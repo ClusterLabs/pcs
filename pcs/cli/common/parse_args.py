@@ -114,6 +114,8 @@ PCS_LONG_OPTIONS: Final = [
     "token=",
     # enable agent self validation
     "agent-validation",
+    # disable text output in query commands
+    "quiet",
 ]
 
 
@@ -532,6 +534,7 @@ class InputModifiers:
                 "--expired": "--expired" in options,
                 "--force": "--force" in options,
                 "--full": "--full" in options,
+                "--quiet": "--quiet" in options,
                 FUTURE_OPTION: FUTURE_OPTION in options,
                 # TODO remove
                 # used only in deprecated 'pcs resource|stonith show'

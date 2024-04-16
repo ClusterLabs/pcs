@@ -2661,6 +2661,13 @@
         daemon urls: pacemaker_node_status
       </description>
     </capability>
+    <capability id="status.pcmk.query.resource" in-pcs="1" in-pcsd="0">
+      <description>
+        Query status of resources.
+
+        pcs commands: status query resource ...
+      </description>
+    </capability>
     <capability id="status.pcmk.resources.hide-inactive" in-pcs="1" in-pcsd="0">
       <description>
         Can hide inactive resources when showing resource status.
@@ -2693,6 +2700,21 @@
         pcs commands: status resources
       </description>
     </capability>
+    <capability id="status.pcmk.resources.rest-api.v2" in-pcs="0" in-pcsd="1">
+      <description>
+        Get status of resources in cluster.
+
+        API v2: status.resources_status
+      </description>
+    </capability>
+    <capability id="status.pcmk.wait" in-pcs="1" in-pcsd="1">
+      <description>
+        Wait for the cluster to settle into stable state.
+
+        pcs commands: status wait
+        API v2: cluster.wait_for_pcmk_idle
+      </description>
+    </capability>
     <capability id="status.pcmk.xml" in-pcs="1" in-pcsd="0">
       <description>
         Display pacemaker status in XML format.
@@ -2700,6 +2722,8 @@
         pcs commands: status xml
       </description>
     </capability>
+
+
 
     <capability id="pcs.rest-api.v1.1" in-pcs="0" in-pcsd="1">
       <description>

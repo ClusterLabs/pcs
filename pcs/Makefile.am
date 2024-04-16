@@ -67,6 +67,8 @@ EXTRA_DIST		= \
 			  cli/file/metadata.py \
 			  cli/__init__.py \
 			  cli/nvset.py \
+			  cli/query/__init__.py \
+			  cli/query/resource.py \
 			  cli/reports/__init__.py \
 			  cli/reports/messages.py \
 			  cli/reports/output.py \
@@ -98,6 +100,8 @@ EXTRA_DIST		= \
 			  cli/routing/stonith.py \
 			  cli/routing/tag.py \
 			  cli/rule.py \
+			  cli/status/command.py \
+			  cli/status/__init__.py \
 			  cli/tag/command.py \
 			  cli/tag/__init__.py \
 			  cluster.py \
@@ -176,6 +180,7 @@ EXTRA_DIST		= \
 			  common/types.py \
 			  common/validate.py \
 			  common/status_dto.py \
+			  common/resource_status.py \
 			  config.py \
 			  constraint.py \
 			  daemon/app/common.py \

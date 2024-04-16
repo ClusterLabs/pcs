@@ -609,7 +609,7 @@ BUNDLE_B2 = CibResourceBundleDto(
         network=None,
         options=None,
     ),
-    network=None,
+    network=CibResourceBundleNetworkOptionsDto(None, 9000, None, None, None),
     port_mappings=[],
     storage_mappings=[],
     meta_attributes=[],

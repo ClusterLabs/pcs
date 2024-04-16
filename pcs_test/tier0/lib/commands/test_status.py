@@ -1280,7 +1280,7 @@ def _fixture_primitive_resource_dto(
 ) -> PrimitiveStatusDto:
     return PrimitiveStatusDto(
         resource_id=resource_id,
-        clone_instance_id=None,
+        instance_id=None,
         resource_agent=resource_agent,
         role=PCMK_STATUS_ROLE_STOPPED,
         target_role=target_role,
@@ -1449,7 +1449,7 @@ class ResourcesStatus(TestCase):
                     ),
                     GroupStatusDto(
                         resource_id="G2",
-                        clone_instance_id=None,
+                        instance_id=None,
                         maintenance=False,
                         description=None,
                         managed=True,
@@ -1477,7 +1477,7 @@ class ResourcesStatus(TestCase):
                         instances=[
                             GroupStatusDto(
                                 resource_id="G1",
-                                clone_instance_id="0",
+                                instance_id="0",
                                 maintenance=False,
                                 description=None,
                                 managed=True,

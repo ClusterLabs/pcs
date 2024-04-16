@@ -5,6 +5,7 @@ EXTRA_DIST		= \
 			  __init__.py \
 			  resources/based_metadata.xml \
 			  resources/capabilities.xml \
+			  resources/cib-all.xml \
 			  resources/cib-empty-1.2.xml \
 			  resources/cib-empty-3.1.xml \
 			  resources/cib-empty-3.2.xml \
@@ -18,9 +19,10 @@ EXTRA_DIST		= \
 			  resources/cib-largefile.xml \
 			  resources/cib-large.xml \
 			  resources/cib-property.xml \
+			  resources/cib-remote.xml \
 			  resources/cib-resources.xml \
-			  resources/cib-all.xml \
 			  resources/cib-rule-with-spaces-in-date.xml \
+			  resources/cib-status.xml \
 			  resources/cib-tags.xml \
 			  resources/cib-unexportable-constraints.xml \
 			  resources/controld_metadata.xml \
@@ -90,6 +92,8 @@ EXTRA_DIST		= \
 			  tier0/cli/constraint_ticket/test_command.py \
 			  tier0/cli/constraint_ticket/test_parse_args.py \
 			  tier0/cli/__init__.py \
+			  tier0/cli/query/__init__.py \
+			  tier0/cli/query/test_resource.py \
 			  tier0/cli/reports/__init__.py \
 			  tier0/cli/reports/test_messages.py \
 			  tier0/cli/resource/__init__.py \
@@ -123,6 +127,7 @@ EXTRA_DIST		= \
 			  tier0/common/test_file.py \
 			  tier0/common/test_host.py \
 			  tier0/common/test_node_communicator.py \
+			  tier0/common/test_resource_status.py \
 			  tier0/common/test_str_tools.py \
 			  tier0/common/test_tools.py \
 			  tier0/common/test_tools_xml_fromstring.py \
@@ -391,6 +396,7 @@ EXTRA_DIST		= \
 			  tier1/test_misc.py \
 			  tier1/test_quorum.py \
 			  tier1/test_status.py \
+			  tier1/test_status_query_resource.py \
 			  tier1/test_tag.py \
 			  tools/assertions.py \
 			  tools/bin_mock/__init__.py \

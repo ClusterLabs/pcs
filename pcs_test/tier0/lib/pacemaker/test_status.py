@@ -85,7 +85,7 @@ def fixture_primitive_xml(
 
 def fixture_primitive_dto(
     resource_id: str = "resource",
-    clone_instance_id: Optional[str] = None,
+    instance_id: Optional[str] = None,
     resource_agent: str = "ocf:heartbeat:Dummy",
     role: PcmkStatusRoleType = PCMK_STATUS_ROLE_STARTED,
     target_role: Optional[str] = None,
@@ -95,7 +95,7 @@ def fixture_primitive_dto(
 ) -> PrimitiveStatusDto:
     return PrimitiveStatusDto(
         resource_id,
-        clone_instance_id,
+        instance_id,
         resource_agent,
         role,
         target_role,
@@ -138,13 +138,13 @@ def fixture_group_xml(
 
 def fixture_group_dto(
     resource_id: str = "resource-group",
-    clone_instance_id: Optional[str] = None,
+    instance_id: Optional[str] = None,
     description: Optional[str] = None,
     members: Sequence[PrimitiveStatusDto] = (),
 ) -> GroupStatusDto:
     return GroupStatusDto(
         resource_id,
-        clone_instance_id,
+        instance_id,
         maintenance=False,
         description=description,
         managed=True,
@@ -510,7 +510,7 @@ class TestPrimitiveStatusToDto(TestCase):
 
         result = status._primitive_to_dto(primitive_xml, True)
 
-        self.assertEqual(result, fixture_primitive_dto(clone_instance_id="0"))
+        self.assertEqual(result, fixture_primitive_dto(instance_id="0"))
 
     def test_running_on_multiple_nodes(self):
         primitive_xml = etree.fromstring(
@@ -721,8 +721,8 @@ class TestGroupStatusToDto(TestCase):
         self.assertEqual(
             result,
             fixture_group_dto(
-                clone_instance_id="0",
-                members=[fixture_primitive_dto(clone_instance_id="0")],
+                instance_id="0",
+                members=[fixture_primitive_dto(instance_id="0")],
             ),
         )
 
@@ -799,9 +799,9 @@ class TestCloneStatusToDto(TestCase):
             fixture_clone_dto(
                 unique=True,
                 instances=[
-                    fixture_primitive_dto(clone_instance_id="0"),
+                    fixture_primitive_dto(instance_id="0"),
                     fixture_primitive_dto(
-                        clone_instance_id="1", node_names=["node2"]
+                        instance_id="1", node_names=["node2"]
                     ),
                 ],
             ),
@@ -896,10 +896,10 @@ class TestCloneStatusToDto(TestCase):
             fixture_clone_dto(
                 instances=[
                     fixture_group_dto(
-                        clone_instance_id="0", members=[fixture_primitive_dto()]
+                        instance_id="0", members=[fixture_primitive_dto()]
                     ),
                     fixture_group_dto(
-                        clone_instance_id="1",
+                        instance_id="1",
                         members=[fixture_primitive_dto(node_names=["node2"])],
                     ),
                 ],
@@ -936,14 +936,14 @@ class TestCloneStatusToDto(TestCase):
                 unique=True,
                 instances=[
                     fixture_group_dto(
-                        clone_instance_id="0",
-                        members=[fixture_primitive_dto(clone_instance_id="0")],
+                        instance_id="0",
+                        members=[fixture_primitive_dto(instance_id="0")],
                     ),
                     fixture_group_dto(
-                        clone_instance_id="1",
+                        instance_id="1",
                         members=[
                             fixture_primitive_dto(
-                                clone_instance_id="1", node_names=["node2"]
+                                instance_id="1", node_names=["node2"]
                             )
                         ],
                     ),
@@ -1081,6 +1081,30 @@ class TestBundleReplicaStatusToDto(TestCase):
             fixture_replica_dto(
                 ip=True,
                 member=fixture_primitive_dto(node_names=["resource-bundle-0"]),
+            ),
+        )
+
+    def test_member_unique(self):
+        replica_xml = etree.fromstring(
+            fixture_replica_xml(
+                ip=True,
+                member=fixture_primitive_xml(
+                    resource_id="resource:0",
+                    node_names=["resource-bundle-0"],
+                ),
+            )
+        )
+
+        result = status._replica_to_dto(
+            replica_xml, self.bundle_id, self.bundle_type, True
+        )
+        self.assertEqual(
+            result,
+            fixture_replica_dto(
+                ip=True,
+                member=fixture_primitive_dto(
+                    instance_id="0", node_names=["resource-bundle-0"]
+                ),
             ),
         )
 
@@ -1638,7 +1662,7 @@ class TestResourcesStatusToDto(TestCase):
         )
         assert_report_item_list_equal(parser.get_warnings(), [])
 
-    def test_skip_bundle(self):
+    def test_skip_bundle_same_id(self):
         status_xml = etree.fromstring(
             fixture_crm_mon_xml(
                 [
@@ -1675,6 +1699,30 @@ class TestResourcesStatusToDto(TestCase):
                     reports.codes.CLUSTER_STATUS_BUNDLE_MEMBER_ID_AS_IMPLICIT,
                     bundle_id="resource-bundle",
                     bad_ids=["resource-bundle-0"],
+                )
+            ],
+        )
+
+    def test_skip_bundle_missing_implicit(self):
+        status_xml = etree.fromstring(
+            fixture_crm_mon_xml(
+                [fixture_bundle_xml("bundle", ['<replica id="0"/>'])]
+            )
+        )
+
+        parser = status.ClusterStatusParser(status_xml)
+        result = parser.status_xml_to_dto()
+
+        self.assertEqual(result, ResourcesStatusDto([]))
+        assert_report_item_list_equal(
+            parser.get_warnings(),
+            [
+                fixture.warn(
+                    reports.codes.BAD_CLUSTER_STATE_DATA,
+                    reason=(
+                        "Replica '0' of bundle 'bundle' is missing implicit "
+                        "container resource"
+                    ),
                 )
             ],
         )
