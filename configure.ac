@@ -334,7 +334,6 @@ AM_CONDITIONAL([PIP_HAS_ISOLATION], [test "x$have_isolation" = xyes])
 
 if test "x$tests_only" != "xyes"; then
 	PCS_CHECK_PYMOD([setuptools])
-	PCS_CHECK_PYMOD([setuptools-scm])
 	if test "x$local_build" = "xyes"; then
 		PCS_CHECK_PYMOD([wheel])
 	fi
@@ -348,6 +347,11 @@ if test "x$tests_only" != "xyes"; then
 	PCS_CHECK_PYMOD([dacite], [], [yes])
 	PCS_CHECK_PYMOD([tornado], [>= 6.0.0], [yes])
 	PCS_CHECK_PYMOD([python-dateutil], [>= 2.7.0], [yes])
+	# setuptoools_scm is needed for bundling dateutil, this uses variables
+	# set by the CHECK_PYMOD macro, so it must be executed right after it
+	if test "x$bundle_module" = "xyes" && test "x$cache_only" = "xyes"; then
+		PCS_CHECK_PYMOD([setuptools-scm])
+	fi
 
 	# special case, because we need to download from github
 	AC_PIP_MODULE([pyagentx])
