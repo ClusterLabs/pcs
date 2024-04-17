@@ -50,6 +50,7 @@ from pcs.cli.nvset import (
 from pcs.cli.reports import process_library_reports
 from pcs.cli.reports.output import (
     deprecation_warning,
+    error,
     warn,
 )
 from pcs.cli.resource.output import (
@@ -119,8 +120,8 @@ def _check_is_not_stonith(
     lib: Any, resource_id_list: list[str], cmd_to_use: Optional[str] = None
 ) -> None:
     if lib.resource.is_any_stonith(resource_id_list):
-        deprecation_warning(
-            reports.messages.ResourceStonithCommandsMismatch(
+        raise error(
+            reports.messages.CommandArgumentTypeMismatch(
                 "stonith resources"
             ).message
             + format_optional(cmd_to_use, " Please use '{}' instead.")
@@ -166,17 +167,19 @@ def resource_utilization_cmd(
       * -f - CIB file
     """
     modifiers.ensure_only_supported("-f")
+    resource_id = None
+    if argv:
+        resource_id = argv.pop(0)
+        _check_is_not_stonith(lib, [resource_id])
     utils.print_warning_if_utilization_attrs_has_no_effect(
         PropertyConfigurationFacade.from_properties_dtos(
             lib.cluster_property.get_properties(),
             lib.cluster_property.get_properties_metadata(),
         )
     )
-    if not argv:
+    if not resource_id:
         print_resources_utilization()
         return
-    resource_id = argv.pop(0)
-    _check_is_not_stonith(lib, [resource_id])
     if argv:
         set_resource_utilization(resource_id, argv)
     else:
@@ -610,8 +613,8 @@ def resource_list_options(
             lib.resource_agent.get_agents_list().names, agent_name_str
         )
     if agent_name.standard == "stonith":
-        deprecation_warning(
-            reports.messages.ResourceStonithCommandsMismatch(
+        error(
+            reports.messages.CommandArgumentTypeMismatch(
                 "stonith / fence agents"
             ).message
             + " Please use 'pcs stonith describe' instead."
@@ -1797,6 +1800,13 @@ def resource_clone_create(
     )
     if not element:
         utils.err("unable to find group or resource: %s" % name)
+    if element.getAttribute("class") == "stonith":
+        utils.err(
+            reports.messages.CommandArgumentTypeMismatch(
+                "stonith resource",
+                reports.const.PCS_COMMAND_STONITH_CREATE,
+            ).message
+        )
 
     if element.parentNode.tagName == "bundle":
         utils.err("cannot clone bundle resource")

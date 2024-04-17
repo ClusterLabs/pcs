@@ -336,7 +336,7 @@ class Clone(
         self.set_cib_file(FIXTURE_STONITH_FOR_CLONE)
         self.assert_pcs_fail(
             "resource clone fence-device".split(),
-            self.stonith_deprecation_warning + fixture_clone_stonith_msg(),
+            "Error: This command does not accept stonith resources.\n",
         )
         self.assert_resources_xml_in_cib(
             fixture_resources_xml(FIXTURE_STONITH_FOR_CLONE)
@@ -344,13 +344,12 @@ class Clone(
 
     def test_clone_id_is_stonith_forced(self):
         self.set_cib_file(FIXTURE_STONITH_FOR_CLONE)
-        self.assert_effect(
+        self.assert_pcs_fail(
             "resource clone fence-device --force".split(),
-            fixture_resources_xml(FIXTURE_STONITH_CLONE),
-            stderr_full=(
-                self.stonith_deprecation_warning
-                + fixture_clone_stonith_msg(forced=True)
-            ),
+            "Error: This command does not accept stonith resources.\n",
+        )
+        self.assert_resources_xml_in_cib(
+            fixture_resources_xml(FIXTURE_STONITH_FOR_CLONE)
         )
 
     def test_clone_group_with_stonith(self):
@@ -486,7 +485,7 @@ class Clone(
         self.set_cib_file(FIXTURE_STONITH_FOR_CLONE)
         self.assert_pcs_fail(
             "resource promotable fence-device".split(),
-            self.stonith_deprecation_warning + fixture_clone_stonith_msg(),
+            "Error: This command does not accept stonith resources.\n",
         )
         self.assert_resources_xml_in_cib(
             fixture_resources_xml(FIXTURE_STONITH_FOR_CLONE)
@@ -496,10 +495,10 @@ class Clone(
         self.set_cib_file(FIXTURE_STONITH_FOR_CLONE)
         self.assert_pcs_fail(
             "resource promotable fence-device --force".split(),
-            stderr_start=(
-                self.stonith_deprecation_warning
-                + fixture_clone_stonith_msg(forced=True)
-            ),
+            "Error: This command does not accept stonith resources.\n",
+        )
+        self.assert_resources_xml_in_cib(
+            fixture_resources_xml(FIXTURE_STONITH_FOR_CLONE)
         )
 
     def test_promotable_keyword_and_option(self):

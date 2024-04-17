@@ -19,6 +19,7 @@ from pcs.cli.common.parse_args import (
 from pcs.cli.fencing_topology import target_type_map_cli_to_lib
 from pcs.cli.reports.output import (
     deprecation_warning,
+    error,
     print_to_stderr,
     warn,
 )
@@ -133,10 +134,8 @@ def _check_is_stonith(
     cmd_to_use: Optional[str] = None,
 ) -> None:
     if lib.resource.is_any_resource_except_stonith(resource_id_list):
-        deprecation_warning(
-            reports.messages.ResourceStonithCommandsMismatch(
-                "resources"
-            ).message
+        raise error(
+            reports.messages.CommandArgumentTypeMismatch("resources").message
             + format_optional(cmd_to_use, " Please use '{}' instead.")
         )
 

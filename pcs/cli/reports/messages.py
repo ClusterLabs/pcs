@@ -559,8 +559,8 @@ class InvalidStonithAgentName(CliReportMessageCustom):
         )
 
 
-class ResourceStonithCommandsMismatch(CliReportMessageCustom):
-    _obj: messages.ResourceStonithCommandsMismatch
+class CommandArgumentTypeMismatch(CliReportMessageCustom):
+    _obj: messages.CommandArgumentTypeMismatch
 
     @property
     def message(self) -> str:

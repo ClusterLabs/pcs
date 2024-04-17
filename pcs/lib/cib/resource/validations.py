@@ -134,10 +134,8 @@ def validate_move(
 
     if is_stonith(resource_element):
         report_list.append(
-            reports.ReportItem.deprecation(
-                reports.messages.ResourceStonithCommandsMismatch(
-                    "stonith device"
-                )
+            reports.ReportItem.error(
+                reports.messages.CommandArgumentTypeMismatch("stonith resource")
             )
         )
 
@@ -209,10 +207,8 @@ def validate_ban(
 
     if is_stonith(resource_element):
         report_list.append(
-            reports.ReportItem.deprecation(
-                reports.messages.ResourceStonithCommandsMismatch(
-                    "stonith device"
-                )
+            reports.ReportItem.error(
+                reports.messages.CommandArgumentTypeMismatch("stonith resource")
             )
         )
 
@@ -254,10 +250,8 @@ def validate_unmove_unban(
 
     if is_stonith(resource_element):
         report_list.append(
-            reports.ReportItem.deprecation(
-                reports.messages.ResourceStonithCommandsMismatch(
-                    "stonith device"
-                )
+            reports.ReportItem.error(
+                reports.messages.CommandArgumentTypeMismatch("stonith resource")
             )
         )
 
