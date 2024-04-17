@@ -121,7 +121,10 @@ class SyncConfigMutualExclusive(AppTest):
         # Without lock the timeout should be enough to finish task. With the
         # lock it should raise because of timeout. The same timeout is used for
         # noticing differences between test with and test without lock.
-        return self.io_loop.run_sync(fetch_sync_options, timeout=0.5)
+        # The timeout needs to be long enough for the test to fit into it even
+        # if running on a slower machine. And it should be short enough not to
+        # make the test run unnecessary long.
+        return self.io_loop.run_sync(fetch_sync_options, timeout=2.5)
 
     def check_call_wrapper_without_lock(self, method):
         self.assert_wrappers_response(self.fetch_set_sync_options(method))
