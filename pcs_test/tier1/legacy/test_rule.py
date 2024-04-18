@@ -98,7 +98,7 @@ class DateValueTest(TestCase):
         deprecation_call_list = [
             mock.call(
                 f"duration option '{option}' is deprecated and might be removed "
-                "in future, therefore it should not be used"
+                "in a future release, therefore it should not be used"
             )
             for option in ("monthdays", "weekdays", "weekyears", "moon")
         ]
@@ -141,7 +141,7 @@ class DateValueTest(TestCase):
         deprecation_call_list = [
             mock.call(
                 f"date-spec option '{option}' is deprecated and might be removed "
-                "in future, therefore it should not be used"
+                "in a future release, therefore it should not be used"
             )
             for option in ("moon", "moon")
         ]

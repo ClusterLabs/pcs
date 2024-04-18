@@ -400,7 +400,7 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
             "constraint order D1 then D2 score=123".split(),
             stderr_full=(
                 "Deprecation Warning: option 'score' is deprecated and might "
-                "be removed in future, therefore it should not be used\n"
+                "be removed in a future release, therefore it should not be used\n"
                 "Adding D1 D2 (score: 123) (Options: first-action=start "
                 "then-action=start)\n"
             ),
@@ -1680,8 +1680,8 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
             (
                 f"Deprecation Warning: Value "
                 f"'{const.PCMK_ROLE_UNPROMOTED_LEGACY}' of option "
-                "role is deprecated and might be removed in future, therefore "
-                "it should not be used, use "
+                "role is deprecated and might be removed in a future release, "
+                "therefore it should not be used, use "
                 f"'{const.PCMK_ROLE_UNPROMOTED}' value instead\n"
             ),
         )
@@ -4183,8 +4183,8 @@ class TicketAdd(ConstraintBaseTest):
             f"constraint ticket add T {role} A loss-policy=fence".split(),
             (
                 f"Deprecation Warning: Value '{role}' of option role is "
-                "deprecated and might be removed in future, therefore it should "
-                "not be used, use "
+                "deprecated and might be removed in a future release, "
+                "therefore it should not be used, use "
                 f"'{const.PCMK_ROLE_UNPROMOTED}' value instead\n"
                 "Duplicate constraints:\n"
                 f"  {const.PCMK_ROLE_UNPROMOTED} resource 'A' depends on ticket 'T' (id: ticket-T-A-{const.PCMK_ROLE_UNPROMOTED})\n"
@@ -4200,8 +4200,8 @@ class TicketAdd(ConstraintBaseTest):
             f"constraint ticket add T {role} A loss-policy=fence".split(),
             stderr_full=(
                 f"Deprecation Warning: Value '{role}' of option role is "
-                "deprecated and might be removed in future, therefore it should "
-                "not be used, use "
+                "deprecated and might be removed in a future release, "
+                "therefore it should not be used, use "
                 f"'{const.PCMK_ROLE_PROMOTED}' value instead\n"
             ),
         )
@@ -4332,8 +4332,8 @@ class TicketShow(ConstraintBaseTest):
             f"constraint ticket add T {role} A loss-policy=fence".split(),
             stderr_full=(
                 f"Deprecation Warning: Value '{role}' of option role is "
-                "deprecated and might be removed in future, therefore it should "
-                "not be used, use "
+                "deprecated and might be removed in a future release, "
+                "therefore it should not be used, use "
                 f"'{const.PCMK_ROLE_PROMOTED}' value instead\n"
             ),
         )

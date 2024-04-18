@@ -173,7 +173,7 @@ class PlainStonith(ResourceTest):
             </resources>""",
             stderr_start=(
                 "Warning: stonith option 'debug' is deprecated and might be "
-                "removed in future, therefore it should not "
+                "removed in a future release, therefore it should not "
                 "be used, use 'debug_file' instead\n"
             ),
         )
@@ -183,7 +183,7 @@ class PlainStonith(ResourceTest):
         self.assert_pcs_fail(
             "stonith create S fence_xvm action=reboot".split(),
             "Error: stonith option 'action' is deprecated and might be removed "
-            "in future, therefore it should not be"
+            "in a future release, therefore it should not be"
             " used, use 'pcmk_off_action', 'pcmk_reboot_action' instead, "
             "use --force to override\n" + ERRORS_HAVE_OCCURRED,
         )
@@ -208,7 +208,7 @@ class PlainStonith(ResourceTest):
             </resources>""",
             stderr_full=(
                 "Warning: stonith option 'action' is deprecated and might be "
-                "removed in future, therefore it should not be "
+                "removed in a future release, therefore it should not be "
                 "used, use 'pcmk_off_action', 'pcmk_reboot_action' instead\n"
             ),
         )

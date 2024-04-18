@@ -352,7 +352,7 @@ def parse_create_old(
             if clone_groups.has_keyword("op"):
                 deprecation_warning(
                     f"Specifying 'op' after '{clone_type}' now defines "
-                    "operations for the base resource. In future, this "
+                    "operations for the base resource. In a future release, this "
                     f"will be removed and operations will have to be specified "
                     f"before '{clone_type}'. "
                     f"Specify {FUTURE_OPTION} to switch to the future behavior."
@@ -361,7 +361,7 @@ def parse_create_old(
             if clone_groups.has_keyword("meta"):
                 deprecation_warning(
                     f"Specifying 'meta' after '{clone_type}' now defines "
-                    "meta attributes for the base resource. In future, this "
+                    "meta attributes for the base resource. In a future release, this "
                     f"will define meta attributes for the {clone_type}. "
                     f"Specify {FUTURE_OPTION} to switch to the future behavior."
                 )
@@ -381,7 +381,7 @@ def parse_create_old(
             if bundle_groups.has_keyword("meta"):
                 deprecation_warning(
                     "Specifying 'meta' after 'bundle' now defines meta options for "
-                    "the base resource. In future, this will be removed and meta "
+                    "the base resource. In a future release, this will be removed and meta "
                     "options will have to be specified before 'bundle'. "
                     f"Specify {FUTURE_OPTION} to switch to the future behavior."
                 )
@@ -389,7 +389,7 @@ def parse_create_old(
             if bundle_groups.has_keyword("op"):
                 deprecation_warning(
                     "Specifying 'op' after 'bundle' now defines operations for the "
-                    "base resource. In future, this will be removed and operations "
+                    "base resource. In a future release, this will be removed and operations "
                     "will have to be specified before 'bundle'. "
                     f"Specify {FUTURE_OPTION} to switch to the future behavior."
                 )

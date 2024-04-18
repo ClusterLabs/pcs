@@ -383,27 +383,27 @@ class ParseCreateArgsOld(ParseCreateArgsCommonMixin, TestCase):
     )
     msg_meta_after_clone = (
         "Deprecation Warning: Specifying 'meta' after 'clone' now defines "
-        "meta attributes for the base resource. In future, this will define "
-        "meta attributes for the clone. Specify --future to switch to the "
+        "meta attributes for the base resource. In a future release, this will "
+        "define meta attributes for the clone. Specify --future to switch to the "
         "future behavior."
     )
     msg_op_after_clone = (
         "Deprecation Warning: Specifying 'op' after 'clone' now defines "
-        "operations for the base resource. In future, this will be removed and "
-        "operations will have to be specified before 'clone'. Specify --future "
-        "to switch to the future behavior."
+        "operations for the base resource. In a future release, this will be "
+        "removed and operations will have to be specified before 'clone'. "
+        "Specify --future to switch to the future behavior."
     )
     msg_meta_after_bundle = (
         "Deprecation Warning: Specifying 'meta' after 'bundle' now defines "
-        "meta options for the base resource. In future, this will be removed "
-        "and meta options will have to be specified before 'bundle'. Specify "
-        "--future to switch to the future behavior."
+        "meta options for the base resource. In a future release, this will be "
+        "removed and meta options will have to be specified before 'bundle'. "
+        "Specify --future to switch to the future behavior."
     )
     msg_op_after_bundle = (
         "Deprecation Warning: Specifying 'op' after 'bundle' now defines "
-        "operations for the base resource. In future, this will be removed and "
-        "operations will have to be specified before 'bundle'. Specify "
-        "--future to switch to the future behavior."
+        "operations for the base resource. In a future release, this will be "
+        "removed and operations will have to be specified before 'bundle'. "
+        "Specify --future to switch to the future behavior."
     )
 
     def assert_produce(self, arg_list, result, modifiers=None):

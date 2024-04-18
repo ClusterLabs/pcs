@@ -1439,7 +1439,7 @@ class StonithTest(TestCase, AssertPcsMixin):
             "stonith create S fence_apc ip=i login=l password=1234".split(),
             stderr_full=(
                 "Warning: stonith option 'login' is deprecated and might be "
-                "removed in future, therefore it should not be "
+                "removed in a future release, therefore it should not be "
                 "used, use 'username' instead\n"
             ),
         )
@@ -1475,10 +1475,10 @@ class StonithTest(TestCase, AssertPcsMixin):
             ),
             stderr_full=(
                 "Warning: stonith option 'ipaddr' is deprecated and might be "
-                "removed in future, therefore it should not be "
+                "removed in a future release, therefore it should not be "
                 "used, use 'ip' instead\n"
                 "Warning: stonith option 'login' is deprecated and might be "
-                "removed in future, therefore it should not be "
+                "removed in a future release, therefore it should not be "
                 "used, use 'username' instead\n"
             ),
         )
@@ -1574,7 +1574,7 @@ class StonithTest(TestCase, AssertPcsMixin):
             "stonith create test fence_apc ip=i username=u action=a".split(),
             (
                 "Error: stonith option 'action' is deprecated and might be "
-                "removed in future, therefore it should not be"
+                "removed in a future release, therefore it should not be"
                 " used, use 'pcmk_off_action', 'pcmk_reboot_action' instead,"
                 " use --force to override\n" + ERRORS_HAVE_OCCURRED
             ),
@@ -1584,7 +1584,7 @@ class StonithTest(TestCase, AssertPcsMixin):
             "stonith create test fence_apc ip=i username=u action=a --force".split(),
             stderr_start=(
                 "Warning: stonith option 'action' is deprecated and might be "
-                "removed in future, therefore it should not be "
+                "removed in a future release, therefore it should not be "
                 "used, use 'pcmk_off_action', 'pcmk_reboot_action' instead\n"
             ),
         )
@@ -1636,7 +1636,7 @@ class StonithTest(TestCase, AssertPcsMixin):
             "stonith update test action=a".split(),
             (
                 "Error: stonith option 'action' is deprecated and might be "
-                "removed in future, therefore it should not be"
+                "removed in a future release, therefore it should not be"
                 " used, use 'pcmk_off_action', 'pcmk_reboot_action' instead,"
                 " use --force to override\n"
             ),
@@ -1646,7 +1646,7 @@ class StonithTest(TestCase, AssertPcsMixin):
             "stonith update test action=a --force".split(),
             stderr_start=(
                 "Warning: stonith option 'action' is deprecated and might be "
-                "removed in future, therefore it should not be "
+                "removed in a future release, therefore it should not be "
                 "used, use 'pcmk_off_action', 'pcmk_reboot_action' instead\n"
             ),
         )
@@ -3430,10 +3430,10 @@ class StonithUpdate(ResourceTest):
             """,
             stderr_regexp=(
                 "Warning: stonith option 'login' is deprecated and might be "
-                "removed in future, therefore it should not "
+                "removed in a future release, therefore it should not "
                 "be used, use 'username' instead\n"
                 "Warning: stonith option 'debug' is deprecated and might be "
-                "removed in future, therefore it should not "
+                "removed in a future release, therefore it should not "
                 "be used, use 'debug_file' instead\n"
                 + self.agent_secure_warning
             ),
@@ -3472,7 +3472,7 @@ class StonithUpdate(ResourceTest):
             """,
             stderr_regexp=(
                 "Warning: stonith option 'debug' is deprecated and might be "
-                "removed in future, therefore it should not "
+                "removed in a future release, therefore it should not "
                 "be used, use 'debug_file' instead\n"
                 + self.agent_secure_warning
             ),
@@ -3653,7 +3653,7 @@ class StonithUpdate(ResourceTest):
             """,
             stderr_regexp=(
                 "Warning: stonith option 'ipaddr' is deprecated and might be "
-                "removed in future, therefore it should not "
+                "removed in a future release, therefore it should not "
                 "be used, use 'ip' instead\n" + self.agent_secure_warning
             ),
         )
@@ -3694,7 +3694,7 @@ class StonithUpdate(ResourceTest):
             """,
             stderr_regexp=(
                 "Warning: stonith option 'ipaddr' is deprecated and might be "
-                "removed in future, therefore it should not "
+                "removed in a future release, therefore it should not "
                 "be used, use 'ip' instead\n" + self.agent_secure_warning
             ),
         )

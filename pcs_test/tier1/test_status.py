@@ -39,7 +39,7 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
             ).split(),
             stderr_start=(
                 "Warning: stonith option 'action' is deprecated and might be "
-                "removed in future, therefore it should not be "
+                "removed in a future release, therefore it should not be "
                 "used, use 'pcmk_off_action', 'pcmk_reboot_action' instead\n"
             ),
         )
