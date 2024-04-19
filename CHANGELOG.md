@@ -22,6 +22,12 @@
 - Use different process creation method for multiprocessing module in order to
   avoid deadlock on process termination. ([ghissue#780], [RHEL-28749])
 
+### Deprecated
+- Pcs produces warnings about [features planned to be removed in pacemaker 3](https://projects.clusterlabs.org/w/projects/pacemaker/pacemaker_3.0_changes/pacemaker_3.0_configuration_changes/):
+  - score in order constraints
+  - using rkt in bundles
+  - upstart and nagios resources
+  - some date-spec and duration options in rules
 
 [ghissue#772]: https://github.com/ClusterLabs/pcs/issues/772
 [ghissue#780]: https://github.com/ClusterLabs/pcs/issues/780

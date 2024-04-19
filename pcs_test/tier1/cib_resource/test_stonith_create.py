@@ -172,7 +172,8 @@ class PlainStonith(ResourceTest):
                 </primitive>
             </resources>""",
             stderr_start=(
-                "Warning: stonith option 'debug' is deprecated and should not "
+                "Warning: stonith option 'debug' is deprecated and might be "
+                "removed in a future release, therefore it should not "
                 "be used, use 'debug_file' instead\n"
             ),
         )
@@ -181,7 +182,8 @@ class PlainStonith(ResourceTest):
         self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
         self.assert_pcs_fail(
             "stonith create S fence_xvm action=reboot".split(),
-            "Error: stonith option 'action' is deprecated and should not be"
+            "Error: stonith option 'action' is deprecated and might be removed "
+            "in a future release, therefore it should not be"
             " used, use 'pcmk_off_action', 'pcmk_reboot_action' instead, "
             "use --force to override\n" + ERRORS_HAVE_OCCURRED,
         )
@@ -205,7 +207,8 @@ class PlainStonith(ResourceTest):
                 </primitive>
             </resources>""",
             stderr_full=(
-                "Warning: stonith option 'action' is deprecated and should not be "
+                "Warning: stonith option 'action' is deprecated and might be "
+                "removed in a future release, therefore it should not be "
                 "used, use 'pcmk_off_action', 'pcmk_reboot_action' instead\n"
             ),
         )

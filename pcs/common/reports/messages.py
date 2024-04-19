@@ -708,12 +708,14 @@ class DeprecatedOption(ReportItemMessage):
     @property
     def message(self) -> str:
         return (
-            "{desc}option '{option_name}' is deprecated and should not be "
-            "used, use {hint} instead"
+            "{desc}option '{option_name}' is deprecated and might be removed "
+            "in a future release, therefore it should not be used{hint}"
         ).format(
             option_name=self.option_name,
             desc=format_optional(self.option_type),
-            hint=format_list(self.replaced_by),
+            hint=format_optional(
+                format_list(self.replaced_by), ", use {} instead"
+            ),
         )
 
 
@@ -736,7 +738,8 @@ class DeprecatedOptionValue(ReportItemMessage):
     def message(self) -> str:
         return (
             "Value '{deprecated_value}' of option {option_name} is deprecated "
-            "and should not be used{replaced_by}"
+            "and might be removed in a future release, therefore it should not "
+            "be used{replaced_by}"
         ).format(
             deprecated_value=self.deprecated_value,
             option_name=self.option_name,

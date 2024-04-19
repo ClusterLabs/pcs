@@ -289,7 +289,7 @@ Dates are expected to conform to ISO 8601 format.
 
 Duration options are: hours, monthdays, weekdays, yearsdays, months, weeks, years, weekyears, moon. Value for these options is an integer.
 
-Date\-spec options are: hours, monthdays, weekdays, yearsdays, months, weeks, years, weekyears, moon. Value for these options is an integer or a range written as integer\-integer.
+Date\-spec options are: hours, monthdays, weekdays, yeardays, months, weeks, years, weekyears, moon. Value for these options is an integer or a range written as integer\-integer.
 
 NOTE: Defaults do not apply to resources / stonith devices which override them with their own defined values.
 .TP

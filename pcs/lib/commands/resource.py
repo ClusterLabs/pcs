@@ -177,6 +177,17 @@ def _get_agent_facade(
                     )
                 )
             )
+        if split_name.standard in ("nagios", "upstart"):
+            # TODO deprecated in pacemaker 2, to be removed in pacemaker 3
+            # added to pcs after 0.11.7
+            report_processor.report(
+                reports.ReportItem.deprecation(
+                    reports.messages.DeprecatedOptionValue(
+                        "standard", split_name.standard
+                    )
+                )
+            )
+
         return factory.facade_from_parsed_name(split_name)
     except (UnableToGetAgentMetadata, UnsupportedOcfVersion) as e:
         if allow_absent_agent:

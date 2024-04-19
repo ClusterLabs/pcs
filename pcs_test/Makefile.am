@@ -48,6 +48,7 @@ EXTRA_DIST		= \
 			  resources/pcmk_api_rng/pacemakerd-health-2.25.rng \
 			  resources/pcmk_api_rng/resources-2.29.rng \
 			  resources/pcmk_api_rng/status-2.0.rng \
+			  resources/resource_agent_nagios_check_fping.xml \
 			  resources/resource_agent_ocf_heartbeat_dummy_insane_action.xml \
 			  resources/resource_agent_ocf_heartbeat_dummy_utf8.xml \
 			  resources/resource_agent_ocf_heartbeat_dummy.xml \

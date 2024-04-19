@@ -545,6 +545,11 @@ def _order_add(resource1, resource2, options_list, modifiers):
         if opt[0] == "score":
             scorekind = "score: " + opt[1]
             id_suffix = opt[1]
+            # TODO deprecated in pacemaker 2, to be removed in pacemaker 3
+            # added to pcs after 0.11.7
+            deprecation_warning(
+                reports.messages.DeprecatedOption(opt[0], []).message
+            )
             break
         if opt[0] == "kind":
             scorekind = "kind: " + opt[1]

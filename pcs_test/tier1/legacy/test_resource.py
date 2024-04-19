@@ -5515,7 +5515,8 @@ class ResourceRemoveWithTicket(TestCase, AssertPcsMixin):
             f"constraint ticket add T {role} A loss-policy=fence".split(),
             stderr_full=(
                 f"Deprecation Warning: Value '{role}' of option role is "
-                f"deprecated and should not be used, use "
+                "deprecated and might be removed in a future release, therefore it "
+                "should not be used, use "
                 f"'{const.PCMK_ROLE_PROMOTED}' value instead\n"
             ),
         )
@@ -5563,6 +5564,11 @@ class BundleCommon(
         )
 
     def fixture_bundle(self, name, container="docker"):
+        deprecated_rkt = (
+            "Deprecation Warning: Value 'rkt' of option container type is "
+            "deprecated and might be removed in a future release, therefore it should "
+            "not be used\n"
+        )
         self.assert_pcs_success(
             [
                 "resource",
@@ -5574,7 +5580,8 @@ class BundleCommon(
                 "image=pcs:test",
                 "network",
                 "control-port=1234",
-            ]
+            ],
+            stderr_full=(deprecated_rkt if container == "rkt" else None),
         )
 
 
