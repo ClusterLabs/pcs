@@ -1527,28 +1527,6 @@ def dom_get_parent_by_tag_names(dom_el, tag_names):
     return None
 
 
-def dom_attrs_to_list(dom_el, with_id=False):
-    """
-    Commandline options: no options
-    """
-    attributes = [
-        "%s=%s"
-        % (
-            name,
-            (
-                value
-                if name != "role"
-                else common_pacemaker.role.get_value_primary(value.capitalize())
-            ),
-        )
-        for name, value in sorted(dom_el.attributes.items())
-        if name != "id"
-    ]
-    if with_id:
-        attributes.append("(id:%s)" % (dom_el.getAttribute("id")))
-    return attributes
-
-
 # moved to pcs.lib.pacemaker.state
 def get_resource_for_running_check(cluster_state, resource_id, stopped=False):
     """
