@@ -6,5 +6,8 @@ black==24.3.0
 isort
 types-cryptography
 types-dataclasses
-types-pycurl
+# later versions remove type annotations from a few functions causing
+# error: Call to untyped function "getinfo" in typed context  [no-untyped-call]
+# so we are stuck with this version until there's a fix
+types-pycurl==7.45.2.20240311
 types-python-dateutil
