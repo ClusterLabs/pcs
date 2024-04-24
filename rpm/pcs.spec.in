@@ -67,7 +67,7 @@ BuildRequires: python3 >= 3.9
 BuildRequires: python3-setuptools
 %endif
 
-%if 0%{?rhel} >= 8
+%if 0%{?rhel} >= 8 && 0%{?rhel} <= 9
 BuildRequires: platform-python
 BuildRequires: platform-python-setuptools
 # for bundled python dateutil
