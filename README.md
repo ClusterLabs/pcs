@@ -31,7 +31,7 @@ daemon, which operates as a remote server for pcs.
 ### Dependencies
 
 These are the runtime dependencies of pcs and pcsd:
-* python 3.9+
+* python 3.12+
 * python3-cryptography
 * python3-dateutil 2.7.0+
 * python3-lxml
@@ -41,10 +41,10 @@ These are the runtime dependencies of pcs and pcsd:
 * python3-pyparsing
 * python3-tornado 6.1.0+
 * [dacite](https://github.com/konradhalas/dacite)
-* ruby 2.5.0+
+* ruby 3.3.0+
 * killall (package psmisc)
 * corosync 3.x
-* pacemaker 2.1
+* pacemaker 3.x
 
 ---
 

@@ -6,7 +6,12 @@ default:
 .parallel:
   parallel:
     matrix:
-      - BASE_IMAGE_NAME: ["PcsRhel9CurrentRelease", "PcsRhel9Next", "PcsFedoraCurrentRelease"]
+      - BASE_IMAGE_NAME: ["PcsCentos10Stream"]
+        OS_TAG: "centos10"
+      - BASE_IMAGE_NAME: ["PcsFedoraCurrentRelease"]
+        OS_TAG: "generic"
+  tags:
+    - ${OS_TAG}
 
 stages:
   - stage1
