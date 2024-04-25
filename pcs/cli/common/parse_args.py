@@ -726,8 +726,8 @@ def get_rule_str(argv: Argv) -> Optional[str]:
             # deprecated after 0.11.7
             deprecation_warning(
                 "Specifying a rule as multiple arguments is deprecated and "
-                "might be removed in future, specify the rule as a single "
-                "string instead"
+                "might be removed in a future release, specify the rule as "
+                "a single string instead"
             )
             return " ".join(argv)
         return argv[0]

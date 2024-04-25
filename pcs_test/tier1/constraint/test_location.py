@@ -21,8 +21,8 @@ ERRORS_HAVE_OCCURRED = (
 )
 RULE_ARGV_DEPRECATED = (
     "Deprecation Warning: Specifying a rule as multiple arguments is "
-    "deprecated and might be removed in future, specify the rule as a single "
-    "string instead\n"
+    "deprecated and might be removed in a future release, specify the rule as "
+    "a single string instead\n"
 )
 empty_cib = get_test_resource("cib-empty-3.7.xml")
 

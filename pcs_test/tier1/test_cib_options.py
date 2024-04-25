@@ -34,8 +34,8 @@ empty_cib = rc("cib-empty.xml")
 empty_cib_rules = rc("cib-empty-3.4.xml")
 RULE_ARGV_DEPRECATED = (
     "Deprecation Warning: Specifying a rule as multiple arguments is "
-    "deprecated and might be removed in future, specify the rule as a single "
-    "string instead\n"
+    "deprecated and might be removed in a future release, specify the rule as "
+    "a single string instead\n"
 )
 
 

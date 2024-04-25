@@ -16,7 +16,7 @@ from pcs_test.tools.misc import dict_to_modifiers
 
 RULE_ARGV_DEPRECATED = (
     "Specifying a rule as multiple arguments is deprecated and might be removed "
-    "in future, specify the rule as a single string instead"
+    "in a future release, specify the rule as a single string instead"
 )
 
 

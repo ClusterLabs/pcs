@@ -84,7 +84,7 @@ FIXTURE_INSTANCE_ATTRIBUTES = [
 ]
 RULE_ARGV_DEPRECATED = (
     "Specifying a rule as multiple arguments is deprecated and might be removed "
-    "in future, specify the rule as a single string instead"
+    "in a future release, specify the rule as a single string instead"
 )
 
 
