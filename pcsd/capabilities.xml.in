@@ -977,6 +977,19 @@
         daemon urls: add_constraint_rule_remote (param: c_type=loc)
       </description>
     </capability>
+    <capability id="pcmk.constraint.location.simple.rule.rest-api.v2" in-pcs="0" in-pcsd="1">
+      <description>
+        Can create rule location constraints.
+        Can add rules to existing location constraints.
+        Constraint options (resource-discovery, role, rule-id, score-attribute)
+        and id can be specified.
+        Rules support a node attribute type 'number'.
+
+        API v2:
+          constraint.location.add_rule_to_constraint
+          constraint.location.create_with_rule
+      </description>
+    </capability>
     <capability id="pcmk.constraint.location.simple.rule.node-attr-type-number" in-pcs="1" in-pcsd="1">
       <description>
         Rules support a node attribute type 'number'.

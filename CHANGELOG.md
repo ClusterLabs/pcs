@@ -11,6 +11,8 @@
 - Add lib command `status.resources_status` to API v2
 - Add `pcs status wait` CLI command ([RHEL-25854])
 - Add `pcs status query resource` CLI commands ([RHEL-21051])
+- Add commands `constraint.location.add_rule_to_constraint` and
+  `constraint.location.create_with_rule` to API v2
 
 ### Fixed
 - Do not put empty uid/gid corosync configuration options to an uidgid file
