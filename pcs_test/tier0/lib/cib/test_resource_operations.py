@@ -464,18 +464,20 @@ class ValidateOperation(TestCase):
             ],
         )
 
-    def test_return_legacy_role_deprecation(self):
+    def test_return_legacy_role_error(self):
         self.assert_operation_produces_report(
             {
                 "name": "monitor",
                 "role": const.PCMK_ROLE_PROMOTED_LEGACY,
             },
             [
-                fixture.deprecation(
-                    report_codes.DEPRECATED_OPTION_VALUE,
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
                     option_name="role",
-                    deprecated_value=const.PCMK_ROLE_PROMOTED_LEGACY,
-                    replaced_by=const.PCMK_ROLE_PROMOTED,
+                    option_value=const.PCMK_ROLE_PROMOTED_LEGACY,
+                    allowed_values=const.PCMK_ROLES,
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
             ],
         )

@@ -269,69 +269,7 @@ class MetadataActionTranslateRole(TestCase):
             metadata_out,
         )
 
-    @mock.patch(
-        "pcs.common.const.PCMK_ROLE_PROMOTED_PRIMARY",
-        const.PCMK_ROLE_PROMOTED_LEGACY,
-    )
-    @mock.patch(
-        "pcs.common.const.PCMK_ROLE_UNPROMOTED_PRIMARY",
-        const.PCMK_ROLE_UNPROMOTED_LEGACY,
-    )
-    def test_role_old_agent_old_preferred(self):
-        metadata_in = self._fixture_metadata(
-            [
-                self._fixture_action(const.PCMK_ROLE_PROMOTED_LEGACY, "10"),
-                self._fixture_action(const.PCMK_ROLE_UNPROMOTED_LEGACY, "11"),
-            ]
-        )
-        metadata_out = self._fixture_metadata(
-            [
-                self._fixture_action(const.PCMK_ROLE_PROMOTED_LEGACY, "10"),
-                self._fixture_action(const.PCMK_ROLE_UNPROMOTED_LEGACY, "11"),
-            ]
-        )
-        self.assertEqual(
-            # pylint: disable=protected-access
-            ra.pcs_transform._metadata_action_translate_role(metadata_in),
-            metadata_out,
-        )
-
-    @mock.patch(
-        "pcs.common.const.PCMK_ROLE_PROMOTED_PRIMARY",
-        const.PCMK_ROLE_PROMOTED_LEGACY,
-    )
-    @mock.patch(
-        "pcs.common.const.PCMK_ROLE_UNPROMOTED_PRIMARY",
-        const.PCMK_ROLE_UNPROMOTED_LEGACY,
-    )
-    def test_role_new_agent_old_preferred(self):
-        metadata_in = self._fixture_metadata(
-            [
-                self._fixture_action(const.PCMK_ROLE_PROMOTED, "10"),
-                self._fixture_action(const.PCMK_ROLE_UNPROMOTED, "11"),
-            ]
-        )
-        metadata_out = self._fixture_metadata(
-            [
-                self._fixture_action(const.PCMK_ROLE_PROMOTED_LEGACY, "10"),
-                self._fixture_action(const.PCMK_ROLE_UNPROMOTED_LEGACY, "11"),
-            ]
-        )
-        self.assertEqual(
-            # pylint: disable=protected-access
-            ra.pcs_transform._metadata_action_translate_role(metadata_in),
-            metadata_out,
-        )
-
-    @mock.patch(
-        "pcs.common.const.PCMK_ROLE_PROMOTED_PRIMARY",
-        const.PCMK_ROLE_PROMOTED,
-    )
-    @mock.patch(
-        "pcs.common.const.PCMK_ROLE_UNPROMOTED_PRIMARY",
-        const.PCMK_ROLE_UNPROMOTED,
-    )
-    def test_role_old_agent_new_preferred(self):
+    def test_role_old_in_agent(self):
         metadata_in = self._fixture_metadata(
             [
                 self._fixture_action(const.PCMK_ROLE_PROMOTED_LEGACY, "10"),
@@ -350,15 +288,7 @@ class MetadataActionTranslateRole(TestCase):
             metadata_out,
         )
 
-    @mock.patch(
-        "pcs.common.const.PCMK_ROLE_PROMOTED_PRIMARY",
-        const.PCMK_ROLE_PROMOTED,
-    )
-    @mock.patch(
-        "pcs.common.const.PCMK_ROLE_UNPROMOTED_PRIMARY",
-        const.PCMK_ROLE_UNPROMOTED,
-    )
-    def test_role_new_agent_new_preferred(self):
+    def test_role_new_in_agent(self):
         metadata_in = self._fixture_metadata(
             [
                 self._fixture_action(const.PCMK_ROLE_PROMOTED, "10"),

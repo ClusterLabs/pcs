@@ -3368,7 +3368,7 @@ def resource_relocate_location_to_str(location):
         return message.format(
             res=location["id_for_constraint"],
             node=location["promote_on_node"],
-            role=f" role={const.PCMK_ROLE_PROMOTED_PRIMARY}",
+            role=f" role={const.PCMK_ROLE_PROMOTED}",
         )
     return ""
 
@@ -3407,7 +3407,7 @@ def resource_relocate_run(cib_dom, resources=None, dry=True):
             new_constraint.setAttribute(
                 "role",
                 pacemaker.role.get_value_for_cib(
-                    const.PCMK_ROLE_PROMOTED_PRIMARY,
+                    const.PCMK_ROLE_PROMOTED,
                     utils.isCibVersionSatisfied(
                         cib_dom, const.PCMK_NEW_ROLES_CIB_VERSION
                     ),

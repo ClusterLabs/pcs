@@ -155,7 +155,7 @@ class GetPrimitiveRolesWithNodes(TestCase):
                 </resource>
             """,
             """
-                <resource id="A" role="Slave">
+                <resource id="A" role="Unpromoted">
                     <node name="node3" id="3"/>
                 </resource>
             """,
@@ -168,6 +168,11 @@ class GetPrimitiveRolesWithNodes(TestCase):
                     <node name="node5" id="5"/>
                 </resource>
             """,
+            """
+                <resource id="A" role="Promoted">
+                    <node name="node6" id="6"/>
+                </resource>
+            """,
         ]
         primitives = [etree.fromstring(xml) for xml in primitives_xml]
 
@@ -176,8 +181,8 @@ class GetPrimitiveRolesWithNodes(TestCase):
             state._get_primitive_roles_with_nodes(primitives),
             {
                 "Started": ["node1", "node5"],
-                "Master": ["node2"],
-                "Slave": ["node3", "node4"],
+                "Promoted": ["node2", "node6"],
+                "Unpromoted": ["node3", "node4"],
             },
         )
 

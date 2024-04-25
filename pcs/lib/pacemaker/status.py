@@ -9,10 +9,13 @@ from lxml.etree import _Element
 
 from pcs.common import reports
 from pcs.common.const import (
-    PCMK_ROLES,
+    PCMK_ROLES_WITH_LEGACY,
     PCMK_STATUS_ROLES,
     PcmkRoleType,
     PcmkStatusRoleType,
+)
+from pcs.common.pacemaker.role import (
+    get_value_primary as get_primary_role_value,
 )
 from pcs.common.status_dto import (
     AnyResourceStatusDto,
@@ -383,9 +386,9 @@ def _get_target_role(resource: _Element) -> Optional[PcmkRoleType]:
     target_role = resource.get("target_role")
     if target_role is None:
         return None
-    if target_role not in PCMK_ROLES:
+    if target_role not in PCMK_ROLES_WITH_LEGACY:
         raise UnknownPcmkRoleError(str(resource.get("id")), target_role)
-    return PcmkRoleType(target_role)
+    return get_primary_role_value(PcmkRoleType(target_role))
 
 
 def _remove_clone_suffix(resource_id: str) -> tuple[str, Optional[str]]:

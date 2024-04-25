@@ -1069,11 +1069,11 @@ class Resource(TestCase, AssertPcsMixin):
                 Resource: state (class=ocf provider=pacemaker type=Stateful)
                   Operations:
                     monitor: state-monitor-interval-10s
-                      interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                      interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED}
                     monitor: state-monitor-interval-11
-                      interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                      interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
                     monitor: state-monitor-interval-15
-                      interval=15 role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                      interval=15 role={const.PCMK_ROLE_PROMOTED}
                 """
             ),
         )
@@ -1519,8 +1519,15 @@ class Resource(TestCase, AssertPcsMixin):
             ),
         )
 
-        self.assert_pcs_success(
+        self.assert_pcs_fail(
             "resource update B op monitor interval=100 role=Master".split(),
+            "Error: role must be: {} (use --force to override)\n".format(
+                format_list_custom_last_separator(const.PCMK_ROLES, " or ")
+            ),
+        )
+
+        self.assert_pcs_success(
+            "resource update B op monitor interval=100 role=Promoted".split(),
         )
 
         self.assert_pcs_success(
@@ -1534,7 +1541,7 @@ class Resource(TestCase, AssertPcsMixin):
                     start: B-start-interval-0
                       interval=0 timeout=20
                     monitor: B-monitor-interval-100
-                      interval=100 role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                      interval=100 role={const.PCMK_ROLE_PROMOTED}
                 """
             ),
         )
@@ -1554,7 +1561,7 @@ class Resource(TestCase, AssertPcsMixin):
                     start: B-start-interval-0
                       interval=0 timeout=22
                     monitor: B-monitor-interval-100
-                      interval=100 role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                      interval=100 role={const.PCMK_ROLE_PROMOTED}
                 """
             ),
         )
@@ -2371,18 +2378,18 @@ class Resource(TestCase, AssertPcsMixin):
                   Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
                     Operations:
                       monitor: dummy1-monitor-interval-10s
-                        interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                        interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED}
                       monitor: dummy1-monitor-interval-11
-                        interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                        interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
                 Clone: dummy2-master
                   Meta Attributes:
                     promotable=true
                   Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
                     Operations:
                       monitor: dummy2-monitor-interval-10s
-                        interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                        interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED}
                       monitor: dummy2-monitor-interval-11
-                        interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                        interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
                 """
             ),
         )
@@ -2395,16 +2402,16 @@ class Resource(TestCase, AssertPcsMixin):
                 Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
                   Operations:
                     monitor: dummy2-monitor-interval-10s
-                      interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                      interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED}
                     monitor: dummy2-monitor-interval-11
-                      interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                      interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
                 Group: gr
                   Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
                     Operations:
                       monitor: dummy1-monitor-interval-10s
-                        interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                        interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED}
                       monitor: dummy1-monitor-interval-11
-                        interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                        interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
                 """
             ),
         )
@@ -2426,15 +2433,15 @@ class Resource(TestCase, AssertPcsMixin):
                     Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
                       Operations:
                         monitor: dummy1-monitor-interval-10s
-                          interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                          interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED}
                         monitor: dummy1-monitor-interval-11
-                          interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                          interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
                     Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
                       Operations:
                         monitor: dummy2-monitor-interval-10s
-                          interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                          interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED}
                         monitor: dummy2-monitor-interval-11
-                          interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                          interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
                 """
             ),
         )
@@ -2448,15 +2455,15 @@ class Resource(TestCase, AssertPcsMixin):
                   Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
                     Operations:
                       monitor: dummy1-monitor-interval-10s
-                        interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                        interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED}
                       monitor: dummy1-monitor-interval-11
-                        interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                        interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
                   Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
                     Operations:
                       monitor: dummy2-monitor-interval-10s
-                        interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                        interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED}
                       monitor: dummy2-monitor-interval-11
-                        interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                        interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
                 """
             ),
         )
@@ -2477,15 +2484,15 @@ class Resource(TestCase, AssertPcsMixin):
                     Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
                       Operations:
                         monitor: dummy1-monitor-interval-10s
-                          interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                          interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED}
                         monitor: dummy1-monitor-interval-11
-                          interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                          interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
                     Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
                       Operations:
                         monitor: dummy2-monitor-interval-10s
-                          interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                          interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED}
                         monitor: dummy2-monitor-interval-11
-                          interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                          interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
                 """
             ),
         )
@@ -2499,15 +2506,15 @@ class Resource(TestCase, AssertPcsMixin):
                   Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
                     Operations:
                       monitor: dummy1-monitor-interval-10s
-                        interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                        interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED}
                       monitor: dummy1-monitor-interval-11
-                        interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                        interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
                   Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
                     Operations:
                       monitor: dummy2-monitor-interval-10s
-                        interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                        interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED}
                       monitor: dummy2-monitor-interval-11
-                        interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                        interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
                 """
             ),
         )
@@ -2525,9 +2532,9 @@ class Resource(TestCase, AssertPcsMixin):
                 Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
                   Operations:
                     monitor: dummy2-monitor-interval-10s
-                      interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                      interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED}
                     monitor: dummy2-monitor-interval-11
-                      interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                      interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
                 Clone: gr-master
                   Meta Attributes:
                     promotable=true
@@ -2535,9 +2542,9 @@ class Resource(TestCase, AssertPcsMixin):
                     Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
                       Operations:
                         monitor: dummy1-monitor-interval-10s
-                          interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                          interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED}
                         monitor: dummy1-monitor-interval-11
-                          interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                          interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
                 """
             ),
         )
@@ -2550,15 +2557,15 @@ class Resource(TestCase, AssertPcsMixin):
                 Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
                   Operations:
                     monitor: dummy2-monitor-interval-10s
-                      interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                      interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED}
                     monitor: dummy2-monitor-interval-11
-                      interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                      interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
                 Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
                   Operations:
                     monitor: dummy1-monitor-interval-10s
-                      interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                      interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED}
                     monitor: dummy1-monitor-interval-11
-                      interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                      interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
                 """
             ),
         )
@@ -2580,15 +2587,15 @@ class Resource(TestCase, AssertPcsMixin):
                     Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
                       Operations:
                         monitor: dummy1-monitor-interval-10s
-                          interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                          interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED}
                         monitor: dummy1-monitor-interval-11
-                          interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                          interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
                     Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
                       Operations:
                         monitor: dummy2-monitor-interval-10s
-                          interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                          interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED}
                         monitor: dummy2-monitor-interval-11
-                          interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                          interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
                 """
             ),
         )
@@ -2602,9 +2609,9 @@ class Resource(TestCase, AssertPcsMixin):
                 Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
                   Operations:
                     monitor: dummy2-monitor-interval-10s
-                      interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                      interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED}
                     monitor: dummy2-monitor-interval-11
-                      interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                      interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
                 Clone: gr-master
                   Meta Attributes:
                     promotable=true
@@ -2612,9 +2619,9 @@ class Resource(TestCase, AssertPcsMixin):
                     Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
                       Operations:
                         monitor: dummy1-monitor-interval-10s
-                          interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                          interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED}
                         monitor: dummy1-monitor-interval-11
-                          interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                          interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
                 """
             ),
         )
@@ -3470,14 +3477,21 @@ class Resource(TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_fail(
-            "resource update B op monitor interval=30s monitor interval=31s role=master".split(),
+            "resource update B op monitor interval=30s monitor interval=31s role=Master".split(),
+            "Error: role must be: {} (use --force to override)\n".format(
+                format_list_custom_last_separator(const.PCMK_ROLES, " or ")
+            ),
+        )
+
+        self.assert_pcs_fail(
+            "resource update B op monitor interval=30s monitor interval=31s role=promoted".split(),
             "Error: role must be: {} (use --force to override)\n".format(
                 format_list_custom_last_separator(const.PCMK_ROLES, " or ")
             ),
         )
 
         self.assert_pcs_success(
-            "resource update B op monitor interval=30s monitor interval=31s role=Master".split(),
+            "resource update B op monitor interval=30s monitor interval=31s role=Promoted".split(),
         )
 
         self.assert_pcs_success(
@@ -3489,7 +3503,7 @@ class Resource(TestCase, AssertPcsMixin):
                     monitor: B-monitor-interval-30s
                       interval=30s
                     monitor: B-monitor-interval-31s
-                      interval=31s role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                      interval=31s role={const.PCMK_ROLE_PROMOTED}
                 Resource: C (class=ocf provider=heartbeat type=Dummy)
                   Operations:
                     monitor: C-monitor-interval-10s
@@ -5298,9 +5312,9 @@ class CloneMasterUpdate(TestCase, AssertPcsMixin):
               Resource: dummy (class=ocf provider=pacemaker type=Stateful)
                 Operations:
                   monitor: dummy-monitor-interval-10
-                    interval=10 timeout=20 role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                    interval=10 timeout=20 role={const.PCMK_ROLE_PROMOTED}
                   monitor: dummy-monitor-interval-11
-                    interval=11 timeout=20 role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                    interval=11 timeout=20 role={const.PCMK_ROLE_UNPROMOTED}
                   notify: dummy-notify-interval-0s
                     interval=0s timeout=5
                   start: dummy-start-interval-0s
@@ -5510,21 +5524,15 @@ class ResourceRemoveWithTicket(TestCase, AssertPcsMixin):
 
     def test_remove_ticket(self):
         self.assert_pcs_success("resource create A ocf:heartbeat:Dummy".split())
-        role = str(const.PCMK_ROLE_PROMOTED_LEGACY).lower()
+        role = str(const.PCMK_ROLE_PROMOTED).lower()
         self.assert_pcs_success(
-            f"constraint ticket add T {role} A loss-policy=fence".split(),
-            stderr_full=(
-                f"Deprecation Warning: Value '{role}' of option role is "
-                "deprecated and might be removed in a future release, therefore it "
-                "should not be used, use "
-                f"'{const.PCMK_ROLE_PROMOTED}' value instead\n"
-            ),
+            f"constraint ticket add T {role} A loss-policy=fence".split()
         )
         self.assert_pcs_success(
             "constraint ticket config".split(),
             (
                 "Ticket Constraints:\n"
-                f"  {const.PCMK_ROLE_PROMOTED_PRIMARY} resource 'A' depends on ticket 'T'\n"
+                f"  {const.PCMK_ROLE_PROMOTED} resource 'A' depends on ticket 'T'\n"
                 "    loss-policy=fence\n"
             ),
         )

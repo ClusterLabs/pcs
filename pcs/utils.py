@@ -1587,9 +1587,15 @@ def resource_running_on(resource, passed_state=None, stopped=False):
                 role = res.getAttribute("role")
                 if role == const.PCMK_ROLE_STARTED:
                     nodes_started.append(node_name)
-                elif role in const.PCMK_ROLES_PROMOTED:
+                elif role in (
+                    const.PCMK_ROLE_PROMOTED,
+                    const.PCMK_ROLE_PROMOTED_LEGACY,
+                ):
                     nodes_promoted.append(node_name)
-                elif role in const.PCMK_ROLES_UNPROMOTED:
+                elif role in (
+                    const.PCMK_ROLE_UNPROMOTED,
+                    const.PCMK_ROLE_UNPROMOTED_LEGACY,
+                ):
                     nodes_unpromoted.append(node_name)
     if not nodes_started and not nodes_promoted and not nodes_unpromoted:
         message = "Resource '%s' is not running on any node" % resource_original
@@ -1597,8 +1603,8 @@ def resource_running_on(resource, passed_state=None, stopped=False):
         message_parts = []
         for alist, label in (
             (nodes_started, "running"),
-            (nodes_promoted, str(const.PCMK_ROLE_PROMOTED_PRIMARY).lower()),
-            (nodes_unpromoted, str(const.PCMK_ROLE_UNPROMOTED_PRIMARY).lower()),
+            (nodes_promoted, str(const.PCMK_ROLE_PROMOTED).lower()),
+            (nodes_unpromoted, str(const.PCMK_ROLE_UNPROMOTED).lower()),
         ):
             if alist:
                 alist.sort()
@@ -2755,20 +2761,6 @@ def get_token_from_file(file_name: str) -> str:
     except OSError as e:
         err(f"Unable to read file '{file_name}': {e}", exit_after_error=False)
         raise SystemExit(1) from e
-
-
-def print_depracation_warning_for_legacy_roles(role: str) -> None:
-    deprecation_map: Dict[str, str] = {
-        const.PCMK_ROLE_PROMOTED_LEGACY: const.PCMK_ROLE_PROMOTED,
-        const.PCMK_ROLE_UNPROMOTED_LEGACY: const.PCMK_ROLE_UNPROMOTED,
-    }
-    role_normalized = role.capitalize()
-    if role_normalized in deprecation_map:
-        replaced_by = deprecation_map[role_normalized]
-        reports_output.deprecation_warning(
-            f"Role value '{role}' is deprecated and should not be used, use "
-            f"'{replaced_by}' instead"
-        )
 
 
 def print_warning_if_utilization_attrs_has_no_effect(
