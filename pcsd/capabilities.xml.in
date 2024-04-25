@@ -1015,6 +1015,13 @@
         pcs commands: constraint rule ( add | delete | remove )
       </description>
     </capability>
+    <capability id="pcmk.constraint.location.simple.rule.rule-as-one-argument" in-pcs="1" in-pcsd="0">
+      <description>
+        Rule is supposed to be specified as a single argument.
+
+        pcs commands: constraint location rule, constraint rule add
+      </description>
+    </capability>
     <capability id="pcmk.constraint.colocation.simple" in-pcs="1" in-pcsd="1">
       <description>
         Create and delete a colocation constraint for a pair of resources.
