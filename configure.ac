@@ -180,6 +180,10 @@ AC_ARG_ENABLE([booth-enable-authfile-unset],
 	      [AS_HELP_STRING([--enable-booth-enable-authfile-unset], [Enable support for removing enable-authfile booth option])],
 	      [booth_enable_authfile_unset="yes"])
 
+AC_ARG_ENABLE([webui],
+	      [AS_HELP_STRING([--enable-webui], [Enable support for webui in pcsd])],
+	      [webui="yes"])
+
 # this will catch both ID and ID_LIKE from os-release
 AC_ARG_WITH([distro],
 	    [AS_HELP_STRING([--with-distro=DIR], [Set defaults to specified distro. Default: autodetected])],
@@ -479,6 +483,7 @@ AC_SUBST([BOOTH_ENABLE_AUTHFILE_SET_ENABLED], [$(if test "x$booth_enable_authfil
 AC_SUBST([BOOTH_ENABLE_AUTHFILE_UNSET_ENABLED], [$(if test "x$booth_enable_authfile_unset" = "xyes"; then echo "True"; else echo "False"; fi)])
 AC_SUBST([BOOTH_ENABLE_AUTHFILE_SET_CAPABILITY], [$(test "x$booth_enable_authfile_set" != "xyes"; echo "$?")])
 AC_SUBST([BOOTH_ENABLE_AUTHFILE_UNSET_CAPABILITY], [$(test "x$booth_enable_authfile_unset" != "xyes"; echo "$?")])
+AC_SUBST([WEBUI], [$(if test "x$webui" = "xyes"; then echo "True"; else echo "False"; fi)])
 
 OUTPUT_FORMAT_SYNTAX_DOC="\fB\-\-output\-format\fR text|cmd|json"
 OUTPUT_FORMAT_DESC_DOC="There are 3 formats of output available: 'cmd', 'json' and 'text', default is 'text'. Format 'text' is a human friendly output. Format 'cmd' prints pcs commands which can be used to recreate the same configuration. Format 'json' is a machine oriented output of the configuration."

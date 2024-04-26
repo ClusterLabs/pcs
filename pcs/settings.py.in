@@ -39,6 +39,7 @@ pcsd_settings_conf_location = os.path.join(
     pcsd_var_location, "pcs_settings.conf"
 )
 pcsd_users_conf_location = os.path.join(pcsd_var_location, "pcs_users.conf")
+webui_enabled = @WEBUI@
 
 default_ssl_ciphers = "@PCSD_DEFAULT_CIPHERLIST@"
 # Ssl options are based on default options in python (maybe with some extra

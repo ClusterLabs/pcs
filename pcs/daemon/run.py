@@ -91,7 +91,7 @@ def configure_app(
     sync_config_lock: Lock,
     public_dir: str,
     pcsd_capabilities: Iterable[capabilities.Capability],
-    disable_gui: bool = False,
+    enable_webui: bool = False,
     debug: bool = False,
 ):
     # pylint: disable=too-many-arguments
@@ -118,7 +118,7 @@ def configure_app(
             )
         )
 
-        if not disable_gui:
+        if enable_webui:
             routes.extend(
                 [(r"/(ui)?", RedirectHandler, dict(url="/ui/"))]
                 + ui.get_routes(
@@ -222,7 +222,7 @@ def main(argv=None) -> None:
         sync_config_lock,
         env.PCSD_STATIC_FILES_DIR,
         pcsd_capabilities,
-        disable_gui=env.PCSD_DISABLE_GUI,
+        enable_webui=settings.webui_enabled and not env.PCSD_DISABLE_GUI,
         debug=env.PCSD_DEV,
     )
     pcsd_ssl = ssl.PcsdSSL(
