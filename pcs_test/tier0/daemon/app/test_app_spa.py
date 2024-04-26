@@ -2,7 +2,7 @@ import logging
 import os
 from unittest import mock
 
-from pcs.daemon.app import ui
+from pcs.daemon.app import webui
 from pcs.lib.auth.provider import AuthProvider
 from pcs.lib.auth.types import AuthUser
 
@@ -33,7 +33,7 @@ class AppTest(fixtures_app.AppUiTestMixin):
         super().tearDown()
 
     def get_routes(self):
-        return ui.get_routes(
+        return webui.get_routes(
             url_prefix=PREFIX,
             app_dir=self.spa_dir_path,
             fallback_page_path=self.fallback_path,

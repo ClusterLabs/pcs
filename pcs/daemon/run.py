@@ -36,8 +36,13 @@ from pcs.daemon.app import capabilities as capabilities_app
 from pcs.daemon.app import (
     sinatra_remote,
     sinatra_ui,
-    ui,
 )
+
+try:
+    from pcs.daemon.app import webui
+except ImportError:
+    webui = None
+
 from pcs.daemon.app.common import (
     Http404Handler,
     RedirectHandler,
@@ -118,10 +123,10 @@ def configure_app(
             )
         )
 
-        if enable_webui:
+        if webui and enable_webui:
             routes.extend(
                 [(r"/(ui)?", RedirectHandler, dict(url="/ui/"))]
-                + ui.get_routes(
+                + webui.get_routes(
                     url_prefix="/ui/",
                     app_dir=os.path.join(public_dir, "ui"),
                     fallback_page_path=os.path.join(
@@ -222,7 +227,7 @@ def main(argv=None) -> None:
         sync_config_lock,
         env.PCSD_STATIC_FILES_DIR,
         pcsd_capabilities,
-        enable_webui=settings.webui_enabled and not env.PCSD_DISABLE_GUI,
+        enable_webui=not env.PCSD_DISABLE_GUI,
         debug=env.PCSD_DEV,
     )
     pcsd_ssl = ssl.PcsdSSL(

@@ -105,6 +105,13 @@ class PureLib(_SomeDir):
         # pylint: disable=no-self-use
         return dist.install_purelib
 
+# If newly excluded pacakages still persists, try to remove `./*.egg-info` and
+# `./build`. Don't waste the time: https://stackoverflow.com/a/59686298/22796102
+EXCLUDE_PACKAGES=["pcs_test", "pcs_test.*"]
+
+WEBUI_ENABLED=@WEBUI@
+if not WEBUI_ENABLED:
+    EXCLUDE_PACKAGES.extend(["pcs.daemon.app.webui"])
 
 setup(
     name="pcs",
@@ -113,7 +120,7 @@ setup(
     author="Chris Feist",
     author_email="cfeist@redhat.com",
     url="https://github.com/ClusterLabs/pcs",
-    packages=find_packages(exclude=["pcs_test", "pcs_test.*"]),
+    packages=find_packages(exclude=EXCLUDE_PACKAGES),
     package_data={"pcs": ["py.typed"]},
     zip_safe=False,
     entry_points={
