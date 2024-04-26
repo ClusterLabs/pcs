@@ -325,10 +325,10 @@ class IsEmptyAfterInnerElRemoval(TestCase):
             etree.fromstring("<group><primitive/></group>"),
             etree.fromstring("<tag><obj_ref/></tag>"),
             etree.fromstring("<resource_set><resource_ref/></resource_set>"),
-            etree.fromstring("<element><resource_set/></element>"),
+            etree.fromstring("<rsc_order><resource_set/></rsc_order>"),
             etree.fromstring("<rsc_location><rule/></rsc_location>"),
         ):
-            with self.subTest(parent=parent):
+            with self.subTest(parent=parent.tag):
                 self.assertTrue(lib._is_empty_after_inner_el_removal(parent))
 
     def test_last_element_false(self):

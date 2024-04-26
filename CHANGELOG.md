@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Removed
+- Using spaces in dates in location constraint rules ([rhbz#2163953])
+
 ### Added
 - Support for output formats `json` and `cmd` to resources/stonith defaults and
   resource/stonith op defaults config commands ([RHEL-16231])
@@ -11,6 +14,8 @@
 - Add lib command `status.resources_status` to API v2
 - Add `pcs status wait` CLI command ([RHEL-25854])
 - Add `pcs status query resource` CLI commands ([RHEL-21051])
+- Add commands `constraint.location.add_rule_to_constraint` and
+  `constraint.location.create_with_rule` to API v2
 
 ### Fixed
 - Do not put empty uid/gid corosync configuration options to an uidgid file
@@ -28,6 +33,7 @@
   - using rkt in bundles
   - upstart and nagios resources
   - some date-spec and duration options in rules
+- Specifying rules as multiple arguments, use a single string argument instead
 
 [ghissue#772]: https://github.com/ClusterLabs/pcs/issues/772
 [ghissue#780]: https://github.com/ClusterLabs/pcs/issues/780
@@ -37,6 +43,7 @@
 [RHEL-28749]: https://issues.redhat.com/browse/RHEL-28749
 [RHEL-25854]: https://issues.redhat.com/browse/RHEL-25854
 [RHEL-21051]: https://issues.redhat.com/browse/RHEL-21051
+[rhbz#2163953]: https://bugzilla.redhat.com/show_bug.cgi?id=2163953
 
 
 ## [0.11.7] - 2024-01-11

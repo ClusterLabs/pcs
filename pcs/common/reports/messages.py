@@ -142,7 +142,10 @@ _type_translation = {
     # with a master, say we were doing it with a clone instead.
     "master": "clone",
     "primitive": "resource",
+    "rsc_colocation": "colocation constraint",
     "rsc_location": "location constraint",
+    "rsc_order": "order constraint",
+    "rsc_ticket": "ticket constraint",
 }
 _type_articles = {
     "ACL group": "an",
@@ -831,6 +834,28 @@ class InvalidIdBadChar(ReportItemMessage):
             f"invalid {self.id_description} '{self.id}', "
             f"'{self.invalid_character}' is not a valid {desc}character for a "
             f"{self.id_description}"
+        )
+
+
+@dataclass(frozen=True)
+class InvalidIdType(ReportItemMessage):
+    """
+    Specified type of id (plain, pattern, ...) is not valid
+
+    id_type -- specified type of an id
+    allowed_types -- list of allowed types
+    """
+
+    id_type: str
+    allowed_types: list[str]
+    _code = codes.INVALID_ID_TYPE
+
+    @property
+    def message(self) -> str:
+        hint = format_list(self.allowed_types)
+        return (
+            f"'{self.id_type}' is not a valid type of ID specification, "
+            f"use {hint}"
         )
 
 
@@ -7404,6 +7429,41 @@ class RuleExpressionSinceGreaterThanUntil(ReportItemMessage):
     @property
     def message(self) -> str:
         return f"Since '{self.since}' is not sooner than until '{self.until}'"
+
+
+@dataclass(frozen=True)
+class RuleNoExpressionSpecified(ReportItemMessage):
+    """
+    No rule was specified / empty rule was specified when a rule is required
+    """
+
+    _code = codes.RULE_NO_EXPRESSION_SPECIFIED
+
+    @property
+    def message(self) -> str:
+        return "No rule expression was specified"
+
+
+@dataclass(frozen=True)
+class CannotAddRuleToConstraintWrongType(ReportItemMessage):
+    """
+    It was attempted to add a rule to constraint other than location
+
+    constraint_id -- id of the element which cannot hold rules
+    constraint_type -- tag of the element which cannot hold rules
+    """
+
+    element_id: str
+    element_type: str
+    _code = codes.CANNOT_ADD_RULE_TO_CONSTRAINT_WRONG_TYPE
+
+    @property
+    def message(self) -> str:
+        _element_type = _type_to_string(self.element_type, article=True)
+        return (
+            "Rules can only be added to location constraints, "
+            f"'{self.element_id}' is {_element_type}"
+        )
 
 
 @dataclass(frozen=True)

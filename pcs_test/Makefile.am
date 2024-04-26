@@ -226,6 +226,8 @@ EXTRA_DIST		= \
 			  tier0/lib/commands/cluster/test_setup.py \
 			  tier0/lib/commands/cluster/test_update_link.py \
 			  tier0/lib/commands/cluster/test_verify.py \
+			  tier0/lib/commands/constraint/__init__.py \
+			  tier0/lib/commands/constraint/test_location.py \
 			  tier0/lib/commands/dr/__init__.py \
 			  tier0/lib/commands/dr/test_destroy.py \
 			  tier0/lib/commands/dr/test_get_config.py \
@@ -374,6 +376,7 @@ EXTRA_DIST		= \
 			  tier1/cluster/test_setup_local.py \
 			  tier1/constraint/__init__.py \
 			  tier1/constraint/test_config.py \
+			  tier1/constraint/test_location.py \
 			  tier1/__init__.py \
 			  tier1/legacy/__init__.py \
 			  tier1/legacy/common.py \
@@ -383,7 +386,6 @@ EXTRA_DIST		= \
 			  tier1/legacy/test_constraints.py \
 			  tier1/legacy/test_node.py \
 			  tier1/legacy/test_resource.py \
-			  tier1/legacy/test_rule.py \
 			  tier1/legacy/test_stonith.py \
 			  tier1/legacy/test_utils.py \
 			  tier1/resource/__init__.py \

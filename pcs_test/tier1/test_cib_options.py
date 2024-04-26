@@ -32,6 +32,11 @@ from pcs_test.tools.xml import XmlManipulation
 
 empty_cib = rc("cib-empty.xml")
 empty_cib_rules = rc("cib-empty-3.4.xml")
+RULE_ARGV_DEPRECATED = (
+    "Deprecation Warning: Specifying a rule as multiple arguments is "
+    "deprecated and might be removed in a future release, specify the rule as "
+    "a single string instead\n"
+)
 
 
 def fixture_defaults_dto(prefix, include_expired):
@@ -583,17 +588,25 @@ class DefaultsSetCreateMixin(TestDefaultsMixin, AssertPcsMixin):
             ),
         )
 
-    def test_success_rule(self):
-        self.assert_effect(
+    def _assert_success_rule(self, deprecated_rule_form):
+        command = (
             self.cli_command
-            + (
-                "-- set create id=mine score=10 meta nam1=val1 nam2=val2 "
-                "rule (date gt 2018-05-17T13:28:19 or "
-                "date in_range 2019-01-01 to 2019-03-15 or "
-                "date in_range 2019-05-01 to duration months=2 or "
-                "date-spec years=2019 months=7-8 weekdays=6-7 or "
-                "date in_range to 2019-12-15)"
-            ).split(),
+            + "-- set create id=mine score=10 meta nam1=val1 nam2=val2 rule".split()
+        )
+        rule_str = (
+            "(date gt 2018-05-17T13:28:19 or "
+            "date in_range 2019-01-01 to 2019-03-15 or "
+            "date in_range 2019-05-01 to duration months=2 or "
+            "date-spec years=2019 months=7-8 weekdays=6-7 or "
+            "date in_range to 2019-12-15)"
+        )
+        if deprecated_rule_form:
+            full_command = command + rule_str.split()
+        else:
+            full_command = command + [rule_str]
+
+        self.assert_effect(
+            full_command,
             dedent(
                 f"""\
                 <{self.cib_tag}>
@@ -632,21 +645,28 @@ class DefaultsSetCreateMixin(TestDefaultsMixin, AssertPcsMixin):
             """
             ),
             stderr_full=(
-                "Warning: Defaults do not apply to resources which override "
+                (RULE_ARGV_DEPRECATED if deprecated_rule_form else "")
+                + "Warning: Defaults do not apply to resources which override "
                 "them with their own defined values\n"
             ),
         )
 
+    def test_success_rule(self):
+        self._assert_success_rule(False)
+
+    def test_success_rule_deprecated_form(self):
+        self._assert_success_rule(True)
+
     def test_rule_error_messages(self):
         self.assert_pcs_fail(
             self.cli_command
-            + (
-                "set create id=mine score=10 meta nam1=val1 nam2=val2 "
-                "rule (date gt 2018-05-1X or "
+            + "set create id=mine score=10 meta nam1=val1 nam2=val2 rule".split()
+            + [
+                "(date gt 2018-05-1X or "
                 "date in_range 2019-03-05 to 2019-01-11 or "
                 "date in_range 2019-05-0X to duration months=2 months=3a x=y or "
                 "date-spec years=2019 months=7-X weekdays=7-6 years=202a x=y)"
-            ).split(),
+            ],
             (
                 "Error: '2018-05-1X' is not a valid date value, use ISO 8601 date\n"
                 "Error: Since '2019-03-05' is not sooner than until '2019-01-11'\n"
@@ -684,8 +704,11 @@ class RscDefaultsSetCreate(
     @skip_unless_pacemaker_supports_rsc_and_op_rules()
     def test_success_rules_rsc_op(self):
         self.assert_effect(
-            self.cli_command
-            + "set create id=X meta nam1=val1 rule resource ::Dummy".split(),
+            (
+                self.cli_command
+                + "set create id=X meta nam1=val1 rule".split()
+                + ["resource ::Dummy"]
+            ),
             f"""\
             <{self.cib_tag}>
                 <meta_attributes id="X">
@@ -705,7 +728,7 @@ class RscDefaultsSetCreate(
 
     def test_node_attr_expressions(self):
         self.assert_pcs_fail(
-            self.cli_command + ("set create rule defined attr").split(),
+            self.cli_command + ["set", "create", "rule", "defined attr"],
             (
                 "Error: Keywords 'defined', 'not_defined', 'eq', 'ne', 'gte', "
                 "'gt', 'lte' and 'lt' cannot be used in a rule in this command\n"
@@ -729,10 +752,13 @@ class OpDefaultsSetCreate(
     def test_rule_error_messages(self):
         self.assert_pcs_fail(
             self.cli_command
-            + (
-                "set create rule defined attr1 or attr2 gte number 12a or "
-                "attr3 lt version 3.2.1a or attr4 ne string test or attr5 lt 3 "
-            ).split(),
+            + [
+                "set",
+                "create",
+                "rule",
+                "defined attr1 or attr2 gte number 12a or "
+                "attr3 lt version 3.2.1a or attr4 ne string test or attr5 lt 3 ",
+            ],
             (
                 "Error: '12a' is not a valid number attribute value, use a "
                 "floating-point number\n"
@@ -746,12 +772,12 @@ class OpDefaultsSetCreate(
     def test_success_rules_rsc_op(self):
         self.assert_effect(
             self.cli_command
-            + (
-                "-- set create id=X meta nam1=val1 "
-                "rule resource ::Dummy and (op start or op stop) and "
+            + "-- set create id=X meta nam1=val1 rule".split()
+            + [
+                "resource ::Dummy and (op start or op stop) and "
                 "(defined attr1 or attr2 gte number -1.2 or "
                 "attr3 lt version 3.2.1 or attr4 ne string test or attr5 lt 3) "
-            ).split(),
+            ],
             f"""\
             <{self.cib_tag}>
                 <meta_attributes id="X">

@@ -35,6 +35,7 @@ from pcs.cli.common.parse_args import (
     Argv,
     InputModifiers,
     KeyValueParser,
+    get_rule_str,
     group_by_keywords,
     wait_to_timeout,
 )
@@ -198,11 +199,7 @@ def _defaults_set_create_cmd(
     lib_command(
         KeyValueParser(groups.get_args_flat("meta")).get_unique(),
         KeyValueParser(groups.get_args_flat("options")).get_unique(),
-        nvset_rule=(
-            " ".join(groups.get_args_flat("rule"))
-            if groups.get_args_flat("rule")
-            else None
-        ),
+        nvset_rule=get_rule_str(groups.get_args_flat("rule")),
         force_flags=force_flags,
     )
 

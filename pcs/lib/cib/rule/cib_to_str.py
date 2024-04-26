@@ -20,9 +20,13 @@ class RuleToStr:
 
     _date_separators_re = re.compile(r"\s*([TZ:.+-])\s*")
 
-    def __init__(self) -> None:
+    def __init__(self, normalize: bool = False) -> None:
+        """
+        normalize -- export in a normalized form
+        """
         # The cache prevents evaluating subtrees repeatedly.
         self._cache: Dict[str, str] = {}
+        self._normalize = normalize
 
     def get_str(self, rule_part_element: _Element) -> str:
         """
@@ -66,6 +70,8 @@ class RuleToStr:
                 string_parts.append(f"({self.get_str(child)})")
             else:
                 string_parts.append(self.get_str(child))
+        if self._normalize:
+            string_parts.sort()
         return f" {boolean_op} ".join(string_parts)
 
     def _simple_expr_to_str(self, expr_el: _Element) -> str:
@@ -82,6 +88,8 @@ class RuleToStr:
             )
             if "type" in expr_el.attrib:
                 string_parts.append(str(expr_el.get("type", "")))
+            elif self._normalize:
+                string_parts.append("string")
             string_parts.append(quote(str(expr_el.get("value", "")), " "))
         else:
             # "attribute" and "operation" are defined as mandatory in CIB schema

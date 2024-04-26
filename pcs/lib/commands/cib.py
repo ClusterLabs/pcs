@@ -9,12 +9,14 @@ from lxml.etree import _Element
 from pcs.common import reports
 from pcs.common.types import StringCollection
 from pcs.lib.cib.const import TAG_OBJREF
-from pcs.lib.cib.constraint.common import is_constraint
+from pcs.lib.cib.constraint.common import (
+    is_constraint,
+    is_set_constraint,
+)
 from pcs.lib.cib.constraint.location import (
     is_location_constraint,
     is_location_rule,
 )
-from pcs.lib.cib.constraint.resource_set import is_set_constraint
 from pcs.lib.cib.resource.bundle import is_bundle
 from pcs.lib.cib.resource.clone import is_any_clone
 from pcs.lib.cib.resource.common import get_inner_resources

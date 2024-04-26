@@ -13,9 +13,9 @@ from pcs.common.pacemaker.types import CibResourceSetOrderType
 from pcs.common.reports.item import ReportItem
 from pcs.lib.cib.const import TAG_CONSTRAINT_ORDER as TAG
 from pcs.lib.cib.constraint import constraint
+from pcs.lib.cib.constraint.common import is_set_constraint
 from pcs.lib.cib.constraint.resource_set import (
     constraint_element_to_resource_set_dto_list,
-    is_set_constraint,
 )
 from pcs.lib.cib.tools import check_new_id_applicable
 from pcs.lib.errors import LibraryError

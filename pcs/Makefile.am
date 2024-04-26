@@ -301,6 +301,7 @@ EXTRA_DIST		= \
 			  lib/commands/constraint/colocation.py \
 			  lib/commands/constraint/common.py \
 			  lib/commands/constraint/__init__.py \
+			  lib/commands/constraint/location.py \
 			  lib/commands/constraint/order.py \
 			  lib/commands/constraint/ticket.py \
 			  lib/commands/dr.py \
@@ -396,7 +397,6 @@ EXTRA_DIST		= \
 			  qdevice.py \
 			  quorum.py \
 			  resource.py \
-			  rule.py \
 			  snmp/agentx/__init__.py \
 			  snmp/agentx/types.py \
 			  snmp/agentx/updater.py \

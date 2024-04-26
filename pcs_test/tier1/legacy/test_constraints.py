@@ -133,219 +133,6 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
     def fixture_resources(self):
         write_file_to_tmpfile(CIB_FIXTURE.cache_path, self.temp_cib)
 
-    def test_constraint_rules(self):
-        self.fixture_resources()
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            "constraint location D1 rule score=222 #uname eq c00n03".split(),
-        )
-        self.assertEqual(stderr, "")
-        self.assertEqual(stdout, "")
-        self.assertEqual(retval, 0)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            "constraint location D2 rule score=-INFINITY #uname eq c00n04".split(),
-        )
-        self.assertEqual(stderr, "")
-        self.assertEqual(stdout, "")
-        self.assertEqual(retval, 0)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            "resource create C1 ocf:heartbeat:Dummy --group C1-group".split(),
-        )
-        self.assertEqual(stderr, DEPRECATED_DASH_DASH_GROUP)
-        self.assertEqual(stdout, "")
-        self.assertEqual(retval, 0)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            (
-                "constraint location D3 rule score=-INFINITY "
-                "not_defined pingd or pingd lte 0 --force"
-            ).split(),
-        )
-        self.assertEqual(stderr, "")
-        self.assertEqual(stdout, "")
-        self.assertEqual(retval, 0)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            (
-                "constraint location D3 rule score=-INFINITY "
-                "not_defined pingd and pingd lte 0 --force"
-            ).split(),
-        )
-        self.assertEqual(stderr, "")
-        self.assertEqual(stdout, "")
-        self.assertEqual(retval, 0)
-
-        self.assert_pcs_success(
-            "constraint --full --all".split(),
-            stdout_full=outdent(
-                """\
-                Location Constraints:
-                  resource 'D1' (id: location-D1)
-                    Rules:
-                      Rule: score=222 (id: location-D1-rule)
-                        Expression: #uname eq c00n03 (id: location-D1-rule-expr)
-                  resource 'D2' (id: location-D2)
-                    Rules:
-                      Rule: score=-INFINITY (id: location-D2-rule)
-                        Expression: #uname eq c00n04 (id: location-D2-rule-expr)
-                  resource 'D3' (id: location-D3)
-                    Rules:
-                      Rule: boolean-op=or score=-INFINITY (id: location-D3-rule)
-                        Expression: not_defined pingd (id: location-D3-rule-expr)
-                        Expression: pingd lte 0 (id: location-D3-rule-expr-1)
-                  resource 'D3' (id: location-D3-1)
-                    Rules:
-                      Rule: boolean-op=and score=-INFINITY (id: location-D3-1-rule)
-                        Expression: not_defined pingd (id: location-D3-1-rule-expr)
-                        Expression: pingd lte 0 (id: location-D3-1-rule-expr-1)
-                """
-            ),
-        )
-
-    def test_constraint_rules_space_deprecated(self):
-        self.fixture_resources()
-        message = (
-            "Deprecation Warning: Using spaces in date values is deprecated and "
-            "will be removed. Use 'T' as a delimiter between date and time.\n"
-        )
-        self.assert_pcs_success(
-            "constraint location D1 rule".split()
-            + [
-                "date",
-                "gt",
-                "1923-01-01 12:00 +3:00",
-                "and",
-                "date",
-                "lt",
-                "2123-12-31 12:00 -10:30",
-                "and",
-                "date",
-                "in_range",
-                "1923-01-01 12:00",
-                "to",
-                "2123-12-31 12:00",
-            ],
-            stderr_full=message,
-        )
-        self.assert_pcs_success(
-            "constraint location D1 rule".split()
-            + ["date", "gt", "1923-01-01 12:00"],
-            stderr_full=message,
-        )
-        self.assert_pcs_success(
-            "constraint location D1 rule".split()
-            + ["date", "lt", "2123-12-31 12:00"],
-            stderr_full=message,
-        )
-        self.assert_pcs_success(
-            "constraint location D1 rule".split()
-            + [
-                "date",
-                "in_range",
-                "1923-01-01 12:00",
-                "to",
-                "2123-12-31T12:00",
-            ],
-            stderr_full=message,
-        )
-        self.assert_pcs_success(
-            "constraint location D1 rule".split()
-            + [
-                "date",
-                "in_range",
-                "1923-01-01T12:00",
-                "to",
-                "2123-12-31 12:00",
-            ],
-            stderr_full=message,
-        )
-        # when exporting the rules, spaces are replaced by T
-        self.assert_pcs_success(
-            "constraint config".split(),
-            dedent(
-                """\
-                Location Constraints:
-                  resource 'D1'
-                    Rules:
-                      Rule: boolean-op=and score=INFINITY
-                        Expression: date gt 1923-01-01T12:00+3:00
-                        Expression: date lt 2123-12-31T12:00-10:30
-                        Expression: date in_range 1923-01-01T12:00 to 2123-12-31T12:00
-                  resource 'D1'
-                    Rules:
-                      Rule: score=INFINITY
-                        Expression: date gt 1923-01-01T12:00
-                  resource 'D1'
-                    Rules:
-                      Rule: score=INFINITY
-                        Expression: date lt 2123-12-31T12:00
-                  resource 'D1'
-                    Rules:
-                      Rule: score=INFINITY
-                        Expression: date in_range 1923-01-01T12:00 to 2123-12-31T12:00
-                  resource 'D1'
-                    Rules:
-                      Rule: score=INFINITY
-                        Expression: date in_range 1923-01-01T12:00 to 2123-12-31T12:00
-                """
-            ),
-        )
-        self.assert_pcs_success(
-            "constraint config --output-format=cmd".split(),
-            dedent(
-                """\
-                pcs -- constraint location resource%D1 rule \\
-                  id=location-D1-rule constraint-id=location-D1 score=INFINITY \\
-                  date gt 1923-01-01T12:00+3:00 and date lt 2123-12-31T12:00-10:30 and date in_range 1923-01-01T12:00 to 2123-12-31T12:00;
-                pcs -- constraint location resource%D1 rule \\
-                  id=location-D1-1-rule constraint-id=location-D1-1 score=INFINITY \\
-                  date gt 1923-01-01T12:00;
-                pcs -- constraint location resource%D1 rule \\
-                  id=location-D1-2-rule constraint-id=location-D1-2 score=INFINITY \\
-                  date lt 2123-12-31T12:00;
-                pcs -- constraint location resource%D1 rule \\
-                  id=location-D1-3-rule constraint-id=location-D1-3 score=INFINITY \\
-                  date in_range 1923-01-01T12:00 to 2123-12-31T12:00;
-                pcs -- constraint location resource%D1 rule \\
-                  id=location-D1-4-rule constraint-id=location-D1-4 score=INFINITY \\
-                  date in_range 1923-01-01T12:00 to 2123-12-31T12:00
-                """
-            ),
-        )
-
-    def test_advanced_constraint_rule(self):
-        self.fixture_resources()
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            (
-                "constraint location D1 rule score=INFINITY "
-                "not_defined pingd or pingd lte 0"
-            ).split(),
-        )
-        self.assertEqual(stderr, "")
-        self.assertEqual(stdout, "")
-        self.assertEqual(retval, 0)
-
-        self.assert_pcs_success(
-            ["constraint", "--full"],
-            stdout_full=outdent(
-                """\
-                Location Constraints:
-                  resource 'D1' (id: location-D1)
-                    Rules:
-                      Rule: boolean-op=or score=INFINITY (id: location-D1-rule)
-                        Expression: not_defined pingd (id: location-D1-rule-expr)
-                        Expression: pingd lte 0 (id: location-D1-rule-expr-1)
-                """
-            ),
-        )
-
     def test_empty_constraints(self):
         self.assert_pcs_success(["constraint"])
 
@@ -1364,65 +1151,6 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
         )
         self.assertEqual(retval, 1)
 
-    def test_constraint_resource_discovery_rules(self):
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            "resource create crd ocf:heartbeat:Dummy".split(),
-        )
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            "resource create crd1 ocf:heartbeat:Dummy".split(),
-        )
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            (
-                "constraint location crd rule resource-discovery=exclusive "
-                "score=-INFINITY opsrole ne controller0 and opsrole ne controller1"
-            ).split(),
-        )
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            (
-                "constraint location crd1 rule resource-discovery=exclusive "
-                "score=-INFINITY opsrole2 ne controller2"
-            ).split(),
-        )
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
-
-        self.assert_pcs_success(
-            "constraint --full".split(),
-            stdout_full=outdent(
-                """\
-                Location Constraints:
-                  resource 'crd' (id: location-crd)
-                    resource-discovery=exclusive
-                    Rules:
-                      Rule: boolean-op=and score=-INFINITY (id: location-crd-rule)
-                        Expression: opsrole ne controller0 (id: location-crd-rule-expr)
-                        Expression: opsrole ne controller1 (id: location-crd-rule-expr-1)
-                  resource 'crd1' (id: location-crd1)
-                    resource-discovery=exclusive
-                    Rules:
-                      Rule: score=-INFINITY (id: location-crd1-rule)
-                        Expression: opsrole2 ne controller2 (id: location-crd1-rule-expr)
-                """
-            ),
-        )
-
     def test_constraint_resource_discovery(self):
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
@@ -1924,249 +1652,6 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
             ),
         )
 
-    def test_location_constraint_rule(self):
-        # pylint: disable=too-many-statements
-        self.fixture_resources()
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            "constraint location D1 prefers rh7-1".split(),
-        )
-        self.assertEqual(stderr, LOCATION_NODE_VALIDATION_SKIP_WARNING)
-        self.assertEqual(stdout, "")
-        self.assertEqual(retval, 0)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            "constraint location D2 prefers rh7-2".split(),
-        )
-        self.assertEqual(stderr, LOCATION_NODE_VALIDATION_SKIP_WARNING)
-        self.assertEqual(stdout, "")
-        self.assertEqual(retval, 0)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            "constraint rule add location-D1-rh7-1-INFINITY #uname eq rh7-1".split(),
-        )
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            "constraint rule add location-D1-rh7-1-INFINITY #uname eq rh7-1".split(),
-        )
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            "constraint rule add location-D1-rh7-1-INFINITY #uname eq rh7-1".split(),
-        )
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            "constraint rule add location-D2-rh7-2-INFINITY date-spec hours=9-16 weekdays=1-5".split(),
-        )
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
-
-        self.assert_pcs_success(
-            "constraint --full".split(),
-            stdout_full=outdent(
-                """\
-                Location Constraints:
-                  resource 'D1' (id: location-D1-rh7-1-INFINITY)
-                    Rules:
-                      Rule: score=INFINITY (id: location-D1-rh7-1-INFINITY-rule)
-                        Expression: #uname eq rh7-1 (id: location-D1-rh7-1-INFINITY-rule-expr)
-                      Rule: score=INFINITY (id: location-D1-rh7-1-INFINITY-rule-1)
-                        Expression: #uname eq rh7-1 (id: location-D1-rh7-1-INFINITY-rule-1-expr)
-                      Rule: score=INFINITY (id: location-D1-rh7-1-INFINITY-rule-2)
-                        Expression: #uname eq rh7-1 (id: location-D1-rh7-1-INFINITY-rule-2-expr)
-                  resource 'D2' (id: location-D2-rh7-2-INFINITY)
-                    Rules:
-                      Rule: score=INFINITY (id: location-D2-rh7-2-INFINITY-rule)
-                        Expression: (id: location-D2-rh7-2-INFINITY-rule-expr)
-                          Date Spec: hours=9-16 weekdays=1-5 (id: location-D2-rh7-2-INFINITY-rule-expr-datespec)
-                """
-            ),
-        )
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            "constraint rule remove location-D1-rh7-1-INFINITY-rule-1".split(),
-        )
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            "constraint rule remove location-D1-rh7-1-INFINITY-rule-2".split(),
-        )
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
-
-        self.assert_pcs_success(
-            "constraint --full".split(),
-            stdout_full=outdent(
-                """\
-                Location Constraints:
-                  resource 'D1' (id: location-D1-rh7-1-INFINITY)
-                    Rules:
-                      Rule: score=INFINITY (id: location-D1-rh7-1-INFINITY-rule)
-                        Expression: #uname eq rh7-1 (id: location-D1-rh7-1-INFINITY-rule-expr)
-                  resource 'D2' (id: location-D2-rh7-2-INFINITY)
-                    Rules:
-                      Rule: score=INFINITY (id: location-D2-rh7-2-INFINITY-rule)
-                        Expression: (id: location-D2-rh7-2-INFINITY-rule-expr)
-                          Date Spec: hours=9-16 weekdays=1-5 (id: location-D2-rh7-2-INFINITY-rule-expr-datespec)
-                """
-            ),
-        )
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            "constraint rule delete location-D1-rh7-1-INFINITY-rule".split(),
-        )
-        self.assertEqual(stdout, "")
-        self.assertEqual(
-            stderr,
-            (
-                "Removing dependant element:\n"
-                "  Location constraint: 'location-D1-rh7-1-INFINITY'\n"
-            ),
-        )
-        self.assertEqual(retval, 0)
-
-        self.assert_pcs_success(
-            "constraint --full".split(),
-            stdout_full=outdent(
-                """\
-                Location Constraints:
-                  resource 'D2' (id: location-D2-rh7-2-INFINITY)
-                    Rules:
-                      Rule: score=INFINITY (id: location-D2-rh7-2-INFINITY-rule)
-                        Expression: (id: location-D2-rh7-2-INFINITY-rule-expr)
-                          Date Spec: hours=9-16 weekdays=1-5 (id: location-D2-rh7-2-INFINITY-rule-expr-datespec)
-                """
-            ),
-        )
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            f"constraint location D1 rule role={const.PCMK_ROLE_PROMOTED}".split(),
-        )
-        self.assertEqual(stderr, "Error: no rule expression was specified\n")
-        self.assertEqual(stdout, "")
-        self.assertEqual(retval, 1)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            f"constraint location non-existent-resource rule role={const.PCMK_ROLE_PROMOTED} #uname eq rh7-1".split(),
-        )
-        self.assertEqual(
-            stderr, "Error: Resource 'non-existent-resource' does not exist\n"
-        )
-        self.assertEqual(stdout, "")
-        self.assertEqual(retval, 1)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            "constraint rule add location-D1-rh7-1-INFINITY #uname eq rh7-2".split(),
-        )
-        ac(
-            stderr,
-            "Error: Unable to find constraint: location-D1-rh7-1-INFINITY\n",
-        )
-        self.assertEqual(stdout, "")
-        self.assertEqual(retval, 1)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            "constraint rule add location-D2-rh7-2-INFINITY id=123 #uname eq rh7-2".split(),
-        )
-        ac(
-            stderr,
-            "Error: invalid rule id '123', '1' is not a valid first character for a rule id\n",
-        )
-        self.assertEqual(stdout, "")
-        self.assertEqual(retval, 1)
-
-    def test_location_bad_rules(self):
-        # pcs no longer allows creating masters but supports existing ones. In
-        # order to test it, we need to put a master in the CIB without pcs.
-        fixture_to_cib(self.temp_cib.name, fixture_master_xml("stateful0"))
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            (
-                "constraint location stateful0 rule role={role} #uname eq "
-                "rh7-1 --force"
-            )
-            .format(role=str(const.PCMK_ROLE_PROMOTED).lower())
-            .split(),
-        )
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
-
-        self.assert_pcs_success(
-            "constraint --full".split(),
-            stdout_full=outdent(
-                f"""\
-                Location Constraints:
-                  resource 'stateful0' (id: location-stateful0)
-                    Rules:
-                      Rule: role={const.PCMK_ROLE_PROMOTED_PRIMARY} score=INFINITY (id: location-stateful0-rule)
-                        Expression: #uname eq rh7-1 (id: location-stateful0-rule-expr)
-                """
-            ),
-        )
-
-        # pcs no longer allows creating masters but supports existing ones. In
-        # order to test it, we need to put a master in the CIB without pcs.
-        fixture_to_cib(self.temp_cib.name, fixture_master_xml("stateful1"))
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            "constraint location stateful1 rule rulename #uname eq rh7-1 --force".split(),
-        )
-        ac(
-            stderr,
-            "Error: 'rulename #uname eq rh7-1' is not a valid rule expression: unexpected '#uname'\n",
-        )
-        self.assertEqual(stdout, "")
-        self.assertEqual(retval, 1)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            f"constraint location stateful1 rule role={const.PCMK_ROLE_PROMOTED} rulename #uname eq rh7-1 --force".split(),
-        )
-        ac(
-            stderr,
-            "Error: 'rulename #uname eq rh7-1' is not a valid rule expression: unexpected '#uname'\n",
-        )
-        self.assertEqual(stdout, "")
-        self.assertEqual(retval, 1)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            f"constraint location stateful1 rule role={const.PCMK_ROLE_PROMOTED} 25 --force".split(),
-        )
-        ac(
-            stderr,
-            "Error: '25' is not a valid rule expression: missing one of 'eq', 'ne', 'lt', 'gt', 'lte', 'gte', 'in_range', 'defined', 'not_defined', 'date-spec'\n",
-        )
-        self.assertEqual(stdout, "")
-        self.assertEqual(retval, 1)
-
     def test_master_slave_constraint(self):
         # pylint: disable=too-many-statements
         os.system(
@@ -2226,28 +1711,6 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
             stderr,
             LOCATION_NODE_VALIDATION_SKIP_WARNING
             + "Error: statefulG is a clone resource, you should use the clone id: statefulG-master when adding constraints. Use --force to override.\n",
-        )
-        self.assertEqual(retval, 1)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            "constraint location stateful1 rule #uname eq rh7-1".split(),
-        )
-        self.assertEqual(stdout, "")
-        ac(
-            stderr,
-            "Error: stateful1 is a clone resource, you should use the clone id: stateful1-master when adding constraints. Use --force to override.\n",
-        )
-        self.assertEqual(retval, 1)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            "constraint location statefulG rule #uname eq rh7-1".split(),
-        )
-        self.assertEqual(stdout, "")
-        ac(
-            stderr,
-            "Error: statefulG is a clone resource, you should use the clone id: statefulG-master when adding constraints. Use --force to override.\n",
         )
         self.assertEqual(retval, 1)
 
@@ -2355,14 +1818,6 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
 
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
-            "constraint location statefulG rule #uname eq rh7-1 --force".split(),
-        )
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
             "constraint order stateful1 then dummy1 --force".split(),
         )
         self.assertEqual(stdout, "")
@@ -2408,10 +1863,6 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
                 """\
                 Location Constraints:
                   resource 'stateful1' prefers node 'rh7-1' with score INFINITY (id: location-stateful1-rh7-1-INFINITY)
-                  resource 'statefulG' (id: location-statefulG)
-                    Rules:
-                      Rule: score=INFINITY (id: location-statefulG-rule)
-                        Expression: #uname eq rh7-1 (id: location-statefulG-rule-expr)
                 Colocation Constraints:
                   resource 'stateful1' with resource 'dummy1' (id: colocation-stateful1-dummy1-INFINITY)
                     score=INFINITY
@@ -2490,28 +1941,6 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
             stderr,
             LOCATION_NODE_VALIDATION_SKIP_WARNING
             + "Error: dummyG is a clone resource, you should use the clone id: dummyG-clone when adding constraints. Use --force to override.\n",
-        )
-        self.assertEqual(retval, 1)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            "constraint location dummy rule #uname eq rh7-1".split(),
-        )
-        self.assertEqual(stdout, "")
-        self.assertEqual(
-            stderr,
-            "Error: dummy is a clone resource, you should use the clone id: dummy-clone when adding constraints. Use --force to override.\n",
-        )
-        self.assertEqual(retval, 1)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            "constraint location dummyG rule #uname eq rh7-1".split(),
-        )
-        self.assertEqual(stdout, "")
-        self.assertEqual(
-            stderr,
-            "Error: dummyG is a clone resource, you should use the clone id: dummyG-clone when adding constraints. Use --force to override.\n",
         )
         self.assertEqual(retval, 1)
 
@@ -2619,14 +2048,6 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
 
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
-            "constraint location dummyG rule #uname eq rh7-1 --force".split(),
-        )
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
             "constraint order dummy then dummy1 --force".split(),
         )
         self.assertEqual(stdout, "")
@@ -2672,10 +2093,6 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
                 """\
                 Location Constraints:
                   resource 'dummy' prefers node 'rh7-1' with score INFINITY (id: location-dummy-rh7-1-INFINITY)
-                  resource 'dummyG' (id: location-dummyG)
-                    Rules:
-                      Rule: score=INFINITY (id: location-dummyG-rule)
-                        Expression: #uname eq rh7-1 (id: location-dummyG-rule-expr)
                 Colocation Constraints:
                   resource 'dummy' with resource 'dummy1' (id: colocation-dummy-dummy1-INFINITY)
                     score=INFINITY
@@ -3687,129 +3104,6 @@ Error: duplicate constraint already exists, use --force to override
             ),
         )
 
-    def test_duplicate_location_rules(self):
-        self.fixture_resources()
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            "constraint location D1 rule #uname eq node1".split(),
-        )
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            "constraint location D1 rule #uname eq node1".split(),
-        )
-        ac(
-            stderr,
-            """\
-Error: duplicate constraint already exists, use --force to override
-  Constraint: location-D1
-    Rule: score=INFINITY (id:location-D1-rule)
-      Expression: #uname eq node1 (id:location-D1-rule-expr)
-""",
-        )
-        self.assertEqual(stdout, "")
-        self.assertEqual(retval, 1)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            "constraint location D1 rule #uname eq node1 --force".split(),
-        )
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            "constraint location D2 rule #uname eq node1".split(),
-        )
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            "constraint location D2 rule #uname eq node1 or #uname eq node2".split(),
-        )
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            "constraint location D2 rule #uname eq node1 or #uname eq node2".split(),
-        )
-        self.assertEqual(stdout, "")
-        ac(
-            stderr,
-            """\
-Error: duplicate constraint already exists, use --force to override
-  Constraint: location-D2-1
-    Rule: boolean-op=or score=INFINITY (id:location-D2-1-rule)
-      Expression: #uname eq node1 (id:location-D2-1-rule-expr)
-      Expression: #uname eq node2 (id:location-D2-1-rule-expr-1)
-""",
-        )
-        self.assertEqual(retval, 1)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            "constraint location D2 rule #uname eq node2 or #uname eq node1".split(),
-        )
-        self.assertEqual(stdout, "")
-        ac(
-            stderr,
-            """\
-Error: duplicate constraint already exists, use --force to override
-  Constraint: location-D2-1
-    Rule: boolean-op=or score=INFINITY (id:location-D2-1-rule)
-      Expression: #uname eq node1 (id:location-D2-1-rule-expr)
-      Expression: #uname eq node2 (id:location-D2-1-rule-expr-1)
-""",
-        )
-        self.assertEqual(retval, 1)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            "constraint location D2 rule #uname eq node2 or #uname eq node1 --force".split(),
-        )
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
-
-        self.assert_pcs_success(
-            "constraint --full".split(),
-            stdout_full=outdent(
-                """\
-                Location Constraints:
-                  resource 'D1' (id: location-D1)
-                    Rules:
-                      Rule: score=INFINITY (id: location-D1-rule)
-                        Expression: #uname eq node1 (id: location-D1-rule-expr)
-                  resource 'D1' (id: location-D1-1)
-                    Rules:
-                      Rule: score=INFINITY (id: location-D1-1-rule)
-                        Expression: #uname eq node1 (id: location-D1-1-rule-expr)
-                  resource 'D2' (id: location-D2)
-                    Rules:
-                      Rule: score=INFINITY (id: location-D2-rule)
-                        Expression: #uname eq node1 (id: location-D2-rule-expr)
-                  resource 'D2' (id: location-D2-1)
-                    Rules:
-                      Rule: boolean-op=or score=INFINITY (id: location-D2-1-rule)
-                        Expression: #uname eq node1 (id: location-D2-1-rule-expr)
-                        Expression: #uname eq node2 (id: location-D2-1-rule-expr-1)
-                  resource 'D2' (id: location-D2-2)
-                    Rules:
-                      Rule: boolean-op=or score=INFINITY (id: location-D2-2-rule)
-                        Expression: #uname eq node2 (id: location-D2-2-rule-expr)
-                        Expression: #uname eq node1 (id: location-D2-2-rule-expr-1)
-                """
-            ),
-        )
-
     def test_constraints_custom_id(self):
         # pylint: disable=too-many-statements
         self.fixture_resources()
@@ -3965,57 +3259,10 @@ Error: duplicate constraint already exists, use --force to override
         )
         self.assertEqual(retval, 0)
 
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            "constraint location D1 rule constraint-id=9id defined pingd".split(),
-        )
-        self.assertEqual(stdout, "")
-        ac(
-            stderr,
-            "Error: invalid constraint id '9id', '9' is not a valid first character for a constraint id\n",
-        )
-        self.assertEqual(retval, 1)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            "constraint location D1 rule constraint-id=id9 defined pingd".split(),
-        )
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            "constraint location D1 rule constraint-id=id9 defined pingd".split(),
-        )
-        self.assertEqual(stdout, "")
-        ac(
-            stderr,
-            "Error: id 'id9' is already in use, please specify another one\n",
-        )
-        self.assertEqual(retval, 1)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            "constraint location D2 rule score=100 constraint-id=id10 id=rule1 defined pingd".split(),
-        )
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
-
         self.assert_pcs_success(
             "constraint --full".split(),
             stdout_full=outdent(
                 """\
-                Location Constraints:
-                  resource 'D1' (id: id9)
-                    Rules:
-                      Rule: score=INFINITY (id: id9-rule)
-                        Expression: defined pingd (id: id9-rule-expr)
-                  resource 'D2' (id: id10)
-                    Rules:
-                      Rule: score=100 (id: rule1)
-                        Expression: defined pingd (id: rule1-expr)
                 Colocation Constraints:
                   resource 'D1' with resource 'D2' (id: id1)
                     score=INFINITY
@@ -4429,25 +3676,6 @@ class LocationTypeId(ConstraintEffect):
             stderr_full=LOCATION_NODE_VALIDATION_SKIP_WARNING,
         )
 
-    def test_rule(self):
-        self.fixture_primitive("A")
-        self.assert_effect(
-            [
-                "constraint location A rule #uname eq node1".split(),
-                "constraint location %A rule #uname eq node1".split(),
-                "constraint location resource%A rule #uname eq node1".split(),
-            ],
-            """<constraints>
-                <rsc_location id="location-A" rsc="A">
-                    <rule id="location-A-rule" score="INFINITY">
-                        <expression id="location-A-rule-expr"
-                            operation="eq" attribute="#uname" value="node1"
-                        />
-                    </rule>
-                </rsc_location>
-            </constraints>""",
-        )
-
 
 class LocationTypePattern(ConstraintEffect):
     # This was written while implementing rsc-pattern to location constraints.
@@ -4485,20 +3713,6 @@ class LocationTypePattern(ConstraintEffect):
                 />
             </constraints>""",
             stderr_full=LOCATION_NODE_VALIDATION_SKIP_WARNING,
-        )
-
-    def test_rule(self):
-        self.assert_effect(
-            "constraint location regexp%res_[0-9] rule #uname eq node1".split(),
-            """<constraints>
-                <rsc_location id="location-res_0-9" rsc-pattern="res_[0-9]">
-                    <rule id="location-res_0-9-rule" score="INFINITY">
-                        <expression id="location-res_0-9-rule-expr"
-                            operation="eq" attribute="#uname" value="node1"
-                        />
-                    </rule>
-                </rsc_location>
-            </constraints>""",
         )
 
 
@@ -4555,7 +3769,7 @@ class LocationShowWithPattern(ConstraintBaseTest):
                     resource-discovery=never
                   resource pattern 'R_[0-9]+' (id: location-R_0-9)
                     Rules:
-                      Rule: score=20 (id: location-R_0-9-rule)
+                      Rule: boolean-op=and score=20 (id: location-R_0-9-rule)
                         Expression: defined pingd (id: location-R_0-9-rule-expr)
                 """
             ),
@@ -4586,7 +3800,7 @@ class LocationShowWithPattern(ConstraintBaseTest):
                     resource-discovery=never
                   resource pattern 'R_[0-9]+'
                     Rules:
-                      Rule: score=20
+                      Rule: boolean-op=and score=20
                         Expression: defined pingd
                 """
             ),
@@ -4659,7 +3873,7 @@ class LocationShowWithPattern(ConstraintBaseTest):
                       node 'node4' with score INFINITY
                     Constraint:
                       Rules:
-                        Rule: score=20
+                        Rule: boolean-op=and score=20
                           Expression: defined pingd
                 """
             ),
@@ -5278,10 +4492,8 @@ class ExpiredConstraints(ConstraintBaseTest):
         )
         self.fixture_primitive()
         self.assert_pcs_success(
-            (
-                "constraint location dummy rule id=test-rule score=INFINITY "
-                "date lt 2019-01-01"
-            ).split()
+            "constraint location dummy rule id=test-rule score=INFINITY".split()
+            + ["date lt 2019-01-01"]
         )
         self.assert_pcs_success(
             ["constraint"],
@@ -5290,7 +4502,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 Location Constraints:
                   resource 'dummy'
                     Rules:
-                      Rule: score=INFINITY
+                      Rule: boolean-op=and score=INFINITY
                         Expression: date lt 2019-01-01
                 """
             ),
@@ -5300,10 +4512,8 @@ class ExpiredConstraints(ConstraintBaseTest):
     def test_in_effect_primitive_plain(self):
         self.fixture_primitive()
         self.assert_pcs_success(
-            (
-                "constraint location dummy rule id=test-rule score=INFINITY "
-                "date gt 2019-01-01"
-            ).split()
+            "constraint location dummy rule id=test-rule score=INFINITY".split()
+            + ["date gt 2019-01-01"]
         )
         self.assert_pcs_success(
             ["constraint"],
@@ -5312,7 +4522,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 Location Constraints:
                   resource 'dummy'
                     Rules:
-                      Rule: score=INFINITY
+                      Rule: boolean-op=and score=INFINITY
                         Expression: date gt 2019-01-01
                 """
             ),
@@ -5321,10 +4531,8 @@ class ExpiredConstraints(ConstraintBaseTest):
     def test_in_effect_primitive_full(self):
         self.fixture_primitive()
         self.assert_pcs_success(
-            (
-                "constraint location dummy rule id=test-rule score=INFINITY "
-                "date gt 2019-01-01"
-            ).split()
+            "constraint location dummy rule id=test-rule score=INFINITY".split()
+            + ["date gt 2019-01-01"]
         )
         self.assert_pcs_success(
             "constraint --full".split(),
@@ -5333,7 +4541,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 Location Constraints:
                   resource 'dummy' (id: location-dummy)
                     Rules:
-                      Rule: score=INFINITY (id: test-rule)
+                      Rule: boolean-op=and score=INFINITY (id: test-rule)
                         Expression: date gt 2019-01-01 (id: test-rule-expr)
                 """
             ),
@@ -5342,10 +4550,8 @@ class ExpiredConstraints(ConstraintBaseTest):
     def test_in_effect_primitive_all(self):
         self.fixture_primitive()
         self.assert_pcs_success(
-            (
-                "constraint location dummy rule id=test-rule score=INFINITY "
-                "date gt 2019-01-01"
-            ).split()
+            "constraint location dummy rule id=test-rule score=INFINITY".split()
+            + ["date gt 2019-01-01"]
         )
         self.assert_pcs_success(
             "constraint --all".split(),
@@ -5354,7 +4560,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 Location Constraints:
                   resource 'dummy'
                     Rules:
-                      Rule: score=INFINITY
+                      Rule: boolean-op=and score=INFINITY
                         Expression: date gt 2019-01-01
                 """
             ),
@@ -5363,10 +4569,8 @@ class ExpiredConstraints(ConstraintBaseTest):
     def test_in_effect_primitive_full_all(self):
         self.fixture_primitive()
         self.assert_pcs_success(
-            (
-                "constraint location dummy rule id=test-rule score=INFINITY "
-                "date gt 2019-01-01"
-            ).split()
+            "constraint location dummy rule id=test-rule score=INFINITY".split()
+            + ["date gt 2019-01-01"]
         )
         self.assert_pcs_success(
             "constraint --full --all".split(),
@@ -5375,7 +4579,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 Location Constraints:
                   resource 'dummy' (id: location-dummy)
                     Rules:
-                      Rule: score=INFINITY (id: test-rule)
+                      Rule: boolean-op=and score=INFINITY (id: test-rule)
                         Expression: date gt 2019-01-01 (id: test-rule-expr)
                 """
             ),
@@ -5384,10 +4588,8 @@ class ExpiredConstraints(ConstraintBaseTest):
     def test_in_effect_group_plain(self):
         self.fixture_group()
         self.assert_pcs_success(
-            (
-                "constraint location dummy_group rule id=test-rule score=INFINITY "
-                "date gt 2019-01-01"
-            ).split()
+            "constraint location dummy_group rule id=test-rule score=INFINITY".split()
+            + ["date gt 2019-01-01"]
         )
         self.assert_pcs_success(
             ["constraint"],
@@ -5396,7 +4598,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 Location Constraints:
                   resource 'dummy_group'
                     Rules:
-                      Rule: score=INFINITY
+                      Rule: boolean-op=and score=INFINITY
                         Expression: date gt 2019-01-01
                 """
             ),
@@ -5405,30 +4607,24 @@ class ExpiredConstraints(ConstraintBaseTest):
     def test_expired_primitive_plain(self):
         self.fixture_primitive()
         self.assert_pcs_success(
-            (
-                "constraint location dummy rule id=test-rule score=INFINITY "
-                "date lt 2019-01-01"
-            ).split()
+            "constraint location dummy rule id=test-rule score=INFINITY".split()
+            + ["date lt 2019-01-01"]
         )
         self.assert_pcs_success(["constraint"])
 
     def test_expired_primitive_full(self):
         self.fixture_primitive()
         self.assert_pcs_success(
-            (
-                "constraint location dummy rule id=test-rule score=INFINITY "
-                "date lt 2019-01-01"
-            ).split()
+            "constraint location dummy rule id=test-rule score=INFINITY".split()
+            + ["date lt 2019-01-01"]
         )
         self.assert_pcs_success("constraint --full".split())
 
     def test_expired_primitive_all(self):
         self.fixture_primitive()
         self.assert_pcs_success(
-            (
-                "constraint location dummy rule id=test-rule score=INFINITY "
-                "date lt 2019-01-01"
-            ).split()
+            "constraint location dummy rule id=test-rule score=INFINITY".split()
+            + ["date lt 2019-01-01"]
         )
         self.assert_pcs_success(
             "constraint --all".split(),
@@ -5437,7 +4633,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 Location Constraints:
                   resource 'dummy'
                     Rules:
-                      Rule (expired): score=INFINITY
+                      Rule (expired): boolean-op=and score=INFINITY
                         Expression: date lt 2019-01-01
                 """
             ),
@@ -5446,10 +4642,8 @@ class ExpiredConstraints(ConstraintBaseTest):
     def test_expired_primitive_full_all(self):
         self.fixture_primitive()
         self.assert_pcs_success(
-            (
-                "constraint location dummy rule id=test-rule score=INFINITY "
-                "date lt 2019-01-01"
-            ).split()
+            "constraint location dummy rule id=test-rule score=INFINITY".split()
+            + ["date lt 2019-01-01"]
         )
         self.assert_pcs_success(
             "constraint --full --all".split(),
@@ -5458,7 +4652,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 Location Constraints:
                   resource 'dummy' (id: location-dummy)
                     Rules:
-                      Rule (expired): score=INFINITY (id: test-rule)
+                      Rule (expired): boolean-op=and score=INFINITY (id: test-rule)
                         Expression: date lt 2019-01-01 (id: test-rule-expr)
                 """
             ),
@@ -5467,20 +4661,16 @@ class ExpiredConstraints(ConstraintBaseTest):
     def test_expired_group_plain(self):
         self.fixture_group()
         self.assert_pcs_success(
-            (
-                "constraint location dummy_group rule id=test-rule score=INFINITY "
-                "date lt 2019-01-01"
-            ).split()
+            "constraint location dummy_group rule id=test-rule score=INFINITY".split()
+            + ["date lt 2019-01-01"]
         )
         self.assert_pcs_success(["constraint"])
 
     def test_indeterminate_primitive_plain(self):
         self.fixture_primitive()
         self.assert_pcs_success(
-            (
-                "constraint location dummy rule id=test-rule score=INFINITY "
-                "date eq 2019-01-01 or date eq 2019-03-01"
-            ).split()
+            "constraint location dummy rule id=test-rule score=INFINITY".split()
+            + ["date eq 2019-01-01 or date eq 2019-03-01"]
         )
         self.assert_pcs_success(
             ["constraint"],
@@ -5499,10 +4689,8 @@ class ExpiredConstraints(ConstraintBaseTest):
     def test_indeterminate_primitive_full(self):
         self.fixture_primitive()
         self.assert_pcs_success(
-            (
-                "constraint location dummy rule id=test-rule score=INFINITY "
-                "date eq 2019-01-01 or date eq 2019-03-01"
-            ).split()
+            "constraint location dummy rule id=test-rule score=INFINITY".split()
+            + ["date eq 2019-01-01 or date eq 2019-03-01"]
         )
         self.assert_pcs_success(
             "constraint --full".split(),
@@ -5521,10 +4709,8 @@ class ExpiredConstraints(ConstraintBaseTest):
     def test_indeterminate_primitive_all(self):
         self.fixture_primitive()
         self.assert_pcs_success(
-            (
-                "constraint location dummy rule id=test-rule score=INFINITY "
-                "date eq 2019-01-01 or date eq 2019-03-01"
-            ).split()
+            "constraint location dummy rule id=test-rule score=INFINITY".split()
+            + ["date eq 2019-01-01 or date eq 2019-03-01"]
         )
         self.assert_pcs_success(
             "constraint --all".split(),
@@ -5543,10 +4729,8 @@ class ExpiredConstraints(ConstraintBaseTest):
     def test_indeterminate_primitive_full_all(self):
         self.fixture_primitive()
         self.assert_pcs_success(
-            (
-                "constraint location dummy rule id=test-rule score=INFINITY "
-                "date eq 2019-01-01 or date eq 2019-03-01"
-            ).split()
+            "constraint location dummy rule id=test-rule score=INFINITY".split()
+            + ["date eq 2019-01-01 or date eq 2019-03-01"]
         )
         self.assert_pcs_success(
             "constraint --full --all".split(),
@@ -5565,10 +4749,8 @@ class ExpiredConstraints(ConstraintBaseTest):
     def test_indeterminate_group_plain(self):
         self.fixture_group()
         self.assert_pcs_success(
-            (
-                "constraint location dummy_group rule id=test-rule score=INFINITY "
-                "date eq 2019-01-01 or date eq 2019-03-01"
-            ).split()
+            "constraint location dummy_group rule id=test-rule score=INFINITY".split()
+            + ["date eq 2019-01-01 or date eq 2019-03-01"]
         )
         self.assert_pcs_success(
             ["constraint"],
@@ -5587,8 +4769,8 @@ class ExpiredConstraints(ConstraintBaseTest):
     def test_not_yet_in_effect_primitive_plain(self):
         self.fixture_primitive()
         self.assert_pcs_success(
-            "constraint location dummy rule id=test-rule score=INFINITY date gt".split()
-            + [self._tomorrow]
+            "constraint location dummy rule id=test-rule score=INFINITY".split()
+            + [f"date gt {self._tomorrow}"]
         )
         self.assert_pcs_success(
             ["constraint"],
@@ -5597,7 +4779,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 Location Constraints:
                   resource 'dummy'
                     Rules:
-                      Rule (not yet in effect): score=INFINITY
+                      Rule (not yet in effect): boolean-op=and score=INFINITY
                         Expression: date gt {self._tomorrow}
                 """
             ),
@@ -5606,8 +4788,8 @@ class ExpiredConstraints(ConstraintBaseTest):
     def test_not_yet_in_effect_primitive_full(self):
         self.fixture_primitive()
         self.assert_pcs_success(
-            "constraint location dummy rule id=test-rule score=INFINITY date gt".split()
-            + [self._tomorrow]
+            "constraint location dummy rule id=test-rule score=INFINITY".split()
+            + [f"date gt {self._tomorrow}"]
         )
         self.assert_pcs_success(
             "constraint --full".split(),
@@ -5616,7 +4798,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 Location Constraints:
                   resource 'dummy' (id: location-dummy)
                     Rules:
-                      Rule (not yet in effect): score=INFINITY (id: test-rule)
+                      Rule (not yet in effect): boolean-op=and score=INFINITY (id: test-rule)
                         Expression: date gt {self._tomorrow} (id: test-rule-expr)
                 """
             ),
@@ -5625,8 +4807,8 @@ class ExpiredConstraints(ConstraintBaseTest):
     def test_not_yet_in_effect_primitive_all(self):
         self.fixture_primitive()
         self.assert_pcs_success(
-            "constraint location dummy rule id=test-rule score=INFINITY date gt".split()
-            + [self._tomorrow]
+            "constraint location dummy rule id=test-rule score=INFINITY".split()
+            + [f"date gt {self._tomorrow}"]
         )
         self.assert_pcs_success(
             "constraint --all".split(),
@@ -5635,7 +4817,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 Location Constraints:
                   resource 'dummy'
                     Rules:
-                      Rule (not yet in effect): score=INFINITY
+                      Rule (not yet in effect): boolean-op=and score=INFINITY
                         Expression: date gt {self._tomorrow}
                 """
             ),
@@ -5644,8 +4826,8 @@ class ExpiredConstraints(ConstraintBaseTest):
     def test_not_yet_in_effect_primitive_full_all(self):
         self.fixture_primitive()
         self.assert_pcs_success(
-            "constraint location dummy rule id=test-rule score=INFINITY date gt".split()
-            + [self._tomorrow]
+            "constraint location dummy rule id=test-rule score=INFINITY".split()
+            + [f"date gt {self._tomorrow}"]
         )
         self.assert_pcs_success(
             "constraint --full --all".split(),
@@ -5654,7 +4836,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 Location Constraints:
                   resource 'dummy' (id: location-dummy)
                     Rules:
-                      Rule (not yet in effect): score=INFINITY (id: test-rule)
+                      Rule (not yet in effect): boolean-op=and score=INFINITY (id: test-rule)
                         Expression: date gt {self._tomorrow} (id: test-rule-expr)
                 """
             ),
@@ -5663,8 +4845,8 @@ class ExpiredConstraints(ConstraintBaseTest):
     def test_not_yet_in_effect_group_plain(self):
         self.fixture_group()
         self.assert_pcs_success(
-            "constraint location dummy_group rule id=test-rule score=INFINITY date gt".split()
-            + [self._tomorrow]
+            "constraint location dummy_group rule id=test-rule score=INFINITY".split()
+            + [f"date gt {self._tomorrow}"]
         )
         self.assert_pcs_success(
             ["constraint"],
@@ -5673,7 +4855,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 Location Constraints:
                   resource 'dummy_group'
                     Rules:
-                      Rule (not yet in effect): score=INFINITY
+                      Rule (not yet in effect): boolean-op=and score=INFINITY
                         Expression: date gt {self._tomorrow}
                 """
             ),
@@ -5682,40 +4864,28 @@ class ExpiredConstraints(ConstraintBaseTest):
     def test_complex_primitive_plain(self):
         self.fixture_multiple_primitive()
         self.assert_pcs_success(
-            (
-                "constraint location D1 rule id=test-rule-D1-1 score=INFINITY "
-                "not_defined pingd"
-            ).split()
+            "constraint location D1 rule id=test-rule-D1-1 score=INFINITY".split()
+            + ["not_defined pingd"]
         )
         self.assert_pcs_success(
-            (
-                "constraint location D1 rule id=test-rule-D1-2 score=INFINITY "
-                "( date eq 2019-01-01 or date eq 2019-01-30 ) and #uname eq node1"
-            ).split()
+            "constraint location D1 rule id=test-rule-D1-2 score=INFINITY".split()
+            + ["(date eq 2019-01-01 or date eq 2019-01-30) and #uname eq node1"]
         )
         self.assert_pcs_success(
-            (
-                "constraint location D2 rule id=test-constr-D2 score=INFINITY "
-                "date in_range 2019-01-01 to 2019-02-01"
-            ).split()
+            "constraint location D2 rule id=test-constr-D2 score=INFINITY".split()
+            + ["date in_range 2019-01-01 to 2019-02-01"]
         )
         self.assert_pcs_success(
-            (
-                "constraint rule add location-D2 id=test-duration score=INFINITY "
-                "date in_range 2019-03-01 to duration weeks=2"
-            ).split()
+            "constraint rule add location-D2 id=test-duration score=INFINITY".split()
+            + ["date in_range 2019-03-01 to duration weeks=2"]
         )
         self.assert_pcs_success(
-            (
-                "constraint location D3 rule id=test-rule-D3-0 score=INFINITY "
-                "date in_range 2019-03-01 to duration weeks=2"
-            ).split()
+            "constraint location D3 rule id=test-rule-D3-0 score=INFINITY".split()
+            + ["date in_range 2019-03-01 to duration weeks=2"]
         )
         self.assert_pcs_success(
-            (
-                "constraint rule add location-D3 id=test-defined score=INFINITY "
-                "not_defined pingd"
-            ).split()
+            "constraint rule add location-D3 id=test-defined score=INFINITY".split()
+            + ["not_defined pingd"]
         )
 
         self.assert_pcs_success(
@@ -5725,7 +4895,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 Location Constraints:
                   resource 'D1'
                     Rules:
-                      Rule: score=INFINITY
+                      Rule: boolean-op=and score=INFINITY
                         Expression: not_defined pingd
                   resource 'D1'
                     Rules:
@@ -5736,10 +4906,10 @@ class ExpiredConstraints(ConstraintBaseTest):
                         Expression: #uname eq node1
                   resource 'D3'
                     Rules:
-                      Rule (expired): score=INFINITY
+                      Rule (expired): boolean-op=and score=INFINITY
                         Expression: date in_range 2019-03-01 to duration
                           Duration: weeks=2
-                      Rule: score=INFINITY
+                      Rule: boolean-op=and score=INFINITY
                         Expression: not_defined pingd
                 """
             ),
@@ -5748,40 +4918,28 @@ class ExpiredConstraints(ConstraintBaseTest):
     def test_complex_primitive_all(self):
         self.fixture_multiple_primitive()
         self.assert_pcs_success(
-            (
-                "constraint location D1 rule id=test-rule-D1 score=INFINITY "
-                "not_defined pingd"
-            ).split()
+            "constraint location D1 rule id=test-rule-D1 score=INFINITY".split()
+            + ["not_defined pingd"]
         )
         self.assert_pcs_success(
-            (
-                "constraint location D1 rule id=test-rule-D1-2 score=INFINITY "
-                "( date eq 2019-01-01 or date eq 2019-01-30 ) and #uname eq node1"
-            ).split()
+            "constraint location D1 rule id=test-rule-D1-2 score=INFINITY".split()
+            + ["(date eq 2019-01-01 or date eq 2019-01-30) and #uname eq node1"]
         )
         self.assert_pcs_success(
-            (
-                "constraint location D2 rule id=test-constr-D2 score=INFINITY "
-                "date in_range 2019-01-01 to 2019-02-01"
-            ).split()
+            "constraint location D2 rule id=test-constr-D2 score=INFINITY".split()
+            + ["date in_range 2019-01-01 to 2019-02-01"]
         )
         self.assert_pcs_success(
-            (
-                "constraint rule add location-D2 id=test-duration score=INFINITY "
-                "date in_range 2019-03-01 to duration weeks=2"
-            ).split()
+            "constraint rule add location-D2 id=test-duration score=INFINITY".split()
+            + ["date in_range 2019-03-01 to duration weeks=2"]
         )
         self.assert_pcs_success(
-            (
-                "constraint location D3 rule id=test-rule-D3-0 score=INFINITY "
-                "date in_range 2019-03-01 to duration weeks=2"
-            ).split()
+            "constraint location D3 rule id=test-rule-D3-0 score=INFINITY".split()
+            + ["date in_range 2019-03-01 to duration weeks=2"]
         )
         self.assert_pcs_success(
-            (
-                "constraint rule add location-D3 id=test-defined score=INFINITY "
-                "not_defined pingd"
-            ).split()
+            "constraint rule add location-D3 id=test-defined score=INFINITY".split()
+            + ["not_defined pingd"]
         )
 
         self.assert_pcs_success(
@@ -5791,7 +4949,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                 Location Constraints:
                   resource 'D1'
                     Rules:
-                      Rule: score=INFINITY
+                      Rule: boolean-op=and score=INFINITY
                         Expression: not_defined pingd
                   resource 'D1'
                     Rules:
@@ -5802,17 +4960,17 @@ class ExpiredConstraints(ConstraintBaseTest):
                         Expression: #uname eq node1
                   resource 'D2'
                     Rules:
-                      Rule (expired): score=INFINITY
+                      Rule (expired): boolean-op=and score=INFINITY
                         Expression: date in_range 2019-01-01 to 2019-02-01
-                      Rule (expired): score=INFINITY
+                      Rule (expired): boolean-op=and score=INFINITY
                         Expression: date in_range 2019-03-01 to duration
                           Duration: weeks=2
                   resource 'D3'
                     Rules:
-                      Rule (expired): score=INFINITY
+                      Rule (expired): boolean-op=and score=INFINITY
                         Expression: date in_range 2019-03-01 to duration
                           Duration: weeks=2
-                      Rule: score=INFINITY
+                      Rule: boolean-op=and score=INFINITY
                         Expression: not_defined pingd
                 """
             ),

@@ -11,9 +11,9 @@ from pcs.common.pacemaker.constraint import (
 from pcs.common.reports.item import ReportItem
 from pcs.lib.cib.const import TAG_CONSTRAINT_COLOCATION as TAG
 from pcs.lib.cib.constraint import constraint
+from pcs.lib.cib.constraint.common import is_set_constraint
 from pcs.lib.cib.constraint.resource_set import (
     constraint_element_to_resource_set_dto_list,
-    is_set_constraint,
 )
 from pcs.lib.cib.rule import RuleInEffectEval
 from pcs.lib.cib.rule.cib_to_dto import rule_element_to_dto

@@ -112,10 +112,6 @@ def is_resource_in_same_group(cib, resource_id_list):
         )
 
 
-def is_set_constraint(constraint_el: etree._Element) -> bool:
-    return constraint_el.find("./resource_set") is not None
-
-
 def _resource_set_element_to_dto(
     resource_set_el: etree._Element,
 ) -> CibResourceSetDto:

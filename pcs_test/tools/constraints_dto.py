@@ -117,7 +117,10 @@ def get_all_constraints(
                         in_effect=rule_eval.get_rule_status(
                             "loc_constr_with_expired_rule-rule"
                         ),
-                        options={"score": "500"},
+                        options={
+                            "boolean-op": "and",
+                            "score": "500",
+                        },
                         date_spec=None,
                         duration=None,
                         expressions=[

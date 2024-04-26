@@ -459,48 +459,16 @@ class UtilsTest(TestCase):
             ),
         )
 
-    def test_get_element_with_id(self):
-        dom = xml.dom.minidom.parseString(
-            """
-            <aa>
-                <bb id="bb1"/>
-                <bb/>
-                <bb id="bb2">
-                    <cc id="cc1"/>
-                </bb>
-                <bb id="bb3">
-                    <cc id="cc2"/>
-                </bb>
-            </aa>
-        """
-        ).documentElement
-
-        self.assert_element_id(
-            utils.dom_get_element_with_id(dom, "bb", "bb1"), "bb1"
-        )
-        self.assert_element_id(
-            utils.dom_get_element_with_id(dom, "bb", "bb2"), "bb2"
-        )
-        self.assert_element_id(
-            utils.dom_get_element_with_id(dom, "cc", "cc1"), "cc1"
-        )
-        self.assert_element_id(
-            utils.dom_get_element_with_id(
-                utils.dom_get_element_with_id(dom, "bb", "bb2"), "cc", "cc1"
-            ),
-            "cc1",
-        )
-        self.assertEqual(None, utils.dom_get_element_with_id(dom, "dd", "bb1"))
-        self.assertEqual(None, utils.dom_get_element_with_id(dom, "bb", "bb4"))
-        self.assertEqual(None, utils.dom_get_element_with_id(dom, "bb", "cc1"))
-        self.assertEqual(
-            None,
-            utils.dom_get_element_with_id(
-                utils.dom_get_element_with_id(dom, "bb", "bb2"), "cc", "cc2"
-            ),
-        )
-
     def test_dom_get_parent_by_tag_name(self):
+        def dom_get_element_with_id(dom, tag_name, element_id):
+            for elem in dom.getElementsByTagName(tag_name):
+                if (
+                    elem.hasAttribute("id")
+                    and elem.getAttribute("id") == element_id
+                ):
+                    return elem
+            return None
+
         dom = xml.dom.minidom.parseString(
             """
             <aa id="aa1">
@@ -515,8 +483,8 @@ class UtilsTest(TestCase):
             </aa>
         """
         ).documentElement
-        bb1 = utils.dom_get_element_with_id(dom, "bb", "bb1")
-        cc1 = utils.dom_get_element_with_id(dom, "cc", "cc1")
+        bb1 = dom_get_element_with_id(dom, "bb", "bb1")
+        cc1 = dom_get_element_with_id(dom, "cc", "cc1")
 
         self.assert_element_id(
             utils.dom_get_parent_by_tag_names(bb1, ["aa"]), "aa1"

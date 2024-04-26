@@ -1,5 +1,6 @@
 from . import compat_pyparsing
 from .cib_to_dto import rule_element_to_dto
+from .cib_to_str import RuleToStr
 from .expression_part import BoolExpr as RuleRoot
 from .in_effect import (
     RuleInEffectEval,

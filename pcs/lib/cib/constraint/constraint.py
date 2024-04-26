@@ -90,6 +90,7 @@ def have_duplicate_resource_sets(element, other_element):
     return get_id_set_list(element) == get_id_set_list(other_element)
 
 
+# DEPRECATED, replace with pcs.lib.cib.constraints.duplicates
 def check_is_without_duplication(
     report_processor: reports.ReportProcessor,
     constraint_section: _Element,

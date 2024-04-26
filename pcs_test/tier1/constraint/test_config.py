@@ -196,7 +196,7 @@ class ConstraintConfigCmdSpaceInDate(ConstraintConfigCmdMixin, TestCase):
                 "to 2023-12-31T12:00;\n"
                 "pcs -- constraint rule add location-R1 \\\n"
                 "  id=location-R1-rule-1 score=INFINITY \\\n"
-                "  '#uname' eq node1 and date gt 2023-01-01T12:00 and "
+                "  '#uname' eq node2 and date gt 2023-01-01T12:00 and "
                 "date lt 2023-12-31T12:00 and date in_range 2023-01-01T12:00 "
                 "to 2023-12-31T12:00\n"
             ),
@@ -332,7 +332,7 @@ class ConstraintConfigText(TestCase):
               resource pattern 'R*' prefers node 'localhost' with score INFINITY
               resource 'B2'
                 Rules:
-                  Rule (expired): score=500
+                  Rule (expired): boolean-op=and score=500
                     Expression: date lt 2000-01-01
               resource 'R6-clone'
                 Rules:
@@ -460,7 +460,7 @@ class ConstraintConfigText(TestCase):
               resource pattern 'R*' prefers node 'localhost' with score INFINITY (id: location-R-localhost-INFINITY)
               resource 'B2' (id: loc_constr_with_expired_rule)
                 Rules:
-                  Rule (expired): score=500 (id: loc_constr_with_expired_rule-rule)
+                  Rule (expired): boolean-op=and score=500 (id: loc_constr_with_expired_rule-rule)
                     Expression: date lt 2000-01-01 (id: loc_constr_with_expired_rule-rule-expr)
               resource 'R6-clone' (id: loc_constr_with_not_expired_rule)
                 Rules:
