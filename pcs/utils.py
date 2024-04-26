@@ -2739,12 +2739,6 @@ def get_user_and_pass():
 
 
 def get_input_modifiers() -> InputModifiers:
-    if "--master" in pcs_options:
-        reports_output.deprecation_warning(
-            "Option '--master' is deprecated and has been replaced by option "
-            "'--promoted' "
-        )
-        pcs_options["--promoted"] = pcs_options.pop("--master")
     return InputModifiers(pcs_options)
 
 
