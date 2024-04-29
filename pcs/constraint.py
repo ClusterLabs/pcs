@@ -158,6 +158,8 @@ def _validate_resources_not_in_same_group(cib_dom, resource1, resource2):
 #        <src> with <role> <tgt> [score] [options]
 # <role> <src> with        <tgt> [score] [options]
 # <role> <src> with <role> <tgt> [score] [options]
+# Specifying score as a single argument is deprecated, though. The correct way
+# is score=value in options.
 def colocation_add(lib, argv, modifiers):
     """
     Options:
@@ -173,8 +175,16 @@ def colocation_add(lib, argv, modifiers):
         Commandline options: no options
         """
         if not argv:
-            return SCORE_INFINITY, []
-        score = SCORE_INFINITY if "=" in argv[0] else argv.pop(0)
+            return None, []
+        score = None
+        if "=" not in argv[0]:
+            score = argv.pop(0)
+            # TODO added to pcs in the first 0.12.x version
+            deprecation_warning(
+                "Specifying score as a standalone value is deprecated and "
+                "might be removed in a future release, use score=value instead"
+            )
+
         # create a list of 2-tuples (name, value)
         arg_array = [
             parse_args.split_option(arg, allow_empty_value=False)
@@ -255,6 +265,10 @@ def colocation_add(lib, argv, modifiers):
                     % value
                 )
             id_in_nvpairs = True
+        elif name == "score":
+            score = value
+    if score is None:
+        score = SCORE_INFINITY
     if not id_in_nvpairs:
         nv_pairs.append(
             (

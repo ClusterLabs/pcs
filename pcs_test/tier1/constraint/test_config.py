@@ -234,8 +234,8 @@ class ConstraintConfigCmdUnsupported(TestCase):
             stdout,
             (
                 "pcs -- constraint location add location-OK resource%R1 node1 INFINITY;\n"
-                "pcs -- constraint colocation add R1 with R3 INFINITY \\\n"
-                "  id=colocation-OK;\n"
+                "pcs -- constraint colocation add R1 with R3 \\\n"
+                "  id=colocation-OK score=INFINITY;\n"
                 "pcs -- constraint colocation \\\n"
                 "  set R1 R3 \\\n"
                 "  setoptions id=colocation-set-OK;\n"

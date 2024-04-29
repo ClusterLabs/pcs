@@ -195,7 +195,7 @@ def add_colocation_constraint(
     score = "INFINITY"
   end
   command = [
-    "constraint", "colocation", "add", resourceA, "with", resourceB, score
+    "constraint", "colocation", "add", resourceA, "with", resourceB, "score=#{score}"
   ]
   flags = []
   flags << '--force' if force

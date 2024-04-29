@@ -2478,7 +2478,8 @@ Commands:
         {output_format_desc}
 
     colocation add [<role>] <source resource id> with [<role>]
-                   <target resource id> [score] [options] [id=constraint-id]
+            <target resource id> [score=<score>] [<options>]
+            [id=<constraint-id>]
         Request <source resource> to run on the same node where pacemaker has
         determined <target resource> should run.  Positive values of score
         mean the resources should be run on the same node, negative values

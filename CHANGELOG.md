@@ -39,6 +39,8 @@
   - upstart and nagios resources
   - some date-spec and duration options in rules
 - Specifying rules as multiple arguments, use a single string argument instead
+- Specifying score as a standalone value in `pcs constraint colocation add`, use
+  score=value instead
 
 [ghissue#772]: https://github.com/ClusterLabs/pcs/issues/772
 [ghissue#780]: https://github.com/ClusterLabs/pcs/issues/780

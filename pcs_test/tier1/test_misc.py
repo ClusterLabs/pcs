@@ -35,6 +35,7 @@ class ParseArgvDashDash(TestCase, AssertPcsMixin):
             outdent(
                 """\
                 Deprecation Warning: Using '-123' without '--' is deprecated, those parameters will be considered position independent options in future pcs versions
+                Deprecation Warning: Specifying score as a standalone value is deprecated and might be removed in a future release, use score=value instead
                 Error: Resource 'R1' does not exist
                 """
             ),
@@ -67,6 +68,7 @@ class ParseArgvDashDash(TestCase, AssertPcsMixin):
             ["--"] + self.cmd + ["-123"],
             outdent(
                 """\
+                Deprecation Warning: Specifying score as a standalone value is deprecated and might be removed in a future release, use score=value instead
                 Error: Resource 'R1' does not exist
                 """
             ),

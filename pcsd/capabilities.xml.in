@@ -1040,6 +1040,14 @@
         pcs commands: constraint colocation add
       </description>
     </capability>
+    <capability id="pcmk.constraint.colocation.simple.options.score" in-pcs="1" in-pcsd="0">
+      <description>
+        Score for a constraint is passed as 'score={value}', not as a standalone
+        argument.
+
+        pcs commands: constraint colocation add
+      </description>
+    </capability>
     <capability id="pcmk.constraint.colocation.set" in-pcs="1" in-pcsd="1">
       <description>
         Create and delete a colocation constraint for sets of resources.

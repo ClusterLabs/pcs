@@ -174,21 +174,16 @@ def plain_constraint_to_cmd(
         )
         return []
     result = [
-        "pcs -- constraint colocation add {resource_role}{resource_id} with {with_resource_role}{with_resource_id}{score}".format(
+        "pcs -- constraint colocation add {resource_role}{resource_id} with {with_resource_role}{with_resource_id}".format(
             resource_role=format_optional(constraint_dto.resource_role),
             resource_id=quote(constraint_dto.resource_id),
             with_resource_role=format_optional(
                 constraint_dto.with_resource_role
             ),
             with_resource_id=quote(constraint_dto.with_resource_id),
-            score=format_optional(
-                constraint_dto.attributes.score, template=" {}"
-            ),
         )
     ]
-    pairs = _attributes_to_cmd_pairs(
-        constraint_dto.attributes, filter_out=("score",)
-    )
+    pairs = _attributes_to_cmd_pairs(constraint_dto.attributes)
     if pairs is None:
         return []
     params = pairs_to_cmd(pairs)

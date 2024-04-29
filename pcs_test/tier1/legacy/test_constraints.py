@@ -58,6 +58,10 @@ DEPRECATED_LOCATION_CONSTRAINT_REMOVE = (
     "Deprecation Warning: This command is deprecated and will be removed. "
     "Please use 'pcs constraint delete' or 'pcs constraint remove' instead.\n"
 )
+DEPRECATED_STANDALONE_SCORE = (
+    "Deprecation Warning: Specifying score as a standalone value is deprecated "
+    "and might be removed in a future release, use score=value instead\n"
+)
 
 empty_cib = rc("cib-empty-3.7.xml")
 large_cib = rc("cib-large.xml")
@@ -520,7 +524,7 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
             "constraint colocation add D1 with D2 100".split(),
         )
         self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
+        self.assertEqual(stderr, DEPRECATED_STANDALONE_SCORE)
         self.assertEqual(retval, 0)
 
         stdout, stderr, retval = pcs(
@@ -528,12 +532,12 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
             "--force -- constraint colocation add D1 with D2 -100".split(),
         )
         self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
+        self.assertEqual(stderr, DEPRECATED_STANDALONE_SCORE)
         self.assertEqual(retval, 0)
 
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
-            "constraint colocation add Master with D5 100".split(),
+            "constraint colocation add Master with D5 score=100".split(),
         )
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
@@ -570,7 +574,7 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
 
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
-            f"constraint colocation add {const.PCMK_ROLE_UNPROMOTED} M5-master with started M6-master 500".split(),
+            f"constraint colocation add {const.PCMK_ROLE_UNPROMOTED} M5-master with started M6-master score=500".split(),
         )
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
@@ -715,6 +719,14 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
             "-- constraint colocation add D1 with D2 -100 id=abcd node-attribute=y".split(),
         )
         self.assertEqual(stdout, "")
+        self.assertEqual(stderr, DEPRECATED_STANDALONE_SCORE)
+        self.assertEqual(retval, 0)
+
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name,
+            "-- constraint colocation add D2 with D1 score=-100 id=efgh node-attribute=y".split(),
+        )
+        self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
         self.assertEqual(retval, 0)
 
@@ -724,6 +736,8 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
                 """\
                 Colocation Constraints:
                   resource 'D1' with resource 'D2'
+                    score=-100
+                  resource 'D2' with resource 'D1'
                     score=-100
                 """
             ),
@@ -2774,7 +2788,7 @@ Error: duplicate constraint already exists, use --force to override
 
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
-            "constraint colocation add D1 with D2 50".split(),
+            "constraint colocation add D1 with D2 score=50".split(),
         )
         self.assertEqual(stdout, "")
         ac(
@@ -2788,7 +2802,7 @@ Error: duplicate constraint already exists, use --force to override
 
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
-            "constraint colocation add D1 with D2 50 --force".split(),
+            "constraint colocation add D1 with D2 score=50 --force".split(),
         )
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
@@ -3161,7 +3175,7 @@ Error: duplicate constraint already exists, use --force to override
 
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
-            "constraint colocation add D2 with D1 100 id=id2".split(),
+            "constraint colocation add D2 with D1 score=100 id=id2".split(),
         )
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
