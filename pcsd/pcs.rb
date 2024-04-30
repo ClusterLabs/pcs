@@ -110,7 +110,7 @@ def add_location_constraint_rule(
       cmd << "score-attribute=#{score}"
     end
   end
-  cmd.concat(rule.shellsplit())
+  cmd << rule
   flags = []
   flags << '--force' if force
   stdout, stderr, retval = run_cmd(auth_user, PCS, *flags, "--", *cmd)
