@@ -844,7 +844,7 @@ def run_cmd(auth_user, *args)
 end
 
 def run_cmd_options(auth_user, options, *args)
-  $logger.info("Running: " + args.join(" "))
+  $logger.info("Running: #{args}")
   cib_user = auth_user[:username]
   # when running 'id -Gn' to get the groups they are not defined yet
   cib_groups = (auth_user[:usergroups] || []).join(' ')
