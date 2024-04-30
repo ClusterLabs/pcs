@@ -24,12 +24,12 @@ class ParseAddTest(TestCase):
     def test_parse_add_args_with_resource_role(self):
         self.assertEqual(
             parse_args.parse_add(
-                ["T", "master", "resource1", "ticket=T", "loss-policy=fence"]
+                ["T", "promoted", "resource1", "ticket=T", "loss-policy=fence"]
             ),
             (
                 "T",
                 "resource1",
-                "master",
+                "promoted",
                 {
                     "ticket": "T",
                     "loss-policy": "fence",
@@ -41,7 +41,7 @@ class ParseAddTest(TestCase):
         self.assertRaises(
             CmdLineInputError,
             lambda: parse_args.parse_add(
-                ["T", "master", "resource1", "something_else"]
+                ["T", "promoted", "resource1", "something_else"]
             ),
         )
 

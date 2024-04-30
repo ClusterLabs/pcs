@@ -494,6 +494,7 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
 
     # see also BundleColocation
     def test_colocation_constraints(self):
+        # pylint: disable=too-many-statements
         self.fixture_resources()
         # pcs no longer allows creating masters but supports existing ones. In
         # order to test it, we need to put a master in the CIB without pcs.
@@ -562,9 +563,17 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
         self.assertEqual(stdout, "")
         ac(
             stderr,
-            f"Deprecation Warning: Role value '{role}' is deprecated and "
-            f"should not be used, use '{const.PCMK_ROLE_UNPROMOTED}' instead\n",
+            "Error: invalid role value '{}', allowed values are: {}\n".format(
+                role, format_list(const.PCMK_ROLES)
+            ),
         )
+
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name,
+            f"constraint colocation add {const.PCMK_ROLE_UNPROMOTED} M5-master with started M6-master 500".split(),
+        )
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
         self.assertEqual(retval, 0)
 
         stdout, stderr, retval = pcs(
@@ -596,15 +605,15 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
                     score=-100
                   resource 'Master' with resource 'D5'
                     score=100
-                  {const.PCMK_ROLE_PROMOTED_PRIMARY} resource 'M1-master' with {const.PCMK_ROLE_PROMOTED_PRIMARY} resource 'M2-master'
+                  {const.PCMK_ROLE_PROMOTED} resource 'M1-master' with {const.PCMK_ROLE_PROMOTED} resource 'M2-master'
                     score=INFINITY
                   resource 'M3-master' with resource 'M4-master'
                     score=INFINITY
-                  {const.PCMK_ROLE_UNPROMOTED_PRIMARY} resource 'M5-master' with Started resource 'M6-master'
+                  {const.PCMK_ROLE_UNPROMOTED} resource 'M5-master' with Started resource 'M6-master'
                     score=500
-                  Started resource 'M7-master' with {const.PCMK_ROLE_PROMOTED_PRIMARY} resource 'M8-master'
+                  Started resource 'M7-master' with {const.PCMK_ROLE_PROMOTED} resource 'M8-master'
                     score=INFINITY
-                  {const.PCMK_ROLE_UNPROMOTED_PRIMARY} resource 'M9-master' with Started resource 'M10-master'
+                  {const.PCMK_ROLE_UNPROMOTED} resource 'M9-master' with Started resource 'M10-master'
                     score=INFINITY
                 """
             ),
@@ -641,9 +650,9 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
                     score=100
                   resource 'M3-master' with resource 'M4-master'
                     score=INFINITY
-                  Started resource 'M7-master' with {const.PCMK_ROLE_PROMOTED_PRIMARY} resource 'M8-master'
+                  Started resource 'M7-master' with {const.PCMK_ROLE_PROMOTED} resource 'M8-master'
                     score=INFINITY
-                  {const.PCMK_ROLE_UNPROMOTED_PRIMARY} resource 'M9-master' with Started resource 'M10-master'
+                  {const.PCMK_ROLE_UNPROMOTED} resource 'M9-master' with Started resource 'M10-master'
                     score=INFINITY
                 """
             ),
@@ -777,7 +786,7 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
 
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
-            "constraint colocation add master D1 with D2 with D3".split(),
+            "constraint colocation add promoted D1 with D2 with D3".split(),
         )
         self.assertIn(msg, stderr)
         self.assertEqual(stdout, "")
@@ -785,7 +794,7 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
 
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
-            "constraint colocation add D1 with master D2 with D3".split(),
+            "constraint colocation add D1 with promoted D2 with D3".split(),
         )
         self.assertIn(msg, stderr)
         self.assertEqual(stdout, "")
@@ -793,7 +802,7 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
 
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
-            "constraint colocation add D1 with D2 with master D3".split(),
+            "constraint colocation add D1 with D2 with promoted D3".split(),
         )
         self.assertIn(msg, stderr)
         self.assertEqual(stdout, "")
@@ -801,7 +810,7 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
 
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
-            "constraint colocation add master D1 with master D2 with D3".split(),
+            "constraint colocation add promoted D1 with promoted D2 with D3".split(),
         )
         self.assertIn(msg, stderr)
         self.assertEqual(stdout, "")
@@ -809,7 +818,7 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
 
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
-            "constraint colocation add master D1 with D2 with master D3".split(),
+            "constraint colocation add promoted D1 with D2 with promoted D3".split(),
         )
         self.assertIn(msg, stderr)
         self.assertEqual(stdout, "")
@@ -817,7 +826,7 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
 
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
-            "constraint colocation add D1 with master D2 with master D3".split(),
+            "constraint colocation add D1 with promoted D2 with promoted D3".split(),
         )
         self.assertIn(msg, stderr)
         self.assertEqual(stdout, "")
@@ -825,7 +834,7 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
 
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
-            "constraint colocation add master D1 with master D2 with master D3".split(),
+            "constraint colocation add promoted D1 with promoted D2 with promoted D3".split(),
         )
         self.assertIn(msg, stderr)
         self.assertEqual(stdout, "")
@@ -917,8 +926,8 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
             self.temp_cib.name,
             (
                 "constraint colocation "
-                f"set D5 D6 action=stop role=Started set D7 D8 action=promote role={const.PCMK_ROLE_UNPROMOTED_PRIMARY} "
-                f"set D8 D9 action=demote role={const.PCMK_ROLE_PROMOTED_PRIMARY}"
+                f"set D5 D6 action=stop role=Started set D7 D8 action=promote role={const.PCMK_ROLE_UNPROMOTED} "
+                f"set D8 D9 action=demote role={const.PCMK_ROLE_PROMOTED}"
             ).split(),
         )
         self.assertEqual(retval, 0)
@@ -949,10 +958,10 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
                       action=stop role=Started
                     Resource Set: colocation_set_D5D6D7-1_set-1
                       Resources: 'D7', 'D8'
-                      action=promote role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                      action=promote role={const.PCMK_ROLE_UNPROMOTED}
                     Resource Set: colocation_set_D5D6D7-1_set-2
                       Resources: 'D8', 'D9'
-                      action=demote role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                      action=demote role={const.PCMK_ROLE_PROMOTED}
                 """
             ),
         )
@@ -984,10 +993,10 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
                       action=stop role=Started
                     Resource Set: colocation_set_D5D6D7-1_set-1
                       Resources: 'D7', 'D8'
-                      action=promote role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                      action=promote role={const.PCMK_ROLE_UNPROMOTED}
                     Resource Set: colocation_set_D5D6D7-1_set-2
                       Resources: 'D8', 'D9'
-                      action=demote role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                      action=demote role={const.PCMK_ROLE_PROMOTED}
                 """
             ),
         )
@@ -1399,20 +1408,33 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
                 "constraint order "
                 "set D5 D6 action=stop role=Started "
                 f"set D7 D8 action=promote role={const.PCMK_ROLE_UNPROMOTED_LEGACY} "
-                f"set D8 D9 action=demote role={const.PCMK_ROLE_PROMOTED}"
+                f"set D8 D9 action=demote role={const.PCMK_ROLE_PROMOTED_LEGACY}"
             ).split(),
         )
         self.assertEqual(stdout, "")
         ac(
             stderr,
             (
-                f"Deprecation Warning: Value "
-                f"'{const.PCMK_ROLE_UNPROMOTED_LEGACY}' of option "
-                "role is deprecated and might be removed in a future release, "
-                "therefore it should not be used, use "
-                f"'{const.PCMK_ROLE_UNPROMOTED}' value instead\n"
+                "Error: '{}' is not a valid role value, use {}\n"
+                + ERRORS_HAVE_OCCURRED
+            ).format(
+                const.PCMK_ROLE_UNPROMOTED_LEGACY,
+                format_list(const.PCMK_ROLES),
             ),
         )
+        self.assertEqual(retval, 1)
+
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name,
+            (
+                "constraint order "
+                "set D5 D6 action=stop role=Started "
+                f"set D7 D8 action=promote role={const.PCMK_ROLE_UNPROMOTED} "
+                f"set D8 D9 action=demote role={const.PCMK_ROLE_PROMOTED}"
+            ).split(),
+        )
+        self.assertEqual(stdout, "")
+        self.assertEqual(stderr, "")
         self.assertEqual(retval, 0)
 
         self.assert_pcs_success(
@@ -1436,10 +1458,10 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
                       action=stop role=Started
                     Resource Set: order_set_D5D6D7-1_set-1
                       Resources: 'D7', 'D8'
-                      action=promote role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                      action=promote role={const.PCMK_ROLE_UNPROMOTED}
                     Resource Set: order_set_D5D6D7-1_set-2
                       Resources: 'D8', 'D9'
-                      action=demote role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                      action=demote role={const.PCMK_ROLE_PROMOTED}
                 """
             ),
         )
@@ -1469,10 +1491,10 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
                       action=stop role=Started
                     Resource Set: order_set_D5D6D7-1_set-1
                       Resources: 'D7', 'D8'
-                      action=promote role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                      action=promote role={const.PCMK_ROLE_UNPROMOTED}
                     Resource Set: order_set_D5D6D7-1_set-2
                       Resources: 'D8', 'D9'
-                      action=demote role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                      action=demote role={const.PCMK_ROLE_PROMOTED}
                 """
             ),
         )
@@ -1640,10 +1662,10 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
                   Set Constraint: order_set_D5D6D7-1
                     Resource Set: order_set_D5D6D7-1_set-1
                       Resources: 'D7', 'D8'
-                      action=promote role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                      action=promote role={const.PCMK_ROLE_UNPROMOTED}
                     Resource Set: order_set_D5D6D7-1_set-2
                       Resources: 'D8', 'D9'
-                      action=demote role={const.PCMK_ROLE_PROMOTED_PRIMARY}
+                      action=demote role={const.PCMK_ROLE_PROMOTED}
                   Set Constraint: order_set_D1D2
                     symmetrical=0 kind=Mandatory
                     Resource Set: order_set_D1D2_set
@@ -2133,8 +2155,8 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
             stdout_full=outdent(
                 f"""\
                 Location Constraints:
-                  {const.PCMK_ROLE_PROMOTED_PRIMARY} resource 'stateful0-master' prefers node 'rh7-1' with score INFINITY
-                  {const.PCMK_ROLE_UNPROMOTED_PRIMARY} resource 'stateful0-master' avoids node 'rh7-1' with score INFINITY
+                  {const.PCMK_ROLE_PROMOTED} resource 'stateful0-master' prefers node 'rh7-1' with score INFINITY
+                  {const.PCMK_ROLE_UNPROMOTED} resource 'stateful0-master' avoids node 'rh7-1' with score INFINITY
                 """
             ),
         )
@@ -3386,7 +3408,7 @@ class TicketAdd(ConstraintBaseTest):
             stdout_full=outdent(
                 f"""\
                 Ticket Constraints:
-                  {const.PCMK_ROLE_PROMOTED_PRIMARY} resource 'A' depends on ticket 'T' (id: my-constraint)
+                  {const.PCMK_ROLE_PROMOTED} resource 'A' depends on ticket 'T' (id: my-constraint)
                     loss-policy=fence
                 """
             ),
@@ -3403,7 +3425,7 @@ class TicketAdd(ConstraintBaseTest):
 
     def test_refuse_noexistent_resource_id(self):
         self.assert_pcs_fail(
-            "constraint ticket add T master AA loss-policy=fence".split(),
+            "constraint ticket add T Promoted AA loss-policy=fence".split(),
             "Error: 'AA' does not exist\n" + ERRORS_HAVE_OCCURRED,
         )
 
@@ -3418,6 +3440,17 @@ class TicketAdd(ConstraintBaseTest):
             ),
         )
 
+    def test_refuse_legacy_role(self):
+        self.assert_pcs_fail(
+            "constraint ticket add T Master A loss-policy=fence".split(),
+            (
+                "Error: 'Master' is not a valid role value, use {}\n".format(
+                    format_list(const.PCMK_ROLES)
+                )
+                + ERRORS_HAVE_OCCURRED
+            ),
+        )
+
     def test_refuse_duplicate_ticket(self):
         self.assert_pcs_success(
             (
@@ -3425,14 +3458,10 @@ class TicketAdd(ConstraintBaseTest):
                 "loss-policy=fence"
             ).split(),
         )
-        role = str(const.PCMK_ROLE_UNPROMOTED_LEGACY).lower()
+        role = str(const.PCMK_ROLE_UNPROMOTED).lower()
         self.assert_pcs_fail(
             f"constraint ticket add T {role} A loss-policy=fence".split(),
             (
-                f"Deprecation Warning: Value '{role}' of option role is "
-                "deprecated and might be removed in a future release, "
-                "therefore it should not be used, use "
-                f"'{const.PCMK_ROLE_UNPROMOTED}' value instead\n"
                 "Duplicate constraints:\n"
                 f"  {const.PCMK_ROLE_UNPROMOTED} resource 'A' depends on ticket 'T' (id: ticket-T-A-{const.PCMK_ROLE_UNPROMOTED})\n"
                 "    loss-policy=fence\n"
@@ -3442,17 +3471,11 @@ class TicketAdd(ConstraintBaseTest):
         )
 
     def test_accept_duplicate_ticket_with_force(self):
-        role = str(const.PCMK_ROLE_PROMOTED_LEGACY).lower()
+        role = str(const.PCMK_ROLE_PROMOTED).lower()
         self.assert_pcs_success(
             f"constraint ticket add T {role} A loss-policy=fence".split(),
-            stderr_full=(
-                f"Deprecation Warning: Value '{role}' of option role is "
-                "deprecated and might be removed in a future release, "
-                "therefore it should not be used, use "
-                f"'{const.PCMK_ROLE_PROMOTED}' value instead\n"
-            ),
         )
-        promoted_role = const.PCMK_ROLE_PROMOTED_PRIMARY
+        promoted_role = const.PCMK_ROLE_PROMOTED
         self.assert_pcs_success(
             (
                 f"constraint ticket add T {const.PCMK_ROLE_PROMOTED} A "
@@ -3574,22 +3597,16 @@ class TicketShow(ConstraintBaseTest):
         self.assert_pcs_success(
             "constraint ticket set A B setoptions ticket=T".split()
         )
-        role = str(const.PCMK_ROLE_PROMOTED_LEGACY).lower()
+        role = str(const.PCMK_ROLE_PROMOTED).lower()
         self.assert_pcs_success(
             f"constraint ticket add T {role} A loss-policy=fence".split(),
-            stderr_full=(
-                f"Deprecation Warning: Value '{role}' of option role is "
-                "deprecated and might be removed in a future release, "
-                "therefore it should not be used, use "
-                f"'{const.PCMK_ROLE_PROMOTED}' value instead\n"
-            ),
         )
         self.assert_pcs_success(
             "constraint ticket config".split(),
             outdent(
                 f"""\
                 Ticket Constraints:
-                  {const.PCMK_ROLE_PROMOTED_PRIMARY} resource 'A' depends on ticket 'T'
+                  {const.PCMK_ROLE_PROMOTED} resource 'A' depends on ticket 'T'
                     loss-policy=fence
                 Ticket Set Constraints:
                   Set Constraint:

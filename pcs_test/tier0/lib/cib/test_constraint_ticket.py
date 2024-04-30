@@ -45,13 +45,13 @@ class PrepareOptionsPlainTest(TestCase):
     @mock.patch("pcs.lib.cib.constraint.ticket._create_id")
     def test_prepare_correct_options(self, mock_create_id, _):
         mock_create_id.return_value = "generated_id"
-        role = str(const.PCMK_ROLE_PROMOTED_LEGACY).lower()
+        role = str(const.PCMK_ROLE_PROMOTED).lower()
         self.assertEqual(
             {
                 "id": "generated_id",
                 "loss-policy": "fence",
                 "rsc": "resourceA",
-                "rsc-role": const.PCMK_ROLE_PROMOTED_PRIMARY,
+                "rsc-role": const.PCMK_ROLE_PROMOTED,
                 "ticket": "ticket-key",
             },
             self.prepare(
@@ -59,16 +59,6 @@ class PrepareOptionsPlainTest(TestCase):
                 "ticket-key",
                 "resourceA",
             ),
-        )
-        self.report_processor.assert_reports(
-            [
-                fixture.deprecation(
-                    report_codes.DEPRECATED_OPTION_VALUE,
-                    option_name="role",
-                    deprecated_value=role,
-                    replaced_by=const.PCMK_ROLE_PROMOTED,
-                )
-            ]
         )
 
     @mock.patch("pcs.lib.cib.constraint.ticket._create_id")
@@ -132,8 +122,28 @@ class PrepareOptionsPlainTest(TestCase):
             ]
         )
 
-    def test_refuse_missing_ticket(self, _):
+    def test_refuse_legacy_role(self, _):
         role = str(const.PCMK_ROLE_UNPROMOTED_LEGACY).lower()
+        assert_raise_library_error(
+            lambda: self.prepare(
+                {"id": "id", "rsc-role": role}, "ticket-key", "resourceA"
+            ),
+        )
+        self.report_processor.assert_reports(
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    allowed_values=const.PCMK_ROLES,
+                    option_value=role,
+                    option_name="role",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+            ]
+        )
+
+    def test_refuse_missing_ticket(self, _):
+        role = str(const.PCMK_ROLE_UNPROMOTED).lower()
         assert_raise_library_error(
             lambda: self.prepare(
                 {"id": "id", "rsc-role": role}, "", "resourceA"
@@ -145,12 +155,6 @@ class PrepareOptionsPlainTest(TestCase):
                     report_codes.REQUIRED_OPTIONS_ARE_MISSING,
                     option_names=["ticket"],
                     option_type=None,
-                ),
-                fixture.deprecation(
-                    report_codes.DEPRECATED_OPTION_VALUE,
-                    option_name="role",
-                    deprecated_value=role,
-                    replaced_by=const.PCMK_ROLE_UNPROMOTED,
                 ),
             ]
         )
@@ -228,7 +232,7 @@ class PrepareOptionsPlainTest(TestCase):
             {
                 "id": "generated_id",
                 "rsc": resource_id,
-                "rsc-role": const.PCMK_ROLE_PROMOTED_PRIMARY,
+                "rsc-role": const.PCMK_ROLE_PROMOTED,
                 "ticket": ticket_key,
             }
         )
@@ -244,7 +248,7 @@ class PrepareOptionsPlainTest(TestCase):
             self.cib,
             ticket_key,
             resource_id,
-            const.PCMK_ROLE_PROMOTED_PRIMARY,
+            const.PCMK_ROLE_PROMOTED,
         )
 
 

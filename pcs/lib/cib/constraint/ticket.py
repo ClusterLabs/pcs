@@ -128,18 +128,7 @@ def prepare_options_plain(
     )
     role_value_validator.empty_string_valid = True
 
-    validators = [
-        role_value_validator,
-        validate.ValueDeprecated(
-            "rsc-role",
-            {
-                const.PCMK_ROLE_PROMOTED_LEGACY: const.PCMK_ROLE_PROMOTED,
-                const.PCMK_ROLE_UNPROMOTED_LEGACY: const.PCMK_ROLE_UNPROMOTED,
-            },
-            reports.ReportItemSeverity.deprecation(),
-            option_name_for_report="role",
-        ),
-    ]
+    validators = [role_value_validator]
     report_processor.report_list(
         validate.ValidatorAll(validators).validate(
             validate.values_to_pairs(

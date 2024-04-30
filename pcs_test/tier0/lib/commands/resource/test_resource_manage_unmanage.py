@@ -38,8 +38,8 @@ fixture_primitive_cib_managed_op_enabled = """
             <operations>
                 <op id="A-start" name="start" />
                 <op id="A-stop" name="stop" />
-                <op id="A-monitor-m" name="monitor" role="Master" />
-                <op id="A-monitor-s" name="monitor" role="Slave" />
+                <op id="A-monitor-m" name="monitor" role="Promoted" />
+                <op id="A-monitor-s" name="monitor" role="Unpromoted" />
             </operations>
         </primitive>
     </resources>
@@ -51,8 +51,8 @@ fixture_primitive_cib_managed_with_meta_op_enabled = """
             <operations>
                 <op id="A-start" name="start" />
                 <op id="A-stop" name="stop" />
-                <op id="A-monitor-m" name="monitor" role="Master" />
-                <op id="A-monitor-s" name="monitor" role="Slave" />
+                <op id="A-monitor-m" name="monitor" role="Promoted" />
+                <op id="A-monitor-s" name="monitor" role="Unpromoted" />
             </operations>
         </primitive>
     </resources>
@@ -64,9 +64,9 @@ fixture_primitive_cib_managed_with_meta_op_disabled = """
             <operations>
                 <op id="A-start" name="start" />
                 <op id="A-stop" name="stop" />
-                <op id="A-monitor-m" name="monitor" role="Master"
+                <op id="A-monitor-m" name="monitor" role="Promoted"
                     enabled="false" />
-                <op id="A-monitor-s" name="monitor" role="Slave"
+                <op id="A-monitor-s" name="monitor" role="Unpromoted"
                     enabled="false" />
             </operations>
         </primitive>
@@ -82,8 +82,8 @@ fixture_primitive_cib_unmanaged_op_enabled = """
             <operations>
                 <op id="A-start" name="start" />
                 <op id="A-stop" name="stop" />
-                <op id="A-monitor-m" name="monitor" role="Master" />
-                <op id="A-monitor-s" name="monitor" role="Slave" />
+                <op id="A-monitor-m" name="monitor" role="Promoted" />
+                <op id="A-monitor-s" name="monitor" role="Unpromoted" />
             </operations>
         </primitive>
     </resources>
@@ -98,9 +98,9 @@ fixture_primitive_cib_unmanaged_op_disabled = """
             <operations>
                 <op id="A-start" name="start" />
                 <op id="A-stop" name="stop" />
-                <op id="A-monitor-m" name="monitor" role="Master"
+                <op id="A-monitor-m" name="monitor" role="Promoted"
                     enabled="false" />
-                <op id="A-monitor-s" name="monitor" role="Slave"
+                <op id="A-monitor-s" name="monitor" role="Unpromoted"
                     enabled="false" />
             </operations>
         </primitive>

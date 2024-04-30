@@ -80,7 +80,6 @@ PCS_LONG_OPTIONS: Final = [
     "no-default-ops",
     "defaults",
     "nodesc",
-    "master",  # deprecated, replaced by --promoted
     "promoted",
     "name=",
     "group=",

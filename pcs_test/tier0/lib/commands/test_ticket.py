@@ -37,11 +37,11 @@ class CreateTest(TestCase):
                         />
                     </constraints>
                 """.format(
-                    role=const.PCMK_ROLE_PROMOTED_PRIMARY
+                    role=const.PCMK_ROLE_PROMOTED
                 )
             )
         )
-        role = str(const.PCMK_ROLE_PROMOTED_LEGACY).lower()
+        role = str(const.PCMK_ROLE_PROMOTED).lower()
 
         ticket_command.create(
             env_assist.get_env(),
@@ -52,14 +52,39 @@ class CreateTest(TestCase):
                 "rsc-role": role,
             },
         )
+
+    def test_refuse_legacy_role(self):
+        env_assist, config = get_env_tools(test_case=self)
+        config.runner.cib.load(
+            filename="cib-empty-3.7.xml",
+            resources="""
+                    <resources>
+                        <primitive id="resourceA" class="service" type="exim"/>
+                    </resources>
+                """,
+        )
+
+        role = str(const.PCMK_ROLE_UNPROMOTED_LEGACY).lower()
+        env_assist.assert_raise_library_error(
+            lambda: ticket_command.create(
+                env_assist.get_env(),
+                "ticketA",
+                "resourceA",
+                {
+                    "rsc-role": role,
+                },
+            ),
+        )
         env_assist.assert_reports(
             [
-                fixture.deprecation(
-                    report_codes.DEPRECATED_OPTION_VALUE,
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
                     option_name="role",
-                    deprecated_value=role,
-                    replaced_by=const.PCMK_ROLE_PROMOTED,
-                )
+                    option_value=role,
+                    allowed_values=const.PCMK_ROLES,
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
             ]
         )
 
@@ -71,7 +96,6 @@ class CreateTest(TestCase):
                 env_assist.get_env(),
                 "ticketA",
                 "resourceA",
-                str(const.PCMK_ROLE_UNPROMOTED_LEGACY).lower(),
                 {"loss-policy": "fence"},
             ),
         )

@@ -50,7 +50,7 @@ class CreateWithSetTest(TestCase):
     def setUp(self):
         self.cib, self.constraint_section = fixture_cib_and_constraints()
         self.env = fixture_env(self.cib)
-        self.role = const.PCMK_ROLE_PROMOTED_LEGACY
+        self.role = const.PCMK_ROLE_PROMOTED
         self.independent_cib = etree.XML(etree.tostring(self.cib))
 
     def create(self, duplication_allowed=False):
@@ -73,7 +73,7 @@ class CreateWithSetTest(TestCase):
             etree.XML(
                 f"""
             <rsc_some id="some_id" symmetrical="true">
-                  <resource_set id="some_id_set" role="{const.PCMK_ROLE_PROMOTED_PRIMARY}">
+                  <resource_set id="some_id_set" role="{const.PCMK_ROLE_PROMOTED}">
                       <resource_ref id="A"></resource_ref>
                       <resource_ref id="B"></resource_ref>
                   </resource_set>
@@ -89,14 +89,20 @@ class CreateWithSetTest(TestCase):
             etree.tostring(self.independent_cib).decode(),
             etree.tostring(self.cib).decode(),
         )
+
+    def test_refuse_legacy_role(self):
+        self.role = const.PCMK_ROLE_PROMOTED_LEGACY
+        assert_raise_library_error(self.create)
         self.env.report_processor.assert_reports(
             [
-                fixture.deprecation(
-                    report_codes.DEPRECATED_OPTION_VALUE,
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
                     option_name="role",
-                    deprecated_value=self.role,
-                    replaced_by=const.PCMK_ROLE_PROMOTED,
-                )
+                    option_value=self.role,
+                    allowed_values=const.PCMK_ROLES,
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
             ]
         )
 
@@ -115,15 +121,6 @@ class CreateWithSetTest(TestCase):
                     report_codes.FORCE,
                 ),
             ]
-            + [
-                fixture.deprecation(
-                    report_codes.DEPRECATED_OPTION_VALUE,
-                    option_name="role",
-                    deprecated_value=self.role,
-                    replaced_by=const.PCMK_ROLE_PROMOTED,
-                )
-                for _ in range(2)
-            ]
         )
 
     def test_put_duplicate_constraint_when_duplication_allowed(self):
@@ -141,7 +138,7 @@ class CreateWithSetTest(TestCase):
             etree.XML(
                 f"""
             <rsc_some id="some_id" symmetrical="true">
-                <resource_set id="some_id_set" role="{const.PCMK_ROLE_PROMOTED_PRIMARY}">
+                <resource_set id="some_id_set" role="{const.PCMK_ROLE_PROMOTED}">
                     <resource_ref id="A"></resource_ref>
                     <resource_ref id="B"></resource_ref>
                 </resource_set>
@@ -157,7 +154,7 @@ class CreateWithSetTest(TestCase):
             etree.XML(
                 f"""
             <rsc_some id="some_id" symmetrical="true">
-                <resource_set id="some_id_set-2" role="{const.PCMK_ROLE_PROMOTED_PRIMARY}">
+                <resource_set id="some_id_set-2" role="{const.PCMK_ROLE_PROMOTED}">
                     <resource_ref id="A"></resource_ref>
                     <resource_ref id="B"></resource_ref>
                 </resource_set>

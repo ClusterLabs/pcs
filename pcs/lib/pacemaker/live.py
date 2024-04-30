@@ -634,37 +634,53 @@ def resource_refresh(
     return join_multilines([stdout, stderr])
 
 
-def resource_move(runner, resource_id, node=None, master=False, lifetime=None):
+def resource_move(
+    runner: CommandRunner,
+    resource_id: str,
+    node: Optional[str] = None,
+    promoted: bool = False,
+    lifetime: Optional[str] = None,
+) -> Tuple[str, str, int]:
     return _resource_move_ban_clear(
         runner,
         "--move",
         resource_id,
         node=node,
-        master=master,
+        promoted=promoted,
         lifetime=lifetime,
     )
 
 
-def resource_ban(runner, resource_id, node=None, master=False, lifetime=None):
+def resource_ban(
+    runner: CommandRunner,
+    resource_id: str,
+    node: Optional[str] = None,
+    promoted: bool = False,
+    lifetime: Optional[str] = None,
+) -> Tuple[str, str, int]:
     return _resource_move_ban_clear(
         runner,
         "--ban",
         resource_id,
         node=node,
-        master=master,
+        promoted=promoted,
         lifetime=lifetime,
     )
 
 
 def resource_unmove_unban(
-    runner, resource_id, node=None, master=False, expired=False
-):
+    runner: CommandRunner,
+    resource_id: str,
+    node: Optional[str] = None,
+    promoted: bool = False,
+    expired: bool = False,
+) -> Tuple[str, str, int]:
     return _resource_move_ban_clear(
         runner,
         "--clear",
         resource_id,
         node=node,
-        master=master,
+        promoted=promoted,
         expired=expired,
     )
 
@@ -676,14 +692,14 @@ def has_resource_unmove_unban_expired_support(runner):
 
 
 def _resource_move_ban_clear(
-    runner,
-    action,
-    resource_id,
-    node=None,
-    master=False,
-    lifetime=None,
-    expired=False,
-):
+    runner: CommandRunner,
+    action: str,
+    resource_id: str,
+    node: Optional[str] = None,
+    promoted: bool = False,
+    lifetime: Optional[str] = None,
+    expired: bool = False,
+) -> Tuple[str, str, int]:
     command = [
         settings.crm_resource_exec,
         action,
@@ -692,8 +708,8 @@ def _resource_move_ban_clear(
     ]
     if node:
         command.extend(["--node", node])
-    if master:
-        command.extend(["--master"])
+    if promoted:
+        command.extend(["--promoted"])
     if lifetime:
         command.extend(["--lifetime", lifetime])
     if expired:

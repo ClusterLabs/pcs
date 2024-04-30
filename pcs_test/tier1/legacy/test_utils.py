@@ -814,13 +814,13 @@ class UtilsTest(TestCase):
             </resource>
         </clone>
         <clone id="myMaster">
-            <resource id="myMasteredResource:1" role="{const.PCMK_ROLE_UNPROMOTED_PRIMARY}">
+            <resource id="myMasteredResource:1" role="{const.PCMK_ROLE_UNPROMOTED}">
                 <node name="rh70-node2" />
             </resource>
-            <resource id="myMasteredResource" role="{const.PCMK_ROLE_UNPROMOTED_PRIMARY}">
+            <resource id="myMasteredResource" role="{const.PCMK_ROLE_UNPROMOTED}">
                 <node name="rh70-node3" />
             </resource>
-            <resource id="myMasteredResource" role="{const.PCMK_ROLE_PROMOTED_PRIMARY}">
+            <resource id="myMasteredResource" role="{const.PCMK_ROLE_PROMOTED}">
                 <node name="rh70-node1" />
             </resource>
         </clone>
@@ -853,17 +853,17 @@ class UtilsTest(TestCase):
         </clone>
         <clone id="myGroupMaster">
             <group id="myMasteredGroup:0">
-                 <resource id="myMasteredGroupedResource" role="{const.PCMK_ROLE_UNPROMOTED_PRIMARY}">
+                 <resource id="myMasteredGroupedResource" role="{const.PCMK_ROLE_UNPROMOTED}">
                      <node name="rh70-node1" />
                  </resource>
             </group>
             <group id="myMasteredGroup:1">
-                 <resource id="myMasteredGroupedResource" role="{const.PCMK_ROLE_PROMOTED_PRIMARY}">
+                 <resource id="myMasteredGroupedResource" role="{const.PCMK_ROLE_PROMOTED}">
                      <node name="rh70-node2" />
                  </resource>
             </group>
             <group id="myMasteredGroup:2">
-                 <resource id="myMasteredGroupedResource" role="{const.PCMK_ROLE_UNPROMOTED_PRIMARY}">
+                 <resource id="myMasteredGroupedResource" role="{const.PCMK_ROLE_UNPROMOTED}">
                      <node name="rh70-node3" />
                  </resource>
             </group>
@@ -905,8 +905,8 @@ class UtilsTest(TestCase):
                     "Resource 'myMasteredResource' is {promoted} on node "
                     "rh70-node1; {unpromoted} on nodes rh70-node2, rh70-node3."
                 ).format(
-                    promoted=str(const.PCMK_ROLE_PROMOTED_PRIMARY).lower(),
-                    unpromoted=str(const.PCMK_ROLE_UNPROMOTED_PRIMARY).lower(),
+                    promoted=str(const.PCMK_ROLE_PROMOTED).lower(),
+                    unpromoted=str(const.PCMK_ROLE_UNPROMOTED).lower(),
                 ),
                 "is_running": True,
             },
@@ -918,8 +918,8 @@ class UtilsTest(TestCase):
                     "Resource 'myMaster' is {promoted} on node "
                     "rh70-node1; {unpromoted} on nodes rh70-node2, rh70-node3."
                 ).format(
-                    promoted=str(const.PCMK_ROLE_PROMOTED_PRIMARY).lower(),
-                    unpromoted=str(const.PCMK_ROLE_UNPROMOTED_PRIMARY).lower(),
+                    promoted=str(const.PCMK_ROLE_PROMOTED).lower(),
+                    unpromoted=str(const.PCMK_ROLE_UNPROMOTED).lower(),
                 ),
                 "is_running": True,
             },
@@ -971,8 +971,8 @@ class UtilsTest(TestCase):
                     "Resource 'myMasteredGroupedResource' is {promoted} on node "
                     "rh70-node2; {unpromoted} on nodes rh70-node1, rh70-node3."
                 ).format(
-                    promoted=str(const.PCMK_ROLE_PROMOTED_PRIMARY).lower(),
-                    unpromoted=str(const.PCMK_ROLE_UNPROMOTED_PRIMARY).lower(),
+                    promoted=str(const.PCMK_ROLE_PROMOTED).lower(),
+                    unpromoted=str(const.PCMK_ROLE_UNPROMOTED).lower(),
                 ),
                 "is_running": True,
             },
@@ -984,8 +984,8 @@ class UtilsTest(TestCase):
                     "Resource 'myMasteredGroup' is {promoted} on node "
                     "rh70-node2; {unpromoted} on nodes rh70-node1, rh70-node3."
                 ).format(
-                    promoted=str(const.PCMK_ROLE_PROMOTED_PRIMARY).lower(),
-                    unpromoted=str(const.PCMK_ROLE_UNPROMOTED_PRIMARY).lower(),
+                    promoted=str(const.PCMK_ROLE_PROMOTED).lower(),
+                    unpromoted=str(const.PCMK_ROLE_UNPROMOTED).lower(),
                 ),
                 "is_running": True,
             },
@@ -997,8 +997,8 @@ class UtilsTest(TestCase):
                     "Resource 'myGroupMaster' is {promoted} on node "
                     "rh70-node2; {unpromoted} on nodes rh70-node1, rh70-node3."
                 ).format(
-                    promoted=str(const.PCMK_ROLE_PROMOTED_PRIMARY).lower(),
-                    unpromoted=str(const.PCMK_ROLE_UNPROMOTED_PRIMARY).lower(),
+                    promoted=str(const.PCMK_ROLE_PROMOTED).lower(),
+                    unpromoted=str(const.PCMK_ROLE_UNPROMOTED).lower(),
                 ),
                 "is_running": True,
             },

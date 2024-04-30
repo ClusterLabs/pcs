@@ -122,13 +122,13 @@ def validate_move_resources_to_group(
 
 
 def validate_move(
-    resource_element: _Element, master: bool
+    resource_element: _Element, promotable: bool
 ) -> reports.ReportItemList:
     """
     Validate moving a resource to a node
 
     resource_element -- the resource to be moved
-    master -- limit moving to the master role
+    promotable -- limit moving to the promotable role
     """
     report_list = []
 
@@ -174,7 +174,7 @@ def validate_move(
     # of its promotable clone. To be consistent, we do not allow to move
     # demoted instances of promotables' inner resources either. See
     # rhbz#1875301 for details.
-    if not master and analysis.is_in_promotable_clone:
+    if not promotable and analysis.is_in_promotable_clone:
         report_list.append(
             reports.ReportItem.error(
                 reports.messages.CannotMoveResourcePromotableInner(
@@ -183,7 +183,7 @@ def validate_move(
                 )
             )
         )
-    elif master and not analysis.is_promotable_clone:
+    elif promotable and not analysis.is_promotable_clone:
         report_list.append(
             reports.ReportItem.error(
                 reports.messages.CannotMoveResourceMasterResourceNotPromotable(
@@ -197,13 +197,13 @@ def validate_move(
 
 
 def validate_ban(
-    resource_element: _Element, master: bool
+    resource_element: _Element, promotable: bool
 ) -> reports.ReportItemList:
     """
     Validate banning a resource on a node
 
     resource_element -- the resource to be banned
-    master -- limit banning to the master role
+    promotable -- limit banning to the promotable role
     """
     report_list = []
 
@@ -228,7 +228,7 @@ def validate_ban(
             )
         )
 
-    if master and not analysis.is_promotable_clone:
+    if promotable and not analysis.is_promotable_clone:
         report_list.append(
             reports.ReportItem.error(
                 reports.messages.CannotBanResourceMasterResourceNotPromotable(
@@ -242,13 +242,13 @@ def validate_ban(
 
 
 def validate_unmove_unban(
-    resource_element: _Element, master: bool
+    resource_element: _Element, promotable: bool
 ) -> reports.ReportItemList:
     """
     Validate unmoving/unbanning a resource to/on nodes
 
     resource_element -- the resource to be unmoved/unbanned
-    master -- limit unmoving/unbanning to the master role
+    promotable -- limit unmoving/unbanning to the promotable role
     """
     report_list = []
 
@@ -263,7 +263,7 @@ def validate_unmove_unban(
 
     analysis = _validate_move_ban_clear_analyzer(resource_element)
 
-    if master and not analysis.is_promotable_clone:
+    if promotable and not analysis.is_promotable_clone:
         report_list.append(
             reports.ReportItem.error(
                 reports.messages.CannotUnmoveUnbanResourceMasterResourceNotPromotable(

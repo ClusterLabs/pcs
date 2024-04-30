@@ -78,6 +78,15 @@ class ParametrizedContainerMixin(SetUpMixin):
     bundle_id = None
     image = None
     initial_cib_filename = "cib-empty-3.2.xml"
+    allowed_options = [
+        "image",
+        "network",
+        "options",
+        "promoted-max",
+        "replicas",
+        "replicas-per-host",
+        "run-command",
+    ]
 
     def test_all_options(self):
         self.config.env.push_cib(
@@ -113,40 +122,24 @@ class ParametrizedContainerMixin(SetUpMixin):
             }
         )
 
-    def test_deprecated_options(self):
-        # Setting both deprecated options and their new variants is tested in
-        # self.test_options_errors. This shows deprecated options emit warning
-        # even when not forced.
-        self.config.env.push_cib(
-            resources="""
-                <resources>
-                    <bundle id="{bundle_id}">
-                        <{container_type} image="{image}" masters="1" />
-                    </bundle>
-                </resources>
-            """.format(
-                container_type=self.container_type,
-                bundle_id=self.bundle_id,
-                image=self.image,
-            ),
-        )
-        self.run_bundle_cmd(
-            container_options={
-                "image": self.image,
-                "masters": "1",
-            },
+    def test_legacy_options_no_longer_allowed(self):
+        self.env_assist.assert_raise_library_error(
+            lambda: self.run_bundle_cmd(
+                container_options={
+                    "image": self.image,
+                    "masters": "1",
+                },
+            )
         )
         self.env_assist.assert_reports(
             [
-                (
-                    severities.DEPRECATION,
-                    report_codes.DEPRECATED_OPTION,
-                    {
-                        "option_name": "masters",
-                        "option_type": "container",
-                        "replaced_by": ["promoted-max"],
-                    },
-                    None,
+                fixture.error(
+                    report_codes.INVALID_OPTIONS,
+                    force_code=report_codes.FORCE,
+                    option_names=["masters"],
+                    option_type="container",
+                    allowed=self.allowed_options,
+                    allowed_patterns=[],
                 ),
             ]
         )
@@ -157,7 +150,6 @@ class ParametrizedContainerMixin(SetUpMixin):
                 container_options={
                     "replicas-per-host": "0",
                     "replicas": "0",
-                    "masters": "-1",
                     "promoted-max": "-2",
                 },
                 force_options=True,
@@ -165,16 +157,6 @@ class ParametrizedContainerMixin(SetUpMixin):
         )
         self.env_assist.assert_reports(
             [
-                (
-                    severities.DEPRECATION,
-                    report_codes.DEPRECATED_OPTION,
-                    {
-                        "option_name": "masters",
-                        "option_type": "container",
-                        "replaced_by": ["promoted-max"],
-                    },
-                    None,
-                ),
                 (
                     severities.ERROR,
                     report_codes.REQUIRED_OPTIONS_ARE_MISSING,
@@ -188,31 +170,11 @@ class ParametrizedContainerMixin(SetUpMixin):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    option_name="masters",
-                    option_value="-1",
-                    allowed_values="a non-negative integer",
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
                     option_name="promoted-max",
                     option_value="-2",
                     allowed_values="a non-negative integer",
                     cannot_be_empty=False,
                     forbidden_characters=None,
-                ),
-                (
-                    severities.ERROR,
-                    report_codes.MUTUALLY_EXCLUSIVE_OPTIONS,
-                    {
-                        "option_names": [
-                            "masters",
-                            "promoted-max",
-                        ],
-                        "option_type": "container",
-                    },
-                    None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,

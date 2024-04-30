@@ -106,7 +106,6 @@ class Basics(TestCase):
 class ContainerParametrized(TestCase):
     allowed_options = [
         "image",
-        "masters",
         "network",
         "options",
         "promoted-max",
@@ -151,17 +150,6 @@ class ContainerParametrized(TestCase):
         """.format(
             container_type=self.container_type
         )
-
-    fixture_report_deprecated_masters = (
-        severities.DEPRECATION,
-        report_codes.DEPRECATED_OPTION,
-        {
-            "option_name": "masters",
-            "option_type": "container",
-            "replaced_by": ["promoted-max"],
-        },
-        None,
-    )
 
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
@@ -321,7 +309,6 @@ class ContainerParametrized(TestCase):
                 self.env_assist.get_env(),
                 "B1",
                 container_options={
-                    "masters": "-1",
                     "promoted-max": "-2",
                     "replicas": "0",
                     "replicas-per-host": "0",
@@ -330,15 +317,6 @@ class ContainerParametrized(TestCase):
         )
         self.env_assist.assert_reports(
             [
-                self.fixture_report_deprecated_masters,
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_name="masters",
-                    option_value="-1",
-                    allowed_values="a non-negative integer",
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     option_name="promoted-max",
@@ -346,18 +324,6 @@ class ContainerParametrized(TestCase):
                     allowed_values="a non-negative integer",
                     cannot_be_empty=False,
                     forbidden_characters=None,
-                ),
-                (
-                    severities.ERROR,
-                    report_codes.MUTUALLY_EXCLUSIVE_OPTIONS,
-                    {
-                        "option_names": [
-                            "masters",
-                            "promoted-max",
-                        ],
-                        "option_type": "container",
-                    },
-                    None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
@@ -378,25 +344,33 @@ class ContainerParametrized(TestCase):
             ]
         )
 
-    def _test_deprecated_options_set(self):
-        # Setting both deprecated options and their new variants is tested in
-        # self.test_options_errors. This shows deprecated options emit warning
-        # even when not forced.
-        (
-            self.config.runner.cib.load(
-                resources=fixture_resources_minimal(self.container_type)
-            ).env.push_cib(resources=self.fixture_cib_masters)
+    def _test_legacy_options_no_longer_allowed(self):
+        self.config.runner.cib.load(
+            resources=fixture_resources_minimal(self.container_type)
         )
-        resource.bundle_update(
-            self.env_assist.get_env(),
-            "B1",
-            container_options={
-                "masters": "2",
-            },
+        self.env_assist.assert_raise_library_error(
+            lambda: resource.bundle_update(
+                self.env_assist.get_env(),
+                "B1",
+                container_options={
+                    "masters": "2",
+                },
+            )
         )
-        self.env_assist.assert_reports([self.fixture_report_deprecated_masters])
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTIONS,
+                    force_code=report_codes.FORCE,
+                    option_names=["masters"],
+                    option_type="container",
+                    allowed=self.allowed_options,
+                    allowed_patterns=[],
+                ),
+            ]
+        )
 
-    def _test_deprecated_options_remove(self):
+    def _test_legacy_options_can_be_removed(self):
         (
             self.config.runner.cib.load(
                 resources=self.fixture_cib_masters
@@ -428,50 +402,6 @@ class ContainerParametrized(TestCase):
                 "promoted-max": "",
             },
         )
-
-    def _test_masters_set_after_promoted_max(self):
-        (self.config.runner.cib.load(resources=self.fixture_cib_promoted_max))
-        self.env_assist.assert_raise_library_error(
-            lambda: resource.bundle_update(
-                self.env_assist.get_env(),
-                "B1",
-                container_options={
-                    "masters": "2",
-                },
-            )
-        )
-        self.env_assist.assert_reports(
-            [
-                self.fixture_report_deprecated_masters,
-                (
-                    severities.ERROR,
-                    report_codes.PREREQUISITE_OPTION_MUST_NOT_BE_SET,
-                    {
-                        "option_name": "masters",
-                        "option_type": "container",
-                        "prerequisite_name": "promoted-max",
-                        "prerequisite_type": "container",
-                    },
-                    None,
-                ),
-            ]
-        )
-
-    def _test_masters_set_after_promoted_max_with_remove(self):
-        (
-            self.config.runner.cib.load(
-                resources=self.fixture_cib_promoted_max
-            ).env.push_cib(resources=self.fixture_cib_masters)
-        )
-        resource.bundle_update(
-            self.env_assist.get_env(),
-            "B1",
-            container_options={
-                "masters": "2",
-                "promoted-max": "",
-            },
-        )
-        self.env_assist.assert_reports([self.fixture_report_deprecated_masters])
 
     def _test_promoted_max_set_after_masters(self):
         (self.config.runner.cib.load(resources=self.fixture_cib_masters))
@@ -1191,7 +1121,7 @@ class Meta(TestCase):
     fixture_no_meta = """
         <resources>
             <bundle id="B1">
-                <docker image="pcs:test" masters="3" replicas="6"/>
+                <docker image="pcs:test" promoted-max="3" replicas="6"/>
             </bundle>
         </resources>
     """
@@ -1200,7 +1130,7 @@ class Meta(TestCase):
         <resources>
             <bundle id="B1">
                 <meta_attributes id="B1-meta_attributes" />
-                <docker image="pcs:test" masters="3" replicas="6"/>
+                <docker image="pcs:test" promoted-max="3" replicas="6"/>
             </bundle>
         </resources>
     """
@@ -1212,7 +1142,7 @@ class Meta(TestCase):
                 <nvpair id="B1-meta_attributes-target-role"
                     name="target-role" value="Stopped" />
                 </meta_attributes>
-                <docker image="pcs:test" masters="3" replicas="6"/>
+                <docker image="pcs:test" promoted-max="3" replicas="6"/>
             </bundle>
         </resources>
     """
@@ -1260,7 +1190,7 @@ class Meta(TestCase):
                     <nvpair id="B1-meta_attributes-is-managed"
                         name="is-managed" value="false" />
                     </meta_attributes>
-                    <docker image="pcs:test" masters="3" replicas="6"/>
+                    <docker image="pcs:test" promoted-max="3" replicas="6"/>
                 </bundle>
             </resources>
         """
@@ -1275,7 +1205,7 @@ class Meta(TestCase):
                     <nvpair id="B1-meta_attributes-resource-stickiness"
                         name="resource-stickiness" value="100" />
                     </meta_attributes>
-                    <docker image="pcs:test" masters="3" replicas="6"/>
+                    <docker image="pcs:test" promoted-max="3" replicas="6"/>
                 </bundle>
             </resources>
         """

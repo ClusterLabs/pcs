@@ -206,18 +206,33 @@ class ValidateWithRuleCommonMixin:
             "#uname eq node1",
             {
                 "id": "ruleid",
-                "role": const.PCMK_ROLE_PROMOTED_LEGACY,
+                "role": const.PCMK_ROLE_UNPROMOTED,
                 "score-attribute": "something",
+            },
+        )
+        assert_report_item_list_equal(validator.validate(), [])
+
+    def test_refuse_legacy_role(self):
+        validator = self.get_validator(
+            self.id_provider,
+            "#uname eq node1",
+            {
+                "role": const.PCMK_ROLE_PROMOTED_LEGACY,
             },
         )
         assert_report_item_list_equal(
             validator.validate(),
             [
-                fixture.deprecation(
-                    reports.codes.DEPRECATED_OPTION_VALUE,
+                fixture.error(
+                    reports.codes.INVALID_OPTION_VALUE,
                     option_name="role",
-                    deprecated_value=const.PCMK_ROLE_PROMOTED_LEGACY,
-                    replaced_by=const.PCMK_ROLE_PROMOTED_PRIMARY,
+                    option_value=const.PCMK_ROLE_PROMOTED_LEGACY,
+                    allowed_values=(
+                        const.PCMK_ROLE_PROMOTED,
+                        const.PCMK_ROLE_UNPROMOTED,
+                    ),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
             ],
         )
@@ -267,8 +282,8 @@ class ValidateWithRuleCommonMixin:
                             option_name="role",
                             option_value="bad role",
                             allowed_values=(
-                                const.PCMK_ROLES_PROMOTED
-                                + const.PCMK_ROLES_UNPROMOTED
+                                const.PCMK_ROLE_PROMOTED,
+                                const.PCMK_ROLE_UNPROMOTED,
                             ),
                             cannot_be_empty=False,
                             forbidden_characters=None,

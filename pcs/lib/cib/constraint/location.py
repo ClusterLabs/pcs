@@ -241,15 +241,7 @@ class ValidateWithRuleBase:
             validate.ValueScore("score"),
             validate.ValueIn(
                 "role",
-                const.PCMK_ROLES_PROMOTED + const.PCMK_ROLES_UNPROMOTED,
-            ),
-            validate.ValueDeprecated(
-                "role",
-                {
-                    const.PCMK_ROLE_PROMOTED_LEGACY: const.PCMK_ROLE_PROMOTED,
-                    const.PCMK_ROLE_UNPROMOTED_LEGACY: const.PCMK_ROLE_UNPROMOTED,
-                },
-                reports.ReportItemSeverity.deprecation(),
+                (const.PCMK_ROLE_PROMOTED, const.PCMK_ROLE_UNPROMOTED),
             ),
         ]
         return validate.ValidatorAll(validators_rule).validate(

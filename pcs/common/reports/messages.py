@@ -65,7 +65,7 @@ def _resource_move_ban_clear_master_resource_not_promotable(
     promotable_id: str,
 ) -> str:
     return (
-        "when specifying master you must use the promotable clone id{_id}"
+        "when specifying promoted you must use the promotable clone id{_id}"
     ).format(
         _id=format_optional(promotable_id, " ({})"),
     )

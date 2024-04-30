@@ -14,6 +14,7 @@ from pcs.lib.errors import LibraryError
 from pcs.lib.resource_agent import ResourceAgentName
 
 from pcs_test.tools import fixture
+from pcs_test.tools.assertions import assert_raise_library_error
 from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import outdent
@@ -139,8 +140,8 @@ wait_error_message = outdent(
 def fixture_cib_primitive_stateful(
     use_legacy_roles=False, include_reload=True, res_id="S1"
 ):
-    promoted_role = const.PCMK_ROLE_PROMOTED_PRIMARY
-    unpromoted_role = const.PCMK_ROLE_UNPROMOTED_PRIMARY
+    promoted_role = const.PCMK_ROLE_PROMOTED
+    unpromoted_role = const.PCMK_ROLE_UNPROMOTED
     if use_legacy_roles:
         promoted_role = const.PCMK_ROLE_PROMOTED_LEGACY
         unpromoted_role = const.PCMK_ROLE_UNPROMOTED_LEGACY
@@ -441,23 +442,35 @@ class CreateRolesNormalization(TestCase):
             ]
         )
 
-    def test_roles_normalization_user_defined(self):
-        self.prepare(True, False)
-        self.config.env.push_cib(
-            resources=fixture_cib_resources_xml(
-                fixture_cib_primitive_stateful(
-                    use_legacy_roles=True, include_reload=False
-                )
+    def assert_old_roles_refused(self):
+        assert_raise_library_error(
+            lambda: self.create(
+                [
+                    dict(name="start", role=const.PCMK_ROLE_PROMOTED_LEGACY),
+                    dict(name="stop", role=const.PCMK_ROLE_UNPROMOTED_LEGACY),
+                ]
             )
         )
-        promoted_role = str(const.PCMK_ROLE_PROMOTED_LEGACY).lower()
-        self.create(
+        self.env_assist.assert_reports(
             [
-                dict(name="start", role=promoted_role),
-                dict(name="stop", role=const.PCMK_ROLE_UNPROMOTED_LEGACY),
+                fixture.error(
+                    reports.codes.INVALID_OPTION_VALUE,
+                    option_name="role",
+                    option_value=role,
+                    allowed_values=const.PCMK_ROLES,
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                )
+                for role in (
+                    const.PCMK_ROLE_PROMOTED_LEGACY,
+                    const.PCMK_ROLE_UNPROMOTED_LEGACY,
+                )
             ]
         )
-        self.assert_deprecated_reports(promoted_deprecated=promoted_role)
+
+    def test_roles_normalization_user_defined(self):
+        self.prepare(True, False)
+        self.assert_old_roles_refused()
 
     def test_roles_normalization_user_defined_new_roles(self):
         self.prepare(True, False)
@@ -477,19 +490,7 @@ class CreateRolesNormalization(TestCase):
 
     def test_roles_normalization_user_defined_with_cib_support(self):
         self.prepare(True, True)
-        self.config.env.push_cib(
-            resources=fixture_cib_resources_xml(
-                fixture_cib_primitive_stateful(include_reload=False)
-            )
-        )
-        unpromoted_role = str(const.PCMK_ROLE_UNPROMOTED_LEGACY).lower()
-        self.create(
-            [
-                dict(name="start", role=const.PCMK_ROLE_PROMOTED_LEGACY),
-                dict(name="stop", role=unpromoted_role),
-            ]
-        )
-        self.assert_deprecated_reports(unpromoted_deprecated=unpromoted_role)
+        self.assert_old_roles_refused()
 
     def test_roles_normalization_user_defined_new_roles_with_cib_support(self):
         self.prepare(True, True)
@@ -507,18 +508,7 @@ class CreateRolesNormalization(TestCase):
 
     def test_roles_normalization_agent(self):
         self.prepare(False, False)
-        self.config.env.push_cib(
-            resources=fixture_cib_resources_xml(
-                fixture_cib_primitive_stateful(use_legacy_roles=True)
-            )
-        )
-        self.create(
-            [
-                dict(name="start", role=const.PCMK_ROLE_PROMOTED_LEGACY),
-                dict(name="stop", role=const.PCMK_ROLE_UNPROMOTED_LEGACY),
-            ]
-        )
-        self.assert_deprecated_reports()
+        self.assert_old_roles_refused()
 
     def test_roles_normalization_agent_new_roles(self):
         self.prepare(False, False)
@@ -536,18 +526,7 @@ class CreateRolesNormalization(TestCase):
 
     def test_roles_normalization_agent_with_cib_support(self):
         self.prepare(False, True)
-        self.config.env.push_cib(
-            resources=fixture_cib_resources_xml(
-                fixture_cib_primitive_stateful()
-            )
-        )
-        self.create(
-            [
-                dict(name="start", role=const.PCMK_ROLE_PROMOTED_LEGACY),
-                dict(name="stop", role=const.PCMK_ROLE_UNPROMOTED_LEGACY),
-            ]
-        )
-        self.assert_deprecated_reports()
+        self.assert_old_roles_refused()
 
     def test_roles_normalization_agent_new_roles_with_cib_support(self):
         self.prepare(False, True)

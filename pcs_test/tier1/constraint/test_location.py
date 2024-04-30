@@ -194,7 +194,7 @@ class CreateWithRule(RuleBaseMixin, TestCase):
 
     def test_errors(self):
         roles = format_list(
-            const.PCMK_ROLES_PROMOTED + const.PCMK_ROLES_UNPROMOTED
+            [const.PCMK_ROLE_PROMOTED, const.PCMK_ROLE_UNPROMOTED]
         )
         self.assert_pcs_fail(
             (
@@ -364,7 +364,7 @@ class RuleAdd(RuleBaseMixin, TestCase):
 
     def test_errors(self):
         roles = format_list(
-            const.PCMK_ROLES_PROMOTED + const.PCMK_ROLES_UNPROMOTED
+            [const.PCMK_ROLE_PROMOTED, const.PCMK_ROLE_UNPROMOTED]
         )
         self.assert_pcs_fail(
             "constraint rule add loc-rule role=bad-role bad=option #uname eq".split(),

@@ -185,14 +185,6 @@ def _validate_operation_list(
             severity=severity,
         ),
         validate.ValueIn("role", const.PCMK_ROLES),
-        validate.ValueDeprecated(
-            "role",
-            {
-                const.PCMK_ROLE_PROMOTED_LEGACY: const.PCMK_ROLE_PROMOTED,
-                const.PCMK_ROLE_UNPROMOTED_LEGACY: const.PCMK_ROLE_UNPROMOTED,
-            },
-            reports.ReportItemSeverity.deprecation(),
-        ),
         validate.ValueIn("on-fail", ON_FAIL_VALUES),
         validate.ValuePcmkBoolean("record-pending"),
         validate.ValuePcmkBoolean("enabled"),

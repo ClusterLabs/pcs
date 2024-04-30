@@ -6,16 +6,16 @@ def get_value_for_cib(
 ) -> const.PcmkRoleType:
     if is_latest_supported:
         return get_value_primary(role)
-    if role in const.PCMK_ROLES_PROMOTED:
+    if role == const.PCMK_ROLE_PROMOTED:
         return const.PCMK_ROLE_PROMOTED_LEGACY
-    if role in const.PCMK_ROLES_UNPROMOTED:
+    if role == const.PCMK_ROLE_UNPROMOTED:
         return const.PCMK_ROLE_UNPROMOTED_LEGACY
     return role
 
 
 def get_value_primary(role: const.PcmkRoleType) -> const.PcmkRoleType:
-    if role in const.PCMK_ROLES_PROMOTED:
-        return const.PCMK_ROLE_PROMOTED_PRIMARY
-    if role in const.PCMK_ROLES_UNPROMOTED:
-        return const.PCMK_ROLE_UNPROMOTED_PRIMARY
+    if role == const.PCMK_ROLE_PROMOTED_LEGACY:
+        return const.PCMK_ROLE_PROMOTED
+    if role == const.PCMK_ROLE_UNPROMOTED_LEGACY:
+        return const.PCMK_ROLE_UNPROMOTED
     return role

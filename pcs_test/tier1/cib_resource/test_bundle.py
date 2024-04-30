@@ -167,37 +167,15 @@ class BundleCreate(BundleCreateCommon):
             """,
         )
 
-    def test_deprecated_masters(self):
-        self.assert_effect(
+    def test_legacy_masters_not_allowed(self):
+        self.assert_pcs_fail(
             """
                 resource bundle create B1
                 container docker image=pcs:test masters=0
             """.split(),
-            """
-                <resources>
-                    <bundle id="B1">
-                        <docker image="pcs:test" masters="0" />
-                    </bundle>
-                </resources>
-            """,
-            stderr_full=(
-                "Deprecation Warning: container option 'masters' is deprecated and "
-                "might be removed in a future release, therefore it "
-                "should not be used, use 'promoted-max' instead\n"
-            ),
-        )
-
-    def test_deprecated_masters_and_promoted_max(self):
-        self.assert_pcs_fail(
-            """
-                resource bundle create B1
-                container docker image=pcs:test masters=0 promoted-max=0
-            """.split(),
-            "Error: Only one of container options 'masters' and "
-            "'promoted-max' can be used\n"
-            "Deprecation Warning: container option 'masters' is deprecated and "
-            "might be removed in a future release, therefore it "
-            "should not be used, use 'promoted-max' instead\n"
+            "Error: invalid container option 'masters', allowed options are: "
+            "'image', 'network', 'options', 'promoted-max', 'replicas', "
+            "'replicas-per-host', 'run-command', use --force to override\n"
             + ERRORS_HAVE_OCCURRED,
         )
 
@@ -234,7 +212,7 @@ class BundleCreate(BundleCreateCommon):
                 extra=option
             """.split(),
             "Error: invalid container option 'extra', allowed options are: "
-            "'image', 'masters', 'network', 'options', 'promoted-max', "
+            "'image', 'network', 'options', 'promoted-max', "
             "'replicas', 'replicas-per-host', 'run-command', use --force "
             "to override\n" + ERRORS_HAVE_OCCURRED,
         )
@@ -251,7 +229,7 @@ class BundleCreate(BundleCreateCommon):
             """.split(),
             stderr_start=(
                 "Warning: invalid container option 'extra', allowed options "
-                "are: 'image', 'masters', 'network', 'options', 'promoted-max',"
+                "are: 'image', 'network', 'options', 'promoted-max',"
                 " 'replicas', 'replicas-per-host', 'run-command'\n"
                 "Error: Unable to update cib\n"
             ),
@@ -485,35 +463,24 @@ class BundleUpdate(BundleCreateCommon):
             self.success_xml,
         )
 
-    def test_deprecated_masters_set(self):
-        # Setting both deprecated options and their new variants is tested in
-        # self.test_options_errors. This shows deprecated options emit warning
-        # even when not forced.
+    def test_legacy_masters_not_allowed(self):
         self.fixture_bundle("B")
-        self.assert_effect(
+        self.assert_pcs_fail(
             "resource bundle update B container masters=2".split(),
-            """
-                <resources>
-                    <bundle id="B">
-                        <docker image="pcs:test" masters="2" />
-                    </bundle>
-                </resources>
-            """,
-            stderr_full=(
-                "Deprecation Warning: container option 'masters' is deprecated and "
-                "might be removed in a future release, therefore it "
-                "should not be used, use 'promoted-max' instead\n"
-            ),
+            "Error: invalid container option 'masters', allowed options are: "
+            "'image', 'network', 'options', 'promoted-max', 'replicas', "
+            "'replicas-per-host', 'run-command', use --force to override\n"
+            + ERRORS_HAVE_OCCURRED,
         )
 
     def test_delete_masters(self):
         self.fixture_bundle("B")
         self.assert_pcs_success(
-            "resource bundle update B container masters=2".split(),
+            "resource bundle update B container masters=2 --force".split(),
             stderr_full=(
-                "Deprecation Warning: container option 'masters' is deprecated and "
-                "might be removed in a future release, therefore it "
-                "should not be used, use 'promoted-max' instead\n"
+                "Warning: invalid container option 'masters', allowed options "
+                "are: 'image', 'network', 'options', 'promoted-max', 'replicas', "
+                "'replicas-per-host', 'run-command'\n"
             ),
         )
         self.assert_effect(
@@ -533,49 +500,14 @@ class BundleUpdate(BundleCreateCommon):
             "resource bundle update B container masters= promoted-max=".split(),
         )
 
-    def test_masters_set_after_promoted_max(self):
-        self.fixture_bundle("B")
-        self.assert_pcs_success(
-            "resource bundle update B container promoted-max=3".split(),
-        )
-        self.assert_pcs_fail(
-            "resource bundle update B container masters=2".split(),
-            "Deprecation Warning: container option 'masters' is deprecated and "
-            "might be removed in a future release, therefore it "
-            "should not be used, use 'promoted-max' instead\n"
-            "Error: Cannot set container option 'masters' because container "
-            "option 'promoted-max' is already set\n" + ERRORS_HAVE_OCCURRED,
-        )
-
-    def test_masters_set_after_promoted_max_with_remove(self):
-        self.fixture_bundle("B")
-        self.assert_pcs_success(
-            "resource bundle update B container promoted-max=3".split(),
-        )
-        self.assert_effect(
-            "resource bundle update B container masters=2 promoted-max=".split(),
-            """
-                <resources>
-                    <bundle id="B">
-                        <docker image="pcs:test" masters="2" />
-                    </bundle>
-                </resources>
-            """,
-            stderr_full=(
-                "Deprecation Warning: container option 'masters' is deprecated and "
-                "might be removed in a future release, therefore it "
-                "should not be used, use 'promoted-max' instead\n"
-            ),
-        )
-
     def test_promoted_max_set_after_masters(self):
         self.fixture_bundle("B")
         self.assert_pcs_success(
-            "resource bundle update B container masters=2".split(),
+            "resource bundle update B container masters=2 --force".split(),
             stderr_full=(
-                "Deprecation Warning: container option 'masters' is deprecated and "
-                "might be removed in a future release, therefore it "
-                "should not be used, use 'promoted-max' instead\n"
+                "Warning: invalid container option 'masters', allowed options "
+                "are: 'image', 'network', 'options', 'promoted-max', 'replicas', "
+                "'replicas-per-host', 'run-command'\n"
             ),
         )
         self.assert_pcs_fail(
@@ -588,11 +520,11 @@ class BundleUpdate(BundleCreateCommon):
     def test_promoted_max_set_after_masters_with_remove(self):
         self.fixture_bundle("B")
         self.assert_pcs_success(
-            "resource bundle update B container masters=2".split(),
+            "resource bundle update B container masters=2 --force".split(),
             stderr_full=(
-                "Deprecation Warning: container option 'masters' is deprecated and "
-                "might be removed in a future release, therefore it "
-                "should not be used, use 'promoted-max' instead\n"
+                "Warning: invalid container option 'masters', allowed options "
+                "are: 'image', 'network', 'options', 'promoted-max', 'replicas', "
+                "'replicas-per-host', 'run-command'\n"
             ),
         )
         self.assert_effect(
@@ -612,7 +544,7 @@ class BundleUpdate(BundleCreateCommon):
         self.assert_pcs_fail(
             "resource bundle update B container extra=option".split(),
             "Error: invalid container option 'extra', allowed options are: "
-            "'image', 'masters', 'network', 'options', 'promoted-max', "
+            "'image', 'network', 'options', 'promoted-max', "
             "'replicas', 'replicas-per-host', 'run-command', use --force "
             "to override\n" + ERRORS_HAVE_OCCURRED,
         )
@@ -624,7 +556,7 @@ class BundleUpdate(BundleCreateCommon):
             "resource bundle update B container extra=option --force".split(),
             stderr_start=(
                 "Warning: invalid container option 'extra', allowed options "
-                "are: 'image', 'masters', 'network', 'options', 'promoted-max',"
+                "are: 'image', 'network', 'options', 'promoted-max',"
                 " 'replicas', 'replicas-per-host', 'run-command'\n"
                 "Error: Unable to update cib\n",
             ),

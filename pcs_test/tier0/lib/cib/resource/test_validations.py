@@ -371,186 +371,186 @@ class ValidateMoveBanClearMixin:
             """
         )
 
-    def test_master_true_promotable_clone(self):
+    def test_promoted_true_promotable_clone(self):
         element = self._fixture_clone(True)
         assert_report_item_list_equal(self.validate(element, True), [])
 
-    def test_master_false_promotable_clone(self):
+    def test_promoted_false_promotable_clone(self):
         element = self._fixture_clone(True)
         assert_report_item_list_equal(self.validate(element, False), [])
 
-    def test_master_true_clone(self):
+    def test_promoted_true_clone(self):
         element = self._fixture_clone(False)
         assert_report_item_list_equal(
             self.validate(element, True),
             [
                 fixture.error(
-                    self.report_code_bad_master,
+                    self.report_code_bad_promoted,
                     resource_id="R-clone",
                     promotable_id="",
                 ),
             ],
         )
 
-    def test_master_false_clone(self):
+    def test_promoted_false_clone(self):
         element = self._fixture_clone(False)
         assert_report_item_list_equal(self.validate(element, False), [])
 
-    def test_master_true_master(self):
+    def test_promoted_true_master(self):
         element = self._fixture_master()
         assert_report_item_list_equal(self.validate(element, True), [])
 
-    def test_master_false_master(self):
+    def test_promoted_false_master(self):
         element = self._fixture_master()
         assert_report_item_list_equal(self.validate(element, False), [])
 
-    def test_master_true_promotable_clone_resource(self):
+    def test_promoted_true_promotable_clone_resource(self):
         element = self._fixture_clone(True)
         assert_report_item_list_equal(
             self.validate(element.find("./primitive"), True),
             [
                 fixture.error(
-                    self.report_code_bad_master,
+                    self.report_code_bad_promoted,
                     resource_id="R",
                     promotable_id="R-clone",
                 ),
             ],
         )
 
-    def test_master_false_promotable_clone_resource(self):
+    def test_promoted_false_promotable_clone_resource(self):
         element = self._fixture_clone(True)
         assert_report_item_list_equal(
             self.validate(element.find("./primitive"), False), []
         )
 
-    def test_master_true_promotable_clone_group(self):
+    def test_promoted_true_promotable_clone_group(self):
         element = self._fixture_group_clone(True)
         assert_report_item_list_equal(
             self.validate(element.find("./group"), True),
             [
                 fixture.error(
-                    self.report_code_bad_master,
+                    self.report_code_bad_promoted,
                     resource_id="G",
                     promotable_id="G-clone",
                 ),
             ],
         )
 
-    def test_master_false_promotable_clone_group(self):
+    def test_promoted_false_promotable_clone_group(self):
         element = self._fixture_group_clone(True)
         assert_report_item_list_equal(
             self.validate(element.find("./group"), False), []
         )
 
-    def test_master_true_promotable_clone_group_resource(self):
+    def test_promoted_true_promotable_clone_group_resource(self):
         element = self._fixture_group_clone(True)
         assert_report_item_list_equal(
             self.validate(element.find("./group/primitive"), True),
             [
                 fixture.error(
-                    self.report_code_bad_master,
+                    self.report_code_bad_promoted,
                     resource_id="R",
                     promotable_id="G-clone",
                 ),
             ],
         )
 
-    def test_master_false_promotable_clone_group_resource(self):
+    def test_promoted_false_promotable_clone_group_resource(self):
         element = self._fixture_group_clone(True)
         assert_report_item_list_equal(
             self.validate(element.find("./group/primitive"), False), []
         )
 
-    def test_master_true_clone_resource(self):
+    def test_promoted_true_clone_resource(self):
         element = self._fixture_clone(False)
         assert_report_item_list_equal(
             self.validate(element.find("./primitive"), True),
             [
                 fixture.error(
-                    self.report_code_bad_master,
+                    self.report_code_bad_promoted,
                     resource_id="R",
                     promotable_id="",
                 ),
             ],
         )
 
-    def test_master_false_clone_resource(self):
+    def test_promoted_false_clone_resource(self):
         element = self._fixture_clone(False)
         assert_report_item_list_equal(
             self.validate(element.find("./primitive"), False), []
         )
 
-    def test_master_true_clone_group(self):
+    def test_promoted_true_clone_group(self):
         element = self._fixture_group_clone(False)
         assert_report_item_list_equal(
             self.validate(element.find("./group"), True),
             [
                 fixture.error(
-                    self.report_code_bad_master,
+                    self.report_code_bad_promoted,
                     resource_id="G",
                     promotable_id="",
                 ),
             ],
         )
 
-    def test_master_false_clone_group(self):
+    def test_promoted_false_clone_group(self):
         element = self._fixture_group_clone(False)
         assert_report_item_list_equal(
             self.validate(element.find("./group"), False), []
         )
 
-    def test_master_true_clone_group_resource(self):
+    def test_promoted_true_clone_group_resource(self):
         element = self._fixture_group_clone(False)
         assert_report_item_list_equal(
             self.validate(element.find("./group/primitive"), True),
             [
                 fixture.error(
-                    self.report_code_bad_master,
+                    self.report_code_bad_promoted,
                     resource_id="R",
                     promotable_id="",
                 ),
             ],
         )
 
-    def test_master_false_clone_group_resource(self):
+    def test_promoted_false_clone_group_resource(self):
         element = self._fixture_group_clone(False)
         assert_report_item_list_equal(
             self.validate(element.find("./group/primitive"), False), []
         )
 
-    def test_master_true_master_resource(self):
+    def test_promoted_true_master_resource(self):
         element = self._fixture_master()
         assert_report_item_list_equal(
             self.validate(element.find("./primitive"), True),
             [
                 fixture.error(
-                    self.report_code_bad_master,
+                    self.report_code_bad_promoted,
                     resource_id="R",
                     promotable_id="R-master",
                 ),
             ],
         )
 
-    def test_master_true_master_group(self):
+    def test_promoted_true_master_group(self):
         element = self._fixture_group_master()
         assert_report_item_list_equal(
             self.validate(element.find("./group"), True),
             [
                 fixture.error(
-                    self.report_code_bad_master,
+                    self.report_code_bad_promoted,
                     resource_id="G",
                     promotable_id="G-master",
                 ),
             ],
         )
 
-    def test_master_true_master_group_resource(self):
+    def test_promoted_true_master_group_resource(self):
         element = self._fixture_group_master()
         assert_report_item_list_equal(
             self.validate(element.find("./group/primitive"), True),
             [
                 fixture.error(
-                    self.report_code_bad_master,
+                    self.report_code_bad_promoted,
                     resource_id="R",
                     promotable_id="G-master",
                 ),
@@ -560,25 +560,25 @@ class ValidateMoveBanClearMixin:
 
 class ValidateMove(ValidateMoveBanClearMixin, TestCase):
     validate = staticmethod(validations.validate_move)
-    report_code_bad_master = (
+    report_code_bad_promoted = (
         reports.codes.CANNOT_MOVE_RESOURCE_MASTER_RESOURCE_NOT_PROMOTABLE
     )
 
-    def test_master_false_promotable_clone(self):
+    def test_promoted_false_promotable_clone(self):
         element = self._fixture_clone(True)
         assert_report_item_list_equal(
             self.validate(element, False),
             [],
         )
 
-    def test_master_true_promotable_clone(self):
+    def test_promoted_true_promotable_clone(self):
         element = self._fixture_clone(True)
         assert_report_item_list_equal(
             self.validate(element, True),
             [],
         )
 
-    def test_master_true_clone(self):
+    def test_promoted_true_clone(self):
         element = self._fixture_clone(False)
         assert_report_item_list_equal(
             self.validate(element, True),
@@ -591,28 +591,28 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
             ],
         )
 
-    def test_master_false_clone(self):
+    def test_promoted_false_clone(self):
         element = self._fixture_clone(False)
         assert_report_item_list_equal(
             self.validate(element, False),
             [],
         )
 
-    def test_master_false_master(self):
+    def test_promoted_false_master(self):
         element = self._fixture_master()
         assert_report_item_list_equal(
             self.validate(element, False),
             [],
         )
 
-    def test_master_true_master(self):
+    def test_promoted_true_master(self):
         element = self._fixture_master()
         assert_report_item_list_equal(
             self.validate(element, True),
             [],
         )
 
-    def test_master_false_promotable_clone_resource(self):
+    def test_promoted_false_promotable_clone_resource(self):
         element = self._fixture_clone(True)
         assert_report_item_list_equal(
             self.validate(element.find("./primitive"), False),
@@ -625,7 +625,7 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
             ],
         )
 
-    def test_master_false_promotable_clone_group(self):
+    def test_promoted_false_promotable_clone_group(self):
         element = self._fixture_group_clone(True)
         assert_report_item_list_equal(
             self.validate(element.find("./group"), False),
@@ -638,7 +638,7 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
             ],
         )
 
-    def test_master_false_promotable_clone_group_resource(self):
+    def test_promoted_false_promotable_clone_group_resource(self):
         element = self._fixture_group_clone(True)
         assert_report_item_list_equal(
             self.validate(element.find("./group/primitive"), False),
@@ -651,7 +651,7 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
             ],
         )
 
-    def test_master_true_clone_resource(self):
+    def test_promoted_true_clone_resource(self):
         element = self._fixture_clone(False)
         assert_report_item_list_equal(
             self.validate(element.find("./primitive"), True),
@@ -664,7 +664,7 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
             ],
         )
 
-    def test_master_false_clone_resource(self):
+    def test_promoted_false_clone_resource(self):
         element = self._fixture_clone(False)
         assert_report_item_list_equal(
             self.validate(element.find("./primitive"), False),
@@ -677,7 +677,7 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
             ],
         )
 
-    def test_master_true_clone_group(self):
+    def test_promoted_true_clone_group(self):
         element = self._fixture_group_clone(False)
         assert_report_item_list_equal(
             self.validate(element.find("./group"), True),
@@ -690,7 +690,7 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
             ],
         )
 
-    def test_master_false_clone_group(self):
+    def test_promoted_false_clone_group(self):
         element = self._fixture_group_clone(False)
         assert_report_item_list_equal(
             self.validate(element.find("./group"), False),
@@ -703,7 +703,7 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
             ],
         )
 
-    def test_master_true_clone_group_resource(self):
+    def test_promoted_true_clone_group_resource(self):
         element = self._fixture_group_clone(False)
         assert_report_item_list_equal(
             self.validate(element.find("./group/primitive"), True),
@@ -716,7 +716,7 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
             ],
         )
 
-    def test_master_false_clone_group_resource(self):
+    def test_promoted_false_clone_group_resource(self):
         element = self._fixture_group_clone(False)
         assert_report_item_list_equal(
             self.validate(element.find("./group/primitive"), False),
@@ -752,7 +752,7 @@ class ValidateMove(ValidateMoveBanClearMixin, TestCase):
 
 class ValidateBan(ValidateMoveBanClearMixin, TestCase):
     validate = staticmethod(validations.validate_ban)
-    report_code_bad_master = (
+    report_code_bad_promoted = (
         reports.codes.CANNOT_BAN_RESOURCE_MASTER_RESOURCE_NOT_PROMOTABLE
     )
 
@@ -772,6 +772,6 @@ class ValidateBan(ValidateMoveBanClearMixin, TestCase):
 
 class ValidateUnmoveUnban(ValidateMoveBanClearMixin, TestCase):
     validate = staticmethod(validations.validate_unmove_unban)
-    report_code_bad_master = (
+    report_code_bad_promoted = (
         reports.codes.CANNOT_UNMOVE_UNBAN_RESOURCE_MASTER_RESOURCE_NOT_PROMOTABLE
     )

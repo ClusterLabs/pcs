@@ -481,7 +481,8 @@ class CreatePlainWithRule(TestCase):
                     option_name="role",
                     option_value="bad role",
                     allowed_values=(
-                        const.PCMK_ROLES_PROMOTED + const.PCMK_ROLES_UNPROMOTED
+                        const.PCMK_ROLE_PROMOTED,
+                        const.PCMK_ROLE_UNPROMOTED,
                     ),
                     cannot_be_empty=False,
                     forbidden_characters=None,
@@ -952,7 +953,8 @@ class AddRuleToConstraint(TestCase):
                     option_name="role",
                     option_value="bad role",
                     allowed_values=(
-                        const.PCMK_ROLES_PROMOTED + const.PCMK_ROLES_UNPROMOTED
+                        const.PCMK_ROLE_PROMOTED,
+                        const.PCMK_ROLE_UNPROMOTED,
                     ),
                     cannot_be_empty=False,
                     forbidden_characters=None,
