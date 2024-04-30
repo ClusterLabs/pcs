@@ -191,14 +191,14 @@ class ConstraintConfigCmdSpaceInDate(ConstraintConfigCmdMixin, TestCase):
             (
                 "pcs -- constraint location resource%R1 rule \\\n"
                 "  id=location-R1-rule constraint-id=location-R1 score=INFINITY \\\n"
-                "  '#uname' eq node1 and date gt 2023-01-01T12:00 and "
+                "  '#uname eq node1 and date gt 2023-01-01T12:00 and "
                 "date lt 2023-12-31T12:00 and date in_range 2023-01-01T12:00 "
-                "to 2023-12-31T12:00;\n"
+                "to 2023-12-31T12:00';\n"
                 "pcs -- constraint rule add location-R1 \\\n"
                 "  id=location-R1-rule-1 score=INFINITY \\\n"
-                "  '#uname' eq node2 and date gt 2023-01-01T12:00 and "
+                "  '#uname eq node2 and date gt 2023-01-01T12:00 and "
                 "date lt 2023-12-31T12:00 and date in_range 2023-01-01T12:00 "
-                "to 2023-12-31T12:00\n"
+                "to 2023-12-31T12:00'\n"
             ),
         )
 

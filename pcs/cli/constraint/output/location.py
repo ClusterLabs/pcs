@@ -190,7 +190,7 @@ def _add_rule_cmd(constraint_id: str, rule: CibRuleExpressionDto) -> list[str]:
         indent(
             [
                 pairs_to_cmd([("id", rule.id)] + _rule_to_cmd_pairs(rule)),
-                shlex.join(shlex.split(rule.as_string)),
+                shlex.quote(rule.as_string),
             ],
             indent_step=INDENT_STEP,
         )
@@ -221,7 +221,7 @@ def _plain_constraint_rule_to_cmd(
                     + _attributes_to_pairs(constraint_dto.attributes)
                     + _rule_to_cmd_pairs(first_rule)
                 ),
-                shlex.join(shlex.split(first_rule.as_string)),
+                shlex.quote(first_rule.as_string),
             ],
             indent_step=INDENT_STEP,
         )
