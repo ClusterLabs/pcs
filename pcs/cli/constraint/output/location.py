@@ -155,12 +155,13 @@ def _plain_constraint_get_resource_for_cmd(
 def _plain_constraint_to_cmd(
     constraint_dto: CibConstraintLocationDto,
 ) -> list[str]:
+    score = constraint_dto.attributes.score or "INFINITY"
     result = [
         "pcs -- constraint location add {id} {resource} {node} {score}".format(
             id=shlex.quote(constraint_dto.attributes.constraint_id),
             resource=_plain_constraint_get_resource_for_cmd(constraint_dto),
             node=shlex.quote(str(constraint_dto.attributes.node)),
-            score=constraint_dto.attributes.score,
+            score=shlex.quote(f"score={score}"),
         )
     ]
     if constraint_dto.attributes.resource_discovery:

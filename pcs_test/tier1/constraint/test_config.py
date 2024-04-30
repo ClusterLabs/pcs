@@ -233,7 +233,7 @@ class ConstraintConfigCmdUnsupported(TestCase):
         self.assertEqual(
             stdout,
             (
-                "pcs -- constraint location add location-OK resource%R1 node1 INFINITY;\n"
+                "pcs -- constraint location add location-OK resource%R1 node1 score=INFINITY;\n"
                 "pcs -- constraint colocation add R1 with R3 \\\n"
                 "  id=colocation-OK score=INFINITY;\n"
                 "pcs -- constraint colocation \\\n"
