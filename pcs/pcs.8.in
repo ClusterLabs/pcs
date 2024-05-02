@@ -1656,6 +1656,14 @@ level add | clear | delete | remove
 Delimiting stonith devices with a comma is no longer allowed.
 .br
 Ambiguous syntax of 'pcs stonith level clear | delete | remove' is no longer supported.
+.SS "resource"
+.TP
+\fB\-\-wait\fR option
+This option is deprecated in all resource commands except 'pcs resource restart' and 'pcs resource move'. Instead, use the 'pcs status wait' command to wait for the cluster to settle into stable state. Use the 'pcs status query resource' commands to verify that the resource is in the expected state after the wait.
+.SS "cluster"
+.TP
+node add\-remote | add\-guest
+\fB\-\-wait\fR option is deprecated. Instead, use the 'pcs status wait' command to wait for the cluster to settle into stable state. Use the 'pcs status query resource' commands to verify that the resource is in the expected state after the wait.
 .SH CHANGES IN PCS-0.11
 This section summarizes the most important changes in commands done in pcs-0.11.x compared to pcs-0.10.x. For detailed description of current commands see above.
 .SS "Legacy role names"

@@ -1044,6 +1044,15 @@ def resource_update(args: Argv, modifiers: InputModifiers) -> None:
     wait = False
     wait_timeout = None
     if modifiers.is_specified("--wait"):
+        # deprecated in the first version of 0.12
+        process_library_reports(
+            [
+                reports.ReportItem.deprecation(
+                    reports.messages.ResourceWaitDeprecated()
+                )
+            ]
+        )
+
         wait_timeout = utils.validate_wait_get_timeout()
         wait = True
 
@@ -1554,6 +1563,15 @@ def resource_meta(argv: Argv, modifiers: InputModifiers) -> None:
         )
 
     if modifiers.is_specified("--wait"):
+        # deprecated in the first version of 0.12
+        process_library_reports(
+            [
+                reports.ReportItem.deprecation(
+                    reports.messages.ResourceWaitDeprecated()
+                )
+            ]
+        )
+
         wait_timeout = utils.validate_wait_get_timeout()
 
     attr_tuples = utils.convert_args_to_tuples(argv)
@@ -1619,6 +1637,15 @@ def resource_group_rm_cmd(
     cib_dom = resource_group_rm(utils.get_cib_dom(), group_name, resource_ids)
 
     if modifiers.is_specified("--wait"):
+        # deprecated in the first version of 0.12
+        process_library_reports(
+            [
+                reports.ReportItem.deprecation(
+                    reports.messages.ResourceWaitDeprecated()
+                )
+            ]
+        )
+
         wait_timeout = utils.validate_wait_get_timeout()
 
     utils.replace_cib_configuration(cib_dom)
@@ -1693,6 +1720,15 @@ def resource_clone(
     cib_dom = utils.get_cib_dom()
 
     if modifiers.is_specified("--wait"):
+        # deprecated in the first version of 0.12
+        process_library_reports(
+            [
+                reports.ReportItem.deprecation(
+                    reports.messages.ResourceWaitDeprecated()
+                )
+            ]
+        )
+
         wait_timeout = utils.validate_wait_get_timeout()
 
     force_flags = set()
@@ -1939,6 +1975,15 @@ def resource_clone_master_remove(
         utils.err("'%s' is not a clone resource" % name)
 
     if modifiers.is_specified("--wait"):
+        # deprecated in the first version of 0.12
+        process_library_reports(
+            [
+                reports.ReportItem.deprecation(
+                    reports.messages.ResourceWaitDeprecated()
+                )
+            ]
+        )
+
         wait_timeout = utils.validate_wait_get_timeout()
 
     # if user requested uncloning a resource contained in a cloned group
@@ -2001,8 +2046,6 @@ def resource_remove(resource_id, output=True, is_remove_remote_context=False):
     Commandline options:
       * -f - CIB file
       * --force - don't stop a resource before its deletion
-      * --wait - is supported by resource_disable but waiting for resource to
-        stop is handled also in this function
 
     This function contains at least three bugs:
     1) Input parameter 'output' gets overwritten with output of utilities which
@@ -2750,6 +2793,15 @@ def resource_disable(argv: Argv) -> Optional[bool]:
 
     wait_timeout = None
     if "--wait" in utils.pcs_options:
+        # deprecated in the first version of 0.12
+        process_library_reports(
+            [
+                reports.ReportItem.deprecation(
+                    reports.messages.ResourceWaitDeprecated()
+                )
+            ]
+        )
+
         wait_timeout = utils.validate_wait_get_timeout()
 
     args = [
@@ -2796,6 +2848,7 @@ def resource_restart(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
       * --wait
     """
     modifiers.ensure_only_supported("--wait")
+
     if not argv:
         utils.err("You must specify a resource to restart")
     _check_is_not_stonith(lib, [argv[0]])

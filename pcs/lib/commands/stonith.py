@@ -142,6 +142,14 @@ def create(
     enable_agent_self_validation -- if True, use agent self-validation feature
         to validate instance attributes
     """
+    if wait is not False:
+        # deprecated in the first version of 0.12
+        env.report_processor.report(
+            reports.ReportItem.deprecation(
+                reports.messages.ResourceWaitDeprecated()
+            )
+        )
+
     runner = env.cmd_runner()
     agent_factory = ResourceAgentFacadeFactory(runner, env.report_processor)
     stonith_agent = _get_agent_facade(
@@ -232,6 +240,14 @@ def create_in_group(
     enable_agent_self_validation -- if True, use agent self-validation feature
         to validate instance attributes
     """
+    if wait is not False:
+        # deprecated in the first version of 0.12
+        env.report_processor.report(
+            reports.ReportItem.deprecation(
+                reports.messages.ResourceWaitDeprecated()
+            )
+        )
+
     runner = env.cmd_runner()
     agent_factory = ResourceAgentFacadeFactory(runner, env.report_processor)
     stonith_agent = _get_agent_facade(

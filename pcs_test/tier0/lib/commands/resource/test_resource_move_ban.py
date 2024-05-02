@@ -387,6 +387,9 @@ class MoveBanWaitMixin:
             ],
             expected_in_processor=False,
         )
+        self.env_assist.assert_reports(
+            [fixture.deprecation(report_codes.RESOURCE_WAIT_DEPRECATED)]
+        )
 
     @mock.patch.object(
         settings,
@@ -405,6 +408,9 @@ class MoveBanWaitMixin:
                 ),
             ],
             expected_in_processor=False,
+        )
+        self.env_assist.assert_reports(
+            [fixture.deprecation(report_codes.RESOURCE_WAIT_DEPRECATED)]
         )
 
     @mock.patch.object(
@@ -428,6 +434,9 @@ class MoveBanWaitMixin:
                 ),
             ],
             expected_in_processor=False,
+        )
+        self.env_assist.assert_reports(
+            [fixture.deprecation(report_codes.RESOURCE_WAIT_DEPRECATED)]
         )
 
     @mock.patch.object(
@@ -466,6 +475,7 @@ class MoveBanWaitMixin:
                     report_codes.WAIT_FOR_IDLE_STARTED,
                     timeout=self.timeout,
                 ),
+                fixture.deprecation(report_codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -508,6 +518,7 @@ class MoveBanWaitMixin:
                     report_codes.WAIT_FOR_IDLE_STARTED,
                     timeout=self.timeout,
                 ),
+                fixture.deprecation(report_codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -546,6 +557,7 @@ class MoveBanWaitMixin:
                     report_codes.WAIT_FOR_IDLE_STARTED,
                     timeout=self.timeout,
                 ),
+                fixture.deprecation(report_codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -571,6 +583,7 @@ class MoveBanWaitMixin:
                 fixture.report_resource_not_running(
                     "A", severity=severities.ERROR
                 ),
+                fixture.deprecation(report_codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -592,6 +605,7 @@ class MoveBanWaitMixin:
                 fixture.report_resource_not_running(
                     "A",
                 ),
+                fixture.deprecation(report_codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -617,6 +631,7 @@ class MoveBanWaitMixin:
                 fixture.report_resource_running(
                     "A", {"Started": ["node1"]}, severity=severities.ERROR
                 ),
+                fixture.deprecation(report_codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -639,6 +654,7 @@ class MoveBanWaitMixin:
                     "A",
                     {"Started": ["node2"]},
                 ),
+                fixture.deprecation(report_codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -681,6 +697,7 @@ class MoveWait(MoveMixin, MoveBanWaitMixin, TestCase):
                     "A",
                     {"Started": ["node2"]},
                 ),
+                fixture.deprecation(report_codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -710,6 +727,7 @@ class MoveWait(MoveMixin, MoveBanWaitMixin, TestCase):
                 fixture.report_resource_running(
                     "A", {"Started": ["node1"]}, severity=severities.ERROR
                 ),
+                fixture.deprecation(report_codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -744,6 +762,7 @@ class BanWait(BanMixin, MoveBanWaitMixin, TestCase):
                 fixture.report_resource_running(
                     "A", {"Started": ["node1"]}, severity=severities.ERROR
                 ),
+                fixture.deprecation(report_codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -772,6 +791,7 @@ class BanWait(BanMixin, MoveBanWaitMixin, TestCase):
                     "A",
                     {"Started": ["node2"]},
                 ),
+                fixture.deprecation(report_codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -811,6 +831,7 @@ class UnmoveUnbanWait(UnmoveUnbanMixin, TestCase):
                     timeout=self.timeout,
                 ),
                 fixture.report_resource_running("A", {"Started": ["node1"]}),
+                fixture.deprecation(report_codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -843,6 +864,7 @@ class UnmoveUnbanWait(UnmoveUnbanMixin, TestCase):
                     report_codes.WAIT_FOR_IDLE_STARTED,
                     timeout=self.timeout,
                 ),
+                fixture.deprecation(report_codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -872,6 +894,7 @@ class UnmoveUnbanWait(UnmoveUnbanMixin, TestCase):
                     report_codes.WAIT_FOR_IDLE_STARTED,
                     timeout=self.timeout,
                 ),
+                fixture.deprecation(report_codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -904,5 +927,6 @@ class UnmoveUnbanWait(UnmoveUnbanMixin, TestCase):
                     report_codes.WAIT_FOR_IDLE_STARTED,
                     timeout=self.timeout,
                 ),
+                fixture.deprecation(report_codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )

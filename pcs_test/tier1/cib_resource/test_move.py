@@ -107,7 +107,14 @@ class Move(
     def test_wait_not_supported_with_file(self):
         self.assert_pcs_fail(
             "resource move-with-constraint A --wait".split(),
-            "Error: Cannot use '-f' together with '--wait'\n",
+            (
+                "Deprecation Warning: Using '--wait' is deprecated. Instead, "
+                "use the 'pcs status wait' command to wait for the cluster to "
+                "settle into stable state. Use the 'pcs status query resource' "
+                "commands to verify that the resource is in the expected state "
+                "after the wait.\n"
+                "Error: Cannot use '-f' together with '--wait'\n"
+            ),
         )
 
     def test_move_autoclean_not_supported_with_file(self):

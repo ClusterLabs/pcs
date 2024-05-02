@@ -1169,6 +1169,9 @@ class WaitMixin(FixturesMixin, SetUpMixin):
             [fixture.report_wait_for_idle_timed_out(wait_error_message)],
             expected_in_processor=False,
         )
+        self.env_assist.assert_reports(
+            [fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED)]
+        )
 
     @mock.patch.object(
         settings,
@@ -1187,6 +1190,7 @@ class WaitMixin(FixturesMixin, SetUpMixin):
                 fixture.report_resource_running(
                     self.bundle_id, {"Started": ["node1", "node2"]}
                 ),
+                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -1209,6 +1213,7 @@ class WaitMixin(FixturesMixin, SetUpMixin):
                 fixture.report_resource_not_running(
                     self.bundle_id, severities.ERROR
                 ),
+                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -1234,7 +1239,8 @@ class WaitMixin(FixturesMixin, SetUpMixin):
                         "resource_id": self.bundle_id,
                     },
                     None,
-                )
+                ),
+                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -1259,6 +1265,7 @@ class WaitMixin(FixturesMixin, SetUpMixin):
                     self.bundle_id,
                     {"Started": ["node1", "node2"]},
                     severities.ERROR,
-                )
+                ),
+                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )

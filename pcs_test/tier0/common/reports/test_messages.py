@@ -5879,3 +5879,14 @@ class ClusterStatusBundleMemberIdAsImplicit(NameBuildTest):
                 "resource-bundle", ["resource-0", "resource-1"]
             ),
         )
+
+
+class ResourceWaitDeprecated(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "Ability of this command to accept 'wait' argument is "
+                "deprecated and will be removed in a future release."
+            ),
+            reports.ResourceWaitDeprecated(),
+        )

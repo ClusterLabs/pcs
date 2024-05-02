@@ -7758,6 +7758,22 @@ class ResourceStonithCommandsMismatch(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class ResourceWaitDeprecated(ReportItemMessage):
+    """
+    Deprecated wait parameter was used in command.
+    """
+
+    _code = codes.RESOURCE_WAIT_DEPRECATED
+
+    @property
+    def message(self) -> str:
+        return (
+            "Ability of this command to accept 'wait' argument is "
+            "deprecated and will be removed in a future release."
+        )
+
+
+@dataclass(frozen=True)
 class CommandInvalidPayload(ReportItemMessage):
     reason: str
     _code = codes.COMMAND_INVALID_PAYLOAD

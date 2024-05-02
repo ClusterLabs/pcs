@@ -514,6 +514,7 @@ class GroupAddWait(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.report_resource_running("G", {"Started": ["node1"]}),
+                fixture.deprecation(report_codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -539,5 +540,6 @@ class GroupAddWait(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.report_resource_not_running("G"),
+                fixture.deprecation(report_codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )

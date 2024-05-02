@@ -825,3 +825,16 @@ class ResourceMoveAutocleanSimulationFailure(CliReportMessageTestBase):
                 " Run 'pcs resource clear R1 node1' to remove the constraint."
             ),
         )
+
+
+class ResourceWaitDeprecated(CliReportMessageTestBase):
+    def test_success(self):
+        self.assert_message(
+            messages.ResourceWaitDeprecated(),
+            (
+                "Using '--wait' is deprecated. Instead, use the 'pcs status "
+                "wait' command to wait for the cluster to settle into stable "
+                "state. Use the 'pcs status query resource' commands to verify "
+                "that the resource is in the expected state after the wait."
+            ),
+        )

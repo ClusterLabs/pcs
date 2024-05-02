@@ -42,6 +42,11 @@
 - Specifying rules as multiple arguments, use a single string argument instead
 - Specifying score as a standalone value in `pcs constraint location add` and
   `pcs constraint colocation add`, use score=value instead ([RHEL-34792])
+- `--wait` option in resource commands except `pcs resource restart | move`, and
+  in the commands `pcs cluster node add-guest | add-remote`. Instead use:
+    - `pcs status wait` to wait for the cluster to settle into stable state
+    - `pcs status query resource` commands to verify that the resource is in the
+       expected state after the wait
 
 [ghissue#772]: https://github.com/ClusterLabs/pcs/issues/772
 [ghissue#780]: https://github.com/ClusterLabs/pcs/issues/780

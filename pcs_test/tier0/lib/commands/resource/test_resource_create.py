@@ -1261,6 +1261,9 @@ class CreateWait(TestCase):
             [fixture.report_wait_for_idle_timed_out(wait_error_message)],
             expected_in_processor=False,
         )
+        self.env_assist.assert_reports(
+            [fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED)]
+        )
 
     def test_wait_ok_run_fail(self):
         self.config.runner.pcmk.load_state(
@@ -1275,7 +1278,8 @@ class CreateWait(TestCase):
                 fixture.error(
                     reports.codes.RESOURCE_DOES_NOT_RUN,
                     resource_id="A",
-                )
+                ),
+                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -1291,6 +1295,7 @@ class CreateWait(TestCase):
                     roles_with_nodes={"Started": ["node1"]},
                     resource_id="A",
                 ),
+                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -1317,6 +1322,7 @@ class CreateWait(TestCase):
                     roles_with_nodes={"Started": ["node1"]},
                     resource_id="A",
                 ),
+                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -1337,7 +1343,8 @@ class CreateWait(TestCase):
                 fixture.info(
                     reports.codes.RESOURCE_DOES_NOT_RUN,
                     resource_id="A",
-                )
+                ),
+                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -1362,7 +1369,8 @@ class CreateWait(TestCase):
                 fixture.info(
                     reports.codes.RESOURCE_DOES_NOT_RUN,
                     resource_id="A",
-                )
+                ),
+                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -1496,7 +1504,8 @@ class CreateInGroup(TestCase):
                     reports.codes.AGENT_SELF_VALIDATION_RESULT,
                     result="not ignored\nfirst issue\nanother one",
                     force_code=reports.codes.FORCE,
-                )
+                ),
+                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -1515,6 +1524,9 @@ class CreateInGroup(TestCase):
             lambda: create_group(self.env_assist.get_env()),
             [fixture.report_wait_for_idle_timed_out(wait_error_message)],
             expected_in_processor=False,
+        )
+        self.env_assist.assert_reports(
+            [fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED)]
         )
 
     @mock.patch.object(
@@ -1537,7 +1549,8 @@ class CreateInGroup(TestCase):
             [
                 fixture.error(
                     reports.codes.RESOURCE_DOES_NOT_RUN, resource_id="A"
-                )
+                ),
+                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -1559,7 +1572,8 @@ class CreateInGroup(TestCase):
                     reports.codes.RESOURCE_RUNNING_ON_NODES,
                     roles_with_nodes={"Started": ["node1"]},
                     resource_id="A",
-                )
+                ),
+                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -1585,7 +1599,8 @@ class CreateInGroup(TestCase):
                     reports.codes.RESOURCE_RUNNING_ON_NODES,
                     roles_with_nodes={"Started": ["node1"]},
                     resource_id="A",
-                )
+                ),
+                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -1609,7 +1624,8 @@ class CreateInGroup(TestCase):
                 fixture.info(
                     reports.codes.RESOURCE_DOES_NOT_RUN,
                     resource_id="A",
-                )
+                ),
+                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -1636,7 +1652,8 @@ class CreateInGroup(TestCase):
                 fixture.info(
                     reports.codes.RESOURCE_DOES_NOT_RUN,
                     resource_id="A",
-                )
+                ),
+                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -1679,7 +1696,8 @@ class CreateAsClone(TestCase):
                     reports.codes.AGENT_SELF_VALIDATION_RESULT,
                     result="not ignored\nfirst issue\nanother one",
                     force_code=reports.codes.FORCE,
-                )
+                ),
+                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -1796,6 +1814,9 @@ class CreateAsClone(TestCase):
             [fixture.report_wait_for_idle_timed_out(wait_error_message)],
             expected_in_processor=False,
         )
+        self.env_assist.assert_reports(
+            [fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED)]
+        )
 
     @mock.patch.object(
         settings,
@@ -1817,7 +1838,8 @@ class CreateAsClone(TestCase):
             [
                 fixture.error(
                     reports.codes.RESOURCE_DOES_NOT_RUN, resource_id="A"
-                )
+                ),
+                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -1839,7 +1861,8 @@ class CreateAsClone(TestCase):
                     reports.codes.RESOURCE_RUNNING_ON_NODES,
                     roles_with_nodes={"Started": ["node1"]},
                     resource_id="A",
-                )
+                ),
+                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -1865,7 +1888,8 @@ class CreateAsClone(TestCase):
                     reports.codes.RESOURCE_RUNNING_ON_NODES,
                     roles_with_nodes={"Started": ["node1"]},
                     resource_id="A",
-                )
+                ),
+                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -1889,7 +1913,8 @@ class CreateAsClone(TestCase):
                 fixture.info(
                     reports.codes.RESOURCE_DOES_NOT_RUN,
                     resource_id="A",
-                )
+                ),
+                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -1953,7 +1978,8 @@ class CreateAsClone(TestCase):
                 fixture.info(
                     reports.codes.RESOURCE_DOES_NOT_RUN,
                     resource_id="A",
-                )
+                ),
+                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -2015,7 +2041,8 @@ class CreateAsClone(TestCase):
                 fixture.info(
                     reports.codes.RESOURCE_DOES_NOT_RUN,
                     resource_id="A",
-                )
+                ),
+                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -2077,7 +2104,8 @@ class CreateAsClone(TestCase):
                 fixture.info(
                     reports.codes.RESOURCE_DOES_NOT_RUN,
                     resource_id="A",
-                )
+                ),
+                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -2140,7 +2168,8 @@ class CreateAsClone(TestCase):
                 fixture.info(
                     reports.codes.RESOURCE_DOES_NOT_RUN,
                     resource_id="A",
-                )
+                ),
+                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -2167,7 +2196,8 @@ class CreateAsCloneFailures(TestCase):
                     resource_agent=agent.to_dto(),
                     resource_id=None,
                     group_id=None,
-                )
+                ),
+                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -2196,7 +2226,8 @@ class CreateAsCloneFailures(TestCase):
                     resource_id=None,
                     group_id=None,
                     force_code=reports.codes.FORCE,
-                )
+                ),
+                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -2235,6 +2266,7 @@ class CreateAsCloneFailures(TestCase):
                     result="error",
                     force_code=reports.codes.FORCE,
                 ),
+                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -2495,6 +2527,9 @@ class CreateInToBundle(TestCase):
             ],
             expected_in_processor=False,
         )
+        self.env_assist.assert_reports(
+            [fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED)]
+        )
 
     @mock.patch.object(
         settings,
@@ -2513,6 +2548,7 @@ class CreateInToBundle(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.report_resource_running("A", {"Started": ["node1"]}),
+                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -2536,7 +2572,8 @@ class CreateInToBundle(TestCase):
             [
                 fixture.error(
                     reports.codes.RESOURCE_DOES_NOT_RUN, resource_id="A"
-                )
+                ),
+                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -2555,7 +2592,10 @@ class CreateInToBundle(TestCase):
         )
         create_bundle(self.env_assist.get_env(), disabled=True)
         self.env_assist.assert_reports(
-            [fixture.report_resource_not_running("A")]
+            [
+                fixture.report_resource_not_running("A"),
+                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
+            ]
         )
 
     @mock.patch.object(
@@ -2580,7 +2620,8 @@ class CreateInToBundle(TestCase):
                     reports.codes.RESOURCE_RUNNING_ON_NODES,
                     resource_id="A",
                     roles_with_nodes={"Started": ["node1"]},
-                )
+                ),
+                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -2688,7 +2729,8 @@ class CreateInToBundle(TestCase):
                     reports.codes.AGENT_SELF_VALIDATION_RESULT,
                     result="not ignored\nfirst issue\nanother one",
                     force_code=reports.codes.FORCE,
-                )
+                ),
+                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 

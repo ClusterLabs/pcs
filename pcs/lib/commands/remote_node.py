@@ -288,6 +288,14 @@ def node_add_remote(
         a resource agent metadata to the resource
     wait -- a flag for controlling waiting for pacemaker idle mechanism
     """
+    if wait is not False:
+        # deprecated in the first version of 0.12
+        env.report_processor.report(
+            reports.ReportItem.deprecation(
+                reports.messages.ResourceWaitDeprecated()
+            )
+        )
+
     wait_timeout = env.ensure_wait_satisfiable(wait)
 
     report_processor = env.report_processor
@@ -481,6 +489,14 @@ def node_add_guest(
         succeed
     mixed wait -- a flag for controlling waiting for pacemaker idle mechanism
     """
+    if wait is not False:
+        # deprecated in the first version of 0.12
+        env.report_processor.report(
+            reports.ReportItem.deprecation(
+                reports.messages.ResourceWaitDeprecated()
+            )
+        )
+
     wait_timeout = env.ensure_wait_satisfiable(wait)
 
     report_processor = env.report_processor

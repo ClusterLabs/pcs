@@ -411,6 +411,14 @@ def create(
     enable_agent_self_validation -- if True, use agent self-validation feature
         to validate instance attributes
     """
+    if wait is not False:
+        # deprecated in the first version of 0.12
+        env.report_processor.report(
+            reports.ReportItem.deprecation(
+                reports.messages.ResourceWaitDeprecated()
+            )
+        )
+
     runner = env.cmd_runner()
     agent_factory = ResourceAgentFacadeFactory(runner, env.report_processor)
     resource_agent = _get_agent_facade(
@@ -517,6 +525,14 @@ def create_as_clone(
     enable_agent_self_validation -- if True, use agent self-validation feature
         to validate instance attributes
     """
+    if wait is not False:
+        # deprecated in the first version of 0.12
+        env.report_processor.report(
+            reports.ReportItem.deprecation(
+                reports.messages.ResourceWaitDeprecated()
+            )
+        )
+
     runner = env.cmd_runner()
     agent_factory = ResourceAgentFacadeFactory(runner, env.report_processor)
     resource_agent = _get_agent_facade(
@@ -664,6 +680,14 @@ def create_in_group(
     enable_agent_self_validation -- if True, use agent self-validation feature
         to validate instance attributes
     """
+    if wait is not False:
+        # deprecated in the first version of 0.12
+        env.report_processor.report(
+            reports.ReportItem.deprecation(
+                reports.messages.ResourceWaitDeprecated()
+            )
+        )
+
     runner = env.cmd_runner()
     agent_factory = ResourceAgentFacadeFactory(runner, env.report_processor)
     resource_agent = _get_agent_facade(
@@ -808,6 +832,14 @@ def create_into_bundle(
     enable_agent_self_validation -- if True, use agent self-validation feature
         to validate instance attributes
     """
+    if wait is not False:
+        # deprecated in the first version of 0.12
+        env.report_processor.report(
+            reports.ReportItem.deprecation(
+                reports.messages.ResourceWaitDeprecated()
+            )
+        )
+
     runner = env.cmd_runner()
     agent_factory = ResourceAgentFacadeFactory(runner, env.report_processor)
     resource_agent = _get_agent_facade(
@@ -907,6 +939,14 @@ def bundle_create(
     bool ensure_disabled -- set the bundle's target-role to "Stopped"
     mixed wait -- False: no wait, None: wait default timeout, int: wait timeout
     """
+    if wait is not False:
+        # deprecated in the first version of 0.12
+        env.report_processor.report(
+            reports.ReportItem.deprecation(
+                reports.messages.ResourceWaitDeprecated()
+            )
+        )
+
     container_options = container_options or {}
     network_options = network_options or {}
     port_map = port_map or []
@@ -984,6 +1024,14 @@ def bundle_reset(
     bool ensure_disabled -- set the bundle's target-role to "Stopped"
     mixed wait -- False: no wait, None: wait default timeout, int: wait timeout
     """
+    if wait is not False:
+        # deprecated in the first version of 0.12
+        env.report_processor.report(
+            reports.ReportItem.deprecation(
+                reports.messages.ResourceWaitDeprecated()
+            )
+        )
+
     container_options = container_options or {}
     network_options = network_options or {}
     port_map = port_map or []
@@ -1070,6 +1118,14 @@ def bundle_update(
     bool force_options -- return warnings instead of forceable errors
     mixed wait -- False: no wait, None: wait default timeout, int: wait timeout
     """
+    if wait is not False:
+        # deprecated in the first version of 0.12
+        env.report_processor.report(
+            reports.ReportItem.deprecation(
+                reports.messages.ResourceWaitDeprecated()
+            )
+        )
+
     container_options = container_options or {}
     network_options = network_options or {}
     port_map_add = port_map_add or []
@@ -1213,6 +1269,14 @@ def disable(
         of tag ids, all resources in tags are to be disabled
     wait -- False: no wait, None: wait default timeout, int: wait timeout
     """
+    if wait is not False:
+        # deprecated in the first version of 0.12
+        env.report_processor.report(
+            reports.ReportItem.deprecation(
+                reports.messages.ResourceWaitDeprecated()
+            )
+        )
+
     wait_timeout = env.ensure_wait_satisfiable(wait)
     _disable_validate_and_edit_cib(env, env.get_cib(), resource_or_tag_ids)
     _push_cib_wait(
@@ -1239,6 +1303,14 @@ def disable_safe(
     strict -- if False, allow resources to be migrated
     wait -- False: no wait, None: wait default timeout, int: wait timeout
     """
+    if wait is not False:
+        # deprecated in the first version of 0.12
+        env.report_processor.report(
+            reports.ReportItem.deprecation(
+                reports.messages.ResourceWaitDeprecated()
+            )
+        )
+
     if not env.is_cib_live:
         raise LibraryError(
             ReportItem.error(
@@ -1351,6 +1423,14 @@ def enable(
         of tag ids, all resources in tags are to be enabled
     wait -- False: no wait, None: wait default timeout, int: wait timeout
     """
+    if wait is not False:
+        # deprecated in the first version of 0.12
+        env.report_processor.report(
+            reports.ReportItem.deprecation(
+                reports.messages.ResourceWaitDeprecated()
+            )
+        )
+
     wait_timeout = env.ensure_wait_satisfiable(wait)
     cib = env.get_cib()
     resource_el_list, report_list = _find_resources_expand_tags(
@@ -1522,6 +1602,15 @@ def group_add(
     """
     # pylint: disable = too-many-locals
     # pylint: disable = too-many-branches
+
+    if wait is not False:
+        # deprecated in the first version of 0.12
+        env.report_processor.report(
+            reports.ReportItem.deprecation(
+                reports.messages.ResourceWaitDeprecated()
+            )
+        )
+
     wait_timeout = env.ensure_wait_satisfiable(wait)
     resources_section = get_resources(env.get_cib(None))
 
@@ -2171,6 +2260,15 @@ class _MoveBanTemplate:
     ):
         # pylint: disable=too-many-locals
         # validate
+
+        if wait is not False:
+            # deprecated in the first version of 0.12
+            env.report_processor.report(
+                reports.ReportItem.deprecation(
+                    reports.messages.ResourceWaitDeprecated()
+                )
+            )
+
         wait_timeout = env.ensure_wait_satisfiable(wait)  # raises on error
 
         cib = env.get_cib()
@@ -2341,6 +2439,14 @@ def unmove_unban(
     bool expired -- only remove constrains which have already expired
     mixed wait -- flag for controlling waiting for pacemaker idle mechanism
     """
+    if wait is not False:
+        # deprecated in the first version of 0.12
+        env.report_processor.report(
+            reports.ReportItem.deprecation(
+                reports.messages.ResourceWaitDeprecated()
+            )
+        )
+
     # validate
     wait_timeout = env.ensure_wait_satisfiable(wait)  # raises on error
 

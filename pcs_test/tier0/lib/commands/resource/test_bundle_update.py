@@ -1306,6 +1306,9 @@ class Wait(TestCase):
             [fixture.report_wait_for_idle_timed_out(wait_error_message)],
             expected_in_processor=False,
         )
+        self.env_assist.assert_reports(
+            [fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED)]
+        )
 
     @mock.patch.object(
         settings,
@@ -1324,6 +1327,7 @@ class Wait(TestCase):
                 fixture.report_resource_running(
                     "B1", {"Started": ["node1", "node2"]}
                 ),
+                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -1342,6 +1346,7 @@ class Wait(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.report_resource_not_running("B1", severities.INFO),
+                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 

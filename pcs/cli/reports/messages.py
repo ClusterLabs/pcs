@@ -632,6 +632,19 @@ class ResourceMoveAutocleanSimulationFailure(CliReportMessageCustom):
         )
 
 
+class ResourceWaitDeprecated(CliReportMessageCustom):
+    _obj: messages.ResourceWaitDeprecated
+
+    @property
+    def message(self) -> str:
+        return (
+            "Using '--wait' is deprecated. Instead, use the 'pcs status wait' "
+            "command to wait for the cluster to settle into stable state. Use "
+            "the 'pcs status query resource' commands to verify that the "
+            "resource is in the expected state after the wait."
+        )
+
+
 def _create_report_msg_map() -> Dict[str, type]:
     result: Dict[str, type] = {}
     for report_msg_cls in get_all_subclasses(CliReportMessageCustom):

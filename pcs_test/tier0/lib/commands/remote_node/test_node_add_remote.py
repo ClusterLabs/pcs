@@ -734,12 +734,11 @@ class NotLive(TestCase):
     def test_wait(self):
         self.env_assist.assert_raise_library_error(
             lambda: node_add_remote(self.env_assist.get_env(), wait=1),
-            [
-                fixture.error(
-                    reports.codes.WAIT_FOR_IDLE_NOT_LIVE_CLUSTER,
-                ),
-            ],
+            [fixture.error(reports.codes.WAIT_FOR_IDLE_NOT_LIVE_CLUSTER)],
             expected_in_processor=False,
+        )
+        self.env_assist.assert_reports(
+            [fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED)]
         )
 
 
@@ -783,11 +782,13 @@ class WithWait(TestCase):
         )
         node_add_remote(self.env_assist.get_env(), wait=self.wait)
         self.env_assist.assert_reports(
-            fixture.ReportSequenceBuilder(REPORTS.copy()).info(
+            fixture.ReportSequenceBuilder(REPORTS.copy())
+            .info(
                 reports.codes.RESOURCE_RUNNING_ON_NODES,
                 roles_with_nodes={"Started": [NODE_1]},
                 resource_id=NODE_NAME,
             )
+            .deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED)
         )
 
     def test_fail_when_resource_not_started(self):
@@ -808,10 +809,12 @@ class WithWait(TestCase):
             lambda: node_add_remote(self.env_assist.get_env(), wait=self.wait)
         )
         self.env_assist.assert_reports(
-            fixture.ReportSequenceBuilder(REPORTS.copy()).error(
+            fixture.ReportSequenceBuilder(REPORTS.copy())
+            .error(
                 reports.codes.RESOURCE_DOES_NOT_RUN,
                 resource_id=NODE_NAME,
             )
+            .deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED)
         )
 
 

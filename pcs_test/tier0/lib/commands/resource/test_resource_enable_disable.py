@@ -937,7 +937,10 @@ class Wait(TestCase):
             lambda: resource.enable(self.env_assist.get_env(), ["B"], TIMEOUT),
         )
         self.env_assist.assert_reports(
-            [fixture.report_not_resource_or_tag("B")]
+            [
+                fixture.report_not_resource_or_tag("B"),
+                fixture.deprecation(report_codes.RESOURCE_WAIT_DEPRECATED),
+            ]
         )
 
     def test_disable_dont_wait_on_error(self):
@@ -948,7 +951,10 @@ class Wait(TestCase):
             lambda: resource.disable(self.env_assist.get_env(), ["B"], TIMEOUT),
         )
         self.env_assist.assert_reports(
-            [fixture.report_not_resource_or_tag("B")]
+            [
+                fixture.report_not_resource_or_tag("B"),
+                fixture.deprecation(report_codes.RESOURCE_WAIT_DEPRECATED),
+            ]
         )
 
     def test_enable_resource_stopped(self):
@@ -976,6 +982,7 @@ class Wait(TestCase):
             [
                 fixture.report_resource_not_running("A", severities.ERROR),
                 fixture.report_resource_not_running("B", severities.ERROR),
+                fixture.deprecation(report_codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -999,6 +1006,7 @@ class Wait(TestCase):
             [
                 fixture.report_resource_not_running("A"),
                 fixture.report_resource_not_running("B"),
+                fixture.deprecation(report_codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -1024,6 +1032,7 @@ class Wait(TestCase):
             [
                 fixture.report_resource_running("A", {"Started": ["node1"]}),
                 fixture.report_resource_running("B", {"Started": ["node2"]}),
+                fixture.deprecation(report_codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -1055,6 +1064,7 @@ class Wait(TestCase):
                 fixture.report_resource_running(
                     "B", {"Started": ["node2"]}, severities.ERROR
                 ),
+                fixture.deprecation(report_codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -1086,6 +1096,9 @@ class Wait(TestCase):
             ],
             expected_in_processor=False,
         )
+        self.env_assist.assert_reports(
+            [fixture.deprecation(report_codes.RESOURCE_WAIT_DEPRECATED)]
+        )
 
     def test_disable_wait_timeout(self):
         (
@@ -1112,6 +1125,9 @@ class Wait(TestCase):
                 )
             ],
             expected_in_processor=False,
+        )
+        self.env_assist.assert_reports(
+            [fixture.deprecation(report_codes.RESOURCE_WAIT_DEPRECATED)]
         )
 
 
@@ -1168,7 +1184,8 @@ class WaitClone(TestCase):
                         "resource_id": "A-clone",
                     },
                     None,
-                )
+                ),
+                fixture.deprecation(report_codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -1199,7 +1216,8 @@ class WaitClone(TestCase):
                         "roles_with_nodes": {"Started": ["node1", "node2"]},
                     },
                     None,
-                )
+                ),
+                fixture.deprecation(report_codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -2538,6 +2556,7 @@ class DisableSafeMixin(DisableSafeFixturesMixin):
             [
                 fixture.report_resource_not_running("A"),
                 fixture.report_resource_not_running("B"),
+                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 

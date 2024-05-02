@@ -617,6 +617,7 @@ class CreateMixin:
                     roles_with_nodes={"Started": ["node1"]},
                     resource_id=instance_name,
                 ),
+                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
