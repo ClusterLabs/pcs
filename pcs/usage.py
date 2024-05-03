@@ -1902,13 +1902,8 @@ Commands:
     create <stonith id> <stonith device type> [stonith device options]
            [op <operation action> <operation options> [<operation action>
            <operation options>]...] [meta <meta options>]
-           [--group <group id> [--before <stonith id> | --after <stonith id>]]
            [--disabled] [--agent-validation] [--wait[=n]]
         Create stonith device with specified type and options.
-        If --group is specified the stonith device is added to the group named.
-        You can use --before or --after to specify the position of the added
-        stonith device relatively to some stonith device already existing in the
-        group.
         If --disabled is specified the stonith device is not used.
         If --agent-validation is specified, stonith agent validate-all action
         will be used to validate stonith device options.

@@ -711,8 +711,8 @@ Show list of all available stonith agents (if filter is provided then only stoni
 describe <stonith agent> [\fB\-\-full\fR]
 Show options for specified stonith agent. If \fB\-\-full\fR is specified, all options including advanced and deprecated ones are shown.
 .TP
-create <stonith id> <stonith device type> [stonith device options] [op <operation action> <operation options> [<operation action> <operation options>]...] [meta <meta options>] [\fB\-\-group\fR <group id> [\fB\-\-before\fR <stonith id> | \fB\-\-after\fR <stonith id>]] [\fB\-\-disabled\fR] [\fB\-\-agent\-validation\fR] [\fB\-\-wait\fR[=n]]
-Create stonith device with specified type and options. If \fB\-\-group\fR is specified the stonith device is added to the group named. You can use \fB\-\-before\fR or \fB\-\-after\fR to specify the position of the added stonith device relatively to some stonith device already existing in the group. If\fB\-\-disabled\fR is specified the stonith device is not used. If \fB\-\-agent\-validation\fR is specified, stonith agent validate\-all action will be used to validate stonith device options. If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the stonith device to start and then return 0 if the stonith device is started, or 1 if the stonith device has not yet started. If 'n' is not specified it defaults to 60 minutes.
+create <stonith id> <stonith device type> [stonith device options] [op <operation action> <operation options> [<operation action> <operation options>]...] [meta <meta options>] [\fB\-\-disabled\fR] [\fB\-\-agent\-validation\fR] [\fB\-\-wait\fR[=n]]
+Create stonith device with specified type and options. If\fB\-\-disabled\fR is specified the stonith device is not used. If \fB\-\-agent\-validation\fR is specified, stonith agent validate\-all action will be used to validate stonith device options. If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the stonith device to start and then return 0 if the stonith device is started, or 1 if the stonith device has not yet started. If 'n' is not specified it defaults to 60 minutes.
 
 Example: Create a device for nodes node1 and node2
 .br
@@ -1646,6 +1646,9 @@ Using spaces in dates in location constraint rules is no longer allowed.
 Rules are supposed to be specified as a single string argument. Specifying rules as multiple arguments has been deprecated and might be removed in a future release.
 .SS "\-\-yes instead of \-\-force as an alternative to interactive confirmation"
 Some pcs commands require interactive confirmation to proceed. Previously, this could be overridden by specifying \fB\-\-force\fR. Since pcs-0.12, using \fB\-\-force\fR for this purpose is deprecated in favor of \fB\-\-yes\fR. The \fB\-\-force\fR flag is kept to override validation errors, which was its originally intended use. Affected commands are: 'pcs cluster destroy', 'pcs quorum unblock', 'pcs stonith confirm', 'pcs stonith sbd device setup' and 'pcs stonith sbd watchdog test'.
+.SS "Mixing resources and stonith resources"
+ Using stonith resources in `pcs resource` commands and resources in `pcs stonith` commands is no longer allowed.
+.br
 .SS "constraint"
 .TP
 location add
@@ -1654,6 +1657,10 @@ Specifying score as a standalone value is deprecated in favor of score=value. Th
 colocation add
 Specifying score as a standalone value is deprecated in favor of score=value. This makes the command consistent with other commands for creating constraints.
 .SS "stonith"
+.TP
+create  \fB\-\-group\fR
+Creating stonith resources in groups is no longer allowed.
+.br
 .TP
 level add | clear | delete | remove
 Delimiting stonith devices with a comma is no longer allowed.
