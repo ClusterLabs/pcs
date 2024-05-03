@@ -31,6 +31,7 @@
   ([RHEL-27492])
 - Use different process creation method for multiprocessing module in order to
   avoid deadlock on process termination. ([ghissue#780], [RHEL-28749])
+- Unified the way score is defined in constraints commands ([RHEL-34792])
 
 ### Deprecated
 - Pcs produces warnings about [features planned to be removed in pacemaker 3](https://projects.clusterlabs.org/w/projects/pacemaker/pacemaker_3.0_changes/pacemaker_3.0_configuration_changes/):
@@ -39,6 +40,8 @@
   - upstart and nagios resources
   - some date-spec and duration options in rules
 - Specifying rules as multiple arguments, use a single string argument instead
+- Specifying score as a standalone value in `pcs constraint location add` and
+  `pcs constraint colocation add`, use score=value instead ([RHEL-34792])
 
 [ghissue#772]: https://github.com/ClusterLabs/pcs/issues/772
 [ghissue#780]: https://github.com/ClusterLabs/pcs/issues/780
@@ -48,6 +51,7 @@
 [RHEL-28749]: https://issues.redhat.com/browse/RHEL-28749
 [RHEL-25854]: https://issues.redhat.com/browse/RHEL-25854
 [RHEL-21051]: https://issues.redhat.com/browse/RHEL-21051
+[RHEL-34792]: https://issues.redhat.com/browse/RHEL-34792
 [rhbz#2163953]: https://bugzilla.redhat.com/show_bug.cgi?id=2163953
 
 

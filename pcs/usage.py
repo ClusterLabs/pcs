@@ -2433,11 +2433,13 @@ Commands:
         constraints.
         {output_format_desc}
 
-    location add <id> <resource> <node> <score> [resource-discovery=<option>]
+    location add <id> <resource> <node> [score=<score>]
+            [resource-discovery=<option>]
         Add a location constraint with the appropriate id for the specified
-        resource, node name and score. Resource may be either a resource id
-        <resource_id> or %<resource_id> or resource%<resource_id>, or a
-        resource name regular expression regexp%<resource_pattern>.
+        resource, node name and score (default score: INFINITY). Resource may be
+        either a resource id <resource_id> or %<resource_id> or
+        resource%<resource_id>, or a resource name regular expression
+        regexp%<resource_pattern>.
 
     location delete <id>...
         Remove location constraints with the specified ids.
@@ -2478,7 +2480,8 @@ Commands:
         {output_format_desc}
 
     colocation add [<role>] <source resource id> with [<role>]
-                   <target resource id> [score] [options] [id=constraint-id]
+            <target resource id> [score=<score>] [<options>]
+            [id=<constraint-id>]
         Request <source resource> to run on the same node where pacemaker has
         determined <target resource> should run.  Positive values of score
         mean the resources should be run on the same node, negative values

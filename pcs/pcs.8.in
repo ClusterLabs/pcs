@@ -1130,8 +1130,8 @@ where duration options and date spec options are: hours, monthdays, weekdays, ye
 location [config [resources [<resource reference>...]] | [nodes [<node>...]]] [\fB\-\-full\fR] [\fB\-\-all\fR] [@OUTPUT_FORMAT_SYNTAX_DOC@]
 List all the current location constraints that are not expired. If 'resources' is specified, location constraints are displayed per resource. If 'nodes' is specified, location constraints are displayed per node. If specific nodes, resources or resource name regular expressions are specified, only constraints containing those will be shown. Resource reference may be either a resource id <resource_id> or %<resource_id> or resource%<resource_id>, or a resource name regular expression regexp%<resource_pattern>. If \fB\-\-full\fR is specified show the internal constraint id's as well. If \fB\-\-all\fR is specified show the expired constraints. @OUTPUT_FORMAT_DESC_DOC@
 .TP
-location add <id> <resource> <node> <score> [resource\-discovery=<option>]
-Add a location constraint with the appropriate id for the specified resource, node name and score. Resource may be either a resource id <resource_id> or %<resource_id> or resource%<resource_id>, or a resource name regular expression regexp%<resource_pattern>.
+location add <id> <resource> <node> [score=<score>] [resource\-discovery=<option>]
+Add a location constraint with the appropriate id for the specified resource, node name and score (default score: INFINITY). Resource may be either a resource id <resource_id> or %<resource_id> or resource%<resource_id>, or a resource name regular expression regexp%<resource_pattern>.
 .TP
 location delete <id>...
 Remove location constraints with the specified ids.
@@ -1157,7 +1157,7 @@ Remove resource from any ordering constraint
 colocation [config] [\fB\-\-full\fR] [@OUTPUT_FORMAT_SYNTAX_DOC@]
 List all current colocation constraints (if \fB\-\-full\fR is specified show the internal constraint id's as well). @OUTPUT_FORMAT_DESC_DOC@
 .TP
-colocation add [<role>] <source resource id> with [<role>] <target resource id> [score] [options] [id=constraint\-id]
+colocation add [<role>] <source resource id> with [<role>] <target resource id> [score=<score>] [<options>] [id=<constraint\-id>]
 Request <source resource> to run on the same node where pacemaker has determined <target resource> should run.  Positive values of score mean the resources should be run on the same node, negative values mean the resources should not be run on the same node.  Specifying 'INFINITY' (or '\-INFINITY') for the score forces <source resource> to run (or not run) with <target resource> (score defaults to "INFINITY"). A role can be: 'Promoted', 'Unpromoted', 'Started', 'Stopped' (if no role is specified, it defaults to 'Started').
 .TP
 colocation set <resource1> [resourceN]... [options] [set <resourceX> ... [options]] [setoptions [constraint_options]]
@@ -1643,6 +1643,13 @@ Several date-spec and duration options have been removed in pacemaker 3. Therefo
 Using spaces in dates in location constraint rules is no longer allowed.
 .br
 Rules are supposed to be specified as a single string argument. Specifying rules as multiple arguments has been deprecated and might be removed in a future release.
+.SS "constraint"
+.TP
+location add
+Specifying score as a standalone value is deprecated in favor of score=value. This makes the command consistent with other commands for creating constraints.
+.TP
+colocation add
+Specifying score as a standalone value is deprecated in favor of score=value. This makes the command consistent with other commands for creating constraints.
 .SS "stonith"
 .TP
 level add | clear | delete | remove

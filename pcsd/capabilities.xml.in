@@ -962,6 +962,14 @@
         pcs commands: constraint location add
       </description>
     </capability>
+    <capability id="pcmk.constraint.location.simple.options.score" in-pcs="1" in-pcsd="0">
+      <description>
+        Score for a constraint is passed as 'score={value}', not as a standalone
+        argument.
+
+        pcs commands: constraint location add
+      </description>
+    </capability>
     <capability id="pcmk.constraint.location.simple.resource-regexp" in-pcs="1" in-pcsd="0">
       <description>
         Resources can be specified by regular expressions.
@@ -1036,6 +1044,14 @@
     <capability id="pcmk.constraint.colocation.simple.options" in-pcs="1" in-pcsd="0">
       <description>
         Can set constraint options, constraint id and resources's role.
+
+        pcs commands: constraint colocation add
+      </description>
+    </capability>
+    <capability id="pcmk.constraint.colocation.simple.options.score" in-pcs="1" in-pcsd="0">
+      <description>
+        Score for a constraint is passed as 'score={value}', not as a standalone
+        argument.
 
         pcs commands: constraint colocation add
       </description>

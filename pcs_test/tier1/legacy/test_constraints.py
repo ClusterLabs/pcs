@@ -58,6 +58,10 @@ DEPRECATED_LOCATION_CONSTRAINT_REMOVE = (
     "Deprecation Warning: This command is deprecated and will be removed. "
     "Please use 'pcs constraint delete' or 'pcs constraint remove' instead.\n"
 )
+DEPRECATED_STANDALONE_SCORE = (
+    "Deprecation Warning: Specifying score as a standalone value is deprecated "
+    "and might be removed in a future release, use score=value instead\n"
+)
 
 empty_cib = rc("cib-empty-3.7.xml")
 large_cib = rc("cib-large.xml")
@@ -520,7 +524,7 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
             "constraint colocation add D1 with D2 100".split(),
         )
         self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
+        self.assertEqual(stderr, DEPRECATED_STANDALONE_SCORE)
         self.assertEqual(retval, 0)
 
         stdout, stderr, retval = pcs(
@@ -528,12 +532,12 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
             "--force -- constraint colocation add D1 with D2 -100".split(),
         )
         self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
+        self.assertEqual(stderr, DEPRECATED_STANDALONE_SCORE)
         self.assertEqual(retval, 0)
 
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
-            "constraint colocation add Master with D5 100".split(),
+            "constraint colocation add Master with D5 score=100".split(),
         )
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
@@ -570,7 +574,7 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
 
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
-            f"constraint colocation add {const.PCMK_ROLE_UNPROMOTED} M5-master with started M6-master 500".split(),
+            f"constraint colocation add {const.PCMK_ROLE_UNPROMOTED} M5-master with started M6-master score=500".split(),
         )
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
@@ -715,6 +719,14 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
             "-- constraint colocation add D1 with D2 -100 id=abcd node-attribute=y".split(),
         )
         self.assertEqual(stdout, "")
+        self.assertEqual(stderr, DEPRECATED_STANDALONE_SCORE)
+        self.assertEqual(retval, 0)
+
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name,
+            "-- constraint colocation add D2 with D1 score=-100 id=efgh node-attribute=y".split(),
+        )
+        self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
         self.assertEqual(retval, 0)
 
@@ -724,6 +736,8 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
                 """\
                 Colocation Constraints:
                   resource 'D1' with resource 'D2'
+                    score=-100
+                  resource 'D2' with resource 'D1'
                     score=-100
                 """
             ),
@@ -1161,60 +1175,70 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
         self.assertEqual(retval, 1)
 
     def test_constraint_resource_discovery(self):
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            "resource create crd ocf:heartbeat:Dummy".split(),
-        )
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
+        self.assert_pcs_success(
             "resource create crd1 ocf:heartbeat:Dummy".split(),
         )
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            "-- constraint location add my_constraint_id crd my_node -INFINITY resource-discovery=always".split(),
+        self.assert_pcs_success(
+            "resource create crd2 ocf:heartbeat:Dummy".split(),
         )
-        self.assertEqual(stderr, LOCATION_NODE_VALIDATION_SKIP_WARNING)
-        self.assertEqual(stdout, "")
-        self.assertEqual(retval, 0)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            "-- constraint location add my_constraint_id2 crd1 my_node -INFINITY resource-discovery=never".split(),
+        self.assert_pcs_success(
+            "resource create crd3 ocf:heartbeat:Dummy".split(),
         )
-        self.assertEqual(stderr, LOCATION_NODE_VALIDATION_SKIP_WARNING)
-        self.assertEqual(stdout, "")
-        self.assertEqual(retval, 0)
+        self.assert_pcs_success(
+            "resource create crd4 ocf:heartbeat:Dummy".split(),
+        )
+
+        self.assert_pcs_success(
+            "-- constraint location add id1 crd1 my_node -INFINITY resource-discovery=always".split(),
+            stderr_full=(
+                DEPRECATED_STANDALONE_SCORE
+                + LOCATION_NODE_VALIDATION_SKIP_WARNING
+            ),
+        )
+        self.assert_pcs_success(
+            "-- constraint location add id2 crd2 my_node score=-INFINITY resource-discovery=never".split(),
+            stderr_full=LOCATION_NODE_VALIDATION_SKIP_WARNING,
+        )
+        self.assert_pcs_success(
+            "-- constraint location add id3 crd3 my_node resource-discovery=always score=10".split(),
+            stderr_full=LOCATION_NODE_VALIDATION_SKIP_WARNING,
+        )
+        self.assert_pcs_success(
+            "-- constraint location add id4 crd4 my_node resource-discovery=never".split(),
+            stderr_full=LOCATION_NODE_VALIDATION_SKIP_WARNING,
+        )
+        self.assert_pcs_fail(
+            "-- constraint location add id5 crd1 my_node2 resource-discovery=never INFINITY".split(),
+            "Error: missing value of 'INFINITY' option\n",
+        )
+        self.assert_pcs_fail(
+            "-- constraint location add id6 crd1 my_node2 -INFINITY bad-opt=test".split(),
+            (
+                DEPRECATED_STANDALONE_SCORE
+                + "Error: bad option 'bad-opt', use --force to override\n"
+            ),
+        )
+        self.assert_pcs_fail(
+            "-- constraint location add id7 crd1 my_node2 score=-INFINITY bad-opt=test".split(),
+            "Error: bad option 'bad-opt', use --force to override\n",
+        )
 
         self.assert_pcs_success(
             "constraint --full".split(),
             stdout_full=outdent(
                 """\
                 Location Constraints:
-                  resource 'crd' avoids node 'my_node' with score INFINITY (id: my_constraint_id)
+                  resource 'crd1' avoids node 'my_node' with score INFINITY (id: id1)
                     resource-discovery=always
-                  resource 'crd1' avoids node 'my_node' with score INFINITY (id: my_constraint_id2)
+                  resource 'crd2' avoids node 'my_node' with score INFINITY (id: id2)
+                    resource-discovery=never
+                  resource 'crd3' prefers node 'my_node' with score 10 (id: id3)
+                    resource-discovery=always
+                  resource 'crd4' prefers node 'my_node' with score INFINITY (id: id4)
                     resource-discovery=never
                 """
             ),
         )
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            "-- constraint location add my_constraint_id3 crd1 my_node2 -INFINITY bad-opt=test".split(),
-        )
-        self.assertEqual(stdout, "")
-        self.assertEqual(
-            stderr, "Error: bad option 'bad-opt', use --force to override\n"
-        )
-        self.assertEqual(retval, 1)
 
     def test_order_sets_removal(self):
         for i in range(9):
@@ -2774,7 +2798,7 @@ Error: duplicate constraint already exists, use --force to override
 
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
-            "constraint colocation add D1 with D2 50".split(),
+            "constraint colocation add D1 with D2 score=50".split(),
         )
         self.assertEqual(stdout, "")
         ac(
@@ -2788,7 +2812,7 @@ Error: duplicate constraint already exists, use --force to override
 
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
-            "constraint colocation add D1 with D2 50 --force".split(),
+            "constraint colocation add D1 with D2 score=50 --force".split(),
         )
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
@@ -3161,7 +3185,7 @@ Error: duplicate constraint already exists, use --force to override
 
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
-            "constraint colocation add D2 with D1 100 id=id2".split(),
+            "constraint colocation add D2 with D1 score=100 id=id2".split(),
         )
         self.assertEqual(stdout, "")
         self.assertEqual(stderr, "")
@@ -3679,13 +3703,30 @@ class LocationTypeId(ConstraintEffect):
             stderr_full=LOCATION_NODE_VALIDATION_SKIP_WARNING,
         )
 
-    def test_add(self):
+    def test_add_deprecated(self):
         self.fixture_primitive("A")
         self.assert_effect(
             [
                 "constraint location add my-id A node1 INFINITY".split(),
                 "constraint location add my-id %A node1 INFINITY".split(),
                 "constraint location add my-id resource%A node1 INFINITY".split(),
+            ],
+            """<constraints>
+                <rsc_location id="my-id" node="node1" rsc="A" score="INFINITY"/>
+            </constraints>""",
+            stderr_full=(
+                DEPRECATED_STANDALONE_SCORE
+                + LOCATION_NODE_VALIDATION_SKIP_WARNING
+            ),
+        )
+
+    def test_add(self):
+        self.fixture_primitive("A")
+        self.assert_effect(
+            [
+                "constraint location add my-id A node1 score=INFINITY".split(),
+                "constraint location add my-id %A node1 score=INFINITY".split(),
+                "constraint location add my-id resource%A node1 score=INFINITY".split(),
             ],
             """<constraints>
                 <rsc_location id="my-id" node="node1" rsc="A" score="INFINITY"/>
@@ -3721,9 +3762,23 @@ class LocationTypePattern(ConstraintEffect):
             stderr_full=LOCATION_NODE_VALIDATION_SKIP_WARNING,
         )
 
-    def test_add(self):
+    def test_add_deprecated(self):
         self.assert_effect(
             "constraint location add my-id regexp%res_[0-9] node1 INFINITY".split(),
+            """<constraints>
+                <rsc_location id="my-id" node="node1" rsc-pattern="res_[0-9]"
+                    score="INFINITY"
+                />
+            </constraints>""",
+            stderr_full=(
+                DEPRECATED_STANDALONE_SCORE
+                + LOCATION_NODE_VALIDATION_SKIP_WARNING
+            ),
+        )
+
+    def test_add(self):
+        self.assert_effect(
+            "constraint location add my-id regexp%res_[0-9] node1 score=INFINITY".split(),
             """<constraints>
                 <rsc_location id="my-id" node="node1" rsc-pattern="res_[0-9]"
                     score="INFINITY"
@@ -3962,7 +4017,7 @@ class BundleLocation(Bundle):
 
     def test_bundle_location(self):
         self.assert_effect(
-            "constraint location add id B node1 100".split(),
+            "constraint location add id B node1 score=100".split(),
             """
                 <constraints>
                     <rsc_location id="id" node="node1" rsc="B" score="100" />
@@ -4024,7 +4079,7 @@ class BundleLocation(Bundle):
     def test_primitive_location(self):
         self.fixture_primitive("R", "B")
         self.assert_pcs_fail(
-            "constraint location add id R node1 100".split(),
+            "constraint location add id R node1 score=100".split(),
             (
                 LOCATION_NODE_VALIDATION_SKIP_WARNING
                 + "Error: R is a bundle resource, you should use the bundle id: "
@@ -4035,7 +4090,7 @@ class BundleLocation(Bundle):
     def test_primitive_location_force(self):
         self.fixture_primitive("R", "B")
         self.assert_effect(
-            "constraint location add id R node1 100 --force".split(),
+            "constraint location add id R node1 score=100 --force".split(),
             """
                 <constraints>
                     <rsc_location id="id" node="node1" rsc="R" score="100" />
@@ -4444,9 +4499,21 @@ class LocationAvoids(ConstraintEffect, LocationPrefersAvoidsMixin):
 
 
 class LocationAdd(ConstraintEffect):
-    def test_invalid_score(self):
+    def test_invalid_score_deprecated(self):
         self.assert_pcs_fail(
             "constraint location add location1 D1 rh7-1 bar".split(),
+            (
+                DEPRECATED_STANDALONE_SCORE
+                + LOCATION_NODE_VALIDATION_SKIP_WARNING
+                + "Error: invalid score 'bar', use integer or INFINITY or "
+                "-INFINITY\n"
+            ),
+        )
+        self.assert_resources_xml_in_cib("<constraints/>")
+
+    def test_invalid_score(self):
+        self.assert_pcs_fail(
+            "constraint location add location1 D1 rh7-1 score=bar".split(),
             (
                 LOCATION_NODE_VALIDATION_SKIP_WARNING
                 + "Error: invalid score 'bar', use integer or INFINITY or "
@@ -4457,7 +4524,7 @@ class LocationAdd(ConstraintEffect):
 
     def test_invalid_location(self):
         self.assert_pcs_fail(
-            "constraint location add loc:dummy D1 rh7-1 100".split(),
+            "constraint location add loc:dummy D1 rh7-1 score=100".split(),
             (
                 LOCATION_NODE_VALIDATION_SKIP_WARNING
                 + "Error: invalid constraint id 'loc:dummy', ':' is not a valid "

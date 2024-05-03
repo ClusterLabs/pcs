@@ -80,6 +80,10 @@ OPTIONS_SYMMETRICAL = order_attrib["symmetrical"]
 LOCATION_NODE_VALIDATION_SKIP_MSG = (
     "Validation for node existence in the cluster will be skipped"
 )
+STANDALONE_SCORE_MSG = (
+    "Specifying score as a standalone value is deprecated and "
+    "might be removed in a future release, use score=value instead"
+)
 
 
 class CrmRuleReturnCode(Enum):
@@ -158,6 +162,8 @@ def _validate_resources_not_in_same_group(cib_dom, resource1, resource2):
 #        <src> with <role> <tgt> [score] [options]
 # <role> <src> with        <tgt> [score] [options]
 # <role> <src> with <role> <tgt> [score] [options]
+# Specifying score as a single argument is deprecated, though. The correct way
+# is score=value in options.
 def colocation_add(lib, argv, modifiers):
     """
     Options:
@@ -173,8 +179,13 @@ def colocation_add(lib, argv, modifiers):
         Commandline options: no options
         """
         if not argv:
-            return SCORE_INFINITY, []
-        score = SCORE_INFINITY if "=" in argv[0] else argv.pop(0)
+            return None, []
+        score = None
+        if "=" not in argv[0]:
+            score = argv.pop(0)
+            # TODO added to pcs in the first 0.12.x version
+            deprecation_warning(STANDALONE_SCORE_MSG)
+
         # create a list of 2-tuples (name, value)
         arg_array = [
             parse_args.split_option(arg, allow_empty_value=False)
@@ -255,6 +266,10 @@ def colocation_add(lib, argv, modifiers):
                     % value
                 )
             id_in_nvpairs = True
+        elif name == "score":
+            score = value
+    if score is None:
+        score = SCORE_INFINITY
     if not id_in_nvpairs:
         nv_pairs.append(
             (
@@ -910,7 +925,7 @@ def location_prefer(
                 sanitize_id(f"location-{rsc_value}-{node}-{score}"),
                 rsc,
                 node,
-                score,
+                f"score={score}",
             ]
         )
 
@@ -946,21 +961,25 @@ def location_add(
         RESOURCE_TYPE_RESOURCE,
     )
     node = argv.pop(0)
-    score = argv.pop(0)
+    score = None
+    if "=" not in argv[0]:
+        score = argv.pop(0)
+        # TODO added to pcs in the first 0.12.x version
+        deprecation_warning(STANDALONE_SCORE_MSG)
     options = []
-    # For now we only allow setting resource-discovery
-    if argv:
-        for arg in argv:
-            if "=" in arg:
-                options.append(arg.split("=", 1))
-            else:
-                raise CmdLineInputError(f"bad option '{arg}'")
-            if options[-1][0] != "resource-discovery" and not modifiers.get(
-                "--force"
-            ):
-                utils.err(
-                    "bad option '%s', use --force to override" % options[-1][0]
-                )
+    # For now we only allow setting resource-discovery and score
+    for arg in argv:
+        name, value = parse_args.split_option(arg, allow_empty_value=False)
+        if name == "score":
+            score = value
+        elif name == "resource-discovery":
+            options.append([name, value])
+        elif modifiers.get("--force"):
+            options.append([name, value])
+        else:
+            utils.err("bad option '%s', use --force to override" % name)
+    if score is None:
+        score = "INFINITY"
 
     # Verify that specified node exists in the cluster and score is valid
     if not skip_score_and_node_check:
