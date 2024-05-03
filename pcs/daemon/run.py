@@ -136,10 +136,15 @@ def configure_app(
                     session_storage=session_storage,
                     auth_provider=auth_provider,
                 )
-                + sinatra_ui.get_routes(
-                    session_storage, auth_provider, ruby_pcsd_wrapper
-                )
             )
+
+        # Even with disabled (standalone) webui the following routes must be
+        # provided because they can be used via unix socket from cockpit.
+        routes.extend(
+            sinatra_ui.get_routes(
+                session_storage, auth_provider, ruby_pcsd_wrapper
+            )
+        )
 
         return Application(
             routes, debug=debug, default_handler_class=Http404Handler
