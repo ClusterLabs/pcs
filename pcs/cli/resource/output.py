@@ -47,6 +47,7 @@ from pcs.common.str_tools import (
     format_list,
     format_name_value_list,
     format_optional,
+    format_plural,
     indent,
 )
 from pcs.common.types import StringIterable
@@ -857,9 +858,66 @@ def _resource_clone_to_cmd(clone_dto: CibResourceCloneDto) -> List[List[str]]:
     ]
 
 
+def _get_stonith_ids_from_group_dto(
+    group_dto: CibResourceGroupDto,
+    resources_facade: ResourcesConfigurationFacade,
+) -> list[str]:
+    stonith_ids = []
+    for member_id in group_dto.member_ids:
+        primitive_dto = resources_facade.get_primitive_dto(member_id)
+        if primitive_dto is None:
+            raise CmdLineInputError(
+                f"Invalid data: group {group_dto.id} has no children"
+            )
+        if is_stonith(primitive_dto.agent_name):
+            stonith_ids.append(primitive_dto.id)
+    return stonith_ids
+
+
+def _get_stonith_ids_from_clone_dto(
+    clone_dto: CibResourceCloneDto,
+    resources_facade: ResourcesConfigurationFacade,
+) -> list[str]:
+    primitive_dto = resources_facade.get_primitive_dto(clone_dto.member_id)
+    group_dto = resources_facade.get_group_dto(clone_dto.member_id)
+    if primitive_dto is not None:
+        return (
+            [primitive_dto.id] if is_stonith(primitive_dto.agent_name) else []
+        )
+    if group_dto is not None:
+        return _get_stonith_ids_from_group_dto(group_dto, resources_facade)
+    raise CmdLineInputError(
+        f"Invalid data: clone {clone_dto.id} has no children"
+    )
+
+
+def _warn_stonith_unsupported(
+    dto: Union[CibResourceBundleDto, CibResourceGroupDto, CibResourceCloneDto],
+    stonith_ids: StringIterable,
+) -> None:
+    if isinstance(dto, CibResourceBundleDto):
+        element = "bundle resource"
+    elif isinstance(dto, CibResourceGroupDto):
+        element = "group"
+    elif isinstance(dto, CibResourceCloneDto):
+        element = "clone"
+    else:
+        raise AssertionError(f"unexpedted cib resource dto: {dto}")
+
+    resource_pl = format_plural(sorted(stonith_ids), "resource")
+    stonith_id_list = format_list(sorted(stonith_ids))
+    warn(
+        f"{element.capitalize()} '{dto.id}' contains stonith {resource_pl}: "
+        f"{stonith_id_list}. {element.capitalize()} with stonith {resource_pl} "
+        f"is unsupported, therefore pcs is unable to create it. The {element} "
+        "will be omitted."
+    )
+
+
 def resources_to_cmd(
     resources_facade: ResourcesConfigurationFacade,
 ) -> List[List[str]]:
+    # pylint: disable=too-many-branches
     output: List[List[str]] = []
     primitives_created_with_bundle = set()
     for bundle_dto in resources_facade.bundles:
@@ -869,7 +927,7 @@ def resources_to_cmd(
                 "type, therefore pcs is unable to create it. The resource will be omitted."
             )
             continue
-        output.extend(_resource_bundle_to_cmd(bundle_dto))
+        primitive_dto = None
         if bundle_dto.member_id:
             primitive_dto = resources_facade.get_primitive_dto(
                 bundle_dto.member_id
@@ -880,16 +938,39 @@ def resources_to_cmd(
                     f"primitive resource with id '{bundle_dto.member_id}' "
                     "which was not found"
                 )
+            if is_stonith(primitive_dto.agent_name):
+                _warn_stonith_unsupported(bundle_dto, [bundle_dto.member_id])
+                continue
+        output.extend(_resource_bundle_to_cmd(bundle_dto))
+        if primitive_dto:
             output.extend(
                 _resource_primitive_to_cmd(primitive_dto, bundle_dto.id)
             )
             primitives_created_with_bundle.add(bundle_dto.member_id)
     for primitive_dto in resources_facade.primitives:
+        # stonith in bundle, clone, group is not filtered out for resource
+        # config
+        if is_stonith(
+            primitive_dto.agent_name
+        ) and resources_facade.get_parent_id(primitive_dto.id):
+            continue
         if primitive_dto.id not in primitives_created_with_bundle:
             output.extend(_resource_primitive_to_cmd(primitive_dto, None))
     for group_dto in resources_facade.groups:
+        stonith_ids = _get_stonith_ids_from_group_dto(
+            group_dto, resources_facade
+        )
+        if stonith_ids:
+            _warn_stonith_unsupported(group_dto, stonith_ids)
+            continue
         output.extend(_resource_group_to_cmd(group_dto))
     for clone_dto in resources_facade.clones:
+        stonith_ids = _get_stonith_ids_from_clone_dto(
+            clone_dto, resources_facade
+        )
+        if stonith_ids:
+            _warn_stonith_unsupported(clone_dto, stonith_ids)
+            continue
         output.extend(_resource_clone_to_cmd(clone_dto))
     return output
 

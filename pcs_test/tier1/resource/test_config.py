@@ -100,6 +100,14 @@ class ResourceConfigCmdMixin:
             ["resource", "config", "--output-format=cmd"]
         )
         self.assertEqual(retval, 0)
+        self.assertEqual(
+            stderr,
+            (
+                "Warning: Group 'G2' contains stonith resource: 'S1'. Group "
+                "with stonith resource is unsupported, therefore pcs is unable "
+                "to create it. The group will be omitted.\n"
+            ),
+        )
         cmds = [
             split(cmd)[1:]
             for cmd in stdout.replace("\\\n", "").strip().split(";\n")
@@ -114,9 +122,18 @@ class ResourceConfigCmdMixin:
                     f"stderr:\n{stderr}"
                 ),
             )
+        expected_dict = self._get_as_json(self.pcs_runner_orig)
+        expected_dict["groups"] = [
+            group for group in expected_dict["groups"] if group["id"] != "G2"
+        ]
+        expected_dict["primitives"] = [
+            primitive
+            for primitive in expected_dict["primitives"]
+            if primitive["id"] != "S1"
+        ]
         self.assertEqual(
             self._get_as_json(self.pcs_runner_new),
-            self._get_as_json(self.pcs_runner_orig),
+            expected_dict,
         )
 
 
