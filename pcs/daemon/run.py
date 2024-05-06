@@ -22,7 +22,6 @@ from pcs.common.types import StringCollection
 from pcs.daemon import (
     log,
     ruby_pcsd,
-    session,
     ssl,
     systemd,
 )
@@ -91,7 +90,7 @@ def config_sync(sync_config_lock: Lock, ruby_pcsd_wrapper: ruby_pcsd.Wrapper):
 def configure_app(
     async_scheduler: Scheduler,
     auth_provider: AuthProvider,
-    session_storage: session.Storage,
+    session_lifetime: int,
     ruby_pcsd_wrapper: ruby_pcsd.Wrapper,
     sync_config_lock: Lock,
     public_dir: str,
@@ -124,9 +123,10 @@ def configure_app(
         )
 
         if webui and enable_webui:
+            session_storage = webui.session.Storage(session_lifetime)
             routes.extend(
                 [(r"/(ui)?", RedirectHandler, dict(url="/ui/"))]
-                + webui.get_routes(
+                + webui.core.get_routes(
                     url_prefix="/ui/",
                     app_dir=os.path.join(public_dir, "ui"),
                     fallback_page_path=os.path.join(
@@ -136,15 +136,16 @@ def configure_app(
                     session_storage=session_storage,
                     auth_provider=auth_provider,
                 )
+                + webui.sinatra_ui.get_routes(
+                    session_storage, auth_provider, ruby_pcsd_wrapper
+                )
             )
-
-        # Even with disabled (standalone) webui the following routes must be
-        # provided because they can be used via unix socket from cockpit.
-        routes.extend(
-            sinatra_ui.get_routes(
-                session_storage, auth_provider, ruby_pcsd_wrapper
+        else:
+            # Even with disabled (standalone) webui the following routes must be
+            # provided because they can be used via unix socket from cockpit.
+            routes.extend(
+                sinatra_ui.get_routes(auth_provider, ruby_pcsd_wrapper)
             )
-        )
 
         return Application(
             routes, debug=debug, default_handler_class=Http404Handler
@@ -227,7 +228,7 @@ def main(argv=None) -> None:
     make_app = configure_app(
         async_scheduler,
         auth_provider,
-        session.Storage(env.PCSD_SESSION_LIFETIME),
+        env.PCSD_SESSION_LIFETIME,
         ruby_pcsd_wrapper,
         sync_config_lock,
         env.PCSD_STATIC_FILES_DIR,

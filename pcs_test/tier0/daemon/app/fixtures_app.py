@@ -8,11 +8,9 @@ from tornado.httputil import (
 from tornado.testing import AsyncHTTPTestCase
 from tornado.web import Application
 
-from pcs.daemon import (
-    ruby_pcsd,
-    session,
-)
-from pcs.daemon.app.auth import PCSD_SESSION
+from pcs.daemon import ruby_pcsd
+from pcs.daemon.app.webui import session
+from pcs.daemon.app.webui.auth import PCSD_SESSION
 
 USER = "user"
 GROUPS = ["group1", "group2"]

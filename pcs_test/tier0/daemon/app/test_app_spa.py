@@ -33,7 +33,7 @@ class AppTest(fixtures_app.AppUiTestMixin):
         super().tearDown()
 
     def get_routes(self):
-        return webui.get_routes(
+        return webui.core.get_routes(
             url_prefix=PREFIX,
             app_dir=self.spa_dir_path,
             fallback_page_path=self.fallback_path,
