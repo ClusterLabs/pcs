@@ -22,7 +22,7 @@ rpm_build:
   stage: stage1
   script:
     - ./autogen.sh
-    - ./configure --enable-local-build --enable-individual-bundling
+    - ./configure --enable-local-build --enable-individual-bundling  --enable-webui
     - make CI_BRANCH=${BASE_IMAGE_NAME} rpm/pcs.spec
     - dnf builddep -y rpm/pcs.spec
     - make CI_BRANCH=${BASE_IMAGE_NAME} rpm
@@ -42,7 +42,7 @@ distcheck:
         pyagentx
       "
     - ./autogen.sh
-    - ./configure --enable-local-build --enable-individual-bundling
+    - ./configure --enable-local-build --enable-individual-bundling --enable-webui
     - make distcheck DISTCHECK_CONFIGURE_FLAGS='--enable-local-build --enable-individual-bundling'
     - rename --verbose .tar. ".${BASE_IMAGE_NAME}.tar." pcs*.tar.*
     - mkdir -p dist && cp -v pcs*.tar.* dist/
@@ -56,7 +56,7 @@ typos:
   stage: stage1
   script:
     - ./autogen.sh
-    - ./configure --enable-local-build --enable-typos-check --enable-individual-bundling
+    - ./configure --enable-local-build --enable-typos-check --enable-individual-bundling --enable-webui
     - make
     - make typos_check
 
@@ -66,7 +66,7 @@ black:
   script:
     - python3 -m pip install --upgrade -r dev_requirements.txt
     - ./autogen.sh
-    - ./configure --enable-local-build --enable-dev-tests --enable-tests-only --enable-individual-bundling
+    - ./configure --enable-local-build --enable-dev-tests --enable-tests-only --enable-individual-bundling --enable-webui
     - make black_check
 
 isort:
@@ -75,7 +75,7 @@ isort:
   script:
     - python3 -m pip install --upgrade -r dev_requirements.txt
     - ./autogen.sh
-    - ./configure --enable-local-build --enable-dev-tests --enable-tests-only --enable-individual-bundling
+    - ./configure --enable-local-build --enable-dev-tests --enable-tests-only --enable-individual-bundling --enable-webui
     - make isort_check
 
 pylint:
@@ -84,7 +84,7 @@ pylint:
   script:
     - python3 -m pip install --upgrade -r dev_requirements.txt
     - ./autogen.sh
-    - ./configure --enable-local-build --enable-dev-tests --enable-parallel-pylint --enable-individual-bundling
+    - ./configure --enable-local-build --enable-dev-tests --enable-parallel-pylint --enable-individual-bundling --enable-webui
     - make
     - make pylint
 
@@ -94,7 +94,7 @@ mypy:
   script:
     - python3 -m pip install --upgrade -r dev_requirements.txt
     - ./autogen.sh
-    - ./configure --enable-local-build --enable-dev-tests --enable-individual-bundling
+    - ./configure --enable-local-build --enable-dev-tests --enable-individual-bundling --enable-webui
     - make
     - make mypy
 
@@ -103,7 +103,7 @@ ruby_tests:
   stage: stage1
   script:
     - ./autogen.sh
-    - ./configure --enable-local-build --enable-individual-bundling
+    - ./configure --enable-local-build --enable-individual-bundling --enable-webui
     - make
     - make pcsd-tests
 
@@ -115,7 +115,7 @@ python_tier0_tests:
     - dnf remove -y corosync* pacemaker* fence-agents* resource-agents* booth* sbd
     - python3 -m pip install concurrencytest
     - ./autogen.sh
-    - ./configure --enable-local-build --enable-individual-bundling
+    - ./configure --enable-local-build --enable-individual-bundling --enable-webui
     - make
     - make tests_tier0
 
@@ -128,7 +128,7 @@ python_tier1_tests:
     - "dnf install -y rpms/pcs-*${BASE_IMAGE_NAME}*$(rpm -E %{dist}).*.rpm"
     - python3 -m pip install concurrencytest
     - ./autogen.sh
-    - ./configure --enable-local-build --enable-destructive-tests --enable-tests-only --enable-individual-bundling
+    - ./configure --enable-local-build --enable-destructive-tests --enable-tests-only --enable-individual-bundling --enable-webui
     - rm -rf pcs pcsd pcs_bundled # make sure we are testing installed package
     - pcs_test/suite -v --installed --tier1
 
@@ -142,7 +142,7 @@ python_smoke_tests:
     - systemctl start pcsd
     - sleep 2
     - ./autogen.sh
-    - ./configure --enable-local-build --enable-individual-bundling
+    - ./configure --enable-local-build --enable-individual-bundling --enable-webui
     - make
     - rm -rf pcs
     - pcs_test/smoke.sh
