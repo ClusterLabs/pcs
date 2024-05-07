@@ -19,6 +19,7 @@ class ResourceConfigJson(TestCase):
         self.pcs_runner = PcsRunner(
             cib_file=get_test_resource("cib-resources.xml"),
         )
+        self.maxDiff = None
 
     def test_all(self):
         stdout, stderr, retval = self.pcs_runner.run(
@@ -29,7 +30,6 @@ class ResourceConfigJson(TestCase):
                 resources_dto.PRIMITIVE_R1,
                 resources_dto.PRIMITIVE_R7,
                 resources_dto.PRIMITIVE_R5,
-                resources_dto.STONITH_S1,
                 resources_dto.PRIMITIVE_R2,
                 resources_dto.PRIMITIVE_R3,
                 resources_dto.PRIMITIVE_R4,
@@ -73,6 +73,9 @@ class ResourceConfigJson(TestCase):
 
 
 class ResourceConfigCmdMixin:
+    sub_command = None
+    expected_config_stderr = ""
+
     def setUp(self):
         self.new_cib_file = get_tmp_file(self._get_tmp_file_name())
         self.pcs_runner_orig = PcsRunner(
@@ -87,27 +90,7 @@ class ResourceConfigCmdMixin:
     def tearDown(self):
         self.new_cib_file.close()
 
-    def _get_as_json(self, runner):
-        stdout, stderr, retval = runner.run(
-            ["resource", "config", "--output-format=json"]
-        )
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
-        return json.loads(stdout)
-
-    def test_all(self):
-        stdout, stderr, retval = self.pcs_runner_orig.run(
-            ["resource", "config", "--output-format=cmd"]
-        )
-        self.assertEqual(retval, 0)
-        self.assertEqual(
-            stderr,
-            (
-                "Warning: Group 'G2' contains stonith resource: 'S1'. Group "
-                "with stonith resource is unsupported, therefore pcs is unable "
-                "to create it. The group will be omitted.\n"
-            ),
-        )
+    def _run_commands(self, stdout):
         cmds = [
             split(cmd)[1:]
             for cmd in stdout.replace("\\\n", "").strip().split(";\n")
@@ -122,22 +105,74 @@ class ResourceConfigCmdMixin:
                     f"stderr:\n{stderr}"
                 ),
             )
-        expected_dict = self._get_as_json(self.pcs_runner_orig)
-        expected_dict["groups"] = [
-            group for group in expected_dict["groups"] if group["id"] != "G2"
-        ]
-        expected_dict["primitives"] = [
-            primitive
-            for primitive in expected_dict["primitives"]
-            if primitive["id"] != "S1"
-        ]
+
+    def _get_as_json(self, runner):
+        stdout, stderr, retval = runner.run(
+            [self.sub_command, "config", "--output-format=json"]
+        )
+        self.assertEqual(stderr, self.expected_config_stderr)
+        self.assertEqual(retval, 0)
+        return json.loads(stdout)
+
+    def test_all(self):
+        stdout, stderr, retval = self.pcs_runner_orig.run(
+            [self.sub_command, "config", "--output-format=cmd"]
+        )
+        self.assertEqual(retval, 0)
+        self.assertEqual(stderr, self.expected_config_stderr)
+        self._run_commands(stdout)
         self.assertEqual(
             self._get_as_json(self.pcs_runner_new),
-            expected_dict,
+            self._get_as_json(self.pcs_runner_orig),
         )
 
 
 class ResourceConfigCmd(ResourceConfigCmdMixin, TestCase):
+    sub_command = "resource"
+
     @staticmethod
     def _get_tmp_file_name():
         return "tier1_resource_test_config_cib.xml"
+
+    def test_unsupported_stonith(self):
+        self.pcs_runner_orig = PcsRunner(
+            cib_file=get_test_resource("cib-unsupported-stonith-config.xml")
+        )
+        stdout, stderr, retval = self.pcs_runner_orig.run(
+            ["resource", "config", "--output-format=cmd"]
+        )
+        self.assertEqual(retval, 0)
+        self.assertEqual(
+            stderr,
+            (
+                "Warning: Bundle resource 'B1' contains stonith resource: 'S1'."
+                " Bundle resource with stonith resource is unsupported, "
+                "therefore pcs is unable to create it. The bundle resource will"
+                " be omitted.\n"
+                "Warning: Group 'G1' contains stonith resource: 'S2'. Group "
+                "with stonith resource is unsupported, therefore pcs is unable "
+                "to create it. The group will be omitted.\n"
+                "Warning: Group 'G2' contains stonith resources: 'S4', 'S5'. "
+                "Group with stonith resources is unsupported, therefore pcs is "
+                "unable to create it. The group will be omitted.\n"
+                "Warning: Clone 'S3-clone' contains stonith resource: 'S3'. "
+                "Clone with stonith resource is unsupported, therefore pcs is "
+                "unable to create it. The clone will be omitted.\n"
+                "Warning: Clone 'G2-clone' contains stonith resources: 'S4', "
+                "'S5'. Clone with stonith resources is unsupported, therefore "
+                "pcs is unable to create it. The clone will be omitted.\n"
+            ),
+        )
+        self._run_commands(stdout)
+        expected_dict = to_dict(
+            CibResourcesDto(
+                primitives=[resources_dto.PRIMITIVE_R1],
+                clones=[],
+                groups=[],
+                bundles=[],
+            )
+        )
+        self.assertEqual(
+            self._get_as_json(self.pcs_runner_new),
+            expected_dict,
+        )

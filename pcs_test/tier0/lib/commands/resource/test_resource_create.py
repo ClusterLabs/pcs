@@ -106,6 +106,7 @@ def create_clone(
 
 def create_bundle(
     env,
+    agent="ocf:heartbeat:Dummy",
     wait=TIMEOUT,
     disabled=False,
     meta_attributes=None,
@@ -116,7 +117,7 @@ def create_bundle(
     return resource.create_into_bundle(
         env,
         "A",
-        "ocf:heartbeat:Dummy",
+        agent,
         operation_list=operation_list if operation_list else [],
         meta_attributes=meta_attributes if meta_attributes else {},
         instance_attributes={},
@@ -2812,3 +2813,53 @@ class DeprecatedNagios(TestCase):
             wait=False,
         )
         self.env_assist.assert_reports([self.report])
+
+
+class StonithIsForbiddenMixin:
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+
+    def _command(self):
+        raise NotImplementedError
+
+    def test_stonith_is_forbidden(self):
+        self.env_assist.assert_raise_library_error(self._command)
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.COMMAND_ARGUMENT_TYPE_MISMATCH,
+                    not_accepted_type="stonith resource",
+                    command_to_use_instead="stonith create",
+                ),
+            ]
+        )
+
+
+class StonithIsForbiddenInCreate(StonithIsForbiddenMixin, TestCase):
+    def _command(self):
+        return create(
+            self.env_assist.get_env(),
+            wait=False,
+            agent_name="stonith:fence_simple",
+        )
+
+
+class StonithIsForbiddenInBundle(StonithIsForbiddenMixin, TestCase):
+    def _command(self):
+        return create_bundle(
+            self.env_assist.get_env(), wait=False, agent="stonith:fence_simple"
+        )
+
+
+class StonithIsForbiddenInClone(StonithIsForbiddenMixin, TestCase):
+    def _command(self):
+        return create_clone(
+            self.env_assist.get_env(), wait=False, agent="stonith:fence_simple"
+        )
+
+
+class StonithIsForbiddenInGroup(StonithIsForbiddenMixin, TestCase):
+    def _command(self):
+        return create_group(
+            self.env_assist.get_env(), wait=False, agent="stonith:fence_simple"
+        )

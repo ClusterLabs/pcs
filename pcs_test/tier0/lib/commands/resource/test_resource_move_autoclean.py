@@ -46,6 +46,10 @@ def _rsc_primitive_fixture(res_id):
     return f'<primitive id="{res_id}"/>'
 
 
+def _rsc_stonith_primitive_fixture(res_id):
+    return f'<primitive id="{res_id}" class="stonith"/>'
+
+
 def _rsc_clone_fixture(clone_id, primitive=None, is_promotable=False):
     if not primitive:
         primitive = _rsc_primitive_fixture(f"{clone_id}-primitive")
@@ -644,6 +648,24 @@ class MoveAutocleanValidations(MoveAutocleanCommonSetup):
                     ],
                     context_type="resources",
                     context_id="",
+                )
+            ]
+        )
+
+    def test_resource_wrong_type_stonith(self):
+        stonith_id = "stonith_rsc"
+        self.config.runner.cib.load(
+            resources=_resources_tag(_rsc_stonith_primitive_fixture(stonith_id))
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: move_autoclean(self.env_assist.get_env(), stonith_id),
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.COMMAND_ARGUMENT_TYPE_MISMATCH,
+                    not_accepted_type="stonith resource",
+                    command_to_use_instead=None,
                 )
             ]
         )

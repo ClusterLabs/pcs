@@ -182,7 +182,7 @@ class GroupAdd(TestCase):
     def test_remove_empty_group(self):
         resources_before = """
             <resources>
-                
+
                 <group id="X">
                     <primitive id="RX1" />
                 </group>
@@ -459,6 +459,29 @@ class GroupAdd(TestCase):
                     item_type=ADD_REMOVE_ITEM_TYPE_RESOURCE,
                     container_id="G",
                     adjacent_item_id="RX1",
+                ),
+            ]
+        )
+
+    def test_validation_stonith_is_forbidden(self):
+        resources_before = """
+            <resources>
+                <primitive id="S" class="stonith" />
+                <group id="G">
+                    <primitive id="RG1" />
+                </group>
+            </resources>
+        """
+        (self.config.runner.cib.load(resources=resources_before))
+        self.env_assist.assert_raise_library_error(
+            lambda: resource.group_add(self.env_assist.get_env(), "G", ["S"])
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.COMMAND_ARGUMENT_TYPE_MISMATCH,
+                    not_accepted_type="stonith resources",
+                    command_to_use_instead=None,
                 ),
             ]
         )

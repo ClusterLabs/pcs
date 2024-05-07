@@ -1,0 +1,55 @@
+<cib crm_feature_set="3.19.0" validate-with="pacemaker-3.9" epoch="59" num_updates="44" admin_epoch="0" cib-last-written="Mon May  6 12:16:56 2024" update-origin="node1" update-client="root" update-user="root" have-quorum="1" dc-uuid="1">
+  <configuration>
+    <crm_config/>
+    <nodes/>
+    <resources>
+      <primitive id="R1" class="ocf" type="Dummy" provider="pacemaker">
+        <operations>
+          <op name="monitor" interval="10s" timeout="20s" id="R1-monitor-interval-10s"/>
+        </operations>
+      </primitive>
+      <bundle id="B1">
+        <meta_attributes id="B1-meta_attributes">
+          <nvpair id="B1-meta_attributes-target-role" name="target-role" value="Stopped"/>
+        </meta_attributes>
+        <podman image="fedora"/>
+        <network control-port="1234"/>
+        <primitive id="S1" class="stonith" type="fence_kdump">
+          <operations>
+            <op name="monitor" interval="60s" id="S1-monitor-interval-60s"/>
+          </operations>
+        </primitive>
+      </bundle>
+      <group id="G1">
+        <primitive id="S2" class="stonith" type="fence_kdump">
+          <operations>
+            <op name="monitor" interval="60s" id="S2-monitor-interval-60s"/>
+          </operations>
+        </primitive>
+      </group>
+      <clone id="S3-clone">
+        <primitive id="S3" class="stonith" type="fence_kdump">
+          <operations>
+            <op name="monitor" interval="60s" id="S3-monitor-interval-60s"/>
+          </operations>
+        </primitive>
+      </clone>
+      <clone id="G2-clone">
+        <group id="G2">
+          <primitive id="S4" class="stonith" type="fence_kdump">
+            <operations>
+              <op name="monitor" interval="60s" id="S4-monitor-interval-60s"/>
+            </operations>
+          </primitive>
+          <primitive id="S5" class="stonith" type="fence_kdump">
+            <operations>
+              <op name="monitor" interval="60s" id="S5-monitor-interval-60s"/>
+            </operations>
+          </primitive>
+        </group>
+      </clone>
+    </resources>
+    <constraints/>
+  </configuration>
+  <status/>
+</cib>

@@ -167,7 +167,7 @@ class QueryGetMembers(QueryTestBase):
     def test_ok(self):
         self.assert_pcs_success(
             ["status", "query", "resource", "G2", "get-members"],
-            "R5\nS1\n",
+            "R5\n",
         )
 
     def test_primitive(self):
@@ -184,7 +184,7 @@ class QueryGetMembers(QueryTestBase):
 class QueryGetIndexInGroup(QueryTestBase):
     def test_ok(self):
         self.assert_pcs_success(
-            ["status", "query", "resource", "S1", "get-index-in-group"], "1\n"
+            ["status", "query", "resource", "R5", "get-index-in-group"], "0\n"
         )
 
     def test_not_in_group(self):
