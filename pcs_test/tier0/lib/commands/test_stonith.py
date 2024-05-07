@@ -111,6 +111,9 @@ class Create(TestCase):
         )
         self.config.runner.pcmk.load_fake_agent_metadata()
         self.config.runner.cib.load()
+        self.config.runner.pcmk.stonith_agent_self_validation(
+            instance_attributes, agent_name
+        )
         self.config.env.push_cib(
             resources=self._expected_cib(expected_cib_simple)
         )
@@ -171,7 +174,9 @@ class Create(TestCase):
             ]
         )
 
-    def test_agent_self_validation_failure_forced(self):
+    def assert_agent_self_validation_warnings(
+        self, user_enabled, extra_reports
+    ):
         agent_name = "test_simple"
         instance_attributes = {
             "must-set": "value",
@@ -208,16 +213,30 @@ class Create(TestCase):
             operations=[],
             meta_attributes={},
             instance_attributes=instance_attributes,
-            allow_invalid_instance_attributes=True,
-            enable_agent_self_validation=True,
+            allow_invalid_instance_attributes=user_enabled,
+            enable_agent_self_validation=user_enabled,
         )
         self.env_assist.assert_reports(
-            [
+            (extra_reports or [])
+            + [
                 fixture.warn(
                     reports.codes.AGENT_SELF_VALIDATION_RESULT,
                     result="not ignored\nfirst issue\nanother one",
                 )
             ]
+        )
+
+    def test_agent_self_validation_failure_forced(self):
+        self.assert_agent_self_validation_warnings(True, [])
+
+    def test_agent_self_validation_failure_default(self):
+        self.assert_agent_self_validation_warnings(
+            False,
+            [
+                fixture.warn(
+                    reports.codes.AGENT_SELF_VALIDATION_AUTO_ON_WITH_WARNINGS
+                ),
+            ],
         )
 
     def test_agent_self_validation_invalid_output(self):
@@ -260,8 +279,52 @@ class Create(TestCase):
             ]
         )
 
+    def test_agent_self_validation_invalid_output_default(self):
+        agent_name = "test_simple"
+        instance_attributes = {
+            "must-set": "value",
+            "must-set-new": "B",
+        }
+
+        self.config.runner.pcmk.load_agent(
+            agent_name=f"stonith:{agent_name}",
+            agent_filename="stonith_agent_fence_simple.xml",
+        )
+        self.config.runner.pcmk.load_fake_agent_metadata()
+        self.config.runner.cib.load()
+        self.config.runner.pcmk.stonith_agent_self_validation(
+            instance_attributes,
+            agent_name,
+            output="""<not valid> xml""",
+            returncode=0,
+        )
+        self.config.env.push_cib(
+            resources=self._expected_cib(expected_cib_simple)
+        )
+
+        self._create(
+            self.env_assist.get_env(),
+            "stonith-test",
+            agent_name,
+            operations=[],
+            meta_attributes={},
+            instance_attributes=instance_attributes,
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.AGENT_SELF_VALIDATION_AUTO_ON_WITH_WARNINGS
+                ),
+                fixture.warn(
+                    reports.codes.AGENT_SELF_VALIDATION_INVALID_DATA,
+                    reason="Specification mandates value for attribute valid, line 5, column 29 (<string>, line 5)",
+                ),
+            ]
+        )
+
     def test_unfencing(self):
         agent_name = "test_unfencing"
+        instance_attributes = {}
 
         self.config.runner.pcmk.load_agent(
             agent_name=f"stonith:{agent_name}",
@@ -269,6 +332,9 @@ class Create(TestCase):
         )
         self.config.runner.pcmk.load_fake_agent_metadata()
         self.config.runner.cib.load()
+        self.config.runner.pcmk.stonith_agent_self_validation(
+            instance_attributes, agent_name
+        )
         self.config.env.push_cib(
             resources=self._expected_cib(expected_cib_unfencing)
         )
@@ -279,7 +345,7 @@ class Create(TestCase):
             agent_name,
             operations=[],
             meta_attributes={},
-            instance_attributes={},
+            instance_attributes=instance_attributes,
         )
 
     def test_disabled(self):
@@ -306,6 +372,9 @@ class Create(TestCase):
         )
         self.config.runner.pcmk.load_fake_agent_metadata()
         self.config.runner.cib.load()
+        self.config.runner.pcmk.stonith_agent_self_validation(
+            instance_attributes, agent_name
+        )
         self.config.env.push_cib(resources=self._expected_cib(expected_cib))
 
         self._create(
@@ -324,6 +393,7 @@ class Create(TestCase):
         # it is worth testing. If it ever changes, the test should fail and be
         # updated to test new behaviour.
         agent_name = "test_custom_actions"
+        instance_attributes = {}
 
         self.config.runner.pcmk.load_agent(
             agent_name=f"stonith:{agent_name}",
@@ -331,6 +401,9 @@ class Create(TestCase):
         )
         self.config.runner.pcmk.load_fake_agent_metadata()
         self.config.runner.cib.load()
+        self.config.runner.pcmk.stonith_agent_self_validation(
+            instance_attributes, agent_name
+        )
         self.config.env.push_cib(
             resources=self._expected_cib(expected_cib_operations)
         )
@@ -341,7 +414,7 @@ class Create(TestCase):
             agent_name,
             operations=[],
             meta_attributes={},
-            instance_attributes={},
+            instance_attributes=instance_attributes,
             use_default_operations=use_default_operations,
         )
 
@@ -389,6 +462,9 @@ class Create(TestCase):
         )
         self.config.runner.pcmk.load_fake_agent_metadata()
         self.config.runner.cib.load()
+        self.config.runner.pcmk.stonith_agent_self_validation(
+            instance_attributes, agent_name
+        )
         self.config.env.push_cib(
             resources=self._expected_cib(expected_cib_simple_forced)
         )
@@ -601,6 +677,9 @@ class Create(TestCase):
         )
         self.config.runner.pcmk.load_fake_agent_metadata()
         self.config.runner.cib.load()
+        self.config.runner.pcmk.stonith_agent_self_validation(
+            instance_attributes, agent_name
+        )
         self.config.env.push_cib(
             resources=self._expected_cib(expected_cib_simple), wait=timeout
         )

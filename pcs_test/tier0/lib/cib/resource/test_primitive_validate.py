@@ -645,7 +645,7 @@ class ValidateResourceInstanceAttributesCreateSelfValidation(TestCase):
         self.agent_self_validation_mock.return_value = True, []
         self.cmd_runner = mock.Mock()
 
-    def test_disabled(self):
+    def _assert_success(self, enabled):
         attributes = {"required": "value"}
         facade = _fixture_ocf_agent()
         self.assertEqual(
@@ -655,23 +655,7 @@ class ValidateResourceInstanceAttributesCreateSelfValidation(TestCase):
                 attributes,
                 etree.Element("resources"),
                 force=False,
-                enable_agent_self_validation=False,
-            ),
-            [],
-        )
-        self.agent_self_validation_mock.assert_not_called()
-
-    def test_success(self):
-        attributes = {"required": "value"}
-        facade = _fixture_ocf_agent()
-        self.assertEqual(
-            primitive.validate_resource_instance_attributes_create(
-                self.cmd_runner,
-                facade,
-                attributes,
-                etree.Element("resources"),
-                force=False,
-                enable_agent_self_validation=True,
+                enable_agent_self_validation=enabled,
             ),
             [],
         )
@@ -680,6 +664,12 @@ class ValidateResourceInstanceAttributesCreateSelfValidation(TestCase):
             facade.metadata.name,
             attributes,
         )
+
+    def test_success_with_warnings(self):
+        self._assert_success(False)
+
+    def test_success_with_errors(self):
+        self._assert_success(True)
 
     def test_force(self):
         attributes = {"required": "value"}
@@ -701,11 +691,10 @@ class ValidateResourceInstanceAttributesCreateSelfValidation(TestCase):
             attributes,
         )
 
-    def test_failure(self):
+    def _assert_failure(self, enabled, report_items):
         attributes = {"required": "value"}
         facade = _fixture_ocf_agent()
-        failure_reason = "failure reason"
-        self.agent_self_validation_mock.return_value = False, failure_reason
+        self.agent_self_validation_mock.return_value = False, "failure_reason"
         assert_report_item_list_equal(
             primitive.validate_resource_instance_attributes_create(
                 self.cmd_runner,
@@ -713,20 +702,40 @@ class ValidateResourceInstanceAttributesCreateSelfValidation(TestCase):
                 attributes,
                 etree.Element("resources"),
                 force=False,
-                enable_agent_self_validation=True,
+                enable_agent_self_validation=enabled,
             ),
-            [
-                fixture.error(
-                    reports.codes.AGENT_SELF_VALIDATION_RESULT,
-                    result=failure_reason,
-                    force_code=reports.codes.FORCE,
-                )
-            ],
+            report_items,
         )
         self.agent_self_validation_mock.assert_called_once_with(
             self.cmd_runner,
             facade.metadata.name,
             attributes,
+        )
+
+    def test_failure_with_warnings(self):
+        self._assert_failure(
+            False,
+            [
+                fixture.warn(
+                    reports.codes.AGENT_SELF_VALIDATION_AUTO_ON_WITH_WARNINGS
+                ),
+                fixture.warn(
+                    reports.codes.AGENT_SELF_VALIDATION_RESULT,
+                    result="failure_reason",
+                ),
+            ],
+        )
+
+    def test_failure_with_errors(self):
+        self._assert_failure(
+            True,
+            [
+                fixture.error(
+                    reports.codes.AGENT_SELF_VALIDATION_RESULT,
+                    result="failure_reason",
+                    force_code=reports.codes.FORCE,
+                )
+            ],
         )
 
     def test_stonith_check(self):
@@ -1351,7 +1360,7 @@ class ValidateResourceInstanceAttributesUpdateSelfValidation(TestCase):
             etree.SubElement(nvset_el, "nvpair", dict(name=name, value=value))
         return resources_el
 
-    def test_disabled(self):
+    def _assert_success(self, enabled):
         old_attributes = {"required": "old_value"}
         new_attributes = {"required": "new_value"}
         facade = _fixture_ocf_agent()
@@ -1363,25 +1372,7 @@ class ValidateResourceInstanceAttributesUpdateSelfValidation(TestCase):
                 self._NAME,
                 self._fixture_resources(old_attributes),
                 force=False,
-                enable_agent_self_validation=False,
-            ),
-            [],
-        )
-        self.agent_self_validation_mock.assert_not_called()
-
-    def test_success(self):
-        old_attributes = {"required": "old_value"}
-        new_attributes = {"required": "new_value"}
-        facade = _fixture_ocf_agent()
-        self.assertEqual(
-            primitive.validate_resource_instance_attributes_update(
-                self.cmd_runner,
-                facade,
-                new_attributes,
-                self._NAME,
-                self._fixture_resources(old_attributes),
-                force=False,
-                enable_agent_self_validation=True,
+                enable_agent_self_validation=enabled,
             ),
             [],
         )
@@ -1400,6 +1391,12 @@ class ValidateResourceInstanceAttributesUpdateSelfValidation(TestCase):
                 ),
             ],
         )
+
+    def test_success_with_warnings(self):
+        self._assert_success(False)
+
+    def test_success_with_errors(self):
+        self._assert_success(True)
 
     def test_force(self):
         old_attributes = {"required": "old_value"}
@@ -1433,14 +1430,13 @@ class ValidateResourceInstanceAttributesUpdateSelfValidation(TestCase):
             ],
         )
 
-    def test_failure(self):
+    def _assert_failure(self, enabled, report_items):
         old_attributes = {"required": "old_value"}
         new_attributes = {"required": "new_value"}
-        failure_reason = "failure reason"
         facade = _fixture_ocf_agent()
         self.agent_self_validation_mock.side_effect = (
             (True, ""),
-            (False, failure_reason),
+            (False, "failure_reason"),
         )
         assert_report_item_list_equal(
             primitive.validate_resource_instance_attributes_update(
@@ -1450,15 +1446,9 @@ class ValidateResourceInstanceAttributesUpdateSelfValidation(TestCase):
                 self._NAME,
                 self._fixture_resources(old_attributes),
                 force=False,
-                enable_agent_self_validation=True,
+                enable_agent_self_validation=enabled,
             ),
-            [
-                fixture.error(
-                    reports.codes.AGENT_SELF_VALIDATION_RESULT,
-                    result=failure_reason,
-                    force_code=reports.codes.FORCE,
-                )
-            ],
+            report_items,
         )
         self.assertEqual(
             self.agent_self_validation_mock.mock_calls,
@@ -1473,6 +1463,32 @@ class ValidateResourceInstanceAttributesUpdateSelfValidation(TestCase):
                     facade.metadata.name,
                     new_attributes,
                 ),
+            ],
+        )
+
+    def test_failure_with_warnings(self):
+        self._assert_failure(
+            False,
+            [
+                fixture.warn(
+                    reports.codes.AGENT_SELF_VALIDATION_AUTO_ON_WITH_WARNINGS
+                ),
+                fixture.warn(
+                    reports.codes.AGENT_SELF_VALIDATION_RESULT,
+                    result="failure_reason",
+                ),
+            ],
+        )
+
+    def test_failure_with_errors(self):
+        self._assert_failure(
+            True,
+            [
+                fixture.error(
+                    reports.codes.AGENT_SELF_VALIDATION_RESULT,
+                    result="failure_reason",
+                    force_code=reports.codes.FORCE,
+                )
             ],
         )
 

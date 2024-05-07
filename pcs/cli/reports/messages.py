@@ -596,6 +596,19 @@ class AgentSelfValidationResult(CliReportMessageCustom):
         return f"{self._base_msg}{force_text}:\n{self._formatted_result}"
 
 
+class AgentSelfValidationAutoOnWithWarnings(CliReportMessageCustom):
+    _obj: messages.AgentSelfValidationAutoOnWithWarnings
+
+    @property
+    def message(self) -> str:
+        return (
+            "Validating resource options using the resource agent itself is "
+            "enabled by default and produces warnings. In a future version, "
+            "this might be changed to errors. Specify --agent-validation to "
+            "switch to the future behavior."
+        )
+
+
 class BoothAuthfileNotUsed(CliReportMessageCustom):
     _obj: messages.BoothAuthfileNotUsed
 

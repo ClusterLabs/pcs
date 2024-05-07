@@ -1049,9 +1049,20 @@ class PcmkShortcuts:
             cmd.extend(["--provider", provider])
         for key, value in sorted(attributes.items()):
             cmd.extend(["--option", f"{key}={value}"])
-        if output is not None:
-            cmd_str = " ".join(cmd)
-            provider_str = f' provider="{provider}"' if provider else ""
+
+        cmd_str = " ".join(cmd)
+        provider_str = f' provider="{provider}"' if provider else ""
+        if output is None:
+            stdout = f"""
+            <pacemaker-result api-version="2.15" request="{cmd_str}">
+              <resource-agent-action action="validate" class="{standard}" type="{agent_type}"{provider_str}>
+                <overrides/>
+                <agent-status code="0" message="ok" execution_code="0" execution_message="complete"/>
+              </resource-agent-action>
+              <status code="0" message="OK"/>
+            </pacemaker-result>
+            """
+        else:
             stdout = f"""
             <pacemaker-result api-version="2.15" request="{cmd_str}">
               <resource-agent-action action="validate" class="{standard}" type="{agent_type}"{provider_str}>
@@ -1068,6 +1079,7 @@ class PcmkShortcuts:
               </status>
             </pacemaker-result>
             """
+
         self.__calls.place(
             name,
             RunnerCall(cmd, stdout=stdout, returncode=returncode, env=env),
@@ -1098,8 +1110,19 @@ class PcmkShortcuts:
         ]
         for key, value in sorted(attributes.items()):
             cmd.extend(["--option", f"{key}={value}"])
-        if output is not None:
-            cmd_str = " ".join(cmd)
+
+        cmd_str = " ".join(cmd)
+        if output is None:
+            stdout = f"""
+            <pacemaker-result api-version="2.22" request="{cmd_str}">
+              <validate agent="{agent}" valid="true">
+                <command code="0">
+                </command>
+              </validate>
+              <status code="0" message="OK"/>
+            </pacemaker-result>
+            """
+        else:
             stdout = f"""
             <pacemaker-result api-version="2.22" request="{cmd_str}">
               <validate agent="{agent}" valid="false">
@@ -1110,6 +1133,7 @@ class PcmkShortcuts:
               <status code="1" message="Error occurred"/>
             </pacemaker-result>
             """
+
         self.__calls.place(
             name,
             RunnerCall(cmd, stdout=stdout, returncode=returncode, env=env),

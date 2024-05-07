@@ -475,6 +475,9 @@ class CreateRolesNormalization(TestCase):
 
     def test_roles_normalization_user_defined_new_roles(self):
         self.prepare(True, False)
+        self.config.runner.pcmk.resource_agent_self_validation(
+            {}, "ocf", "pacemaker", "Stateful"
+        )
         self.config.env.push_cib(
             resources=fixture_cib_resources_xml(
                 fixture_cib_primitive_stateful(
@@ -495,6 +498,9 @@ class CreateRolesNormalization(TestCase):
 
     def test_roles_normalization_user_defined_new_roles_with_cib_support(self):
         self.prepare(True, True)
+        self.config.runner.pcmk.resource_agent_self_validation(
+            {}, "ocf", "pacemaker", "Stateful"
+        )
         self.config.env.push_cib(
             resources=fixture_cib_resources_xml(
                 fixture_cib_primitive_stateful(include_reload=False)
@@ -513,6 +519,9 @@ class CreateRolesNormalization(TestCase):
 
     def test_roles_normalization_agent_new_roles(self):
         self.prepare(False, False)
+        self.config.runner.pcmk.resource_agent_self_validation(
+            {}, "ocf", "pacemaker", "Stateful"
+        )
         self.config.env.push_cib(
             resources=fixture_cib_resources_xml(
                 fixture_cib_primitive_stateful(use_legacy_roles=True)
@@ -531,6 +540,9 @@ class CreateRolesNormalization(TestCase):
 
     def test_roles_normalization_agent_new_roles_with_cib_support(self):
         self.prepare(False, True)
+        self.config.runner.pcmk.resource_agent_self_validation(
+            {}, "ocf", "pacemaker", "Stateful"
+        )
         self.config.env.push_cib(
             resources=fixture_cib_resources_xml(
                 fixture_cib_primitive_stateful()
@@ -583,10 +595,42 @@ class Create(TestCase):
     def test_simplest_resource(self):
         self.config.runner.pcmk.load_agent()
         self.config.runner.cib.load()
+        self.config.runner.pcmk.resource_agent_self_validation({})
         self.config.env.push_cib(
             resources=fixture_cib_resources_xml_primitive_simplest
         )
         create(self.env_assist.get_env())
+
+    def test_resource_self_validation_failure_default(self):
+        self.config.runner.pcmk.load_agent()
+        self.config.runner.cib.load()
+        self.config.runner.pcmk.resource_agent_self_validation(
+            {},
+            output="""
+            <output source="stderr">not ignored</output>
+            <output source="stdout">this is ignored</output>
+            <output source="stderr">
+            first issue
+            another one
+            </output>
+            """,
+            returncode=1,
+        )
+        self.config.env.push_cib(
+            resources=fixture_cib_resources_xml_primitive_simplest
+        )
+        create(self.env_assist.get_env())
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.AGENT_SELF_VALIDATION_AUTO_ON_WITH_WARNINGS
+                ),
+                fixture.warn(
+                    reports.codes.AGENT_SELF_VALIDATION_RESULT,
+                    result="not ignored\nfirst issue\nanother one",
+                ),
+            ]
+        )
 
     def test_resource_self_validation_failure(self):
         self.config.runner.pcmk.load_agent()
@@ -650,6 +694,30 @@ class Create(TestCase):
             ]
         )
 
+    def test_resource_self_validation_default_invalid_output(self):
+        self.config.runner.pcmk.load_agent()
+        self.config.runner.cib.load()
+        self.config.runner.pcmk.resource_agent_self_validation(
+            {},
+            output="""<not valid> xml""",
+            returncode=0,
+        )
+        self.config.env.push_cib(
+            resources=fixture_cib_resources_xml_primitive_simplest
+        )
+        create(self.env_assist.get_env())
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.AGENT_SELF_VALIDATION_AUTO_ON_WITH_WARNINGS
+                ),
+                fixture.warn(
+                    reports.codes.AGENT_SELF_VALIDATION_INVALID_DATA,
+                    reason="Specification mandates value for attribute valid, line 7, column 29 (<string>, line 7)",
+                ),
+            ]
+        )
+
     def test_resource_self_validation_invalid_output(self):
         self.config.runner.pcmk.load_agent()
         self.config.runner.cib.load()
@@ -707,6 +775,7 @@ class Create(TestCase):
         )
         self.config.runner.pcmk.load_agent()
         self.config.runner.cib.load()
+        self.config.runner.pcmk.resource_agent_self_validation({})
         self.config.env.push_cib(
             resources=fixture_cib_resources_xml_primitive_simplest
         )
@@ -869,6 +938,7 @@ class Create(TestCase):
     def test_resource_with_operation(self):
         self.config.runner.pcmk.load_agent()
         self.config.runner.cib.load()
+        self.config.runner.pcmk.resource_agent_self_validation({})
         self.config.env.push_cib(
             resources="""
                 <resources>
@@ -914,12 +984,14 @@ class Create(TestCase):
             ),
         )
         self.config.runner.cib.load()
+        self.config.runner.pcmk.resource_agent_self_validation({})
         self.config.env.push_cib(resources=self.fixture_sanitized_operation)
         create(self.env_assist.get_env())
 
     def test_sanitize_operation_id_from_user(self):
         self.config.runner.pcmk.load_agent()
         self.config.runner.cib.load()
+        self.config.runner.pcmk.resource_agent_self_validation({})
         self.config.env.push_cib(resources=self.fixture_sanitized_operation)
         create(
             self.env_assist.get_env(),
@@ -1061,6 +1133,7 @@ class Create(TestCase):
         )
 
     def test_unique_option_forced(self):
+        instance_attributes = {"state": "1"}
         self.config.runner.pcmk.load_agent()
         self.config.runner.cib.load(
             resources="""
@@ -1100,6 +1173,9 @@ class Create(TestCase):
                     </primitive>
                 </resources>
             """,
+        )
+        self.config.runner.pcmk.resource_agent_self_validation(
+            instance_attributes
         )
         self.config.env.push_cib(
             resources="""
@@ -1162,7 +1238,7 @@ class Create(TestCase):
             "ocf:heartbeat:Dummy",
             operation_list=[],
             meta_attributes={},
-            instance_attributes={"state": "1"},
+            instance_attributes=instance_attributes,
             use_default_operations=False,
             allow_invalid_instance_attributes=True,
         )
@@ -1186,6 +1262,7 @@ class Create(TestCase):
         )
         self.config.runner.cib.upgrade()
         self.config.runner.cib.load(filename="cib-empty-3.4.xml")
+        self.config.runner.pcmk.resource_agent_self_validation({})
         self.config.env.push_cib(
             resources="""
                 <resources>
@@ -1241,6 +1318,7 @@ class CreateWait(TestCase):
         self.env_assist, self.config = get_env_tools(test_case=self)
         self.config.runner.pcmk.load_agent()
         self.config.runner.cib.load()
+        self.config.runner.pcmk.resource_agent_self_validation({})
         self.config.env.push_cib(
             resources=fixture_cib_resources_xml_primitive_simplest,
             wait=TIMEOUT,
@@ -1383,43 +1461,10 @@ class CreateInGroup(TestCase):
         self.config.runner.cib.load()
 
     def test_simplest_resource(self):
-        (
-            self.config.env.push_cib(
-                resources="""
-                    <resources>
-                        <group id="G">
-                            <primitive class="ocf" id="A" provider="heartbeat"
-                                type="Dummy"
-                            >
-                                <operations>
-                                    <op id="A-migrate_from-interval-0s"
-                                        interval="0s" name="migrate_from"
-                                        timeout="20"
-                                    />
-                                    <op id="A-migrate_to-interval-0s"
-                                        interval="0s" name="migrate_to"
-                                        timeout="20"
-                                    />
-                                    <op id="A-monitor-interval-10" interval="10"
-                                        name="monitor" timeout="20"
-                                    />
-                                    <op id="A-reload-interval-0s" interval="0s"
-                                        name="reload" timeout="20"
-                                    />
-                                    <op id="A-start-interval-0s" interval="0s"
-                                        name="start" timeout="20"
-                                    />
-                                    <op id="A-stop-interval-0s" interval="0s"
-                                        name="stop" timeout="20"
-                                    />
-                                </operations>
-                            </primitive>
-                        </group>
-                    </resources>
-                """
-            )
+        self.config.runner.pcmk.resource_agent_self_validation({})
+        self.config.env.push_cib(
+            resources=fixture_cib_resources_xml_group_simplest
         )
-
         create_group(self.env_assist.get_env(), wait=False)
 
     def test_cib_upgrade_on_onfail_demote(self):
@@ -1430,6 +1475,7 @@ class CreateInGroup(TestCase):
         )
         self.config.runner.cib.upgrade()
         self.config.runner.cib.load(filename="cib-empty-3.4.xml")
+        self.config.runner.pcmk.resource_agent_self_validation({})
         self.config.env.push_cib(
             resources="""
                 <resources>
@@ -1481,6 +1527,36 @@ class CreateInGroup(TestCase):
             [fixture.info(reports.codes.CIB_UPGRADE_SUCCESSFUL)]
         )
 
+    def test_resource_self_validation_failure_default(self):
+        self.config.runner.pcmk.resource_agent_self_validation(
+            {},
+            output="""
+            <output source="stderr">not ignored</output>
+            <output source="stdout">this is ignored</output>
+            <output source="stderr">
+            first issue
+            another one
+            </output>
+            """,
+            returncode=1,
+        )
+        self.config.env.push_cib(
+            resources=fixture_cib_resources_xml_group_simplest
+        )
+
+        create_group(self.env_assist.get_env(), wait=False)
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.AGENT_SELF_VALIDATION_AUTO_ON_WITH_WARNINGS
+                ),
+                fixture.warn(
+                    reports.codes.AGENT_SELF_VALIDATION_RESULT,
+                    result="not ignored\nfirst issue\nanother one",
+                ),
+            ]
+        )
+
     def test_resource_self_validation_failure(self):
         self.config.runner.pcmk.resource_agent_self_validation(
             {},
@@ -1496,7 +1572,9 @@ class CreateInGroup(TestCase):
         )
         self.env_assist.assert_raise_library_error(
             lambda: create_group(
-                self.env_assist.get_env(), enable_agent_self_validation=True
+                self.env_assist.get_env(),
+                enable_agent_self_validation=True,
+                wait=False,
             ),
         )
         self.env_assist.assert_reports(
@@ -1506,11 +1584,11 @@ class CreateInGroup(TestCase):
                     result="not ignored\nfirst issue\nanother one",
                     force_code=reports.codes.FORCE,
                 ),
-                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
     def test_fail_wait(self):
+        self.config.runner.pcmk.resource_agent_self_validation({})
         self.config.env.push_cib(
             resources=fixture_cib_resources_xml_group_simplest,
             wait=TIMEOUT,
@@ -1536,12 +1614,12 @@ class CreateInGroup(TestCase):
         rc("pcmk_api_rng/api-result.rng"),
     )
     def test_wait_ok_run_fail(self):
-        (
-            self.config.env.push_cib(
-                resources=fixture_cib_resources_xml_group_simplest, wait=TIMEOUT
-            ).runner.pcmk.load_state(
-                resources=fixture_state_resources_xml(failed="true")
-            )
+        self.config.runner.pcmk.resource_agent_self_validation({})
+        self.config.env.push_cib(
+            resources=fixture_cib_resources_xml_group_simplest, wait=TIMEOUT
+        )
+        self.config.runner.pcmk.load_state(
+            resources=fixture_state_resources_xml(failed="true")
         )
         self.env_assist.assert_raise_library_error(
             lambda: create_group(self.env_assist.get_env())
@@ -1561,10 +1639,12 @@ class CreateInGroup(TestCase):
         rc("pcmk_api_rng/api-result.rng"),
     )
     def test_wait_ok_run_ok(self):
-        (
-            self.config.env.push_cib(
-                resources=fixture_cib_resources_xml_group_simplest, wait=TIMEOUT
-            ).runner.pcmk.load_state(resources=fixture_state_resources_xml())
+        self.config.runner.pcmk.resource_agent_self_validation({})
+        self.config.env.push_cib(
+            resources=fixture_cib_resources_xml_group_simplest, wait=TIMEOUT
+        )
+        self.config.runner.pcmk.load_state(
+            resources=fixture_state_resources_xml()
         )
         create_group(self.env_assist.get_env())
         self.env_assist.assert_reports(
@@ -1584,11 +1664,13 @@ class CreateInGroup(TestCase):
         rc("pcmk_api_rng/api-result.rng"),
     )
     def test_wait_ok_disable_fail(self):
-        (
-            self.config.env.push_cib(
-                resources=fixture_cib_resources_xml_group_simplest_disabled,
-                wait=TIMEOUT,
-            ).runner.pcmk.load_state(resources=fixture_state_resources_xml())
+        self.config.runner.pcmk.resource_agent_self_validation({})
+        self.config.env.push_cib(
+            resources=fixture_cib_resources_xml_group_simplest_disabled,
+            wait=TIMEOUT,
+        )
+        self.config.runner.pcmk.load_state(
+            resources=fixture_state_resources_xml()
         )
 
         self.env_assist.assert_raise_library_error(
@@ -1611,13 +1693,13 @@ class CreateInGroup(TestCase):
         rc("pcmk_api_rng/api-result.rng"),
     )
     def test_wait_ok_disable_ok(self):
-        (
-            self.config.env.push_cib(
-                resources=fixture_cib_resources_xml_group_simplest_disabled,
-                wait=TIMEOUT,
-            ).runner.pcmk.load_state(
-                resources=fixture_state_resources_xml(role="Stopped")
-            )
+        self.config.runner.pcmk.resource_agent_self_validation({})
+        self.config.env.push_cib(
+            resources=fixture_cib_resources_xml_group_simplest_disabled,
+            wait=TIMEOUT,
+        )
+        self.config.runner.pcmk.load_state(
+            resources=fixture_state_resources_xml(role="Stopped")
         )
         create_group(self.env_assist.get_env(), disabled=True)
         self.env_assist.assert_reports(
@@ -1636,13 +1718,13 @@ class CreateInGroup(TestCase):
         rc("pcmk_api_rng/api-result.rng"),
     )
     def test_wait_ok_disable_ok_by_target_role(self):
-        (
-            self.config.env.push_cib(
-                resources=fixture_cib_resources_xml_group_simplest_disabled,
-                wait=TIMEOUT,
-            ).runner.pcmk.load_state(
-                resources=fixture_state_resources_xml(role="Stopped")
-            )
+        self.config.runner.pcmk.resource_agent_self_validation({})
+        self.config.env.push_cib(
+            resources=fixture_cib_resources_xml_group_simplest_disabled,
+            wait=TIMEOUT,
+        )
+        self.config.runner.pcmk.load_state(
+            resources=fixture_state_resources_xml(role="Stopped")
         )
         create_group(
             self.env_assist.get_env(),
@@ -1666,12 +1748,40 @@ class CreateAsClone(TestCase):
         self.config.runner.cib.load()
 
     def test_simplest_resource(self):
-        (
-            self.config.env.push_cib(
-                resources=fixture_cib_resources_xml_clone_simplest
-            )
+        self.config.runner.pcmk.resource_agent_self_validation({})
+        self.config.env.push_cib(
+            resources=fixture_cib_resources_xml_clone_simplest
         )
         create_clone(self.env_assist.get_env(), wait=False)
+
+    def test_resource_self_validation_failure_default(self):
+        self.config.runner.pcmk.resource_agent_self_validation(
+            {},
+            output="""
+            <output source="stderr">not ignored</output>
+            <output source="stdout">this is ignored</output>
+            <output source="stderr">
+            first issue
+            another one
+            </output>
+            """,
+            returncode=1,
+        )
+        self.config.env.push_cib(
+            resources=fixture_cib_resources_xml_clone_simplest
+        )
+        create_clone(self.env_assist.get_env(), wait=False)
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.AGENT_SELF_VALIDATION_AUTO_ON_WITH_WARNINGS
+                ),
+                fixture.warn(
+                    reports.codes.AGENT_SELF_VALIDATION_RESULT,
+                    result="not ignored\nfirst issue\nanother one",
+                ),
+            ]
+        )
 
     def test_resource_self_validation_failure(self):
         self.config.runner.pcmk.resource_agent_self_validation(
@@ -1703,10 +1813,9 @@ class CreateAsClone(TestCase):
         )
 
     def test_custom_clone_id(self):
-        (
-            self.config.env.push_cib(
-                resources=fixture_cib_resources_xml_clone_custom_id
-            )
+        self.config.runner.pcmk.resource_agent_self_validation({})
+        self.config.env.push_cib(
+            resources=fixture_cib_resources_xml_clone_custom_id
         )
         create_clone(
             self.env_assist.get_env(), wait=False, clone_id="CustomCloneId"
@@ -1753,6 +1862,7 @@ class CreateAsClone(TestCase):
         )
         self.config.runner.cib.upgrade()
         self.config.runner.cib.load(filename="cib-empty-3.4.xml")
+        self.config.runner.pcmk.resource_agent_self_validation({})
         self.config.env.push_cib(
             resources="""<resources>
                 <clone id="A-clone">
@@ -1801,6 +1911,7 @@ class CreateAsClone(TestCase):
         )
 
     def test_fail_wait(self):
+        self.config.runner.pcmk.resource_agent_self_validation({})
         self.config.env.push_cib(
             resources=fixture_cib_resources_xml_clone_simplest,
             wait=TIMEOUT,
@@ -1825,12 +1936,12 @@ class CreateAsClone(TestCase):
         rc("pcmk_api_rng/api-result.rng"),
     )
     def test_wait_ok_run_fail(self):
-        (
-            self.config.env.push_cib(
-                resources=fixture_cib_resources_xml_clone_simplest, wait=TIMEOUT
-            ).runner.pcmk.load_state(
-                resources=fixture_state_resources_xml(failed="true")
-            )
+        self.config.runner.pcmk.resource_agent_self_validation({})
+        self.config.env.push_cib(
+            resources=fixture_cib_resources_xml_clone_simplest, wait=TIMEOUT
+        )
+        self.config.runner.pcmk.load_state(
+            resources=fixture_state_resources_xml(failed="true")
         )
         self.env_assist.assert_raise_library_error(
             lambda: create_clone(self.env_assist.get_env())
@@ -1850,10 +1961,12 @@ class CreateAsClone(TestCase):
         rc("pcmk_api_rng/api-result.rng"),
     )
     def test_wait_ok_run_ok(self):
-        (
-            self.config.env.push_cib(
-                resources=fixture_cib_resources_xml_clone_simplest, wait=TIMEOUT
-            ).runner.pcmk.load_state(resources=fixture_state_resources_xml())
+        self.config.runner.pcmk.resource_agent_self_validation({})
+        self.config.env.push_cib(
+            resources=fixture_cib_resources_xml_clone_simplest, wait=TIMEOUT
+        )
+        self.config.runner.pcmk.load_state(
+            resources=fixture_state_resources_xml()
         )
         create_clone(self.env_assist.get_env())
         self.env_assist.assert_reports(
@@ -1873,11 +1986,13 @@ class CreateAsClone(TestCase):
         rc("pcmk_api_rng/api-result.rng"),
     )
     def test_wait_ok_disable_fail(self):
-        (
-            self.config.env.push_cib(
-                resources=fixture_cib_resources_xml_clone_simplest_disabled,
-                wait=TIMEOUT,
-            ).runner.pcmk.load_state(resources=fixture_state_resources_xml())
+        self.config.runner.pcmk.resource_agent_self_validation({})
+        self.config.env.push_cib(
+            resources=fixture_cib_resources_xml_clone_simplest_disabled,
+            wait=TIMEOUT,
+        )
+        self.config.runner.pcmk.load_state(
+            resources=fixture_state_resources_xml()
         )
 
         self.env_assist.assert_raise_library_error(
@@ -1900,13 +2015,13 @@ class CreateAsClone(TestCase):
         rc("pcmk_api_rng/api-result.rng"),
     )
     def test_wait_ok_disable_ok(self):
-        (
-            self.config.env.push_cib(
-                resources=fixture_cib_resources_xml_clone_simplest_disabled,
-                wait=TIMEOUT,
-            ).runner.pcmk.load_state(
-                resources=fixture_state_resources_xml(role="Stopped")
-            )
+        self.config.runner.pcmk.resource_agent_self_validation({})
+        self.config.env.push_cib(
+            resources=fixture_cib_resources_xml_clone_simplest_disabled,
+            wait=TIMEOUT,
+        )
+        self.config.runner.pcmk.load_state(
+            resources=fixture_state_resources_xml(role="Stopped")
         )
         create_clone(self.env_assist.get_env(), disabled=True)
         self.env_assist.assert_reports(
@@ -1925,50 +2040,50 @@ class CreateAsClone(TestCase):
         rc("pcmk_api_rng/api-result.rng"),
     )
     def test_wait_ok_disable_ok_by_target_role(self):
-        (
-            self.config.env.push_cib(
-                resources="""
-                    <resources>
-                        <clone id="A-clone">
-                            <primitive class="ocf" id="A" provider="heartbeat"
-                                type="Dummy"
-                            >
-                                <meta_attributes id="A-meta_attributes">
-                                    <nvpair id="A-meta_attributes-target-role"
-                                        name="target-role"
-                                        value="Stopped"
-                                    />
-                                </meta_attributes>
-                                <operations>
-                                    <op id="A-migrate_from-interval-0s"
-                                        interval="0s" name="migrate_from"
-                                        timeout="20"
-                                    />
-                                    <op id="A-migrate_to-interval-0s"
-                                        interval="0s" name="migrate_to"
-                                        timeout="20"
-                                    />
-                                    <op id="A-monitor-interval-10" interval="10"
-                                        name="monitor" timeout="20"
-                                    />
-                                    <op id="A-reload-interval-0s" interval="0s"
-                                        name="reload" timeout="20"
-                                    />
-                                    <op id="A-start-interval-0s" interval="0s"
-                                        name="start" timeout="20"
-                                    />
-                                    <op id="A-stop-interval-0s" interval="0s"
-                                        name="stop" timeout="20"
-                                    />
-                                </operations>
-                            </primitive>
-                        </clone>
-                    </resources>
-                """,
-                wait=TIMEOUT,
-            ).runner.pcmk.load_state(
-                resources=fixture_state_resources_xml(role="Stopped")
-            )
+        self.config.runner.pcmk.resource_agent_self_validation({})
+        self.config.env.push_cib(
+            resources="""
+                <resources>
+                    <clone id="A-clone">
+                        <primitive class="ocf" id="A" provider="heartbeat"
+                            type="Dummy"
+                        >
+                            <meta_attributes id="A-meta_attributes">
+                                <nvpair id="A-meta_attributes-target-role"
+                                    name="target-role"
+                                    value="Stopped"
+                                />
+                            </meta_attributes>
+                            <operations>
+                                <op id="A-migrate_from-interval-0s"
+                                    interval="0s" name="migrate_from"
+                                    timeout="20"
+                                />
+                                <op id="A-migrate_to-interval-0s"
+                                    interval="0s" name="migrate_to"
+                                    timeout="20"
+                                />
+                                <op id="A-monitor-interval-10" interval="10"
+                                    name="monitor" timeout="20"
+                                />
+                                <op id="A-reload-interval-0s" interval="0s"
+                                    name="reload" timeout="20"
+                                />
+                                <op id="A-start-interval-0s" interval="0s"
+                                    name="start" timeout="20"
+                                />
+                                <op id="A-stop-interval-0s" interval="0s"
+                                    name="stop" timeout="20"
+                                />
+                            </operations>
+                        </primitive>
+                    </clone>
+                </resources>
+            """,
+            wait=TIMEOUT,
+        )
+        self.config.runner.pcmk.load_state(
+            resources=fixture_state_resources_xml(role="Stopped")
         )
         create_clone(
             self.env_assist.get_env(),
@@ -1990,49 +2105,49 @@ class CreateAsClone(TestCase):
         rc("pcmk_api_rng/api-result.rng"),
     )
     def test_wait_ok_disable_ok_by_target_role_in_clone(self):
-        (
-            self.config.env.push_cib(
-                resources="""
-                    <resources>
-                        <clone id="A-clone">
-                            <primitive class="ocf" id="A" provider="heartbeat"
-                                type="Dummy"
-                            >
-                                <operations>
-                                    <op id="A-migrate_from-interval-0s"
-                                        interval="0s" name="migrate_from"
-                                        timeout="20"
-                                    />
-                                    <op id="A-migrate_to-interval-0s"
-                                        interval="0s" name="migrate_to"
-                                        timeout="20"
-                                    />
-                                    <op id="A-monitor-interval-10" interval="10"
-                                        name="monitor" timeout="20"
-                                    />
-                                    <op id="A-reload-interval-0s" interval="0s"
-                                        name="reload" timeout="20"
-                                    />
-                                    <op id="A-start-interval-0s" interval="0s"
-                                        name="start" timeout="20"
-                                    />
-                                    <op id="A-stop-interval-0s" interval="0s"
-                                        name="stop" timeout="20"
-                                    />
-                                </operations>
-                            </primitive>
-                            <meta_attributes id="A-clone-meta_attributes">
-                                <nvpair id="A-clone-meta_attributes-target-role"
-                                    name="target-role" value="Stopped"
+        self.config.runner.pcmk.resource_agent_self_validation({})
+        self.config.env.push_cib(
+            resources="""
+                <resources>
+                    <clone id="A-clone">
+                        <primitive class="ocf" id="A" provider="heartbeat"
+                            type="Dummy"
+                        >
+                            <operations>
+                                <op id="A-migrate_from-interval-0s"
+                                    interval="0s" name="migrate_from"
+                                    timeout="20"
                                 />
-                            </meta_attributes>
-                        </clone>
-                    </resources>
-                """,
-                wait=TIMEOUT,
-            ).runner.pcmk.load_state(
-                resources=fixture_state_resources_xml(role="Stopped")
-            )
+                                <op id="A-migrate_to-interval-0s"
+                                    interval="0s" name="migrate_to"
+                                    timeout="20"
+                                />
+                                <op id="A-monitor-interval-10" interval="10"
+                                    name="monitor" timeout="20"
+                                />
+                                <op id="A-reload-interval-0s" interval="0s"
+                                    name="reload" timeout="20"
+                                />
+                                <op id="A-start-interval-0s" interval="0s"
+                                    name="start" timeout="20"
+                                />
+                                <op id="A-stop-interval-0s" interval="0s"
+                                    name="stop" timeout="20"
+                                />
+                            </operations>
+                        </primitive>
+                        <meta_attributes id="A-clone-meta_attributes">
+                            <nvpair id="A-clone-meta_attributes-target-role"
+                                name="target-role" value="Stopped"
+                            />
+                        </meta_attributes>
+                    </clone>
+                </resources>
+            """,
+            wait=TIMEOUT,
+        )
+        self.config.runner.pcmk.load_state(
+            resources=fixture_state_resources_xml(role="Stopped")
         )
         create_clone(
             self.env_assist.get_env(), clone_options={"target-role": "Stopped"}
@@ -2053,49 +2168,49 @@ class CreateAsClone(TestCase):
         rc("pcmk_api_rng/api-result.rng"),
     )
     def test_wait_ok_disable_ok_by_clone_max(self):
-        (
-            self.config.env.push_cib(
-                resources="""
-                    <resources>
-                        <clone id="A-clone">
-                            <primitive class="ocf" id="A" provider="heartbeat"
-                                type="Dummy"
-                            >
-                                <operations>
-                                    <op id="A-migrate_from-interval-0s"
-                                        interval="0s" name="migrate_from"
-                                        timeout="20"
-                                    />
-                                    <op id="A-migrate_to-interval-0s"
-                                        interval="0s" name="migrate_to"
-                                        timeout="20"
-                                    />
-                                    <op id="A-monitor-interval-10" interval="10"
-                                        name="monitor" timeout="20"
-                                    />
-                                    <op id="A-reload-interval-0s" interval="0s"
-                                        name="reload" timeout="20"
-                                    />
-                                    <op id="A-start-interval-0s" interval="0s"
-                                        name="start" timeout="20"
-                                    />
-                                    <op id="A-stop-interval-0s" interval="0s"
-                                        name="stop" timeout="20"
-                                    />
-                                </operations>
-                            </primitive>
-                            <meta_attributes id="A-clone-meta_attributes">
-                                <nvpair id="A-clone-meta_attributes-clone-max"
-                                    name="clone-max" value="0"
+        self.config.runner.pcmk.resource_agent_self_validation({})
+        self.config.env.push_cib(
+            resources="""
+                <resources>
+                    <clone id="A-clone">
+                        <primitive class="ocf" id="A" provider="heartbeat"
+                            type="Dummy"
+                        >
+                            <operations>
+                                <op id="A-migrate_from-interval-0s"
+                                    interval="0s" name="migrate_from"
+                                    timeout="20"
                                 />
-                            </meta_attributes>
-                        </clone>
-                    </resources>
-                """,
-                wait=TIMEOUT,
-            ).runner.pcmk.load_state(
-                resources=fixture_state_resources_xml(role="Stopped")
-            )
+                                <op id="A-migrate_to-interval-0s"
+                                    interval="0s" name="migrate_to"
+                                    timeout="20"
+                                />
+                                <op id="A-monitor-interval-10" interval="10"
+                                    name="monitor" timeout="20"
+                                />
+                                <op id="A-reload-interval-0s" interval="0s"
+                                    name="reload" timeout="20"
+                                />
+                                <op id="A-start-interval-0s" interval="0s"
+                                    name="start" timeout="20"
+                                />
+                                <op id="A-stop-interval-0s" interval="0s"
+                                    name="stop" timeout="20"
+                                />
+                            </operations>
+                        </primitive>
+                        <meta_attributes id="A-clone-meta_attributes">
+                            <nvpair id="A-clone-meta_attributes-clone-max"
+                                name="clone-max" value="0"
+                            />
+                        </meta_attributes>
+                    </clone>
+                </resources>
+            """,
+            wait=TIMEOUT,
+        )
+        self.config.runner.pcmk.load_state(
+            resources=fixture_state_resources_xml(role="Stopped")
         )
         create_clone(
             self.env_assist.get_env(), clone_options={"clone-max": "0"}
@@ -2116,50 +2231,50 @@ class CreateAsClone(TestCase):
         rc("pcmk_api_rng/api-result.rng"),
     )
     def test_wait_ok_disable_ok_by_clone_node_max(self):
-        (
-            self.config.env.push_cib(
-                resources="""
-                    <resources>
-                        <clone id="A-clone">
-                            <primitive class="ocf" id="A" provider="heartbeat"
-                                type="Dummy"
-                            >
-                                <operations>
-                                    <op id="A-migrate_from-interval-0s"
-                                        interval="0s" name="migrate_from"
-                                        timeout="20"
-                                    />
-                                    <op id="A-migrate_to-interval-0s"
-                                        interval="0s" name="migrate_to"
-                                        timeout="20"
-                                    />
-                                    <op id="A-monitor-interval-10" interval="10"
-                                        name="monitor" timeout="20"
-                                    />
-                                    <op id="A-reload-interval-0s" interval="0s"
-                                        name="reload" timeout="20"
-                                    />
-                                    <op id="A-start-interval-0s" interval="0s"
-                                        name="start" timeout="20"
-                                    />
-                                    <op id="A-stop-interval-0s" interval="0s"
-                                        name="stop" timeout="20"
-                                    />
-                                </operations>
-                            </primitive>
-                            <meta_attributes id="A-clone-meta_attributes">
-                                <nvpair
-                                    id="A-clone-meta_attributes-clone-node-max"
-                                    name="clone-node-max" value="0"
+        self.config.runner.pcmk.resource_agent_self_validation({})
+        self.config.env.push_cib(
+            resources="""
+                <resources>
+                    <clone id="A-clone">
+                        <primitive class="ocf" id="A" provider="heartbeat"
+                            type="Dummy"
+                        >
+                            <operations>
+                                <op id="A-migrate_from-interval-0s"
+                                    interval="0s" name="migrate_from"
+                                    timeout="20"
                                 />
-                            </meta_attributes>
-                        </clone>
-                    </resources>
-                """,
-                wait=TIMEOUT,
-            ).runner.pcmk.load_state(
-                resources=fixture_state_resources_xml(role="Stopped")
-            )
+                                <op id="A-migrate_to-interval-0s"
+                                    interval="0s" name="migrate_to"
+                                    timeout="20"
+                                />
+                                <op id="A-monitor-interval-10" interval="10"
+                                    name="monitor" timeout="20"
+                                />
+                                <op id="A-reload-interval-0s" interval="0s"
+                                    name="reload" timeout="20"
+                                />
+                                <op id="A-start-interval-0s" interval="0s"
+                                    name="start" timeout="20"
+                                />
+                                <op id="A-stop-interval-0s" interval="0s"
+                                    name="stop" timeout="20"
+                                />
+                            </operations>
+                        </primitive>
+                        <meta_attributes id="A-clone-meta_attributes">
+                            <nvpair
+                                id="A-clone-meta_attributes-clone-node-max"
+                                name="clone-node-max" value="0"
+                            />
+                        </meta_attributes>
+                    </clone>
+                </resources>
+            """,
+            wait=TIMEOUT,
+        )
+        self.config.runner.pcmk.load_state(
+            resources=fixture_state_resources_xml(role="Stopped")
         )
         create_clone(
             self.env_assist.get_env(), clone_options={"clone-node-max": "0"}
@@ -2417,6 +2532,7 @@ class CreateInToBundle(TestCase):
         self.config.runner.cib.load(
             filename="cib-empty-3.4.xml", resources=self.fixture_resources_pre
         )
+        self.config.runner.pcmk.resource_agent_self_validation({})
         self.config.env.push_cib(
             resources=self.fixture_resource_post_simple_without_network.format(
                 network="""
@@ -2446,11 +2562,13 @@ class CreateInToBundle(TestCase):
 
     def test_simplest_resource(self):
         self.config.runner.cib.load(resources=self.fixture_resources_pre)
+        self.config.runner.pcmk.resource_agent_self_validation({})
         self.config.env.push_cib(resources=self.fixture_resources_post_simple)
         create_bundle(self.env_assist.get_env(), wait=False)
 
     def test_bundle_doesnt_exist(self):
         self.config.runner.cib.load(resources=self.fixture_empty_resources)
+        self.config.runner.pcmk.resource_agent_self_validation({})
         self.env_assist.assert_raise_library_error(
             lambda: create_bundle(self.env_assist.get_env(), wait=False),
             [
@@ -2473,6 +2591,7 @@ class CreateInToBundle(TestCase):
                     </resources>
                 """
         )
+        self.config.runner.pcmk.resource_agent_self_validation({})
 
         self.env_assist.assert_raise_library_error(
             lambda: create_bundle(self.env_assist.get_env(), wait=False),
@@ -2498,6 +2617,7 @@ class CreateInToBundle(TestCase):
                     </resources>
                 """
         )
+        self.config.runner.pcmk.resource_agent_self_validation({})
         self.env_assist.assert_raise_library_error(
             lambda: create_bundle(self.env_assist.get_env(), wait=False),
             [
@@ -2512,6 +2632,7 @@ class CreateInToBundle(TestCase):
 
     def test_wait_fail(self):
         self.config.runner.cib.load(resources=self.fixture_resources_pre)
+        self.config.runner.pcmk.resource_agent_self_validation({})
         self.config.env.push_cib(
             resources=self.fixture_resources_post_simple,
             wait=TIMEOUT,
@@ -2539,6 +2660,7 @@ class CreateInToBundle(TestCase):
     )
     def test_wait_ok_run_ok(self):
         self.config.runner.cib.load(resources=self.fixture_resources_pre)
+        self.config.runner.pcmk.resource_agent_self_validation({})
         self.config.env.push_cib(
             resources=self.fixture_resources_post_simple, wait=TIMEOUT
         )
@@ -2560,6 +2682,7 @@ class CreateInToBundle(TestCase):
     )
     def test_wait_ok_run_fail(self):
         self.config.runner.cib.load(resources=self.fixture_resources_pre)
+        self.config.runner.pcmk.resource_agent_self_validation({})
         self.config.env.push_cib(
             resources=self.fixture_resources_post_simple, wait=TIMEOUT
         )
@@ -2585,6 +2708,7 @@ class CreateInToBundle(TestCase):
     )
     def test_disabled_wait_ok_not_running(self):
         self.config.runner.cib.load(resources=self.fixture_resources_pre)
+        self.config.runner.pcmk.resource_agent_self_validation({})
         self.config.env.push_cib(
             resources=self.fixture_resources_post_disabled, wait=TIMEOUT
         )
@@ -2606,6 +2730,7 @@ class CreateInToBundle(TestCase):
     )
     def test_disabled_wait_ok_running(self):
         self.config.runner.cib.load(resources=self.fixture_resources_pre)
+        self.config.runner.pcmk.resource_agent_self_validation({})
         self.config.env.push_cib(
             resources=self.fixture_resources_post_disabled, wait=TIMEOUT
         )
@@ -2634,6 +2759,7 @@ class CreateInToBundle(TestCase):
                 </resources>
             """
         )
+        self.config.runner.pcmk.resource_agent_self_validation({})
         self.env_assist.assert_raise_library_error(
             lambda: create_bundle(self.env_assist.get_env(), wait=False)
         )
@@ -2656,6 +2782,7 @@ class CreateInToBundle(TestCase):
                 </resources>
             """
         )
+        self.config.runner.pcmk.resource_agent_self_validation({})
         self.config.env.push_cib(
             resources=(
                 self.fixture_resource_post_simple_without_network.format(
@@ -2688,6 +2815,7 @@ class CreateInToBundle(TestCase):
                 </resources>
             """
         )
+        self.config.runner.pcmk.resource_agent_self_validation({})
         self.config.env.push_cib(
             resources=(
                 self.fixture_resource_post_simple_without_network.format(
@@ -2703,6 +2831,35 @@ class CreateInToBundle(TestCase):
     def test_ip_range_defined(self):
         self._test_with_network_defined(
             '<network ip-range-start="192.168.100.200"/>'
+        )
+
+    def test_resource_self_validation_failure_default(self):
+        self.config.runner.cib.load(resources=self.fixture_resources_pre)
+        self.config.runner.pcmk.resource_agent_self_validation(
+            {},
+            output="""
+            <output source="stderr">not ignored</output>
+            <output source="stdout">this is ignored</output>
+            <output source="stderr">
+            first issue
+            another one
+            </output>
+            """,
+            returncode=1,
+        )
+        self.config.env.push_cib(resources=self.fixture_resources_post_simple)
+
+        create_bundle(self.env_assist.get_env(), wait=False)
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.AGENT_SELF_VALIDATION_AUTO_ON_WITH_WARNINGS
+                ),
+                fixture.warn(
+                    reports.codes.AGENT_SELF_VALIDATION_RESULT,
+                    result="not ignored\nfirst issue\nanother one",
+                ),
+            ]
         )
 
     def test_resource_self_validation_failure(self):

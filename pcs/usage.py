@@ -729,7 +729,10 @@ def _resource_update_desc_fn(is_stonith: bool) -> tuple[str, ...]:
         "",
         f"""
         If --agent-validation is specified, {agent_type} agent validate-all
-        action will be used to validate {obj} options.
+        action will be used to validate {obj} options and will prevent creating
+        a misconfigured {obj}. If --agent-validation is not specified, the
+        validation will be done anyway, but it will only produce warnings not
+        preventing the {obj} from being updated.
         """,
         "",
         """
@@ -834,7 +837,10 @@ Commands:
         If --disabled is specified, the resource is not started
         automatically.
         If --agent-validation is specified, resource agent validate-all action
-        will be used to validate resource options.
+        will be used to validate resource options and will prevent creating a
+        misconfigured resource. If --agent-validation is not specified, the
+        validation will be done anyway, but it will only produce warnings not
+        preventing the resource from being created.
         If --no-default-ops is specified, only monitor operations are created
         for the resource and all other operations use default settings.
         If --wait is specified, pcs will wait up to 'n' seconds for the
@@ -1906,7 +1912,10 @@ Commands:
         Create stonith device with specified type and options.
         If --disabled is specified the stonith device is not used.
         If --agent-validation is specified, stonith agent validate-all action
-        will be used to validate stonith device options.
+        will be used to validate stonith device options and will prevent
+        creating a misconfigured stonith device. If --agent-validation is not
+        specified, the validation will be done anyway, but it will only produce
+        warnings not preventing the stonith device from being created.
         If --wait is specified, pcs will wait up to 'n' seconds for the stonith
         device to start and then return 0 if the stonith device is started, or 1
         if the stonith device has not yet started.  If 'n' is not specified it

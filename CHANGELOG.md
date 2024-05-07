@@ -43,6 +43,12 @@
   avoid deadlock on process termination. ([ghissue#780], [RHEL-28749])
 - Unified the way score is defined in constraints commands ([RHEL-34792])
 
+### Changed
+- When creating or updating a resource or stonith, its options are now
+  validated by the resource or stonith agent. Unless --agent-validation is
+  specified, this does not prevent misconfiguring the resource or stonith.
+  ([RHEL-35670])
+
 ### Deprecated
 - Pcs produces warnings about [features planned to be removed in pacemaker 3](https://projects.clusterlabs.org/w/projects/pacemaker/pacemaker_3.0_changes/pacemaker_3.0_configuration_changes/):
   - score in order constraints
@@ -67,12 +73,13 @@
 [ghissue#780]: https://github.com/ClusterLabs/pcs/issues/780
 [RHEL-2977]: https://issues.redhat.com/browse/RHEL-2977
 [RHEL-16231]: https://issues.redhat.com/browse/RHEL-16231
+[RHEL-21051]: https://issues.redhat.com/browse/RHEL-21051
+[RHEL-25854]: https://issues.redhat.com/browse/RHEL-25854
 [RHEL-27492]: https://issues.redhat.com/browse/RHEL-27492
 [RHEL-28749]: https://issues.redhat.com/browse/RHEL-28749
-[RHEL-25854]: https://issues.redhat.com/browse/RHEL-25854
-[RHEL-21051]: https://issues.redhat.com/browse/RHEL-21051
 [RHEL-34792]: https://issues.redhat.com/browse/RHEL-34792
 [RHEL-35428]: https://issues.redhat.com/browse/RHEL-35428
+[RHEL-35670]: https://issues.redhat.com/browse/RHEL-35670
 [RHEL-36612]: https://issues.redhat.com/browse/RHEL-36612
 [rhbz#2163953]: https://bugzilla.redhat.com/show_bug.cgi?id=2163953
 

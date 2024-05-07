@@ -709,6 +709,19 @@ class AgentSelfValidationResult(CliReportMessageTestBase):
         )
 
 
+class AgentSelfValidationAutoOnWithWarnings(CliReportMessageTestBase):
+    def test_message(self):
+        self.assert_message(
+            messages.AgentSelfValidationAutoOnWithWarnings(),
+            (
+                "Validating resource options using the resource agent itself "
+                "is enabled by default and produces warnings. In a future "
+                "version, this might be changed to errors. Specify "
+                "--agent-validation to switch to the future behavior."
+            ),
+        )
+
+
 class BoothAuthfileNotUsed(CliReportMessageTestBase):
     def test_message(self):
         self.assert_message(

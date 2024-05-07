@@ -5760,6 +5760,19 @@ class AgentSelfValidationSkippedUpdatedResourceMisconfigured(NameBuildTest):
         )
 
 
+class AgentSelfValidationAutoOnWithWarnings(NameBuildTest):
+    def test_message(self):
+        self.assert_message_from_report(
+            (
+                "Validating resource options using the resource agent itself "
+                "is enabled by default and produces warnings. In a future "
+                "version, this might be changed to errors. Enable "
+                "agent validation to switch to the future behavior."
+            ),
+            reports.AgentSelfValidationAutoOnWithWarnings(),
+        )
+
+
 class ResourceCloneIncompatibleMetaAttributes(NameBuildTest):
     def test_with_provider(self):
         attr = "attr_name"

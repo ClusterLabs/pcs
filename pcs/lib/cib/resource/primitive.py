@@ -428,8 +428,7 @@ def validate_resource_instance_attributes_create(
         )
 
     if (
-        enable_agent_self_validation
-        and _is_ocf_or_stonith_agent(agent_name)
+        _is_ocf_or_stonith_agent(agent_name)
         and resource_agent.metadata.agent_exists
         and resource_agent.metadata.provides_self_validation
         and not any(
@@ -437,16 +436,24 @@ def validate_resource_instance_attributes_create(
             for report_item in report_items
         )
     ):
-        report_items.extend(
-            _get_report_from_agent_self_validation(
-                *validate_resource_instance_attributes_via_pcmk(
-                    cmd_runner,
-                    agent_name,
-                    instance_attributes,
-                ),
-                reports.get_severity(reports.codes.FORCE, force),
-            )
+        agent_reports = _get_report_from_agent_self_validation(
+            *validate_resource_instance_attributes_via_pcmk(
+                cmd_runner,
+                agent_name,
+                instance_attributes,
+            ),
+            reports.get_severity(
+                reports.codes.FORCE,
+                force or not enable_agent_self_validation,
+            ),
         )
+        if agent_reports and not enable_agent_self_validation:
+            report_items.append(
+                reports.ReportItem.warning(
+                    reports.messages.AgentSelfValidationAutoOnWithWarnings()
+                )
+            )
+        report_items.extend(agent_reports)
     return report_items
 
 
@@ -465,6 +472,8 @@ def validate_resource_instance_attributes_update(
     # lxml. Once resource update command is moved to pcs.lib, this function
     # will be fixed to accept the updated resource as an element instead of a
     # string.
+
+    # pylint: disable=too-many-locals
     report_items: reports.ReportItemList = []
     current_instance_attrs = get_nvset_as_dict(
         INSTANCE_ATTRIBUTES_TAG,
@@ -518,7 +527,7 @@ def validate_resource_instance_attributes_update(
             )
         ).validate(final_attrs)
 
-    if resource_agent.metadata.name.is_stonith:
+    if agent_name.is_stonith:
         report_items += _validate_stonith_action(instance_attributes, force)
 
     if resource_agent.metadata.agent_exists:
@@ -531,8 +540,7 @@ def validate_resource_instance_attributes_update(
         )
 
     if (
-        enable_agent_self_validation
-        and _is_ocf_or_stonith_agent(agent_name)
+        _is_ocf_or_stonith_agent(agent_name)
         and resource_agent.metadata.agent_exists
         and resource_agent.metadata.provides_self_validation
         and not any(
@@ -549,16 +557,24 @@ def validate_resource_instance_attributes_update(
             current_instance_attrs,
         )
         if original_is_valid:
-            report_items.extend(
-                _get_report_from_agent_self_validation(
-                    *validate_resource_instance_attributes_via_pcmk(
-                        cmd_runner,
-                        resource_agent.metadata.name,
-                        final_attrs,
-                    ),
-                    reports.get_severity(reports.codes.FORCE, force),
-                )
+            agent_reports = _get_report_from_agent_self_validation(
+                *validate_resource_instance_attributes_via_pcmk(
+                    cmd_runner,
+                    agent_name,
+                    final_attrs,
+                ),
+                reports.get_severity(
+                    reports.codes.FORCE,
+                    force or not enable_agent_self_validation,
+                ),
             )
+            if agent_reports and not enable_agent_self_validation:
+                report_items.append(
+                    reports.ReportItem.warning(
+                        reports.messages.AgentSelfValidationAutoOnWithWarnings()
+                    )
+                )
+            report_items.extend(agent_reports)
         elif original_is_valid is None:
             report_items.append(
                 reports.ReportItem.warning(

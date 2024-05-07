@@ -7833,6 +7833,24 @@ class AgentSelfValidationSkippedUpdatedResourceMisconfigured(ReportItemMessage):
         ).format(result="\n".join(indent(self.result.splitlines())))
 
 
+class AgentSelfValidationAutoOnWithWarnings(ReportItemMessage):
+    """
+    Agent self validation is enabled for all applicable commands and it produces
+    warnings. In a future version, this may be switched to errors.
+    """
+
+    _code = codes.AGENT_SELF_VALIDATION_AUTO_ON_WITH_WARNINGS
+
+    @property
+    def message(self) -> str:
+        return (
+            "Validating resource options using the resource agent itself is "
+            "enabled by default and produces warnings. In a future version, "
+            "this might be changed to errors. Enable agent validation to "
+            "switch to the future behavior."
+        )
+
+
 @dataclass(frozen=True)
 class ResourceCloneIncompatibleMetaAttributes(ReportItemMessage):
     """
