@@ -183,6 +183,7 @@ AC_ARG_ENABLE([booth-enable-authfile-unset],
 AC_ARG_ENABLE([webui],
 	      [AS_HELP_STRING([--enable-webui], [Enable support for webui in pcsd])],
 	      [webui="yes"])
+AM_CONDITIONAL([ENABLE_WEBUI], [test "x$webui" = "xyes"])
 
 # this will catch both ID and ID_LIKE from os-release
 AC_ARG_WITH([distro],

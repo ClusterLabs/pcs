@@ -361,6 +361,12 @@ gen-ChangeLog:
 		mv $(distdir)/cl-t $(distdir)/ChangeLog;		\
 	fi
 
+if ENABLE_WEBUI
+spec_config_extra_flags = "--enable-webui"
+else
+spec_config_extra_flags = ""
+endif
+
 ## make rpm/srpm section.
 $(SPEC): $(SPEC).in .version config.status stamps/download_python_deps stamps/download_rpm_ruby_deps
 	rm -f $@-t $@
@@ -422,6 +428,7 @@ $(SPEC): $(SPEC).in .version config.status stamps/download_python_deps stamps/do
 	$(AWK) -i inplace -v r="$$gembundle" '{gsub(/@gembundle@/,r)}1' $@-t; \
 	gemcache="`echo $(MKDIR_P) $(PCSD_BUNDLED_CACHE_DIR); base=80; for i in $$gemlist; do echo 'cp -f %SOURCE'$$base' $(PCSD_BUNDLED_CACHE_DIR)' && let "base=base+1"; done`" && \
 	$(AWK) -i inplace -v r="$$gemcache" '{gsub(/@gemcache@/,r)}1' $@-t;
+	$(AWK) -i inplace -v r="${spec_config_extra_flags}" '{gsub(/@spec_config_extra_flags@/,r)}1' $@-t;
 	chmod a-w $@-t
 	mv $@-t $@
 	rm -f $@-t*
