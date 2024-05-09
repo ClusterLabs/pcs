@@ -194,7 +194,11 @@ EXTRA_DIST		= \
 			  daemon/app/sinatra_remote.py \
 			  daemon/app/sinatra_ui.py \
 			  daemon/app/ui_common.py \
-			  daemon/app/ui.py \
+			  daemon/app/webui/__init__.py \
+			  daemon/app/webui/auth.py \
+			  daemon/app/webui/core.py \
+			  daemon/app/webui/session.py \
+			  daemon/app/webui/sinatra_ui.py \
 			  daemon/async_tasks/__init__.py \
 			  daemon/async_tasks/scheduler.py \
 			  daemon/async_tasks/task.py \
@@ -212,7 +216,6 @@ EXTRA_DIST		= \
 			  daemon/log.py \
 			  daemon/ruby_pcsd.py \
 			  daemon/run.py \
-			  daemon/session.py \
 			  daemon/ssl.py \
 			  daemon/systemd.py \
 			  entry_points/cli.py \
