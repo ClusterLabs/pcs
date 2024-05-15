@@ -32,6 +32,8 @@ class ValidateMoveResourcesToGroup(TestCase):
                 <primitive id="R1" />
                 <primitive id="R2" />
                 <primitive id="R3" />
+                <primitive id="S1" class="stonith" />
+                <primitive id="S2" class="stonith" />
                 <clone id="RC1-clone">
                     <primitive id="RC1" />
                 </clone>
@@ -92,6 +94,27 @@ class ValidateMoveResourcesToGroup(TestCase):
                     reports.codes.CANNOT_GROUP_RESOURCE_WRONG_TYPE,
                     resource_id="RB1-bundle",
                     resource_type="bundle",
+                    parent_id=None,
+                    parent_type=None,
+                ),
+            ],
+        )
+
+    def test_resources_are_stonith_resources(self):
+        assert_report_item_list_equal(
+            self._validate("G", ["S1", "S2"]),
+            [
+                fixture.error(
+                    reports.codes.CANNOT_GROUP_RESOURCE_WRONG_TYPE,
+                    resource_id="S1",
+                    resource_type="stonith",
+                    parent_id=None,
+                    parent_type=None,
+                ),
+                fixture.error(
+                    reports.codes.CANNOT_GROUP_RESOURCE_WRONG_TYPE,
+                    resource_id="S2",
+                    resource_type="stonith",
                     parent_id=None,
                     parent_type=None,
                 ),

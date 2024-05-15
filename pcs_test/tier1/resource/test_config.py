@@ -3,6 +3,8 @@ from shlex import split
 from unittest import TestCase
 
 from pcs.common.interface.dto import to_dict
+from pcs.common.pacemaker.resource.clone import CibResourceCloneDto
+from pcs.common.pacemaker.resource.group import CibResourceGroupDto
 from pcs.common.pacemaker.resource.list import CibResourcesDto
 
 from pcs_test.tools import resources_dto
@@ -145,30 +147,55 @@ class ResourceConfigCmd(ResourceConfigCmdMixin, TestCase):
         self.assertEqual(
             stderr,
             (
-                "Warning: Bundle resource 'B1' contains stonith resource: 'S1'."
-                " Bundle resource with stonith resource is unsupported, "
-                "therefore pcs is unable to create it. The bundle resource will"
-                " be omitted.\n"
-                "Warning: Group 'G1' contains stonith resource: 'S2'. Group "
-                "with stonith resource is unsupported, therefore pcs is unable "
-                "to create it. The group will be omitted.\n"
-                "Warning: Group 'G2' contains stonith resources: 'S4', 'S5'. "
-                "Group with stonith resources is unsupported, therefore pcs is "
-                "unable to create it. The group will be omitted.\n"
-                "Warning: Clone 'S3-clone' contains stonith resource: 'S3'. "
-                "Clone with stonith resource is unsupported, therefore pcs is "
-                "unable to create it. The clone will be omitted.\n"
+                "Warning: Bundle resource 'B1' contains stonith resource: 'S1',"
+                " which is unsupported. The bundle resource will be omitted.\n"
+                "Warning: Group 'G1' contains stonith resource: 'S2', which is "
+                "unsupported. The group will be omitted.\n"
+                "Warning: Group 'G2' contains stonith resources: 'S4', 'S5', "
+                "which is unsupported. The group will be omitted.\n"
+                "Warning: Group 'G3' contains stonith resources: 'S6', 'S7', "
+                "which is unsupported. The stonith resources will be omitted.\n"
+                "Warning: Group 'G4' contains stonith resource: 'S8', which is "
+                "unsupported. The stonith resource will be omitted.\n"
+                "Warning: Clone 'S3-clone' contains stonith resource: 'S3', "
+                "which is unsupported. The clone will be omitted.\n"
                 "Warning: Clone 'G2-clone' contains stonith resources: 'S4', "
-                "'S5'. Clone with stonith resources is unsupported, therefore "
-                "pcs is unable to create it. The clone will be omitted.\n"
+                "'S5', which is unsupported. The clone will be omitted.\n"
             ),
         )
         self._run_commands(stdout)
         expected_dict = to_dict(
             CibResourcesDto(
-                primitives=[resources_dto.PRIMITIVE_R1],
-                clones=[],
-                groups=[],
+                primitives=[
+                    resources_dto.PRIMITIVE_R1,
+                    resources_dto.PRIMITIVE_R2,
+                    resources_dto.PRIMITIVE_R3,
+                ],
+                clones=[
+                    CibResourceCloneDto(
+                        id="G4-clone",
+                        description=None,
+                        member_id="G4",
+                        meta_attributes=[],
+                        instance_attributes=[],
+                    )
+                ],
+                groups=[
+                    CibResourceGroupDto(
+                        id="G3",
+                        description=None,
+                        member_ids=["R2"],
+                        meta_attributes=[],
+                        instance_attributes=[],
+                    ),
+                    CibResourceGroupDto(
+                        id="G4",
+                        description=None,
+                        member_ids=["R3"],
+                        meta_attributes=[],
+                        instance_attributes=[],
+                    ),
+                ],
                 bundles=[],
             )
         )

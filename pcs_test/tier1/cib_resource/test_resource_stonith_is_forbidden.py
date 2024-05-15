@@ -204,7 +204,7 @@ class ResourceStonithIsForbidden(
         self.assert_pcs_fail(
             "resource group add G S1".split(),
             stderr_full=(
-                "Error: This command does not accept stonith resources.\n"
+                "Error: 'S1' is a stonith resource, stonith resources cannot be put into a group\n"
                 "Error: Errors have occurred, therefore pcs is unable to continue\n"
             ),
         )
@@ -262,5 +262,6 @@ class ResourceStonithIsForbidden(
             "resource relations S1".split(),
             stderr_full=(
                 "Error: This command does not accept stonith resource.\n"
+                "Error: Errors have occurred, therefore pcs is unable to continue\n"
             ),
         )

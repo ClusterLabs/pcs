@@ -67,6 +67,6 @@ COROSYNC_RUNNING_ON_NODE = _D("COROSYNC_RUNNING_ON_NODE")
 # pcs.cli.reports.preprocessor.get_duplicate_constraint_exists_preprocessor
 DUPLICATE_CONSTRAINTS_LIST = _D("DUPLICATE_CONSTRAINTS_LIST")
 
-# Removed after 0.12.0
+# Removed in the first pcs-0.12.x version
 # Replaced by COMMAND_MISMATCH_ARGUMENT_TYPE
 RESOURCE_STONITH_COMMANDS_MISMATCH = _D("RESOURCE_STONITH_COMMANDS_MISMATCH")

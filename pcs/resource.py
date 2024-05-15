@@ -1800,13 +1800,6 @@ def resource_clone_create(
     )
     if not element:
         utils.err("unable to find group or resource: %s" % name)
-    if element.getAttribute("class") == "stonith":
-        utils.err(
-            reports.messages.CommandArgumentTypeMismatch(
-                "stonith resource",
-                reports.const.PCS_COMMAND_STONITH_CREATE,
-            ).message
-        )
 
     if element.parentNode.tagName == "bundle":
         utils.err("cannot clone bundle resource")

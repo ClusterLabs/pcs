@@ -13,7 +13,7 @@
   `pcs stonith` commands ([RHEL-35428])
 - Ability to create stonith resource in a group from `pcs stonith create`
   command ([RHEL-35428])
-- command `stonith.create_in_group` from API v1 ([RHEL-35428])
+- command `stonith.create_in_group` from API v1 and v2 ([RHEL-35428])
 
 ### Added
 - Support for output formats `json` and `cmd` to resources/stonith defaults and

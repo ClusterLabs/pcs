@@ -1616,28 +1616,6 @@ def group_add(
     wait_timeout = env.ensure_wait_satisfiable(wait)
     resources_section = get_resources(env.get_cib(None))
 
-    (
-        resource_element_list,
-        id_not_found_list,
-    ) = get_elements_by_ids(get_root(resources_section), resource_id_list)
-    for resource_id in id_not_found_list:
-        env.report_processor.report(
-            ReportItem.error(reports.messages.IdNotFound(resource_id, []))
-        )
-
-    if any(
-        resource.stonith.is_stonith(resource_el)
-        for resource_el in resource_element_list
-    ):
-        if env.report_processor.report(
-            reports.ReportItem.error(
-                reports.messages.CommandArgumentTypeMismatch(
-                    "stonith resources"
-                )
-            )
-        ).has_errors:
-            raise LibraryError()
-
     adjacent_resource_element = None
     if adjacent_resource_id:
         try:
@@ -1663,6 +1641,15 @@ def group_add(
         )
         env.report_processor.report_list(group_id_reports)
         group_element = resource.group.append_new(resources_section, group_id)
+
+    (
+        resource_element_list,
+        id_not_found_list,
+    ) = get_elements_by_ids(get_root(resources_section), resource_id_list)
+    for resource_id in id_not_found_list:
+        env.report_processor.report(
+            ReportItem.error(reports.messages.IdNotFound(resource_id, []))
+        )
 
     if env.report_processor.report_list(
         resource.validations.validate_move_resources_to_group(
@@ -2539,11 +2526,12 @@ def get_resource_relations_tree(
             )
         )
     if resource.stonith.is_stonith(resource_el):
-        raise LibraryError(
+        env.report_processor.report(
             reports.ReportItem.error(
                 reports.messages.CommandArgumentTypeMismatch("stonith resource")
             )
         )
+        raise LibraryError()
 
     (
         resources_dict,

@@ -479,9 +479,11 @@ class GroupAdd(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.COMMAND_ARGUMENT_TYPE_MISMATCH,
-                    not_accepted_type="stonith resources",
-                    command_to_use_instead=None,
+                    report_codes.CANNOT_GROUP_RESOURCE_WRONG_TYPE,
+                    resource_id="S",
+                    resource_type="stonith",
+                    parent_id=None,
+                    parent_type=None,
                 ),
             ]
         )

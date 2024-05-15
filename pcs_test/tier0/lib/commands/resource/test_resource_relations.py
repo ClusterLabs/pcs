@@ -82,20 +82,19 @@ class GetResourceRelationsTree(TestCase):
                 <resources><primitive id="S" class="stonith" /></resources>
             """
         )
-        resource_id = "S"
         self.env_assist.assert_raise_library_error(
             lambda: resource.get_resource_relations_tree(
-                self.env_assist.get_env(),
-                resource_id,
-            ),
+                self.env_assist.get_env(), "S"
+            )
+        )
+        self.env_assist.assert_reports(
             [
                 fixture.error(
                     report_codes.COMMAND_ARGUMENT_TYPE_MISMATCH,
                     not_accepted_type="stonith resource",
                     command_to_use_instead=None,
-                )
-            ],
-            expected_in_processor=False,
+                ),
+            ]
         )
 
     def test_simple(self):
