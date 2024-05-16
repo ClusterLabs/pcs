@@ -70,6 +70,8 @@
   watchdog test' commands, use `--yes` instead ([RHEL-36612])
 - Using `--force` to confirm overwriting files in `pcs cluster report`, use
   `--overwrite` instead ([RHEL-36612])
+- Assigning and unassigning ACL roles without specifying 'user' or 'group'
+  keyword
 
 [ghissue#772]: https://github.com/ClusterLabs/pcs/issues/772
 [ghissue#780]: https://github.com/ClusterLabs/pcs/issues/780

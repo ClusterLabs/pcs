@@ -186,22 +186,28 @@ def _role_assign_unassign(argv, keyword, not_specific_fn, user_fn, group_fn):
     """
     Commandline options: no options
     """
-    # TODO deprecate ambiguous syntax:
+    # DEPRECATED ambiguous syntax in the first 0.12 version
     # - pcs role assign <role id> [to] [user|group] <username/group>
     # - pcs role unassign <role id> [from] [user|group] <username/group>
     # The problem is, that 'user|group' is optional, therefore pcs guesses
     # which one it is.
-    # We haven't deprecated it yet, as groups don't work in pacemaker,
-    # therefore there would be no benefit from deprecating it.
     argv_len = len(argv)
     if argv_len < 2:
         raise CmdLineInputError()
 
+    not_specific_fn_deprecated = (
+        "Assigning / unassigning a role to a user / group without specifying "
+        "'user' or 'group' keyword is deprecated and might be removed in a "
+        "future release."
+    )
+
     if argv_len == 2:
+        deprecation_warning(not_specific_fn_deprecated)
         not_specific_fn(*argv)
     elif argv_len == 3:
         role_id, something, ug_id = argv
         if something == keyword:
+            deprecation_warning(not_specific_fn_deprecated)
             not_specific_fn(role_id, ug_id)
         elif something == "user":
             user_fn(role_id, ug_id)
@@ -228,10 +234,8 @@ def role_assign(lib, argv, modifiers):
     _role_assign_unassign(
         argv,
         "to",
-        # TODO deprecate
+        # DEPRECATED ambiguous syntax in the first 0.12 version
         # Use assign_role_to_target or assign_role_to_group instead.
-        # We haven't deprecated it yet, as groups don't work in pacemaker,
-        # therefore there would be no benefit from deprecating it.
         lib.acl.assign_role_not_specific,
         lib.acl.assign_role_to_target,
         lib.acl.assign_role_to_group,
@@ -248,10 +252,8 @@ def role_unassign(lib, argv, modifiers):
     _role_assign_unassign(
         argv,
         "from",
-        # TODO deprecate
+        # DEPRECATED ambiguous syntax in the first 0.12 version
         # Use unassign_role_from_target or unassign_role_from_group instead.
-        # We haven't deprecated it yet, as groups don't work in pacemaker,
-        # therefore there would be no benefit from deprecating it.
         lambda role_id, ug_id: lib.acl.unassign_role_not_specific(
             role_id, ug_id, modifiers.get("--autodelete")
         ),

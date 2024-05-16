@@ -2632,17 +2632,12 @@ Commands:
         Delete the role specified and remove it from any users/groups it was
         assigned to.
 
-    role assign <role id> [to] [user|group] <username/group>
+    role assign <role id> [to] user|group <username/group>
         Assign a role to a user or group already created with 'pcs acl
-        user/group create'. If there is user and group with the same id and it
-        is not specified which should be used, user will be prioritized. In
-        cases like this specify whenever user or group should be used.
+        user|group create'.
 
-    role unassign <role id> [from] [user|group] <username/group>
-        Remove a role from the specified user. If there is user and group with
-        the same id and it is not specified which should be used, user will be
-        prioritized. In cases like this specify whenever user or group should
-        be used.
+    role unassign <role id> [from] user|group <username/group>
+        Remove a role from the specified user or group.
 
     user create <username> [<role id>]...
         Create an ACL for the user specified and assign roles to the user.

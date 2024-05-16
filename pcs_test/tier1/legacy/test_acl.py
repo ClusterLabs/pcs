@@ -11,6 +11,12 @@ from pcs_test.tools.pcs_runner import PcsRunner
 
 empty_cib = rc("cib-empty.xml")
 
+AMBIGUOUS_ASSIGN_DEPRECATED = (
+    "Deprecation Warning: Assigning / unassigning a role to a user / group "
+    "without specifying 'user' or 'group' keyword is deprecated and might be "
+    "removed in a future release.\n"
+)
+
 
 class ACLTest(TestCase, AssertPcsMixin):
     # pylint: disable=too-many-public-methods
@@ -129,13 +135,22 @@ class ACLTest(TestCase, AssertPcsMixin):
         )
         self.assert_pcs_fail(
             "acl role assign role1 to noexist".split(),
-            "Error: ACL group/ACL user 'noexist' does not exist\n",
+            (
+                AMBIGUOUS_ASSIGN_DEPRECATED
+                + "Error: ACL group/ACL user 'noexist' does not exist\n"
+            ),
         )
         self.assert_pcs_fail(
             "acl role assign noexist to user1".split(),
-            "Error: ACL role 'noexist' does not exist\n",
+            (
+                AMBIGUOUS_ASSIGN_DEPRECATED
+                + "Error: ACL role 'noexist' does not exist\n"
+            ),
         )
-        self.assert_pcs_success("acl role assign role3 to user1".split())
+        self.assert_pcs_success(
+            "acl role assign role3 to user1".split(),
+            stderr_full=AMBIGUOUS_ASSIGN_DEPRECATED,
+        )
         self.assert_pcs_success(
             ["acl"],
             dedent(
@@ -160,13 +175,22 @@ class ACLTest(TestCase, AssertPcsMixin):
         )
         self.assert_pcs_fail(
             "acl role unassign noexist from user1".split(),
-            "Error: Role 'noexist' is not assigned to 'user1'\n",
+            (
+                AMBIGUOUS_ASSIGN_DEPRECATED
+                + "Error: Role 'noexist' is not assigned to 'user1'\n"
+            ),
         )
         self.assert_pcs_fail(
             "acl role unassign role3 from noexist".split(),
-            "Error: ACL group/ACL user 'noexist' does not exist\n",
+            (
+                AMBIGUOUS_ASSIGN_DEPRECATED
+                + "Error: ACL group/ACL user 'noexist' does not exist\n"
+            ),
         )
-        self.assert_pcs_success("acl role unassign role3 from user1".split())
+        self.assert_pcs_success(
+            "acl role unassign role3 from user1".split(),
+            stderr_full=AMBIGUOUS_ASSIGN_DEPRECATED,
+        )
         self.assert_pcs_success(
             ["acl"],
             dedent(
@@ -189,8 +213,14 @@ class ACLTest(TestCase, AssertPcsMixin):
                 """
             ),
         )
-        self.assert_pcs_success("acl role unassign role2 from user1".split())
-        self.assert_pcs_success("acl role unassign role1 from user1".split())
+        self.assert_pcs_success(
+            "acl role unassign role2 from user1".split(),
+            stderr_full=AMBIGUOUS_ASSIGN_DEPRECATED,
+        )
+        self.assert_pcs_success(
+            "acl role unassign role1 from user1".split(),
+            stderr_full=AMBIGUOUS_ASSIGN_DEPRECATED,
+        )
         self.assert_pcs_success(
             ["acl"],
             dedent(
@@ -233,7 +263,10 @@ class ACLTest(TestCase, AssertPcsMixin):
                 """
             ),
         )
-        self.assert_pcs_success("acl role assign role2 to user1".split())
+        self.assert_pcs_success(
+            "acl role assign role2 to user1".split(),
+            stderr_full=AMBIGUOUS_ASSIGN_DEPRECATED,
+        )
         self.assert_pcs_success(
             ["acl"],
             dedent(
@@ -253,7 +286,10 @@ class ACLTest(TestCase, AssertPcsMixin):
                 """
             ),
         )
-        self.assert_pcs_success("acl role assign role1 user1".split())
+        self.assert_pcs_success(
+            "acl role assign role1 user1".split(),
+            stderr_full=AMBIGUOUS_ASSIGN_DEPRECATED,
+        )
         self.assert_pcs_success(
             ["acl"],
             dedent(
@@ -274,7 +310,8 @@ class ACLTest(TestCase, AssertPcsMixin):
             ),
         )
         self.assert_pcs_success(
-            "acl role unassign role2 from user1 --autodelete".split()
+            "acl role unassign role2 from user1 --autodelete".split(),
+            stderr_full=AMBIGUOUS_ASSIGN_DEPRECATED,
         )
         self.assert_pcs_success(
             ["acl"],
@@ -296,7 +333,8 @@ class ACLTest(TestCase, AssertPcsMixin):
             ),
         )
         self.assert_pcs_success(
-            "acl role unassign role1 from user1 --autodelete".split()
+            "acl role unassign role1 from user1 --autodelete".split(),
+            stderr_full=AMBIGUOUS_ASSIGN_DEPRECATED,
         )
         self.assert_pcs_success(
             ["acl"],
