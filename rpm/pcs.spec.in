@@ -77,7 +77,7 @@ BuildRequires: python3-setuptools_scm
 BuildRequires: python3-devel
 # for tier0 tests
 BuildRequires: python3-cryptography
-BuildRequires: python3-pyparsing
+BuildRequires: python3-pyparsing >= 3.0.0
 # required to pass ./configure
 BuildRequires: python3-wheel
 BuildRequires: python3-lxml
@@ -132,7 +132,7 @@ Requires: python3-lxml
 %else
 Requires: python3-pycurl
 %endif
-Requires: python3-pyparsing
+Requires: python3-pyparsing >= 3.0.0
 # ruby and gems for pcsd
 Requires: ruby >= 2.5
 Requires: rubygems

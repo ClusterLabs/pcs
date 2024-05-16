@@ -5,7 +5,8 @@ from typing import (
     Tuple,
 )
 
-from . import compat_pyparsing as pyparsing
+import pyparsing
+
 from .expression_part import (
     BOOL_AND,
     BOOL_OR,

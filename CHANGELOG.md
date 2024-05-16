@@ -94,6 +94,9 @@
 - Standalone webui backend support in pcsd is now optional. It can be enabled
   by adding `--enable-webui` option to `./configure` command. ([RHEL-29739])
 
+### Changed
+- Minimal required version of python3-pyparsing has been changed to 3.0.0
+
 ### Deprecated
 - Pcs produces warnings about [features planned to be removed in pacemaker 3](https://projects.clusterlabs.org/w/projects/pacemaker/pacemaker_3.0_changes/pacemaker_3.0_configuration_changes/):
   - score in order constraints

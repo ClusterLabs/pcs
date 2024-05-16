@@ -283,7 +283,6 @@ EXTRA_DIST		= \
 			  lib/cib/resource/validations.py \
 			  lib/cib/rule/cib_to_dto.py \
 			  lib/cib/rule/cib_to_str.py \
-			  lib/cib/rule/compat_pyparsing.py \
 			  lib/cib/rule/expression_part.py \
 			  lib/cib/rule/in_effect.py \
 			  lib/cib/rule/__init__.py \
