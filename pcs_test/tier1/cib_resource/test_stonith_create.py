@@ -264,5 +264,7 @@ class InGroup(ResourceTest):
             (
                 "Error: Specified options '--after', '--group' are not "
                 "supported in this command\n"
+                "Hint: Syntax has changed from previous version. See 'man pcs' "
+                "-> Changes in pcs-0.12.\n"
             ),
         )

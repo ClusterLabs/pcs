@@ -600,7 +600,7 @@ class InputModifiers:
     def ensure_only_supported(
         self,
         *supported_options: str,
-        hint_syntax_changed: bool = False,
+        hint_syntax_changed: Optional[str] = None,
         output_format_supported: bool = False,
     ) -> None:
         # --debug is supported in all commands
@@ -619,7 +619,7 @@ class InputModifiers:
                 ),
                 hint=(
                     "Syntax has changed from previous version. {}".format(
-                        SEE_MAN_CHANGES.format("0.11")
+                        SEE_MAN_CHANGES.format(hint_syntax_changed)
                     )
                     if hint_syntax_changed
                     else None

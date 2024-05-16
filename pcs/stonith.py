@@ -158,6 +158,7 @@ def stonith_create(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
         "--agent-validation",
         "--wait",
         "-f",
+        hint_syntax_changed="0.12",
     )
 
     if len(argv) < 2:
