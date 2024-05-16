@@ -56,9 +56,11 @@ def format_wrap_for_terminal(
     trim -- number which will be substracted from terminal size. Can be used in
         cases lines will be indented later by this number of spaces.
     """
-    if (sys.stdout is not None and sys.stdout.isatty()) or (
-        sys.stderr is not None and sys.stderr.isatty()
-    ):
+    # This function is used for stdout only - we don't care about wrapping
+    # error messages and debug info. So it checks stdout and not stderr.
+    # Checking stderr would enable wrapping in case of 'pcs ... | grep ...'
+    # (stderr is connected to a terminal), which we don't want. (RHEL-36514)
+    if sys.stdout is not None and sys.stdout.isatty():
         return format_wrap(
             text,
             # minimal line length is 40

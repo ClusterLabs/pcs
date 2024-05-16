@@ -21,6 +21,8 @@
   ([RHEL-27492])
 - Use different process creation method for multiprocessing module in order to
   avoid deadlock on process termination. ([ghissue#780], [RHEL-28749])
+- Do not wrap pcs output to terminal width if pcs's stdout is redirected
+  ([RHEL-36514])
 
 ### Deprecated
 - Pcs produces warnings about [features planned to be removed in pacemaker 3](https://projects.clusterlabs.org/w/projects/pacemaker/pacemaker_3.0_changes/pacemaker_3.0_configuration_changes/):
@@ -37,6 +39,7 @@
 [RHEL-28749]: https://issues.redhat.com/browse/RHEL-28749
 [RHEL-25854]: https://issues.redhat.com/browse/RHEL-25854
 [RHEL-21051]: https://issues.redhat.com/browse/RHEL-21051
+[RHEL-36514]: https://issues.redhat.com/browse/RHEL-36514
 
 
 ## [0.11.7] - 2024-01-11
