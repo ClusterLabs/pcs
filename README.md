@@ -38,7 +38,7 @@ These are the runtime dependencies of pcs and pcsd:
 * python3-pycurl
 * python3-setuptools
 * python3-setuptools\_scm
-* python3-pyparsing
+* python3-pyparsing 3.0.0+
 * python3-tornado 6.1.0+
 * [dacite](https://github.com/konradhalas/dacite)
 * ruby 3.3.0+
