@@ -42,6 +42,8 @@
 - Use different process creation method for multiprocessing module in order to
   avoid deadlock on process termination. ([ghissue#780], [RHEL-28749])
 - Unified the way score is defined in constraints commands ([RHEL-34792])
+- Do not wrap pcs output to terminal width if pcs's stdout is redirected
+  ([RHEL-36514])
 
 ### Changed
 - When creating or updating a resource or stonith, its options are now
@@ -80,6 +82,7 @@
 [RHEL-34792]: https://issues.redhat.com/browse/RHEL-34792
 [RHEL-35428]: https://issues.redhat.com/browse/RHEL-35428
 [RHEL-35670]: https://issues.redhat.com/browse/RHEL-35670
+[RHEL-36514]: https://issues.redhat.com/browse/RHEL-36514
 [RHEL-36612]: https://issues.redhat.com/browse/RHEL-36612
 [rhbz#2163953]: https://bugzilla.redhat.com/show_bug.cgi?id=2163953
 
