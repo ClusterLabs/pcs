@@ -292,10 +292,10 @@ def quorum_device_heuristics_remove_cmd(
 def quorum_unblock_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
-      * --force - no error when removing non existing property and no warning
-        about this action
+      * --force - required for unblocking the quorum - DEPRECATED
+      * --yes - required for unblocking the quorum
     """
-    modifiers.ensure_only_supported("--force")
+    modifiers.ensure_only_supported("--force", "--yes")
     if argv:
         raise CmdLineInputError()
 
@@ -318,17 +318,18 @@ def quorum_unblock_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     unjoined_nodes = list(set(all_nodes) - set(utils.getCorosyncActiveNodes()))
     if not unjoined_nodes:
         utils.err("no unjoined nodes found")
-    if not utils.get_continue_confirmation_or_force(
+    if not utils.get_continue_confirmation(
         f"If node(s) {format_list(unjoined_nodes)} are not powered off or they "
         "do have access to shared resources, data corruption and/or cluster "
         "failure may occur",
+        bool(modifiers.get("--yes")),
         bool(modifiers.get("--force")),
     ):
         return
     for node in unjoined_nodes:
-        # pass --force so no warning will be displayed
+        # pass --yes so no warning will be displayed
         stonith.stonith_confirm(
-            lib, [node], parse_args.InputModifiers({"--force": ""})
+            lib, [node], parse_args.InputModifiers({"--yes": ""})
         )
 
     output, retval = utils.run(

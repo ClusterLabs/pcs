@@ -2486,6 +2486,14 @@
         pcs commands: --request-timeout
       </description>
     </capability>
+    <capability id="pcs.yes-to-confirm-commands" in-pcs="1" in-pcsd="0">
+      <description>
+        Interactive confirmation required by some of pcs commands can be
+        overridden by specifying --yes flag.
+
+        pcs commands: --yes
+      </description>
+    </capability>
     <capability id="pcs.daemon-ssl-cert.set" in-pcs="1" in-pcsd="1">
       <description>
         Set a SSL certificate (a certificate-key pair) to be used by pcsd on the

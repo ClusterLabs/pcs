@@ -21,6 +21,11 @@
 - Add `pcs status query resource` CLI commands ([RHEL-21051])
 - Add commands `constraint.location.add_rule_to_constraint` and
   `constraint.location.create_with_rule` to API v2
+- Using `--yes` to confirm 'pcs cluster destroy', 'pcs quorum unblock', 'pcs
+  stonith confirm', 'pcs stonith sbd device setup' and 'pcs stonith sbd
+  watchdog test' commands ([RHEL-36612])
+- Using `--overwrite` to confirm 'pcs cluster report' overwriting files
+  ([RHEL-36612])
 
 ### Fixed
 - Do not put empty uid/gid corosync configuration options to an uidgid file
@@ -47,6 +52,11 @@
     - `pcs status wait` to wait for the cluster to settle into stable state
     - `pcs status query resource` commands to verify that the resource is in the
        expected state after the wait
+- Using `--force` to confirm 'pcs cluster destroy', 'pcs quorum unblock', 'pcs
+  stonith confirm', 'pcs stonith sbd device setup' and 'pcs stonith sbd
+  watchdog test' commands, use `--yes` instead ([RHEL-36612])
+- Using `--force` to confirm overwriting files in `pcs cluster report`, use
+  `--overwrite` instead ([RHEL-36612])
 
 [ghissue#772]: https://github.com/ClusterLabs/pcs/issues/772
 [ghissue#780]: https://github.com/ClusterLabs/pcs/issues/780
@@ -57,6 +67,7 @@
 [RHEL-25854]: https://issues.redhat.com/browse/RHEL-25854
 [RHEL-21051]: https://issues.redhat.com/browse/RHEL-21051
 [RHEL-34792]: https://issues.redhat.com/browse/RHEL-34792
+[RHEL-36612]: https://issues.redhat.com/browse/RHEL-36612
 [rhbz#2163953]: https://bugzilla.redhat.com/show_bug.cgi?id=2163953
 
 

@@ -123,7 +123,7 @@ class SbdDeviceSetup(TestCase):
 
     def call_cmd(self, argv, modifiers=None):
         all_modifiers = dict(
-            force=True,  # otherwise it asks interactively for confirmation
+            yes=True,  # otherwise it asks interactively for confirmation
         )
         all_modifiers.update(modifiers or {})
         stonith.sbd_setup_block_device(

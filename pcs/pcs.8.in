@@ -687,10 +687,10 @@ Get the corosync.conf from the specified node or from the current node if node n
 reload corosync
 Reload the corosync configuration on the current node.
 .TP
-destroy [\fB\-\-all\fR] [\fB\-\-force\fR]
+destroy [\fB\-\-all\fR] [\fB\-\-yes\fR]
 Permanently destroy the cluster on the current node, killing all cluster processes and removing all cluster configuration files. Using \fB\-\-all\fR will attempt to destroy the cluster on all nodes in the local cluster.
 
-\fBWARNING:\fR This command permanently removes any cluster configuration that has been created. It is recommended to run 'pcs cluster stop' before destroying the cluster. To prevent accidental running of this command, \fB\-\-force\fR or interactive user response is required in order to proceed.
+\fBWARNING:\fR This command permanently removes any cluster configuration that has been created. It is recommended to run 'pcs cluster stop' before destroying the cluster. To prevent accidental running of this command, \fB\-\-yes\fR or interactive user response is required in order to proceed.
 .TP
 verify [\fB\-\-full\fR] [\fB\-f\fR <filename>]
 Checks the pacemaker configuration (CIB) for syntax and common conceptual errors. If no filename is specified the check is performed on the currently running cluster. If \fB\-\-full\fR is used more verbose output will be printed.
@@ -958,10 +958,10 @@ Verifies all fence devices and nodes specified in fence levels exist.
 fence <node> [\fB\-\-off\fR]
 Fence the node specified (if \fB\-\-off\fR is specified, use the 'off' API call to stonith which will turn the node off instead of rebooting it).
 .TP
-confirm <node> [\fB\-\-force\fR]
+confirm <node> [\fB\-\-yes\fR]
 Confirm to the cluster that the specified node is powered off. This allows the cluster to recover from a situation where no stonith device is able to fence the node. This command should \fBONLY\fR be used after manually ensuring that the node is powered off and has no access to shared resources.
 
-.B WARNING: If this node is not actually powered off or it does have access to shared resources, data corruption/cluster failure can occur. To prevent accidental running of this command, \-\-force or interactive user response is required in order to proceed.
+.B WARNING: If this node is not actually powered off or it does have access to shared resources, data corruption/cluster failure can occur. To prevent accidental running of this command, \fB\-\-yes\fR or interactive user response is required in order to proceed.
 
 NOTE: It is not checked if the specified node exists in the cluster in order to be able to work with nodes not visible from the local cluster partition.
 .TP
@@ -991,10 +991,11 @@ Disable SBD in cluster.
 
 .B WARNING: Cluster has to be restarted in order to apply these changes.
 .TP
-sbd device setup device=<path> [device=<path>]... [watchdog\-timeout=<integer>] [allocate\-timeout=<integer>] [loop\-timeout=<integer>] [msgwait\-timeout=<integer>]
+sbd device setup device=<path> [device=<path>]... [watchdog\-timeout=<integer>] [allocate\-timeout=<integer>] [loop\-timeout=<integer>] [msgwait\-timeout=<integer>] [\fB\-\-yes\fR]
 Initialize SBD structures on device(s) with specified timeouts.
 
-.B WARNING: All content on device(s) will be overwritten.
+.B WARNING: All content on the specified device(s) will be overwritten.
+To prevent accidental running of this command, \fB\-\-yes\fR or interactive user response is required in order to proceed.
 .TP
 sbd device message <device\-path> <node> <message\-type>
 Manually set a message of the specified type on the device for the node. Possible message types (they are documented in sbd(8) man page): test, reset, off, crashdump, exit, clear
@@ -1012,8 +1013,8 @@ Show all available watchdog devices on the local node.
 .B WARNING: Listing available watchdogs may cause a restart of the system when a watchdog with no\-way\-out\-feature enabled is present.
 
 .TP
-sbd watchdog test [<watchdog\-path>]
-This operation is expected to force\-reboot the local system without following any shutdown procedures using a watchdog. If no watchdog is specified, available watchdog will be used if only one watchdog device is available on the local system.
+sbd watchdog test [<watchdog\-path>] [\fB\-\-yes\fR]
+This operation is expected to force\-reboot the local system without following any shutdown procedures using a watchdog. If no watchdog is specified, available watchdog will be used if only one watchdog device is available on the local system. To prevent accidental running of this command, \fB\-\-yes\fR or interactive user response is required in order to proceed.
 
 .SS "acl"
 .TP
@@ -1282,10 +1283,10 @@ WARNING: If you want to change "host" option of qdevice model net, use "pcs quor
 expected\-votes <votes>
 Set expected votes in the live cluster to specified value.  This only affects the live cluster, not changes any configuration files.
 .TP
-unblock [\fB\-\-force\fR]
+unblock [\fB\-\-yes\fR]
 Cancel waiting for all nodes when establishing quorum.  Useful in situations where you know the cluster is inquorate, but you are confident that the cluster should proceed with resource management regardless.  This command should ONLY be used when nodes which the cluster is waiting for have been confirmed to be powered off and to have no access to shared resources.
 
-.B WARNING: If the nodes are not actually powered off or they do have access to shared resources, data corruption/cluster failure can occur. To prevent accidental running of this command, \-\-force or interactive user response is required in order to proceed.
+.B WARNING: If the nodes are not actually powered off or they do have access to shared resources, data corruption/cluster failure can occur. To prevent accidental running of this command, \fB\-\-yes\fR or interactive user response is required in order to proceed.
 .TP
 update [auto_tie_breaker=[0|1]] [last_man_standing=[0|1]] [last_man_standing_window=[<time in ms>]] [wait_for_all=[0|1]]
 Add, remove or change quorum options. At least one option must be specified. Unspecified options will be kept unchanged. If you wish to remove an option, set it to empty value, i.e. 'option_name='. Options are documented in corosync's votequorum(5) man page. Requires the cluster to be stopped.
@@ -1643,6 +1644,8 @@ Several date-spec and duration options have been removed in pacemaker 3. Therefo
 Using spaces in dates in location constraint rules is no longer allowed.
 .br
 Rules are supposed to be specified as a single string argument. Specifying rules as multiple arguments has been deprecated and might be removed in a future release.
+.SS "\-\-yes instead of \-\-force as an alternative to interactive confirmation"
+Some pcs commands require interactive confirmation to proceed. Previously, this could be overridden by specifying \fB\-\-force\fR. Since pcs-0.12, using \fB\-\-force\fR for this purpose is deprecated in favor of \fB\-\-yes\fR. The \fB\-\-force\fR flag is kept to override validation errors, which was its originally intended use. Affected commands are: 'pcs cluster destroy', 'pcs quorum unblock', 'pcs stonith confirm', 'pcs stonith sbd device setup' and 'pcs stonith sbd watchdog test'.
 .SS "constraint"
 .TP
 location add

@@ -1847,7 +1847,7 @@ Commands:
     reload corosync
         Reload the corosync configuration on the current node.
 
-    destroy [--all] [--force]
+    destroy [--all] [--yes]
         Permanently destroy the cluster on the current node, killing all
         cluster processes and removing all cluster configuration files. Using
         --all will attempt to destroy the cluster on all nodes in the local
@@ -1855,7 +1855,7 @@ Commands:
         WARNING: This command permanently removes any cluster configuration that
         has been created. It is recommended to run 'pcs cluster stop' before
         destroying the cluster. To prevent accidental running of this command,
-        --force or interactive user response is required in order to proceed.
+        --yes or interactive user response is required in order to proceed.
 
     verify [--full] [-f <filename>]
         Checks the pacemaker configuration (CIB) for syntax and common
@@ -2064,7 +2064,7 @@ Commands:
         Fence the node specified (if --off is specified, use the 'off' API
         call to stonith which will turn the node off instead of rebooting it).
 
-    confirm <node> [--force]
+    confirm <node> [--yes]
         Confirm to the cluster that the specified node is powered off. This
         allows the cluster to recover from a situation where no stonith device
         is able to fence the node. This command should ONLY be used after
@@ -2073,7 +2073,7 @@ Commands:
 
         WARNING: If this node is not actually powered off or it does have
         access to shared resources, data corruption/cluster failure can occur.
-        To prevent accidental running of this command, --force or interactive
+        To prevent accidental running of this command, --yes or interactive
         user response is required in order to proceed.
 
         NOTE: It is not checked if the specified node exists in the cluster
@@ -2126,11 +2126,13 @@ Commands:
         WARNING: Cluster has to be restarted in order to apply these changes.
 
     sbd device setup device=<path> [device=<path>]...
-                     [watchdog-timeout=<integer>] [allocate-timeout=<integer>]
-                     [loop-timeout=<integer>] [msgwait-timeout=<integer>]
+            [watchdog-timeout=<integer>] [allocate-timeout=<integer>]
+            [loop-timeout=<integer>] [msgwait-timeout=<integer>] [--yes]
         Initialize SBD structures on device(s) with specified timeouts.
 
-        WARNING: All content on device(s) will be overwritten.
+        WARNING: All content on the specified device(s) will be overwritten.
+        To prevent accidental running of this command, --yes or interactive
+        user response is required in order to proceed.
 
     sbd device message <device-path> <node> <message-type>
         Manually set a message of the specified type on the device for the node.
@@ -2151,11 +2153,14 @@ Commands:
         WARNING: Listing available watchdogs may cause a restart of the system
                  when a watchdog with no-way-out-feature enabled is present.
 
-    sbd watchdog test [<watchdog-path>]
+    sbd watchdog test [<watchdog-path>] [--yes]
         This operation is expected to force-reboot the local system without
         following any shutdown procedures using a watchdog. If no watchdog is
         specified, available watchdog will be used if only one watchdog device
         is available on the local system.
+
+        To prevent accidental running of this command, --yes or interactive
+        user response is required in order to proceed.
 """.format(
         config_syntax=_format_syntax(_resource_config_syntax("stonith")),
         config_desc=_format_desc(_resource_config_desc("stonith device")),
@@ -3154,17 +3159,17 @@ Commands:
         Set expected votes in the live cluster to specified value.  This only
         affects the live cluster, not changes any configuration files.
 
-    unblock [--force]
+    unblock [--yes]
         Cancel waiting for all nodes when establishing quorum.  Useful in
         situations where you know the cluster is inquorate, but you are
         confident that the cluster should proceed with resource management
-        regardless.  This command should ONLY be used when nodes which
+        regardless. This command should ONLY be used when nodes which
         the cluster is waiting for have been confirmed to be powered off and
         to have no access to shared resources.
 
         WARNING: If the nodes are not actually powered off or they do have
         access to shared resources, data corruption/cluster failure can occur.
-        To prevent accidental running of this command, --force or interactive
+        To prevent accidental running of this command, --yes or interactive
         user response is required in order to proceed.
 
     update [auto_tie_breaker=[0|1]] [last_man_standing=[0|1]]

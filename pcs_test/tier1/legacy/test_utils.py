@@ -1684,3 +1684,44 @@ class TouchCibFile(TestCase):
         err.assert_called_once_with(
             "Unable to write to file: '/fake/filename': 'some message'"
         )
+
+
+@mock.patch("pcs.utils.is_run_interactive", mock.Mock(return_value=False))
+class GetContinueConfirmation(TestCase):
+    def setUp(self):
+        self.text = "some warning text"
+        patcher_output = mock.patch("pcs.cli.reports.output.print_to_stderr")
+        self.addCleanup(patcher_output.stop)
+        self.mock_output = patcher_output.start()
+
+    def test_yes_force(self):
+        self.assertTrue(utils.get_continue_confirmation(self.text, True, True))
+        self.mock_output.assert_called_once_with(f"Warning: {self.text}")
+
+    def test_yes(self):
+        self.assertTrue(utils.get_continue_confirmation(self.text, True, False))
+        self.mock_output.assert_called_once_with(f"Warning: {self.text}")
+
+    def test_force(self):
+        self.assertTrue(utils.get_continue_confirmation(self.text, False, True))
+        self.assertEqual(
+            self.mock_output.mock_calls,
+            [
+                mock.call(
+                    "Deprecation Warning: Using --force to confirm this action "
+                    "is deprecated and might be removed in a future release, "
+                    "use --yes instead"
+                ),
+                mock.call(f"Warning: {self.text}"),
+            ],
+        )
+
+    def test_nothing(self):
+        with self.assertRaises(SystemExit) as cm:
+            self.assertFalse(
+                utils.get_continue_confirmation(self.text, False, False)
+            )
+        self.assertEqual(cm.exception.code, 1)
+        self.mock_output.assert_called_once_with(
+            f"Error: {self.text}, use --yes to override"
+        )

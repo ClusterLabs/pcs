@@ -40,7 +40,10 @@ from pcs.cli.common.tools import print_to_stderr
 from pcs.cli.file import metadata as file_metadata
 from pcs.cli.reports import process_library_reports
 from pcs.cli.reports.messages import report_item_msg_from_dto
-from pcs.cli.reports.output import warn
+from pcs.cli.reports.output import (
+    deprecation_warning,
+    warn,
+)
 from pcs.common import file as pcs_file
 from pcs.common import (
     file_type_codes,
@@ -1286,12 +1289,16 @@ def cluster_destroy(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * --all - destroy cluster on all cluster nodes => destroy whole cluster
+      * --force - required for destroying the cluster - DEPRECATED
       * --request-timeout - timeout of HTTP requests, effective only with --all
+      * --yes - required for destroying the cluster
     """
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-statements
     del lib
-    modifiers.ensure_only_supported("--all", "--request-timeout", "--force")
+    modifiers.ensure_only_supported(
+        "--all", "--force", "--request-timeout", "--yes"
+    )
     if argv:
         raise CmdLineInputError()
     if utils.is_run_interactive():
@@ -1299,9 +1306,10 @@ def cluster_destroy(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
             "It is recommended to run 'pcs cluster stop' before "
             "destroying the cluster."
         )
-        if not utils.get_continue_confirmation_or_force(
+        if not utils.get_continue_confirmation(
             "This would kill all cluster processes and then PERMANENTLY remove "
             "cluster state and configuration",
+            bool(modifiers.get("--yes")),
             bool(modifiers.get("--force")),
         ):
             return
@@ -1435,30 +1443,39 @@ def cluster_verify(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
 def cluster_report(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
-      * --force - overwrite existing file
+      * --force - allow overwriting existing files - DEPRECATED
       * --from - timestamp
       * --to - timestamp
+      * --overwrite - allow overwriting existing files
+        The resulting file should be stored on the machine where pcs cli is
+        running, not on the machine where pcs daemon is running. Therefore we
+        want to use --overwrite and not --force.
     """
+
     # pylint: disable=too-many-branches
     del lib
-    modifiers.ensure_only_supported("--force", "--from", "--to")
+    modifiers.ensure_only_supported("--force", "--from", "--overwrite", "--to")
     if len(argv) != 1:
         raise CmdLineInputError()
 
     outfile = argv[0]
     dest_outfile = outfile + ".tar.bz2"
     if os.path.exists(dest_outfile):
-        if not modifiers.get("--force"):
+        if not (modifiers.get("--overwrite") or modifiers.get("--force")):
             utils.err(
-                dest_outfile + " already exists, use --force to overwrite"
+                dest_outfile + " already exists, use --overwrite to overwrite"
             )
-        else:
-            try:
-                os.remove(dest_outfile)
-            except OSError as e:
-                utils.err(
-                    "Unable to remove " + dest_outfile + ": " + e.strerror
-                )
+            return
+        if modifiers.get("--force"):
+            # deprecated in the first pcs-0.12 version, replaced by --overwrite
+            deprecation_warning(
+                "Using --force to confirm this action is deprecated and might "
+                "be removed in a future release, use --overwrite instead"
+            )
+        try:
+            os.remove(dest_outfile)
+        except OSError as e:
+            utils.err("Unable to remove " + dest_outfile + ": " + e.strerror)
     crm_report_opts = []
 
     crm_report_opts.append("-f")
@@ -1705,6 +1722,7 @@ def cluster_setup(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
         corosync and pacemaker authkeys
       * --no-cluster-uuid - do not generate a cluster UUID during setup
       * --corosync_conf - corosync.conf file path, do not talk to cluster nodes
+      * --overwrite - allow overwriting existing files
     """
     # pylint: disable=too-many-locals
     is_local = modifiers.is_specified("--corosync_conf")

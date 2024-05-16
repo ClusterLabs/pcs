@@ -116,6 +116,8 @@ PCS_LONG_OPTIONS: Final = [
     "agent-validation",
     # disable text output in query commands
     "quiet",
+    # proceed with dangerous actions, meant for / used in CLI only
+    "yes",
 ]
 
 
@@ -560,6 +562,7 @@ class InputModifiers:
                 "--skip-offline": "--skip-offline" in options,
                 "--start": "--start" in options,
                 "--strict": "--strict" in options,
+                "--yes": "--yes" in options,
                 # string values
                 "--after": options.get("--after", None),
                 "--before": options.get("--before", None),

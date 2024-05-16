@@ -2000,7 +2000,7 @@ def get_terminal_input(message=None):
         sys.exit(1)
 
 
-def _get_continue_confirmation(warning_text: str) -> bool:
+def _get_continue_confirmation_interactive(warning_text: str) -> bool:
     """
     Warns user and asks for permission to continue. Returns True if user wishes
     to continue, False otherwise.
@@ -2032,23 +2032,34 @@ def is_run_interactive() -> bool:
     )
 
 
-def get_continue_confirmation_or_force(warning_text: str, force: bool) -> bool:
+def get_continue_confirmation(
+    warning_text: str, yes: bool, force: bool
+) -> bool:
     """
-    Either asks user to confirm continuation interactively or use --force to
+    Either asks user to confirm continuation interactively or use --yes to
     override when running from a script. Returns True if user wants to continue.
     Returns False if user cancels the action. If a non-interactive environment
     is detected, pcs exits with an error formed from warning_text.
 
     warning_text -- describes action that we want the user to confirm
-    force -- was force flag provided?
+    yes -- was --yes flag provided?
+    force -- was --force flag provided? (deprecated)
     """
-    if force:
+    if force and not yes:
+        # Force may be specified for overriding library errors. We don't want
+        # to report an issue in that case.
+        # deprecated in the first pcs-0.12 version
+        reports_output.deprecation_warning(
+            "Using --force to confirm this action is deprecated and might be "
+            "removed in a future release, use --yes instead"
+        )
+    if yes or force:
         reports_output.warn(warning_text)
         return True
     if not is_run_interactive():
-        err(f"{warning_text}, use --force to override")
+        err(f"{warning_text}, use --yes to override")
         return False
-    return _get_continue_confirmation(warning_text)
+    return _get_continue_confirmation_interactive(warning_text)
 
 
 def get_terminal_password(message="Password: "):

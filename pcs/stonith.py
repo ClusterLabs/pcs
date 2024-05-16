@@ -464,17 +464,19 @@ def stonith_fence(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
 def stonith_confirm(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
-      * --force - do not warn user
+      * --force - required for confirming that fencing happened - DEPRECATED
+      * --yes - required for confirming that fencing happened
     """
     del lib
-    modifiers.ensure_only_supported("--force")
+    modifiers.ensure_only_supported("--force", "--yes")
     if len(argv) != 1:
         utils.err("must specify one (and only one) node to confirm fenced")
 
     node = argv.pop(0)
-    if not utils.get_continue_confirmation_or_force(
+    if not utils.get_continue_confirmation(
         f"If node '{node}' is not powered off or it does have access to shared "
         "resources, data corruption and/or cluster failure may occur",
+        bool(modifiers.get("--yes")),
         bool(modifiers.get("--force")),
     ):
         return
@@ -540,14 +542,17 @@ def sbd_watchdog_list_json(
 
 def sbd_watchdog_test(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
-    Options: no options
+    Options:
+      * --force - required for testing the watchdog - DEPRECATED
+      * --yes - required for testing the watchdog
     """
-    modifiers.ensure_only_supported("--force")
+    modifiers.ensure_only_supported("--force", "--yes")
     if len(argv) > 1:
         raise CmdLineInputError()
-    if not utils.get_continue_confirmation_or_force(
+    if not utils.get_continue_confirmation(
         "This operation is expected to force-reboot this system without "
         "following any shutdown procedures",
+        bool(modifiers.get("--yes")),
         bool(modifiers.get("--force")),
     ):
         return
@@ -767,18 +772,20 @@ def sbd_setup_block_device(
 ) -> None:
     """
     Options:
-      * --force - do not show warning about wiping the devices
+      * --force - required for wiping specified storage devices - DEPRECATED
+      * --yes - required for wiping specified storage devices
     """
-    modifiers.ensure_only_supported("--force")
+    modifiers.ensure_only_supported("--force", "--yes")
     parser = KeyValueParser(argv, repeatable=("device",))
     repeatable_options = parser.get_repeatable()
     device_list = repeatable_options.get("device", [])
     if not device_list:
         raise CmdLineInputError("No device defined")
 
-    if not utils.get_continue_confirmation_or_force(
+    if not utils.get_continue_confirmation(
         f"All current content on device(s) {format_list(device_list)} will be "
         "overwritten",
+        bool(modifiers.get("--yes")),
         bool(modifiers.get("--force")),
     ):
         return
