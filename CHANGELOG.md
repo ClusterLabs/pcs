@@ -18,6 +18,8 @@
   pcsd status` (deprecated since 0.10.9)
 - Command `pcs cluster certkey`, replaced with `pcs pcsd certkey` (deprecated
   since 0.10.9)
+- Command `pcs resource | stonith [op] defaults <name>=<value>...`, replaced
+  with `pcs resource | stonith [op] defaults update` (deprecated since 0.10.7)
 
 ### Added
 - Support for output formats `json` and `cmd` to resources/stonith defaults and

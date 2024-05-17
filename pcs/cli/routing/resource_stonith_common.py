@@ -4,6 +4,7 @@ from typing import (
 )
 
 from pcs import resource
+from pcs.cli.common.errors import command_replaced
 from pcs.cli.common.parse_args import InputModifiers
 from pcs.cli.common.routing import (
     CliCmdInterface,
@@ -21,9 +22,8 @@ def resource_defaults_cmd(parent_cmd: List[str]) -> CliCmdInterface:
           * --force - allow unknown options
         """
         if argv and "=" in argv[0]:
-            # DEPRECATED legacy command
-            return resource.resource_defaults_legacy_cmd(
-                lib, argv, modifiers, deprecated_syntax_used=True
+            raise command_replaced(
+                ["pcs resource defaults update"], pcs_version="0.12"
             )
 
         router = create_router(
@@ -38,7 +38,7 @@ def resource_defaults_cmd(parent_cmd: List[str]) -> CliCmdInterface:
                     },
                     parent_cmd + ["set"],
                 ),
-                "update": resource.resource_defaults_legacy_cmd,
+                "update": resource.resource_defaults_update_cmd,
             },
             parent_cmd,
             default_cmd="config",
@@ -58,9 +58,8 @@ def resource_op_defaults_cmd(parent_cmd: List[str]) -> CliCmdInterface:
           * --force - allow unknown options
         """
         if argv and "=" in argv[0]:
-            # DEPRECATED legacy command
-            return resource.resource_op_defaults_legacy_cmd(
-                lib, argv, modifiers, deprecated_syntax_used=True
+            raise command_replaced(
+                ["pcs resource op defaults update"], pcs_version="0.12"
             )
 
         router = create_router(
@@ -75,7 +74,7 @@ def resource_op_defaults_cmd(parent_cmd: List[str]) -> CliCmdInterface:
                     },
                     parent_cmd + ["set"],
                 ),
-                "update": resource.resource_op_defaults_legacy_cmd,
+                "update": resource.resource_op_defaults_update_cmd,
             },
             parent_cmd,
             default_cmd="config",

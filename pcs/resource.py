@@ -415,43 +415,31 @@ def resource_op_defaults_set_update_cmd(
     )
 
 
-def resource_defaults_legacy_cmd(
+def resource_defaults_update_cmd(
     lib: Any,
     argv: Argv,
     modifiers: InputModifiers,
-    deprecated_syntax_used: bool = False,
 ) -> None:
     """
     Options:
       * -f - CIB file
     """
     del modifiers
-    if deprecated_syntax_used:
-        deprecation_warning(
-            "This command is deprecated and will be removed. "
-            "Please use 'pcs resource defaults update' instead."
-        )
     return lib.cib_options.resource_defaults_update(
         None, KeyValueParser(argv).get_unique()
     )
 
 
-def resource_op_defaults_legacy_cmd(
+def resource_op_defaults_update_cmd(
     lib: Any,
     argv: Argv,
     modifiers: InputModifiers,
-    deprecated_syntax_used: bool = False,
 ) -> None:
     """
     Options:
       * -f - CIB file
     """
     del modifiers
-    if deprecated_syntax_used:
-        deprecation_warning(
-            "This command is deprecated and will be removed. "
-            "Please use 'pcs resource op defaults update' instead."
-        )
     return lib.cib_options.operation_defaults_update(
         None, KeyValueParser(argv).get_unique()
     )

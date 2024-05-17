@@ -13,22 +13,6 @@ ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE = (
 SEE_MAN_CHANGES = "See 'man pcs' -> Changes in pcs-{}."
 
 
-def _msg_command_replaced(
-    new_commands: StringSequence, pcs_version: str
-) -> str:
-    commands = format_list_base(quote_items(new_commands))
-    changes = SEE_MAN_CHANGES.format(pcs_version)
-    return f"This command has been replaced with {commands}. {changes}"
-
-
-def raise_command_replaced(
-    new_commands: StringSequence, pcs_version: str
-) -> None:
-    raise CmdLineInputError(
-        message=_msg_command_replaced(new_commands, pcs_version=pcs_version)
-    )
-
-
 class CmdLineInputError(Exception):
     """
     an incorrect command has been entered in the command line
@@ -55,3 +39,25 @@ class CmdLineInputError(Exception):
         self.message = message
         self.hint = hint
         self.show_both_usage_and_message = show_both_usage_and_message
+
+
+def _msg_command_replaced(
+    new_commands: StringSequence, pcs_version: str
+) -> str:
+    commands = format_list_base(quote_items(new_commands))
+    changes = SEE_MAN_CHANGES.format(pcs_version)
+    return f"This command has been replaced with {commands}. {changes}"
+
+
+def command_replaced(
+    new_commands: StringSequence, pcs_version: str
+) -> CmdLineInputError:
+    return CmdLineInputError(
+        message=_msg_command_replaced(new_commands, pcs_version=pcs_version)
+    )
+
+
+def raise_command_replaced(
+    new_commands: StringSequence, pcs_version: str
+) -> None:
+    raise command_replaced(new_commands, pcs_version)
