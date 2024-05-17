@@ -185,11 +185,6 @@ post '/run_pcs' do
       'only_superuser' => false,
       'permissions' => Permissions::FULL,
     },
-    # TODO deprecated, remove command
-    ['cluster', 'pcsd-status', '...'] => {
-      'only_superuser' => false,
-      'permissions' => nil,
-    },
     # runs on the local node, check permissions
     ['cluster', 'start'] => {
       'only_superuser' => false,

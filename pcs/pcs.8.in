@@ -1660,6 +1660,13 @@ When creating or updating a resource or stonith, its options are now validated b
 .TP
 role assign | unassign
 The possibility of not specifying 'user' or 'group' keyword is now deprecated and might be removed in a future release.
+.SS "cluster"
+.TP
+certkey
+This deprecated command has been removed. Use 'pcs pcsd certkey' instead.
+.TP
+pcsd-status
+This deprecated command has been removed. Use 'pcs status pcsd' or 'pcs pcsd status' instead.
 .SS "constraint"
 .TP
 location add

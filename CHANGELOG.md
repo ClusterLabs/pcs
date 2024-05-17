@@ -14,6 +14,10 @@
 - Ability to create stonith resource in a group from `pcs stonith create`
   command ([RHEL-35428])
 - command `stonith.create_in_group` from API v1 and v2 ([RHEL-35428])
+- Command `pcs cluster pcsd-status`, replaced with `pcs status pcsd` or `pcs
+  pcsd status` (deprecated since 0.10.9)
+- Command `pcs cluster certkey`, replaced with `pcs pcsd certkey` (deprecated
+  since 0.10.9)
 
 ### Added
 - Support for output formats `json` and `cmd` to resources/stonith defaults and

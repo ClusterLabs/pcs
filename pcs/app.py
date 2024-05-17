@@ -66,7 +66,6 @@ def _non_root_run(argv_cmd):
         ["cluster", "disable", "..."],
         ["cluster", "enable", "..."],
         ["cluster", "node", "..."],
-        ["cluster", "pcsd-status", "..."],  # TODO deprecated, remove command
         ["cluster", "start", "..."],
         ["cluster", "stop", "..."],
         ["cluster", "sync", "..."],

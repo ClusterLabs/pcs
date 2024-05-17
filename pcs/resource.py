@@ -2519,8 +2519,6 @@ def resource_group_list(
 def resource_show(
     lib: Any, argv: Argv, modifiers: InputModifiers, stonith: bool = False
 ) -> None:
-    # TODO remove, deprecated command
-    # replaced with 'resource status' and 'resource config'
     """
     Options:
       * -f - CIB file
@@ -3226,9 +3224,6 @@ def resource_refresh(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     modifiers.ensure_only_supported(
         "--force",
         "--strict",
-        # The hint is defined to print error messages which point users to the
-        # changes section in pcs manpage.
-        # To be removed in the next significant version.
         hint_syntax_changed=(
             "0.11" if modifiers.is_specified("--full") else None
         ),

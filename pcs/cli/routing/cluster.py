@@ -1,44 +1,12 @@
-from typing import Any
-
 import pcs.cli.cluster.command as cluster_command
 from pcs import (
     cluster,
-    pcsd,
     resource,
     status,
     usage,
 )
-from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.common.parse_args import (
-    Argv,
-    InputModifiers,
-)
+from pcs.cli.common.errors import raise_command_replaced
 from pcs.cli.common.routing import create_router
-from pcs.cli.reports.output import deprecation_warning
-from pcs.utils import exit_on_cmdline_input_error
-
-
-def certkey(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
-    deprecation_warning(
-        "This command is deprecated and will be removed. "
-        "Please use 'pcs pcsd certkey' instead."
-    )
-    try:
-        return pcsd.pcsd_certkey_cmd(lib, argv, modifiers)
-    except CmdLineInputError as e:
-        return exit_on_cmdline_input_error(e, "pcsd", ["certkey"])
-
-
-def pcsd_status(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
-    deprecation_warning(
-        "This command is deprecated and will be removed. "
-        "Please use 'pcs pcsd status' or 'pcs status pcsd' instead."
-    )
-    try:
-        return pcsd.pcsd_status_cmd(lib, argv, modifiers)
-    except CmdLineInputError as e:
-        return exit_on_cmdline_input_error(e, "pcsd", ["status"])
-
 
 cluster_cmd = create_router(
     {
@@ -70,12 +38,12 @@ cluster_cmd = create_router(
             default_cmd="corosync",
         ),
         "status": status.cluster_status,
-        # TODO remove, deprecated command
-        # replaced with 'pcs pcsd status' and 'pcs status pcsd'
-        "pcsd-status": pcsd_status,
-        # TODO remove, deprecated command
-        # replaced with 'pcs pcsd certkey'
-        "certkey": certkey,
+        "pcsd-status": lambda lib, argv, modifiers: raise_command_replaced(
+            ["pcs pcsd status", "pcs status pcsd"], pcs_version="0.12"
+        ),
+        "certkey": lambda lib, argv, modifiers: raise_command_replaced(
+            ["pcs pcsd certkey"], pcs_version="0.12"
+        ),
         "auth": cluster.cluster_auth_cmd,
         "start": cluster.cluster_start_cmd,
         "stop": cluster.cluster_stop_cmd,
