@@ -31,6 +31,7 @@
   property config` (deprecated since 0.10.9)
 - Command `pcs tag list`, replaced with `pcs tag config` (deprecated since
   0.10.9)
+- `--autodelete` flag of `pcs resource move` command (deprecated since 0.11)
 
 ### Added
 - Support for output formats `json` and `cmd` to resources/stonith defaults and

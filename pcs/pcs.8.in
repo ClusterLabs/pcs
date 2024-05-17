@@ -1717,6 +1717,9 @@ This option is deprecated in all resource commands except 'pcs resource restart'
 defaults <name>=<value>...
 This deprecated command has been removed. Use 'pcs resource defaults update <name>=<value>...' if you only manage one set of defaults, or 'pcs resource defaults set' if you manage several sets of defaults.
 .TP
+move
+Since pcs-0.11, this command automatically removes location constraint used for moving a resource. Therefore, it's deprecated flag \fB\-\-autodelete\fR was removed.
+.TP
 op defaults <name>=<value>...
 This deprecated command has been removed. Use 'pcs resource op defaults update <name>=<value>...' if you only manage one set of defaults, or 'pcs resource op defaults set' if you manage several sets of defaults.
 .SS "cluster"

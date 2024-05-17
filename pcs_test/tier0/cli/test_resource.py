@@ -550,20 +550,6 @@ class ResourceMove(TestCase):
         )
         mock_warn.assert_not_called()
 
-    def test_success_autodelete(self, mock_deprecation):
-        resource.resource_move(
-            self.lib,
-            ["resource", "node"],
-            dict_to_modifiers(dict(autodelete=True)),
-        )
-        self.resource.move_autoclean.assert_called_once_with(
-            "resource", node="node", master=False, wait_timeout=-1, strict=False
-        )
-        mock_deprecation.assert_called_once_with(
-            "Option '--autodelete' is deprecated. There is no need to use it "
-            "as its functionality is default now."
-        )
-
     def test_success_all_options(self, mock_warn):
         resource.resource_move(
             self.lib,

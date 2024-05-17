@@ -848,13 +848,12 @@ def resource_move_with_constraint(
 def resource_move(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
-      * --autodelete - deprecated, not needed anymore
       * --promoted
       * --strict
       * --wait
     """
     modifiers.ensure_only_supported(
-        "--autodelete", "--promoted", "--strict", "--wait"
+        "--promoted", "--strict", "--wait", hint_syntax_changed="0.12"
     )
 
     if not argv:
@@ -871,12 +870,6 @@ def resource_move(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
             )
     if argv:
         raise CmdLineInputError()
-
-    if modifiers.is_specified("--autodelete"):
-        deprecation_warning(
-            "Option '--autodelete' is deprecated. There is no need to use it "
-            "as its functionality is default now."
-        )
 
     lib.resource.move_autoclean(
         resource_id,
