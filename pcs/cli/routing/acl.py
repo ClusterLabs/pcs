@@ -2,14 +2,15 @@ from pcs import (
     acl,
     usage,
 )
+from pcs.cli.common.errors import raise_command_replaced
 from pcs.cli.common.routing import create_router
 
 acl_cmd = create_router(
     {
         "help": lambda lib, argv, modifiers: print(usage.acl(argv)),
-        # TODO remove, deprecated command
-        # replaced with 'config'
-        "show": acl.show_acl_config,
+        "show": lambda lib, argv, modifiers: raise_command_replaced(
+            ["pcs acl config"], pcs_version="0.12"
+        ),
         "config": acl.acl_config,
         "enable": acl.acl_enable,
         "disable": acl.acl_disable,

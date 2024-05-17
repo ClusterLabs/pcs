@@ -13,14 +13,6 @@ def _print_list_of_objects(obj_list, transformation_fn):
         print("\n".join(out))
 
 
-def show_acl_config(lib, argv, modifiers):
-    deprecation_warning(
-        "This command is deprecated and will be removed. "
-        "Please use 'pcs acl config' instead."
-    )
-    return acl_config(lib, argv, modifiers)
-
-
 def acl_config(lib, argv, modifiers):
     """
     Options:

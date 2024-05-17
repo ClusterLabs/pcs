@@ -14,7 +14,10 @@ from xml.dom.minidom import parseString
 import pcs.cli.constraint_order.command as order_command
 from pcs import utils
 from pcs.cli.common import parse_args
-from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.common.errors import (
+    CmdLineInputError,
+    raise_command_replaced,
+)
 from pcs.cli.common.output import (
     INDENT_STEP,
     lines_to_str,
@@ -104,21 +107,15 @@ def constraint_order_cmd(lib, argv, modifiers):
         elif sub_cmd in ["remove", "delete"]:
             order_rm(lib, argv, modifiers)
         elif sub_cmd == "show":
-            order_command.show(lib, argv, modifiers)
+            raise_command_replaced(
+                ["pcs constraint order config"], pcs_version="0.12"
+            )
         elif sub_cmd == "config":
             order_command.config_cmd(lib, argv, modifiers)
         else:
             order_start(lib, [sub_cmd] + argv, modifiers)
     except CmdLineInputError as e:
         utils.exit_on_cmdline_input_error(e, "constraint", ["order", sub_cmd])
-
-
-def constraint_show(lib, argv, modifiers):
-    deprecation_warning(
-        "This command is deprecated and will be removed. "
-        "Please use 'pcs constraint config' instead."
-    )
-    config_cmd(lib, argv, modifiers)
 
 
 def config_cmd(
@@ -654,18 +651,6 @@ def order_find_duplicates(dom, constraint_el):
         and constraint_el is not other_el
         and normalized_el == normalize(other_el)
     ]
-
-
-def location_show(
-    lib: Any,
-    argv: parse_args.Argv,
-    modifiers: parse_args.InputModifiers,
-) -> None:
-    deprecation_warning(
-        "This command is deprecated and will be removed. "
-        "Please use 'pcs constraint location config' instead."
-    )
-    return location_config_cmd(lib, argv, modifiers)
 
 
 _SetConstraint = TypeVar(

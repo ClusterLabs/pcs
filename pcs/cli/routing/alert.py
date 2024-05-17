@@ -2,6 +2,7 @@ from pcs import (
     alert,
     usage,
 )
+from pcs.cli.common.errors import raise_command_replaced
 from pcs.cli.common.routing import create_router
 
 alert_cmd = create_router(
@@ -12,9 +13,9 @@ alert_cmd = create_router(
         "delete": alert.alert_remove,
         "remove": alert.alert_remove,
         "config": alert.print_alert_config,
-        # TODO remove, deprecated command
-        # replaced with 'config'
-        "show": alert.print_alert_show,
+        "show": lambda lib, argv, modifiers: raise_command_replaced(
+            ["pcs alert config"], pcs_version="0.12"
+        ),
         "recipient": create_router(
             {
                 "help": lambda lib, argv, modifiers: print(

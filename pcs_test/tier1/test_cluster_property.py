@@ -569,21 +569,3 @@ class TestGetClusterPropertiesDefinition(AssertPcsMixin, TestCase):
             "property get_cluster_properties_definition arg".split(),
             stderr_start="\nUsage: pcs property ...",
         )
-
-
-class TestListPropertyDeprecated(PropertyMixin, TestCase):
-    def _assert_success(self, cmd):
-        self.assert_pcs_success(
-            ["property", cmd],
-            stdout_full=FIXTURE_CONFIG_OUTPUT,
-            stderr_full=(
-                "Deprecation Warning: This command is deprecated and will be "
-                "removed. Please use 'pcs property config' instead.\n"
-            ),
-        )
-
-    def test_success_list(self):
-        self._assert_success("list")
-
-    def test_success_show(self):
-        self._assert_success("show")

@@ -10,6 +10,7 @@ from pcs.cli.resource.relations import show_resource_relations_cmd
 from .resource_stonith_common import (
     resource_defaults_cmd,
     resource_op_defaults_cmd,
+    resource_show,
 )
 
 resource_cmd = create_router(
@@ -29,9 +30,7 @@ resource_cmd = create_router(
         "meta": resource.meta_cmd,
         "delete": resource.resource_remove_cmd,
         "remove": resource.resource_remove_cmd,
-        # TODO remove, deprecated command
-        # replaced with 'resource status' and 'resource config'
-        "show": resource.resource_show,
+        "show": resource_show,
         "status": resource.resource_status,
         "config": resource.config,
         "group": create_router(

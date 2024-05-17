@@ -41,12 +41,6 @@ from pcs.common.str_tools import (
 )
 
 
-def stonith_show_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
-    # TODO remove, deprecated command
-    # replaced with 'stonith status' and 'stonith config'
-    resource.resource_show(lib, argv, modifiers, stonith=True)
-
-
 def stonith_status_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     resource.resource_status(lib, argv[:], modifiers, stonith=True)
     if not argv:

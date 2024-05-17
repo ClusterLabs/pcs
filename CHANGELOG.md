@@ -20,6 +20,17 @@
   since 0.10.9)
 - Command `pcs resource | stonith [op] defaults <name>=<value>...`, replaced
   with `pcs resource | stonith [op] defaults update` (deprecated since 0.10.7)
+- Command `pcs acl show`, replaced with `pcs acl config` (deprecated since
+  0.10.9)
+- Command `pcs alert show`, replaced with `pcs alert config` (deprecated since
+  0.10.9)
+- Commands `pcs constraint [location | colocation | order | ticket] show |
+  list`, replaced with `pcs constraint [location | colocation | order | ticket]
+  config` (deprecated since 0.10.9)
+- Commands `pcs property show`, `pcs property list`, replaced with `pcs
+  property config` (deprecated since 0.10.9)
+- Command `pcs tag list`, replaced with `pcs tag config` (deprecated since
+  0.10.9)
 
 ### Added
 - Support for output formats `json` and `cmd` to resources/stonith defaults and

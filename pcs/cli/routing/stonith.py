@@ -1,3 +1,5 @@
+from functools import partial
+
 from pcs import (
     resource,
     stonith,
@@ -8,7 +10,10 @@ from pcs.cli.common.routing import create_router
 from .resource_stonith_common import (
     resource_defaults_cmd,
     resource_op_defaults_cmd,
+    resource_show,
 )
+
+stonith_show = partial(resource_show, stonith=True)
 
 stonith_cmd = create_router(
     {
@@ -21,9 +26,7 @@ stonith_cmd = create_router(
         "update-scsi-devices": stonith.stonith_update_scsi_devices,
         "delete": stonith.delete_cmd,
         "remove": stonith.delete_cmd,
-        # TODO remove, deprecated command
-        # replaced with 'stonith status' and 'stonith config'
-        "show": stonith.stonith_show_cmd,
+        "show": stonith_show,
         "status": stonith.stonith_status_cmd,
         "meta": stonith.meta_cmd,
         "op": create_router(

@@ -160,10 +160,7 @@ class TagCreate(TestTagMixin, TestCase):
         self.assert_resources_xml_in_cib(self.fixture_tags_xml())
 
 
-class TagConfigListBase(TestTagMixin):
-    command = None
-    deprecation_msg = ""
-
+class TagConfig(TestTagMixin, TestCase):
     def test_config_empty(self):
         write_file_to_tmpfile(empty_cib, self.temp_cib)
 
@@ -173,15 +170,15 @@ class TagConfigListBase(TestTagMixin):
         )
 
         self.assert_pcs_success(
-            ["tag", self.command],
-            stderr_full=(self.deprecation_msg + " No tags defined\n"),
+            ["tag", "config"],
+            stderr_full=(" No tags defined\n"),
         )
 
     def test_config_tag_does_not_exist(self):
         self.assert_pcs_fail(
-            ["tag", self.command, "notag2", "notag1"],
+            ["tag", "config", "notag2", "notag1"],
             (
-                self.deprecation_msg + "Error: tag 'notag2' does not exist\n"
+                "Error: tag 'notag2' does not exist\n"
                 "Error: tag 'notag1' does not exist\n"
                 "Error: Errors have occurred, therefore pcs is unable to "
                 "continue\n"
@@ -191,7 +188,7 @@ class TagConfigListBase(TestTagMixin):
 
     def test_config_tags_defined(self):
         self.assert_pcs_success(
-            ["tag", self.command],
+            ["tag", "config"],
             dedent(
                 """\
                 tag1
@@ -210,12 +207,11 @@ class TagConfigListBase(TestTagMixin):
                   x3
                 """
             ),
-            stderr_full=self.deprecation_msg,
         )
 
     def test_config_specified_tags(self):
         self.assert_pcs_success(
-            ["tag", self.command, "tag2", "tag1"],
+            ["tag", "config", "tag2", "tag1"],
             dedent(
                 """\
                 tag2
@@ -227,26 +223,7 @@ class TagConfigListBase(TestTagMixin):
                   x3
                 """
             ),
-            stderr_full=self.deprecation_msg,
         )
-
-
-class TagConfig(
-    TagConfigListBase,
-    TestCase,
-):
-    command = "config"
-
-
-class TagList(
-    TagConfigListBase,
-    TestCase,
-):
-    command = "list"
-    deprecation_msg = (
-        "Deprecation Warning: This command is deprecated and will be removed. "
-        "Please use 'pcs tag config' instead.\n"
-    )
 
 
 class PcsConfigTagsTest(TestTagMixin, TestCase):

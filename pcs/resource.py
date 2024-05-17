@@ -24,7 +24,6 @@ from pcs.cli.cluster_property.output import PropertyConfigurationFacade
 from pcs.cli.common.errors import (
     SEE_MAN_CHANGES,
     CmdLineInputError,
-    raise_command_replaced,
 )
 from pcs.cli.common.output import smart_wrap_text
 from pcs.cli.common.parse_args import (
@@ -2502,30 +2501,6 @@ def resource_group_list(
         for resource in e.getElementsByTagName("primitive"):
             line_parts.append(resource.getAttribute("id"))
         print(" ".join(line_parts))
-
-
-def resource_show(
-    lib: Any, argv: Argv, modifiers: InputModifiers, stonith: bool = False
-) -> None:
-    """
-    Options:
-      * -f - CIB file
-      * --full - print all configured options
-      * --groups - print resource groups
-      * --hide-inactive - print only active resources
-    """
-    del lib
-    modifiers.ensure_only_supported(
-        "-f", "--full", "--groups", "--hide-inactive"
-    )
-    if modifiers.get("--groups"):
-        raise_command_replaced(["pcs resource group list"], pcs_version="0.11")
-
-    keyword = "stonith" if stonith else "resource"
-    if modifiers.get("--full") or argv:
-        raise_command_replaced([f"pcs {keyword} config"], pcs_version="0.11")
-
-    raise_command_replaced([f"pcs {keyword} status"], pcs_version="0.11")
 
 
 def resource_status(

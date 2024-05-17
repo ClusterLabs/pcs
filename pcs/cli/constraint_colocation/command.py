@@ -41,14 +41,6 @@ def create_with_set(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     )
 
 
-def show(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
-    deprecation_warning(
-        "This command is deprecated and will be removed. "
-        "Please use 'pcs constraint colocation config' instead."
-    )
-    return config_cmd(lib, argv, modifiers)
-
-
 def config_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     modifiers.ensure_only_supported("-f", "--output-format", "--full")
     if argv:
