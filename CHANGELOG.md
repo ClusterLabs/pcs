@@ -9,8 +9,9 @@
 - Ambiguous syntax of `pcs stonith level clear | delete | remove`
 - Legacy role names are no longer accepted by pcs, use `Promoted`, `Unpromoted`,
   `--promoted`, `promotable`, `promoted-max`
-- Using stonith resources in `pcs resource` commands and resources in
-  `pcs stonith` commands ([RHEL-35428])
+- Using stonith resources in `pcs resource` commands and resources in `pcs
+  stonith` commands, as well as `--brief`, `--no-strict`, `--safe` and
+  `--simulate` flags of `pcs stonith disable` command ([RHEL-35428])
 - Ability to create stonith resource in a group from `pcs stonith create`
   command ([RHEL-35428])
 - command `stonith.create_in_group` from API v1 and v2 ([RHEL-35428])

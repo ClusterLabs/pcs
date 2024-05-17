@@ -18,7 +18,6 @@ from pcs.cli.common.parse_args import (
 )
 from pcs.cli.fencing_topology import target_type_map_cli_to_lib
 from pcs.cli.reports.output import (
-    deprecation_warning,
     error,
     print_to_stderr,
     warn,
@@ -880,10 +879,6 @@ def disable_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * -f - CIB file
-      * --brief - show brief output of --simulate
-      * --safe - only disable if no other resource gets stopped or demoted
-      * --simulate - do not push the CIB, print its effects
-      * --no-strict - allow disable if other resource is affected
       * --wait
     """
     if not argv:
@@ -891,11 +886,7 @@ def disable_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
             "You must specify stonith resource(s) to disable"
         )
     _check_is_stonith(lib, argv, "pcs resource disable")
-    if modifiers.is_specified_any(("--safe", "--no-strict", "--simulate")):
-        deprecation_warning(
-            "Options '--safe', '--no-strict' and '--simulate' are deprecated "
-            "and will be removed in a future release."
-        )
+    modifiers.ensure_only_supported("-f", "--wait", hint_syntax_changed="0.12")
     resource.resource_disable_common(lib, argv, modifiers)
 
 

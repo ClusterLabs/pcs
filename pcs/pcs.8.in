@@ -1695,6 +1695,9 @@ Creating stonith resources in groups is no longer allowed.
 defaults <name>=<value>...
 This deprecated command has been removed. Use 'pcs stonith defaults update <name>=<value>...' if you only manage one set of defaults, or 'pcs stonith defaults set' if you manage several sets of defaults.
 .TP
+disable
+Deprecated options \fB\-\-brief\fR, \fB\-\-no\-strict\fR, \fB\-\-safe\fR and \fB\-\-simulate\fR were removed
+.TP
 level add | clear | delete | remove
 Delimiting stonith devices with a comma is no longer allowed.
 .br
