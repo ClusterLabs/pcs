@@ -7736,28 +7736,6 @@ class AddRemoveCannotSpecifyAdjacentItemWithoutItemsToAdd(ReportItemMessage):
 
 
 @dataclass(frozen=True)
-class ResourceStonithCommandsMismatch(ReportItemMessage):
-    """
-    Command designed for a resource has been used with a stonith resource/agent
-    or the other way around.
-
-    not_accepted_type -- description of an entity not being accepted anymore
-    command_to_use_instead -- identifier of a command to use instead
-    """
-
-    not_accepted_type: str
-    command_to_use_instead: Optional[types.PcsCommand] = None
-    _code = codes.RESOURCE_STONITH_COMMANDS_MISMATCH
-
-    @property
-    def message(self) -> str:
-        return (
-            f"Ability of this command to accept {self.not_accepted_type} is "
-            "deprecated and will be removed in a future release."
-        )
-
-
-@dataclass(frozen=True)
 class ResourceWaitDeprecated(ReportItemMessage):
     """
     Deprecated wait parameter was used in command.
@@ -7937,3 +7915,21 @@ class CannotCreateDefaultClusterPropertySet(ReportItemMessage):
             f"'{self.nvset_id}' already exists. Find elements with the ID and "
             "remove them from cluster configuration."
         )
+
+
+@dataclass(frozen=True)
+class CommandArgumentTypeMismatch(ReportItemMessage):
+    """
+    Command does not accept specific type of an argument.
+
+    not_accepted_type -- description of an entity not being accepted
+    command_to_use_instead -- identifier of a command to use instead
+    """
+
+    not_accepted_type: str
+    command_to_use_instead: Optional[types.PcsCommand] = None
+    _code = codes.COMMAND_ARGUMENT_TYPE_MISMATCH
+
+    @property
+    def message(self) -> str:
+        return f"This command does not accept {self.not_accepted_type}."

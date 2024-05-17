@@ -2066,10 +2066,9 @@
         pcs commands: stonith create
         daemon urls:
           /api/v1/stonith-create/v1
-          /api/v1/stonith-create-in-group/v1
       </description>
     </capability>
-    <capability id="pcmk.stonith.create.in-group" in-pcs="1" in-pcsd="1">
+    <capability id="pcmk.stonith.create.in-group" in-pcs="0" in-pcsd="0">
       <description>
         Put a new stonith resource into an existing or new group upon its
         creation. Optionally specify the resource's position in the group.
@@ -2086,7 +2085,6 @@
         pcs commands: stonith create ... meta
         daemon urls:
           /api/v1/stonith-create/v1
-          /api/v1/stonith-create-in-group/v1
       </description>
     </capability>
     <capability id="pcmk.stonith.create.operations" in-pcs="1" in-pcsd="1">
@@ -2096,7 +2094,6 @@
         pcs commands: stonith create ... op
         daemon urls:
           /api/v1/stonith-create/v1
-          /api/v1/stonith-create-in-group/v1
       </description>
     </capability>
     <capability id="pcmk.stonith.create.operations.onfail-demote" in-pcs="1" in-pcsd="1">
@@ -2106,7 +2103,6 @@
         pcs commands: stonith create ... op
         daemon urls:
           /api/v1/stonith-create/v1
-          /api/v1/stonith-create-in-group/v1
       </description>
     </capability>
     <capability id="pcmk.stonith.create.wait" in-pcs="1" in-pcsd="1">
@@ -2116,7 +2112,6 @@
         pcs commands: stonith create ... --wait
         daemon urls:
           /api/v1/stonith-create/v1
-          /api/v1/stonith-create-in-group/v1
       </description>
     </capability>
     <capability id="pcmk.stonith.delete" in-pcs="1" in-pcsd="1">
@@ -2813,7 +2808,6 @@
           stonith_agent.describe_agent
           stonith_agent.list_agents
           stonith.create
-          stonith.create_in_group
       </description>
     </capability>
     <capability id="pcs.rest-api.v2" in-pcs="0" in-pcsd="1">

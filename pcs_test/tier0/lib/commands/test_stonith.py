@@ -1,4 +1,3 @@
-from functools import partial
 from unittest import (
     TestCase,
     mock,
@@ -89,7 +88,13 @@ expected_cib_unknown = """
 """
 
 
-class CreateMixin:
+class Create(TestCase):
+    _create = staticmethod(stonith.create)
+
+    @staticmethod
+    def _expected_cib(xml):
+        return "<resources>" + xml + "</resources>"
+
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
 
@@ -620,112 +625,3 @@ class CreateMixin:
                 fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
-
-
-class Create(CreateMixin, TestCase):
-    _create = staticmethod(stonith.create)
-
-    @staticmethod
-    def _expected_cib(xml):
-        return "<resources>" + xml + "</resources>"
-
-
-class CreateInGroup(CreateMixin, TestCase):
-    _create = staticmethod(
-        partial(stonith.create_in_group, group_id="my-group")
-    )
-
-    @staticmethod
-    def _expected_cib(xml):
-        return "<resources><group id='my-group'>" + xml + "</group></resources>"
-
-    @staticmethod
-    def _dummy(name):
-        return f"""
-            <primitive class="ocf" id="{name}" provider="pacemaker" type="Dummy"
-            />
-        """
-
-    def test_group_not_valid(self):
-        agent_name = "test_simple"
-
-        self.config.runner.pcmk.load_agent(
-            agent_name=f"stonith:{agent_name}",
-            agent_filename="stonith_agent_fence_simple.xml",
-        )
-        self.config.runner.pcmk.load_fake_agent_metadata()
-        self.config.runner.cib.load()
-
-        self.env_assist.assert_raise_library_error(
-            lambda: stonith.create_in_group(
-                self.env_assist.get_env(),
-                "stonith-test",
-                agent_name,
-                "0-group",
-                operations=[],
-                meta_attributes={},
-                instance_attributes={
-                    "must-set": "value",
-                    "must-set-new": "B",
-                },
-            ),
-            expected_in_processor=False,
-        )
-
-        self.env_assist.assert_reports(
-            [
-                fixture.error(
-                    reports.codes.INVALID_ID_BAD_CHAR,
-                    id="0-group",
-                    id_description="group name",
-                    is_first_char=True,
-                    invalid_character="0",
-                )
-            ]
-        )
-
-    def _assert_adjacent(self, adjacent, after):
-        agent_name = "test_simple"
-        instance_attributes = {
-            "must-set": "value",
-            "must-set-new": "B",
-        }
-        original_cib = (
-            "<resources><group id='my-group'>"
-            + self._dummy("dummy1")
-            + self._dummy("dummy2")
-            + "</group></resources>"
-        )
-        expected_cib = (
-            "<resources><group id='my-group'>"
-            + self._dummy("dummy1")
-            + expected_cib_simple
-            + self._dummy("dummy2")
-            + "</group></resources>"
-        )
-
-        self.config.runner.pcmk.load_agent(
-            agent_name=f"stonith:{agent_name}",
-            agent_filename="stonith_agent_fence_simple.xml",
-        )
-        self.config.runner.pcmk.load_fake_agent_metadata()
-        self.config.runner.cib.load(resources=original_cib)
-        self.config.env.push_cib(resources=expected_cib)
-
-        stonith.create_in_group(
-            self.env_assist.get_env(),
-            "stonith-test",
-            agent_name,
-            "my-group",
-            operations=[],
-            meta_attributes={},
-            instance_attributes=instance_attributes,
-            adjacent_resource_id=adjacent,
-            put_after_adjacent=after,
-        )
-
-    def test_put_after_adjacent(self):
-        self._assert_adjacent("dummy1", True)
-
-    def test_put_before_adjacent(self):
-        self._assert_adjacent("dummy2", False)

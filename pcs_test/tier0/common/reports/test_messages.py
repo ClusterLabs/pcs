@@ -5675,20 +5675,6 @@ class AddRemoveCannotSpecifyAdjacentItemWithoutItemsToAdd(NameBuildTest):
         )
 
 
-class ResourceStonithCommandsMismatch(NameBuildTest):
-    def test_message(self):
-        self.assert_message_from_report(
-            (
-                "Ability of this command to accept some elements is "
-                "deprecated and will be removed in a future release."
-            ),
-            reports.ResourceStonithCommandsMismatch(
-                "some elements",
-                const.PCS_COMMAND_RESOURCE_CREATE,
-            ),
-        )
-
-
 class CloningStonithResourcesHasNoEffect(NameBuildTest):
     def test_singular_without_group_id(self):
         self.assert_message_from_report(
@@ -5889,4 +5875,14 @@ class ResourceWaitDeprecated(NameBuildTest):
                 "deprecated and will be removed in a future release."
             ),
             reports.ResourceWaitDeprecated(),
+        )
+
+
+class CommandArgumentTypeMismatch(NameBuildTest):
+    def test_message(self) -> str:
+        self.assert_message_from_report(
+            "This command does not accept entity type.",
+            reports.CommandArgumentTypeMismatch(
+                "entity type", "pcs stonith create"
+            ),
         )

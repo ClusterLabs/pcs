@@ -5,7 +5,6 @@ from unittest import TestCase
 from pcs import settings
 
 from pcs_test.tools.assertions import AssertPcsMixin
-from pcs_test.tools.bin_mock import get_mock_settings
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import (
     get_tmp_file,
@@ -199,39 +198,6 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
 
                     WARNINGS:
                     No stonith devices and stonith-enabled is not false
-
-                    Stack: unknown
-                    Current DC: NONE
-                """
-                ),
-            )
-
-    def test_no_stonith_warning_when_stonith_in_group(self):
-        self.assert_pcs_success(
-            "stonith create S fence_xvm --group G".split(),
-            stderr_full=(
-                "Deprecation Warning: Option to group stonith resource is "
-                "deprecated and will be removed in a future release.\n"
-            ),
-        )
-        self.pcs_runner.corosync_conf_opt = self.corosync_conf
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
-        if PCMK_2_0_3_PLUS:
-            self.assert_pcs_success(
-                ["status"],
-                stdout_start=dedent(
-                    """\
-                    Cluster name: test99
-                    Cluster Summary:
-                """
-                ),
-            )
-        else:
-            self.assert_pcs_success(
-                ["status"],
-                stdout_start=dedent(
-                    """\
-                    Cluster name: test99
 
                     Stack: unknown
                     Current DC: NONE

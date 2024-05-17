@@ -1,6 +1,7 @@
 from unittest import TestCase
 
 from pcs.common.pacemaker.resource.relations import ResourceRelationType
+from pcs.common.reports import codes as report_codes
 from pcs.lib.commands import resource
 
 from pcs_test.tools import fixture
@@ -73,6 +74,27 @@ class GetResourceRelationsTree(TestCase):
                 )
             ],
             expected_in_processor=False,
+        )
+
+    def test_validation_stonith_is_forbidden(self):
+        self.config.runner.cib.load(
+            resources="""
+                <resources><primitive id="S" class="stonith" /></resources>
+            """
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: resource.get_resource_relations_tree(
+                self.env_assist.get_env(), "S"
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.COMMAND_ARGUMENT_TYPE_MISMATCH,
+                    not_accepted_type="stonith resource",
+                    command_to_use_instead=None,
+                ),
+            ]
         )
 
     def test_simple(self):

@@ -171,12 +171,14 @@ def _get_agent_facade(
         )
         if split_name.is_stonith:
             report_processor.report(
-                reports.ReportItem.deprecation(
-                    reports.messages.ResourceStonithCommandsMismatch(
-                        "fence agent", reports.const.PCS_COMMAND_STONITH_CREATE
+                reports.ReportItem.error(
+                    reports.messages.CommandArgumentTypeMismatch(
+                        "stonith resource",
+                        reports.const.PCS_COMMAND_STONITH_CREATE,
                     )
                 )
             )
+            raise LibraryError()
         if split_name.standard in ("nagios", "upstart"):
             # TODO deprecated in pacemaker 2, to be removed in pacemaker 3
             # added to pcs after 0.11.7
@@ -1328,9 +1330,9 @@ def disable_safe(
         for resource_el in resource_el_list
     ):
         env.report_processor.report(
-            reports.ReportItem.deprecation(
-                reports.messages.ResourceStonithCommandsMismatch(
-                    "stonith device"
+            reports.ReportItem.error(
+                reports.messages.CommandArgumentTypeMismatch(
+                    "stonith resources"
                 )
             )
         )
@@ -1647,18 +1649,6 @@ def group_add(
     for resource_id in id_not_found_list:
         env.report_processor.report(
             ReportItem.error(reports.messages.IdNotFound(resource_id, []))
-        )
-
-    if any(
-        resource.stonith.is_stonith(resource_el)
-        for resource_el in resource_element_list
-    ):
-        env.report_processor.report(
-            reports.ReportItem.deprecation(
-                reports.messages.ResourceStonithCommandsMismatch(
-                    "stonith resource"
-                )
-            )
         )
 
     if env.report_processor.report_list(
@@ -2537,12 +2527,11 @@ def get_resource_relations_tree(
         )
     if resource.stonith.is_stonith(resource_el):
         env.report_processor.report(
-            reports.ReportItem.deprecation(
-                reports.messages.ResourceStonithCommandsMismatch(
-                    "stonith resource"
-                )
+            reports.ReportItem.error(
+                reports.messages.CommandArgumentTypeMismatch("stonith resource")
             )
         )
+        raise LibraryError()
 
     (
         resources_dict,

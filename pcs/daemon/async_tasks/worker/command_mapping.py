@@ -388,10 +388,6 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
         cmd=stonith.create,
         required_permission=p.WRITE,
     ),
-    "stonith.create_in_group": _Cmd(
-        cmd=stonith.create_in_group,
-        required_permission=p.WRITE,
-    ),
     # CMDs allowed in pcs_internal but not exposed via REST API:
     # "services.disable_service": Cmd(services.disable_service,
     # "services.enable_service": Cmd(services.enable_service,

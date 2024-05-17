@@ -25,6 +25,7 @@ EXTRA_DIST		= \
 			  resources/cib-status.xml \
 			  resources/cib-tags.xml \
 			  resources/cib-unexportable-constraints.xml \
+			  resources/cib-unsupported-stonith-config.xml \
 			  resources/controld_metadata.xml \
 			  resources/corosync-3nodes.conf \
 			  resources/corosync-3nodes-qdevice.conf \
@@ -366,8 +367,10 @@ EXTRA_DIST		= \
 			  tier1/cib_resource/test_manage_unmanage.py \
 			  tier1/cib_resource/test_move.py \
 			  tier1/cib_resource/test_operation_add.py \
+			  tier1/cib_resource/test_resource_stonith_is_forbidden.py \
 			  tier1/cib_resource/test_stonith_create.py \
 			  tier1/cib_resource/test_stonith_enable_disable.py \
+			  tier1/cib_resource/test_stonith_resource_is_forbidden.py \
 			  tier1/cluster/common.py \
 			  tier1/cluster/__init__.py \
 			  tier1/cluster/test_cib_push.py \

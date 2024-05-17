@@ -41,6 +41,11 @@ resources_primitive = """
         <primitive id="A" />
     </resources>
 """
+resources_stonith = """
+    <resources>
+        <primitive id="S" class="stonith" />
+    </resources>
+"""
 resources_promotable = """
     <resources>
         <clone id="A-clone">
@@ -76,6 +81,21 @@ class MoveBanClearBaseMixin:
         self.env_assist.assert_reports(
             [
                 fixture.report_not_found("B", context_type="resources"),
+            ]
+        )
+
+    def test_resource_is_stonith(self):
+        self.config.runner.cib.load(resources=resources_stonith)
+        self.env_assist.assert_raise_library_error(
+            lambda: self.lib_action(self.env_assist.get_env(), "S")
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.COMMAND_ARGUMENT_TYPE_MISMATCH,
+                    not_accepted_type="stonith resource",
+                    command_to_use_instead=None,
+                ),
             ]
         )
 

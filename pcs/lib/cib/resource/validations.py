@@ -68,6 +68,17 @@ def validate_move_resources_to_group(
                     )
                 )
             )
+        elif is_stonith(resource_element):
+            report_list.append(
+                reports.ReportItem.error(
+                    reports.messages.CannotGroupResourceWrongType(
+                        str(resource_element.attrib["id"]),
+                        "stonith",
+                        parent_id=None,
+                        parent_type=None,
+                    )
+                )
+            )
         else:
             parent = get_parent_resource(resource_element)
             if parent is not None and not group.is_group(parent):
@@ -134,10 +145,8 @@ def validate_move(
 
     if is_stonith(resource_element):
         report_list.append(
-            reports.ReportItem.deprecation(
-                reports.messages.ResourceStonithCommandsMismatch(
-                    "stonith device"
-                )
+            reports.ReportItem.error(
+                reports.messages.CommandArgumentTypeMismatch("stonith resource")
             )
         )
 
@@ -209,10 +218,8 @@ def validate_ban(
 
     if is_stonith(resource_element):
         report_list.append(
-            reports.ReportItem.deprecation(
-                reports.messages.ResourceStonithCommandsMismatch(
-                    "stonith device"
-                )
+            reports.ReportItem.error(
+                reports.messages.CommandArgumentTypeMismatch("stonith resource")
             )
         )
 
@@ -254,10 +261,8 @@ def validate_unmove_unban(
 
     if is_stonith(resource_element):
         report_list.append(
-            reports.ReportItem.deprecation(
-                reports.messages.ResourceStonithCommandsMismatch(
-                    "stonith device"
-                )
+            reports.ReportItem.error(
+                reports.messages.CommandArgumentTypeMismatch("stonith resource")
             )
         )
 

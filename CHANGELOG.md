@@ -9,6 +9,11 @@
 - Ambiguous syntax of `pcs stonith level clear | delete | remove`
 - Legacy role names are no longer accepted by pcs, use `Promoted`, `Unpromoted`,
   `--promoted`, `promotable`, `promoted-max`
+- Using stonith resources in `pcs resource` commands and resources in
+  `pcs stonith` commands ([RHEL-35428])
+- Ability to create stonith resource in a group from `pcs stonith create`
+  command ([RHEL-35428])
+- command `stonith.create_in_group` from API v1 and v2 ([RHEL-35428])
 
 ### Added
 - Support for output formats `json` and `cmd` to resources/stonith defaults and
@@ -67,6 +72,7 @@
 [RHEL-25854]: https://issues.redhat.com/browse/RHEL-25854
 [RHEL-21051]: https://issues.redhat.com/browse/RHEL-21051
 [RHEL-34792]: https://issues.redhat.com/browse/RHEL-34792
+[RHEL-35428]: https://issues.redhat.com/browse/RHEL-35428
 [RHEL-36612]: https://issues.redhat.com/browse/RHEL-36612
 [rhbz#2163953]: https://bugzilla.redhat.com/show_bug.cgi?id=2163953
 

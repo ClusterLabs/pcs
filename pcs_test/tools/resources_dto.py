@@ -481,7 +481,7 @@ GROUP_G1 = CibResourceGroupDto(
 GROUP_G2 = CibResourceGroupDto(
     id="G2",
     description=None,
-    member_ids=["R5", "S1"],
+    member_ids=["R5"],
     meta_attributes=[
         CibNvsetDto(
             id="G2-meta_attributes",
@@ -620,9 +620,9 @@ ALL_RESOURCES = CibResourcesDto(
     primitives=[
         PRIMITIVE_R1,
         PRIMITIVE_R7,
+        STONITH_S1,
         STONITH_S2,
         PRIMITIVE_R5,
-        STONITH_S1,
         PRIMITIVE_R2,
         PRIMITIVE_R3,
         PRIMITIVE_R4,

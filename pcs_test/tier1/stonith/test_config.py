@@ -28,8 +28,8 @@ class StonithConfigJson(TestCase):
         self.assertEqual(retval, 0)
         expected = CibResourcesDto(
             primitives=[
-                resources_dto.STONITH_S2,
                 resources_dto.STONITH_S1,
+                resources_dto.STONITH_S2,
             ],
             clones=[],
             groups=[],
@@ -58,6 +58,26 @@ class StonithConfigJson(TestCase):
 
 
 class StonithConfigCmd(ResourceConfigCmdMixin, TestCase):
+    sub_command = "stonith"
+    expected_config_stderr = (
+        "Warning: Only 'text' output format is supported for stonith levels\n"
+    )
+
     @staticmethod
     def _get_tmp_file_name():
         return "tier1_stonith_test_config_cib.xml"
+
+    def test_unsupported_stonith(self):
+        self.pcs_runner_orig = PcsRunner(
+            cib_file=get_test_resource("cib-unsupported-stonith-config.xml")
+        )
+        stdout, stderr, retval = self.pcs_runner_orig.run(
+            ["stonith", "config", "--output-format=cmd"]
+        )
+        self.assertEqual(retval, 0)
+        self.assertEqual(stderr, self.expected_config_stderr)
+        self._run_commands(stdout)
+        self.assertEqual(
+            self._get_as_json(self.pcs_runner_new),
+            self._get_as_json(self.pcs_runner_orig),
+        )

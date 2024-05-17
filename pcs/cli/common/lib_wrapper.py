@@ -473,7 +473,6 @@ def load_module(env, middleware_factory, name):
             ),
             {
                 "create": stonith.create,
-                "create_in_group": stonith.create_in_group,
                 "history_get_text": stonith.history_get_text,
                 "history_cleanup": stonith.history_cleanup,
                 "history_update": stonith.history_update,
