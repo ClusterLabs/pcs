@@ -6,10 +6,7 @@ from pcs.cli.common.parse_args import (
     InputModifiers,
     group_by_keywords,
 )
-from pcs.cli.reports.output import (
-    deprecation_warning,
-    print_to_stderr,
-)
+from pcs.cli.reports.output import print_to_stderr
 from pcs.common.str_tools import indent
 
 
@@ -23,18 +20,6 @@ def tag_create(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
         raise CmdLineInputError()
     tag_id, idref_list = argv[0], argv[1:]
     lib.tag.create(tag_id, idref_list)
-
-
-def tag_list_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
-    """
-    Options:
-      * -f - CIB file
-    """
-    deprecation_warning(
-        "This command is deprecated and will be removed. "
-        "Please use 'pcs tag config' instead."
-    )
-    return tag_config(lib, argv, modifiers)
 
 
 def tag_config(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:

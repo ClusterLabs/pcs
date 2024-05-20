@@ -469,10 +469,10 @@ class DefaultsUpdateMixin(DefaultsBaseMixin):
 
 
 class RscDefaultsUpdate(DefaultsUpdateMixin, TestCase):
-    cli_command_name = "resource_defaults_legacy_cmd"
+    cli_command_name = "resource_defaults_update_cmd"
     lib_command_name = "resource_defaults_update"
 
 
 class OpDefaultsUpdate(DefaultsUpdateMixin, TestCase):
-    cli_command_name = "resource_op_defaults_legacy_cmd"
+    cli_command_name = "resource_op_defaults_update_cmd"
     lib_command_name = "operation_defaults_update"

@@ -1046,11 +1046,11 @@ Delete the role specified and remove it from any users/groups it was assigned to
 role remove <role id>
 Delete the role specified and remove it from any users/groups it was assigned to.
 .TP
-role assign <role id> [to] [user|group] <username/group>
-Assign a role to a user or group already created with 'pcs acl user/group create'. If there is user and group with the same id and it is not specified which should be used, user will be prioritized. In cases like this specify whenever user or group should be used.
+role assign <role id> [to] user|group <username/group>
+Assign a role to a user or group already created with 'pcs acl user|group create'.
 .TP
-role unassign <role id> [from] [user|group] <username/group>
-Remove a role from the specified user. If there is user and group with the same id and it is not specified which should be used, user will be prioritized. In cases like this specify whenever user or group should be used.
+role unassign <role id> [from] user|group <username/group>
+Remove a role from the specified user or group.
 .TP
 user create <username> [<role id>]...
 Create an ACL for the user specified and assign roles to the user.
@@ -1656,31 +1656,83 @@ Some pcs commands require interactive confirmation to proceed. Previously, this 
  Using stonith resources in `pcs resource` commands and resources in `pcs stonith` commands is no longer allowed.
 .SS "Resources validation"
 When creating or updating a resource or stonith, its options are now validated by the resource or stonith agent. Unless \fB\-\-agent\-validation\fR is specified, this does not prevent misconfiguring the resource or stonith by exiting with an error. In pcs-0.11, the validation was done only when \fB\-\-agent\-validation\fR was specified.
+.SS "acl"
+.TP
+role assign | unassign
+The possibility of not specifying 'user' or 'group' keyword is now deprecated and might be removed in a future release.
+.TP
+show
+This deprecated command has been removed. Use 'pcs acl config' instead
+.SS "alert"
+.TP
+show
+This deprecated command has been removed. Use 'pcs alert config' instead.
+.SS "cluster"
+.TP
+certkey
+This deprecated command has been removed. Use 'pcs pcsd certkey' instead.
+.TP
+pcsd-status
+This deprecated command has been removed. Use 'pcs status pcsd' or 'pcs pcsd status' instead.
 .SS "constraint"
+.TP
+colocation add
+Specifying score as a standalone value is deprecated in favor of score=value. This makes the command consistent with other commands for creating constraints.
+.TP
+list
+This deprecated command, as well as its variants 'pcs constraint [location | colocation | order | ticket] list', has been removed. Use 'pcs constraint [location | colocation | order | ticket] config' instead.
 .TP
 location add
 Specifying score as a standalone value is deprecated in favor of score=value. This makes the command consistent with other commands for creating constraints.
 .TP
-colocation add
-Specifying score as a standalone value is deprecated in favor of score=value. This makes the command consistent with other commands for creating constraints.
+show
+This deprecated command, as well as its variants 'pcs constraint [location | colocation | order | ticket] show', has been removed. Use 'pcs constraint [location | colocation | order | ticket] config' instead.
 .SS "stonith"
 .TP
 create  \fB\-\-group\fR
 Creating stonith resources in groups is no longer allowed.
-.br
+.TP
+defaults <name>=<value>...
+This deprecated command has been removed. Use 'pcs stonith defaults update <name>=<value>...' if you only manage one set of defaults, or 'pcs stonith defaults set' if you manage several sets of defaults.
+.TP
+disable
+Deprecated options \fB\-\-brief\fR, \fB\-\-no\-strict\fR, \fB\-\-safe\fR and \fB\-\-simulate\fR were removed
 .TP
 level add | clear | delete | remove
 Delimiting stonith devices with a comma is no longer allowed.
 .br
 Ambiguous syntax of 'pcs stonith level clear | delete | remove' is no longer supported.
+.TP
+op defaults <name>=<value>...
+This deprecated command has been removed. Use 'pcs stonith op defaults update <name>=<value>...' if you only manage one set of defaults, or 'pcs stonith op defaults set' if you manage several sets of defaults.
+.SS "property"
+.TP
+list
+This deprecated command has been removed. Use 'pcs property config' instead.
+.TP
+show
+This deprecated command has been removed. Use 'pcs property config' instead.
 .SS "resource"
 .TP
 \fB\-\-wait\fR option
 This option is deprecated in all resource commands except 'pcs resource restart' and 'pcs resource move'. Instead, use the 'pcs status wait' command to wait for the cluster to settle into stable state. Use the 'pcs status query resource' commands to verify that the resource is in the expected state after the wait.
+.TP
+defaults <name>=<value>...
+This deprecated command has been removed. Use 'pcs resource defaults update <name>=<value>...' if you only manage one set of defaults, or 'pcs resource defaults set' if you manage several sets of defaults.
+.TP
+move
+Since pcs-0.11, this command automatically removes location constraint used for moving a resource. Therefore, it's deprecated flag \fB\-\-autodelete\fR was removed.
+.TP
+op defaults <name>=<value>...
+This deprecated command has been removed. Use 'pcs resource op defaults update <name>=<value>...' if you only manage one set of defaults, or 'pcs resource op defaults set' if you manage several sets of defaults.
 .SS "cluster"
 .TP
 node add\-remote | add\-guest
 \fB\-\-wait\fR option is deprecated. Instead, use the 'pcs status wait' command to wait for the cluster to settle into stable state. Use the 'pcs status query resource' commands to verify that the resource is in the expected state after the wait.
+.SS "tag"
+.TP
+list
+This deprecated command has been removed. Use 'pcs tag config' instead.
 .SH CHANGES IN PCS-0.11
 This section summarizes the most important changes in commands done in pcs-0.11.x compared to pcs-0.10.x. For detailed description of current commands see above.
 .SS "Legacy role names"

@@ -13,10 +13,7 @@ from pcs.cli.common.parse_args import (
 from pcs.cli.constraint import command
 from pcs.cli.constraint.output import print_config
 from pcs.cli.constraint_ticket import parse_args
-from pcs.cli.reports.output import (
-    deprecation_warning,
-    error,
-)
+from pcs.cli.reports.output import error
 from pcs.cli.reports.preprocessor import (
     get_duplicate_constraint_exists_preprocessor,
 )
@@ -119,14 +116,6 @@ def remove(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     ticket, resource_id = argv
     if not lib.constraint_ticket.remove(ticket, resource_id):
         raise error("no matching ticket constraint found")
-
-
-def show(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
-    deprecation_warning(
-        "This command is deprecated and will be removed. "
-        "Please use 'pcs constraint ticket config' instead."
-    )
-    return config_cmd(lib, argv, modifiers)
 
 
 def config_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:

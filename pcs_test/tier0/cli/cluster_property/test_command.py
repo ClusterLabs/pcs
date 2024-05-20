@@ -198,25 +198,6 @@ class TestUnsetProperty(TestCase):
         self.cluster_property.assert_not_called()
 
 
-class TestListPropertyDeprecated(TestCase):
-    def setUp(self):
-        self.lib = mock.Mock()
-        self.argv = []
-        self.modifiers = {}
-
-    @mock.patch("pcs.cli.cluster_property.command.deprecation_warning")
-    @mock.patch("pcs.cli.cluster_property.command.config")
-    def test_deprecated_command(self, mock_config, mock_warn):
-        cluster_property.list_property_deprecated(
-            self.lib, self.argv, self.modifiers
-        )
-        mock_config.assert_called_once_with(self.lib, self.argv, self.modifiers)
-        mock_warn.assert_called_once_with(
-            "This command is deprecated and will be removed. "
-            "Please use 'pcs property config' instead."
-        )
-
-
 @mock.patch("pcs.cli.cluster_property.command.print")
 class TestConfig(TestCase):
     def setUp(self):

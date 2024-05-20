@@ -8,7 +8,6 @@ from pcs.cli.common.parse_args import (
     KeyValueParser,
     group_by_keywords,
 )
-from pcs.cli.reports.output import deprecation_warning
 from pcs.common.str_tools import indent
 
 
@@ -192,14 +191,6 @@ def _recipient_to_str(recipient):
     return [
         f"Recipient: {recipient['id']} (value={recipient['value']})"
     ] + indent(__description_attributes_to_str(recipient), 1)
-
-
-def print_alert_show(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
-    deprecation_warning(
-        "This command is deprecated and will be removed. "
-        "Please use 'pcs alert config' instead."
-    )
-    return print_alert_config(lib, argv, modifiers)
 
 
 def print_alert_config(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:

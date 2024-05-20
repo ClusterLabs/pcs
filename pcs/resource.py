@@ -24,7 +24,6 @@ from pcs.cli.cluster_property.output import PropertyConfigurationFacade
 from pcs.cli.common.errors import (
     SEE_MAN_CHANGES,
     CmdLineInputError,
-    raise_command_replaced,
 )
 from pcs.cli.common.output import smart_wrap_text
 from pcs.cli.common.parse_args import (
@@ -415,43 +414,31 @@ def resource_op_defaults_set_update_cmd(
     )
 
 
-def resource_defaults_legacy_cmd(
+def resource_defaults_update_cmd(
     lib: Any,
     argv: Argv,
     modifiers: InputModifiers,
-    deprecated_syntax_used: bool = False,
 ) -> None:
     """
     Options:
       * -f - CIB file
     """
     del modifiers
-    if deprecated_syntax_used:
-        deprecation_warning(
-            "This command is deprecated and will be removed. "
-            "Please use 'pcs resource defaults update' instead."
-        )
     return lib.cib_options.resource_defaults_update(
         None, KeyValueParser(argv).get_unique()
     )
 
 
-def resource_op_defaults_legacy_cmd(
+def resource_op_defaults_update_cmd(
     lib: Any,
     argv: Argv,
     modifiers: InputModifiers,
-    deprecated_syntax_used: bool = False,
 ) -> None:
     """
     Options:
       * -f - CIB file
     """
     del modifiers
-    if deprecated_syntax_used:
-        deprecation_warning(
-            "This command is deprecated and will be removed. "
-            "Please use 'pcs resource op defaults update' instead."
-        )
     return lib.cib_options.operation_defaults_update(
         None, KeyValueParser(argv).get_unique()
     )
@@ -861,13 +848,12 @@ def resource_move_with_constraint(
 def resource_move(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
-      * --autodelete - deprecated, not needed anymore
       * --promoted
       * --strict
       * --wait
     """
     modifiers.ensure_only_supported(
-        "--autodelete", "--promoted", "--strict", "--wait"
+        "--promoted", "--strict", "--wait", hint_syntax_changed="0.12"
     )
 
     if not argv:
@@ -884,12 +870,6 @@ def resource_move(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
             )
     if argv:
         raise CmdLineInputError()
-
-    if modifiers.is_specified("--autodelete"):
-        deprecation_warning(
-            "Option '--autodelete' is deprecated. There is no need to use it "
-            "as its functionality is default now."
-        )
 
     lib.resource.move_autoclean(
         resource_id,
@@ -2516,32 +2496,6 @@ def resource_group_list(
         print(" ".join(line_parts))
 
 
-def resource_show(
-    lib: Any, argv: Argv, modifiers: InputModifiers, stonith: bool = False
-) -> None:
-    # TODO remove, deprecated command
-    # replaced with 'resource status' and 'resource config'
-    """
-    Options:
-      * -f - CIB file
-      * --full - print all configured options
-      * --groups - print resource groups
-      * --hide-inactive - print only active resources
-    """
-    del lib
-    modifiers.ensure_only_supported(
-        "-f", "--full", "--groups", "--hide-inactive"
-    )
-    if modifiers.get("--groups"):
-        raise_command_replaced(["pcs resource group list"], pcs_version="0.11")
-
-    keyword = "stonith" if stonith else "resource"
-    if modifiers.get("--full") or argv:
-        raise_command_replaced([f"pcs {keyword} config"], pcs_version="0.11")
-
-    raise_command_replaced([f"pcs {keyword} status"], pcs_version="0.11")
-
-
 def resource_status(
     lib: Any, argv: Argv, modifiers: InputModifiers, stonith: bool = False
 ) -> None:
@@ -3226,9 +3180,6 @@ def resource_refresh(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     modifiers.ensure_only_supported(
         "--force",
         "--strict",
-        # The hint is defined to print error messages which point users to the
-        # changes section in pcs manpage.
-        # To be removed in the next significant version.
         hint_syntax_changed=(
             "0.11" if modifiers.is_specified("--full") else None
         ),

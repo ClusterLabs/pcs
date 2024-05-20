@@ -120,5 +120,7 @@ class Move(
     def test_move_autoclean_not_supported_with_file(self):
         self.assert_pcs_fail(
             "resource move A".split(),
-            "Error: Specified option '-f' is not supported in this command\n",
+            "Error: Specified option '-f' is not supported in this command\n"
+            "Hint: Syntax has changed from previous version. See 'man pcs' -> "
+            "Changes in pcs-0.12.\n",
         )

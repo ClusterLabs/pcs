@@ -43,10 +43,8 @@ def remove_role(lib_env, role_id, autodelete_users_groups=False):
         acl.remove_role(acl_section, role_id, autodelete_users_groups)
 
 
-# TODO deprecate
+# DEPRECATED in the first 0.12 version
 # Use assign_role_to_target or assign_role_to_group instead.
-# We haven't deprecated it yet, as groups don't work in pacemaker, therefore
-# there would be no benefit from deprecating it.
 def assign_role_not_specific(lib_env, role_id, target_or_group_id):
     """
     Assign role with id role_id to target or group with id target_or_group_id.
@@ -100,10 +98,8 @@ def assign_role_to_group(lib_env, role_id, group_id):
         )
 
 
-# TODO deprecate
+# DEPRECATED in the first 0.12 version
 # Use unassign_role_from_target or unassign_role_from_group instead.
-# We haven't deprecated it yet, as groups don't work in pacemaker, therefore
-# there would be no benefit from deprecating it.
 def unassign_role_not_specific(
     lib_env, role_id, target_or_group_id, autodelete_target_group=False
 ):

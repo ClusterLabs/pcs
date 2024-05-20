@@ -5,7 +5,10 @@ from pcs import (
     constraint,
     usage,
 )
-from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.common.errors import (
+    CmdLineInputError,
+    raise_command_replaced,
+)
 from pcs.cli.common.parse_args import (
     Argv,
     InputModifiers,
@@ -32,7 +35,9 @@ def constraint_location_cmd(
         elif sub_cmd in ["remove", "delete"]:
             location_command.remove(lib, argv, modifiers)
         elif sub_cmd == "show":
-            constraint.location_show(lib, argv, modifiers)
+            raise_command_replaced(
+                ["pcs constraint location config"], pcs_version="0.12"
+            )
         elif sub_cmd == "config":
             constraint.location_config_cmd(lib, argv, modifiers)
         elif len(argv) >= 2:
@@ -59,9 +64,9 @@ constraint_cmd = create_router(
                 "add": ticket_command.add,
                 "delete": ticket_command.remove,
                 "remove": ticket_command.remove,
-                # TODO remove, deprecated command
-                # replaced with 'config'
-                "show": ticket_command.show,
+                "show": lambda lib, argv, modifiers: raise_command_replaced(
+                    ["pcs constraint ticket config"], pcs_version="0.12"
+                ),
                 "config": ticket_command.config_cmd,
             },
             ["constraint", "ticket"],
@@ -73,9 +78,9 @@ constraint_cmd = create_router(
                 "remove": colocation_command.remove,
                 "delete": colocation_command.remove,
                 "set": colocation_command.create_with_set,
-                # TODO remove, deprecated command
-                # replaced with 'config'
-                "show": colocation_command.show,
+                "show": lambda lib, argv, modifiers: raise_command_replaced(
+                    ["pcs constraint colocation config"], pcs_version="0.12"
+                ),
                 "config": colocation_command.config_cmd,
             },
             ["constraint", "colocation"],
@@ -83,12 +88,12 @@ constraint_cmd = create_router(
         ),
         "remove": constraint_command.remove,
         "delete": constraint_command.remove,
-        # TODO remove, deprecated command
-        # replaced with 'config'
-        "show": constraint.constraint_show,
-        # TODO remove, deprecated command
-        # replaced with 'config'
-        "list": constraint.constraint_show,
+        "show": lambda lib, argv, modifiers: raise_command_replaced(
+            ["pcs constraint config"], pcs_version="0.12"
+        ),
+        "list": lambda lib, argv, modifiers: raise_command_replaced(
+            ["pcs constraint config"], pcs_version="0.12"
+        ),
         "config": constraint.config_cmd,
         "ref": constraint.ref,
         "rule": create_router(

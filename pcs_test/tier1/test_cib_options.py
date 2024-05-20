@@ -1013,15 +1013,9 @@ class DefaultsUpdateMixin(TestDefaultsMixin, AssertPcsMixin):
     prefix = ""
     cib_tag = ""
 
-    def assert_success_legacy(self, update_keyword):
+    def test_success_legacy(self):
         write_file_to_tmpfile(empty_cib, self.temp_cib)
         warning_lines = []
-        if not update_keyword:
-            warning_lines.append(
-                f"Deprecation Warning: This command is deprecated and will be "
-                f"removed. Please use 'pcs {' '.join(self.cli_command)} "
-                f"update' instead.\n"
-            )
         warning_lines.append(
             "Warning: Defaults do not apply to resources which override "
             "them with their own defined values\n"
@@ -1029,8 +1023,7 @@ class DefaultsUpdateMixin(TestDefaultsMixin, AssertPcsMixin):
         warnings = "".join(warning_lines)
 
         command = self.cli_command[:]
-        if update_keyword:
-            command.append("update")
+        command.append("update")
 
         self.assert_effect(
             command + "name1=value1 name2=value2 name3=value3".split(),
@@ -1084,12 +1077,6 @@ class DefaultsUpdateMixin(TestDefaultsMixin, AssertPcsMixin):
             ),
             stderr_full=warnings,
         )
-
-    def test_deprecated(self):
-        self.assert_success_legacy(False)
-
-    def test_legacy(self):
-        self.assert_success_legacy(True)
 
 
 class RscDefaultsUpdate(

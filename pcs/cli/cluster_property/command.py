@@ -68,16 +68,6 @@ def unset_property(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     )
 
 
-def list_property_deprecated(
-    lib: Any, argv: Argv, modifiers: InputModifiers
-) -> None:
-    deprecation_warning(
-        "This command is deprecated and will be removed. "
-        "Please use 'pcs property config' instead."
-    )
-    return config(lib, argv, modifiers)
-
-
 def config(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:

@@ -10,7 +10,6 @@ from pcs.cli.common.parse_args import (
 )
 from pcs.cli.constraint import command
 from pcs.cli.constraint.output import print_config
-from pcs.cli.reports.output import deprecation_warning
 from pcs.cli.reports.preprocessor import (
     get_duplicate_constraint_exists_preprocessor,
 )
@@ -37,14 +36,6 @@ def create_with_set(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     command.create_with_set(
         lib.constraint_order.create_with_set, argv, modifiers
     )
-
-
-def show(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
-    deprecation_warning(
-        "This command is deprecated and will be removed. "
-        "Please use 'pcs constraint order config' instead."
-    )
-    return config_cmd(lib, argv, modifiers)
 
 
 def config_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:

@@ -9,11 +9,30 @@
 - Ambiguous syntax of `pcs stonith level clear | delete | remove`
 - Legacy role names are no longer accepted by pcs, use `Promoted`, `Unpromoted`,
   `--promoted`, `promotable`, `promoted-max`
-- Using stonith resources in `pcs resource` commands and resources in
-  `pcs stonith` commands ([RHEL-35428])
+- Using stonith resources in `pcs resource` commands and resources in `pcs
+  stonith` commands, as well as `--brief`, `--no-strict`, `--safe` and
+  `--simulate` flags of `pcs stonith disable` command ([RHEL-35428])
 - Ability to create stonith resource in a group from `pcs stonith create`
   command ([RHEL-35428])
 - command `stonith.create_in_group` from API v1 and v2 ([RHEL-35428])
+- Command `pcs cluster pcsd-status`, replaced with `pcs status pcsd` or `pcs
+  pcsd status` (deprecated since 0.10.9)
+- Command `pcs cluster certkey`, replaced with `pcs pcsd certkey` (deprecated
+  since 0.10.9)
+- Command `pcs resource | stonith [op] defaults <name>=<value>...`, replaced
+  with `pcs resource | stonith [op] defaults update` (deprecated since 0.10.7)
+- Command `pcs acl show`, replaced with `pcs acl config` (deprecated since
+  0.10.9)
+- Command `pcs alert show`, replaced with `pcs alert config` (deprecated since
+  0.10.9)
+- Commands `pcs constraint [location | colocation | order | ticket] show |
+  list`, replaced with `pcs constraint [location | colocation | order | ticket]
+  config` (deprecated since 0.10.9)
+- Commands `pcs property show`, `pcs property list`, replaced with `pcs
+  property config` (deprecated since 0.10.9)
+- Command `pcs tag list`, replaced with `pcs tag config` (deprecated since
+  0.10.9)
+- `--autodelete` flag of `pcs resource move` command (deprecated since 0.11)
 
 ### Added
 - Support for output formats `json` and `cmd` to resources/stonith defaults and
@@ -70,6 +89,8 @@
   watchdog test' commands, use `--yes` instead ([RHEL-36612])
 - Using `--force` to confirm overwriting files in `pcs cluster report`, use
   `--overwrite` instead ([RHEL-36612])
+- Assigning and unassigning ACL roles without specifying 'user' or 'group'
+  keyword
 
 [ghissue#772]: https://github.com/ClusterLabs/pcs/issues/772
 [ghissue#780]: https://github.com/ClusterLabs/pcs/issues/780
