@@ -1643,7 +1643,11 @@ no_proxy, https_proxy, all_proxy, NO_PROXY, HTTPS_PROXY, ALL_PROXY
 This section summarizes the most important changes in commands done in pcs-0.12.x compared to pcs-0.11.x. For detailed description of current commands see above.
 .SS "Legacy role names"
 .TP
-Legacy role names and derived options and keywords are no longer accepted, use 'Promoted', 'Unpromoted',  \fB\-\-promoted\fR, 'promotable', 'promoted-max'.
+Legacy role names and derived options and keywords are no longer accepted, use 'Promoted', 'Unpromoted', \fB\-\-promoted\fR, 'promotable', 'promoted-max'.
+.SS "Mixing resources and stonith resources"
+ Using stonith resources in 'pcs resource' commands and resources in 'pcs stonith' commands is no longer allowed.
+.SS "Resources validation"
+When creating or updating a resource or stonith, its options are now validated by the resource or stonith agent. Unless \fB\-\-agent\-validation\fR is specified, this does not prevent misconfiguring the resource or stonith by exiting with an error. In pcs-0.11, the validation was done only when \fB\-\-agent\-validation\fR was specified.
 .SS "Pacemaker rules"
 Several date-spec and duration options have been removed in pacemaker 3. Therefore, pcs no longer supports them either.
 .br
@@ -1652,10 +1656,6 @@ Using spaces in dates in location constraint rules is no longer allowed.
 Rules are supposed to be specified as a single string argument. Specifying rules as multiple arguments has been deprecated and might be removed in a future release.
 .SS "\-\-yes instead of \-\-force as an alternative to interactive confirmation"
 Some pcs commands require interactive confirmation to proceed. Previously, this could be overridden by specifying \fB\-\-force\fR. Since pcs-0.12, using \fB\-\-force\fR for this purpose is deprecated in favor of \fB\-\-yes\fR. The \fB\-\-force\fR flag is kept to override validation errors, which was its originally intended use. Affected commands are: 'pcs cluster destroy', 'pcs quorum unblock', 'pcs stonith confirm', 'pcs stonith sbd device setup' and 'pcs stonith sbd watchdog test'.
-.SS "Mixing resources and stonith resources"
- Using stonith resources in `pcs resource` commands and resources in `pcs stonith` commands is no longer allowed.
-.SS "Resources validation"
-When creating or updating a resource or stonith, its options are now validated by the resource or stonith agent. Unless \fB\-\-agent\-validation\fR is specified, this does not prevent misconfiguring the resource or stonith by exiting with an error. In pcs-0.11, the validation was done only when \fB\-\-agent\-validation\fR was specified.
 .SS "acl"
 .TP
 role assign | unassign
@@ -1672,6 +1672,9 @@ This deprecated command has been removed. Use 'pcs alert config' instead.
 certkey
 This deprecated command has been removed. Use 'pcs pcsd certkey' instead.
 .TP
+node add\-remote | add\-guest
+\fB\-\-wait\fR option is deprecated. Instead, use the 'pcs status wait' command to wait for the cluster to settle into stable state. Use the 'pcs status query resource' commands to verify that the resource is in the expected state after the wait.
+.TP
 pcsd-status
 This deprecated command has been removed. Use 'pcs status pcsd' or 'pcs pcsd status' instead.
 .SS "constraint"
@@ -1687,24 +1690,6 @@ Specifying score as a standalone value is deprecated in favor of score=value. Th
 .TP
 show
 This deprecated command, as well as its variants 'pcs constraint [location | colocation | order | ticket] show', has been removed. Use 'pcs constraint [location | colocation | order | ticket] config' instead.
-.SS "stonith"
-.TP
-create  \fB\-\-group\fR
-Creating stonith resources in groups is no longer allowed.
-.TP
-defaults <name>=<value>...
-This deprecated command has been removed. Use 'pcs stonith defaults update <name>=<value>...' if you only manage one set of defaults, or 'pcs stonith defaults set' if you manage several sets of defaults.
-.TP
-disable
-Deprecated options \fB\-\-brief\fR, \fB\-\-no\-strict\fR, \fB\-\-safe\fR and \fB\-\-simulate\fR were removed
-.TP
-level add | clear | delete | remove
-Delimiting stonith devices with a comma is no longer allowed.
-.br
-Ambiguous syntax of 'pcs stonith level clear | delete | remove' is no longer supported.
-.TP
-op defaults <name>=<value>...
-This deprecated command has been removed. Use 'pcs stonith op defaults update <name>=<value>...' if you only manage one set of defaults, or 'pcs stonith op defaults set' if you manage several sets of defaults.
 .SS "property"
 .TP
 list
@@ -1721,14 +1706,28 @@ defaults <name>=<value>...
 This deprecated command has been removed. Use 'pcs resource defaults update <name>=<value>...' if you only manage one set of defaults, or 'pcs resource defaults set' if you manage several sets of defaults.
 .TP
 move
-Since pcs-0.11, this command automatically removes location constraint used for moving a resource. Therefore, it's deprecated flag \fB\-\-autodelete\fR was removed.
+Since pcs-0.11, this command automatically deletes location constraints used for moving a resource. Therefore, its deprecated flag \fB\-\-autodelete\fR has been removed.
 .TP
 op defaults <name>=<value>...
 This deprecated command has been removed. Use 'pcs resource op defaults update <name>=<value>...' if you only manage one set of defaults, or 'pcs resource op defaults set' if you manage several sets of defaults.
-.SS "cluster"
+.SS "stonith"
 .TP
-node add\-remote | add\-guest
-\fB\-\-wait\fR option is deprecated. Instead, use the 'pcs status wait' command to wait for the cluster to settle into stable state. Use the 'pcs status query resource' commands to verify that the resource is in the expected state after the wait.
+create \fB\-\-group\fR
+Creating stonith resources in groups is no longer allowed.
+.TP
+defaults <name>=<value>...
+This deprecated command has been removed. Use 'pcs stonith defaults update <name>=<value>...' if you only manage one set of defaults, or 'pcs stonith defaults set' if you manage several sets of defaults.
+.TP
+disable
+Deprecated options \fB\-\-brief\fR, \fB\-\-no\-strict\fR, \fB\-\-safe\fR and \fB\-\-simulate\fR have been removed.
+.TP
+level add | clear | delete | remove
+Delimiting stonith devices with a comma is no longer allowed.
+.br
+Ambiguous syntax of 'pcs stonith level clear | delete | remove' is no longer supported.
+.TP
+op defaults <name>=<value>...
+This deprecated command has been removed. Use 'pcs stonith op defaults update <name>=<value>...' if you only manage one set of defaults, or 'pcs stonith op defaults set' if you manage several sets of defaults.
 .SS "tag"
 .TP
 list
@@ -1737,7 +1736,7 @@ This deprecated command has been removed. Use 'pcs tag config' instead.
 This section summarizes the most important changes in commands done in pcs-0.11.x compared to pcs-0.10.x. For detailed description of current commands see above.
 .SS "Legacy role names"
 .TP
-Roles 'Master' and 'Slave' are deprecated and should not be used anymore. Instead use 'Promoted' and 'Unpromoted' respectively. Similarly, \fB\-\-master\fR has been deprecated and replaced with \fB\-\-promoted\fR.
+Roles 'Master' and 'Slave' are deprecated and should not be used anymore. Instead, use 'Promoted' and 'Unpromoted', respectively. Similarly, \fB\-\-master\fR has been deprecated and replaced with \fB\-\-promoted\fR.
 .SS "cluster"
 .TP
 uidgid rm
@@ -1747,17 +1746,17 @@ This command has been replaced with 'pcs cluster uidgid delete' and 'pcs cluster
 move
 The 'pcs resource move' now automatically removes location constraint used for moving a resource. It is equivalent of 'pcs resource move \fB\-\-autodelete\fR' from pcs-0.10.9. Legacy functionality of the 'resource move' command is still available as 'resource move\-with\-constraint <resource id>'.
 .TP
-show \-\-full
+show \fB\-\-full\fR
 This command has been replaced with 'pcs resource config'.
 .TP
-show \-\-groups
+show \fB\-\-groups\fR
 This command has been replaced with 'pcs resource group list'.
 .TP
 show
 This command has been replaced with 'pcs resource status'.
 .SS "stonith"
 .TP
-show \-\-full
+show \fB\-\-full\fR
 This command has been replaced with 'pcs stonith config'.
 .TP
 show
