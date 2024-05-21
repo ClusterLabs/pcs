@@ -70,7 +70,7 @@ class GetClusterStatusMixin(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
         self._xml_summary = etree_to_str(
-            etree.parse(rc("crm_mon.minimal.xml")).find("/summary")
+            etree.parse(rc("crm_mon.minimal.xml")).find("summary")
         )
 
     def fixture_xml(self, transformed=False):
@@ -1354,8 +1354,8 @@ class ResourceRefreshTest(TestCase):
     @staticmethod
     def fixture_status_xml(nodes, resources):
         doc = etree.parse(rc("crm_mon.minimal.xml"))
-        doc.find("/summary/nodes_configured").set("number", str(nodes))
-        doc.find("/summary/resources_configured").set("number", str(resources))
+        doc.find("summary/nodes_configured").set("number", str(nodes))
+        doc.find("summary/resources_configured").set("number", str(resources))
         return etree_to_str(doc)
 
     def test_basic(self):
