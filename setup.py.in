@@ -109,7 +109,7 @@ class PureLib(_SomeDir):
 # `./build`. Don't waste the time: https://stackoverflow.com/a/59686298/22796102
 EXCLUDE_PACKAGES=["pcs_test", "pcs_test.*"]
 
-WEBUI_ENABLED=@WEBUI@
+WEBUI_ENABLED=@PACKAGE_WEBUI_BACKEND@
 if not WEBUI_ENABLED:
     EXCLUDE_PACKAGES.extend(["pcs.daemon.app.webui"])
 
