@@ -43,7 +43,7 @@ distcheck:
       "
     - ./autogen.sh
     - ./configure --enable-local-build --enable-individual-bundling --enable-webui
-    - make distcheck DISTCHECK_CONFIGURE_FLAGS='--enable-local-build --enable-individual-bundling'
+    - make distcheck DISTCHECK_CONFIGURE_FLAGS='--enable-local-build --enable-individual-bundling --enable-webui'
     - rename --verbose .tar. ".${BASE_IMAGE_NAME}.tar." pcs*.tar.*
     - mkdir -p dist && cp -v pcs*.tar.* dist/
   artifacts:
@@ -56,7 +56,7 @@ typos:
   stage: stage1
   script:
     - ./autogen.sh
-    - ./configure --enable-local-build --enable-typos-check --enable-individual-bundling --enable-webui
+    - ./configure --enable-local-build --enable-typos-check --enable-individual-bundling
     - make
     - make typos_check
 
@@ -66,7 +66,7 @@ black:
   script:
     - python3 -m pip install --upgrade -r dev_requirements.txt
     - ./autogen.sh
-    - ./configure --enable-local-build --enable-dev-tests --enable-tests-only --enable-individual-bundling --enable-webui
+    - ./configure --enable-local-build --enable-dev-tests --enable-tests-only --enable-individual-bundling
     - make black_check
 
 isort:
@@ -75,7 +75,7 @@ isort:
   script:
     - python3 -m pip install --upgrade -r dev_requirements.txt
     - ./autogen.sh
-    - ./configure --enable-local-build --enable-dev-tests --enable-tests-only --enable-individual-bundling --enable-webui
+    - ./configure --enable-local-build --enable-dev-tests --enable-tests-only --enable-individual-bundling
     - make isort_check
 
 pylint:
@@ -84,7 +84,7 @@ pylint:
   script:
     - python3 -m pip install --upgrade -r dev_requirements.txt
     - ./autogen.sh
-    - ./configure --enable-local-build --enable-dev-tests --enable-parallel-pylint --enable-individual-bundling --enable-webui
+    - ./configure --enable-local-build --enable-dev-tests --enable-parallel-pylint --enable-individual-bundling
     - make
     - make pylint
 
@@ -94,7 +94,7 @@ mypy:
   script:
     - python3 -m pip install --upgrade -r dev_requirements.txt
     - ./autogen.sh
-    - ./configure --enable-local-build --enable-dev-tests --enable-individual-bundling --enable-webui
+    - ./configure --enable-local-build --enable-dev-tests --enable-individual-bundling
     - make
     - make mypy
 
@@ -103,7 +103,7 @@ ruby_tests:
   stage: stage1
   script:
     - ./autogen.sh
-    - ./configure --enable-local-build --enable-individual-bundling --enable-webui
+    - ./configure --enable-local-build --enable-individual-bundling
     - make
     - make pcsd-tests
 
@@ -115,7 +115,7 @@ python_tier0_tests:
     - dnf remove -y corosync* pacemaker* fence-agents* resource-agents* booth* sbd
     - python3 -m pip install concurrencytest
     - ./autogen.sh
-    - ./configure --enable-local-build --enable-individual-bundling --enable-webui
+    - ./configure --enable-local-build --enable-individual-bundling
     - make
     - make tests_tier0
 
