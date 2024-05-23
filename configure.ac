@@ -339,7 +339,6 @@ if test "x$tests_only" != "xyes"; then
 	fi
 	PCS_CHECK_PYMOD([cryptography])
 	PCS_CHECK_PYMOD([lxml])
-	PCS_CHECK_PYMOD([pycurl])
 	PCS_CHECK_PYMOD([pyparsing])
 
 	# those are kind of problematic.
@@ -351,6 +350,13 @@ if test "x$tests_only" != "xyes"; then
 	# set by the CHECK_PYMOD macro, so it must be executed right after it
 	if test "x$bundle_module" = "xyes" && test "x$cache_only" = "xyes"; then
 		PCS_CHECK_PYMOD([setuptools-scm])
+	fi
+	PCS_CHECK_PYMOD([pycurl], [], [yes])
+	if test "x$bundle_module" = "xyes" && test "x$cache_only" = "xyes"; then
+		# Building requires devel packages that contain pkg-config, so devel
+		# packages must be installed for these checks to pass
+		PKG_CHECK_MODULES([LIBCURL], [libcurl])
+		PKG_CHECK_MODULES([OPENSSL], [openssl])
 	fi
 
 	# special case, because we need to download from github

@@ -232,7 +232,8 @@ done
 for i in license; do
  for x in `find %{pcs_bundled_dir} -type f -iname "${i}*" | grep -v pyagentx`; do
   srcfile=`echo $x | sed -e 's#.*\/##g'`
-  srcpkg=`echo $x | sed -e 's#.*src/##g' -e 's/\(.*\)-\(.*\)/\1/'`
+  # pycurl copies the files into pcs_bundled/usr/share/doc/pycurl instead of pcs_bundled/src/pycurl
+  srcpkg=`echo $x | sed -e 's#.*\(src/\|doc/\)##g' -e 's/\(.*\)[-/]\(.*\)/\1/'`
   mv $x dynamic_files/${srcpkg}_${srcfile}
   echo "@license dynamic_files/${srcpkg}_${srcfile}" >> dynamic_files/pcs
  done
@@ -243,7 +244,7 @@ done
 for i in readme contributors; do
  for x in `find %{pcs_bundled_dir} -type f -iname "${i}*" | grep -v pyagentx |grep -v demos`; do
   srcfile=`echo $x | sed -e 's#.*\/##g'`
-  srcpkg=`echo $x | sed -e 's#.*src/##g' -e 's/\(.*\)-\(.*\)/\1/'`
+  srcpkg=`echo $x | sed -e 's#.*\(src/\|doc/\)##g' -e 's/\(.*\)[-/]\(.*\)/\1/'`
   mv $x dynamic_files/${srcpkg}_${srcfile}
   echo "@doc dynamic_files/${srcpkg}_${srcfile}" >> dynamic_files/pcs
  done
@@ -259,7 +260,7 @@ cat /dev/null > dynamic_files/pcs-snmp
 for i in license; do
  for x in `find %{pcs_bundled_dir} -type f -iname "${i}*" | grep pyagentx`; do
   srcfile=`echo $x | sed -e 's#.*\/##g'`
-  srcpkg=`echo $x | sed -e 's#.*src/##g' -e 's/\(.*\)-\(.*\)/\1/'`
+  srcpkg=`echo $x | sed -e 's#.*\(src/\|doc/\)##g' -e 's/\(.*\)[-/]\(.*\)/\1/'`
   mv $x dynamic_files/${srcpkg}_${srcfile}
   echo "@license dynamic_files/${srcpkg}_${srcfile}" >> dynamic_files/pcs-snmp
  done
@@ -269,7 +270,7 @@ done
 for i in readme contributors; do
  for x in `find %{pcs_bundled_dir} -type f -iname "${i}*" | grep pyagentx`; do
   srcfile=`echo $x | sed -e 's#.*\/##g'`
-  srcpkg=`echo $x | sed -e 's#.*src/##g' -e 's/\(.*\)-\(.*\)/\1/'`
+  srcpkg=`echo $x | sed -e 's#.*\(src/\|doc/\)##g' -e 's/\(.*\)[-/]\(.*\)/\1/'`
   mv $x dynamic_files/${srcpkg}_${srcfile}
   echo "@doc dynamic_files/${srcpkg}_${srcfile}" >> dynamic_files/pcs-snmp
  done
