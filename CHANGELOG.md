@@ -23,6 +23,7 @@
   avoid deadlock on process termination. ([ghissue#780], [RHEL-28749])
 - Do not wrap pcs output to terminal width if pcs's stdout is redirected
   ([RHEL-36514])
+- Report an error when an invalid resource-discovery is specified ([RHEL-7701])
 
 ### Deprecated
 - Pcs produces warnings about [features planned to be removed in pacemaker 3](https://projects.clusterlabs.org/w/projects/pacemaker/pacemaker_3.0_changes/pacemaker_3.0_configuration_changes/):
@@ -34,6 +35,7 @@
 [ghissue#772]: https://github.com/ClusterLabs/pcs/issues/772
 [ghissue#780]: https://github.com/ClusterLabs/pcs/issues/780
 [RHEL-2977]: https://issues.redhat.com/browse/RHEL-2977
+[RHEL-7701]: https://issues.redhat.com/browse/RHEL-7701
 [RHEL-16231]: https://issues.redhat.com/browse/RHEL-16231
 [RHEL-27492]: https://issues.redhat.com/browse/RHEL-27492
 [RHEL-28749]: https://issues.redhat.com/browse/RHEL-28749

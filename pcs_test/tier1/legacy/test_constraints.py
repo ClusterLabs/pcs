@@ -1403,6 +1403,21 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
         self.assertEqual(stderr, "")
         self.assertEqual(retval, 0)
 
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name,
+            (
+                "constraint location crd1 rule resource-discovery=bad-value "
+                "opsrole2 ne controller2"
+            ).split(),
+        )
+        self.assertEqual(stdout, "")
+        self.assertEqual(
+            stderr,
+            "Error: invalid resource-discovery value 'bad-value', allowed "
+            "values are: 'always', 'exclusive', 'never', use --force to override\n",
+        )
+        self.assertEqual(retval, 1)
+
         self.assert_pcs_success(
             "constraint --full".split(),
             stdout_full=outdent(
@@ -1455,6 +1470,12 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
         self.assertEqual(stderr, LOCATION_NODE_VALIDATION_SKIP_WARNING)
         self.assertEqual(stdout, "")
         self.assertEqual(retval, 0)
+
+        self.assert_pcs_fail(
+            "-- constraint location add id7 crd1 my_node2 score=-INFINITY resource-discovery=bad-value".split(),
+            "Error: invalid resource-discovery value 'bad-value', allowed "
+            "values are: 'always', 'exclusive', 'never', use --force to override\n",
+        )
 
         self.assert_pcs_success(
             "constraint --full".split(),

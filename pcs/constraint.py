@@ -46,6 +46,7 @@ from pcs.common.pacemaker.constraint import (
     get_all_constraints_ids,
 )
 from pcs.common.pacemaker.resource.list import CibResourcesDto
+from pcs.common.pacemaker.types import CibResourceDiscovery
 from pcs.common.reports import ReportItem
 from pcs.common.str_tools import (
     format_list,
@@ -972,7 +973,29 @@ def location_add(lib, argv, modifiers, skip_score_and_node_check=False):
     if argv:
         for arg in argv:
             if "=" in arg:
-                options.append(arg.split("=", 1))
+                name, value = arg.split("=", 1)
+                if name == "resource-discovery":
+                    if not modifiers.get("--force"):
+                        allowed_discovery = list(
+                            map(
+                                str,
+                                [
+                                    CibResourceDiscovery.ALWAYS,
+                                    CibResourceDiscovery.EXCLUSIVE,
+                                    CibResourceDiscovery.NEVER,
+                                ],
+                            )
+                        )
+                        if value not in allowed_discovery:
+                            utils.err(
+                                (
+                                    "invalid {0} value '{1}', allowed values are: "
+                                    "{2}, use --force to override"
+                                ).format(
+                                    name, value, format_list(allowed_discovery)
+                                )
+                            )
+                options.append([name, value])
             else:
                 raise CmdLineInputError(f"bad option '{arg}'")
             if options[-1][0] != "resource-discovery" and not modifiers.get(
@@ -1111,6 +1134,28 @@ def location_rule(lib, argv, modifiers):
     # If resource-discovery is specified, we use it with the rsc_location
     # element not the rule
     if resource_discovery:
+        if not modifiers.get("--force"):
+            allowed_discovery = list(
+                map(
+                    str,
+                    [
+                        CibResourceDiscovery.ALWAYS,
+                        CibResourceDiscovery.EXCLUSIVE,
+                        CibResourceDiscovery.NEVER,
+                    ],
+                )
+            )
+            if resource_discovery not in allowed_discovery:
+                utils.err(
+                    (
+                        "invalid {0} value '{1}', allowed values are: {2}, "
+                        "use --force to override"
+                    ).format(
+                        "resource-discovery",
+                        resource_discovery,
+                        format_list(allowed_discovery),
+                    )
+                )
         lc.setAttribute("resource-discovery", options.pop("resource-discovery"))
 
     constraints.appendChild(lc)
