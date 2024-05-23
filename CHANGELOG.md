@@ -36,13 +36,13 @@
 
 ### Added
 - Support for output formats `json` and `cmd` to resources/stonith defaults and
-  resource/stonith op defaults config commands ([RHEL-16231])
+  resource/stonith op defaults config commands ([RHEL-38487])
 - Add lib commands `cib_options.resource_defaults_config` and
   `cib_options.operation_defaults_config` to API v2
 - Add lib command `cluster.wait_for_pcmk_idle` to API v2
 - Add lib command `status.resources_status` to API v2
-- Add `pcs status wait` CLI command ([RHEL-25854])
-- Add `pcs status query resource` CLI commands ([RHEL-21051])
+- Add `pcs status wait` CLI command ([RHEL-38491])
+- Add `pcs status query resource` CLI commands ([RHEL-38489])
 - Add commands `constraint.location.add_rule_to_constraint` and
   `constraint.location.create_with_rule` to API v2
 - Using `--yes` to confirm 'pcs cluster destroy', 'pcs quorum unblock', 'pcs
@@ -55,14 +55,14 @@
 - Do not put empty uid/gid corosync configuration options to an uidgid file
   when not specified in `pcs cluster uidgid add` command. Empty options cause
   corosync start failure. ([ghissue#772])
-- Do not allow fencing levels other than 1..9 ([RHEL-2977])
+- Do not allow fencing levels other than 1..9 ([RHEL-38479])
 - Adjust OCF metadata processing to support the latest pacemaker changes
   ([RHEL-27492])
 - Use different process creation method for multiprocessing module in order to
-  avoid deadlock on process termination. ([ghissue#780], [RHEL-28749])
+  avoid deadlock on process termination. ([ghissue#780], [RHEL-38478])
 - Unified the way score is defined in constraints commands ([RHEL-34792])
 - Do not wrap pcs output to terminal width if pcs's stdout is redirected
-  ([RHEL-36514])
+  ([RHEL-38481])
 
 ### Changed
 - When creating or updating a resource or stonith, its options are now
@@ -94,17 +94,17 @@
 
 [ghissue#772]: https://github.com/ClusterLabs/pcs/issues/772
 [ghissue#780]: https://github.com/ClusterLabs/pcs/issues/780
-[RHEL-2977]: https://issues.redhat.com/browse/RHEL-2977
-[RHEL-16231]: https://issues.redhat.com/browse/RHEL-16231
-[RHEL-21051]: https://issues.redhat.com/browse/RHEL-21051
-[RHEL-25854]: https://issues.redhat.com/browse/RHEL-25854
 [RHEL-27492]: https://issues.redhat.com/browse/RHEL-27492
-[RHEL-28749]: https://issues.redhat.com/browse/RHEL-28749
 [RHEL-34792]: https://issues.redhat.com/browse/RHEL-34792
 [RHEL-35428]: https://issues.redhat.com/browse/RHEL-35428
 [RHEL-35670]: https://issues.redhat.com/browse/RHEL-35670
-[RHEL-36514]: https://issues.redhat.com/browse/RHEL-36514
 [RHEL-36612]: https://issues.redhat.com/browse/RHEL-36612
+[RHEL-38478]: https://issues.redhat.com/browse/RHEL-38478
+[RHEL-38479]: https://issues.redhat.com/browse/RHEL-38479
+[RHEL-38481]: https://issues.redhat.com/browse/RHEL-38481
+[RHEL-38487]: https://issues.redhat.com/browse/RHEL-38487
+[RHEL-38489]: https://issues.redhat.com/browse/RHEL-38489
+[RHEL-38491]: https://issues.redhat.com/browse/RHEL-38491
 [rhbz#2163953]: https://bugzilla.redhat.com/show_bug.cgi?id=2163953
 
 
