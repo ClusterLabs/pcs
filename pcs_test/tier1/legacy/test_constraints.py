@@ -1223,6 +1223,12 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
             "Error: bad option 'bad-opt', use --force to override\n",
         )
 
+        self.assert_pcs_fail(
+            "-- constraint location add id7 crd1 my_node2 score=-INFINITY resource-discovery=bad-value".split(),
+            "Error: invalid resource-discovery value 'bad-value', allowed values "
+            "are: 'always', 'exclusive', 'never', use --force to override\n",
+        )
+
         self.assert_pcs_success(
             "constraint --full".split(),
             stdout_full=outdent(

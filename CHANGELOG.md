@@ -63,6 +63,7 @@
 - Unified the way score is defined in constraints commands ([RHEL-34792])
 - Do not wrap pcs output to terminal width if pcs's stdout is redirected
   ([RHEL-38481])
+- Report an error when an invalid resource-discovery is specified ([RHEL-38480])
 
 ### Changed
 - When creating or updating a resource or stonith, its options are now
@@ -101,6 +102,7 @@
 [RHEL-36612]: https://issues.redhat.com/browse/RHEL-36612
 [RHEL-38478]: https://issues.redhat.com/browse/RHEL-38478
 [RHEL-38479]: https://issues.redhat.com/browse/RHEL-38479
+[RHEL-38480]: https://issues.redhat.com/browse/RHEL-38480
 [RHEL-38481]: https://issues.redhat.com/browse/RHEL-38481
 [RHEL-38487]: https://issues.redhat.com/browse/RHEL-38487
 [RHEL-38489]: https://issues.redhat.com/browse/RHEL-38489

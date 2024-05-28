@@ -51,6 +51,7 @@ from pcs.common.pacemaker.constraint import (
     get_all_constraints_ids,
 )
 from pcs.common.pacemaker.resource.list import CibResourcesDto
+from pcs.common.pacemaker.types import CibResourceDiscovery
 from pcs.common.reports import ReportItem
 from pcs.common.str_tools import (
     format_list,
@@ -958,6 +959,24 @@ def location_add(
         if name == "score":
             score = value
         elif name == "resource-discovery":
+            if not modifiers.get("--force"):
+                allowed_discovery = list(
+                    map(
+                        str,
+                        [
+                            CibResourceDiscovery.ALWAYS,
+                            CibResourceDiscovery.EXCLUSIVE,
+                            CibResourceDiscovery.NEVER,
+                        ],
+                    )
+                )
+                if value not in allowed_discovery:
+                    utils.err(
+                        (
+                            "invalid {0} value '{1}', allowed values are: {2}"
+                            ", use --force to override"
+                        ).format(name, value, format_list(allowed_discovery))
+                    )
             options.append([name, value])
         elif modifiers.get("--force"):
             options.append([name, value])
