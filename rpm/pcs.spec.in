@@ -81,7 +81,13 @@ BuildRequires: python3-pyparsing
 # required to pass ./configure
 BuildRequires: python3-wheel
 BuildRequires: python3-lxml
+# pycurl is not distributed in rhel 10
+%if 0%{?rhel} >= 10
+BuildRequires: libcurl-devel
+BuildRequires: openssl-devel
+%else
 BuildRequires: python3-pycurl
+%endif
 
 # gcc for compiling custom rubygems
 BuildRequires: gcc
@@ -121,7 +127,11 @@ BuildRequires: nss-tools
 
 Requires: python3-cryptography
 Requires: python3-lxml
+# pycurl is not distributed in rhel 10
+%if 0%{?rhel} >= 10
+%else
 Requires: python3-pycurl
+%endif
 Requires: python3-pyparsing
 # ruby and gems for pcsd
 Requires: ruby >= 2.5
