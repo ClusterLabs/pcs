@@ -347,14 +347,16 @@ if test "x$tests_only" != "xyes"; then
 	PCS_CHECK_PYMOD([tornado], [>= 6.0.0], [yes])
 	PCS_CHECK_PYMOD([python-dateutil], [>= 2.7.0], [yes])
 	# setuptoools_scm is needed for bundling dateutil, this uses variables
-	# set by the CHECK_PYMOD macro, so it must be executed right after it
+	# set by the PCS_CHECK_PYMOD macro, so it must be executed right after it
 	if test "x$bundle_module" = "xyes" && test "x$cache_only" = "xyes"; then
 		PCS_CHECK_PYMOD([setuptools-scm])
 	fi
 	PCS_CHECK_PYMOD([pycurl], [], [yes])
-	if test "x$bundle_module" = "xyes" && test "x$cache_only" = "xyes"; then
-		# Building requires devel packages that contain pkg-config, so devel
-		# packages must be installed for these checks to pass
+	# Building pycurl requires devel packages that contain pkg-config, so devel
+	# packages must be installed for these checks to pass.
+	# This uses variables set by the PCS_CHECK_PYMOD macro, so it must be executed
+	# right after it.
+	if test "x$bundle_module" = "xyes"; then
 		PKG_CHECK_MODULES([LIBCURL], [libcurl])
 		PKG_CHECK_MODULES([OPENSSL], [openssl])
 	fi
