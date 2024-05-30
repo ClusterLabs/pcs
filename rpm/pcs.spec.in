@@ -81,7 +81,13 @@ BuildRequires: python3-pyparsing
 # required to pass ./configure
 BuildRequires: python3-wheel
 BuildRequires: python3-lxml
+# pycurl is not distributed in rhel 10
+%if 0%{?rhel} >= 10
+BuildRequires: libcurl-devel
+BuildRequires: openssl-devel
+%else
 BuildRequires: python3-pycurl
+%endif
 
 # gcc for compiling custom rubygems
 BuildRequires: gcc
@@ -121,7 +127,11 @@ BuildRequires: nss-tools
 
 Requires: python3-cryptography
 Requires: python3-lxml
+# pycurl is not distributed in rhel 10
+%if 0%{?rhel} >= 10
+%else
 Requires: python3-pycurl
+%endif
 Requires: python3-pyparsing
 # ruby and gems for pcsd
 Requires: ruby >= 2.5
@@ -192,7 +202,7 @@ rubyver=`pkg-config --variable=ruby_version $rubymod`
 %build
 %define debug_package %{nil}
 ./autogen.sh
-%{configure} --enable-local-build --enable-use-local-cache-only
+%{configure} --enable-local-build --enable-use-local-cache-only --enable-individual-bundling
 make all
 
 %install
@@ -232,7 +242,8 @@ done
 for i in license; do
  for x in `find %{pcs_bundled_dir} -type f -iname "${i}*" | grep -v pyagentx`; do
   srcfile=`echo $x | sed -e 's#.*\/##g'`
-  srcpkg=`echo $x | sed -e 's#.*src/##g' -e 's/\(.*\)-\(.*\)/\1/'`
+  # pycurl copies the files into pcs_bundled/usr/share/doc/pycurl instead of pcs_bundled/src/pycurl
+  srcpkg=`echo $x | sed -e 's#.*\(src/\|doc/\)##g' -e 's/\(.*\)[-/]\(.*\)/\1/'`
   mv $x dynamic_files/${srcpkg}_${srcfile}
   echo "@license dynamic_files/${srcpkg}_${srcfile}" >> dynamic_files/pcs
  done
@@ -243,7 +254,7 @@ done
 for i in readme contributors; do
  for x in `find %{pcs_bundled_dir} -type f -iname "${i}*" | grep -v pyagentx |grep -v demos`; do
   srcfile=`echo $x | sed -e 's#.*\/##g'`
-  srcpkg=`echo $x | sed -e 's#.*src/##g' -e 's/\(.*\)-\(.*\)/\1/'`
+  srcpkg=`echo $x | sed -e 's#.*\(src/\|doc/\)##g' -e 's/\(.*\)[-/]\(.*\)/\1/'`
   mv $x dynamic_files/${srcpkg}_${srcfile}
   echo "@doc dynamic_files/${srcpkg}_${srcfile}" >> dynamic_files/pcs
  done
@@ -259,7 +270,7 @@ cat /dev/null > dynamic_files/pcs-snmp
 for i in license; do
  for x in `find %{pcs_bundled_dir} -type f -iname "${i}*" | grep pyagentx`; do
   srcfile=`echo $x | sed -e 's#.*\/##g'`
-  srcpkg=`echo $x | sed -e 's#.*src/##g' -e 's/\(.*\)-\(.*\)/\1/'`
+  srcpkg=`echo $x | sed -e 's#.*\(src/\|doc/\)##g' -e 's/\(.*\)[-/]\(.*\)/\1/'`
   mv $x dynamic_files/${srcpkg}_${srcfile}
   echo "@license dynamic_files/${srcpkg}_${srcfile}" >> dynamic_files/pcs-snmp
  done
@@ -269,7 +280,7 @@ done
 for i in readme contributors; do
  for x in `find %{pcs_bundled_dir} -type f -iname "${i}*" | grep pyagentx`; do
   srcfile=`echo $x | sed -e 's#.*\/##g'`
-  srcpkg=`echo $x | sed -e 's#.*src/##g' -e 's/\(.*\)-\(.*\)/\1/'`
+  srcpkg=`echo $x | sed -e 's#.*\(src/\|doc/\)##g' -e 's/\(.*\)[-/]\(.*\)/\1/'`
   mv $x dynamic_files/${srcpkg}_${srcfile}
   echo "@doc dynamic_files/${srcpkg}_${srcfile}" >> dynamic_files/pcs-snmp
  done
