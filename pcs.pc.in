@@ -1,0 +1,5 @@
+webui_assets_dir=@webui_assets_dir@
+
+Name: pcs
+Description: Pacemaker/Corosync Configuration System
+Version: @VERSION@
