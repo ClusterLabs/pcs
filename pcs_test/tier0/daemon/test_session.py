@@ -1,8 +1,8 @@
 from contextlib import contextmanager
 from unittest import TestCase
 
-from pcs.daemon import session
-from pcs.daemon.session import Session
+from pcs.daemon.app.webui import session
+from pcs.daemon.app.webui.session import Session
 
 from pcs_test.tools.misc import create_setup_patch_mixin
 

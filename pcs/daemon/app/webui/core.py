@@ -1,10 +1,8 @@
 import os.path
 
-from pcs.daemon import session
 from pcs.daemon.app.auth import (
     NotAuthorizedException,
     PasswordAuthProvider,
-    SessionAuthProvider,
 )
 from pcs.daemon.app.common import (
     BaseHandler,
@@ -16,6 +14,9 @@ from pcs.daemon.app.ui_common import (
     StaticFile,
 )
 from pcs.lib.auth.provider import AuthProvider
+
+from . import session
+from .auth import SessionAuthProvider
 
 
 class SPAHandler(LegacyApiBaseHandler):

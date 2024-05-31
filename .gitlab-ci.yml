@@ -22,7 +22,7 @@ rpm_build:
   stage: stage1
   script:
     - ./autogen.sh
-    - ./configure --enable-local-build --enable-individual-bundling
+    - ./configure --enable-local-build --enable-individual-bundling  --enable-webui
     - make CI_BRANCH=${BASE_IMAGE_NAME} rpm/pcs.spec
     - dnf builddep -y rpm/pcs.spec
     - make CI_BRANCH=${BASE_IMAGE_NAME} rpm
@@ -42,8 +42,8 @@ distcheck:
         pyagentx
       "
     - ./autogen.sh
-    - ./configure --enable-local-build --enable-individual-bundling
-    - make distcheck DISTCHECK_CONFIGURE_FLAGS='--enable-local-build --enable-individual-bundling'
+    - ./configure --enable-local-build --enable-individual-bundling --enable-webui
+    - make distcheck DISTCHECK_CONFIGURE_FLAGS='--enable-local-build --enable-individual-bundling --enable-webui'
     - rename --verbose .tar. ".${BASE_IMAGE_NAME}.tar." pcs*.tar.*
     - mkdir -p dist && cp -v pcs*.tar.* dist/
   artifacts:
@@ -128,7 +128,7 @@ python_tier1_tests:
     - "dnf install -y rpms/pcs-*${BASE_IMAGE_NAME}*$(rpm -E %{dist}).*.rpm"
     - python3 -m pip install concurrencytest
     - ./autogen.sh
-    - ./configure --enable-local-build --enable-destructive-tests --enable-tests-only --enable-individual-bundling
+    - ./configure --enable-local-build --enable-destructive-tests --enable-tests-only --enable-individual-bundling --enable-webui
     - rm -rf pcs pcsd pcs_bundled # make sure we are testing installed package
     - pcs_test/suite -v --installed --tier1
 
@@ -142,7 +142,7 @@ python_smoke_tests:
     - systemctl start pcsd
     - sleep 2
     - ./autogen.sh
-    - ./configure --enable-local-build --enable-individual-bundling
+    - ./configure --enable-local-build --enable-individual-bundling --enable-webui
     - make
     - rm -rf pcs
     - pcs_test/smoke.sh
