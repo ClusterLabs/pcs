@@ -15,6 +15,7 @@ pcs/snmp/pcs_snmp_agent.service
 /pcsd/public/ui
 /Gemfile*
 /scripts/pcsd.sh
+pcs.pc
 pcs-*
 .mypy_cache/
 requirements.txt

@@ -13,6 +13,7 @@
 - Lib command `cib.remove_elements` can now remove resources
 - Support for exporting stonith levels in `json` and `cmd` formats in commands
   `pcs stonith config` and `pcs stonith level config` commands ([RHEL-16232])
+- Pkg-config with info for webui is now provided.
 
 ### Changed
 - Commands `pcs resource delete | remove` and `pcs stonith delete | remove`
