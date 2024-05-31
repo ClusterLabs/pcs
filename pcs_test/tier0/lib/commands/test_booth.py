@@ -524,10 +524,13 @@ class ConfigSetupAuthfileFix(TestCase, FixtureMixin):
 
 
 class ConfigDestroy(TestCase, FixtureMixin):
+    # pylint: disable=too-many-public-methods
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
+        self.cib_path = os.path.join(settings.cib_dir, "cib.xml")
 
     def fixture_config_booth_not_used(self, instance_name="booth"):
+        self.config.fs.exists(self.cib_path, True)
         self.config.runner.cib.load()
         self.config.services.is_running(
             "booth", instance=instance_name, return_value=False
@@ -535,6 +538,44 @@ class ConfigDestroy(TestCase, FixtureMixin):
         self.config.services.is_enabled(
             "booth", instance=instance_name, return_value=False
         )
+
+    def fixture_config_booth_used(
+        self,
+        instance_name,
+        cib_exists=False,
+        pcmk_running=False,
+        pcmk_remote_running=False,
+        booth_running=False,
+        booth_enabled=False,
+    ):
+        cib_load_exception = False
+        self.config.fs.exists(self.cib_path, cib_exists)
+        if not cib_exists:
+            self.config.services.is_running(
+                "pacemaker",
+                return_value=pcmk_running,
+                name="services.is_running.pcmk",
+            )
+            if not pcmk_running:
+                self.config.services.is_running(
+                    "pacemaker_remoted",
+                    return_value=pcmk_remote_running,
+                    name="services.is_running.pcmk_remote",
+                )
+        if cib_exists and not pcmk_running and not pcmk_remote_running:
+            self.config.runner.cib.load(
+                returncode=1, stderr="unable to get cib, pcmk is not running"
+            )
+            cib_load_exception = True
+        elif pcmk_running or pcmk_remote_running:
+            self.config.runner.cib.load(resources=self.fixture_cib_resources())
+        if not cib_load_exception:
+            self.config.services.is_running(
+                "booth", instance=instance_name, return_value=booth_running
+            )
+            self.config.services.is_enabled(
+                "booth", instance=instance_name, return_value=booth_enabled
+            )
 
     def fixture_config_success(self, instance_name="booth"):
         self.fixture_config_booth_not_used(instance_name)
@@ -663,16 +704,9 @@ class ConfigDestroy(TestCase, FixtureMixin):
             expected_in_processor=False,
         )
 
-    def test_booth_config_in_use(self):
+    def test_booth_config_in_use_cib_pcmk(self):
         instance_name = "booth"
-
-        self.config.runner.cib.load(resources=self.fixture_cib_resources())
-        self.config.services.is_running(
-            "booth", instance=instance_name, return_value=True
-        )
-        self.config.services.is_enabled(
-            "booth", instance=instance_name, return_value=True
-        )
+        self.fixture_config_booth_used(instance_name, pcmk_running=True)
 
         self.env_assist.assert_raise_library_error(
             lambda: commands.config_destroy(self.env_assist.get_env()),
@@ -686,16 +720,76 @@ class ConfigDestroy(TestCase, FixtureMixin):
                     detail=reports.const.BOOTH_CONFIG_USED_IN_CLUSTER_RESOURCE,
                     resource_name="booth_resource",
                 ),
+            ]
+        )
+
+    def test_booth_config_in_use_cib_pcmk_remote(self):
+        instance_name = "booth"
+        self.fixture_config_booth_used(instance_name, pcmk_remote_running=True)
+
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_destroy(self.env_assist.get_env()),
+        )
+
+        self.env_assist.assert_reports(
+            [
                 fixture.error(
                     reports.codes.BOOTH_CONFIG_IS_USED,
                     name=instance_name,
-                    detail=reports.const.BOOTH_CONFIG_USED_ENABLED_IN_SYSTEMD,
-                    resource_name=None,
+                    detail=reports.const.BOOTH_CONFIG_USED_IN_CLUSTER_RESOURCE,
+                    resource_name="booth_resource",
                 ),
+            ]
+        )
+
+    def test_pcmk_not_running(self):
+        instance_name = "booth"
+        self.fixture_config_booth_used(instance_name, cib_exists=True)
+
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_destroy(self.env_assist.get_env()),
+            [
+                fixture.error(
+                    reports.codes.CIB_LOAD_ERROR,
+                    reason="unable to get cib, pcmk is not running",
+                )
+            ],
+            expected_in_processor=False,
+        )
+
+    def test_booth_config_in_use_systemd_running(self):
+        instance_name = "booth"
+        self.fixture_config_booth_used(instance_name, booth_running=True)
+
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_destroy(self.env_assist.get_env()),
+        )
+
+        self.env_assist.assert_reports(
+            [
                 fixture.error(
                     reports.codes.BOOTH_CONFIG_IS_USED,
                     name=instance_name,
                     detail=reports.const.BOOTH_CONFIG_USED_RUNNING_IN_SYSTEMD,
+                    resource_name=None,
+                ),
+            ]
+        )
+
+    def test_booth_config_in_use_systemd_enabled(self):
+        instance_name = "booth"
+        self.fixture_config_booth_used(instance_name, booth_enabled=True)
+
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.config_destroy(self.env_assist.get_env()),
+        )
+
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.BOOTH_CONFIG_IS_USED,
+                    name=instance_name,
+                    detail=reports.const.BOOTH_CONFIG_USED_ENABLED_IN_SYSTEMD,
                     resource_name=None,
                 ),
             ]

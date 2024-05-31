@@ -151,6 +151,10 @@ def get_ticket_status_text(runner: CommandRunner) -> Tuple[str, str, int]:
 ### cib
 
 
+def has_cib_xml() -> bool:
+    return os.path.exists(os.path.join(settings.cib_dir, "cib.xml"))
+
+
 def get_cib_xml_cmd_results(
     runner: CommandRunner, scope: Optional[str] = None
 ) -> tuple[str, str, int]:

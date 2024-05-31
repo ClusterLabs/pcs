@@ -58,6 +58,7 @@ from pcs.lib.file.raw_file import (
 )
 from pcs.lib.interface.config import ParserErrorException
 from pcs.lib.node import get_existing_nodes_names
+from pcs.lib.pacemaker.live import has_cib_xml
 from pcs.lib.resource_agent import (
     ResourceAgentError,
     ResourceAgentFacade,
@@ -165,20 +166,30 @@ def config_destroy(
     found_instance_name = booth_env.instance_name
     _ensure_live_env(env, booth_env)
 
-    booth_resource_list = resource.find_for_config(
-        get_resources(env.get_cib()),
-        booth_env.config_path,
-    )
-    if booth_resource_list:
-        report_processor.report(
-            ReportItem.error(
-                reports.messages.BoothConfigIsUsed(
-                    found_instance_name,
-                    reports.const.BOOTH_CONFIG_USED_IN_CLUSTER_RESOURCE,
-                    resource_name=str(booth_resource_list[0].get("id", "")),
+    if (
+        has_cib_xml()
+        or env.service_manager.is_running("pacemaker")
+        or env.service_manager.is_running("pacemaker_remoted")
+    ):
+        # To allow destroying booth config on arbitrators, only check CIB if:
+        # * pacemaker is running and therefore we are able to get CIB
+        # * CIB is stored on disk - pcmk is not running but the node is in a
+        #   cluster (don't checking corosync to cover remote and guest nodes)
+        # If CIB cannot be loaded in either case, fail with an error.
+        booth_resource_list = resource.find_for_config(
+            get_resources(env.get_cib()),
+            booth_env.config_path,
+        )
+        if booth_resource_list:
+            report_processor.report(
+                ReportItem.error(
+                    reports.messages.BoothConfigIsUsed(
+                        found_instance_name,
+                        reports.const.BOOTH_CONFIG_USED_IN_CLUSTER_RESOURCE,
+                        resource_name=str(booth_resource_list[0].get("id", "")),
+                    )
                 )
             )
-        )
     # Only systemd is currently supported. Initd does not supports multiple
     # instances (here specified by name)
     if is_systemd(env.service_manager):
