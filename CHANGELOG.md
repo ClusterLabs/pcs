@@ -74,6 +74,8 @@
   validated by the resource or stonith agent. Unless --agent-validation is
   specified, this does not prevent misconfiguring the resource or stonith.
   ([RHEL-35670])
+- Standalone webui backend support in pcsd is now optional. It can be enabled
+  by adding `--enable-webui` option to `./configure` command. ([RHEL-29739])
 
 ### Deprecated
 - Pcs produces warnings about [features planned to be removed in pacemaker 3](https://projects.clusterlabs.org/w/projects/pacemaker/pacemaker_3.0_changes/pacemaker_3.0_configuration_changes/):
@@ -100,6 +102,7 @@
 [ghissue#772]: https://github.com/ClusterLabs/pcs/issues/772
 [ghissue#780]: https://github.com/ClusterLabs/pcs/issues/780
 [RHEL-27492]: https://issues.redhat.com/browse/RHEL-27492
+[RHEL-29739]: https://issues.redhat.com/browse/RHEL-29739
 [RHEL-34792]: https://issues.redhat.com/browse/RHEL-34792
 [RHEL-35428]: https://issues.redhat.com/browse/RHEL-35428
 [RHEL-35670]: https://issues.redhat.com/browse/RHEL-35670
