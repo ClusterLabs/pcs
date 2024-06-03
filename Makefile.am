@@ -183,14 +183,12 @@ dist_doc_DATA	= README.md CHANGELOG.md
 pkgconfigdir = ${DESTDIR}/$(LIB_DIR)/pkgconfig
 pkgconfig_DATA = pcs.pc
 pcs.pc: pcs.pc.in Makefile
-	sed -e 's,@prefix@,$(prefix),g' < pcs.pc.in > pcs.pc
-	rm -f $@-t $@
+	rm -f $@
 	sed \
-		-e 's#@''webui_assets_dir@#$(LIB_DIR)/pcsd/public/ui#g' \
-		-e 's#@''VERSION@#$(VERSION)#g' \
-	    $< > $@-t
-	chmod a-w $@-t
-	mv $@-t $@
+		-e 's#@webui_dir@#$(PCSD_WEBUI_DIR)#g' \
+		-e 's#@version@#$(VERSION)#g' \
+	    $< > $@
+	chmod a-w $@
 
 # testing
 
