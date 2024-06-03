@@ -66,6 +66,7 @@
 - Report an error when an invalid resource-discovery is specified ([RHEL-38480])
 - 'pcs booth destroy' now works for nodes without a cluster (such as
   arbitrators) ([RHEL-38486])
+- Validate SBD\_DELAY\_START and SBD\_STARTMODE options ([RHEL-38484])
 
 ### Changed
 - When creating or updating a resource or stonith, its options are now
@@ -106,10 +107,11 @@
 [RHEL-38479]: https://issues.redhat.com/browse/RHEL-38479
 [RHEL-38480]: https://issues.redhat.com/browse/RHEL-38480
 [RHEL-38481]: https://issues.redhat.com/browse/RHEL-38481
+[RHEL-38484]: https://issues.redhat.com/browse/RHEL-38484
+[RHEL-38486]: https://issues.redhat.com/browse/RHEL-38486
 [RHEL-38487]: https://issues.redhat.com/browse/RHEL-38487
 [RHEL-38489]: https://issues.redhat.com/browse/RHEL-38489
 [RHEL-38491]: https://issues.redhat.com/browse/RHEL-38491
-[RHEL-38486]: https://issues.redhat.com/browse/RHEL-38486
 [rhbz#2163953]: https://bugzilla.redhat.com/show_bug.cgi?id=2163953
 
 
