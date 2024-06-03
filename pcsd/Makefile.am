@@ -64,7 +64,7 @@ dist_pcsd_DATA		= \
 pcsd_DATA		= \
 			  settings.rb
 
-pcsdpubdir		= ${pcsddir}/public
+pcsdpubdir		= ${PCSD_PUBLIC_DIR}
 dist_pcsdpub_DATA	= \
 			  public/ui_instructions.html
 

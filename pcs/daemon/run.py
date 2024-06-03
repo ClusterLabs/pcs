@@ -93,7 +93,8 @@ def configure_app(
     session_lifetime: int,
     ruby_pcsd_wrapper: ruby_pcsd.Wrapper,
     sync_config_lock: Lock,
-    public_dir: str,
+    webui_dir: str,
+    webui_fallback: str,
     pcsd_capabilities: Iterable[capabilities.Capability],
     enable_webui: bool = False,
     debug: bool = False,
@@ -128,11 +129,8 @@ def configure_app(
                 [(r"/(ui)?", RedirectHandler, dict(url="/ui/"))]
                 + webui.core.get_routes(
                     url_prefix="/ui/",
-                    app_dir=os.path.join(public_dir, "ui"),
-                    fallback_page_path=os.path.join(
-                        public_dir,
-                        "ui_instructions.html",
-                    ),
+                    app_dir=webui_dir,
+                    fallback_page_path=webui_fallback,
                     session_storage=session_storage,
                     auth_provider=auth_provider,
                 )
@@ -231,7 +229,8 @@ def main(argv=None) -> None:
         env.PCSD_SESSION_LIFETIME,
         ruby_pcsd_wrapper,
         sync_config_lock,
-        env.PCSD_STATIC_FILES_DIR,
+        env.WEBUI_DIR,
+        env.WEBUI_FALLBACK,
         pcsd_capabilities,
         enable_webui=not env.PCSD_DISABLE_GUI,
         debug=env.PCSD_DEV,
