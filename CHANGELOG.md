@@ -26,6 +26,7 @@
 - Report an error when an invalid resource-discovery is specified ([RHEL-7701])
 - 'pcs booth destroy' now works for nodes without a cluster (such as
   arbitrators) ([RHEL-7737])
+- Validate SBD\_DELAY\_START and SBD\_STARTMODE options ([RHEL-17962])
 
 ### Deprecated
 - Pcs produces warnings about [features planned to be removed in pacemaker 3](https://projects.clusterlabs.org/w/projects/pacemaker/pacemaker_3.0_changes/pacemaker_3.0_configuration_changes/):
@@ -40,10 +41,11 @@
 [RHEL-7701]: https://issues.redhat.com/browse/RHEL-7701
 [RHEL-7737]: https://issues.redhat.com/browse/RHEL-7737
 [RHEL-16231]: https://issues.redhat.com/browse/RHEL-16231
+[RHEL-17962]: https://issues.redhat.com/browse/RHEL-17962
+[RHEL-21051]: https://issues.redhat.com/browse/RHEL-21051
+[RHEL-25854]: https://issues.redhat.com/browse/RHEL-25854
 [RHEL-27492]: https://issues.redhat.com/browse/RHEL-27492
 [RHEL-28749]: https://issues.redhat.com/browse/RHEL-28749
-[RHEL-25854]: https://issues.redhat.com/browse/RHEL-25854
-[RHEL-21051]: https://issues.redhat.com/browse/RHEL-21051
 [RHEL-36514]: https://issues.redhat.com/browse/RHEL-36514
 
 

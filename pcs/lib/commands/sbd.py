@@ -1,6 +1,9 @@
+from typing import Any
+
 from pcs import settings
 from pcs.common import reports
 from pcs.common.reports.item import ReportItem
+from pcs.common.validate import is_integer
 from pcs.lib import (
     sbd,
     validate,
@@ -22,13 +25,13 @@ from pcs.lib.errors import LibraryError
 from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.tools import environment_file_to_dict
 
-UNSUPPORTED_SBD_OPTION_LIST = [
+_UNSUPPORTED_SBD_OPTION_LIST = [
     "SBD_WATCHDOG_DEV",
     "SBD_OPTS",
     "SBD_PACEMAKER",
     "SBD_DEVICE",
 ]
-ALLOWED_SBD_OPTION_LIST = [
+_ALLOWED_SBD_OPTION_LIST = [
     "SBD_DELAY_START",
     "SBD_STARTMODE",
     "SBD_WATCHDOG_TIMEOUT",
@@ -38,13 +41,14 @@ _TIMEOUT_ACTION_ALLOWED_VALUES = (
     {"flush", "noflush"},
     {"reboot", "off", "crashdump"},
 )
+_STARTMODE_ALLOWED_VALUES = ["always", "clean"]
 
 
 def __tuple(set1, set2):
     return {f"{v1},{v2}" for v1 in set1 for v2 in set2}
 
 
-TIMEOUT_ACTION_ALLOWED_VALUE_LIST = sorted(
+_TIMEOUT_ACTION_ALLOWED_VALUE_LIST = sorted(
     _TIMEOUT_ACTION_ALLOWED_VALUES[0]
     | _TIMEOUT_ACTION_ALLOWED_VALUES[1]
     | __tuple(
@@ -54,6 +58,15 @@ TIMEOUT_ACTION_ALLOWED_VALUE_LIST = sorted(
         _TIMEOUT_ACTION_ALLOWED_VALUES[1], _TIMEOUT_ACTION_ALLOWED_VALUES[0]
     )
 )
+
+
+class _ValueSbdDelayStart(validate.ValuePredicateBase):
+    def _is_valid(self, value: validate.TypeOptionValue) -> bool:
+        # 1 means yes, so we don't allow it to prevent confusion
+        return value in ["yes", "no"] or is_integer(value, 2)
+
+    def _get_allowed_values(self) -> Any:
+        return "'yes', 'no' or an integer greater than 1"
 
 
 def _validate_sbd_options(
@@ -68,16 +81,29 @@ def _validate_sbd_options(
     """
     validators = [
         validate.NamesIn(
-            ALLOWED_SBD_OPTION_LIST,
-            banned_name_list=UNSUPPORTED_SBD_OPTION_LIST,
+            _ALLOWED_SBD_OPTION_LIST,
+            banned_name_list=_UNSUPPORTED_SBD_OPTION_LIST,
             severity=reports.item.get_severity(
                 reports.codes.FORCE, allow_unknown_opts
+            ),
+        ),
+        _ValueSbdDelayStart(
+            "SBD_DELAY_START",
+            severity=reports.item.get_severity(
+                reports.codes.FORCE, allow_invalid_option_values
+            ),
+        ),
+        validate.ValueIn(
+            "SBD_STARTMODE",
+            _STARTMODE_ALLOWED_VALUES,
+            severity=reports.item.get_severity(
+                reports.codes.FORCE, allow_invalid_option_values
             ),
         ),
         validate.ValueNonnegativeInteger("SBD_WATCHDOG_TIMEOUT"),
         validate.ValueIn(
             "SBD_TIMEOUT_ACTION",
-            TIMEOUT_ACTION_ALLOWED_VALUE_LIST,
+            _TIMEOUT_ACTION_ALLOWED_VALUE_LIST,
             severity=reports.item.get_severity(
                 reports.codes.FORCE, allow_invalid_option_values
             ),

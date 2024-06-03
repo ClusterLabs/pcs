@@ -6,8 +6,8 @@ from pcs import settings
 from pcs.common import reports
 from pcs.common.reports import codes as report_codes
 from pcs.lib.commands.sbd import (
-    ALLOWED_SBD_OPTION_LIST,
-    TIMEOUT_ACTION_ALLOWED_VALUE_LIST,
+    _ALLOWED_SBD_OPTION_LIST,
+    _TIMEOUT_ACTION_ALLOWED_VALUE_LIST,
     enable_sbd,
 )
 from pcs.lib.corosync.config_parser import Parser
@@ -808,18 +808,56 @@ class Validations(TestCase):
                 default_watchdog="/dev/watchdog",
                 watchdog_dict={},
                 sbd_options={
+                    "SBD_DELAY_START": "bad_delay",
+                    "SBD_STARTMODE": "bad_startmode",
+                    "SBD_WATCHDOG_TIMEOUT": "bad_timeout",
                     "SBD_TIMEOUT_ACTION": "noflush,flush",
+                    "UNKNOWN_OPT1": 1,
                 },
             )
         )
         self.env_assist.assert_reports(
             [
                 fixture.error(
+                    report_codes.INVALID_OPTIONS,
+                    option_names=["UNKNOWN_OPT1"],
+                    option_type=None,
+                    allowed=sorted(_ALLOWED_SBD_OPTION_LIST),
+                    allowed_patterns=[],
+                    force_code=report_codes.FORCE,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    force_code=report_codes.FORCE,
+                    option_name="SBD_DELAY_START",
+                    option_value="bad_delay",
+                    allowed_values="'yes', 'no' or an integer greater than 1",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    force_code=report_codes.FORCE,
+                    option_name="SBD_STARTMODE",
+                    option_value="bad_startmode",
+                    allowed_values=["always", "clean"],
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="SBD_WATCHDOG_TIMEOUT",
+                    option_value="bad_timeout",
+                    allowed_values="a non-negative integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
                     force_code=report_codes.FORCE,
                     option_name="SBD_TIMEOUT_ACTION",
                     option_value="noflush,flush",
-                    allowed_values=TIMEOUT_ACTION_ALLOWED_VALUE_LIST,
+                    allowed_values=_TIMEOUT_ACTION_ALLOWED_VALUE_LIST,
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),
@@ -833,6 +871,9 @@ class Validations(TestCase):
                 default_watchdog="/dev/watchdog",
                 watchdog_dict={},
                 sbd_options={
+                    "SBD_DELAY_START": "bad_delay",
+                    "SBD_STARTMODE": "bad_startmode",
+                    "SBD_WATCHDOG_TIMEOUT": "bad_timeout",
                     "SBD_TIMEOUT_ACTION": "noflush,flush",
                     "UNKNOWN_OPT1": 1,
                 },
@@ -841,21 +882,45 @@ class Validations(TestCase):
         )
         self.env_assist.assert_reports(
             [
-                fixture.warn(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_name="SBD_TIMEOUT_ACTION",
-                    option_value="noflush,flush",
-                    allowed_values=TIMEOUT_ACTION_ALLOWED_VALUE_LIST,
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
                 fixture.error(
                     report_codes.INVALID_OPTIONS,
                     option_names=["UNKNOWN_OPT1"],
                     option_type=None,
-                    allowed=sorted(ALLOWED_SBD_OPTION_LIST),
+                    allowed=sorted(_ALLOWED_SBD_OPTION_LIST),
                     allowed_patterns=[],
                     force_code=report_codes.FORCE,
+                ),
+                fixture.warn(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="SBD_DELAY_START",
+                    option_value="bad_delay",
+                    allowed_values="'yes', 'no' or an integer greater than 1",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.warn(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="SBD_STARTMODE",
+                    option_value="bad_startmode",
+                    allowed_values=["always", "clean"],
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="SBD_WATCHDOG_TIMEOUT",
+                    option_value="bad_timeout",
+                    allowed_values="a non-negative integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.warn(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="SBD_TIMEOUT_ACTION",
+                    option_value="noflush,flush",
+                    allowed_values=_TIMEOUT_ACTION_ALLOWED_VALUE_LIST,
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
             ]
         )
@@ -880,7 +945,7 @@ class Validations(TestCase):
                     report_codes.INVALID_OPTIONS,
                     option_names=["UNKNOWN_OPT1", "UNKNOWN_OPT2"],
                     option_type=None,
-                    allowed=sorted(ALLOWED_SBD_OPTION_LIST),
+                    allowed=sorted(_ALLOWED_SBD_OPTION_LIST),
                     allowed_patterns=[],
                     force_code=report_codes.FORCE,
                 ),
@@ -888,7 +953,7 @@ class Validations(TestCase):
                     report_codes.INVALID_OPTIONS,
                     option_names=["SBD_WATCHDOG_DEV"],
                     option_type=None,
-                    allowed=sorted(ALLOWED_SBD_OPTION_LIST),
+                    allowed=sorted(_ALLOWED_SBD_OPTION_LIST),
                     allowed_patterns=[],
                 ),
             ]
@@ -915,14 +980,14 @@ class Validations(TestCase):
                     report_codes.INVALID_OPTIONS,
                     option_names=["UNKNOWN_OPT1", "UNKNOWN_OPT2"],
                     option_type=None,
-                    allowed=sorted(ALLOWED_SBD_OPTION_LIST),
+                    allowed=sorted(_ALLOWED_SBD_OPTION_LIST),
                     allowed_patterns=[],
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTIONS,
                     option_names=["SBD_WATCHDOG_DEV"],
                     option_type=None,
-                    allowed=sorted(ALLOWED_SBD_OPTION_LIST),
+                    allowed=sorted(_ALLOWED_SBD_OPTION_LIST),
                     allowed_patterns=[],
                 ),
             ]
@@ -1164,14 +1229,14 @@ class Validations(TestCase):
                     report_codes.INVALID_OPTIONS,
                     option_names=["SBD_WATCHDOG_DEV"],
                     option_type=None,
-                    allowed=sorted(ALLOWED_SBD_OPTION_LIST),
+                    allowed=sorted(_ALLOWED_SBD_OPTION_LIST),
                     allowed_patterns=[],
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTIONS,
                     option_names=["UNKNOWN_OPT1", "UNKNOWN_OPT2"],
                     option_type=None,
-                    allowed=sorted(ALLOWED_SBD_OPTION_LIST),
+                    allowed=sorted(_ALLOWED_SBD_OPTION_LIST),
                     allowed_patterns=[],
                     force_code=report_codes.FORCE,
                 ),
