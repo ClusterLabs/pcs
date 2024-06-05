@@ -326,6 +326,7 @@ sed -i -e 's#^@#%#g' dynamic_files/pcs-snmp
 %{_sbindir}/pcs
 %{python3_sitelib}/*
 %{_libdir}/pcs/*
+%{_libdir}/pkgconfig/pcs.pc
 %exclude %{_libdir}/pcs/pcs_snmp_agent
 %exclude %{_libdir}/pcs/%{pcs_bundled_dir}/packages/pyagentx*
 
