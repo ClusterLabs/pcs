@@ -9,6 +9,7 @@ EXTRA_DIST		= \
 			  make/release.mk \
 			  MANIFEST.in \
 			  mypy.ini \
+			  pcs.pc.in \
 			  pylintrc \
 			  pyproject.toml \
 			  rpm/pcs.spec.in \
@@ -180,7 +181,7 @@ uninstall-local:
 
 dist_doc_DATA	= README.md CHANGELOG.md
 
-pkgconfigdir = ${DESTDIR}/$(LIB_DIR)/pkgconfig
+pkgconfigdir = $(LIB_DIR)/pkgconfig
 pkgconfig_DATA = pcs.pc
 pcs.pc: pcs.pc.in Makefile
 	rm -f $@
@@ -339,6 +340,7 @@ clean-local: test-tree-clean
 	rm -rf Gemfile.lock .bundle pcs_test/resources/temp
 	rm -rf $(PACKAGE_NAME)-$(VERSION).tar.* rpm/*tar* rpm/*.gem rpm/*.rpm
 	rm -rf stamps/*
+	rm -rf pcs.pc
 
 # this will get rid of "libtoolized" m4 files
 distclean-local:
