@@ -489,6 +489,8 @@ PCSD_PUBLIC_DIR="$LIB_DIR/pcsd/public"
 AC_SUBST([PCSD_PUBLIC_DIR])
 PCSD_WEBUI_DIR="$PCSD_PUBLIC_DIR/ui"
 AC_SUBST([PCSD_WEBUI_DIR])
+PCSD_UNIX_SOCKET="$LOCALSTATEDIR/run/pcsd.socket"
+AC_SUBST([PCSD_UNIX_SOCKET])
 
 OUTPUT_FORMAT_SYNTAX_DOC="\fB\-\-output\-format\fR text|cmd|json"
 OUTPUT_FORMAT_DESC_DOC="There are 3 formats of output available: 'cmd', 'json' and 'text', default is 'text'. Format 'text' is a human friendly output. Format 'cmd' prints pcs commands which can be used to recreate the same configuration. Format 'json' is a machine oriented output of the configuration."

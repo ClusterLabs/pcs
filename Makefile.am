@@ -186,6 +186,7 @@ pcs.pc: pcs.pc.in Makefile
 	rm -f $@
 	sed \
 		-e 's#@webui_dir@#$(PCSD_WEBUI_DIR)#g' \
+		-e 's#@pcsd_unix_socket@#$(PCSD_UNIX_SOCKET)#g' \
 		-e 's#@version@#$(VERSION)#g' \
 	    $< > $@
 	chmod a-w $@
