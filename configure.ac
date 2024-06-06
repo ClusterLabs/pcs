@@ -619,6 +619,7 @@ UTC_DATE=$($UTC_DATE_AT$SOURCE_EPOCH +'%F')
 AC_SUBST([UTC_DATE])
 
 AC_CONFIG_FILES([Makefile
+		 pcs.pc
 		 setup.py
 		 setup.cfg
 		 data/Makefile
