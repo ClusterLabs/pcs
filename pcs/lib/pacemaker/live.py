@@ -1,11 +1,9 @@
 import os.path
 import re
 from typing import (
-    Dict,
-    List,
     Mapping,
     Optional,
-    Tuple,
+    Union,
     cast,
 )
 
@@ -53,12 +51,10 @@ class FenceHistoryCommandErrorException(Exception):
 ### status
 
 
-def get_cluster_status_xml_raw(runner: CommandRunner) -> Tuple[str, str, int]:
+def get_cluster_status_xml_raw(runner: CommandRunner) -> tuple[str, str, int]:
     """
     Run pacemaker tool to get XML status. This function doesn't do any
     processing. Usually, using get_cluster_status_dom is preferred instead.
-
-    runner -- a class for running external processes
     """
     return runner.run(
         [
@@ -74,8 +70,6 @@ def get_cluster_status_xml_raw(runner: CommandRunner) -> Tuple[str, str, int]:
 def _get_cluster_status_xml(runner: CommandRunner) -> str:
     """
     Get pacemaker XML status. Using get_cluster_status_dom is preferred instead.
-
-    runner -- a class for running external processes
     """
     stdout, stderr, retval = get_cluster_status_xml_raw(runner)
     if retval == 0:
@@ -114,7 +108,7 @@ def get_cluster_status_text(
     runner: CommandRunner,
     hide_inactive_resources: bool,
     verbose: bool,
-) -> Tuple[str, List[str]]:
+) -> tuple[str, list[str]]:
     cmd = [settings.crm_mon_exec, "--one-shot"]
     if not hide_inactive_resources:
         cmd.append("--inactive")
@@ -132,7 +126,7 @@ def get_cluster_status_text(
                 reports.messages.CrmMonError(join_multilines([stderr, stdout]))
             )
         )
-    warnings: List[str] = []
+    warnings: list[str] = []
     if stderr.strip():
         warnings = [
             line
@@ -143,7 +137,7 @@ def get_cluster_status_text(
     return stdout.strip(), warnings
 
 
-def get_ticket_status_text(runner: CommandRunner) -> Tuple[str, str, int]:
+def get_ticket_status_text(runner: CommandRunner) -> tuple[str, str, int]:
     stdout, stderr, retval = runner.run([settings.crm_ticket_exec, "--details"])
     return stdout.strip(), stderr.strip(), retval
 
@@ -197,7 +191,9 @@ def get_cib(xml: str) -> _Element:
         ) from e
 
 
-def verify(runner, verbose=False):
+def verify(
+    runner: CommandRunner, verbose: bool = False
+) -> tuple[str, str, int, bool]:
     crm_verify_cmd = [settings.crm_verify_exec]
     # Currently, crm_verify can suggest up to two -V options but it accepts
     # more than two. We stick with two -V options if verbose mode was enabled.
@@ -233,7 +229,7 @@ def verify(runner, verbose=False):
     return stdout, stderr, returncode, can_be_more_verbose
 
 
-def replace_cib_configuration_xml(runner, xml):
+def replace_cib_configuration_xml(runner: CommandRunner, xml: str) -> None:
     cmd = [
         settings.cibadmin_exec,
         "--replace",
@@ -249,11 +245,11 @@ def replace_cib_configuration_xml(runner, xml):
         )
 
 
-def replace_cib_configuration(runner, tree):
+def replace_cib_configuration(runner: CommandRunner, tree: _Element) -> None:
     return replace_cib_configuration_xml(runner, etree_to_str(tree))
 
 
-def push_cib_diff_xml(runner, cib_diff_xml):
+def push_cib_diff_xml(runner: CommandRunner, cib_diff_xml: str) -> None:
     cmd = [
         settings.cibadmin_exec,
         "--patch",
@@ -276,8 +272,6 @@ def diff_cibs_xml(
     """
     Return xml diff of two CIBs
 
-    runner
-    reporter
     cib_old_xml -- original CIB
     cib_new_xml -- modified CIB
     """
@@ -317,21 +311,13 @@ def ensure_cib_version(
     cib: _Element,
     version: Version,
     fail_if_version_not_met: bool = True,
-) -> Tuple[_Element, bool]:
+) -> tuple[_Element, bool]:
     """
     Make sure CIB complies to specified schema version (or newer), upgrade CIB
     if necessary. Raise on error. Raise if CIB cannot be upgraded enough to
     meet the required version unless fail_if_version_not_met is set to False.
     Return tuple(upgraded_cib, was_upgraded)
 
-    This method ensures that specified cib is verified by pacemaker with
-    version 'version' or newer. If cib doesn't correspond to this version,
-    method will try to upgrade cib.
-    Returns cib which was verified by pacemaker version 'version' or later.
-    Raises LibraryError on any failure.
-
-    runner -- runner
-    cib -- cib tree
     version -- required cib version
     fail_if_version_not_met -- allows a 'nice to have' cib upgrade
     """
@@ -364,10 +350,9 @@ def ensure_cib_version(
     )
 
 
-def _upgrade_cib(runner):
+def _upgrade_cib(runner: CommandRunner) -> None:
     """
     Upgrade CIB to the latest schema available locally or clusterwise.
-    CommandRunner runner
     """
     stdout, stderr, retval = runner.run(
         [settings.cibadmin_exec, "--upgrade", "--force"]
@@ -385,12 +370,13 @@ def _upgrade_cib(runner):
         )
 
 
-def simulate_cib_xml(runner, cib_xml):
+def simulate_cib_xml(
+    runner: CommandRunner, cib_xml: str
+) -> tuple[str, str, str]:
     """
     Run crm_simulate to get effects the cib would have on the live cluster
 
-    CommandRunner runner -- runner
-    string cib_xml -- CIB XML to simulate
+    cib_xml -- CIB XML to simulate
     """
     try:
         with (
@@ -426,12 +412,13 @@ def simulate_cib_xml(runner, cib_xml):
         ) from e
 
 
-def simulate_cib(runner, cib):
+def simulate_cib(
+    runner: CommandRunner, cib: _Element
+) -> tuple[str, _Element, _Element]:
     """
     Run crm_simulate to get effects the cib would have on the live cluster
 
-    CommandRunner runner -- runner
-    etree cib -- cib tree to simulate
+    cib -- cib tree to simulate
     """
     cib_xml = etree_to_str(cib)
     try:
@@ -456,9 +443,7 @@ def wait_for_idle(runner: CommandRunner, timeout: int) -> None:
     """
     Run waiting command. Raise LibraryError if command failed.
 
-    runner -- preconfigured object for running external programs
-    timeout -- waiting timeout in seconds, wait indefinitely if non-positive
-        integer
+    timeout -- waiting timeout in seconds, wait indefinitely if less than 1
     """
     args = [settings.crm_resource_exec, "--wait"]
     if timeout > 0:
@@ -488,7 +473,7 @@ def wait_for_idle(runner: CommandRunner, timeout: int) -> None:
 ### nodes
 
 
-def get_local_node_name(runner):
+def get_local_node_name(runner: CommandRunner) -> str:
     stdout, stderr, retval = runner.run([settings.crm_node_exec, "--name"])
     if retval != 0:
         klass = (
@@ -506,7 +491,7 @@ def get_local_node_name(runner):
     return stdout.strip()
 
 
-def get_local_node_status(runner):
+def get_local_node_status(runner: CommandRunner) -> dict[str, Union[bool, str]]:
     try:
         cluster_status = ClusterState(get_cluster_status_dom(runner))
         node_name = get_local_node_name(runner)
@@ -514,7 +499,7 @@ def get_local_node_status(runner):
         return {"offline": True}
     for node_status in cluster_status.node_section.nodes:
         if node_status.attrs.name == node_name:
-            result = {
+            result: dict[str, Union[bool, str]] = {
                 "offline": False,
             }
             for attr in (
@@ -539,7 +524,7 @@ def get_local_node_status(runner):
     )
 
 
-def remove_node(runner, node_name):
+def remove_node(runner: CommandRunner, node_name: str) -> None:
     stdout, stderr, retval = runner.run(
         [
             settings.crm_node_exec,
@@ -569,7 +554,7 @@ def resource_cleanup(
     operation: Optional[str] = None,
     interval: Optional[str] = None,
     strict: bool = False,
-):
+) -> str:
     cmd = [settings.crm_resource_exec, "--cleanup"]
     if resource:
         cmd.extend(["--resource", resource])
@@ -602,7 +587,7 @@ def resource_refresh(
     node: Optional[str] = None,
     strict: bool = False,
     force: bool = False,
-):
+) -> str:
     if not force and not node and not resource:
         summary = ClusterState(get_cluster_status_dom(runner)).summary
         operations = summary.nodes.attrs.count * summary.resources.attrs.count
@@ -644,7 +629,7 @@ def resource_move(
     node: Optional[str] = None,
     promoted: bool = False,
     lifetime: Optional[str] = None,
-) -> Tuple[str, str, int]:
+) -> tuple[str, str, int]:
     return _resource_move_ban_clear(
         runner,
         "--move",
@@ -661,7 +646,7 @@ def resource_ban(
     node: Optional[str] = None,
     promoted: bool = False,
     lifetime: Optional[str] = None,
-) -> Tuple[str, str, int]:
+) -> tuple[str, str, int]:
     return _resource_move_ban_clear(
         runner,
         "--ban",
@@ -678,7 +663,7 @@ def resource_unmove_unban(
     node: Optional[str] = None,
     promoted: bool = False,
     expired: bool = False,
-) -> Tuple[str, str, int]:
+) -> tuple[str, str, int]:
     return _resource_move_ban_clear(
         runner,
         "--clear",
@@ -689,7 +674,7 @@ def resource_unmove_unban(
     )
 
 
-def has_resource_unmove_unban_expired_support(runner):
+def has_resource_unmove_unban_expired_support(runner: CommandRunner) -> bool:
     return _is_in_pcmk_tool_help(
         runner, settings.crm_resource_exec, ["--expired"]
     )
@@ -703,7 +688,7 @@ def _resource_move_ban_clear(
     promoted: bool = False,
     lifetime: Optional[str] = None,
     expired: bool = False,
-) -> Tuple[str, str, int]:
+) -> tuple[str, str, int]:
     command = [
         settings.crm_resource_exec,
         action,
@@ -739,22 +724,28 @@ def is_fence_history_supported_management(runner: CommandRunner) -> bool:
     )
 
 
-def fence_history_cleanup(runner, node=None):
+def fence_history_cleanup(
+    runner: CommandRunner, node: Optional[str] = None
+) -> str:
     return _run_fence_history_command(runner, "--cleanup", node)
 
 
-def fence_history_text(runner, node=None):
+def fence_history_text(
+    runner: CommandRunner, node: Optional[str] = None
+) -> str:
     return _run_fence_history_command(runner, "--verbose", node)
 
 
-def fence_history_update(runner):
+def fence_history_update(runner: CommandRunner) -> str:
     # Pacemaker always prints "gather fencing-history from all nodes" even if a
     # node is specified. However, --history expects a value, so we must provide
     # it. Otherwise "--broadcast" would be considered a value of "--history".
     return _run_fence_history_command(runner, "--broadcast", node=None)
 
 
-def _run_fence_history_command(runner, command, node=None):
+def _run_fence_history_command(
+    runner: CommandRunner, command: str, node: Optional[str] = None
+) -> str:
     stdout, stderr, retval = runner.run(
         [
             settings.stonith_admin_exec,
@@ -847,9 +838,9 @@ def _is_in_pcmk_tool_help(
     )
 
 
-def is_getting_resource_digest_supported(runner):
+def is_getting_resource_digest_supported(runner: CommandRunner) -> bool:
     return _is_in_pcmk_tool_help(
-        runner, settings.crm_resource_exec, "--digests"
+        runner, settings.crm_resource_exec, ["--digests"]
     )
 
 
@@ -857,15 +848,14 @@ def get_resource_digests(
     runner: CommandRunner,
     resource_id: str,
     node_name: str,
-    resource_options: Dict[str, str],
-    crm_meta_attributes: Optional[Dict[str, Optional[str]]] = None,
-) -> Dict[str, Optional[str]]:
+    resource_options: dict[str, str],
+    crm_meta_attributes: Optional[dict[str, Optional[str]]] = None,
+) -> dict[str, Optional[str]]:
     """
     Get set of digests for a resource using crm_resource utility. There are 3
     types of digests: all, nonreloadable and nonprivate. Resource can have one
     or more digests types depending on the resource parameters.
 
-    runner -- command runner instance
     resource_id -- resource id
     node_name -- name of the node where resource is running
     resource_options -- resource options with updated values
@@ -892,7 +882,7 @@ def get_resource_digests(
     ]
     stdout, stderr, retval = runner.run(command)
 
-    def error_exception(message):
+    def error_exception(message: str) -> LibraryError:
         return LibraryError(
             ReportItem.error(
                 reports.messages.UnableToGetResourceOperationDigests(message)
@@ -913,7 +903,7 @@ def get_resource_digests(
     digests = {}
     for digest_type in ["all", "nonprivate", "nonreloadable"]:
         xpath_result = cast(
-            List[str],
+            list[str],
             dom.xpath(
                 "./digests/digest[@type=$digest_type]/@hash",
                 digest_type=digest_type,
