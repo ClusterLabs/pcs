@@ -39,7 +39,7 @@ class ClusterStatusParsingError(Exception):
 
 
 class EmptyResourceIdError(ClusterStatusParsingError):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("")
 
 
