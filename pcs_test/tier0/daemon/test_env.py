@@ -1,5 +1,4 @@
-from functools import partial
-from os.path import join as join_path
+import os.path
 from ssl import OP_NO_SSLv2
 from unittest import (
     TestCase,
@@ -10,6 +9,10 @@ from pcs import settings
 from pcs.daemon import env
 
 from pcs_test.tools.misc import create_setup_patch_mixin
+
+
+def webui_fallback(public_dir):
+    return os.path.join(public_dir, env.WEBUI_FALLBACK_FILE)
 
 
 class Logger:
@@ -27,14 +30,13 @@ class Logger:
 class Prepare(TestCase, create_setup_patch_mixin(env)):
     # pylint: disable=too-many-public-methods
     def setUp(self):
-        self.path_exists = self.setup_patch("path_exists", return_value=True)
+        self.path_exists = self.setup_patch("os.path.exists", return_value=True)
         self.logger = Logger()
         self.maxDiff = None
 
     def assert_environ_produces_modified_pcsd_env(
         self, environ=None, specific_env_values=None, errors=None, warnings=None
     ):
-        pcsd_dir = partial(join_path, settings.pcsd_exec_location)
         default_env_values = {
             env.PCSD_PORT: settings.pcsd_default_port,
             env.PCSD_SSL_CIPHERS: settings.default_ssl_ciphers,
@@ -46,7 +48,8 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
             env.PCSD_DEBUG: False,
             env.PCSD_DISABLE_GUI: False,
             env.PCSD_SESSION_LIFETIME: settings.gui_session_lifetime_seconds,
-            env.PCSD_STATIC_FILES_DIR: pcsd_dir(env.PCSD_STATIC_FILES_DIR_NAME),
+            env.WEBUI_DIR: settings.pcsd_webui_dir,
+            env.WEBUI_FALLBACK: webui_fallback(settings.pcsd_public_dir),
             env.PCSD_DEV: False,
             env.PCSD_WORKER_COUNT: settings.pcsd_worker_count,
             env.PCSD_WORKER_RESET_LIMIT: settings.pcsd_worker_reset_limit,
@@ -74,7 +77,6 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
         self.assert_environ_produces_modified_pcsd_env()
 
     def test_many_valid_environment_changes(self):
-        pcsd_dir = partial(join_path, env.PCSD_LOCAL_DIR)
         session_lifetime = 10
         environ = {
             env.PCSD_PORT: "1234",
@@ -106,9 +108,8 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
                 env.PCSD_DEBUG: True,
                 env.PCSD_DISABLE_GUI: True,
                 env.PCSD_SESSION_LIFETIME: session_lifetime,
-                env.PCSD_STATIC_FILES_DIR: pcsd_dir(
-                    env.PCSD_STATIC_FILES_DIR_NAME
-                ),
+                env.WEBUI_DIR: env.LOCAL_WEBUI_DIR,
+                env.WEBUI_FALLBACK: webui_fallback(env.LOCAL_PUBLIC_DIR),
                 env.PCSD_DEV: True,
                 env.PCSD_WORKER_COUNT: 1,
                 env.PCSD_WORKER_RESET_LIMIT: 2,
@@ -178,13 +179,12 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
 
     def test_errors_on_missing_paths(self):
         self.path_exists.return_value = False
-        pcsd_dir = partial(join_path, settings.pcsd_exec_location)
         self.assert_environ_produces_modified_pcsd_env(
             specific_env_values={"has_errors": True},
             errors=[
-                "Directory with web UI assets"
-                f" '{pcsd_dir(env.PCSD_STATIC_FILES_DIR_NAME)}'"
-                " does not exist",
+                f"Webui assets directory '{settings.pcsd_webui_dir}' or"
+                + f" falback html '{webui_fallback(settings.pcsd_public_dir)}'"
+                + " does not exist",
             ],
         )
 

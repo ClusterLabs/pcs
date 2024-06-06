@@ -50,6 +50,7 @@
   watchdog test' commands ([RHEL-36612])
 - Using `--overwrite` to confirm 'pcs cluster report' overwriting files
   ([RHEL-36612])
+- Pkg-config with info for webui is now provided.
 
 ### Fixed
 - Do not put empty uid/gid corosync configuration options to an uidgid file

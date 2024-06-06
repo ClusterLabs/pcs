@@ -1,0 +1,6 @@
+webui_dir=@webui_dir@
+pcsd_unix_socket=@pcsd_unix_socket@
+
+Name: pcs
+Description: Pacemaker/Corosync Configuration System
+Version: @version@

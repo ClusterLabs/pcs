@@ -1,13 +1,7 @@
+import os.path
 import ssl
 from collections import namedtuple
 from functools import lru_cache
-from os.path import (
-    abspath,
-    dirname,
-)
-from os.path import exists as path_exists
-from os.path import join as join_path
-from os.path import realpath
 
 from pcs import settings
 from pcs.common.validate import (
@@ -15,10 +9,17 @@ from pcs.common.validate import (
     is_port_number,
 )
 
-# Relative location instead of system location is used for development purposes.
-PCSD_LOCAL_DIR = realpath(dirname(abspath(__file__)) + "/../../pcsd")
+try:
+    from pcs.daemon.app import webui
+except ImportError:
+    webui = None
 
-PCSD_STATIC_FILES_DIR_NAME = "public"
+# Relative location instead of system location is used for development purposes.
+LOCAL_PUBLIC_DIR = os.path.realpath(
+    os.path.dirname(os.path.abspath(__file__)) + "/../../pcsd/static"
+)
+LOCAL_WEBUI_DIR = os.path.join(LOCAL_PUBLIC_DIR, "ui")
+WEBUI_FALLBACK_FILE = "ui_instructions.html"
 
 PCSD_PORT = "PCSD_PORT"
 PCSD_SSL_CIPHERS = "PCSD_SSL_CIPHERS"
@@ -29,7 +30,8 @@ PCSD_DEBUG = "PCSD_DEBUG"
 PCSD_DISABLE_GUI = "PCSD_DISABLE_GUI"
 PCSD_SESSION_LIFETIME = "PCSD_SESSION_LIFETIME"
 PCSD_DEV = "PCSD_DEV"
-PCSD_STATIC_FILES_DIR = "PCSD_STATIC_FILES_DIR"
+WEBUI_DIR = "WEBUI_DIR"
+WEBUI_FALLBACK = "WEBUI_FALLBACK"
 PCSD_WORKER_COUNT = "PCSD_WORKER_COUNT"
 PCSD_WORKER_RESET_LIMIT = "PCSD_WORKER_RESET_LIMIT"
 PCSD_MAX_WORKER_COUNT = "PCSD_MAX_WORKER_COUNT"
@@ -50,7 +52,8 @@ Env = namedtuple(
         PCSD_DEBUG,
         PCSD_DISABLE_GUI,
         PCSD_SESSION_LIFETIME,
-        PCSD_STATIC_FILES_DIR,
+        WEBUI_DIR,
+        WEBUI_FALLBACK,
         PCSD_DEV,
         PCSD_WORKER_COUNT,
         PCSD_WORKER_RESET_LIMIT,
@@ -67,6 +70,7 @@ Env = namedtuple(
 
 def prepare_env(environ, logger=None):
     loader = EnvLoader(environ)
+    loader.check_webui()
     env = Env(
         loader.port(),
         loader.ssl_ciphers(),
@@ -76,7 +80,8 @@ def prepare_env(environ, logger=None):
         loader.pcsd_debug(),
         loader.pcsd_disable_gui(),
         loader.session_lifetime(),
-        loader.pcsd_static_files_dir(),
+        loader.webui_dir(),
+        loader.webui_fallback(),
         loader.pcsd_dev(),
         loader.pcsd_worker_count(),
         loader.pcsd_worker_reset_limit(),
@@ -120,6 +125,7 @@ def str_to_ssl_options(ssl_options_string, reports):
 
 
 class EnvLoader:
+    # pylint: disable=too-many-public-methods
     def __init__(self, environ):
         self.environ = environ
         self.errors = []
@@ -190,11 +196,29 @@ class EnvLoader:
     def pcsd_debug(self):
         return self.__has_true_in_environ(PCSD_DEBUG)
 
-    def pcsd_static_files_dir(self):
-        return self.__in_pcsd_path(
-            PCSD_STATIC_FILES_DIR_NAME,
-            "Directory with web UI assets",
-            existence_required=not self.pcsd_disable_gui(),
+    def check_webui(self):
+        if (
+            webui
+            and not self.pcsd_disable_gui()
+            and not (
+                os.path.exists(self.webui_dir())
+                or os.path.exists(self.webui_fallback())
+            )
+        ):
+            self.errors.append(
+                f"Webui assets directory '{self.webui_dir()}'"
+                + f" or falback html '{self.webui_fallback()}' does not exist"
+            )
+
+    @lru_cache(maxsize=5)
+    def webui_dir(self):
+        return LOCAL_WEBUI_DIR if self.pcsd_dev() else settings.pcsd_webui_dir
+
+    @lru_cache(maxsize=5)
+    def webui_fallback(self):
+        return os.path.join(
+            LOCAL_PUBLIC_DIR if self.pcsd_dev() else settings.pcsd_public_dir,
+            WEBUI_FALLBACK_FILE,
         )
 
     @lru_cache(maxsize=5)
@@ -269,16 +293,6 @@ class EnvLoader:
         return self._get_non_negative_int(
             PCSD_TASK_DELETION_TIMEOUT, settings.task_deletion_timeout_seconds
         )
-
-    def __in_pcsd_path(self, path, description="", existence_required=True):
-        pcsd_dir = (
-            PCSD_LOCAL_DIR if self.pcsd_dev() else settings.pcsd_exec_location
-        )
-
-        in_pcsd_path = join_path(pcsd_dir, path)
-        if existence_required and not path_exists(in_pcsd_path):
-            self.errors.append(f"{description} '{in_pcsd_path}' does not exist")
-        return in_pcsd_path
 
     def __has_true_in_environ(self, environ_key):
         return self.environ.get(environ_key, "").lower() == "true"
