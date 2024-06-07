@@ -56,11 +56,14 @@ PCS_PYTHON_PACKAGES = pcs/ pcs_test/
 # 1 - sources directory - with python package sources
 # 2 - destination directory - python package will be installed into the
 #     `packages` subdirectory of this destination directory
+# switched to pip installation since setup.py installation is deprecated
+# --no-build-isolation - disables installing dependencies for embedded python
+#   modules. All dependencies are installed by autotools in our case.
 define build_python_bundle
 	cd $(1) && \
 	PYTHONPATH=$(2)/packages/ \
 	LC_ALL=C.utf8 \
-	$(PYTHON) setup.py install --install-lib /packages/ --root $(2)
+	$(PIP) install --no-build-isolation --target $(2)/packages .
 endef
 
 PYAGENTX_URI="https://github.com/ondrejmular/pyagentx/archive/v${PYAGENTX_VERSION}.tar.gz"
