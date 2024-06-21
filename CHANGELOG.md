@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.12.0a1] - 2024-06-21
 
 ### Removed
 - Using spaces in dates in location constraint rules ([rhbz#2163953])
