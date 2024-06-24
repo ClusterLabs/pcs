@@ -1,16 +1,11 @@
 from pprint import pformat
 from urllib.parse import urlencode
 
-from tornado.httputil import (
-    HTTPHeaders,
-    parse_cookie,
-)
+from tornado.httputil import HTTPHeaders
 from tornado.testing import AsyncHTTPTestCase
 from tornado.web import Application
 
 from pcs.daemon import ruby_pcsd
-from pcs.daemon.app.webui import session
-from pcs.daemon.app.webui.auth import PCSD_SESSION
 
 USER = "user"
 GROUPS = ["group1", "group2"]
@@ -56,6 +51,13 @@ class AppTest(AsyncHTTPTestCase):
     def fetch(self, path, raise_error=False, **kwargs):
         if "follow_redirects" not in kwargs:
             kwargs["follow_redirects"] = False
+
+        if "is_ajax" in kwargs:
+            if "headers" not in kwargs:
+                kwargs["headers"] = {}
+            kwargs["headers"]["X-Requested-With"] = "XMLHttpRequest"
+            del kwargs["is_ajax"]
+
         response = super().fetch(path, raise_error=raise_error, **kwargs)
         # "Strict-Transport-Security" header is expected in every response
         self.assertTrue(
@@ -90,45 +92,6 @@ class AppTest(AsyncHTTPTestCase):
         self.assertEqual(response.code, self.wrapper.status_code)
         self.assert_headers_contains(response.headers, self.wrapper.headers)
         self.assertEqual(response.body, self.wrapper.body)
-
-
-class AppUiTestMixin(AppTest):
-    def setUp(self):
-        self.session_storage = session.Storage(lifetime_seconds=10)
-        super().setUp()
-
-    def assert_session_in_response(self, response, sid=None):
-        self.assertTrue("Set-Cookie" in response.headers)
-        cookie = parse_cookie(response.headers["Set-Cookie"])
-        self.assertTrue(PCSD_SESSION, cookie)
-        if sid:
-            self.assertEqual(cookie[PCSD_SESSION], sid)
-        return cookie[PCSD_SESSION]
-
-    def fetch(self, path, raise_error=False, **kwargs):
-        if "sid" in kwargs:
-            if "headers" not in kwargs:
-                kwargs["headers"] = {}
-            kwargs["headers"]["Cookie"] = f"{PCSD_SESSION}={kwargs['sid']}"
-            del kwargs["sid"]
-
-        if "is_ajax" in kwargs:
-            if "headers" not in kwargs:
-                kwargs["headers"] = {}
-            kwargs["headers"]["X-Requested-With"] = "XMLHttpRequest"
-            del kwargs["is_ajax"]
-
-        if "follow_redirects" not in kwargs:
-            kwargs["follow_redirects"] = False
-
-        return super().fetch(path, raise_error=raise_error, **kwargs)
-
-    def create_login_session(self):
-        return self.session_storage.login(USER)
-
-    def assert_success_response(self, response, expected_body):
-        self.assertEqual(response.code, 200)
-        self.assertEqual(response.body.decode(), expected_body)
 
     def assert_unauth_ajax(self, response):
         self.assertEqual(response.code, 401)

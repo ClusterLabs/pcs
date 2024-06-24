@@ -1,23 +1,35 @@
 from contextlib import contextmanager
 from unittest import TestCase
 
-from pcs.daemon.app.webui import session
-from pcs.daemon.app.webui.session import Session
+try:
+    from pcs.daemon.app import webui
+except ImportError:
+    webui = None
 
-from pcs_test.tools.misc import create_setup_patch_mixin
+from pcs_test.tools.misc import (
+    create_setup_patch_mixin,
+    skip_unless_webui_installed,
+)
 
 SID = "abc"
 USER = "user"
 GROUPS = ["group1", "group2"]
 
 
-PatchSessionMixin = create_setup_patch_mixin(session)
+# Function create_setup_patch_mixin does not work with a None argument (i.e.
+# when webui is None) but a callable can be used. The used lambda wouldn't work
+# in SessionTest and  StorageTest, of course, but these classes are skipped when
+# webui is None. Alternatives (using mock.patch for every test/setUp method or
+# expand create_setup_patch_mixin content inside the test classes) lead to more
+# complicated code than this surprising solution.
+PatchSessionMixin = create_setup_patch_mixin(webui if webui else lambda x: x)
 
 
+@skip_unless_webui_installed()
 class SessionTest(TestCase, PatchSessionMixin):
     def setUp(self):
-        self.now = self.setup_patch("now", return_value=0)
-        self.session = Session(SID, USER)
+        self.now = self.setup_patch("session.now", return_value=0)
+        self.session = webui.session.Session(SID, USER)
 
     def test_session_grows_older(self):
         self.now.return_value = 10.1
@@ -42,10 +54,11 @@ class SessionTest(TestCase, PatchSessionMixin):
             session1.sid
 
 
+@skip_unless_webui_installed()
 class StorageTest(TestCase, PatchSessionMixin):
     def setUp(self):
-        self.now = self.setup_patch("now", return_value=0)
-        self.storage = session.Storage(lifetime_seconds=10)
+        self.now = self.setup_patch("session.now", return_value=0)
+        self.storage = webui.session.Storage(lifetime_seconds=10)
 
     def test_does_not_accept_foreign_sid(self):
         self.assertIsNone(self.storage.get("unknown_sid"))

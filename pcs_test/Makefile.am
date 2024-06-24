@@ -134,6 +134,7 @@ EXTRA_DIST		= \
 			  tier0/common/test_tools.py \
 			  tier0/common/test_tools_xml_fromstring.py \
 			  tier0/daemon/app/fixtures_app.py \
+			  tier0/daemon/app/fixtures_app_webui.py \
 			  tier0/daemon/app/__init__.py \
 			  tier0/daemon/app/test_api_v0.py \
 			  tier0/daemon/app/test_api_v1.py \
