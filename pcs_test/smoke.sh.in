@@ -8,6 +8,7 @@ cluster_user_password=qa57Jk27eP
 cluster_name="cluster-name"
 pcsd_socket_path="@LOCALSTATEDIR@/run/pcsd.socket"
 pcsd_settings_conf_path="@LOCALSTATEDIR@/lib/pcsd/pcs_settings.conf"
+package_webui_backend="@PACKAGE_WEBUI_BACKEND@"
 
 echo "${cluster_user_password}" | passwd --stdin "${cluster_user}";
 
@@ -66,10 +67,14 @@ cat <<EOF > ${pcsd_settings_conf_path}
 EOF
 cat ${pcsd_settings_conf_path}
 pcs cluster start --all --wait
-curl --insecure --data "username=${cluster_user}&password=${cluster_user_password}" --cookie-jar ${cookie_file} https://localhost:2224/ui/login
-curl --insecure --cookie ${cookie_file} --header "X-Requested-With: XMLHttpRequest" --data "hidden[hidden_input]=&config[stonith-enabled]=false" https://localhost:2224/managec/${cluster_name}/update_cluster_settings > "${output_file}"
-cat "${output_file}"; echo ""
-[ "$(cat ${output_file})" = "Update Successful" ]
+
+if [ "$package_webui_backend" = "True" ]; then
+  # Webui backend check
+  curl --insecure --data "username=${cluster_user}&password=${cluster_user_password}" --cookie-jar ${cookie_file} https://localhost:2224/ui/login
+  curl --insecure --cookie ${cookie_file} --header "X-Requested-With: XMLHttpRequest" --data "hidden[hidden_input]=&config[stonith-enabled]=false" https://localhost:2224/managec/${cluster_name}/update_cluster_settings > "${output_file}"
+  cat "${output_file}"; echo ""
+  [ "$(cat ${output_file})" = "Update Successful" ]
+fi
 
 # Sanity check of API V1
 curl -kb "token=${token}" https://localhost:2224/api/v1/resource-agent-get-agents-list/v1 --data '{}' > "${output_file}"
