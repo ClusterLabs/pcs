@@ -8,7 +8,6 @@ cluster_user_password=qa57Jk27eP
 cluster_name="cluster-name"
 pcsd_socket_path="@LOCALSTATEDIR@/run/pcsd.socket"
 pcsd_settings_conf_path="@LOCALSTATEDIR@/lib/pcsd/pcs_settings.conf"
-package_webui_backend="@PACKAGE_WEBUI_BACKEND@"
 
 echo "${cluster_user_password}" | passwd --stdin "${cluster_user}";
 
@@ -68,12 +67,23 @@ EOF
 cat ${pcsd_settings_conf_path}
 pcs cluster start --all --wait
 
-if [ "$package_webui_backend" = "True" ]; then
+webui_http_code_response=$(
+  curl --insecure --silent --output /dev/null --write-out "%{http_code}" \
+  https://localhost:2224/ui/
+)
+if [ "$webui_http_code_response" = "200" ]; then
   # Webui backend check
   curl --insecure --data "username=${cluster_user}&password=${cluster_user_password}" --cookie-jar ${cookie_file} https://localhost:2224/ui/login
   curl --insecure --cookie ${cookie_file} --header "X-Requested-With: XMLHttpRequest" --data "hidden[hidden_input]=&config[stonith-enabled]=false" https://localhost:2224/managec/${cluster_name}/update_cluster_settings > "${output_file}"
   cat "${output_file}"; echo ""
   [ "$(cat ${output_file})" = "Update Successful" ]
+elif [  "$webui_http_code_response" = "401"  ]; then
+  curl --insecure  https://localhost:2224/ui/ > "${output_file}"
+  cat "${output_file}"; echo ""
+  [ "$(cat "${output_file}")" = '{"notauthorized":"true"}' ]
+else
+  echo "Unexpected response from https://localhost:2224/ui/ - http code: '${webui_http_code_response}'"
+  exit 1
 fi
 
 # Sanity check of API V1
