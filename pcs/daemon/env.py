@@ -12,7 +12,7 @@ from pcs.common.validate import (
 
 # Relative location instead of system location is used for development purposes.
 LOCAL_PUBLIC_DIR = os.path.realpath(
-    os.path.dirname(os.path.abspath(__file__)) + "/../../pcsd/static"
+    os.path.dirname(os.path.abspath(__file__)) + "/../../pcsd/public"
 )
 LOCAL_WEBUI_DIR = os.path.join(LOCAL_PUBLIC_DIR, "ui")
 WEBUI_FALLBACK_FILE = "ui_instructions.html"
