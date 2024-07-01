@@ -16,13 +16,9 @@ USER = "user"
 GROUPS = ["group1", "group2"]
 
 
-# Function create_setup_patch_mixin does not work with a None argument (i.e.
-# when webui is None) but a callable can be used. The used lambda wouldn't work
-# in SessionTest and  StorageTest, of course, but these classes are skipped when
-# webui is None. Alternatives (using mock.patch for every test/setUp method or
-# expand create_setup_patch_mixin content inside the test classes) lead to more
-# complicated code than this surprising solution.
-PatchSessionMixin = create_setup_patch_mixin(webui if webui else lambda x: x)
+# If webui is None, the tests in this file using these mixins are skipped,
+# passing a dummy object instead to make this executable
+PatchSessionMixin = create_setup_patch_mixin(webui) if webui else object
 
 
 @skip_unless_webui_installed()
