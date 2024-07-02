@@ -31,6 +31,7 @@ entered one is reported as not valid.
 import ipaddress
 import re
 from collections import Counter
+from re import Pattern
 from typing import (
     Any,
     Callable,
@@ -40,7 +41,6 @@ from typing import (
     Mapping,
     NamedTuple,
     Optional,
-    Pattern,
     Set,
     Union,
     cast,

@@ -1,13 +1,15 @@
 import fcntl
 import os
 import shutil
-from contextlib import contextmanager
+from contextlib import (
+    AbstractContextManager,
+    contextmanager,
+)
 from dataclasses import dataclass
 from io import BytesIO
 from typing import (
     IO,
     Any,
-    ContextManager,
     Iterator,
     NewType,
     Optional,
@@ -99,7 +101,7 @@ class RawFileInterface:
         """
         raise NotImplementedError()
 
-    def update(self) -> ContextManager[BytesIO]:
+    def update(self) -> AbstractContextManager[BytesIO]:
         """
         Returns a context manager which __enter__ method returns a buffer
         filled with file data and stores data from the returned buffer to the

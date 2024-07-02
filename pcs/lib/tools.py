@@ -1,11 +1,13 @@
 import os
 import tempfile
 import uuid
-from contextlib import contextmanager
+from contextlib import (
+    AbstractContextManager,
+    contextmanager,
+)
 from typing import (
     IO,
     Callable,
-    ContextManager,
     Generator,
     Literal,
     Mapping,
@@ -83,7 +85,7 @@ def dict_to_environment_file(config_dict: Mapping[str, str]) -> str:
 @overload
 def get_tmp_file(
     data: Optional[bytes], binary: Literal[True]
-) -> ContextManager[IO[bytes]]:
+) -> AbstractContextManager[IO[bytes]]:
     pass
 
 
@@ -91,7 +93,7 @@ def get_tmp_file(
 def get_tmp_file(
     data: Optional[str],
     binary: Literal[False] = False,
-) -> ContextManager[IO[str]]:
+) -> AbstractContextManager[IO[str]]:
     pass
 
 
