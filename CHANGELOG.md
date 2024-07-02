@@ -60,6 +60,7 @@
 - Using `--overwrite` to confirm `pcs cluster report` overwriting files
   ([RHEL-36612])
 - Pkg-config with info for webui is now provided.
+- Command `resource.restart` in API v2
 
 ### Fixed
 - Do not put empty uid/gid corosync configuration options to an uidgid file
