@@ -4,10 +4,7 @@ from pcs import (
 )
 from pcs.cli.booth import command
 from pcs.cli.common.routing import create_router
-from pcs.resource import (
-    resource_remove,
-    resource_restart_cmd,
-)
+from pcs.resource import resource_remove
 
 mapping = {
     "help": lambda lib, argv, modifiers: print(usage.booth(argv)),
@@ -30,7 +27,7 @@ mapping = {
     # a function to pcs.lib
     "delete": command.get_remove_from_cluster(resource_remove),  # type:ignore
     "remove": command.get_remove_from_cluster(resource_remove),  # type:ignore
-    "restart": command.get_restart(resource_restart_cmd),  # type:ignore
+    "restart": command.restart,
     "sync": command.sync,
     "pull": command.pull,
     "enable": command.enable,

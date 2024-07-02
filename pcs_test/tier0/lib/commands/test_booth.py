@@ -2216,16 +2216,12 @@ class RemoveFromCluster(TestCase, FixtureMixin):
 class Restart(TestCase, FixtureMixin):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
-        # mock pcs.resource.resource_restart function which does all the heavy
-        # lifting
-        self.resource_restart = mock.Mock()
 
     def test_invalid_instance(self):
         instance_name = "/tmp/booth/booth"
         self.env_assist.assert_raise_library_error(
             lambda: commands.restart(
                 self.env_assist.get_env(),
-                self.resource_restart,
                 instance_name=instance_name,
             ),
             [
@@ -2233,31 +2229,23 @@ class Restart(TestCase, FixtureMixin):
             ],
             expected_in_processor=False,
         )
-        self.resource_restart.assert_not_called()
 
     def test_success_default_instance(self):
         self.config.runner.cib.load(resources=self.fixture_cib_booth_group())
-        commands.restart(self.env_assist.get_env(), self.resource_restart)
-        self.resource_restart.assert_has_calls(
-            [
-                mock.call(["booth-booth-service"]),
-            ]
-        )
+        self.config.runner.pcmk.resource_restart("booth-booth-service")
+        commands.restart(self.env_assist.get_env())
 
     def test_success_custom_instance(self):
         instance_name = "my_booth"
         self.config.runner.cib.load(
             resources=self.fixture_cib_booth_group(instance_name)
         )
+        self.config.runner.pcmk.resource_restart(
+            f"booth-{instance_name}-service"
+        )
         commands.restart(
             self.env_assist.get_env(),
-            self.resource_restart,
             instance_name=instance_name,
-        )
-        self.resource_restart.assert_has_calls(
-            [
-                mock.call([f"booth-{instance_name}-service"]),
-            ]
         )
 
     def test_not_live(self):
@@ -2270,9 +2258,7 @@ class Restart(TestCase, FixtureMixin):
         )
         self.config.env.set_cib_data("<cib />")
         self.env_assist.assert_raise_library_error(
-            lambda: commands.restart(
-                self.env_assist.get_env(), self.resource_restart
-            ),
+            lambda: commands.restart(self.env_assist.get_env()),
             [
                 fixture.error(
                     reports.codes.LIVE_ENVIRONMENT_REQUIRED,
@@ -2285,14 +2271,11 @@ class Restart(TestCase, FixtureMixin):
             ],
             expected_in_processor=False,
         )
-        self.resource_restart.assert_not_called()
 
     def test_booth_resource_does_not_exist(self):
-        (self.config.runner.cib.load())
+        self.config.runner.cib.load()
         self.env_assist.assert_raise_library_error(
-            lambda: commands.restart(
-                self.env_assist.get_env(), self.resource_restart
-            ),
+            lambda: commands.restart(self.env_assist.get_env()),
         )
         self.env_assist.assert_reports(
             [
@@ -2302,14 +2285,11 @@ class Restart(TestCase, FixtureMixin):
                 ),
             ]
         )
-        self.resource_restart.assert_not_called()
 
     def test_more_booth_resources(self):
         self.config.runner.cib.load(resources=self.fixture_cib_more_resources())
         self.env_assist.assert_raise_library_error(
-            lambda: commands.restart(
-                self.env_assist.get_env(), self.resource_restart
-            ),
+            lambda: commands.restart(self.env_assist.get_env()),
         )
         self.env_assist.assert_reports(
             [
@@ -2320,13 +2300,17 @@ class Restart(TestCase, FixtureMixin):
                 ),
             ]
         )
-        self.resource_restart.assert_not_called()
 
     def test_more_booth_resources_forced(self):
         self.config.runner.cib.load(resources=self.fixture_cib_more_resources())
+        self.config.runner.pcmk.resource_restart(
+            "booth1", name="runner.pcmk.restart.1"
+        )
+        self.config.runner.pcmk.resource_restart(
+            "booth2", name="runner.pcmk.restart.2"
+        )
         commands.restart(
             self.env_assist.get_env(),
-            self.resource_restart,
             allow_multiple=True,
         )
         self.env_assist.assert_reports(
@@ -2335,12 +2319,6 @@ class Restart(TestCase, FixtureMixin):
                     reports.codes.BOOTH_MULTIPLE_TIMES_IN_CIB,
                     name="booth",
                 ),
-            ]
-        )
-        self.resource_restart.assert_has_calls(
-            [
-                mock.call(["booth1"]),
-                mock.call(["booth2"]),
             ]
         )
 
