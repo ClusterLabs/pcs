@@ -236,28 +236,20 @@ def get_remove_from_cluster(resource_remove):  # type:ignore
     return remove_from_cluster
 
 
-def get_restart(resource_restart):  # type:ignore
-    # TODO resource_restart is provisional hack until resources are not moved to
-    # lib
-    def restart(lib: Any, arg_list: Argv, modifiers: InputModifiers) -> None:
-        """
-        Options:
-          * --force - allow multiple
-          * --name - name of a booth instance
-        """
-        modifiers.ensure_only_supported("--force", "--name")
-        if arg_list:
-            raise CmdLineInputError()
+def restart(lib: Any, arg_list: Argv, modifiers: InputModifiers) -> None:
+    """
+    Options:
+      * --force - allow multiple
+      * --name - name of a booth instance
+    """
+    modifiers.ensure_only_supported("--force", "--name")
+    if arg_list:
+        raise CmdLineInputError()
 
-        lib.booth.restart(
-            lambda resource_id_list: resource_restart(
-                lib, resource_id_list, modifiers.get_subset("--force")
-            ),
-            instance_name=modifiers.get("--name"),
-            allow_multiple=modifiers.get("--force"),
-        )
-
-    return restart
+    lib.booth.restart(
+        instance_name=modifiers.get("--name"),
+        allow_multiple=modifiers.get("--force"),
+    )
 
 
 def sync(lib: Any, arg_list: Argv, modifiers: InputModifiers) -> None:
