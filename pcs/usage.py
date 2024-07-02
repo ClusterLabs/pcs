@@ -2761,7 +2761,8 @@ Commands:
         Wait for the cluster to settle into stable state. Timeout can be
         specified as bare number which describes number of seconds or number
         with unit (s or sec for seconds, m or min for minutes, h or hr for
-        hours). If 'timeout' is not specified it defaults to 60 minutes.
+        hours). If 'timeout' is not specified or set to zero, it defaults to
+        60 minutes.
         Example: pcs status wait 30min
 
     query resource <resource-id> exists [--quiet]

@@ -1,5 +1,13 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+- Specify the meaning of zero value timeout in `pcs status wait` ([RHEL-44719])
+
+[RHEL-44719]: https://issues.redhat.com/browse/RHEL-44719
+
+
 ## [0.12.0b1] - 2024-11-12
 
 ### Removed
@@ -59,6 +67,7 @@
 
 [RHEL-21047]: https://issues.redhat.com/browse/RHEL-21047
 [RHEL-33386]: https://issues.redhat.com/browse/RHEL-33386
+[RHEL-38483]: https://issues.redhat.com/browse/RHEL-38483
 [RHEL-44432]: https://issues.redhat.com/browse/RHEL-44432
 [RHEL-49520]: https://issues.redhat.com/browse/RHEL-49520
 [RHEL-49521]: https://issues.redhat.com/browse/RHEL-49521
@@ -68,7 +77,6 @@
 [RHEL-61747]: https://issues.redhat.com/browse/RHEL-61747
 [RHEL-61889]: https://issues.redhat.com/browse/RHEL-61889
 [RHEL-62719]: https://issues.redhat.com/browse/RHEL-62719
-[RHEL-38483]: https://issues.redhat.com/browse/RHEL-38483
 
 
 ## [0.12.0a1] - 2024-06-21
