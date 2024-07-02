@@ -5,6 +5,7 @@ from unittest import (
 
 from pcs import status
 from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.status import command
 
 from pcs_test.tools.misc import dict_to_modifiers
 
@@ -34,3 +35,21 @@ class XmlStatus(TestCase):
             self._call_cmd(["x"])
         self.assertIsNone(cm.exception.message)
         mock_print.assert_not_called()
+
+
+class WaitForPcmkIdle(TestCase):
+    def setUp(self):
+        self.lib = mock.Mock(spec_set=["cluster"])
+        self.lib.cluster = mock.Mock(spec_set=["wait_for_pcmk_idle"])
+        self.lib_command = self.lib.cluster.wait_for_pcmk_idle
+
+    def _call_cmd(self, argv) -> None:
+        command.wait_for_pcmk_idle(self.lib, argv, dict_to_modifiers({}))
+
+    def test_no_timeout(self):
+        self._call_cmd([])
+        self.lib_command.assert_called_once_with(None)
+
+    def test_timeout(self):
+        self._call_cmd(["30min"])
+        self.lib_command.assert_called_once_with("30min")

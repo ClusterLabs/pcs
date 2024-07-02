@@ -30,6 +30,7 @@
   resources` unless `--all` is specified ([RHEL-46293])
 - Displaying status of local and remote cluster sites in `pcs dr status`
   command. ([RHEL-61738])
+- Specify the meaning of zero value timeout in `pcs status wait` ([RHEL-46303])
 
 ### Deprecated
 - Using `pcs resource delete | remove` to delete resources representing remote
@@ -39,14 +40,15 @@
   rules in a location constraint is among the [features planned to be removed
   in pacemaker 3]
 
+[RHEL-16232]: https://issues.redhat.com/browse/RHEL-16232
 [RHEL-46284]: https://issues.redhat.com/browse/RHEL-46284
 [RHEL-46286]: https://issues.redhat.com/browse/RHEL-46286
 [RHEL-46293]: https://issues.redhat.com/browse/RHEL-46293
+[RHEL-46303]: https://issues.redhat.com/browse/RHEL-46303
 [RHEL-55441]: https://issues.redhat.com/browse/RHEL-55441
 [RHEL-61738]: https://issues.redhat.com/browse/RHEL-61738
 [RHEL-61901]: https://issues.redhat.com/browse/RHEL-61901
 [features planned to be removed in pacemaker 3]: https://projects.clusterlabs.org/w/projects/pacemaker/pacemaker_3.0_changes/pacemaker_3.0_configuration_changes/
-[RHEL-16232]: https://issues.redhat.com/browse/RHEL-16232
 
 
 ## [0.11.8] - 2024-07-09
