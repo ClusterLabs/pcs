@@ -315,36 +315,24 @@ class Restart(TestCase):
         self.lib = mock.Mock(spec_set=["booth"])
         self.lib.booth = mock.Mock(spec_set=["restart"])
 
-    def test_lib_call_minimal(self):
-        def resource_restart(something):
-            return something
+    def test_args(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            booth_cmd.restart(self.lib, ["something"], dict_to_modifiers({}))
+        self.assertIsNone(cm.exception.message)
+        self.lib.booth.restart.assert_not_called()
 
-        booth_cmd.get_restart(resource_restart)(
-            self.lib, [], dict_to_modifiers({})
-        )
-        # The first arg going to the lib call is a lambda which we cannot get
-        # in here. So we must check all the other parameters in a bit more
-        # complicated way.
-        self.assertEqual(self.lib.booth.restart.call_count, 1)
-        call = self.lib.booth.restart.call_args
-        self.assertEqual(
-            call[1], dict(instance_name=None, allow_multiple=False)
+    def test_lib_call_minimal(self):
+        booth_cmd.restart(self.lib, [], dict_to_modifiers({}))
+        self.lib.booth.restart.assert_called_once_with(
+            instance_name=None, allow_multiple=False
         )
 
     def test_lib_call_full(self):
-        def resource_restart(something):
-            return something
-
-        booth_cmd.get_restart(resource_restart)(
+        booth_cmd.restart(
             self.lib, [], dict_to_modifiers(dict(name="my_booth", force=True))
         )
-        # The first arg going to the lib call is a lambda which we cannot get
-        # in here. So we must check all the other parameters in a bit more
-        # complicated way.
-        self.assertEqual(self.lib.booth.restart.call_count, 1)
-        call = self.lib.booth.restart.call_args
-        self.assertEqual(
-            call[1], dict(instance_name="my_booth", allow_multiple=True)
+        self.lib.booth.restart.assert_called_once_with(
+            instance_name="my_booth", allow_multiple=True
         )
 
 
