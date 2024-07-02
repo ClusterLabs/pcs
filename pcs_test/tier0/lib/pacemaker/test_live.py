@@ -1175,6 +1175,82 @@ class RemoveNode(TestCase):
         )
 
 
+class ResourceRestart(TestCase):
+    def setUp(self):
+        self.stdout = "expected output"
+        self.stderr = "expected stderr"
+        self.resource = "my_resource"
+        self.node = "my_node"
+        self.timeout = "10m"
+        self.env_assist, self.config = get_env_tools(test_case=self)
+
+    def assert_output(self, real_output):
+        self.assertEqual(self.stdout + "\n" + self.stderr, real_output)
+
+    def test_basic(self):
+        self.config.runner.pcmk.resource_restart(
+            self.resource, stdout=self.stdout, stderr=self.stderr
+        )
+        env = self.env_assist.get_env()
+        lib.resource_restart(env.cmd_runner(), self.resource)
+
+    def test_node(self):
+        self.config.runner.pcmk.resource_restart(
+            self.resource,
+            node=self.node,
+            stdout=self.stdout,
+            stderr=self.stderr,
+        )
+        env = self.env_assist.get_env()
+        lib.resource_restart(env.cmd_runner(), self.resource, node=self.node)
+
+    def test_timeout(self):
+        self.config.runner.pcmk.resource_restart(
+            self.resource,
+            timeout=self.timeout,
+            stdout=self.stdout,
+            stderr=self.stderr,
+        )
+        env = self.env_assist.get_env()
+        lib.resource_restart(
+            env.cmd_runner(), self.resource, timeout=self.timeout
+        )
+
+    def test_all_options(self):
+        self.config.runner.pcmk.resource_restart(
+            self.resource,
+            node=self.node,
+            timeout=self.timeout,
+            stdout=self.stdout,
+            stderr=self.stderr,
+        )
+        env = self.env_assist.get_env()
+        lib.resource_restart(
+            env.cmd_runner(),
+            self.resource,
+            node=self.node,
+            timeout=self.timeout,
+        )
+
+    def test_error(self):
+        self.config.runner.pcmk.resource_restart(
+            self.resource, stdout=self.stdout, stderr=self.stderr, returncode=1
+        )
+        env = self.env_assist.get_env()
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.resource_restart(env.cmd_runner(), self.resource),
+            [
+                fixture.error(
+                    report_codes.RESOURCE_RESTART_ERROR,
+                    reason=(self.stderr + "\n" + self.stdout),
+                    resource=self.resource,
+                    node=None,
+                )
+            ],
+            expected_in_processor=False,
+        )
+
+
 class ResourceCleanupTest(TestCase):
     def setUp(self):
         self.stdout = "expected output"
