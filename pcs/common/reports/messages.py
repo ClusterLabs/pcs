@@ -3406,6 +3406,72 @@ class WaitForIdleNotLiveCluster(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class ResourceRestartError(ReportItemMessage):
+    """
+    An error occurred when restarting a resource in pacemaker
+
+    reason -- error description
+    resource -- resource which has been restarted
+    node -- node where the resource has been restarted
+    """
+
+    reason: str
+    resource: str
+    node: Optional[str] = None
+    _code = codes.RESOURCE_RESTART_ERROR
+
+    @property
+    def message(self) -> str:
+        return f"Unable to restart resource '{self.resource}':\n{self.reason}"
+
+
+@dataclass(frozen=True)
+class ResourceRestartNodeIsForMultiinstanceOnly(ReportItemMessage):
+    """
+    Restart can be limited to a specified node only for multiinstance resources
+
+    resource -- resource to be restarted
+    resource_type -- actual type of the resource
+    node -- node where the resource was to be restarted
+    """
+
+    resource: str
+    resource_type: str
+    node: str
+    _code = codes.RESOURCE_RESTART_NODE_IS_FOR_MULTIINSTANCE_ONLY
+
+    @property
+    def message(self) -> str:
+        resource_type = _type_to_string(self.resource_type, article=True)
+        return (
+            "Can only restart on a specific node for a clone or bundle, "
+            f"'{self.resource}' is {resource_type}"
+        )
+
+
+@dataclass(frozen=True)
+class ResourceRestartUsingParentRersource(ReportItemMessage):
+    """
+    Multiinstance parent is restarted instead of a specified primitive
+
+    resource -- resource which has been asked to be restarted
+    parent -- parent resource to be restarted instead
+    """
+
+    resource: str
+    parent: str
+    _code = codes.RESOURCE_RESTART_USING_PARENT_RESOURCE
+
+    @property
+    def message(self) -> str:
+        return (
+            f"Restarting '{self.parent}' instead...\n"
+            "(If a resource is a clone or bundle, you must use the clone or "
+            "bundle instead)"
+        )
+
+
+@dataclass(frozen=True)
 class ResourceCleanupError(ReportItemMessage):
     """
     An error occurred when deleting resource failed operations in pacemaker
