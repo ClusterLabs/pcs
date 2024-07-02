@@ -2,12 +2,22 @@ import logging
 import os
 from unittest import mock
 
-from pcs.daemon.app import webui
+try:
+    from pcs.daemon.app import webui
+except ImportError:
+    webui = None
+
 from pcs.lib.auth.provider import AuthProvider
 from pcs.lib.auth.types import AuthUser
 
-from pcs_test.tier0.daemon.app import fixtures_app
-from pcs_test.tools.misc import get_tmp_dir
+from pcs_test.tier0.daemon.app import (
+    fixtures_app,
+    fixtures_app_webui,
+)
+from pcs_test.tools.misc import (
+    get_tmp_dir,
+    skip_unless_webui_installed,
+)
 
 LOGIN_BODY = {"username": fixtures_app.USER, "password": fixtures_app.PASSWORD}
 PREFIX = "/ui/"
@@ -16,7 +26,7 @@ PREFIX = "/ui/"
 logging.getLogger("tornado.access").setLevel(logging.CRITICAL)
 
 
-class AppTest(fixtures_app.AppUiTestMixin):
+class AppTest(fixtures_app_webui.AppTest):
     def setUp(self):
         self.public_dir = get_tmp_dir("tier0_daemon_app_spa")
         self.spa_dir_path = os.path.join(self.public_dir.name, "ui")
@@ -41,7 +51,12 @@ class AppTest(fixtures_app.AppUiTestMixin):
             auth_provider=AuthProvider(logging.Logger("test logger")),
         )
 
+    def assert_success_response(self, response, expected_body):
+        self.assertEqual(response.code, 200)
+        self.assertEqual(response.body.decode(), expected_body)
 
+
+@skip_unless_webui_installed()
 class Static(AppTest):
     def test_index(self):
         self.assert_success_response(
@@ -50,6 +65,7 @@ class Static(AppTest):
         )
 
 
+@skip_unless_webui_installed()
 class Fallback(AppTest):
     def setUp(self):
         super().setUp()
@@ -65,6 +81,7 @@ class Fallback(AppTest):
         )
 
 
+@skip_unless_webui_installed()
 class Login(AppTest):
     def setUp(self):
         super().setUp()
@@ -94,6 +111,7 @@ class Login(AppTest):
         )
 
 
+@skip_unless_webui_installed()
 class Logout(AppTest):
     def test_can_logout(self):
         session1 = self.create_login_session()

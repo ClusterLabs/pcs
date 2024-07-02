@@ -8,7 +8,10 @@ from unittest import (
 from pcs import settings
 from pcs.daemon import env
 
-from pcs_test.tools.misc import create_setup_patch_mixin
+from pcs_test.tools.misc import (
+    create_setup_patch_mixin,
+    skip_unless_webui_installed,
+)
 
 
 def webui_fallback(public_dir):
@@ -177,6 +180,7 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
             {env.PCSD_DEBUG: "false"}
         )
 
+    @skip_unless_webui_installed()
     def test_errors_on_missing_paths(self):
         self.path_exists.return_value = False
         self.assert_environ_produces_modified_pcsd_env(
