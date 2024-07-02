@@ -49,7 +49,7 @@ resource_cmd = create_router(
         "enable": resource.resource_enable_cmd,
         "disable": resource.resource_disable_cmd,
         "safe-disable": resource.resource_safe_disable_cmd,
-        "restart": resource.resource_restart,
+        "restart": resource.resource_restart_cmd,
         "debug-start": partial(
             resource.resource_force_action, action="debug-start"
         ),
