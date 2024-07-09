@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.11.8] - 2024-07-09
 
 ### Added
 - Support for output formats `json` and `cmd` to resources/stonith defaults and
