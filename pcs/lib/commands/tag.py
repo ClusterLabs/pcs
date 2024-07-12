@@ -7,6 +7,7 @@ from typing import (
 
 from lxml.etree import _Element
 
+from pcs.common.pacemaker.tag import CibTagListDto
 from pcs.common.types import StringSequence
 from pcs.lib.cib import tag
 from pcs.lib.cib.tools import (
@@ -50,9 +51,25 @@ def create(
         tag.create_tag(tags_section, tag_id, idref_list)
 
 
+def _get_tag_elements(
+    env: LibraryEnvironment, tag_filter: StringSequence
+) -> list[_Element]:
+    tags_section: _Element = get_tags(env.get_cib())
+
+    if not tag_filter:
+        return tag.get_list_of_tag_elements(tags_section)
+
+    tag_element_list, report_list = tag.find_tag_elements_by_ids(
+        tags_section,
+        tag_filter,
+    )
+    if env.report_processor.report_list(report_list).has_errors:
+        raise LibraryError()
+    return tag_element_list
+
+
 def config(
-    env: LibraryEnvironment,
-    tag_filter: StringSequence,
+    env: LibraryEnvironment, tag_filter: StringSequence
 ) -> list[dict[str, Union[str, list[str]]]]:
     """
     Get tags specified in tag_filter or if empty, then get all the tags
@@ -61,19 +78,31 @@ def config(
     env -- provides all for communication with externals
     tag_filter -- list of tags we want to get
     """
-    tags_section: _Element = get_tags(env.get_cib())
-    if tag_filter:
-        tag_element_list, report_list = tag.find_tag_elements_by_ids(
-            tags_section,
-            tag_filter,
-        )
-        if env.report_processor.report_list(report_list).has_errors:
-            raise LibraryError()
-    else:
-        tag_element_list = tag.get_list_of_tag_elements(tags_section)
+    tag_element_list = _get_tag_elements(env, tag_filter)
+
     return [
         tag.tag_element_to_dict(tag_element) for tag_element in tag_element_list
     ]
+
+
+def get_config_dto(
+    env: LibraryEnvironment, tag_filter: StringSequence
+) -> CibTagListDto:
+    """
+    Get tags specified in tag_filter or if empty, then get all the tags
+    configured.
+
+    env -- provides all for communication with externals
+    tag_filter -- list of tags we want to get
+    """
+    tag_element_list = _get_tag_elements(env, tag_filter)
+
+    return CibTagListDto(
+        [
+            tag.tag_element_to_dto(tag_element)
+            for tag_element in tag_element_list
+        ]
+    )
 
 
 def remove(env: LibraryEnvironment, tag_list: StringSequence) -> None:

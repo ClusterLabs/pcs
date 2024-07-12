@@ -1,5 +1,14 @@
 # Change Log
 
+## [Unreleased]
+
+### Added
+- Support for output formats `json` and `cmd` to `pcs tag config` command 
+([RHEL-46284])
+
+[RHEL-46284]: https://issues.redhat.com/browse/RHEL-46284
+
+
 ## [0.11.8] - 2024-07-09
 
 ### Added

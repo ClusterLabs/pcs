@@ -530,6 +530,7 @@ def load_module(env, middleware_factory, name):
             {
                 "config": tag.config,
                 "create": tag.create,
+                "get_config_dto": tag.get_config_dto,
                 "remove": tag.remove,
                 "update": tag.update,
             },

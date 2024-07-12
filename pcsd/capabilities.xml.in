@@ -2332,6 +2332,17 @@
         pcs commands: tag create, tag update
       </description>
     </capability>
+    <capability id="pcmk.tag.output-formats" in-pcs="1" in-pcsd="1">
+      <description>
+        Display configured tags in various formats.
+
+        pcs commands:
+          tag config --output-format=text|json|cmd
+        APIv2:
+          tag.get_config_dto
+      </description>
+    </capability>
+
 
 
 

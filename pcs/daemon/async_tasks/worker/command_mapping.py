@@ -24,6 +24,7 @@ from pcs.lib.commands import (  # services,
     status,
     stonith,
     stonith_agent,
+    tag,
 )
 from pcs.lib.permissions.config.types import PermissionAccessType as p
 
@@ -383,6 +384,10 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
     "stonith.create_in_group": _Cmd(
         cmd=stonith.create_in_group,
         required_permission=p.WRITE,
+    ),
+    "tag.get_config_dto": _Cmd(
+        cmd=tag.get_config_dto,
+        required_permission=p.READ,
     ),
     # CMDs allowed in pcs_internal but not exposed via REST API:
     # "services.disable_service": Cmd(services.disable_service,

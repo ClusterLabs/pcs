@@ -1,16 +1,32 @@
+import json
+import shlex
 from textwrap import dedent
 from unittest import TestCase
 
 from lxml import etree
 
+from pcs.common.interface import dto
+from pcs.common.pacemaker.tag import (
+    CibTagDto,
+    CibTagListDto,
+)
+from pcs.common.types import StringSequence
+from pcs.lib.cib.tools import get_resources
+
+from pcs_test.tools import fixture_cib
 from pcs_test.tools.cib import get_assert_pcs_effect_mixin
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import (
     get_tmp_file,
     outdent,
+    write_data_to_tmpfile,
     write_file_to_tmpfile,
 )
 from pcs_test.tools.pcs_runner import PcsRunner
+from pcs_test.tools.xml import (
+    XmlManipulation,
+    etree_to_str,
+)
 
 empty_cib = rc("cib-empty.xml")
 tags_cib = rc("cib-tags.xml")
@@ -167,14 +183,10 @@ class TagConfigListBase(TestTagMixin):
     def test_config_empty(self):
         write_file_to_tmpfile(empty_cib, self.temp_cib)
 
-        self.assert_pcs_success(
-            ["tag"],
-            stderr_full=" No tags defined\n",
-        )
+        self.assert_pcs_success(["tag"], stderr_full="", stdout_full="")
 
         self.assert_pcs_success(
-            ["tag", self.command],
-            stderr_full=(self.deprecation_msg + " No tags defined\n"),
+            ["tag", self.command], stderr_full=self.deprecation_msg
         )
 
     def test_config_tag_does_not_exist(self):
@@ -231,7 +243,7 @@ class TagConfigListBase(TestTagMixin):
         )
 
 
-class TagConfig(
+class TagConfigText(
     TagConfigListBase,
     TestCase,
 ):
@@ -247,6 +259,141 @@ class TagList(
         "Deprecation Warning: This command is deprecated and will be removed. "
         "Please use 'pcs tag config' instead.\n"
     )
+
+
+class TagConfigJson(TestTagMixin, TestCase):
+    def test_config_empty(self):
+        expected_output = json.loads(json.dumps(dto.to_dict(CibTagListDto([]))))
+        write_file_to_tmpfile(empty_cib, self.temp_cib)
+
+        stdout, stderr = self.assert_pcs_success_ignore_output(
+            ["tag", "--output-format=json"]
+        )
+        self.assertEqual(json.loads(stdout), expected_output)
+        self.assertEqual(stderr, "")
+
+        stdout, stderr = self.assert_pcs_success_ignore_output(
+            ["tag", "config", "--output-format=json"]
+        )
+        self.assertEqual(json.loads(stdout), expected_output)
+
+    def test_config_tag_does_not_exist(self):
+        self.assert_pcs_fail(
+            ["tag", "config", "notag2", "notag1", "--output-format=json"],
+            (
+                "Error: tag 'notag2' does not exist\n"
+                "Error: tag 'notag1' does not exist\n"
+                "Error: Errors have occurred, therefore pcs is unable to "
+                "continue\n"
+            ),
+        )
+        self.assert_resources_xml_in_cib(self.fixture_tags_xml())
+
+    def test_config_tags_defined(self):
+        stdout, stderr = self.assert_pcs_success_ignore_output(
+            ["tag", "config", "--output-format=json"]
+        )
+        self.assertEqual(
+            json.loads(stdout),
+            json.loads(
+                json.dumps(
+                    dto.to_dict(
+                        CibTagListDto(
+                            [
+                                CibTagDto("tag1", ["x1", "x2", "x3"]),
+                                CibTagDto("tag2", ["y1", "x2"]),
+                                CibTagDto("tag3", ["y2-clone"]),
+                                CibTagDto(
+                                    "tag-mixed-stonith-devices-and-resources",
+                                    ["fence-rh-2", "y1", "fence-rh-1", "x3"],
+                                ),
+                            ]
+                        )
+                    )
+                )
+            ),
+        )
+        self.assertEqual(stderr, "")
+
+    def test_config_specified_tags(self):
+        stdout, stderr = self.assert_pcs_success_ignore_output(
+            ["tag", "config", "tag2", "tag1", "--output-format=json"],
+        )
+        self.assertEqual(
+            json.loads(stdout),
+            json.loads(
+                json.dumps(
+                    dto.to_dict(
+                        CibTagListDto(
+                            [
+                                CibTagDto("tag2", ["y1", "x2"]),
+                                CibTagDto("tag1", ["x1", "x2", "x3"]),
+                            ]
+                        )
+                    )
+                )
+            ),
+        )
+        self.assertEqual(stderr, "")
+
+
+class TagConfigCmd(TestCase):
+    def setUp(self):
+        self.old_cib = get_tmp_file("tier1_tag_cmd_old")
+        write_file_to_tmpfile(tags_cib, self.old_cib)
+        self.new_cib = get_tmp_file("tier1_tag_cmd_new")
+        write_data_to_tmpfile(
+            fixture_cib.modify_cib_file(
+                empty_cib,
+                resources=etree_to_str(
+                    get_resources(XmlManipulation.from_file(tags_cib).tree)
+                ),
+            ),
+            self.new_cib,
+        )
+        self.old_pcs_runner = PcsRunner(self.old_cib.name)
+        self.new_pcs_runner = PcsRunner(self.new_cib.name)
+
+    def tearDown(self):
+        self.old_cib.close()
+        self.new_cib.close()
+
+    def _test_commands(self, tag_filter: StringSequence):
+        stdout, _, retval = self.old_pcs_runner.run(
+            ["tag", "config", "--output-format=cmd"] + list(tag_filter)
+        )
+        self.assertEqual(retval, 0)
+
+        commands = [
+            shlex.split(command)[1:]
+            for command in stdout.replace("\\\n", "").strip().split(";\n")
+        ]
+
+        for cmd in commands:
+            stdout, stderr, retval = self.new_pcs_runner.run(cmd)
+            self.assertEqual(
+                retval,
+                0,
+                (
+                    f"Command {cmd} exited with {retval}\nstdout:\n{stdout}\n"
+                    f"stderr:\n{stderr}"
+                ),
+            )
+        old_stdout, _, old_retval = self.old_pcs_runner.run(
+            ["tag", "config", "--output-format=json"] + list(tag_filter)
+        )
+        new_stdout, _, new_retval = self.new_pcs_runner.run(
+            ["tag", "config", "--output-format=json"]
+        )
+        self.assertEqual(old_retval, 0)
+        self.assertEqual(new_retval, 0)
+        self.assertEqual(json.loads(old_stdout), json.loads(new_stdout))
+
+    def test_success(self):
+        self._test_commands([])
+
+    def test_success_filter(self):
+        self._test_commands(["tag2", "tag1"])
 
 
 class PcsConfigTagsTest(TestTagMixin, TestCase):

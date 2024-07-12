@@ -6,6 +6,10 @@ from unittest import (
 
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.tag import command
+from pcs.common.pacemaker.tag import (
+    CibTagDto,
+    CibTagListDto,
+)
 from pcs.lib.errors import LibraryError
 
 from pcs_test.tools.misc import dict_to_modifiers
@@ -45,39 +49,32 @@ class TagCreate(TestCase):
         self.tag.create.assert_called_once_with("tagid", ["id1", "id2"])
 
 
-@mock.patch("pcs.cli.tag.command.print")
+@mock.patch("pcs.cli.tag.output.print")
 class TagConfig(TestCase):
-    tag_dicts = [
-        {
-            "tag_id": "tag1",
-            "idref_list": ["i1", "i2", "i3"],
-        },
-        {
-            "tag_id": "tag2",
-            "idref_list": ["j1", "j2", "j3"],
-        },
+    tag_dtos = [
+        CibTagDto("tag1", ["i1", "i2", "i3"]),
+        CibTagDto("tag2", ["j1", "j2", "j3"]),
     ]
 
     def setUp(self):
         self.lib = mock.Mock(spec_set=["tag"])
-        self.tag = mock.Mock(spec_set=["config"])
+        self.tag = mock.Mock(spec_set=["get_config_dto"])
         self.lib.tag = self.tag
+        self.lib_command = self.lib.tag.get_config_dto
 
     def _call_cmd(self, argv):
         command.tag_config(self.lib, argv, dict_to_modifiers({}))
 
-    @mock.patch("pcs.cli.tag.command.print_to_stderr")
-    def test_no_args_no_tags(self, mock_stderr_print, mock_print):
-        self.tag.config.return_value = []
+    def test_no_args_no_tags(self, mock_print):
+        self.lib_command.return_value = CibTagListDto([])
         self._call_cmd([])
-        self.tag.config.assert_called_once_with([])
+        self.lib_command.assert_called_once_with([])
         mock_print.assert_not_called()
-        mock_stderr_print.assert_called_once_with(" No tags defined")
 
     def test_no_args_all_tags(self, mock_print):
-        self.tag.config.return_value = self.tag_dicts
+        self.lib_command.return_value = CibTagListDto(self.tag_dtos)
         self._call_cmd([])
-        self.tag.config.assert_called_once_with([])
+        self.lib_command.assert_called_once_with([])
         mock_print.assert_called_once_with(
             dedent(
                 """\
@@ -93,9 +90,9 @@ class TagConfig(TestCase):
         )
 
     def test_specified_tag(self, mock_print):
-        self.tag.config.return_value = self.tag_dicts[1:2]
+        self.lib_command.return_value = CibTagListDto(self.tag_dtos[1:2])
         self._call_cmd(["tag2"])
-        self.tag.config.assert_called_once_with(["tag2"])
+        self.lib_command.assert_called_once_with(["tag2"])
         mock_print.assert_called_once_with(
             dedent(
                 """\
@@ -107,9 +104,9 @@ class TagConfig(TestCase):
         )
 
     def test_specified_another_tag(self, mock_print):
-        self.tag.config.return_value = self.tag_dicts[0:1]
+        self.lib_command.return_value = CibTagListDto(self.tag_dtos[0:1])
         self._call_cmd(["tag1"])
-        self.tag.config.assert_called_once_with(["tag1"])
+        self.lib_command.assert_called_once_with(["tag1"])
         mock_print.assert_called_once_with(
             dedent(
                 """\
@@ -121,9 +118,9 @@ class TagConfig(TestCase):
         )
 
     def test_specified_more_tags_are_printed_in_given_order(self, mock_print):
-        self.tag.config.return_value = self.tag_dicts[::-1]
+        self.lib_command.return_value = CibTagListDto(self.tag_dtos[::-1])
         self._call_cmd(["tag2", "tag1"])
-        self.tag.config.assert_called_once_with(["tag2", "tag1"])
+        self.lib_command.assert_called_once_with(["tag2", "tag1"])
         mock_print.assert_called_once_with(
             dedent(
                 """\
@@ -139,10 +136,10 @@ class TagConfig(TestCase):
         )
 
     def test_no_print_on_exception(self, mock_print):
-        self.tag.config.side_effect = LibraryError()
+        self.lib_command.side_effect = LibraryError()
         with self.assertRaises(LibraryError):
             self._call_cmd(["something"])
-        self.tag.config.assert_called_once_with(["something"])
+        self.lib_command.assert_called_once_with(["something"])
         mock_print.assert_not_called()
 
 

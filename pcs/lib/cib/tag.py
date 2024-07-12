@@ -15,6 +15,7 @@ from lxml import etree
 from lxml.etree import _Element
 
 from pcs.common import reports
+from pcs.common.pacemaker.tag import CibTagDto
 from pcs.common.reports import (
     ReportItem,
     ReportItemList,
@@ -656,6 +657,16 @@ def tag_element_to_dict(
             for obj_ref in tag_element.findall(TAG_OBJREF)
         ],
     }
+
+
+def tag_element_to_dto(tag_element: _Element) -> CibTagDto:
+    return CibTagDto(
+        str(tag_element.attrib["id"]),
+        [
+            str(obj_ref.attrib["id"])
+            for obj_ref in tag_element.findall(TAG_OBJREF)
+        ],
+    )
 
 
 def expand_tag(
