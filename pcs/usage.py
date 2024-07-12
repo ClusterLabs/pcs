@@ -3354,8 +3354,9 @@ Usage: pcs tag <command>
 Manage pacemaker tags.
 
 Commands:
-    [config|list [<tag id>...]]
+    [config|list [<tag id>...]] [{output_format_syntax}]
         Display configured tags.
+        {output_format_desc}
 
     create <tag id> <id> [<id>]...
         Create a tag containing the specified ids.
@@ -3373,7 +3374,10 @@ Commands:
         of the added ids relatively to some id already existing in the tag. By
         adding ids to a tag they are already in and specifying --after or
         --before you can move the ids in the tag.
-"""
+""".format(
+        output_format_syntax=_output_format_syntax(cmd=True),
+        output_format_desc=_format_desc((" ", _output_format_desc())),
+    )
     return sub_usage(args, output)
 
 

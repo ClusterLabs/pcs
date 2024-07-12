@@ -46,6 +46,7 @@ from pcs.cli.resource.output import (
     ResourcesConfigurationFacade,
     resources_to_text,
 )
+from pcs.cli.tag.output import tags_to_text
 from pcs.common.interface import dto
 from pcs.common.pacemaker.constraint import CibConstraintsDto
 from pcs.common.str_tools import indent
@@ -220,15 +221,11 @@ def _config_show_cib_lines(lib, properties_facade=None):
             all_lines.append("")
         all_lines.extend(properties_lines)
 
-    tags = lib.tag.config([])
-    if tags:
+    tag_lines = smart_wrap_text(tags_to_text(lib.tag.get_config_dto([])))
+    if tag_lines:
         if all_lines:
             all_lines.append("")
         all_lines.append("Tags:")
-        tag_lines = []
-        for tag in tags:
-            tag_lines.append(tag["tag_id"])
-            tag_lines.extend(indent(tag["idref_list"]))
         all_lines.extend(indent(tag_lines, indent_step=1))
 
     return all_lines

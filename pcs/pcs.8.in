@@ -1591,8 +1591,8 @@ destroy
 Permanently destroy disaster-recovery configuration on all sites.
 .SS "tag"
 .TP
-[config|list [<tag id>...]]
-Display configured tags.
+[config|list [<tag id>...]] [@OUTPUT_FORMAT_SYNTAX_DOC@]
+Display configured tags. @OUTPUT_FORMAT_DESC_DOC@
 .TP
 create <tag id> <id> [<id>]...
 Create a tag containing the specified ids.

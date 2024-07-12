@@ -102,8 +102,9 @@ EXTRA_DIST		= \
 			  cli/rule.py \
 			  cli/status/command.py \
 			  cli/status/__init__.py \
-			  cli/tag/command.py \
 			  cli/tag/__init__.py \
+			  cli/tag/command.py \
+			  cli/tag/output.py \
 			  cluster.py \
 			  common/corosync_conf.py \
 			  common/const.py \
@@ -145,6 +146,7 @@ EXTRA_DIST		= \
 			  common/pacemaker/resource/relations.py \
 			  common/pacemaker/role.py \
 			  common/pacemaker/rule.py \
+			  common/pacemaker/tag.py \
 			  common/pacemaker/tools.py \
 			  common/pacemaker/types.py \
 			  common/permissions/__init__.py \

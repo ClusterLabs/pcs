@@ -1,5 +1,13 @@
 # Change Log
 
+## [Unreleased]
+
+### Added
+- Support for output formats `json` and `cmd` to `pcs tag config` command
+
+[RHEL-21047]: https://issues.redhat.com/browse/RHEL-21047
+
+
 ## [0.12.0a1] - 2024-06-21
 
 ### Removed

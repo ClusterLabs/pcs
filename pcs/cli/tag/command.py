@@ -6,8 +6,7 @@ from pcs.cli.common.parse_args import (
     InputModifiers,
     group_by_keywords,
 )
-from pcs.cli.reports.output import print_to_stderr
-from pcs.common.str_tools import indent
+from pcs.cli.tag.output import print_config
 
 
 def tag_create(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
@@ -26,17 +25,11 @@ def tag_config(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * -f - CIB file
+      * --output-format - supported formats: text, cmd, json
     """
-    modifiers.ensure_only_supported("-f")
-    tag_list = lib.tag.config(argv)
-    if not tag_list:
-        print_to_stderr(" No tags defined")
-        return
-    lines = []
-    for tag in tag_list:
-        lines.append(tag["tag_id"])
-        lines.extend(indent(tag["idref_list"]))
-    print("\n".join(lines))
+    modifiers.ensure_only_supported("-f", "--output-format")
+    tag_dto = lib.tag.get_config_dto(argv)
+    print_config(tag_dto, modifiers)
 
 
 def tag_remove(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
