@@ -1,0 +1,22 @@
+<resource-agent
+  name="fence_pcsmock_unfencing"
+  shortdesc="Mock agent for pcs tests - agent which provides unfencing"
+>
+  <longdesc>
+    This is an agent which provides unfencing for pcs tests
+  </longdesc>
+  <actions>
+    <action name="null"/>
+    <action name="on" on_target="1" automatic="1"/>
+    <action name="off"/>
+    <action name="reboot"/>
+    <action name="metadata"/>
+    <action name="status"/>
+    <action name="monitor"/>
+    <action name="list"/>
+    <action name="list-status"/>
+    <action name="stop" timeout="20s"/>
+    <action name="start" timeout="20s"/>
+    <action name="validate-all" />
+  </actions>
+</resource-agent>

@@ -1,0 +1,31 @@
+<resource-agent
+  name="fence_pcsmock_action"
+  shortdesc="Mock agent for pcs tests - agent with action parameter"
+>
+  <longdesc>
+    This is an agent with action parameter for pcs tests
+  </longdesc>
+  <parameters>
+    <parameter name="action">
+      <getopt mixed="-o"/>
+      <content type="string" default="reboot"/>
+      <shortdesc lang="en">
+        Fencing action (null, off, on, [reboot], status, list, list-status, monitor, validate-all, metadata)
+      </shortdesc>
+    </parameter>
+  </parameters>
+  <actions>
+    <action name="null"/>
+    <action name="on"/>
+    <action name="off"/>
+    <action name="reboot"/>
+    <action name="metadata"/>
+    <action name="status"/>
+    <action name="monitor"/>
+    <action name="list"/>
+    <action name="list-status"/>
+    <action name="stop" timeout="20s"/>
+    <action name="start" timeout="20s"/>
+    <action name="validate-all" />
+  </actions>
+</resource-agent>

@@ -1,0 +1,32 @@
+<resource-agent
+  name="fence_pcsmock_method"
+  shortdesc="Mock agent for pcs tests - agent with method parameter"
+>
+  <longdesc>
+    This is an agent with method parameter for pcs tests
+  </longdesc>
+  <parameters>
+    <parameter name="method" unique="0" required="0">
+      <getopt mixed="-m, --method=[method]" />
+      <content type="select" default="onoff"  >
+        <option value="onoff" />
+        <option value="cycle" />
+      </content>
+      <shortdesc lang="en">Method to fence</shortdesc>
+    </parameter>
+  </parameters>
+  <actions>
+    <action name="null"/>
+    <action name="on"/>
+    <action name="off"/>
+    <action name="reboot"/>
+    <action name="metadata"/>
+    <action name="status"/>
+    <action name="monitor"/>
+    <action name="list"/>
+    <action name="list-status"/>
+    <action name="stop" timeout="20s"/>
+    <action name="start" timeout="20s"/>
+    <action name="validate-all" />
+  </actions>
+</resource-agent>

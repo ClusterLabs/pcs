@@ -26,7 +26,6 @@ def get_arg_values(argv, name):
 
 
 def main():
-    # pylint: disable=too-many-branches
     argv = sys.argv[1:]
     if not argv:
         raise AssertionError()
@@ -52,10 +51,11 @@ def main():
             "ocf:pacemaker:remote",
             "ocf:pacemaker:Stateful",
             "ocf:pacemaker:SystemHealth",
-            "stonith:fence_apc",
-            "stonith:fence_ilo",
-            "stonith:fence_scsi",
-            "stonith:fence_xvm",
+            "stonith:fence_pcsmock_action",
+            "stonith:fence_pcsmock_method",
+            "stonith:fence_pcsmock_minimal",
+            "stonith:fence_pcsmock_params",
+            "stonith:fence_pcsmock_unfencing",
             "systemd:test@a:b",
         )
         # known_agents_map = {item.lower()}
@@ -63,21 +63,11 @@ def main():
             write_local_file_to_stdout(
                 "{}_metadata.xml".format(arg.replace(":", "__"))
             )
-        elif arg == "ocf:pacemaker:nonexistent":
-            sys.stderr.write(
-                "Metadata query for ocf:pacemaker:nonexistent failed: "
-                "Input/output error\n"
-            )
-            raise SystemExit(5)
-        elif arg == "stonith:fence_noexist":
-            sys.stderr.write(
-                "Agent fence_noexist not found or does not support meta-data: "
-                "Invalid argument (22)\nMetadata query for "
-                "stonith:fence_noexist failed: Input/output error\n"
-            )
-            raise SystemExit(5)
         else:
-            raise AssertionError()
+            sys.stderr.write(
+                "pcs mock error message: unable to load agent metadata"
+            )
+            raise SystemExit(1)
     elif arg in option_file_map:
         if argv:
             raise AssertionError()
@@ -100,7 +90,7 @@ def main():
         is_invalid = "fake=is_invalid=True" in argv
         output = ""
         if is_invalid:
-            output = """<output source="stderr">Validation failure</output>"""
+            output = """<output source="stderr">pcsmock validation failure</output>"""
         stdout = """
             <pacemaker-result api-version="2.15" request="{cmd_str}">
               <resource-agent-action action="validate" class="{standard}" type="{agent_type}"{provider_str}>

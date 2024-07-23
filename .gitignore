@@ -33,6 +33,7 @@ pcs_test/smoke.sh
 pcs_test/tools/bin_mock/pcmk/crm_resource
 pcs_test/tools/bin_mock/pcmk/pacemaker_metadata
 pcs_test/tools/bin_mock/pcmk/pacemaker-fenced
+pcs_test/tools/bin_mock/pcmk/stonith_admin
 pcs_test/resources/*.tmp
 pcs_test/resources/temp*.xml
 pcs_test/resources/temp*

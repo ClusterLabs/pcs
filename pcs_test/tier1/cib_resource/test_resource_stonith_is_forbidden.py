@@ -54,7 +54,7 @@ class ResourceStonithIsForbidden(
 
     def test_rsc_create(self):
         self.assert_pcs_fail(
-            "resource create S1 stonith:fence_xvm".split(),
+            "resource create S1 stonith:fence_pcsmock_minimal".split(),
             stderr_full=(
                 "Error: This command does not accept stonith resource. "
                 "Use 'pcs stonith create' command instead.\n"
@@ -64,7 +64,7 @@ class ResourceStonithIsForbidden(
 
     def test_rsc_create_in_bundle(self):
         self.assert_pcs_fail(
-            "resource create S1 stonith:fence_xvm bundle B".split(),
+            "resource create S1 stonith:fence_pcsmock_minimal bundle B".split(),
             stderr_full=(
                 "Error: This command does not accept stonith resource. "
                 "Use 'pcs stonith create' command instead.\n"
@@ -74,7 +74,7 @@ class ResourceStonithIsForbidden(
 
     def test_rsc_create_in_clone(self):
         self.assert_pcs_fail(
-            "resource create S1 stonith:fence_xvm clone".split(),
+            "resource create S1 stonith:fence_pcsmock_minimal clone".split(),
             stderr_full=(
                 "Error: This command does not accept stonith resource. "
                 "Use 'pcs stonith create' command instead.\n"
@@ -84,7 +84,7 @@ class ResourceStonithIsForbidden(
 
     def test_rsc_create_in_group(self):
         self.assert_pcs_fail(
-            "resource create S1 stonith:fence_xvm group G --future".split(),
+            "resource create S1 stonith:fence_pcsmock_minimal group G --future".split(),
             stderr_full=(
                 "Error: This command does not accept stonith resource. "
                 "Use 'pcs stonith create' command instead.\n"

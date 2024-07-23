@@ -5,6 +5,7 @@ from unittest import TestCase
 from pcs import settings
 
 from pcs_test.tools.assertions import AssertPcsMixin
+from pcs_test.tools.bin_mock import get_mock_settings
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import (
     get_tmp_file,
@@ -26,6 +27,9 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
         self.temp_cib = get_tmp_file("tier0_statust_stonith_warning")
         write_file_to_tmpfile(self.empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
+        self.pcs_runner.mock_settings = get_mock_settings(
+            "crm_resource_exec", "stonith_admin_exec"
+        )
 
     def tearDown(self):
         self.temp_cib.close()
@@ -33,8 +37,7 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
     def fixture_stonith_action(self):
         self.assert_pcs_success(
             (
-                "stonith create Sa fence_apc ip=i username=u action=reboot "
-                "--force"
+                "stonith create Sa fence_pcsmock_action action=reboot --force"
             ).split(),
             stderr_start=(
                 "Warning: stonith option 'action' is deprecated and might be "
@@ -44,15 +47,8 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
         )
 
     def fixture_stonith_cycle(self):
-        self.assert_pcs_success_ignore_output(
-            (
-                "stonith",
-                "create",
-                "Sc",
-                "fence_ipmilan",
-                "method=cycle",
-                "--force",
-            )
+        self.assert_pcs_success(
+            "stonith create Sc fence_pcsmock_method method=cycle".split()
         )
 
     def fixture_resource(self):

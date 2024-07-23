@@ -1,0 +1,22 @@
+<resource-agent
+  name="fence_pcsmock_minimal"
+  shortdesc="Mock agent for pcs tests - minimal agent"
+>
+  <longdesc>
+    This is a minimalistic agent for pcs tests
+  </longdesc>
+  <actions>
+    <action name="null"/>
+    <action name="on"/>
+    <action name="off"/>
+    <action name="reboot"/>
+    <action name="metadata"/>
+    <action name="status"/>
+    <action name="monitor"/>
+    <action name="list"/>
+    <action name="list-status"/>
+    <action name="stop" timeout="20s"/>
+    <action name="start" timeout="20s"/>
+    <action name="validate-all" />
+  </actions>
+</resource-agent>
