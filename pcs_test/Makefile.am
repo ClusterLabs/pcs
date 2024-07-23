@@ -403,7 +403,6 @@ EXTRA_DIST		= \
 			  tools/bin_mock/__init__.py \
 			  tools/bin_mock/pcmk/crm_resource.d/list_agents_ocf__heartbeat \
 			  tools/bin_mock/pcmk/crm_resource.d/list_agents_ocf__pacemaker \
-			  tools/bin_mock/pcmk/crm_resource.d/list_agents_stonith \
 			  tools/bin_mock/pcmk/crm_resource.d/list_ocf_providers \
 			  tools/bin_mock/pcmk/crm_resource.d/list_standards \
 			  tools/bin_mock/pcmk/crm_resource.d/lsb__network_metadata.xml \
