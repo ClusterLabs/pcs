@@ -1,0 +1,107 @@
+<resource-agent
+  name="fence_pcsmock_params"
+  shortdesc="Mock agent for pcs tests - agent with various params"
+>
+  <longdesc>
+    This is an agent with params for pcs tests
+  </longdesc>
+  <parameters>
+    <parameter name="action" unique="0" required="1">
+      <getopt mixed="-o, --action=[action]"/>
+      <content type="string" default="reboot"/>
+      <shortdesc lang="en">
+        Fencing action
+      </shortdesc>
+    </parameter>
+    <parameter name="ip" unique="0" required="1" obsoletes="ipaddr">
+      <getopt mixed="-a, --ip=[ip]"/>
+      <content type="string"/>
+      <shortdesc lang="en">
+        IP address or hostname of fencing device
+      </shortdesc>
+    </parameter>
+    <parameter name="ipaddr" unique="0" required="1" deprecated="1">
+      <getopt mixed="-a, --ip=[ip]"/>
+      <content type="string"/>
+      <shortdesc lang="en">
+        IP address or hostname of fencing device
+      </shortdesc>
+    </parameter>
+    <parameter name="login" unique="0" required="1" deprecated="1">
+      <getopt mixed="-l, --username=[name]"/>
+      <content type="string"/>
+      <shortdesc lang="en">
+        Login name
+      </shortdesc>
+    </parameter>
+    <parameter name="passwd" unique="0" required="0" deprecated="1">
+      <getopt mixed="-p, --password=[password]"/>
+      <content type="string"/>
+      <shortdesc lang="en">
+        Login password or passphrase
+      </shortdesc>
+    </parameter>
+    <parameter name="password" unique="0" required="0" obsoletes="passwd">
+      <getopt mixed="-p, --password=[password]"/>
+      <content type="string"/>
+      <shortdesc lang="en">
+        Login password or passphrase
+      </shortdesc>
+    </parameter>
+    <parameter name="secure" unique="0" required="0" deprecated="1">
+      <getopt mixed="-x, --ssh"/>
+      <content type="boolean"/>
+      <shortdesc lang="en">
+        Use SSH connection
+      </shortdesc>
+    </parameter>
+    <parameter name="ssh" unique="0" required="0" obsoletes="secure">
+      <getopt mixed="-x, --ssh"/>
+      <content type="boolean"/>
+      <shortdesc lang="en">
+        Use SSH connection
+      </shortdesc>
+    </parameter>
+    <parameter name="username" unique="0" required="1" obsoletes="login">
+      <getopt mixed="-l, --username=[name]"/>
+      <content type="string"/>
+      <shortdesc lang="en">
+        Login name
+      </shortdesc>
+    </parameter>
+    <parameter name="verbose" unique="0" required="0">
+      <getopt mixed="-v, --verbose"/>
+      <content type="boolean"/>
+      <shortdesc lang="en">
+        Verbose mode
+      </shortdesc>
+    </parameter>
+    <parameter name="debug" unique="0" required="0" deprecated="1">
+      <getopt mixed="-D, --debug-file=[debugfile]"/>
+      <content type="string"/>
+      <shortdesc lang="en">
+        Write debug information to given file
+      </shortdesc>
+    </parameter>
+    <parameter name="debug_file" unique="0" required="0" obsoletes="debug">
+      <getopt mixed="-D, --debug-file=[debugfile]"/>
+      <content type="string"/>
+      <shortdesc lang="en">
+        Write debug information to given file
+      </shortdesc>
+    </parameter>
+  </parameters>
+  <actions>
+    <action name="on"/>
+    <action name="off"/>
+    <action name="reboot"/>
+    <action name="metadata"/>
+    <action name="status"/>
+    <action name="monitor"/>
+    <action name="list"/>
+    <action name="list-status"/>
+    <action name="stop" timeout="20s"/>
+    <action name="start" timeout="20s"/>
+    <action name="validate-all" />
+  </actions>
+</resource-agent>

@@ -8,10 +8,14 @@ CRM_RESOURCE_BIN = os.path.abspath(
 PACEMAKER_FENCED_BIN = os.path.abspath(
     os.path.join(BIN_MOCK_DIR, "pcmk/pacemaker-fenced")
 )
+STONITH_ADMIN_BIN = os.path.abspath(
+    os.path.join(BIN_MOCK_DIR, "pcmk/stonith_admin")
+)
 
 MOCK_SETTINGS = {
     "crm_resource_exec": CRM_RESOURCE_BIN,
     "pacemaker_fenced_exec": PACEMAKER_FENCED_BIN,
+    "stonith_admin_exec": STONITH_ADMIN_BIN,
 }
 
 

@@ -629,6 +629,7 @@ AC_CONFIG_FILES([pcs_test/pcs_for_tests], [chmod +x pcs_test/pcs_for_tests])
 AC_CONFIG_FILES([pcs_test/suite], [chmod +x pcs_test/suite])
 AC_CONFIG_FILES([pcs_test/tools/bin_mock/pcmk/crm_resource], [chmod +x pcs_test/tools/bin_mock/pcmk/crm_resource])
 AC_CONFIG_FILES([pcs_test/tools/bin_mock/pcmk/pacemaker-fenced], [chmod +x pcs_test/tools/bin_mock/pcmk/pacemaker-fenced])
+AC_CONFIG_FILES([pcs_test/tools/bin_mock/pcmk/stonith_admin], [chmod +x pcs_test/tools/bin_mock/pcmk/stonith_admin])
 AC_CONFIG_FILES([pcsd/pcsd], [chmod +x pcsd/pcsd])
 AC_CONFIG_FILES([scripts/pcsd.sh], [chmod +x scripts/pcsd.sh])
 

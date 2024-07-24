@@ -34,7 +34,7 @@ FIXTURE_PRIMITIVE_FOR_CLONE = _get_primitive_fixture("C")
 FIXTURE_CLONE = f"""<clone id="C-clone">{FIXTURE_PRIMITIVE_FOR_CLONE}</clone>"""
 
 FIXTURE_STONITH_FOR_CLONE = """
-    <primitive class="stonith" id="fence-device" type="fence_xvm">
+    <primitive class="stonith" id="fence-device" type="fence_pcsmock_minimal">
         <operations>
           <op id="fence-device-monitor-interval-60s" interval="60s"
               name="monitor"/>

@@ -138,8 +138,8 @@ class ResourceDescribe(TestCase, AssertPcsMixin):
             "resource describe ocf:pacemaker:nonexistent".split(),
             (
                 "Error: Agent 'ocf:pacemaker:nonexistent' is not installed or does "
-                "not provide valid metadata: Metadata query for "
-                "ocf:pacemaker:nonexistent failed: Input/output error\n"
+                "not provide valid metadata: "
+                "pcs mock error message: unable to load agent metadata\n"
                 + ERRORS_HAVE_OCCURRED
             ),
         )
@@ -5018,8 +5018,8 @@ class UpdateInstanceAttrs(
         agent = "ocf:pacemaker:nonexistent"
         message = (
             f"Agent '{agent}' is not installed or does "
-            "not provide valid metadata: Metadata query for "
-            f"{agent} failed: Input/output error"
+            "not provide valid metadata: "
+            "pcs mock error message: unable to load agent metadata"
         )
         self.assert_pcs_success(
             f"resource create --force D0 {agent}".split(),

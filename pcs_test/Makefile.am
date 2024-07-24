@@ -415,18 +415,19 @@ EXTRA_DIST		= \
 			  tools/bin_mock/pcmk/crm_resource.d/ocf__pacemaker__remote_metadata.xml \
 			  tools/bin_mock/pcmk/crm_resource.d/ocf__pacemaker__Stateful_metadata.xml \
 			  tools/bin_mock/pcmk/crm_resource.d/ocf__pacemaker__SystemHealth_metadata.xml \
-			  tools/bin_mock/pcmk/crm_resource.d/stonith__fence_apc_metadata.xml \
-			  tools/bin_mock/pcmk/crm_resource.d/stonith__fence_ilo_metadata.xml \
-			  tools/bin_mock/pcmk/crm_resource.d/stonith__fence_scsi_metadata.xml \
-			  tools/bin_mock/pcmk/crm_resource.d/stonith__fence_xvm_metadata.xml \
+			  tools/bin_mock/pcmk/crm_resource.d/stonith__fence_pcsmock_action_metadata.xml \
+			  tools/bin_mock/pcmk/crm_resource.d/stonith__fence_pcsmock_method_metadata.xml \
+			  tools/bin_mock/pcmk/crm_resource.d/stonith__fence_pcsmock_minimal_metadata.xml \
+			  tools/bin_mock/pcmk/crm_resource.d/stonith__fence_pcsmock_params_metadata.xml \
+			  tools/bin_mock/pcmk/crm_resource.d/stonith__fence_pcsmock_unfencing_metadata.xml \
 			  tools/bin_mock/pcmk/crm_resource.d/systemd__test@a__b_metadata.xml \
 			  tools/bin_mock/pcmk/crm_resource_mock.py \
-			  tools/bin_mock/pcmk/pacemaker-fenced \
 			  tools/bin_mock/pcmk/pacemaker_metadata.d/pacemaker_based.xml \
 			  tools/bin_mock/pcmk/pacemaker_metadata.d/pacemaker_controld.xml \
 			  tools/bin_mock/pcmk/pacemaker_metadata.d/pacemaker_fenced.xml \
 			  tools/bin_mock/pcmk/pacemaker_metadata.d/pacemaker_schedulerd.xml \
 			  tools/bin_mock/pcmk/pacemaker_metadata.py \
+			  tools/bin_mock/pcmk/stonith_admin_mock.py \
 			  tools/case_analysis.py \
 			  tools/check/__init__.py \
 			  tools/check/test_misc.py \

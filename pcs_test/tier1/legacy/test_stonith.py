@@ -40,12 +40,12 @@ class StonithDescribeTest(TestCase, AssertPcsMixin):
 
     def test_success(self):
         self.assert_pcs_success(
-            "stonith describe fence_apc".split(),
+            "stonith describe fence_pcsmock_params".split(),
             stdout_start=dedent(
                 """\
-                fence_apc - Fence agent for APC over telnet/ssh
+                fence_pcsmock_params - Mock agent for pcs tests - agent with various params
 
-                fence_apc is an I/O Fencing agent which can be used with the APC network power switch. It logs into device via telnet/ssh  and reboots a specified outlet. Lengthy telnet/ssh connections should be avoided while a GFS cluster  is  running  because  the  connection will block any necessary fencing actions.
+                This is an agent with params for pcs tests
 
                 Stonith options:
                 """
@@ -54,7 +54,7 @@ class StonithDescribeTest(TestCase, AssertPcsMixin):
 
     def test_full(self):
         self.assert_pcs_success(
-            "stonith describe fence_apc --full".split(),
+            "stonith describe fence_pcsmock_params --full".split(),
             stdout_regexp=".*pcmk_list_retries.*",
         )
 
@@ -63,10 +63,9 @@ class StonithDescribeTest(TestCase, AssertPcsMixin):
             "stonith describe fence_noexist".split(),
             (
                 "Error: Agent 'stonith:fence_noexist' is not installed or does not "
-                "provide valid metadata: Agent fence_noexist not found or does "
-                "not support meta-data: Invalid argument (22), "
-                "Metadata query for stonith:fence_noexist failed: Input/output "
-                "error\n" + ERRORS_HAVE_OCCURRED
+                "provide valid metadata: "
+                "pcs mock error message: unable to load agent metadata\n"
+                + ERRORS_HAVE_OCCURRED
             ),
         )
 
@@ -85,17 +84,17 @@ class StonithDescribeTest(TestCase, AssertPcsMixin):
     def test_pcsd_interface(self):
         self.maxDiff = None
         stdout, stderr, returncode = self.pcs_runner.run(
-            "stonith get_fence_agent_info stonith:fence_apc".split()
+            "stonith get_fence_agent_info stonith:fence_pcsmock_params".split()
         )
         self.assertEqual(
             json.loads(stdout),
             {
-                "name": "stonith:fence_apc",
+                "name": "stonith:fence_pcsmock_params",
                 "standard": "stonith",
                 "provider": None,
-                "type": "fence_apc",
-                "shortdesc": "Fence agent for APC over telnet/ssh",
-                "longdesc": "fence_apc is an I/O Fencing agent which can be used with the APC network power switch. It logs into device via telnet/ssh  and reboots a specified outlet. Lengthy telnet/ssh connections should be avoided while a GFS cluster  is  running  because  the  connection will block any necessary fencing actions.",
+                "type": "fence_pcsmock_params",
+                "shortdesc": "Mock agent for pcs tests - agent with various params",
+                "longdesc": "This is an agent with params for pcs tests",
                 "parameters": [
                     {
                         "name": "action",
@@ -111,81 +110,6 @@ class StonithDescribeTest(TestCase, AssertPcsMixin):
                             "pcmk_off_action",
                             "pcmk_reboot_action",
                         ],
-                        "deprecated_desc": None,
-                        "unique_group": None,
-                        "reloadable": False,
-                    },
-                    {
-                        "name": "cmd_prompt",
-                        "shortdesc": "Force Python regex for command prompt",
-                        "longdesc": None,
-                        "type": "string",
-                        "default": "['\\n>', '\\napc>']",
-                        "enum_values": None,
-                        "required": False,
-                        "advanced": False,
-                        "deprecated": True,
-                        "deprecated_by": ["command_prompt"],
-                        "deprecated_desc": None,
-                        "unique_group": None,
-                        "reloadable": False,
-                    },
-                    {
-                        "name": "command_prompt",
-                        "shortdesc": "Force Python regex for command prompt",
-                        "longdesc": None,
-                        "type": "string",
-                        "default": "['\\n>', '\\napc>']",
-                        "enum_values": None,
-                        "required": False,
-                        "advanced": False,
-                        "deprecated": False,
-                        "deprecated_by": [],
-                        "deprecated_desc": None,
-                        "unique_group": None,
-                        "reloadable": False,
-                    },
-                    {
-                        "name": "identity_file",
-                        "shortdesc": "Identity file (private key) for SSH",
-                        "longdesc": None,
-                        "type": "string",
-                        "default": None,
-                        "enum_values": None,
-                        "required": False,
-                        "advanced": False,
-                        "deprecated": False,
-                        "deprecated_by": [],
-                        "deprecated_desc": None,
-                        "unique_group": None,
-                        "reloadable": False,
-                    },
-                    {
-                        "name": "inet4_only",
-                        "shortdesc": "Forces agent to use IPv4 addresses only",
-                        "longdesc": None,
-                        "type": "boolean",
-                        "default": None,
-                        "enum_values": None,
-                        "required": False,
-                        "advanced": False,
-                        "deprecated": False,
-                        "deprecated_by": [],
-                        "deprecated_desc": None,
-                        "unique_group": None,
-                        "reloadable": False,
-                    },
-                    {
-                        "name": "inet6_only",
-                        "shortdesc": "Forces agent to use IPv6 addresses only",
-                        "longdesc": None,
-                        "type": "boolean",
-                        "default": None,
-                        "enum_values": None,
-                        "required": False,
-                        "advanced": False,
-                        "deprecated": False,
-                        "deprecated_by": [],
                         "deprecated_desc": None,
                         "unique_group": None,
                         "reloadable": False,
@@ -221,21 +145,6 @@ class StonithDescribeTest(TestCase, AssertPcsMixin):
                         "reloadable": False,
                     },
                     {
-                        "name": "ipport",
-                        "shortdesc": "TCP/UDP port to use for connection with device",
-                        "longdesc": None,
-                        "type": "integer",
-                        "default": "23",
-                        "enum_values": None,
-                        "required": False,
-                        "advanced": False,
-                        "deprecated": False,
-                        "deprecated_by": [],
-                        "deprecated_desc": None,
-                        "unique_group": None,
-                        "reloadable": False,
-                    },
-                    {
                         "name": "login",
                         "shortdesc": "Login name",
                         "longdesc": None,
@@ -266,21 +175,6 @@ class StonithDescribeTest(TestCase, AssertPcsMixin):
                         "reloadable": False,
                     },
                     {
-                        "name": "passwd_script",
-                        "shortdesc": "Script to run to retrieve password",
-                        "longdesc": None,
-                        "type": "string",
-                        "default": None,
-                        "enum_values": None,
-                        "required": False,
-                        "advanced": False,
-                        "deprecated": True,
-                        "deprecated_by": ["password_script"],
-                        "deprecated_desc": None,
-                        "unique_group": None,
-                        "reloadable": False,
-                    },
-                    {
                         "name": "password",
                         "shortdesc": "Login password or passphrase",
                         "longdesc": None,
@@ -291,51 +185,6 @@ class StonithDescribeTest(TestCase, AssertPcsMixin):
                         "advanced": False,
                         "deprecated": False,
                         "deprecated_by": [],
-                        "deprecated_desc": None,
-                        "unique_group": None,
-                        "reloadable": False,
-                    },
-                    {
-                        "name": "password_script",
-                        "shortdesc": "Script to run to retrieve password",
-                        "longdesc": None,
-                        "type": "string",
-                        "default": None,
-                        "enum_values": None,
-                        "required": False,
-                        "advanced": False,
-                        "deprecated": False,
-                        "deprecated_by": [],
-                        "deprecated_desc": None,
-                        "unique_group": None,
-                        "reloadable": False,
-                    },
-                    {
-                        "name": "plug",
-                        "shortdesc": "Physical plug number on device, UUID or identification of machine",
-                        "longdesc": None,
-                        "type": "string",
-                        "default": None,
-                        "enum_values": None,
-                        "required": False,
-                        "advanced": False,
-                        "deprecated": False,
-                        "deprecated_by": [],
-                        "deprecated_desc": None,
-                        "unique_group": None,
-                        "reloadable": False,
-                    },
-                    {
-                        "name": "port",
-                        "shortdesc": "Physical plug number on device, UUID or identification of machine",
-                        "longdesc": None,
-                        "type": "string",
-                        "default": None,
-                        "enum_values": None,
-                        "required": False,
-                        "advanced": False,
-                        "deprecated": True,
-                        "deprecated_by": ["plug"],
                         "deprecated_desc": None,
                         "unique_group": None,
                         "reloadable": False,
@@ -371,36 +220,6 @@ class StonithDescribeTest(TestCase, AssertPcsMixin):
                         "reloadable": False,
                     },
                     {
-                        "name": "ssh_options",
-                        "shortdesc": "SSH options to use",
-                        "longdesc": None,
-                        "type": "string",
-                        "default": "-1 -c blowfish",
-                        "enum_values": None,
-                        "required": False,
-                        "advanced": False,
-                        "deprecated": False,
-                        "deprecated_by": [],
-                        "deprecated_desc": None,
-                        "unique_group": None,
-                        "reloadable": False,
-                    },
-                    {
-                        "name": "switch",
-                        "shortdesc": "Physical switch number on device",
-                        "longdesc": None,
-                        "type": "string",
-                        "default": None,
-                        "enum_values": None,
-                        "required": False,
-                        "advanced": False,
-                        "deprecated": False,
-                        "deprecated_by": [],
-                        "deprecated_desc": None,
-                        "unique_group": None,
-                        "reloadable": False,
-                    },
-                    {
                         "name": "username",
                         "shortdesc": "Login name",
                         "longdesc": None,
@@ -408,21 +227,6 @@ class StonithDescribeTest(TestCase, AssertPcsMixin):
                         "default": None,
                         "enum_values": None,
                         "required": True,
-                        "advanced": False,
-                        "deprecated": False,
-                        "deprecated_by": [],
-                        "deprecated_desc": None,
-                        "unique_group": None,
-                        "reloadable": False,
-                    },
-                    {
-                        "name": "quiet",
-                        "shortdesc": "Disable logging to stderr. Does not affect --verbose or --debug-file or logging to syslog.",
-                        "longdesc": None,
-                        "type": "boolean",
-                        "default": None,
-                        "enum_values": None,
-                        "required": False,
                         "advanced": False,
                         "deprecated": False,
                         "deprecated_by": [],
@@ -466,141 +270,6 @@ class StonithDescribeTest(TestCase, AssertPcsMixin):
                         "longdesc": None,
                         "type": "string",
                         "default": None,
-                        "enum_values": None,
-                        "required": False,
-                        "advanced": False,
-                        "deprecated": False,
-                        "deprecated_by": [],
-                        "deprecated_desc": None,
-                        "unique_group": None,
-                        "reloadable": False,
-                    },
-                    {
-                        "name": "separator",
-                        "shortdesc": "Separator for CSV created by 'list' operation",
-                        "longdesc": None,
-                        "type": "string",
-                        "default": ",",
-                        "enum_values": None,
-                        "required": False,
-                        "advanced": False,
-                        "deprecated": False,
-                        "deprecated_by": [],
-                        "deprecated_desc": None,
-                        "unique_group": None,
-                        "reloadable": False,
-                    },
-                    {
-                        "name": "delay",
-                        "shortdesc": "Wait X seconds before fencing is started",
-                        "longdesc": None,
-                        "type": "second",
-                        "default": "0",
-                        "enum_values": None,
-                        "required": False,
-                        "advanced": False,
-                        "deprecated": False,
-                        "deprecated_by": [],
-                        "deprecated_desc": None,
-                        "unique_group": None,
-                        "reloadable": False,
-                    },
-                    {
-                        "name": "login_timeout",
-                        "shortdesc": "Wait X seconds for cmd prompt after login",
-                        "longdesc": None,
-                        "type": "second",
-                        "default": "5",
-                        "enum_values": None,
-                        "required": False,
-                        "advanced": False,
-                        "deprecated": False,
-                        "deprecated_by": [],
-                        "deprecated_desc": None,
-                        "unique_group": None,
-                        "reloadable": False,
-                    },
-                    {
-                        "name": "power_timeout",
-                        "shortdesc": "Test X seconds for status change after ON/OFF",
-                        "longdesc": None,
-                        "type": "second",
-                        "default": "20",
-                        "enum_values": None,
-                        "required": False,
-                        "advanced": False,
-                        "deprecated": False,
-                        "deprecated_by": [],
-                        "deprecated_desc": None,
-                        "unique_group": None,
-                        "reloadable": False,
-                    },
-                    {
-                        "name": "power_wait",
-                        "shortdesc": "Wait X seconds after issuing ON/OFF",
-                        "longdesc": None,
-                        "type": "second",
-                        "default": "0",
-                        "enum_values": None,
-                        "required": False,
-                        "advanced": False,
-                        "deprecated": False,
-                        "deprecated_by": [],
-                        "deprecated_desc": None,
-                        "unique_group": None,
-                        "reloadable": False,
-                    },
-                    {
-                        "name": "shell_timeout",
-                        "shortdesc": "Wait X seconds for cmd prompt after issuing command",
-                        "longdesc": None,
-                        "type": "second",
-                        "default": "3",
-                        "enum_values": None,
-                        "required": False,
-                        "advanced": False,
-                        "deprecated": False,
-                        "deprecated_by": [],
-                        "deprecated_desc": None,
-                        "unique_group": None,
-                        "reloadable": False,
-                    },
-                    {
-                        "name": "retry_on",
-                        "shortdesc": "Count of attempts to retry power on",
-                        "longdesc": None,
-                        "type": "integer",
-                        "default": "1",
-                        "enum_values": None,
-                        "required": False,
-                        "advanced": False,
-                        "deprecated": False,
-                        "deprecated_by": [],
-                        "deprecated_desc": None,
-                        "unique_group": None,
-                        "reloadable": False,
-                    },
-                    {
-                        "name": "ssh_path",
-                        "shortdesc": "Path to ssh binary",
-                        "longdesc": None,
-                        "type": "string",
-                        "default": "/usr/bin/ssh",
-                        "enum_values": None,
-                        "required": False,
-                        "advanced": False,
-                        "deprecated": False,
-                        "deprecated_by": [],
-                        "deprecated_desc": None,
-                        "unique_group": None,
-                        "reloadable": False,
-                    },
-                    {
-                        "name": "telnet_path",
-                        "shortdesc": "Path to telnet binary",
-                        "longdesc": None,
-                        "type": "string",
-                        "default": "/usr/bin/telnet",
                         "enum_values": None,
                         "required": False,
                         "advanced": False,
@@ -1018,7 +687,27 @@ class StonithDescribeTest(TestCase, AssertPcsMixin):
                         "on_target": False,
                     },
                     {
+                        "name": "metadata",
+                        "timeout": None,
+                        "interval": None,
+                        "role": None,
+                        "start-delay": None,
+                        "OCF_CHECK_LEVEL": None,
+                        "automatic": False,
+                        "on_target": False,
+                    },
+                    {
                         "name": "status",
+                        "timeout": None,
+                        "interval": None,
+                        "role": None,
+                        "start-delay": None,
+                        "OCF_CHECK_LEVEL": None,
+                        "automatic": False,
+                        "on_target": False,
+                    },
+                    {
+                        "name": "monitor",
                         "timeout": None,
                         "interval": None,
                         "role": None,
@@ -1048,46 +737,6 @@ class StonithDescribeTest(TestCase, AssertPcsMixin):
                         "on_target": False,
                     },
                     {
-                        "name": "monitor",
-                        "timeout": None,
-                        "interval": None,
-                        "role": None,
-                        "start-delay": None,
-                        "OCF_CHECK_LEVEL": None,
-                        "automatic": False,
-                        "on_target": False,
-                    },
-                    {
-                        "name": "metadata",
-                        "timeout": None,
-                        "interval": None,
-                        "role": None,
-                        "start-delay": None,
-                        "OCF_CHECK_LEVEL": None,
-                        "automatic": False,
-                        "on_target": False,
-                    },
-                    {
-                        "name": "manpage",
-                        "timeout": None,
-                        "interval": None,
-                        "role": None,
-                        "start-delay": None,
-                        "OCF_CHECK_LEVEL": None,
-                        "automatic": False,
-                        "on_target": False,
-                    },
-                    {
-                        "name": "validate-all",
-                        "timeout": None,
-                        "interval": None,
-                        "role": None,
-                        "start-delay": None,
-                        "OCF_CHECK_LEVEL": None,
-                        "automatic": False,
-                        "on_target": False,
-                    },
-                    {
                         "name": "stop",
                         "timeout": "20s",
                         "interval": None,
@@ -1100,6 +749,16 @@ class StonithDescribeTest(TestCase, AssertPcsMixin):
                     {
                         "name": "start",
                         "timeout": "20s",
+                        "interval": None,
+                        "role": None,
+                        "start-delay": None,
+                        "OCF_CHECK_LEVEL": None,
+                        "automatic": False,
+                        "on_target": False,
+                    },
+                    {
+                        "name": "validate-all",
+                        "timeout": None,
                         "interval": None,
                         "role": None,
                         "start-delay": None,
@@ -1133,7 +792,9 @@ class StonithTest(TestCase, AssertPcsMixin):
         self.temp_corosync_conf = get_tmp_file("tier1_test_stonith")
         write_file_to_tmpfile(rc("corosync.conf"), self.temp_corosync_conf)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
+        self.pcs_runner.mock_settings = get_mock_settings(
+            "crm_resource_exec", "stonith_admin_exec"
+        )
         self.pcs_runner.mock_settings["corosync_conf_file"] = (
             self.temp_corosync_conf.name
         )
@@ -1142,16 +803,14 @@ class StonithTest(TestCase, AssertPcsMixin):
         self.temp_cib.close()
         self.temp_corosync_conf.close()
 
-    @skip_unless_crm_rule()
-    def test_stonith_creation(self):
+    def test_stonith_creation_nonexistent_agent(self):
         self.assert_pcs_fail(
             "stonith create test1 fence_noexist".split(),
             (
                 "Error: Agent 'stonith:fence_noexist' is not installed or does not "
-                "provide valid metadata: Agent fence_noexist not found or does "
-                "not support meta-data: Invalid argument (22), "
-                "Metadata query for stonith:fence_noexist failed: Input/output "
-                "error, use --force to override\n" + ERRORS_HAVE_OCCURRED
+                "provide valid metadata: "
+                "pcs mock error message: unable to load agent metadata, "
+                "use --force to override\n" + ERRORS_HAVE_OCCURRED
             ),
         )
 
@@ -1159,186 +818,8 @@ class StonithTest(TestCase, AssertPcsMixin):
             "stonith create test1 fence_noexist --force".split(),
             stderr_full=(
                 "Warning: Agent 'stonith:fence_noexist' is not installed or does not "
-                "provide valid metadata: Agent fence_noexist not found or does "
-                "not support meta-data: Invalid argument (22), "
-                "Metadata query for stonith:fence_noexist failed: Input/output "
-                "error\n"
-            ),
-        )
-
-        self.assert_pcs_fail(
-            "stonith create test2 fence_apc".split(),
-            (
-                "Error: stonith option 'ip' or 'ipaddr' (deprecated) has to be "
-                "specified, use --force to override\n"
-                "Error: stonith option 'username' or 'login' (deprecated) has "
-                "to be specified, use --force to override\n"
-                + ERRORS_HAVE_OCCURRED
-            ),
-        )
-
-        self.assert_pcs_success(
-            "stonith create test2 fence_apc --force".split(),
-            stderr_start=(
-                "Warning: stonith option 'ip' or 'ipaddr' (deprecated) has to be "
-                "specified\n"
-                "Warning: stonith option 'username' or 'login' (deprecated) has to "
-                "be specified\n"
-            ),
-        )
-
-        self.assert_pcs_fail(
-            "stonith create test3 fence_apc bad_argument=test".split(),
-            stderr_start=(
-                "Error: invalid stonith option 'bad_argument', allowed options are:"
-            ),
-        )
-
-        self.assert_pcs_fail(
-            "stonith create test9 fence_apc pcmk_status_action=xxx".split(),
-            (
-                "Error: stonith option 'ip' or 'ipaddr' (deprecated) has to be "
-                "specified, use --force to override\n"
-                "Error: stonith option 'username' or 'login' (deprecated) has "
-                "to be specified, use --force to override\n"
-                + ERRORS_HAVE_OCCURRED
-            ),
-        )
-
-        self.assert_pcs_success(
-            "stonith create test9 fence_apc pcmk_status_action=xxx --force".split(),
-            stderr_start=(
-                "Warning: stonith option 'ip' or 'ipaddr' (deprecated) has to be "
-                "specified\n"
-                "Warning: stonith option 'username' or 'login' (deprecated) has to "
-                "be specified\n"
-            ),
-        )
-
-        self.assert_pcs_success(
-            "stonith config test9".split(),
-            dedent(
-                """\
-                Resource: test9 (class=stonith type=fence_apc)
-                  Attributes: test9-instance_attributes
-                    pcmk_status_action=xxx
-                  Operations:
-                    monitor: test9-monitor-interval-60s
-                      interval=60s
-                """
-            ),
-        )
-
-        self.assert_pcs_success(
-            "stonith delete test9".split(),
-            stderr_full="Deleting Resource - test9\n",
-        )
-
-        self.assert_pcs_fail(
-            "stonith create test3 fence_ilo ip=test".split(),
-            (
-                "Error: stonith option 'username' or 'login' (deprecated) has "
-                "to be specified, use --force to override\n"
-                + ERRORS_HAVE_OCCURRED
-            ),
-        )
-
-        self.assert_pcs_success(
-            "stonith create test3 fence_ilo ip=test --force".split(),
-            stderr_start=(
-                "Warning: stonith option 'username' or 'login' (deprecated) "
-                "has to be specified\n"
-            ),
-        )
-
-        # Testing that pcmk_host_check, pcmk_host_list & pcmk_host_map are
-        # allowed for stonith agents
-        self.assert_pcs_success(
-            (
-                "stonith create apc-fencing fence_apc ip=morph-apc username=apc "
-                "password=apc switch=1 "
-                "pcmk_host_map=buzz-01:1;buzz-02:2;buzz-03:3;buzz-04:4;buzz-05:5 "
-                "pcmk_host_check=static-list "
-                "pcmk_host_list=buzz-01,buzz-02,buzz-03,buzz-04,buzz-05"
-            ).split(),
-        )
-
-        self.assert_pcs_fail(
-            "resource config apc-fencing".split(),
-            (
-                "Warning: Unable to find resource 'apc-fencing'\n"
-                "Error: No resource found\n"
-            ),
-        )
-
-        self.assert_pcs_success(
-            "stonith config apc-fencing".split(),
-            dedent(
-                """\
-                Resource: apc-fencing (class=stonith type=fence_apc)
-                  Attributes: apc-fencing-instance_attributes
-                    ip=morph-apc
-                    password=apc
-                    pcmk_host_check=static-list
-                    pcmk_host_list=buzz-01,buzz-02,buzz-03,buzz-04,buzz-05
-                    pcmk_host_map=buzz-01:1;buzz-02:2;buzz-03:3;buzz-04:4;buzz-05:5
-                    switch=1
-                    username=apc
-                  Operations:
-                    monitor: apc-fencing-monitor-interval-60s
-                      interval=60s
-                """
-            ),
-        )
-
-        self.assert_pcs_success(
-            "stonith remove apc-fencing".split(),
-            stderr_full="Deleting Resource - apc-fencing\n",
-        )
-
-        self.assert_pcs_fail(
-            (
-                "stonith create apc-fencing fence_apc ip=morph-apc username=apc "
-                "--agent-validation"
-            ).split(),
-            stderr_start="Error: Validation result from agent",
-        )
-
-        self.assert_pcs_success(
-            (
-                "stonith create apc-fencing fence_apc ip=morph-apc username=apc "
-                "--agent-validation --force"
-            ).split(),
-            stderr_start="Warning: Validation result from agent",
-        )
-
-        self.assert_pcs_success(
-            "stonith remove apc-fencing".split(),
-            stderr_full="Deleting Resource - apc-fencing\n",
-        )
-
-        self.assert_pcs_fail(
-            "stonith update test3 bad_ipaddr=test username=login".split(),
-            stderr_regexp=(
-                "^Error: invalid stonith option 'bad_ipaddr', allowed options"
-                " are: [^\n]+, use --force to override\n$"
-            ),
-        )
-
-        self.assert_pcs_success(
-            "stonith update test3 username=testA --agent-validation".split(),
-            stderr_start="Warning: The resource was misconfigured before the update,",
-        )
-
-        self.assert_pcs_success(
-            "stonith config test2".split(),
-            dedent(
-                """\
-                Resource: test2 (class=stonith type=fence_apc)
-                  Operations:
-                    monitor: test2-monitor-interval-60s
-                      interval=60s
-                """
+                "provide valid metadata: "
+                "pcs mock error message: unable to load agent metadata\n"
             ),
         )
 
@@ -1350,14 +831,159 @@ class StonithTest(TestCase, AssertPcsMixin):
                   Operations:
                     monitor: test1-monitor-interval-60s
                       interval=60s
-                Resource: test2 (class=stonith type=fence_apc)
+                """
+            ),
+        )
+
+    def test_stonith_creation_pcmk_status_action(self):
+        self.assert_pcs_success(
+            "stonith create test9 fence_pcsmock_minimal pcmk_status_action=xxx".split(),
+        )
+
+        self.assert_pcs_success(
+            "stonith config test9".split(),
+            dedent(
+                """\
+                Resource: test9 (class=stonith type=fence_pcsmock_minimal)
+                  Attributes: test9-instance_attributes
+                    pcmk_status_action=xxx
+                  Operations:
+                    monitor: test9-monitor-interval-60s
+                      interval=60s
+                """
+            ),
+        )
+
+    def test_stonith_creation_pcmk_params(self):
+        # Testing that pcmk_host_check, pcmk_host_list & pcmk_host_map are
+        # allowed for stonith agents
+        self.assert_pcs_success(
+            (
+                "stonith create fencing fence_pcsmock_minimal "
+                "pcmk_host_map=buzz-01:1;buzz-02:2;buzz-03:3;buzz-04:4;buzz-05:5 "
+                "pcmk_host_check=static-list "
+                "pcmk_host_list=buzz-01,buzz-02,buzz-03,buzz-04,buzz-05"
+            ).split(),
+        )
+
+        self.assert_pcs_fail(
+            "resource config fencing".split(),
+            (
+                "Warning: Unable to find resource 'fencing'\n"
+                "Error: No resource found\n"
+            ),
+        )
+
+        self.assert_pcs_success(
+            "stonith config fencing".split(),
+            dedent(
+                """\
+                Resource: fencing (class=stonith type=fence_pcsmock_minimal)
+                  Attributes: fencing-instance_attributes
+                    pcmk_host_check=static-list
+                    pcmk_host_list=buzz-01,buzz-02,buzz-03,buzz-04,buzz-05
+                    pcmk_host_map=buzz-01:1;buzz-02:2;buzz-03:3;buzz-04:4;buzz-05:5
+                  Operations:
+                    monitor: fencing-monitor-interval-60s
+                      interval=60s
+                """
+            ),
+        )
+
+    def test_stonith_creation_pcmk_host_list(self):
+        self.assert_pcs_success(
+            [
+                "stonith",
+                "create",
+                "F1",
+                "fence_pcsmock_minimal",
+                "pcmk_host_list=nodea nodeb",
+            ],
+        )
+
+        self.assert_pcs_success(
+            "stonith config F1".split(),
+            dedent(
+                """\
+                Resource: F1 (class=stonith type=fence_pcsmock_minimal)
+                  Attributes: F1-instance_attributes
+                    pcmk_host_list="nodea nodeb"
+                  Operations:
+                    monitor: F1-monitor-interval-60s
+                      interval=60s
+                """
+            ),
+        )
+
+    def test_stonith_creation(self):
+        self.assert_pcs_fail(
+            "stonith create test2 fence_pcsmock_params".split(),
+            (
+                "Error: stonith option 'ip' or 'ipaddr' (deprecated) has to be "
+                "specified, use --force to override\n"
+                "Error: stonith option 'username' or 'login' (deprecated) has "
+                "to be specified, use --force to override\n"
+                + ERRORS_HAVE_OCCURRED
+            ),
+        )
+
+        self.assert_pcs_success(
+            "stonith create test2 fence_pcsmock_params --force".split(),
+            stderr_start=(
+                "Warning: stonith option 'ip' or 'ipaddr' (deprecated) has to be "
+                "specified\n"
+                "Warning: stonith option 'username' or 'login' (deprecated) has to "
+                "be specified\n"
+            ),
+        )
+
+        self.assert_pcs_fail(
+            "stonith create test3 fence_pcsmock_params bad_argument=test".split(),
+            stderr_start=(
+                "Error: invalid stonith option 'bad_argument', allowed options are:"
+            ),
+        )
+
+        self.assert_pcs_fail(
+            "stonith create test3 fence_pcsmock_params ip=test".split(),
+            (
+                "Error: stonith option 'username' or 'login' (deprecated) has "
+                "to be specified, use --force to override\n"
+                + ERRORS_HAVE_OCCURRED
+            ),
+        )
+
+        self.assert_pcs_success(
+            "stonith create test3 fence_pcsmock_params ip=test --force".split(),
+            stderr_start=(
+                "Warning: stonith option 'username' or 'login' (deprecated) "
+                "has to be specified\n"
+            ),
+        )
+
+        self.assert_pcs_success(
+            "stonith config test2".split(),
+            dedent(
+                """\
+                Resource: test2 (class=stonith type=fence_pcsmock_params)
                   Operations:
                     monitor: test2-monitor-interval-60s
                       interval=60s
-                Resource: test3 (class=stonith type=fence_ilo)
+                """
+            ),
+        )
+
+        self.assert_pcs_success(
+            "stonith config".split(),
+            dedent(
+                """\
+                Resource: test2 (class=stonith type=fence_pcsmock_params)
+                  Operations:
+                    monitor: test2-monitor-interval-60s
+                      interval=60s
+                Resource: test3 (class=stonith type=fence_pcsmock_params)
                   Attributes: test3-instance_attributes
                     ip=test
-                    username=testA
                   Operations:
                     monitor: test3-monitor-interval-60s
                       interval=60s
@@ -1370,23 +996,16 @@ class StonithTest(TestCase, AssertPcsMixin):
                 "stonith",
                 "create",
                 "test-fencing",
-                "fence_apc",
+                "fence_pcsmock_minimal",
                 "pcmk_host_list=rhel7-node1 rhel7-node2",
                 "op",
                 "monitor",
                 "interval=61s",
-                "--force",
             ],
-            stderr_start=(
-                "Warning: stonith option 'ip' or 'ipaddr' (deprecated) has to "
-                "be specified\n"
-                "Warning: stonith option 'username' or 'login' (deprecated) has to "
-                "be specified\n"
-            ),
         )
 
         self.assert_pcs_success(
-            "config show".split(),
+            "config".split(),
             dedent(
                 """\
                 Cluster Name: test99
@@ -1395,22 +1014,17 @@ class StonithTest(TestCase, AssertPcsMixin):
                 Pacemaker Nodes:
 
                 Stonith Devices:
-                  Resource: test1 (class=stonith type=fence_noexist)
-                    Operations:
-                      monitor: test1-monitor-interval-60s
-                        interval=60s
-                  Resource: test2 (class=stonith type=fence_apc)
+                  Resource: test2 (class=stonith type=fence_pcsmock_params)
                     Operations:
                       monitor: test2-monitor-interval-60s
                         interval=60s
-                  Resource: test3 (class=stonith type=fence_ilo)
+                  Resource: test3 (class=stonith type=fence_pcsmock_params)
                     Attributes: test3-instance_attributes
                       ip=test
-                      username=testA
                     Operations:
                       monitor: test3-monitor-interval-60s
                         interval=60s
-                  Resource: test-fencing (class=stonith type=fence_apc)
+                  Resource: test-fencing (class=stonith type=fence_pcsmock_minimal)
                     Attributes: test-fencing-instance_attributes
                       pcmk_host_list="rhel7-node1 rhel7-node2"
                     Operations:
@@ -1420,10 +1034,81 @@ class StonithTest(TestCase, AssertPcsMixin):
             ),
         )
 
+    def test_stonith_agent_validation(self):
+        self.pcs_runner.mock_settings = get_mock_settings(
+            "crm_resource_exec", "stonith_admin_exec"
+        )
+        self.assert_pcs_fail(
+            (
+                "stonith create fencing fence_pcsmock_params "
+                "ip=is_invalid=True username=apc "
+                "--agent-validation"
+            ).split(),
+            stderr_full=(
+                "Error: Validation result from agent (use --force to override):\n"
+                "  pcsmock validation failure\n" + ERRORS_HAVE_OCCURRED
+            ),
+        )
+
+        self.assert_pcs_success(
+            (
+                "stonith create fencing fence_pcsmock_params "
+                "ip=is_invalid=True username=apc "
+                "--agent-validation --force"
+            ).split(),
+            stderr_full=(
+                "Warning: Validation result from agent:\n"
+                "  pcsmock validation failure\n"
+            ),
+        )
+
+        self.assert_pcs_success(
+            "stonith config".split(),
+            dedent(
+                """\
+                Resource: fencing (class=stonith type=fence_pcsmock_params)
+                  Attributes: fencing-instance_attributes
+                    ip="is_invalid=True"
+                    username=apc
+                  Operations:
+                    monitor: fencing-monitor-interval-60s
+                      interval=60s
+                """
+            ),
+        )
+
+        self.assert_pcs_fail(
+            "stonith update fencing bad_ipaddr=test username=login".split(),
+            stderr_regexp=(
+                "^Error: invalid stonith option 'bad_ipaddr', allowed options"
+                " are: [^\n]+, use --force to override\n$"
+            ),
+        )
+
+        self.assert_pcs_success(
+            "stonith update fencing username=testA --agent-validation".split(),
+            stderr_start="Warning: The resource was misconfigured before the update,",
+        )
+
+        self.assert_pcs_success(
+            "stonith config".split(),
+            dedent(
+                """\
+                Resource: fencing (class=stonith type=fence_pcsmock_params)
+                  Attributes: fencing-instance_attributes
+                    ip="is_invalid=True"
+                    username=testA
+                  Operations:
+                    monitor: fencing-monitor-interval-60s
+                      interval=60s
+                """
+            ),
+        )
+
     def test_stonith_create_requires_either_new_or_deprecated(self):
         # 'ipaddr' and 'login' are obsoleted by 'ip' and 'username'
         self.assert_pcs_fail(
-            "stonith create test2 fence_apc".split(),
+            "stonith create test2 fence_pcsmock_params".split(),
             (
                 "Error: stonith option 'ip' or 'ipaddr' (deprecated) has to be "
                 "specified, use --force to override\n"
@@ -1436,7 +1121,7 @@ class StonithTest(TestCase, AssertPcsMixin):
     def test_stonith_create_deprecated_and_obsoleting(self):
         # 'ipaddr' and 'login' are obsoleted by 'ip' and 'username'
         self.assert_pcs_success(
-            "stonith create S fence_apc ip=i login=l password=1234".split(),
+            "stonith create S fence_pcsmock_params ip=i login=l password=1234".split(),
             stderr_full=(
                 "Warning: stonith option 'login' is deprecated and might be "
                 "removed in a future release, therefore it should not be "
@@ -1447,7 +1132,7 @@ class StonithTest(TestCase, AssertPcsMixin):
             "stonith config S".split(),
             dedent(
                 """\
-                Resource: S (class=stonith type=fence_apc)
+                Resource: S (class=stonith type=fence_pcsmock_params)
                   Attributes: S-instance_attributes
                     ip=i
                     login=l
@@ -1466,7 +1151,7 @@ class StonithTest(TestCase, AssertPcsMixin):
                 "stonith",
                 "create",
                 "S",
-                "fence_apc",
+                "fence_pcsmock_params",
                 "ip=i1",
                 "login=l",
                 "ipaddr=i2",
@@ -1486,7 +1171,7 @@ class StonithTest(TestCase, AssertPcsMixin):
             "stonith config S".split(),
             dedent(
                 """\
-                Resource: S (class=stonith type=fence_apc)
+                Resource: S (class=stonith type=fence_pcsmock_params)
                   Attributes: S-instance_attributes
                     ip=i1
                     ipaddr=i2
@@ -1501,65 +1186,62 @@ class StonithTest(TestCase, AssertPcsMixin):
         )
 
     def test_stonith_create_provides_unfencing(self):
-        self.assert_pcs_success_ignore_output(
-            ("stonith", "create", "f1", "fence_scsi", "--force")
+        self.assert_pcs_success(
+            ("stonith", "create", "f1", "fence_pcsmock_unfencing")
         )
-        self.assert_pcs_success_ignore_output(
+        self.assert_pcs_success(
             (
                 "stonith",
                 "create",
                 "f2",
-                "fence_scsi",
+                "fence_pcsmock_unfencing",
                 "meta",
                 "provides=unfencing",
-                "--force",
             )
         )
-        self.assert_pcs_success_ignore_output(
+        self.assert_pcs_success(
             (
                 "stonith",
                 "create",
                 "f3",
-                "fence_scsi",
+                "fence_pcsmock_unfencing",
                 "meta",
                 "provides=something",
-                "--force",
             )
         )
-        self.assert_pcs_success_ignore_output(
+        self.assert_pcs_success(
             (
                 "stonith",
                 "create",
                 "f4",
-                "fence_xvm",
+                "fence_pcsmock_minimal",
                 "meta",
                 "provides=something",
-                "--force",
             )
         )
         self.assert_pcs_success(
             "stonith config".split(),
             dedent(
                 """\
-                Resource: f1 (class=stonith type=fence_scsi)
+                Resource: f1 (class=stonith type=fence_pcsmock_unfencing)
                   Meta Attributes: f1-meta_attributes
                     provides=unfencing
                   Operations:
                     monitor: f1-monitor-interval-60s
                       interval=60s
-                Resource: f2 (class=stonith type=fence_scsi)
+                Resource: f2 (class=stonith type=fence_pcsmock_unfencing)
                   Meta Attributes: f2-meta_attributes
                     provides=unfencing
                   Operations:
                     monitor: f2-monitor-interval-60s
                       interval=60s
-                Resource: f3 (class=stonith type=fence_scsi)
+                Resource: f3 (class=stonith type=fence_pcsmock_unfencing)
                   Meta Attributes: f3-meta_attributes
                     provides=unfencing
                   Operations:
                     monitor: f3-monitor-interval-60s
                       interval=60s
-                Resource: f4 (class=stonith type=fence_xvm)
+                Resource: f4 (class=stonith type=fence_pcsmock_minimal)
                   Meta Attributes: f4-meta_attributes
                     provides=something
                   Operations:
@@ -1571,7 +1253,7 @@ class StonithTest(TestCase, AssertPcsMixin):
 
     def test_stonith_create_action(self):
         self.assert_pcs_fail(
-            "stonith create test fence_apc ip=i username=u action=a".split(),
+            "stonith create test fence_pcsmock_action action=a".split(),
             (
                 "Error: stonith option 'action' is deprecated and might be "
                 "removed in a future release, therefore it should not be"
@@ -1581,7 +1263,7 @@ class StonithTest(TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_success(
-            "stonith create test fence_apc ip=i username=u action=a --force".split(),
+            "stonith create test fence_pcsmock_action action=a --force".split(),
             stderr_start=(
                 "Warning: stonith option 'action' is deprecated and might be "
                 "removed in a future release, therefore it should not be "
@@ -1593,11 +1275,9 @@ class StonithTest(TestCase, AssertPcsMixin):
             "stonith config".split(),
             dedent(
                 """\
-                Resource: test (class=stonith type=fence_apc)
+                Resource: test (class=stonith type=fence_pcsmock_action)
                   Attributes: test-instance_attributes
                     action=a
-                    ip=i
-                    username=u
                   Operations:
                     monitor: test-monitor-interval-60s
                       interval=60s
@@ -1607,24 +1287,20 @@ class StonithTest(TestCase, AssertPcsMixin):
 
     def test_stonith_create_action_empty(self):
         self.assert_pcs_fail(
-            "stonith create test fence_apc ip=i username=u action=".split(),
+            "stonith create test fence_pcsmock_action action=".split(),
             "Error: action cannot be empty\n" + ERRORS_HAVE_OCCURRED,
         )
 
     def test_stonith_update_action(self):
         self.assert_pcs_success(
-            "stonith create test fence_apc ip=i username=u password=1234".split()
+            "stonith create test fence_pcsmock_action".split()
         )
 
         self.assert_pcs_success(
             "stonith config".split(),
             dedent(
                 """\
-                Resource: test (class=stonith type=fence_apc)
-                  Attributes: test-instance_attributes
-                    ip=i
-                    password=1234
-                    username=u
+                Resource: test (class=stonith type=fence_pcsmock_action)
                   Operations:
                     monitor: test-monitor-interval-60s
                       interval=60s
@@ -1655,12 +1331,9 @@ class StonithTest(TestCase, AssertPcsMixin):
             "stonith config".split(),
             dedent(
                 """\
-                Resource: test (class=stonith type=fence_apc)
+                Resource: test (class=stonith type=fence_pcsmock_action)
                   Attributes: test-instance_attributes
                     action=a
-                    ip=i
-                    password=1234
-                    username=u
                   Operations:
                     monitor: test-monitor-interval-60s
                       interval=60s
@@ -1674,11 +1347,7 @@ class StonithTest(TestCase, AssertPcsMixin):
             "stonith config".split(),
             dedent(
                 """\
-                Resource: test (class=stonith type=fence_apc)
-                  Attributes: test-instance_attributes
-                    ip=i
-                    password=1234
-                    username=u
+                Resource: test (class=stonith type=fence_pcsmock_action)
                   Operations:
                     monitor: test-monitor-interval-60s
                       interval=60s
@@ -1697,74 +1366,29 @@ class StonithTest(TestCase, AssertPcsMixin):
             "Error: must specify one (and only one) node to confirm fenced\n",
         )
 
-    def test_pcmk_host_list(self):
-        self.assert_pcs_success(
-            [
-                "stonith",
-                "create",
-                "F1",
-                "fence_apc",
-                "pcmk_host_list=nodea nodeb",
-                "--force",
-            ],
-            stderr_start=(
-                "Warning: stonith option 'ip' or 'ipaddr' (deprecated) has to be "
-                "specified\n"
-                "Warning: stonith option 'username' or 'login' (deprecated) has to "
-                "be specified\n"
-            ),
-        )
-
-        self.assert_pcs_success(
-            "stonith config F1".split(),
-            dedent(
-                """\
-                Resource: F1 (class=stonith type=fence_apc)
-                  Attributes: F1-instance_attributes
-                    pcmk_host_list="nodea nodeb"
-                  Operations:
-                    monitor: F1-monitor-interval-60s
-                      interval=60s
-                """
-            ),
-        )
-
     def test_stonith_delete_removes_level(self):
         shutil.copyfile(rc("cib-empty-with3nodes.xml"), self.temp_cib.name)
 
-        deprecated_warnings = (
-            "Warning: stonith option 'ip' or 'ipaddr' (deprecated) has to be "
-            "specified\n"
-            "Warning: stonith option 'username' or 'login' (deprecated) has to "
-            "be specified\n"
+        self.assert_pcs_success(
+            "stonith create n1-ipmi fence_pcsmock_minimal".split(),
         )
         self.assert_pcs_success(
-            "stonith create n1-ipmi fence_apc --force".split(),
-            stderr_start=deprecated_warnings,
+            "stonith create n2-ipmi fence_pcsmock_minimal".split(),
         )
         self.assert_pcs_success(
-            "stonith create n2-ipmi fence_apc --force".split(),
-            stderr_start=deprecated_warnings,
+            "stonith create n1-apc1 fence_pcsmock_minimal".split(),
         )
         self.assert_pcs_success(
-            "stonith create n1-apc1 fence_apc --force".split(),
-            stderr_start=deprecated_warnings,
+            "stonith create n1-apc2 fence_pcsmock_minimal".split(),
         )
         self.assert_pcs_success(
-            "stonith create n1-apc2 fence_apc --force".split(),
-            stderr_start=deprecated_warnings,
+            "stonith create n2-apc1 fence_pcsmock_minimal".split(),
         )
         self.assert_pcs_success(
-            "stonith create n2-apc1 fence_apc --force".split(),
-            stderr_start=deprecated_warnings,
+            "stonith create n2-apc2 fence_pcsmock_minimal".split(),
         )
         self.assert_pcs_success(
-            "stonith create n2-apc2 fence_apc --force".split(),
-            stderr_start=deprecated_warnings,
-        )
-        self.assert_pcs_success(
-            "stonith create n2-apc3 fence_apc --force".split(),
-            stderr_start=deprecated_warnings,
+            "stonith create n2-apc3 fence_pcsmock_minimal".split(),
         )
         self.assert_pcs_success_all(
             [
@@ -1780,13 +1404,13 @@ class StonithTest(TestCase, AssertPcsMixin):
                 ["stonith"],
                 outdent(
                     """\
-                      * n1-ipmi\t(stonith:fence_apc):\tStopped
-                      * n2-ipmi\t(stonith:fence_apc):\tStopped
-                      * n1-apc1\t(stonith:fence_apc):\tStopped
-                      * n1-apc2\t(stonith:fence_apc):\tStopped
-                      * n2-apc1\t(stonith:fence_apc):\tStopped
-                      * n2-apc2\t(stonith:fence_apc):\tStopped
-                      * n2-apc3\t(stonith:fence_apc):\tStopped
+                      * n1-ipmi\t(stonith:fence_pcsmock_minimal):\tStopped
+                      * n2-ipmi\t(stonith:fence_pcsmock_minimal):\tStopped
+                      * n1-apc1\t(stonith:fence_pcsmock_minimal):\tStopped
+                      * n1-apc2\t(stonith:fence_pcsmock_minimal):\tStopped
+                      * n2-apc1\t(stonith:fence_pcsmock_minimal):\tStopped
+                      * n2-apc2\t(stonith:fence_pcsmock_minimal):\tStopped
+                      * n2-apc3\t(stonith:fence_pcsmock_minimal):\tStopped
 
                     Fencing Levels:
                      Target: rh7-1
@@ -1804,13 +1428,13 @@ class StonithTest(TestCase, AssertPcsMixin):
                 ["stonith"],
                 outdent(
                     """\
-                     n1-ipmi\t(stonith:fence_apc):\tStopped
-                     n2-ipmi\t(stonith:fence_apc):\tStopped
-                     n1-apc1\t(stonith:fence_apc):\tStopped
-                     n1-apc2\t(stonith:fence_apc):\tStopped
-                     n2-apc1\t(stonith:fence_apc):\tStopped
-                     n2-apc2\t(stonith:fence_apc):\tStopped
-                     n2-apc3\t(stonith:fence_apc):\tStopped
+                     n1-ipmi\t(stonith:fence_pcsmock_minimal):\tStopped
+                     n2-ipmi\t(stonith:fence_pcsmock_minimal):\tStopped
+                     n1-apc1\t(stonith:fence_pcsmock_minimal):\tStopped
+                     n1-apc2\t(stonith:fence_pcsmock_minimal):\tStopped
+                     n2-apc1\t(stonith:fence_pcsmock_minimal):\tStopped
+                     n2-apc2\t(stonith:fence_pcsmock_minimal):\tStopped
+                     n2-apc3\t(stonith:fence_pcsmock_minimal):\tStopped
 
                     Fencing Levels:
                      Target: rh7-1
@@ -1833,12 +1457,12 @@ class StonithTest(TestCase, AssertPcsMixin):
                 ["stonith"],
                 outdent(
                     """\
-                      * n1-ipmi\t(stonith:fence_apc):\tStopped
-                      * n2-ipmi\t(stonith:fence_apc):\tStopped
-                      * n1-apc1\t(stonith:fence_apc):\tStopped
-                      * n1-apc2\t(stonith:fence_apc):\tStopped
-                      * n2-apc1\t(stonith:fence_apc):\tStopped
-                      * n2-apc3\t(stonith:fence_apc):\tStopped
+                      * n1-ipmi\t(stonith:fence_pcsmock_minimal):\tStopped
+                      * n2-ipmi\t(stonith:fence_pcsmock_minimal):\tStopped
+                      * n1-apc1\t(stonith:fence_pcsmock_minimal):\tStopped
+                      * n1-apc2\t(stonith:fence_pcsmock_minimal):\tStopped
+                      * n2-apc1\t(stonith:fence_pcsmock_minimal):\tStopped
+                      * n2-apc3\t(stonith:fence_pcsmock_minimal):\tStopped
 
                     Fencing Levels:
                      Target: rh7-1
@@ -1856,12 +1480,12 @@ class StonithTest(TestCase, AssertPcsMixin):
                 ["stonith"],
                 outdent(
                     """\
-                     n1-ipmi\t(stonith:fence_apc):\tStopped
-                     n2-ipmi\t(stonith:fence_apc):\tStopped
-                     n1-apc1\t(stonith:fence_apc):\tStopped
-                     n1-apc2\t(stonith:fence_apc):\tStopped
-                     n2-apc1\t(stonith:fence_apc):\tStopped
-                     n2-apc3\t(stonith:fence_apc):\tStopped
+                     n1-ipmi\t(stonith:fence_pcsmock_minimal):\tStopped
+                     n2-ipmi\t(stonith:fence_pcsmock_minimal):\tStopped
+                     n1-apc1\t(stonith:fence_pcsmock_minimal):\tStopped
+                     n1-apc2\t(stonith:fence_pcsmock_minimal):\tStopped
+                     n2-apc1\t(stonith:fence_pcsmock_minimal):\tStopped
+                     n2-apc3\t(stonith:fence_pcsmock_minimal):\tStopped
 
                     Fencing Levels:
                      Target: rh7-1
@@ -1884,11 +1508,11 @@ class StonithTest(TestCase, AssertPcsMixin):
                 ["stonith"],
                 outdent(
                     """\
-                      * n1-ipmi\t(stonith:fence_apc):\tStopped
-                      * n2-ipmi\t(stonith:fence_apc):\tStopped
-                      * n1-apc1\t(stonith:fence_apc):\tStopped
-                      * n1-apc2\t(stonith:fence_apc):\tStopped
-                      * n2-apc3\t(stonith:fence_apc):\tStopped
+                      * n1-ipmi\t(stonith:fence_pcsmock_minimal):\tStopped
+                      * n2-ipmi\t(stonith:fence_pcsmock_minimal):\tStopped
+                      * n1-apc1\t(stonith:fence_pcsmock_minimal):\tStopped
+                      * n1-apc2\t(stonith:fence_pcsmock_minimal):\tStopped
+                      * n2-apc3\t(stonith:fence_pcsmock_minimal):\tStopped
 
                     Fencing Levels:
                      Target: rh7-1
@@ -1906,11 +1530,11 @@ class StonithTest(TestCase, AssertPcsMixin):
                 ["stonith"],
                 outdent(
                     """\
-                     n1-ipmi\t(stonith:fence_apc):\tStopped
-                     n2-ipmi\t(stonith:fence_apc):\tStopped
-                     n1-apc1\t(stonith:fence_apc):\tStopped
-                     n1-apc2\t(stonith:fence_apc):\tStopped
-                     n2-apc3\t(stonith:fence_apc):\tStopped
+                     n1-ipmi\t(stonith:fence_pcsmock_minimal):\tStopped
+                     n2-ipmi\t(stonith:fence_pcsmock_minimal):\tStopped
+                     n1-apc1\t(stonith:fence_pcsmock_minimal):\tStopped
+                     n1-apc2\t(stonith:fence_pcsmock_minimal):\tStopped
+                     n2-apc3\t(stonith:fence_pcsmock_minimal):\tStopped
 
                     Fencing Levels:
                      Target: rh7-1
@@ -1933,10 +1557,10 @@ class StonithTest(TestCase, AssertPcsMixin):
                 ["stonith"],
                 outdent(
                     """\
-                      * n1-ipmi\t(stonith:fence_apc):\tStopped
-                      * n2-ipmi\t(stonith:fence_apc):\tStopped
-                      * n1-apc1\t(stonith:fence_apc):\tStopped
-                      * n1-apc2\t(stonith:fence_apc):\tStopped
+                      * n1-ipmi\t(stonith:fence_pcsmock_minimal):\tStopped
+                      * n2-ipmi\t(stonith:fence_pcsmock_minimal):\tStopped
+                      * n1-apc1\t(stonith:fence_pcsmock_minimal):\tStopped
+                      * n1-apc2\t(stonith:fence_pcsmock_minimal):\tStopped
 
                     Fencing Levels:
                      Target: rh7-1
@@ -1953,10 +1577,10 @@ class StonithTest(TestCase, AssertPcsMixin):
                 ["stonith"],
                 outdent(
                     """\
-                     n1-ipmi\t(stonith:fence_apc):\tStopped
-                     n2-ipmi\t(stonith:fence_apc):\tStopped
-                     n1-apc1\t(stonith:fence_apc):\tStopped
-                     n1-apc2\t(stonith:fence_apc):\tStopped
+                     n1-ipmi\t(stonith:fence_pcsmock_minimal):\tStopped
+                     n2-ipmi\t(stonith:fence_pcsmock_minimal):\tStopped
+                     n1-apc1\t(stonith:fence_pcsmock_minimal):\tStopped
+                     n1-apc2\t(stonith:fence_pcsmock_minimal):\tStopped
 
                     Fencing Levels:
                      Target: rh7-1
@@ -1978,9 +1602,9 @@ class StonithTest(TestCase, AssertPcsMixin):
                 ["stonith"],
                 outdent(
                     """\
-                      * n1-ipmi\t(stonith:fence_apc):\tStopped
-                      * n2-ipmi\t(stonith:fence_apc):\tStopped
-                      * n1-apc2\t(stonith:fence_apc):\tStopped
+                      * n1-ipmi\t(stonith:fence_pcsmock_minimal):\tStopped
+                      * n2-ipmi\t(stonith:fence_pcsmock_minimal):\tStopped
+                      * n1-apc2\t(stonith:fence_pcsmock_minimal):\tStopped
 
                     Fencing Levels:
                      Target: rh7-1
@@ -1997,9 +1621,9 @@ class StonithTest(TestCase, AssertPcsMixin):
                 ["stonith"],
                 outdent(
                     """\
-                     n1-ipmi\t(stonith:fence_apc):\tStopped
-                     n2-ipmi\t(stonith:fence_apc):\tStopped
-                     n1-apc2\t(stonith:fence_apc):\tStopped
+                     n1-ipmi\t(stonith:fence_pcsmock_minimal):\tStopped
+                     n2-ipmi\t(stonith:fence_pcsmock_minimal):\tStopped
+                     n1-apc2\t(stonith:fence_pcsmock_minimal):\tStopped
 
                     Fencing Levels:
                      Target: rh7-1
@@ -2021,8 +1645,8 @@ class StonithTest(TestCase, AssertPcsMixin):
                 ["stonith"],
                 outdent(
                     """\
-                      * n1-ipmi\t(stonith:fence_apc):\tStopped
-                      * n2-ipmi\t(stonith:fence_apc):\tStopped
+                      * n1-ipmi\t(stonith:fence_pcsmock_minimal):\tStopped
+                      * n2-ipmi\t(stonith:fence_pcsmock_minimal):\tStopped
 
                     Fencing Levels:
                      Target: rh7-1
@@ -2038,8 +1662,8 @@ class StonithTest(TestCase, AssertPcsMixin):
                 ["stonith"],
                 outdent(
                     """\
-                     n1-ipmi\t(stonith:fence_apc):\tStopped
-                     n2-ipmi\t(stonith:fence_apc):\tStopped
+                     n1-ipmi\t(stonith:fence_pcsmock_minimal):\tStopped
+                     n2-ipmi\t(stonith:fence_pcsmock_minimal):\tStopped
 
                     Fencing Levels:
                      Target: rh7-1
@@ -2058,11 +1682,8 @@ class StonithTest(TestCase, AssertPcsMixin):
         )
 
         self.pcs_runner.corosync_conf_opt = None
-        self.assert_pcs_success_ignore_output(
-            (
-                "stonith create test_stonith fence_apc ip=i username=u "
-                "pcmk_host_argument=node1 --force"
-            ).split()
+        self.assert_pcs_success(
+            "stonith create test_stonith fence_pcsmock_minimal".split()
         )
 
         self.pcs_runner.corosync_conf_opt = self.temp_corosync_conf.name
@@ -2092,16 +1713,16 @@ _fixture_stonith_level_cache_lock = Lock()
 
 class StonithLevelTestCibFixture(CachedCibFixture):
     def _fixture_stonith_resource(self, name):
-        self.assert_pcs_success_ignore_output(
+        self._pcs_runner.mock_settings = get_mock_settings(
+            "crm_resource_exec", "stonith_admin_exec"
+        )
+        self.assert_pcs_success(
             [
                 "stonith",
                 "create",
                 name,
-                "fence_apc",
+                "fence_pcsmock_minimal",
                 "pcmk_host_list=rh7-1 rh7-2",
-                "ip=i",
-                "username=u",
-                "--force",
             ]
         )
 
@@ -2136,7 +1757,9 @@ class LevelTestsBase(TestCase, AssertPcsMixin):
         self.temp_cib = get_tmp_file("tier1_test_stonith_level")
         write_file_to_tmpfile(rc("cib-empty-withnodes.xml"), self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
+        self.pcs_runner.mock_settings = get_mock_settings(
+            "crm_resource_exec", "stonith_admin_exec"
+        )
         self.config = ""
         self.config_lines = []
 
@@ -2144,16 +1767,13 @@ class LevelTestsBase(TestCase, AssertPcsMixin):
         self.temp_cib.close()
 
     def fixture_stonith_resource(self, name):
-        self.assert_pcs_success_ignore_output(
+        self.assert_pcs_success(
             [
                 "stonith",
                 "create",
                 name,
-                "fence_apc",
+                "fence_pcsmock_minimal",
                 "pcmk_host_list=rh7-1 rh7-2",
-                "ip=i",
-                "username=u",
-                "--force",
             ]
         )
 
@@ -2597,17 +2217,17 @@ class LevelConfig(LevelTestsBase):
         if PCMK_2_0_3_PLUS:
             result = outdent(
                 """\
-                  * F1\t(stonith:fence_apc):\tStopped
-                  * F2\t(stonith:fence_apc):\tStopped
-                  * F3\t(stonith:fence_apc):\tStopped
+                  * F1\t(stonith:fence_pcsmock_minimal):\tStopped
+                  * F2\t(stonith:fence_pcsmock_minimal):\tStopped
+                  * F3\t(stonith:fence_pcsmock_minimal):\tStopped
                 """
             )
         else:
             result = outdent(
                 """\
-                 F1\t(stonith:fence_apc):\tStopped
-                 F2\t(stonith:fence_apc):\tStopped
-                 F3\t(stonith:fence_apc):\tStopped
+                 F1\t(stonith:fence_pcsmock_minimal):\tStopped
+                 F2\t(stonith:fence_pcsmock_minimal):\tStopped
+                 F3\t(stonith:fence_pcsmock_minimal):\tStopped
                 """
             )
         self.assert_pcs_success(
@@ -2628,27 +2248,21 @@ class LevelConfig(LevelTestsBase):
                     indent(
                         dedent(
                             """
-                            Resource: F1 (class=stonith type=fence_apc)
+                            Resource: F1 (class=stonith type=fence_pcsmock_minimal)
                               Attributes: F1-instance_attributes
-                                ip=i
                                 pcmk_host_list="rh7-1 rh7-2"
-                                username=u
                               Operations:
                                 monitor: F1-monitor-interval-60s
                                   interval=60s
-                            Resource: F2 (class=stonith type=fence_apc)
+                            Resource: F2 (class=stonith type=fence_pcsmock_minimal)
                               Attributes: F2-instance_attributes
-                                ip=i
                                 pcmk_host_list="rh7-1 rh7-2"
-                                username=u
                               Operations:
                                 monitor: F2-monitor-interval-60s
                                   interval=60s
-                            Resource: F3 (class=stonith type=fence_apc)
+                            Resource: F3 (class=stonith type=fence_pcsmock_minimal)
                               Attributes: F3-instance_attributes
-                                ip=i
                                 pcmk_host_list="rh7-1 rh7-2"
-                                username=u
                               Operations:
                                 monitor: F3-monitor-interval-60s
                                   interval=60s
@@ -3383,26 +2997,19 @@ class LevelVerify(LevelTestsBase):
 
 
 class StonithUpdate(ResourceTest):
-    # added in fence-agents-all-4.11.0
-    agent_secure_warning = (
-        "("
-        "Warning: Validation result from agent:\n"
-        "  WARNING:root:Parse error: Ignoring option 'secure' because it does "
-        "not have value\n"
-        ")?"
-    )
-
     def setUp(self):
         super().setUp()
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
+        self.pcs_runner.mock_settings = get_mock_settings(
+            "crm_resource_exec", "stonith_admin_exec"
+        )
         self.fixture_create_stonith()
 
     def fixture_create_stonith(self):
         self.assert_effect(
-            "stonith create S fence_apc ip=i login=l ssh=0 debug=d password=1234".split(),
+            "stonith create S fence_pcsmock_params ip=i login=l ssh=0 debug=d password=1234".split(),
             """
             <resources>
-                <primitive class="stonith" id="S" type="fence_apc">
+                <primitive class="stonith" id="S" type="fence_pcsmock_params">
                     <instance_attributes id="S-instance_attributes">
                         <nvpair id="S-instance_attributes-debug" name="debug"
                             value="d"
@@ -3428,14 +3035,13 @@ class StonithUpdate(ResourceTest):
                 </primitive>
             </resources>
             """,
-            stderr_regexp=(
+            stderr_full=(
                 "Warning: stonith option 'login' is deprecated and might be "
                 "removed in a future release, therefore it should not "
                 "be used, use 'username' instead\n"
                 "Warning: stonith option 'debug' is deprecated and might be "
                 "removed in a future release, therefore it should not "
                 "be used, use 'debug_file' instead\n"
-                + self.agent_secure_warning
             ),
         )
 
@@ -3444,7 +3050,7 @@ class StonithUpdate(ResourceTest):
             "stonith update S debug=D".split(),
             """
             <resources>
-                <primitive class="stonith" id="S" type="fence_apc">
+                <primitive class="stonith" id="S" type="fence_pcsmock_params">
                     <instance_attributes id="S-instance_attributes">
                         <nvpair id="S-instance_attributes-debug" name="debug"
                             value="D"
@@ -3470,11 +3076,10 @@ class StonithUpdate(ResourceTest):
                 </primitive>
             </resources>
             """,
-            stderr_regexp=(
+            stderr_full=(
                 "Warning: stonith option 'debug' is deprecated and might be "
                 "removed in a future release, therefore it should not "
                 "be used, use 'debug_file' instead\n"
-                + self.agent_secure_warning
             ),
         )
 
@@ -3483,7 +3088,7 @@ class StonithUpdate(ResourceTest):
             "stonith update S debug=".split(),
             """
             <resources>
-                <primitive class="stonith" id="S" type="fence_apc">
+                <primitive class="stonith" id="S" type="fence_pcsmock_params">
                     <instance_attributes id="S-instance_attributes">
                         <nvpair id="S-instance_attributes-ip" name="ip"
                             value="i"
@@ -3506,7 +3111,6 @@ class StonithUpdate(ResourceTest):
                 </primitive>
             </resources>
             """,
-            stderr_regexp=self.agent_secure_warning,
         )
 
     def test_unset_deprecated_required_param(self):
@@ -3521,7 +3125,7 @@ class StonithUpdate(ResourceTest):
             "stonith update S ssh=1".split(),
             """
             <resources>
-                <primitive class="stonith" id="S" type="fence_apc">
+                <primitive class="stonith" id="S" type="fence_pcsmock_params">
                     <instance_attributes id="S-instance_attributes">
                         <nvpair id="S-instance_attributes-debug" name="debug"
                             value="d"
@@ -3554,7 +3158,7 @@ class StonithUpdate(ResourceTest):
             "stonith update S ssh=".split(),
             """
             <resources>
-                <primitive class="stonith" id="S" type="fence_apc">
+                <primitive class="stonith" id="S" type="fence_pcsmock_params">
                     <instance_attributes id="S-instance_attributes">
                         <nvpair id="S-instance_attributes-debug" name="debug"
                             value="d"
@@ -3591,7 +3195,7 @@ class StonithUpdate(ResourceTest):
             "stonith update S login= username=u".split(),
             """
             <resources>
-                <primitive class="stonith" id="S" type="fence_apc">
+                <primitive class="stonith" id="S" type="fence_pcsmock_params">
                     <instance_attributes id="S-instance_attributes">
                         <nvpair id="S-instance_attributes-debug" name="debug"
                             value="d"
@@ -3617,7 +3221,6 @@ class StonithUpdate(ResourceTest):
                 </primitive>
             </resources>
             """,
-            stderr_regexp=self.agent_secure_warning,
         )
 
     def test_unset_obsoleting_required_set_deprecated(self):
@@ -3625,7 +3228,7 @@ class StonithUpdate(ResourceTest):
             "stonith update S ip= ipaddr=I".split(),
             """
             <resources>
-                <primitive class="stonith" id="S" type="fence_apc">
+                <primitive class="stonith" id="S" type="fence_pcsmock_params">
                     <instance_attributes id="S-instance_attributes">
                         <nvpair id="S-instance_attributes-debug" name="debug"
                             value="d"
@@ -3651,10 +3254,10 @@ class StonithUpdate(ResourceTest):
                 </primitive>
             </resources>
             """,
-            stderr_regexp=(
+            stderr_full=(
                 "Warning: stonith option 'ipaddr' is deprecated and might be "
                 "removed in a future release, therefore it should not "
-                "be used, use 'ip' instead\n" + self.agent_secure_warning
+                "be used, use 'ip' instead\n"
             ),
         )
 
@@ -3663,7 +3266,7 @@ class StonithUpdate(ResourceTest):
             "stonith update S ip=I1 ipaddr=I2".split(),
             """
             <resources>
-                <primitive class="stonith" id="S" type="fence_apc">
+                <primitive class="stonith" id="S" type="fence_pcsmock_params">
                     <instance_attributes id="S-instance_attributes">
                         <nvpair id="S-instance_attributes-debug" name="debug"
                             value="d"
@@ -3692,9 +3295,9 @@ class StonithUpdate(ResourceTest):
                 </primitive>
             </resources>
             """,
-            stderr_regexp=(
+            stderr_full=(
                 "Warning: stonith option 'ipaddr' is deprecated and might be "
                 "removed in a future release, therefore it should not "
-                "be used, use 'ip' instead\n" + self.agent_secure_warning
+                "be used, use 'ip' instead\n"
             ),
         )
