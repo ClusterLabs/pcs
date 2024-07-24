@@ -4,6 +4,7 @@
 
 ### Added
 - Support for output formats `json` and `cmd` to `pcs tag config` command
+  ([RHEL-21047])
 
 [RHEL-21047]: https://issues.redhat.com/browse/RHEL-21047
 
@@ -53,10 +54,10 @@
 - Add `pcs status query resource` CLI commands ([RHEL-38489])
 - Add commands `constraint.location.add_rule_to_constraint` and
   `constraint.location.create_with_rule` to API v2
-- Using `--yes` to confirm 'pcs cluster destroy', 'pcs quorum unblock', 'pcs
-  stonith confirm', 'pcs stonith sbd device setup' and 'pcs stonith sbd
-  watchdog test' commands ([RHEL-36612])
-- Using `--overwrite` to confirm 'pcs cluster report' overwriting files
+- Using `--yes` to confirm `pcs cluster destroy`, `pcs quorum unblock`, `pcs
+  stonith confirm`, `pcs stonith sbd device setup` and `pcs stonith sbd
+  watchdog test` commands ([RHEL-36612])
+- Using `--overwrite` to confirm `pcs cluster report` overwriting files
   ([RHEL-36612])
 - Pkg-config with info for webui is now provided.
 
@@ -73,7 +74,7 @@
 - Do not wrap pcs output to terminal width if pcs's stdout is redirected
   ([RHEL-38481])
 - Report an error when an invalid resource-discovery is specified ([RHEL-38480])
-- 'pcs booth destroy' now works for nodes without a cluster (such as
+- `pcs booth destroy` now works for nodes without a cluster (such as
   arbitrators) ([RHEL-38486])
 - Validate SBD\_DELAY\_START and SBD\_STARTMODE options ([RHEL-38484])
 
@@ -99,12 +100,12 @@
     - `pcs status wait` to wait for the cluster to settle into stable state
     - `pcs status query resource` commands to verify that the resource is in the
        expected state after the wait
-- Using `--force` to confirm 'pcs cluster destroy', 'pcs quorum unblock', 'pcs
-  stonith confirm', 'pcs stonith sbd device setup' and 'pcs stonith sbd
-  watchdog test' commands, use `--yes` instead ([RHEL-36612])
+- Using `--force` to confirm `pcs cluster destroy`, `pcs quorum unblock`, `pcs
+  stonith confirm`, `pcs stonith sbd device setup` and `pcs stonith sbd
+  watchdog test` commands, use `--yes` instead ([RHEL-36612])
 - Using `--force` to confirm overwriting files in `pcs cluster report`, use
   `--overwrite` instead ([RHEL-36612])
-- Assigning and unassigning ACL roles without specifying 'user' or 'group'
+- Assigning and unassigning ACL roles without specifying `user` or `group`
   keyword
 
 [ghissue#772]: https://github.com/ClusterLabs/pcs/issues/772
