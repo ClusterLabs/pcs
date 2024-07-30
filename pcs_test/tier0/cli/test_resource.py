@@ -1220,3 +1220,57 @@ class ResourceUnmanage(TestCase):
         self.resource.unmanage.assert_called_once_with(
             ["R1", "R2"], with_monitor=True
         )
+
+
+@mock.patch("pcs.resource.print_to_stderr")
+class ResourceRestart(TestCase):
+    def setUp(self):
+        self.lib = mock.Mock(spec_set=["resource"])
+        self.resource = mock.Mock(spec_set=["restart"])
+        self.lib.resource = self.resource
+
+    def test_no_args(self, mock_print):
+        with self.assertRaises(CmdLineInputError) as cm:
+            resource.resource_restart_cmd(self.lib, [], dict_to_modifiers({}))
+        self.assertEqual(
+            cm.exception.message, "You must specify a resource to restart"
+        )
+        self.resource.restart.assert_not_called()
+        mock_print.assert_not_called()
+
+    def test_one_arg(self, mock_print):
+        resource.resource_restart_cmd(
+            self.lib, ["resource"], dict_to_modifiers({})
+        )
+        self.resource.restart.assert_called_once_with("resource", None, None)
+        mock_print.assert_called_once_with("resource successfully restarted")
+
+    def test_two_args(self, mock_print):
+        resource.resource_restart_cmd(
+            self.lib, ["resource", "node"], dict_to_modifiers({})
+        )
+        self.resource.restart.assert_called_once_with("resource", "node", None)
+        mock_print.assert_called_once_with("resource successfully restarted")
+
+    def test_more_args(self, mock_print):
+        with self.assertRaises(CmdLineInputError) as cm:
+            resource.resource_restart_cmd(
+                self.lib, ["ono", "two", "three"], dict_to_modifiers({})
+            )
+        self.assertEqual(cm.exception.message, None)
+        self.resource.restart.assert_not_called()
+        mock_print.assert_not_called()
+
+    def test_wait(self, mock_print):
+        resource.resource_restart_cmd(
+            self.lib, ["resource"], dict_to_modifiers({"wait": "10s"})
+        )
+        self.resource.restart.assert_called_once_with("resource", None, "10s")
+        mock_print.assert_called_once_with("resource successfully restarted")
+
+    def test_all_options(self, mock_print):
+        resource.resource_restart_cmd(
+            self.lib, ["resource", "node"], dict_to_modifiers({"wait": "10s"})
+        )
+        self.resource.restart.assert_called_once_with("resource", "node", "10s")
+        mock_print.assert_called_once_with("resource successfully restarted")

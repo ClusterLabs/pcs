@@ -257,6 +257,7 @@ EXTRA_DIST		= \
 			  tier0/lib/commands/resource/test_resource_move_autoclean.py \
 			  tier0/lib/commands/resource/test_resource_move_ban.py \
 			  tier0/lib/commands/resource/test_resource_relations.py \
+			  tier0/lib/commands/resource/test_restart.py \
 			  tier0/lib/commands/sbd/__init__.py \
 			  tier0/lib/commands/sbd/test_disable_sbd.py \
 			  tier0/lib/commands/sbd/test_enable_sbd.py \
@@ -272,8 +273,8 @@ EXTRA_DIST		= \
 			  tier0/lib/commands/test_acl.py \
 			  tier0/lib/commands/test_alert.py \
 			  tier0/lib/commands/test_booth.py \
-			  tier0/lib/commands/test_cib.py \
 			  tier0/lib/commands/test_cib_options.py \
+			  tier0/lib/commands/test_cib.py \
 			  tier0/lib/commands/test_cluster_property.py \
 			  tier0/lib/commands/test_constraint_common.py \
 			  tier0/lib/commands/test_constraint_order.py \

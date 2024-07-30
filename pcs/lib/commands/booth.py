@@ -6,6 +6,8 @@ from typing import (
     cast,
 )
 
+from lxml.etree import _Element
+
 from pcs import settings
 from pcs.common import (
     file_type_codes,
@@ -34,6 +36,7 @@ from pcs.lib.booth import (
     resource,
     status,
 )
+from pcs.lib.booth.env import BoothEnv
 from pcs.lib.cib.resource import (
     group,
     hierarchy,
@@ -58,7 +61,10 @@ from pcs.lib.file.raw_file import (
 )
 from pcs.lib.interface.config import ParserErrorException
 from pcs.lib.node import get_existing_nodes_names
-from pcs.lib.pacemaker.live import has_cib_xml
+from pcs.lib.pacemaker.live import (
+    has_cib_xml,
+    resource_restart,
+)
 from pcs.lib.resource_agent import (
     ResourceAgentError,
     ResourceAgentFacade,
@@ -558,30 +564,26 @@ def remove_from_cluster(
 
 def restart(
     env: LibraryEnvironment,
-    resource_restart,
-    instance_name=None,
-    allow_multiple=False,
-):
+    instance_name: Optional[str] = None,
+    allow_multiple: bool = False,
+) -> None:
     """
     Restart group with ip resource and booth resource
 
     env -- provides all for communication with externals
-    function resource_restart -- provisional hack til resources are moved to lib
-    string instance_name -- booth instance name
-    bool allow_remove_multiple -- remove all resources if more than one found
+    instance_name -- booth instance name
+    allow_multiple -- restart all resources if more than one found
     """
-    # TODO resource_remove is provisional hack til resources are moved to lib
-    report_processor = env.report_processor
     booth_env = env.get_booth_env(instance_name)
     _ensure_live_env(env, booth_env)
 
     for booth_element in _find_resource_elements_for_operation(
-        report_processor,
+        env.report_processor,
         get_resources(env.get_cib()),
         booth_env,
         allow_multiple,
     ):
-        resource_restart([booth_element.attrib["id"]])
+        resource_restart(env.cmd_runner(), str(booth_element.attrib["id"]))
 
 
 def ticket_grant(
@@ -945,10 +947,10 @@ def get_status(env: LibraryEnvironment, instance_name=None):
 
 def _find_resource_elements_for_operation(
     report_processor: ReportProcessor,
-    resources_section,
-    booth_env,
-    allow_multiple,
-):
+    resources_section: _Element,
+    booth_env: BoothEnv,
+    allow_multiple: bool,
+) -> list[_Element]:
     booth_element_list = resource.find_for_config(
         resources_section,
         booth_env.config_path,
@@ -989,7 +991,7 @@ def _ensure_live_booth_env(booth_env):
         )
 
 
-def _ensure_live_env(env: LibraryEnvironment, booth_env):
+def _ensure_live_env(env: LibraryEnvironment, booth_env: BoothEnv):
     not_live = (
         booth_env.ghost_file_codes
         +

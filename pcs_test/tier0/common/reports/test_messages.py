@@ -5899,3 +5899,38 @@ class CommandArgumentTypeMismatch(NameBuildTest):
                 "entity type", "pcs stonith create"
             ),
         )
+
+
+class ResourceRestartError(NameBuildTest):
+    def test_message(self) -> str:
+        self.assert_message_from_report(
+            "Unable to restart resource 'resourceId':\nerror description",
+            reports.ResourceRestartError("error description", "resourceId"),
+        )
+
+
+class ResourceRestartNodeIsForMultiinstanceOnly(NameBuildTest):
+    def test_message(self) -> str:
+        self.assert_message_from_report(
+            (
+                "Can only restart on a specific node for a clone or bundle, "
+                "'resourceId' is a resource"
+            ),
+            reports.ResourceRestartNodeIsForMultiinstanceOnly(
+                "resourceId", "primitive", "node01"
+            ),
+        )
+
+
+class ResourceRestartUsingParentRersource(NameBuildTest):
+    def test_message(self) -> str:
+        self.assert_message_from_report(
+            (
+                "Restarting 'parentId' instead...\n"
+                "(If a resource is a clone or bundle, you must use the clone "
+                "or bundle instead)"
+            ),
+            reports.ResourceRestartUsingParentRersource(
+                "resourceId", "parentId"
+            ),
+        )
