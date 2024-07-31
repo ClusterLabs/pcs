@@ -547,6 +547,37 @@ def remove_node(runner: CommandRunner, node_name: str) -> None:
 ### resources
 
 
+def resource_restart(
+    runner: CommandRunner,
+    resource: str,
+    node: Optional[str] = None,
+    timeout: Optional[str] = None,
+) -> None:
+    """
+    Ask pacemaker to restart a resource
+
+    resource -- id of the resource to be restarted
+    node -- name of the node to limit the restart to
+    timeout -- abort if the command doesn't finish in this time (integer + unit)
+    """
+    cmd = [settings.crm_resource_exec, "--restart", "--resource", resource]
+    if node:
+        cmd.extend(["--node", node])
+    if timeout:
+        cmd.extend(["--timeout", timeout])
+
+    stdout, stderr, retval = runner.run(cmd)
+
+    if retval != 0:
+        raise LibraryError(
+            ReportItem.error(
+                reports.messages.ResourceRestartError(
+                    join_multilines([stderr, stdout]), resource, node
+                )
+            )
+        )
+
+
 def resource_cleanup(
     runner: CommandRunner,
     resource: Optional[str] = None,
