@@ -66,46 +66,54 @@ large_cib = rc("cib-large.xml")
 class ResourceDescribe(TestCase, AssertPcsMixin):
     def setUp(self):
         self.pcs_runner = PcsRunner(None)
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
+        self.pcs_runner.mock_settings = get_mock_settings()
 
     @staticmethod
     def fixture_description(advanced=False):
-        advanced_params = """\
-              trace_ra (advanced use only)
-                Description: Set to 1 to turn on resource agent tracing (expect large output) The trace output will be saved to trace_file, if set, or by default to $HA_VARRUN/ra_trace/<type>/<id>.<action>.<timestamp> e.g. $HA_VARRUN/ra_trace/oracle/db.start.2012-11-27.08:37:08
-                Type: integer
-                Default: 0
-              trace_file (advanced use only)
-                Description: Path to a file to store resource agent tracing log
-                Type: string
-            """
+        advanced_params = """
+              advanced (advanced use only)
+                Description: This parameter should not be set usually
+                Type: string"""
         return dedent(
             """\
-            ocf:pacemaker:HealthCPU - System health CPU usage
+            ocf:pcsmock:params - Mock agent for pcs tests - agent with various parameters
 
-            System health agent that measures the CPU idling and updates the #health-cpu attribute.
+            This is a mock agent for pcs test - agent with parameters
 
             Resource options:
-              state (unique)
-                Description: Location to store the resource state in.
+              mandatory (required)
+                Description: A generic mandatory string parameter
                 Type: string
-                Default: /var/run/health-cpu-HealthCPU.state
-              yellow_limit (unique)
-                Description: Lower (!) limit of idle percentage to switch the health attribute to yellow. I.e. the #health-cpu will go yellow if the %idle of the CPU falls below 50%.
+              optional
+                Description: A generic optional string parameter
                 Type: string
-                Default: 50
-              red_limit
-                Description: Lower (!) limit of idle percentage to switch the health attribute to red. I.e. the #health-cpu will go red if the %idle of the CPU falls below 10%.
+                Default: if not specified
+              enum
+                Description: An optional enum parameter
+                Allowed values: 'value1', 'value2', 'value3'
+                Default: value1{0}
+              unique1 (unique group: group-A)
+                Description: First parameter in a unique group
                 Type: string
-                Default: 10
-{0}
+              unique2 (unique group: group-A)
+                Description: Second parameter in a unique group
+                Type: string
+
             Default operations:
               start:
-                interval=0s timeout=10s
+                interval=0s timeout=20s
               stop:
-                interval=0s timeout=10s
+                interval=0s timeout=20s
               monitor:
-                interval=10s start-delay=0s timeout=10s
+                interval=10s timeout=20s
+              reload:
+                interval=0s timeout=20s
+              reload-agent:
+                interval=0s timeout=20s
+              migrate_to:
+                interval=0s timeout=20s
+              migrate_from:
+                interval=0s timeout=20s
             """.format(
                 advanced_params if advanced else ""
             )
@@ -113,31 +121,30 @@ class ResourceDescribe(TestCase, AssertPcsMixin):
 
     def test_success(self):
         self.assert_pcs_success(
-            "resource describe ocf:pacemaker:HealthCPU".split(),
+            "resource describe ocf:pcsmock:params".split(),
             self.fixture_description(),
         )
 
     def test_full(self):
         self.assert_pcs_success(
-            "resource describe ocf:pacemaker:HealthCPU --full".split(),
+            "resource describe ocf:pcsmock:params --full".split(),
             self.fixture_description(True),
         )
 
     def test_success_guess_name(self):
         self.assert_pcs_success(
-            "resource describe healthcpu".split(),
+            "resource describe params".split(),
             stdout_full=self.fixture_description(),
             stderr_full=(
-                "Assumed agent name 'ocf:pacemaker:HealthCPU' (deduced from "
-                "'healthcpu')\n"
+                "Assumed agent name 'ocf:pcsmock:params' (deduced from 'params')\n"
             ),
         )
 
     def test_nonextisting_agent(self):
         self.assert_pcs_fail(
-            "resource describe ocf:pacemaker:nonexistent".split(),
+            "resource describe ocf:pcsmock:nonexistent".split(),
             (
-                "Error: Agent 'ocf:pacemaker:nonexistent' is not installed or does "
+                "Error: Agent 'ocf:pcsmock:nonexistent' is not installed or does "
                 "not provide valid metadata: "
                 "pcs mock error message: unable to load agent metadata\n"
                 + ERRORS_HAVE_OCCURRED
@@ -155,10 +162,10 @@ class ResourceDescribe(TestCase, AssertPcsMixin):
 
     def test_more_agents_guess_name(self):
         self.assert_pcs_fail(
-            "resource describe dummy".split(),
+            "resource describe pcsmock".split(),
             (
-                "Error: Multiple agents match 'dummy', please specify full"
-                " name: 'ocf:heartbeat:Dummy' or 'ocf:pacemaker:Dummy'\n"
+                "Error: Multiple agents match 'pcsmock', please specify full"
+                " name: 'ocf:heartbeat:pcsMock' or 'ocf:pacemaker:pcsMock'\n"
             ),
         )
 
@@ -175,140 +182,111 @@ class ResourceDescribe(TestCase, AssertPcsMixin):
         )
 
     def test_pcsd_interface(self):
+        self.maxDiff = None
         stdout, stderr, returncode = self.pcs_runner.run(
-            "resource get_resource_agent_info ocf:pacemaker:Dummy".split()
+            "resource get_resource_agent_info ocf:pcsmock:params".split()
         )
         self.assertEqual(stderr, "")
         self.assertEqual(returncode, 0)
         self.assertEqual(
             json.loads(stdout),
             {
-                "name": "ocf:pacemaker:Dummy",
+                "name": "ocf:pcsmock:params",
                 "standard": "ocf",
-                "provider": "pacemaker",
-                "type": "Dummy",
-                "shortdesc": "Example stateless resource agent",
-                "longdesc": "This is a dummy OCF resource agent. It does absolutely nothing except keep track\nof whether it is running or not, and can be configured so that actions fail or\ntake a long time. Its purpose is primarily for testing, and to serve as a\ntemplate for resource agent writers.",
+                "provider": "pcsmock",
+                "type": "params",
+                "shortdesc": "Mock agent for pcs tests - agent with various parameters",
+                "longdesc": "This is a mock agent for pcs test - agent with parameters",
                 "parameters": [
                     {
-                        "name": "state",
-                        "shortdesc": "State file",
-                        "longdesc": "Location to store the resource state in.",
-                        "type": "string",
-                        "default": "/var/run/Dummy-Dummy.state",
-                        "enum_values": None,
-                        "required": False,
                         "advanced": False,
+                        "default": None,
                         "deprecated": False,
                         "deprecated_by": [],
                         "deprecated_desc": None,
-                        "unique_group": "state",
+                        "enum_values": None,
+                        "longdesc": "A generic mandatory string parameter",
+                        "name": "mandatory",
                         "reloadable": False,
+                        "required": True,
+                        "shortdesc": "mandatory string parameter",
+                        "type": "string",
+                        "unique_group": None,
                     },
                     {
-                        "name": "passwd",
-                        "shortdesc": "Password",
-                        "longdesc": "Fake password field",
-                        "type": "string",
-                        "default": "",
-                        "enum_values": None,
-                        "required": False,
                         "advanced": False,
+                        "default": "if not specified",
                         "deprecated": False,
                         "deprecated_by": [],
                         "deprecated_desc": None,
+                        "enum_values": None,
+                        "longdesc": "A generic optional string parameter",
+                        "name": "optional",
+                        "reloadable": False,
+                        "required": False,
+                        "shortdesc": "optional string parameter",
+                        "type": "string",
                         "unique_group": None,
-                        "reloadable": True,
                     },
                     {
-                        "name": "fake",
-                        "shortdesc": "Fake attribute that can be changed to cause an agent reload",
-                        "longdesc": "Fake attribute that can be changed to cause an agent reload",
-                        "type": "string",
-                        "default": "dummy",
-                        "enum_values": None,
-                        "required": False,
                         "advanced": False,
+                        "default": "value1",
                         "deprecated": False,
                         "deprecated_by": [],
                         "deprecated_desc": None,
+                        "enum_values": ["value1", "value2", "value3"],
+                        "longdesc": "An optional enum parameter",
+                        "name": "enum",
+                        "reloadable": False,
+                        "required": False,
+                        "shortdesc": "optional enum parameter",
+                        "type": "select",
                         "unique_group": None,
-                        "reloadable": True,
                     },
                     {
-                        "name": "op_sleep",
-                        "shortdesc": "Operation sleep duration in seconds.",
-                        "longdesc": "Number of seconds to sleep during operations.  This can be used to test how\nthe cluster reacts to operation timeouts.",
-                        "type": "string",
-                        "default": "0",
-                        "enum_values": None,
-                        "required": False,
-                        "advanced": False,
-                        "deprecated": False,
-                        "deprecated_by": [],
-                        "deprecated_desc": None,
-                        "unique_group": None,
-                        "reloadable": True,
-                    },
-                    {
-                        "name": "fail_start_on",
-                        "shortdesc": "Report bogus start failure on specified host",
-                        "longdesc": "Start, migrate_from, and reload-agent actions will return failure if running on\nthe host specified here, but the resource will run successfully anyway (future\nmonitor calls will find it running). This can be used to test on-fail=ignore.",
-                        "type": "string",
-                        "default": "",
-                        "enum_values": None,
-                        "required": False,
-                        "advanced": False,
-                        "deprecated": False,
-                        "deprecated_by": [],
-                        "deprecated_desc": None,
-                        "unique_group": None,
-                        "reloadable": True,
-                    },
-                    {
-                        "name": "envfile",
-                        "shortdesc": "Environment dump file",
-                        "longdesc": "If this is set, the environment will be dumped to this file for every call.",
-                        "type": "string",
-                        "default": "",
-                        "enum_values": None,
-                        "required": False,
-                        "advanced": False,
-                        "deprecated": False,
-                        "deprecated_by": [],
-                        "deprecated_desc": None,
-                        "unique_group": None,
-                        "reloadable": True,
-                    },
-                    {
-                        "name": "trace_ra",
-                        "shortdesc": "Set to 1 to turn on resource agent tracing (expect large output)",
-                        "longdesc": "Set to 1 to turn on resource agent tracing (expect large output) The trace output will be saved to trace_file, if set, or by default to $HA_VARRUN/ra_trace/<type>/<id>.<action>.<timestamp> e.g. $HA_VARRUN/ra_trace/oracle/db.start.2012-11-27.08:37:08",
-                        "type": "integer",
-                        "default": "0",
-                        "enum_values": None,
-                        "required": False,
                         "advanced": True,
+                        "default": None,
                         "deprecated": False,
                         "deprecated_by": [],
                         "deprecated_desc": None,
-                        "unique_group": None,
+                        "enum_values": None,
+                        "longdesc": "This parameter should not be set usually",
+                        "name": "advanced",
                         "reloadable": False,
+                        "required": False,
+                        "shortdesc": "advanced parameter",
+                        "type": "string",
+                        "unique_group": None,
                     },
                     {
-                        "name": "trace_file",
-                        "shortdesc": "Path to a file to store resource agent tracing log",
-                        "longdesc": "Path to a file to store resource agent tracing log",
-                        "type": "string",
-                        "default": "",
-                        "enum_values": None,
-                        "required": False,
-                        "advanced": True,
+                        "advanced": False,
+                        "default": None,
                         "deprecated": False,
                         "deprecated_by": [],
                         "deprecated_desc": None,
-                        "unique_group": None,
+                        "enum_values": None,
+                        "longdesc": "First parameter in a unique group",
+                        "name": "unique1",
                         "reloadable": False,
+                        "required": False,
+                        "shortdesc": "unique param 1",
+                        "type": "string",
+                        "unique_group": "group-A",
+                    },
+                    {
+                        "advanced": False,
+                        "default": None,
+                        "deprecated": False,
+                        "deprecated_by": [],
+                        "deprecated_desc": None,
+                        "enum_values": None,
+                        "longdesc": "Second parameter in a unique group",
+                        "name": "unique2",
+                        "reloadable": False,
+                        "required": False,
+                        "shortdesc": "unique param 2",
+                        "type": "string",
+                        "unique_group": "group-A",
                     },
                 ],
                 "actions": [
@@ -483,38 +461,32 @@ class ResourceTestCibFixture(CachedCibFixture):
     def _setup_cib(self):
         self.assert_pcs_success_ignore_output(
             (
-                "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2"
-                " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s --force"
+                "resource create --no-default-ops ClusterIP ocf:pcsmock:minimal"
             ).split()
         )
         self.assert_pcs_success_ignore_output(
             (
-                "resource create --no-default-ops ClusterIP2 ocf:heartbeat:IPaddr2"
-                " cidr_netmask=32 ip=192.168.0.92 op monitor interval=30s --force"
+                "resource create --no-default-ops ClusterIP2 ocf:pcsmock:minimal"
             ).split()
         )
         self.assert_pcs_success_ignore_output(
             (
-                "resource create --no-default-ops ClusterIP3 ocf:heartbeat:IPaddr2"
-                " cidr_netmask=32 ip=192.168.0.93 op monitor interval=30s --force"
+                "resource create --no-default-ops ClusterIP3 ocf:pcsmock:minimal"
             ).split()
         )
         self.assert_pcs_success_ignore_output(
             (
-                "resource create --no-default-ops ClusterIP4 ocf:heartbeat:IPaddr2"
-                " cidr_netmask=32 ip=192.168.0.94 op monitor interval=30s --force"
+                "resource create --no-default-ops ClusterIP4 ocf:pcsmock:minimal"
             ).split()
         )
         self.assert_pcs_success_ignore_output(
             (
-                "resource create --no-default-ops ClusterIP5 ocf:heartbeat:IPaddr2"
-                " cidr_netmask=32 ip=192.168.0.95 op monitor interval=30s --force"
+                "resource create --no-default-ops ClusterIP5 ocf:pcsmock:minimal"
             ).split()
         )
         self.assert_pcs_success_ignore_output(
             (
-                "resource create --no-default-ops ClusterIP6 ocf:heartbeat:IPaddr2"
-                " cidr_netmask=32 ip=192.168.0.96 op monitor interval=30s --force"
+                "resource create --no-default-ops ClusterIP6 ocf:pcsmock:minimal"
             ).split()
         )
         self.assert_pcs_success(
@@ -543,7 +515,7 @@ class Resource(TestCase, AssertPcsMixin):
         write_file_to_tmpfile(empty_cib, self.temp_cib)
         write_file_to_tmpfile(large_cib, self.temp_large_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
+        self.pcs_runner.mock_settings = get_mock_settings()
 
     def tearDown(self):
         self.temp_cib.close()
@@ -555,42 +527,34 @@ class Resource(TestCase, AssertPcsMixin):
 
     def test_case_insensitive(self):
         self.assert_pcs_fail(
-            "resource create --no-default-ops D0 dummy".split(),
+            "resource create --no-default-ops D0 pcsmock".split(),
             (
-                "Error: Multiple agents match 'dummy', please specify full name: "
-                "'ocf:heartbeat:Dummy' or 'ocf:pacemaker:Dummy'\n"
+                "Error: Multiple agents match 'pcsmock', please specify full name: "
+                "'ocf:heartbeat:pcsMock' or 'ocf:pacemaker:pcsMock'\n"
                 + ERRORS_HAVE_OCCURRED
             ),
         )
 
         self.assert_pcs_success(
-            "resource create --no-default-ops D1 systemhealth".split(),
+            "resource create --no-default-ops D1 camelcase".split(),
             stderr_full=(
-                "Assumed agent name 'ocf:pacemaker:SystemHealth'"
-                " (deduced from 'systemhealth')\n"
+                "Assumed agent name 'ocf:pcsmock:CamelCase'"
+                " (deduced from 'camelcase')\n"
             ),
         )
 
         self.assert_pcs_success(
-            "resource create --no-default-ops D2 SYSTEMHEALTH".split(),
+            "resource create --no-default-ops D2 CAMELCASE".split(),
             stderr_full=(
-                "Assumed agent name 'ocf:pacemaker:SystemHealth'"
-                " (deduced from 'SYSTEMHEALTH')\n"
-            ),
-        )
-
-        self.assert_pcs_success(
-            "resource create --no-default-ops D3 ipaddr2 ip=1.1.1.1".split(),
-            stderr_full=(
-                "Assumed agent name 'ocf:heartbeat:IPaddr2'"
-                " (deduced from 'ipaddr2')\n"
+                "Assumed agent name 'ocf:pcsmock:CamelCase'"
+                " (deduced from 'CAMELCASE')\n"
             ),
         )
 
         self.assert_pcs_fail(
-            "resource create --no-default-ops D4 ipaddr3".split(),
+            "resource create --no-default-ops D4 camel_case".split(),
             (
-                "Error: Unable to find agent 'ipaddr3', try specifying its full name\n"
+                "Error: Unable to find agent 'camel_case', try specifying its full name\n"
                 + ERRORS_HAVE_OCCURRED
             ),
         )
@@ -600,14 +564,15 @@ class Resource(TestCase, AssertPcsMixin):
 
     def test_add_resources_large_cib(self):
         self.pcs_runner = PcsRunner(self.temp_large_cib.name)
+        self.pcs_runner.mock_settings = get_mock_settings()
         self.assert_pcs_success(
-            "resource create dummy0 ocf:heartbeat:Dummy --no-default-ops".split(),
+            "resource create dummy0 ocf:pcsmock:minimal --no-default-ops".split(),
         )
         self.assert_pcs_success(
             "resource config dummy0".split(),
             dedent(
                 """\
-                Resource: dummy0 (class=ocf provider=heartbeat type=Dummy)
+                Resource: dummy0 (class=ocf provider=pcsmock type=minimal)
                   Operations:
                     monitor: dummy0-monitor-interval-10s
                       interval=10s timeout=20s
@@ -619,10 +584,7 @@ class Resource(TestCase, AssertPcsMixin):
         assert command in {"delete", "remove"}
 
         self.assert_pcs_success(
-            (
-                "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2"
-                " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
-            ).split()
+            "resource create --no-default-ops ClusterIP ocf:pcsmock:minimal".split()
         )
 
         self.assert_pcs_success(
@@ -668,18 +630,18 @@ class Resource(TestCase, AssertPcsMixin):
     def test_resource_show(self):
         self.assert_pcs_success(
             (
-                "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2"
-                " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
+                "resource create --no-default-ops ClusterIP ocf:pcsmock:params"
+                " mandatory=mandat optional=opti op monitor interval=30s"
             ).split()
         )
         self.assert_pcs_success(
             "resource config ClusterIP".split(),
             dedent(
                 """\
-                Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
+                Resource: ClusterIP (class=ocf provider=pcsmock type=params)
                   Attributes: ClusterIP-instance_attributes
-                    cidr_netmask=32
-                    ip=192.168.0.99
+                    mandatory=mandat
+                    optional=opti
                   Operations:
                     monitor: ClusterIP-monitor-interval-30s
                       interval=30s
@@ -691,8 +653,8 @@ class Resource(TestCase, AssertPcsMixin):
         # see also BundleMiscCommands
         self.assert_pcs_success(
             (
-                "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2"
-                " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
+                "resource create --no-default-ops ClusterIP ocf:pcsmock:minimal"
+                " op monitor interval=30s"
             ).split()
         )
 
@@ -745,10 +707,7 @@ class Resource(TestCase, AssertPcsMixin):
             "resource config ClusterIP".split(),
             dedent(
                 """\
-                Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
-                  Attributes: ClusterIP-instance_attributes
-                    cidr_netmask=32
-                    ip=192.168.0.99
+                Resource: ClusterIP (class=ocf provider=pcsmock type=minimal)
                   Operations:
                     monitor: ClusterIP-monitor-interval-30s
                       interval=30s
@@ -759,14 +718,18 @@ class Resource(TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_success(
-            "resource create --no-default-ops OPTest ocf:heartbeat:Dummy op monitor interval=30s OCF_CHECK_LEVEL=1 op monitor interval=25s OCF_CHECK_LEVEL=1 enabled=0".split(),
+            (
+                "resource create --no-default-ops OPTest ocf:pcsmock:minimal "
+                "op monitor interval=30s OCF_CHECK_LEVEL=1 "
+                "op monitor interval=25s OCF_CHECK_LEVEL=1 enabled=0"
+            ).split(),
         )
 
         self.assert_pcs_success(
             "resource config OPTest".split(),
             dedent(
                 """\
-                Resource: OPTest (class=ocf provider=heartbeat type=Dummy)
+                Resource: OPTest (class=ocf provider=pcsmock type=minimal)
                   Operations:
                     monitor: OPTest-monitor-interval-30s
                       interval=30s OCF_CHECK_LEVEL=1
@@ -777,7 +740,12 @@ class Resource(TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_success(
-            "resource create --no-default-ops OPTest2 ocf:heartbeat:Dummy op monitor interval=30s OCF_CHECK_LEVEL=1 op monitor interval=25s OCF_CHECK_LEVEL=2 op start timeout=30s".split(),
+            (
+                "resource create --no-default-ops OPTest2 ocf:pcsmock:minimal "
+                "op monitor interval=30s OCF_CHECK_LEVEL=1 "
+                "op monitor interval=25s OCF_CHECK_LEVEL=2 "
+                "op start timeout=30s"
+            ).split(),
         )
 
         self.assert_pcs_fail(
@@ -804,7 +772,7 @@ class Resource(TestCase, AssertPcsMixin):
             "resource config OPTest2".split(),
             dedent(
                 """\
-                Resource: OPTest2 (class=ocf provider=heartbeat type=Dummy)
+                Resource: OPTest2 (class=ocf provider=pcsmock type=minimal)
                   Operations:
                     monitor: OPTest2-monitor-interval-30s
                       interval=30s OCF_CHECK_LEVEL=1
@@ -819,14 +787,17 @@ class Resource(TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_success(
-            "resource create --no-default-ops OPTest3 ocf:heartbeat:Dummy op monitor OCF_CHECK_LEVEL=1".split(),
+            (
+                "resource create --no-default-ops OPTest3 ocf:pcsmock:minimal "
+                "op monitor OCF_CHECK_LEVEL=1"
+            ).split(),
         )
 
         self.assert_pcs_success(
             "resource config OPTest3".split(),
             dedent(
                 """\
-                Resource: OPTest3 (class=ocf provider=heartbeat type=Dummy)
+                Resource: OPTest3 (class=ocf provider=pcsmock type=minimal)
                   Operations:
                     monitor: OPTest3-monitor-interval-60s
                       interval=60s OCF_CHECK_LEVEL=1
@@ -835,7 +806,10 @@ class Resource(TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_success(
-            "resource create --no-default-ops OPTest4 ocf:heartbeat:Dummy op monitor interval=30s".split(),
+            (
+                "resource create --no-default-ops OPTest4 ocf:pcsmock:minimal "
+                "op monitor interval=30s"
+            ).split(),
         )
 
         self.assert_pcs_success(
@@ -846,7 +820,7 @@ class Resource(TestCase, AssertPcsMixin):
             "resource config OPTest4".split(),
             dedent(
                 """\
-                Resource: OPTest4 (class=ocf provider=heartbeat type=Dummy)
+                Resource: OPTest4 (class=ocf provider=pcsmock type=minimal)
                   Operations:
                     monitor: OPTest4-monitor-interval-60s
                       interval=60s OCF_CHECK_LEVEL=1
@@ -855,7 +829,7 @@ class Resource(TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_success(
-            "resource create --no-default-ops OPTest5 ocf:heartbeat:Dummy".split(),
+            "resource create --no-default-ops OPTest5 ocf:pcsmock:minimal".split(),
         )
 
         self.assert_pcs_success(
@@ -866,7 +840,7 @@ class Resource(TestCase, AssertPcsMixin):
             "resource config OPTest5".split(),
             dedent(
                 """\
-                Resource: OPTest5 (class=ocf provider=heartbeat type=Dummy)
+                Resource: OPTest5 (class=ocf provider=pcsmock type=minimal)
                   Operations:
                     monitor: OPTest5-monitor-interval-60s
                       interval=60s OCF_CHECK_LEVEL=1
@@ -875,7 +849,7 @@ class Resource(TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_success(
-            "resource create --no-default-ops OPTest6 ocf:heartbeat:Dummy".split(),
+            "resource create --no-default-ops OPTest6 ocf:pcsmock:minimal".split(),
         )
 
         self.assert_pcs_success(
@@ -886,7 +860,7 @@ class Resource(TestCase, AssertPcsMixin):
             "resource config OPTest6".split(),
             dedent(
                 """\
-                Resource: OPTest6 (class=ocf provider=heartbeat type=Dummy)
+                Resource: OPTest6 (class=ocf provider=pcsmock type=minimal)
                   Operations:
                     monitor: OPTest6-monitor-interval-10s
                       interval=10s timeout=20s
@@ -897,7 +871,7 @@ class Resource(TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_success(
-            "resource create --no-default-ops OPTest7 ocf:heartbeat:Dummy".split(),
+            "resource create --no-default-ops OPTest7 ocf:pcsmock:minimal".split(),
         )
 
         self.assert_pcs_success(
@@ -920,7 +894,7 @@ class Resource(TestCase, AssertPcsMixin):
             "resource config OPTest7".split(),
             dedent(
                 """\
-                Resource: OPTest7 (class=ocf provider=heartbeat type=Dummy)
+                Resource: OPTest7 (class=ocf provider=pcsmock type=minimal)
                   Operations:
                     monitor: OPTest7-monitor-interval-60s
                       interval=60s OCF_CHECK_LEVEL=1
@@ -939,7 +913,7 @@ class Resource(TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_success(
-            "resource create --no-default-ops OCFTest1 ocf:heartbeat:Dummy".split(),
+            "resource create --no-default-ops OCFTest1 ocf:pcsmock:minimal".split(),
         )
 
         self.assert_pcs_fail(
@@ -962,7 +936,7 @@ class Resource(TestCase, AssertPcsMixin):
             "resource config OCFTest1".split(),
             dedent(
                 """\
-                Resource: OCFTest1 (class=ocf provider=heartbeat type=Dummy)
+                Resource: OCFTest1 (class=ocf provider=pcsmock type=minimal)
                   Operations:
                     monitor: OCFTest1-monitor-interval-10s
                       interval=10s timeout=20s
@@ -982,7 +956,7 @@ class Resource(TestCase, AssertPcsMixin):
             "resource config OCFTest1".split(),
             dedent(
                 """\
-                Resource: OCFTest1 (class=ocf provider=heartbeat type=Dummy)
+                Resource: OCFTest1 (class=ocf provider=pcsmock type=minimal)
                   Operations:
                     monitor: OCFTest1-monitor-interval-61s
                       interval=61s OCF_CHECK_LEVEL=5
@@ -1002,7 +976,7 @@ class Resource(TestCase, AssertPcsMixin):
             "resource config OCFTest1".split(),
             dedent(
                 """\
-                Resource: OCFTest1 (class=ocf provider=heartbeat type=Dummy)
+                Resource: OCFTest1 (class=ocf provider=pcsmock type=minimal)
                   Operations:
                     monitor: OCFTest1-monitor-interval-60s
                       interval=60s OCF_CHECK_LEVEL=4
@@ -1022,7 +996,7 @@ class Resource(TestCase, AssertPcsMixin):
             "resource config OCFTest1".split(),
             dedent(
                 """\
-                Resource: OCFTest1 (class=ocf provider=heartbeat type=Dummy)
+                Resource: OCFTest1 (class=ocf provider=pcsmock type=minimal)
                   Operations:
                     monitor: OCFTest1-monitor-interval-35s
                       interval=35s OCF_CHECK_LEVEL=4
@@ -1035,11 +1009,7 @@ class Resource(TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_success(
-            "resource create --no-default-ops state ocf:pacemaker:Stateful".split(),
-            stderr_full=(
-                "Warning: changing a monitor operation interval from 10s to 11 to"
-                " make the operation unique\n"
-            ),
+            "resource create --no-default-ops state ocf:pcsmock:stateful".split(),
         )
 
         self.assert_pcs_fail(
@@ -1066,12 +1036,12 @@ class Resource(TestCase, AssertPcsMixin):
             "resource config state".split(),
             dedent(
                 f"""\
-                Resource: state (class=ocf provider=pacemaker type=Stateful)
+                Resource: state (class=ocf provider=pcsmock type=stateful)
                   Operations:
                     monitor: state-monitor-interval-10s
                       interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED}
-                    monitor: state-monitor-interval-11
-                      interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
+                    monitor: state-monitor-interval-11s
+                      interval=11s timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
                     monitor: state-monitor-interval-15
                       interval=15 role={const.PCMK_ROLE_PROMOTED}
                 """
@@ -1082,7 +1052,7 @@ class Resource(TestCase, AssertPcsMixin):
     def test_add_operation_onfail_demote_upgrade_cib(self):
         write_file_to_tmpfile(rc("cib-empty-3.3.xml"), self.temp_cib)
         self.assert_pcs_success(
-            "resource create --no-default-ops R ocf:pacemaker:Dummy".split()
+            "resource create --no-default-ops R ocf:pcsmock:minimal".split()
         )
         self.assert_pcs_success(
             "resource op add R start on-fail=demote".split(),
@@ -1093,7 +1063,7 @@ class Resource(TestCase, AssertPcsMixin):
     def test_update_add_operation_onfail_demote_upgrade_cib(self):
         write_file_to_tmpfile(rc("cib-empty-3.3.xml"), self.temp_cib)
         self.assert_pcs_success(
-            "resource create --no-default-ops R ocf:pacemaker:Dummy".split()
+            "resource create --no-default-ops R ocf:pcsmock:minimal".split()
         )
         self.assert_pcs_success(
             "resource update R op start on-fail=demote".split(),
@@ -1105,8 +1075,8 @@ class Resource(TestCase, AssertPcsMixin):
 
         self.assert_pcs_success(
             (
-                "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2"
-                " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
+                "resource create --no-default-ops ClusterIP ocf:pcsmock:minimal"
+                " op monitor interval=30s"
             ).split()
         )
 
@@ -1143,10 +1113,7 @@ class Resource(TestCase, AssertPcsMixin):
             "resource config ClusterIP".split(),
             dedent(
                 """\
-                Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
-                  Attributes: ClusterIP-instance_attributes
-                    cidr_netmask=32
-                    ip=192.168.0.99
+                Resource: ClusterIP (class=ocf provider=pcsmock type=minimal)
                   Operations:
                     monitor: ClusterIP-monitor-interval-31s
                       interval=31s
@@ -1162,10 +1129,7 @@ class Resource(TestCase, AssertPcsMixin):
             "resource config ClusterIP".split(),
             dedent(
                 """\
-                Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
-                  Attributes: ClusterIP-instance_attributes
-                    cidr_netmask=32
-                    ip=192.168.0.99
+                Resource: ClusterIP (class=ocf provider=pcsmock type=minimal)
                 """
             ),
         )
@@ -1194,10 +1158,7 @@ class Resource(TestCase, AssertPcsMixin):
             "resource config ClusterIP".split(),
             dedent(
                 """\
-                Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
-                  Attributes: ClusterIP-instance_attributes
-                    cidr_netmask=32
-                    ip=192.168.0.99
+                Resource: ClusterIP (class=ocf provider=pcsmock type=minimal)
                   Operations:
                     stop: ClusterIP-stop-interval-0s
                       interval=0s timeout=34s
@@ -1228,18 +1189,17 @@ class Resource(TestCase, AssertPcsMixin):
     def test_update_operation(self):
         self.assert_pcs_success(
             (
-                "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2"
-                " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
+                "resource create --no-default-ops ClusterIP ocf:pcsmock:params"
+                " mandatory=value op monitor interval=30s"
             ).split()
         )
         self.assert_pcs_success(
             "resource config ClusterIP".split(),
             dedent(
                 """\
-                Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
+                Resource: ClusterIP (class=ocf provider=pcsmock type=params)
                   Attributes: ClusterIP-instance_attributes
-                    cidr_netmask=32
-                    ip=192.168.0.99
+                    mandatory=value
                   Operations:
                     monitor: ClusterIP-monitor-interval-30s
                       interval=30s
@@ -1254,10 +1214,9 @@ class Resource(TestCase, AssertPcsMixin):
             "resource config ClusterIP".split(),
             dedent(
                 """\
-                Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
+                Resource: ClusterIP (class=ocf provider=pcsmock type=params)
                   Attributes: ClusterIP-instance_attributes
-                    cidr_netmask=32
-                    ip=192.168.0.99
+                    mandatory=value
                   Operations:
                     monitor: ClusterIP-monitor-interval-32s
                       interval=32s
@@ -1267,10 +1226,9 @@ class Resource(TestCase, AssertPcsMixin):
 
         show_clusterip = dedent(
             """\
-            Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
+            Resource: ClusterIP (class=ocf provider=pcsmock type=params)
               Attributes: ClusterIP-instance_attributes
-                cidr_netmask=32
-                ip=192.168.0.99
+                mandatory=value
               Operations:
                 monitor: ClusterIP-monitor-interval-33s
                   interval=33s
@@ -1341,10 +1299,9 @@ class Resource(TestCase, AssertPcsMixin):
             "resource config ClusterIP".split(),
             dedent(
                 """\
-                Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
+                Resource: ClusterIP (class=ocf provider=pcsmock type=params)
                   Attributes: ClusterIP-instance_attributes
-                    cidr_netmask=32
-                    ip=192.168.0.99
+                    mandatory=value
                   Operations:
                     monitor: abcd
                       interval=60s
@@ -1358,13 +1315,13 @@ class Resource(TestCase, AssertPcsMixin):
         # - the first one is updated
         # - operation duplicity detection test
         self.assert_pcs_success(
-            "resource create A ocf:heartbeat:Dummy op monitor interval=10 op monitor interval=20".split()
+            "resource create A ocf:pcsmock:minimal op monitor interval=10 op monitor interval=20".split()
         )
         self.assert_pcs_success(
             "resource config A".split(),
             dedent(
                 """\
-                Resource: A (class=ocf provider=heartbeat type=Dummy)
+                Resource: A (class=ocf provider=pcsmock type=minimal)
                   Operations:
                     migrate_from: A-migrate_from-interval-0s
                       interval=0s timeout=20s
@@ -1375,6 +1332,8 @@ class Resource(TestCase, AssertPcsMixin):
                     monitor: A-monitor-interval-20
                       interval=20
                     reload: A-reload-interval-0s
+                      interval=0s timeout=20s
+                    reload-agent: A-reload-agent-interval-0s
                       interval=0s timeout=20s
                     start: A-start-interval-0s
                       interval=0s timeout=20s
@@ -1400,7 +1359,7 @@ class Resource(TestCase, AssertPcsMixin):
             "resource config A".split(),
             dedent(
                 """\
-                Resource: A (class=ocf provider=heartbeat type=Dummy)
+                Resource: A (class=ocf provider=pcsmock type=minimal)
                   Operations:
                     migrate_from: A-migrate_from-interval-0s
                       interval=0s timeout=20s
@@ -1412,6 +1371,8 @@ class Resource(TestCase, AssertPcsMixin):
                       interval=20
                     reload: A-reload-interval-0s
                       interval=0s timeout=20s
+                    reload-agent: A-reload-agent-interval-0s
+                      interval=0s timeout=20s
                     start: A-start-interval-0s
                       interval=0s timeout=20s
                     stop: A-stop-interval-0s
@@ -1421,7 +1382,7 @@ class Resource(TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_success(
-            "resource create B ocf:heartbeat:Dummy --no-default-ops".split(),
+            "resource create B ocf:pcsmock:minimal --no-default-ops".split(),
         )
 
         self.assert_pcs_success(
@@ -1430,7 +1391,7 @@ class Resource(TestCase, AssertPcsMixin):
 
         self.assert_pcs_success(
             "resource config B".split(),
-            "Resource: B (class=ocf provider=heartbeat type=Dummy)\n",
+            "Resource: B (class=ocf provider=pcsmock type=minimal)\n",
         )
 
         self.assert_pcs_success(
@@ -1441,7 +1402,7 @@ class Resource(TestCase, AssertPcsMixin):
             "resource config B".split(),
             dedent(
                 """\
-                Resource: B (class=ocf provider=heartbeat type=Dummy)
+                Resource: B (class=ocf provider=pcsmock type=minimal)
                   Operations:
                     monitor: B-monitor-interval-60s
                       interval=60s
@@ -1457,7 +1418,7 @@ class Resource(TestCase, AssertPcsMixin):
             "resource config B".split(),
             dedent(
                 """\
-                Resource: B (class=ocf provider=heartbeat type=Dummy)
+                Resource: B (class=ocf provider=pcsmock type=minimal)
                   Operations:
                     monitor: B-monitor-interval-30
                       interval=30
@@ -1473,7 +1434,7 @@ class Resource(TestCase, AssertPcsMixin):
             "resource config B".split(),
             dedent(
                 """\
-                Resource: B (class=ocf provider=heartbeat type=Dummy)
+                Resource: B (class=ocf provider=pcsmock type=minimal)
                   Operations:
                     monitor: B-monitor-interval-30
                       interval=30
@@ -1491,7 +1452,7 @@ class Resource(TestCase, AssertPcsMixin):
             "resource config B".split(),
             dedent(
                 """\
-                Resource: B (class=ocf provider=heartbeat type=Dummy)
+                Resource: B (class=ocf provider=pcsmock type=minimal)
                   Operations:
                     monitor: B-monitor-interval-30
                       interval=30
@@ -1509,7 +1470,7 @@ class Resource(TestCase, AssertPcsMixin):
             "resource config B".split(),
             dedent(
                 """\
-                Resource: B (class=ocf provider=heartbeat type=Dummy)
+                Resource: B (class=ocf provider=pcsmock type=minimal)
                   Operations:
                     monitor: B-monitor-interval-33
                       interval=33
@@ -1534,7 +1495,7 @@ class Resource(TestCase, AssertPcsMixin):
             "resource config B".split(),
             dedent(
                 f"""\
-                Resource: B (class=ocf provider=heartbeat type=Dummy)
+                Resource: B (class=ocf provider=pcsmock type=minimal)
                   Operations:
                     monitor: B-monitor-interval-33
                       interval=33
@@ -1554,7 +1515,7 @@ class Resource(TestCase, AssertPcsMixin):
             "resource config B".split(),
             dedent(
                 f"""\
-                Resource: B (class=ocf provider=heartbeat type=Dummy)
+                Resource: B (class=ocf provider=pcsmock type=minimal)
                   Operations:
                     monitor: B-monitor-interval-33
                       interval=33
@@ -1568,15 +1529,15 @@ class Resource(TestCase, AssertPcsMixin):
 
     def test_group_delete_test(self):
         self.assert_pcs_success(
-            "resource create --no-default-ops A1 ocf:heartbeat:Dummy --group AGroup".split(),
+            "resource create --no-default-ops A1 ocf:pcsmock:minimal --group AGroup".split(),
             stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success(
-            "resource create --no-default-ops A2 ocf:heartbeat:Dummy --group AGroup".split(),
+            "resource create --no-default-ops A2 ocf:pcsmock:minimal --group AGroup".split(),
             stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success(
-            "resource create --no-default-ops A3 ocf:heartbeat:Dummy --group AGroup".split(),
+            "resource create --no-default-ops A3 ocf:pcsmock:minimal --group AGroup".split(),
             stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
 
@@ -1591,9 +1552,9 @@ class Resource(TestCase, AssertPcsMixin):
                 outdent(
                     """\
                       * Resource Group: AGroup:
-                        * A1\t(ocf:heartbeat:Dummy):\t Stopped
-                        * A2\t(ocf:heartbeat:Dummy):\t Stopped
-                        * A3\t(ocf:heartbeat:Dummy):\t Stopped
+                        * A1\t(ocf:pcsmock:minimal):\t Stopped
+                        * A2\t(ocf:pcsmock:minimal):\t Stopped
+                        * A3\t(ocf:pcsmock:minimal):\t Stopped
                     """
                 ),
             )
@@ -1602,9 +1563,9 @@ class Resource(TestCase, AssertPcsMixin):
                 stdout,
                 """\
   * Resource Group: AGroup:
-    * A1\t(ocf::heartbeat:Dummy):\tStopped
-    * A2\t(ocf::heartbeat:Dummy):\tStopped
-    * A3\t(ocf::heartbeat:Dummy):\tStopped
+    * A1\t(ocf::pcsmock:minimal):\tStopped
+    * A2\t(ocf::pcsmock:minimal):\tStopped
+    * A3\t(ocf::pcsmock:minimal):\tStopped
 """,
             )
         else:
@@ -1612,9 +1573,9 @@ class Resource(TestCase, AssertPcsMixin):
                 stdout,
                 """\
  Resource Group: AGroup
-     A1\t(ocf::heartbeat:Dummy):\tStopped
-     A2\t(ocf::heartbeat:Dummy):\tStopped
-     A3\t(ocf::heartbeat:Dummy):\tStopped
+     A1\t(ocf::pcsmock:minimal):\tStopped
+     A2\t(ocf::pcsmock:minimal):\tStopped
+     A3\t(ocf::pcsmock:minimal):\tStopped
 """,
             )
 
@@ -1659,19 +1620,19 @@ class Resource(TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_success(
-            "resource create --no-default-ops A1 ocf:heartbeat:Dummy".split(),
+            "resource create --no-default-ops A1 ocf:pcsmock:minimal".split(),
         )
         self.assert_pcs_success(
-            "resource create --no-default-ops A2 ocf:heartbeat:Dummy".split(),
+            "resource create --no-default-ops A2 ocf:pcsmock:minimal".split(),
         )
         self.assert_pcs_success(
-            "resource create --no-default-ops A3 ocf:heartbeat:Dummy".split(),
+            "resource create --no-default-ops A3 ocf:pcsmock:minimal".split(),
         )
         self.assert_pcs_success(
-            "resource create --no-default-ops A4 ocf:heartbeat:Dummy".split(),
+            "resource create --no-default-ops A4 ocf:pcsmock:minimal".split(),
         )
         self.assert_pcs_success(
-            "resource create --no-default-ops A5 ocf:heartbeat:Dummy".split(),
+            "resource create --no-default-ops A5 ocf:pcsmock:minimal".split(),
         )
 
         self.assert_pcs_success(
@@ -1683,23 +1644,23 @@ class Resource(TestCase, AssertPcsMixin):
             dedent(
                 """\
                 Group: AGroup
-                  Resource: A1 (class=ocf provider=heartbeat type=Dummy)
+                  Resource: A1 (class=ocf provider=pcsmock type=minimal)
                     Operations:
                       monitor: A1-monitor-interval-10s
                         interval=10s timeout=20s
-                  Resource: A2 (class=ocf provider=heartbeat type=Dummy)
+                  Resource: A2 (class=ocf provider=pcsmock type=minimal)
                     Operations:
                       monitor: A2-monitor-interval-10s
                         interval=10s timeout=20s
-                  Resource: A3 (class=ocf provider=heartbeat type=Dummy)
+                  Resource: A3 (class=ocf provider=pcsmock type=minimal)
                     Operations:
                       monitor: A3-monitor-interval-10s
                         interval=10s timeout=20s
-                  Resource: A4 (class=ocf provider=heartbeat type=Dummy)
+                  Resource: A4 (class=ocf provider=pcsmock type=minimal)
                     Operations:
                       monitor: A4-monitor-interval-10s
                         interval=10s timeout=20s
-                  Resource: A5 (class=ocf provider=heartbeat type=Dummy)
+                  Resource: A5 (class=ocf provider=pcsmock type=minimal)
                     Operations:
                       monitor: A5-monitor-interval-10s
                         interval=10s timeout=20s
@@ -1709,6 +1670,7 @@ class Resource(TestCase, AssertPcsMixin):
 
     def test_group_large_resource_remove(self):
         self.pcs_runner = PcsRunner(self.temp_large_cib.name)
+        self.pcs_runner.mock_settings = get_mock_settings()
         self.assert_pcs_success(
             "resource group add dummies dummylarge".split(),
         )
@@ -1728,37 +1690,37 @@ class Resource(TestCase, AssertPcsMixin):
         # and tests overhaul. However, this is the only test where "resource
         # group list" is called. Due to that this test was not deleted.
         self.assert_pcs_success(
-            "resource create --no-default-ops A ocf:heartbeat:Dummy".split(),
+            "resource create --no-default-ops A ocf:pcsmock:minimal".split(),
         )
         self.assert_pcs_success(
-            "resource create --no-default-ops B ocf:heartbeat:Dummy".split(),
+            "resource create --no-default-ops B ocf:pcsmock:minimal".split(),
         )
         self.assert_pcs_success(
-            "resource create --no-default-ops C ocf:heartbeat:Dummy".split(),
+            "resource create --no-default-ops C ocf:pcsmock:minimal".split(),
         )
         self.assert_pcs_success(
-            "resource create --no-default-ops D ocf:heartbeat:Dummy".split(),
+            "resource create --no-default-ops D ocf:pcsmock:minimal".split(),
         )
         self.assert_pcs_success(
-            "resource create --no-default-ops E ocf:heartbeat:Dummy".split(),
+            "resource create --no-default-ops E ocf:pcsmock:minimal".split(),
         )
         self.assert_pcs_success(
-            "resource create --no-default-ops F ocf:heartbeat:Dummy".split(),
+            "resource create --no-default-ops F ocf:pcsmock:minimal".split(),
         )
         self.assert_pcs_success(
-            "resource create --no-default-ops G ocf:heartbeat:Dummy".split(),
+            "resource create --no-default-ops G ocf:pcsmock:minimal".split(),
         )
         self.assert_pcs_success(
-            "resource create --no-default-ops H ocf:heartbeat:Dummy".split(),
+            "resource create --no-default-ops H ocf:pcsmock:minimal".split(),
         )
         self.assert_pcs_success(
-            "resource create --no-default-ops I ocf:heartbeat:Dummy".split(),
+            "resource create --no-default-ops I ocf:pcsmock:minimal".split(),
         )
         self.assert_pcs_success(
-            "resource create --no-default-ops J ocf:heartbeat:Dummy".split(),
+            "resource create --no-default-ops J ocf:pcsmock:minimal".split(),
         )
         self.assert_pcs_success(
-            "resource create --no-default-ops K ocf:heartbeat:Dummy".split(),
+            "resource create --no-default-ops K ocf:pcsmock:minimal".split(),
         )
 
         self.assert_pcs_success(
@@ -1773,18 +1735,18 @@ class Resource(TestCase, AssertPcsMixin):
                 stdout,
                 outdent(
                     """\
-                      * F\t(ocf:heartbeat:Dummy):\t Stopped
-                      * G\t(ocf:heartbeat:Dummy):\t Stopped
-                      * H\t(ocf:heartbeat:Dummy):\t Stopped
+                      * F\t(ocf:pcsmock:minimal):\t Stopped
+                      * G\t(ocf:pcsmock:minimal):\t Stopped
+                      * H\t(ocf:pcsmock:minimal):\t Stopped
                       * Resource Group: RGA:
-                        * A\t(ocf:heartbeat:Dummy):\t Stopped
-                        * B\t(ocf:heartbeat:Dummy):\t Stopped
-                        * C\t(ocf:heartbeat:Dummy):\t Stopped
-                        * E\t(ocf:heartbeat:Dummy):\t Stopped
-                        * D\t(ocf:heartbeat:Dummy):\t Stopped
-                        * K\t(ocf:heartbeat:Dummy):\t Stopped
-                        * J\t(ocf:heartbeat:Dummy):\t Stopped
-                        * I\t(ocf:heartbeat:Dummy):\t Stopped
+                        * A\t(ocf:pcsmock:minimal):\t Stopped
+                        * B\t(ocf:pcsmock:minimal):\t Stopped
+                        * C\t(ocf:pcsmock:minimal):\t Stopped
+                        * E\t(ocf:pcsmock:minimal):\t Stopped
+                        * D\t(ocf:pcsmock:minimal):\t Stopped
+                        * K\t(ocf:pcsmock:minimal):\t Stopped
+                        * J\t(ocf:pcsmock:minimal):\t Stopped
+                        * I\t(ocf:pcsmock:minimal):\t Stopped
                     """
                 ),
             )
@@ -1792,36 +1754,36 @@ class Resource(TestCase, AssertPcsMixin):
             assert_pcs_status(
                 stdout,
                 """\
-  * F\t(ocf::heartbeat:Dummy):\tStopped
-  * G\t(ocf::heartbeat:Dummy):\tStopped
-  * H\t(ocf::heartbeat:Dummy):\tStopped
+  * F\t(ocf::pcsmock:minimal):\tStopped
+  * G\t(ocf::pcsmock:minimal):\tStopped
+  * H\t(ocf::pcsmock:minimal):\tStopped
   * Resource Group: RGA:
-    * A\t(ocf::heartbeat:Dummy):\tStopped
-    * B\t(ocf::heartbeat:Dummy):\tStopped
-    * C\t(ocf::heartbeat:Dummy):\tStopped
-    * E\t(ocf::heartbeat:Dummy):\tStopped
-    * D\t(ocf::heartbeat:Dummy):\tStopped
-    * K\t(ocf::heartbeat:Dummy):\tStopped
-    * J\t(ocf::heartbeat:Dummy):\tStopped
-    * I\t(ocf::heartbeat:Dummy):\tStopped
+    * A\t(ocf::pcsmock:minimal):\tStopped
+    * B\t(ocf::pcsmock:minimal):\tStopped
+    * C\t(ocf::pcsmock:minimal):\tStopped
+    * E\t(ocf::pcsmock:minimal):\tStopped
+    * D\t(ocf::pcsmock:minimal):\tStopped
+    * K\t(ocf::pcsmock:minimal):\tStopped
+    * J\t(ocf::pcsmock:minimal):\tStopped
+    * I\t(ocf::pcsmock:minimal):\tStopped
 """,
             )
         else:
             self.assertEqual(
                 stdout,
                 """\
- F\t(ocf::heartbeat:Dummy):\tStopped
- G\t(ocf::heartbeat:Dummy):\tStopped
- H\t(ocf::heartbeat:Dummy):\tStopped
+ F\t(ocf::pcsmock:minimal):\tStopped
+ G\t(ocf::pcsmock:minimal):\tStopped
+ H\t(ocf::pcsmock:minimal):\tStopped
  Resource Group: RGA
-     A\t(ocf::heartbeat:Dummy):\tStopped
-     B\t(ocf::heartbeat:Dummy):\tStopped
-     C\t(ocf::heartbeat:Dummy):\tStopped
-     E\t(ocf::heartbeat:Dummy):\tStopped
-     D\t(ocf::heartbeat:Dummy):\tStopped
-     K\t(ocf::heartbeat:Dummy):\tStopped
-     J\t(ocf::heartbeat:Dummy):\tStopped
-     I\t(ocf::heartbeat:Dummy):\tStopped
+     A\t(ocf::pcsmock:minimal):\tStopped
+     B\t(ocf::pcsmock:minimal):\tStopped
+     C\t(ocf::pcsmock:minimal):\tStopped
+     E\t(ocf::pcsmock:minimal):\tStopped
+     D\t(ocf::pcsmock:minimal):\tStopped
+     K\t(ocf::pcsmock:minimal):\tStopped
+     J\t(ocf::pcsmock:minimal):\tStopped
+     I\t(ocf::pcsmock:minimal):\tStopped
 """,
             )
 
@@ -1846,61 +1808,43 @@ class Resource(TestCase, AssertPcsMixin):
                 Pacemaker Nodes:
 
                 Resources:
-                  Resource: ClusterIP6 (class=ocf provider=heartbeat type=IPaddr2)
-                    Attributes: ClusterIP6-instance_attributes
-                      cidr_netmask=32
-                      ip=192.168.0.96
+                  Resource: ClusterIP6 (class=ocf provider=pcsmock type=minimal)
                     Operations:
-                      monitor: ClusterIP6-monitor-interval-30s
-                        interval=30s
+                      monitor: ClusterIP6-monitor-interval-10s
+                        interval=10s timeout=20s
                   Group: TestGroup1
-                    Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
-                      Attributes: ClusterIP-instance_attributes
-                        cidr_netmask=32
-                        ip=192.168.0.99
+                    Resource: ClusterIP (class=ocf provider=pcsmock type=minimal)
                       Operations:
-                        monitor: ClusterIP-monitor-interval-30s
-                          interval=30s
+                        monitor: ClusterIP-monitor-interval-10s
+                          interval=10s timeout=20s
                   Group: TestGroup2
-                    Resource: ClusterIP2 (class=ocf provider=heartbeat type=IPaddr2)
-                      Attributes: ClusterIP2-instance_attributes
-                        cidr_netmask=32
-                        ip=192.168.0.92
+                    Resource: ClusterIP2 (class=ocf provider=pcsmock type=minimal)
                       Operations:
-                        monitor: ClusterIP2-monitor-interval-30s
-                          interval=30s
-                    Resource: ClusterIP3 (class=ocf provider=heartbeat type=IPaddr2)
-                      Attributes: ClusterIP3-instance_attributes
-                        cidr_netmask=32
-                        ip=192.168.0.93
+                        monitor: ClusterIP2-monitor-interval-10s
+                          interval=10s timeout=20s
+                    Resource: ClusterIP3 (class=ocf provider=pcsmock type=minimal)
                       Operations:
-                        monitor: ClusterIP3-monitor-interval-30s
-                          interval=30s
+                        monitor: ClusterIP3-monitor-interval-10s
+                          interval=10s timeout=20s
                   Clone: ClusterIP4-clone
-                    Resource: ClusterIP4 (class=ocf provider=heartbeat type=IPaddr2)
-                      Attributes: ClusterIP4-instance_attributes
-                        cidr_netmask=32
-                        ip=192.168.0.94
+                    Resource: ClusterIP4 (class=ocf provider=pcsmock type=minimal)
                       Operations:
-                        monitor: ClusterIP4-monitor-interval-30s
-                          interval=30s
+                        monitor: ClusterIP4-monitor-interval-10s
+                          interval=10s timeout=20s
                   Clone: Master
                     Meta Attributes:
                       promotable=true
-                    Resource: ClusterIP5 (class=ocf provider=heartbeat type=IPaddr2)
-                      Attributes: ClusterIP5-instance_attributes
-                        cidr_netmask=32
-                        ip=192.168.0.95
+                    Resource: ClusterIP5 (class=ocf provider=pcsmock type=minimal)
                       Operations:
-                        monitor: ClusterIP5-monitor-interval-30s
-                          interval=30s
+                        monitor: ClusterIP5-monitor-interval-10s
+                          interval=10s timeout=20s
                 """
             ),
         )
 
     def test_clone_remove(self):
         self.assert_pcs_success(
-            "resource create --no-default-ops D1 ocf:heartbeat:Dummy clone".split(),
+            "resource create --no-default-ops D1 ocf:pcsmock:minimal clone".split(),
         )
 
         self.assert_pcs_success(
@@ -1918,7 +1862,7 @@ class Resource(TestCase, AssertPcsMixin):
             dedent(
                 """\
                 Clone: D1-clone
-                  Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+                  Resource: D1 (class=ocf provider=pcsmock type=minimal)
                     Operations:
                       monitor: D1-monitor-interval-10s
                         interval=10s timeout=20s
@@ -1942,7 +1886,7 @@ class Resource(TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_success(
-            "resource create d99 ocf:heartbeat:Dummy clone globally-unique=true".split(),
+            "resource create d99 ocf:pcsmock:minimal clone globally-unique=true".split(),
             stderr_full=(
                 "Deprecation Warning: Configuring clone meta attributes without "
                 "specifying the 'meta' keyword after the 'clone' keyword is "
@@ -1958,6 +1902,7 @@ class Resource(TestCase, AssertPcsMixin):
 
     def test_clone_remove_large(self):
         self.pcs_runner = PcsRunner(self.temp_large_cib.name)
+        self.pcs_runner.mock_settings = get_mock_settings()
         self.assert_pcs_success("resource clone dummylarge".split())
         self.assert_pcs_success(
             "resource delete dummylarge".split(),
@@ -1966,6 +1911,7 @@ class Resource(TestCase, AssertPcsMixin):
 
     def test_clone_group_large_resource_remove(self):
         self.pcs_runner = PcsRunner(self.temp_large_cib.name)
+        self.pcs_runner.mock_settings = get_mock_settings()
         self.assert_pcs_success(
             "resource group add dummies dummylarge".split(),
         )
@@ -2006,7 +1952,7 @@ class Resource(TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_success(
-            "resource create --no-default-ops ClusterIP5 ocf:heartbeat:Dummy".split(),
+            "resource create --no-default-ops ClusterIP5 ocf:pcsmock:minimal".split(),
         )
 
         self.assert_pcs_success(
@@ -2031,10 +1977,7 @@ class Resource(TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_success(
-            (
-                "resource create --no-default-ops ClusterIP5 ocf:heartbeat:IPaddr2"
-                " cidr_netmask=32 ip=192.168.0.95 op monitor interval=30s"
-            ).split()
+            "resource create --no-default-ops ClusterIP5 ocf:pcsmock:minimal".split()
         )
 
         self.assert_pcs_success(
@@ -2060,51 +2003,33 @@ class Resource(TestCase, AssertPcsMixin):
                 Pacemaker Nodes:
 
                 Resources:
-                  Resource: ClusterIP6 (class=ocf provider=heartbeat type=IPaddr2)
-                    Attributes: ClusterIP6-instance_attributes
-                      cidr_netmask=32
-                      ip=192.168.0.96
+                  Resource: ClusterIP6 (class=ocf provider=pcsmock type=minimal)
                     Operations:
-                      monitor: ClusterIP6-monitor-interval-30s
-                        interval=30s
-                  Resource: ClusterIP5 (class=ocf provider=heartbeat type=IPaddr2)
-                    Attributes: ClusterIP5-instance_attributes
-                      cidr_netmask=32
-                      ip=192.168.0.95
+                      monitor: ClusterIP6-monitor-interval-10s
+                        interval=10s timeout=20s
+                  Resource: ClusterIP5 (class=ocf provider=pcsmock type=minimal)
                     Operations:
-                      monitor: ClusterIP5-monitor-interval-30s
-                        interval=30s
+                      monitor: ClusterIP5-monitor-interval-10s
+                        interval=10s timeout=20s
                   Group: TestGroup1
-                    Resource: ClusterIP (class=ocf provider=heartbeat type=IPaddr2)
-                      Attributes: ClusterIP-instance_attributes
-                        cidr_netmask=32
-                        ip=192.168.0.99
+                    Resource: ClusterIP (class=ocf provider=pcsmock type=minimal)
                       Operations:
-                        monitor: ClusterIP-monitor-interval-30s
-                          interval=30s
+                        monitor: ClusterIP-monitor-interval-10s
+                          interval=10s timeout=20s
                   Group: TestGroup2
-                    Resource: ClusterIP2 (class=ocf provider=heartbeat type=IPaddr2)
-                      Attributes: ClusterIP2-instance_attributes
-                        cidr_netmask=32
-                        ip=192.168.0.92
+                    Resource: ClusterIP2 (class=ocf provider=pcsmock type=minimal)
                       Operations:
-                        monitor: ClusterIP2-monitor-interval-30s
-                          interval=30s
-                    Resource: ClusterIP3 (class=ocf provider=heartbeat type=IPaddr2)
-                      Attributes: ClusterIP3-instance_attributes
-                        cidr_netmask=32
-                        ip=192.168.0.93
+                        monitor: ClusterIP2-monitor-interval-10s
+                          interval=10s timeout=20s
+                    Resource: ClusterIP3 (class=ocf provider=pcsmock type=minimal)
                       Operations:
-                        monitor: ClusterIP3-monitor-interval-30s
-                          interval=30s
+                        monitor: ClusterIP3-monitor-interval-10s
+                          interval=10s timeout=20s
                   Clone: ClusterIP4-clone
-                    Resource: ClusterIP4 (class=ocf provider=heartbeat type=IPaddr2)
-                      Attributes: ClusterIP4-instance_attributes
-                        cidr_netmask=32
-                        ip=192.168.0.94
+                    Resource: ClusterIP4 (class=ocf provider=pcsmock type=minimal)
                       Operations:
-                        monitor: ClusterIP4-monitor-interval-30s
-                          interval=30s
+                        monitor: ClusterIP4-monitor-interval-10s
+                          interval=10s timeout=20s
 
                 Location Constraints:
                   resource 'ClusterIP5' prefers node 'rh7-1' with score INFINITY (id: location-ClusterIP5-rh7-1-INFINITY)
@@ -2120,6 +2045,7 @@ class Resource(TestCase, AssertPcsMixin):
         wrap_element_by_master(self.temp_large_cib, "dummylarge")
 
         self.pcs_runner = PcsRunner(self.temp_large_cib.name)
+        self.pcs_runner.mock_settings = get_mock_settings()
         self.assert_pcs_success(
             "resource delete dummylarge".split(),
             stderr_full="Deleting Resource - dummylarge\n",
@@ -2127,6 +2053,7 @@ class Resource(TestCase, AssertPcsMixin):
 
     def test_master_slave_group_large_resource_remove(self):
         self.pcs_runner = PcsRunner(self.temp_large_cib.name)
+        self.pcs_runner.mock_settings = get_mock_settings()
         self.assert_pcs_success(
             "resource group add dummies dummylarge".split(),
         )
@@ -2147,10 +2074,10 @@ class Resource(TestCase, AssertPcsMixin):
 
     def test_ms_group(self):
         self.assert_pcs_success(
-            "resource create --no-default-ops D0 ocf:heartbeat:Dummy".split(),
+            "resource create --no-default-ops D0 ocf:pcsmock:minimal".split(),
         )
         self.assert_pcs_success(
-            "resource create --no-default-ops D1 ocf:heartbeat:Dummy".split(),
+            "resource create --no-default-ops D1 ocf:pcsmock:minimal".split(),
         )
         self.assert_pcs_success("resource group add Group D0 D1".split())
 
@@ -2167,11 +2094,11 @@ class Resource(TestCase, AssertPcsMixin):
                   Meta Attributes:
                     promotable=true
                   Group: Group
-                    Resource: D0 (class=ocf provider=heartbeat type=Dummy)
+                    Resource: D0 (class=ocf provider=pcsmock type=minimal)
                       Operations:
                         monitor: D0-monitor-interval-10s
                           interval=10s timeout=20s
-                    Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+                    Resource: D1 (class=ocf provider=pcsmock type=minimal)
                       Operations:
                         monitor: D1-monitor-interval-10s
                           interval=10s timeout=20s
@@ -2190,10 +2117,10 @@ class Resource(TestCase, AssertPcsMixin):
     def test_unclone(self):
         # see also BundleClone
         self.assert_pcs_success(
-            "resource create --no-default-ops dummy1 ocf:heartbeat:Dummy".split()
+            "resource create --no-default-ops dummy1 ocf:pcsmock:minimal".split()
         )
         self.assert_pcs_success(
-            "resource create --no-default-ops dummy2 ocf:heartbeat:Dummy".split(),
+            "resource create --no-default-ops dummy2 ocf:pcsmock:minimal".split(),
         )
         self.assert_pcs_success("resource group add gr dummy1".split())
 
@@ -2211,11 +2138,11 @@ class Resource(TestCase, AssertPcsMixin):
                 """\
                 Clone: gr-clone
                   Group: gr
-                    Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
+                    Resource: dummy1 (class=ocf provider=pcsmock type=minimal)
                       Operations:
                         monitor: dummy1-monitor-interval-10s
                           interval=10s timeout=20s
-                    Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
+                    Resource: dummy2 (class=ocf provider=pcsmock type=minimal)
                       Operations:
                         monitor: dummy2-monitor-interval-10s
                           interval=10s timeout=20s
@@ -2229,11 +2156,11 @@ class Resource(TestCase, AssertPcsMixin):
             dedent(
                 """\
                 Group: gr
-                  Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
+                  Resource: dummy1 (class=ocf provider=pcsmock type=minimal)
                     Operations:
                       monitor: dummy1-monitor-interval-10s
                         interval=10s timeout=20s
-                  Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
+                  Resource: dummy2 (class=ocf provider=pcsmock type=minimal)
                     Operations:
                       monitor: dummy2-monitor-interval-10s
                         interval=10s timeout=20s
@@ -2249,11 +2176,11 @@ class Resource(TestCase, AssertPcsMixin):
                 """\
                 Clone: gr-clone
                   Group: gr
-                    Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
+                    Resource: dummy1 (class=ocf provider=pcsmock type=minimal)
                       Operations:
                         monitor: dummy1-monitor-interval-10s
                           interval=10s timeout=20s
-                    Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
+                    Resource: dummy2 (class=ocf provider=pcsmock type=minimal)
                       Operations:
                         monitor: dummy2-monitor-interval-10s
                           interval=10s timeout=20s
@@ -2267,11 +2194,11 @@ class Resource(TestCase, AssertPcsMixin):
             dedent(
                 """\
                 Group: gr
-                  Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
+                  Resource: dummy1 (class=ocf provider=pcsmock type=minimal)
                     Operations:
                       monitor: dummy1-monitor-interval-10s
                         interval=10s timeout=20s
-                  Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
+                  Resource: dummy2 (class=ocf provider=pcsmock type=minimal)
                     Operations:
                       monitor: dummy2-monitor-interval-10s
                         interval=10s timeout=20s
@@ -2287,11 +2214,11 @@ class Resource(TestCase, AssertPcsMixin):
                 """\
                 Clone: gr-clone
                   Group: gr
-                    Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
+                    Resource: dummy1 (class=ocf provider=pcsmock type=minimal)
                       Operations:
                         monitor: dummy1-monitor-interval-10s
                           interval=10s timeout=20s
-                    Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
+                    Resource: dummy2 (class=ocf provider=pcsmock type=minimal)
                       Operations:
                         monitor: dummy2-monitor-interval-10s
                           interval=10s timeout=20s
@@ -2304,13 +2231,13 @@ class Resource(TestCase, AssertPcsMixin):
             "resource config".split(),
             dedent(
                 """\
-                Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
+                Resource: dummy1 (class=ocf provider=pcsmock type=minimal)
                   Operations:
                     monitor: dummy1-monitor-interval-10s
                       interval=10s timeout=20s
                 Clone: gr-clone
                   Group: gr
-                    Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
+                    Resource: dummy2 (class=ocf provider=pcsmock type=minimal)
                       Operations:
                         monitor: dummy2-monitor-interval-10s
                           interval=10s timeout=20s
@@ -2323,11 +2250,11 @@ class Resource(TestCase, AssertPcsMixin):
             "resource config".split(),
             dedent(
                 """\
-                Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
+                Resource: dummy1 (class=ocf provider=pcsmock type=minimal)
                   Operations:
                     monitor: dummy1-monitor-interval-10s
                       interval=10s timeout=20s
-                Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
+                Resource: dummy2 (class=ocf provider=pcsmock type=minimal)
                   Operations:
                     monitor: dummy2-monitor-interval-10s
                       interval=10s timeout=20s
@@ -2338,18 +2265,10 @@ class Resource(TestCase, AssertPcsMixin):
     def test_unclone_master(self):
         # see also BundleClone
         self.assert_pcs_success(
-            "resource create --no-default-ops dummy1 ocf:pacemaker:Stateful".split(),
-            stderr_full=(
-                "Warning: changing a monitor operation interval from 10s to 11 "
-                "to make the operation unique\n"
-            ),
+            "resource create --no-default-ops dummy1 ocf:pcsmock:stateful".split(),
         )
         self.assert_pcs_success(
-            "resource create --no-default-ops dummy2 ocf:pacemaker:Stateful".split(),
-            stderr_full=(
-                "Warning: changing a monitor operation interval from 10s to 11 "
-                "to make the operation unique\n"
-            ),
+            "resource create --no-default-ops dummy2 ocf:pcsmock:stateful".split(),
         )
 
         # try to unclone a non-cloned resource
@@ -2375,21 +2294,21 @@ class Resource(TestCase, AssertPcsMixin):
             dedent(
                 f"""\
                 Group: gr
-                  Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
+                  Resource: dummy1 (class=ocf provider=pcsmock type=stateful)
                     Operations:
                       monitor: dummy1-monitor-interval-10s
                         interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED}
-                      monitor: dummy1-monitor-interval-11
-                        interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
+                      monitor: dummy1-monitor-interval-11s
+                        interval=11s timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
                 Clone: dummy2-master
                   Meta Attributes:
                     promotable=true
-                  Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
+                  Resource: dummy2 (class=ocf provider=pcsmock type=stateful)
                     Operations:
                       monitor: dummy2-monitor-interval-10s
                         interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED}
-                      monitor: dummy2-monitor-interval-11
-                        interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
+                      monitor: dummy2-monitor-interval-11s
+                        interval=11s timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
                 """
             ),
         )
@@ -2399,19 +2318,19 @@ class Resource(TestCase, AssertPcsMixin):
             "resource config".split(),
             dedent(
                 f"""\
-                Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
+                Resource: dummy2 (class=ocf provider=pcsmock type=stateful)
                   Operations:
                     monitor: dummy2-monitor-interval-10s
                       interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED}
-                    monitor: dummy2-monitor-interval-11
-                      interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
+                    monitor: dummy2-monitor-interval-11s
+                      interval=11s timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
                 Group: gr
-                  Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
+                  Resource: dummy1 (class=ocf provider=pcsmock type=stateful)
                     Operations:
                       monitor: dummy1-monitor-interval-10s
                         interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED}
-                      monitor: dummy1-monitor-interval-11
-                        interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
+                      monitor: dummy1-monitor-interval-11s
+                        interval=11s timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
                 """
             ),
         )
@@ -2430,18 +2349,18 @@ class Resource(TestCase, AssertPcsMixin):
                   Meta Attributes:
                     promotable=true
                   Group: gr
-                    Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
+                    Resource: dummy1 (class=ocf provider=pcsmock type=stateful)
                       Operations:
                         monitor: dummy1-monitor-interval-10s
                           interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED}
-                        monitor: dummy1-monitor-interval-11
-                          interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
-                    Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
+                        monitor: dummy1-monitor-interval-11s
+                          interval=11s timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
+                    Resource: dummy2 (class=ocf provider=pcsmock type=stateful)
                       Operations:
                         monitor: dummy2-monitor-interval-10s
                           interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED}
-                        monitor: dummy2-monitor-interval-11
-                          interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
+                        monitor: dummy2-monitor-interval-11s
+                          interval=11s timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
                 """
             ),
         )
@@ -2452,18 +2371,18 @@ class Resource(TestCase, AssertPcsMixin):
             dedent(
                 f"""\
                 Group: gr
-                  Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
+                  Resource: dummy1 (class=ocf provider=pcsmock type=stateful)
                     Operations:
                       monitor: dummy1-monitor-interval-10s
                         interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED}
-                      monitor: dummy1-monitor-interval-11
-                        interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
-                  Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
+                      monitor: dummy1-monitor-interval-11s
+                        interval=11s timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
+                  Resource: dummy2 (class=ocf provider=pcsmock type=stateful)
                     Operations:
                       monitor: dummy2-monitor-interval-10s
                         interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED}
-                      monitor: dummy2-monitor-interval-11
-                        interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
+                      monitor: dummy2-monitor-interval-11s
+                        interval=11s timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
                 """
             ),
         )
@@ -2481,18 +2400,18 @@ class Resource(TestCase, AssertPcsMixin):
                   Meta Attributes:
                     promotable=true
                   Group: gr
-                    Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
+                    Resource: dummy1 (class=ocf provider=pcsmock type=stateful)
                       Operations:
                         monitor: dummy1-monitor-interval-10s
                           interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED}
-                        monitor: dummy1-monitor-interval-11
-                          interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
-                    Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
+                        monitor: dummy1-monitor-interval-11s
+                          interval=11s timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
+                    Resource: dummy2 (class=ocf provider=pcsmock type=stateful)
                       Operations:
                         monitor: dummy2-monitor-interval-10s
                           interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED}
-                        monitor: dummy2-monitor-interval-11
-                          interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
+                        monitor: dummy2-monitor-interval-11s
+                          interval=11s timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
                 """
             ),
         )
@@ -2503,18 +2422,18 @@ class Resource(TestCase, AssertPcsMixin):
             dedent(
                 f"""\
                 Group: gr
-                  Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
+                  Resource: dummy1 (class=ocf provider=pcsmock type=stateful)
                     Operations:
                       monitor: dummy1-monitor-interval-10s
                         interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED}
-                      monitor: dummy1-monitor-interval-11
-                        interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
-                  Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
+                      monitor: dummy1-monitor-interval-11s
+                        interval=11s timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
+                  Resource: dummy2 (class=ocf provider=pcsmock type=stateful)
                     Operations:
                       monitor: dummy2-monitor-interval-10s
                         interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED}
-                      monitor: dummy2-monitor-interval-11
-                        interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
+                      monitor: dummy2-monitor-interval-11s
+                        interval=11s timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
                 """
             ),
         )
@@ -2529,22 +2448,22 @@ class Resource(TestCase, AssertPcsMixin):
             "resource config".split(),
             dedent(
                 f"""\
-                Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
+                Resource: dummy2 (class=ocf provider=pcsmock type=stateful)
                   Operations:
                     monitor: dummy2-monitor-interval-10s
                       interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED}
-                    monitor: dummy2-monitor-interval-11
-                      interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
+                    monitor: dummy2-monitor-interval-11s
+                      interval=11s timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
                 Clone: gr-master
                   Meta Attributes:
                     promotable=true
                   Group: gr
-                    Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
+                    Resource: dummy1 (class=ocf provider=pcsmock type=stateful)
                       Operations:
                         monitor: dummy1-monitor-interval-10s
                           interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED}
-                        monitor: dummy1-monitor-interval-11
-                          interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
+                        monitor: dummy1-monitor-interval-11s
+                          interval=11s timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
                 """
             ),
         )
@@ -2554,18 +2473,18 @@ class Resource(TestCase, AssertPcsMixin):
             "resource config".split(),
             dedent(
                 f"""\
-                Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
+                Resource: dummy2 (class=ocf provider=pcsmock type=stateful)
                   Operations:
                     monitor: dummy2-monitor-interval-10s
                       interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED}
-                    monitor: dummy2-monitor-interval-11
-                      interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
-                Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
+                    monitor: dummy2-monitor-interval-11s
+                      interval=11s timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
+                Resource: dummy1 (class=ocf provider=pcsmock type=stateful)
                   Operations:
                     monitor: dummy1-monitor-interval-10s
                       interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED}
-                    monitor: dummy1-monitor-interval-11
-                      interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
+                    monitor: dummy1-monitor-interval-11s
+                      interval=11s timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
                 """
             ),
         )
@@ -2584,18 +2503,18 @@ class Resource(TestCase, AssertPcsMixin):
                   Meta Attributes:
                     promotable=true
                   Group: gr
-                    Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
+                    Resource: dummy1 (class=ocf provider=pcsmock type=stateful)
                       Operations:
                         monitor: dummy1-monitor-interval-10s
                           interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED}
-                        monitor: dummy1-monitor-interval-11
-                          interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
-                    Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
+                        monitor: dummy1-monitor-interval-11s
+                          interval=11s timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
+                    Resource: dummy2 (class=ocf provider=pcsmock type=stateful)
                       Operations:
                         monitor: dummy2-monitor-interval-10s
                           interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED}
-                        monitor: dummy2-monitor-interval-11
-                          interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
+                        monitor: dummy2-monitor-interval-11s
+                          interval=11s timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
                 """
             ),
         )
@@ -2606,33 +2525,33 @@ class Resource(TestCase, AssertPcsMixin):
             "resource config".split(),
             dedent(
                 f"""\
-                Resource: dummy2 (class=ocf provider=pacemaker type=Stateful)
+                Resource: dummy2 (class=ocf provider=pcsmock type=stateful)
                   Operations:
                     monitor: dummy2-monitor-interval-10s
                       interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED}
-                    monitor: dummy2-monitor-interval-11
-                      interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
+                    monitor: dummy2-monitor-interval-11s
+                      interval=11s timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
                 Clone: gr-master
                   Meta Attributes:
                     promotable=true
                   Group: gr
-                    Resource: dummy1 (class=ocf provider=pacemaker type=Stateful)
+                    Resource: dummy1 (class=ocf provider=pcsmock type=stateful)
                       Operations:
                         monitor: dummy1-monitor-interval-10s
                           interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED}
-                        monitor: dummy1-monitor-interval-11
-                          interval=11 timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
+                        monitor: dummy1-monitor-interval-11s
+                          interval=11s timeout=20s role={const.PCMK_ROLE_UNPROMOTED}
                 """
             ),
         )
 
     def test_clone_group_member(self):
         self.assert_pcs_success(
-            "resource create --no-default-ops D0 ocf:heartbeat:Dummy --group AG".split(),
+            "resource create --no-default-ops D0 ocf:pcsmock:minimal --group AG".split(),
             stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success(
-            "resource create --no-default-ops D1 ocf:heartbeat:Dummy --group AG".split(),
+            "resource create --no-default-ops D1 ocf:pcsmock:minimal --group AG".split(),
             stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
 
@@ -2642,12 +2561,12 @@ class Resource(TestCase, AssertPcsMixin):
             dedent(
                 """\
                 Group: AG
-                  Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+                  Resource: D1 (class=ocf provider=pcsmock type=minimal)
                     Operations:
                       monitor: D1-monitor-interval-10s
                         interval=10s timeout=20s
                 Clone: D0-clone
-                  Resource: D0 (class=ocf provider=heartbeat type=Dummy)
+                  Resource: D0 (class=ocf provider=pcsmock type=minimal)
                     Operations:
                       monitor: D0-monitor-interval-10s
                         interval=10s timeout=20s
@@ -2661,12 +2580,12 @@ class Resource(TestCase, AssertPcsMixin):
             dedent(
                 """\
                 Clone: D0-clone
-                  Resource: D0 (class=ocf provider=heartbeat type=Dummy)
+                  Resource: D0 (class=ocf provider=pcsmock type=minimal)
                     Operations:
                       monitor: D0-monitor-interval-10s
                         interval=10s timeout=20s
                 Clone: D1-clone
-                  Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+                  Resource: D1 (class=ocf provider=pcsmock type=minimal)
                     Operations:
                       monitor: D1-monitor-interval-10s
                         interval=10s timeout=20s
@@ -2676,11 +2595,11 @@ class Resource(TestCase, AssertPcsMixin):
 
     def test_promotable_group_member(self):
         self.assert_pcs_success(
-            "resource create --no-default-ops D0 ocf:heartbeat:Dummy --group AG".split(),
+            "resource create --no-default-ops D0 ocf:pcsmock:stateful --group AG".split(),
             stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success(
-            "resource create --no-default-ops D1 ocf:heartbeat:Dummy --group AG".split(),
+            "resource create --no-default-ops D1 ocf:pcsmock:stateful --group AG".split(),
             stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
 
@@ -2690,17 +2609,21 @@ class Resource(TestCase, AssertPcsMixin):
             dedent(
                 """\
                 Group: AG
-                  Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+                  Resource: D1 (class=ocf provider=pcsmock type=stateful)
                     Operations:
                       monitor: D1-monitor-interval-10s
-                        interval=10s timeout=20s
+                        interval=10s timeout=20s role=Promoted
+                      monitor: D1-monitor-interval-11s
+                        interval=11s timeout=20s role=Unpromoted
                 Clone: D0-clone
                   Meta Attributes: D0-clone-meta_attributes
                     promotable=true
-                  Resource: D0 (class=ocf provider=heartbeat type=Dummy)
+                  Resource: D0 (class=ocf provider=pcsmock type=stateful)
                     Operations:
                       monitor: D0-monitor-interval-10s
-                        interval=10s timeout=20s
+                        interval=10s timeout=20s role=Promoted
+                      monitor: D0-monitor-interval-11s
+                        interval=11s timeout=20s role=Unpromoted
                 """
             ),
         )
@@ -2713,17 +2636,21 @@ class Resource(TestCase, AssertPcsMixin):
                 Clone: D0-clone
                   Meta Attributes: D0-clone-meta_attributes
                     promotable=true
-                  Resource: D0 (class=ocf provider=heartbeat type=Dummy)
+                  Resource: D0 (class=ocf provider=pcsmock type=stateful)
                     Operations:
                       monitor: D0-monitor-interval-10s
-                        interval=10s timeout=20s
+                        interval=10s timeout=20s role=Promoted
+                      monitor: D0-monitor-interval-11s
+                        interval=11s timeout=20s role=Unpromoted
                 Clone: D1-clone
                   Meta Attributes: D1-clone-meta_attributes
                     promotable=true
-                  Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+                  Resource: D1 (class=ocf provider=pcsmock type=stateful)
                     Operations:
                       monitor: D1-monitor-interval-10s
-                        interval=10s timeout=20s
+                        interval=10s timeout=20s role=Promoted
+                      monitor: D1-monitor-interval-11s
+                        interval=11s timeout=20s role=Unpromoted
                 """
             ),
         )
@@ -2731,16 +2658,16 @@ class Resource(TestCase, AssertPcsMixin):
     def test_clone_master(self):
         # see also BundleClone
         self.assert_pcs_success(
-            "resource create --no-default-ops D0 ocf:heartbeat:Dummy".split(),
+            "resource create --no-default-ops D0 ocf:pcsmock:stateful".split(),
         )
         self.assert_pcs_success(
-            "resource create --no-default-ops D1 ocf:heartbeat:Dummy".split(),
+            "resource create --no-default-ops D1 ocf:pcsmock:stateful".split(),
         )
         self.assert_pcs_success(
-            "resource create --no-default-ops D2 ocf:heartbeat:Dummy".split(),
+            "resource create --no-default-ops D2 ocf:pcsmock:stateful".split(),
         )
         self.assert_pcs_success(
-            "resource create --no-default-ops D3 ocf:heartbeat:Dummy".split(),
+            "resource create --no-default-ops D3 ocf:pcsmock:stateful".split(),
         )
         self.assert_pcs_success("resource clone D0".split())
 
@@ -2768,31 +2695,39 @@ class Resource(TestCase, AssertPcsMixin):
             dedent(
                 """\
                 Clone: D0-clone
-                  Resource: D0 (class=ocf provider=heartbeat type=Dummy)
+                  Resource: D0 (class=ocf provider=pcsmock type=stateful)
                     Operations:
                       monitor: D0-monitor-interval-10s
-                        interval=10s timeout=20s
+                        interval=10s timeout=20s role=Promoted
+                      monitor: D0-monitor-interval-11s
+                        interval=11s timeout=20s role=Unpromoted
                 Clone: D3-clone
                   Meta Attributes: D3-clone-meta_attributes
                     promotable=true
-                  Resource: D3 (class=ocf provider=heartbeat type=Dummy)
+                  Resource: D3 (class=ocf provider=pcsmock type=stateful)
                     Operations:
                       monitor: D3-monitor-interval-10s
-                        interval=10s timeout=20s
+                        interval=10s timeout=20s role=Promoted
+                      monitor: D3-monitor-interval-11s
+                        interval=11s timeout=20s role=Unpromoted
                 Clone: D1-master-custom
                   Meta Attributes:
                     promotable=true
-                  Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+                  Resource: D1 (class=ocf provider=pcsmock type=stateful)
                     Operations:
                       monitor: D1-monitor-interval-10s
-                        interval=10s timeout=20s
+                        interval=10s timeout=20s role=Promoted
+                      monitor: D1-monitor-interval-11s
+                        interval=11s timeout=20s role=Unpromoted
                 Clone: D2-master
                   Meta Attributes:
                     promotable=true
-                  Resource: D2 (class=ocf provider=heartbeat type=Dummy)
+                  Resource: D2 (class=ocf provider=pcsmock type=stateful)
                     Operations:
                       monitor: D2-monitor-interval-10s
-                        interval=10s timeout=20s
+                        interval=10s timeout=20s role=Promoted
+                      monitor: D2-monitor-interval-11s
+                        interval=11s timeout=20s role=Unpromoted
                 """
             ),
         )
@@ -2807,51 +2742,59 @@ class Resource(TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_success(
-            "resource create --no-default-ops D0 ocf:heartbeat:Dummy".split(),
+            "resource create --no-default-ops D0 ocf:pcsmock:stateful".split(),
         )
         self.assert_pcs_success(
-            "resource create --no-default-ops D2 ocf:heartbeat:Dummy".split(),
+            "resource create --no-default-ops D2 ocf:pcsmock:stateful".split(),
         )
         self.assert_pcs_success(
             "resource config".split(),
             dedent(
                 """\
-                Resource: D0 (class=ocf provider=heartbeat type=Dummy)
+                Resource: D0 (class=ocf provider=pcsmock type=stateful)
                   Operations:
                     monitor: D0-monitor-interval-10s
-                      interval=10s timeout=20s
-                Resource: D2 (class=ocf provider=heartbeat type=Dummy)
+                      interval=10s timeout=20s role=Promoted
+                    monitor: D0-monitor-interval-11s
+                      interval=11s timeout=20s role=Unpromoted
+                Resource: D2 (class=ocf provider=pcsmock type=stateful)
                   Operations:
                     monitor: D2-monitor-interval-10s
-                      interval=10s timeout=20s
+                      interval=10s timeout=20s role=Promoted
+                    monitor: D2-monitor-interval-11s
+                      interval=11s timeout=20s role=Unpromoted
                 Clone: D3-clone
                   Meta Attributes: D3-clone-meta_attributes
                     promotable=true
-                  Resource: D3 (class=ocf provider=heartbeat type=Dummy)
+                  Resource: D3 (class=ocf provider=pcsmock type=stateful)
                     Operations:
                       monitor: D3-monitor-interval-10s
-                        interval=10s timeout=20s
+                        interval=10s timeout=20s role=Promoted
+                      monitor: D3-monitor-interval-11s
+                        interval=11s timeout=20s role=Unpromoted
                 Clone: D1-master-custom
                   Meta Attributes:
                     promotable=true
-                  Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+                  Resource: D1 (class=ocf provider=pcsmock type=stateful)
                     Operations:
                       monitor: D1-monitor-interval-10s
-                        interval=10s timeout=20s
+                        interval=10s timeout=20s role=Promoted
+                      monitor: D1-monitor-interval-11s
+                        interval=11s timeout=20s role=Unpromoted
                 """
             ),
         )
 
     def test_lsb_resource(self):
         self.assert_pcs_fail(
-            "resource create --no-default-ops D2 lsb:network foo=bar".split(),
+            "resource create --no-default-ops D2 lsb:pcsmock foo=bar".split(),
             (
                 "Error: invalid resource option 'foo', there are no options"
                 " allowed, use --force to override\n" + ERRORS_HAVE_OCCURRED
             ),
         )
         self.assert_pcs_success(
-            "resource create --no-default-ops D2 lsb:network foo=bar --force".split(),
+            "resource create --no-default-ops D2 lsb:pcsmock foo=bar --force".split(),
             stderr_full=(
                 "Warning: invalid resource option 'foo', there are no options"
                 " allowed\n"
@@ -2861,7 +2804,7 @@ class Resource(TestCase, AssertPcsMixin):
             "resource config".split(),
             dedent(
                 """\
-                Resource: D2 (class=lsb type=network)
+                Resource: D2 (class=lsb type=pcsmock)
                   Attributes: D2-instance_attributes
                     foo=bar
                   Operations:
@@ -2889,7 +2832,7 @@ class Resource(TestCase, AssertPcsMixin):
             "resource config".split(),
             dedent(
                 """\
-                Resource: D2 (class=lsb type=network)
+                Resource: D2 (class=lsb type=pcsmock)
                   Attributes: D2-instance_attributes
                     bar=baz
                     foo=bar
@@ -2906,15 +2849,15 @@ class Resource(TestCase, AssertPcsMixin):
     )
     def test_debug_start_clone_group(self):
         self.assert_pcs_success(
-            "resource create D0 ocf:heartbeat:Dummy --group DGroup".split(),
+            "resource create D0 ocf:pcsmock:minimal --group DGroup".split(),
             stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success(
-            "resource create D1 ocf:heartbeat:Dummy --group DGroup".split(),
+            "resource create D1 ocf:pcsmock:minimal --group DGroup".split(),
             stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success(
-            "resource create D2 ocf:heartbeat:Dummy clone".split(),
+            "resource create D2 ocf:pcsmock:minimal clone".split(),
         )
 
         # pcs no longer allows creating masters but supports existing ones. In
@@ -2936,7 +2879,7 @@ class Resource(TestCase, AssertPcsMixin):
 
     def test_group_clone_creation(self):
         self.assert_pcs_success(
-            "resource create --no-default-ops D1 ocf:heartbeat:Dummy --group DGroup".split(),
+            "resource create --no-default-ops D1 ocf:pcsmock:minimal --group DGroup".split(),
             stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
 
@@ -2952,7 +2895,7 @@ class Resource(TestCase, AssertPcsMixin):
                 """\
                 Clone: DGroup-clone
                   Group: DGroup
-                    Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+                    Resource: D1 (class=ocf provider=pcsmock type=minimal)
                       Operations:
                         monitor: D1-monitor-interval-10s
                           interval=10s timeout=20s
@@ -2967,7 +2910,7 @@ class Resource(TestCase, AssertPcsMixin):
 
     def test_group_promotable_creation(self):
         self.assert_pcs_success(
-            "resource create --no-default-ops D1 ocf:heartbeat:Dummy --group DGroup".split(),
+            "resource create --no-default-ops D1 ocf:pcsmock:stateful --group DGroup".split(),
             stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
 
@@ -2985,10 +2928,12 @@ class Resource(TestCase, AssertPcsMixin):
                   Meta Attributes: DGroup-clone-meta_attributes
                     promotable=true
                   Group: DGroup
-                    Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+                    Resource: D1 (class=ocf provider=pcsmock type=stateful)
                       Operations:
                         monitor: D1-monitor-interval-10s
-                          interval=10s timeout=20s
+                          interval=10s timeout=20s role=Promoted
+                        monitor: D1-monitor-interval-11s
+                          interval=11s timeout=20s role=Unpromoted
                 """
             ),
         )
@@ -3000,10 +2945,6 @@ class Resource(TestCase, AssertPcsMixin):
 
     @skip_unless_crm_rule()
     def test_group_remove_with_constraints1(self):
-        # The mock executable for crm_resource does not support the
-        # `move-with-constraint` command, and so the real executable is used.
-        self.pcs_runner.mock_settings = {}
-
         # Load nodes into cib so move will work
         self.temp_cib.seek(0)
         xml = etree.fromstring(self.temp_cib.read())
@@ -3013,11 +2954,11 @@ class Resource(TestCase, AssertPcsMixin):
         write_data_to_tmpfile(etree.tounicode(xml), self.temp_cib)
 
         self.assert_pcs_success(
-            "resource create --no-default-ops D1 ocf:heartbeat:Dummy --group DGroup".split(),
+            "resource create --no-default-ops D1 ocf:pcsmock:minimal --group DGroup".split(),
             stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success(
-            "resource create --no-default-ops D2 ocf:heartbeat:Dummy --group DGroup".split(),
+            "resource create --no-default-ops D2 ocf:pcsmock:minimal --group DGroup".split(),
             stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
 
@@ -3032,8 +2973,8 @@ class Resource(TestCase, AssertPcsMixin):
                 outdent(
                     """\
                       * Resource Group: DGroup:
-                        * D1\t(ocf:heartbeat:Dummy):\t Stopped
-                        * D2\t(ocf:heartbeat:Dummy):\t Stopped
+                        * D1\t(ocf:pcsmock:minimal):\t Stopped
+                        * D2\t(ocf:pcsmock:minimal):\t Stopped
                     """
                 ),
             )
@@ -3042,8 +2983,8 @@ class Resource(TestCase, AssertPcsMixin):
                 stdout,
                 """\
   * Resource Group: DGroup:
-    * D1\t(ocf::heartbeat:Dummy):\tStopped
-    * D2\t(ocf::heartbeat:Dummy):\tStopped
+    * D1\t(ocf::pcsmock:minimal):\tStopped
+    * D2\t(ocf::pcsmock:minimal):\tStopped
 """,
             )
         else:
@@ -3051,11 +2992,14 @@ class Resource(TestCase, AssertPcsMixin):
                 stdout,
                 """\
  Resource Group: DGroup
-     D1\t(ocf::heartbeat:Dummy):\tStopped
-     D2\t(ocf::heartbeat:Dummy):\tStopped
+     D1\t(ocf::pcsmock:minimal):\tStopped
+     D2\t(ocf::pcsmock:minimal):\tStopped
 """,
             )
 
+        # The mock executable for crm_resource does not support the
+        # `move-with-constraint` command, and so the real executable is used.
+        self.pcs_runner.mock_settings = {}
         self.assert_pcs_success(
             "resource move-with-constraint DGroup rh7-1".split(),
             stderr_full=(
@@ -3064,6 +3008,7 @@ class Resource(TestCase, AssertPcsMixin):
                 "\n"
             ),
         )
+        self.pcs_runner.mock_settings = get_mock_settings()
         self.assert_pcs_success(
             ["constraint"],
             outdent(
@@ -3094,27 +3039,28 @@ class Resource(TestCase, AssertPcsMixin):
 
     def test_resource_clone_creation(self):
         self.pcs_runner = PcsRunner(self.temp_large_cib.name)
+        self.pcs_runner.mock_settings = get_mock_settings()
         # resource "dummy1" is already in "temp_large_cib
         self.assert_pcs_success("resource clone dummy1".split())
 
     def test_resource_clone_id(self):
         self.assert_pcs_success(
-            "resource create --no-default-ops dummy-clone ocf:heartbeat:Dummy".split(),
+            "resource create --no-default-ops dummy-clone ocf:pcsmock:minimal".split(),
         )
         self.assert_pcs_success(
-            "resource create --no-default-ops dummy ocf:heartbeat:Dummy".split(),
+            "resource create --no-default-ops dummy ocf:pcsmock:minimal".split(),
         )
         self.assert_pcs_success("resource clone dummy".split())
         self.assert_pcs_success(
             "resource config".split(),
             dedent(
                 """\
-                Resource: dummy-clone (class=ocf provider=heartbeat type=Dummy)
+                Resource: dummy-clone (class=ocf provider=pcsmock type=minimal)
                   Operations:
                     monitor: dummy-clone-monitor-interval-10s
                       interval=10s timeout=20s
                 Clone: dummy-clone-1
-                  Resource: dummy (class=ocf provider=heartbeat type=Dummy)
+                  Resource: dummy (class=ocf provider=pcsmock type=minimal)
                     Operations:
                       monitor: dummy-monitor-interval-10s
                         interval=10s timeout=20s
@@ -3127,18 +3073,18 @@ class Resource(TestCase, AssertPcsMixin):
             stderr_full="Deleting Resource - dummy\n",
         )
         self.assert_pcs_success(
-            "resource create --no-default-ops dummy ocf:heartbeat:Dummy clone".split(),
+            "resource create --no-default-ops dummy ocf:pcsmock:minimal clone".split(),
         )
         self.assert_pcs_success(
             "resource config".split(),
             dedent(
                 """\
-                Resource: dummy-clone (class=ocf provider=heartbeat type=Dummy)
+                Resource: dummy-clone (class=ocf provider=pcsmock type=minimal)
                   Operations:
                     monitor: dummy-clone-monitor-interval-10s
                       interval=10s timeout=20s
                 Clone: dummy-clone-1
-                  Resource: dummy (class=ocf provider=heartbeat type=Dummy)
+                  Resource: dummy (class=ocf provider=pcsmock type=minimal)
                     Operations:
                       monitor: dummy-monitor-interval-10s
                         interval=10s timeout=20s
@@ -3148,27 +3094,31 @@ class Resource(TestCase, AssertPcsMixin):
 
     def test_resource_promotable_id(self):
         self.assert_pcs_success(
-            "resource create --no-default-ops dummy-clone ocf:heartbeat:Dummy".split(),
+            "resource create --no-default-ops dummy-clone ocf:pcsmock:stateful".split(),
         )
         self.assert_pcs_success(
-            "resource create --no-default-ops dummy ocf:heartbeat:Dummy".split(),
+            "resource create --no-default-ops dummy ocf:pcsmock:stateful".split(),
         )
         self.assert_pcs_success("resource promotable dummy".split())
         self.assert_pcs_success(
             "resource config".split(),
             dedent(
                 """\
-                Resource: dummy-clone (class=ocf provider=heartbeat type=Dummy)
+                Resource: dummy-clone (class=ocf provider=pcsmock type=stateful)
                   Operations:
                     monitor: dummy-clone-monitor-interval-10s
-                      interval=10s timeout=20s
+                      interval=10s timeout=20s role=Promoted
+                    monitor: dummy-clone-monitor-interval-11s
+                      interval=11s timeout=20s role=Unpromoted
                 Clone: dummy-clone-1
                   Meta Attributes: dummy-clone-1-meta_attributes
                     promotable=true
-                  Resource: dummy (class=ocf provider=heartbeat type=Dummy)
+                  Resource: dummy (class=ocf provider=pcsmock type=stateful)
                     Operations:
                       monitor: dummy-monitor-interval-10s
-                        interval=10s timeout=20s
+                        interval=10s timeout=20s role=Promoted
+                      monitor: dummy-monitor-interval-11s
+                        interval=11s timeout=20s role=Unpromoted
                 """
             ),
         )
@@ -3178,37 +3128,41 @@ class Resource(TestCase, AssertPcsMixin):
             stderr_full="Deleting Resource - dummy\n",
         )
         self.assert_pcs_success(
-            "resource create --no-default-ops dummy ocf:heartbeat:Dummy promotable".split(),
+            "resource create --no-default-ops dummy ocf:pcsmock:stateful promotable".split(),
         )
         self.assert_pcs_success(
             "resource config".split(),
             dedent(
                 """\
-                Resource: dummy-clone (class=ocf provider=heartbeat type=Dummy)
+                Resource: dummy-clone (class=ocf provider=pcsmock type=stateful)
                   Operations:
                     monitor: dummy-clone-monitor-interval-10s
-                      interval=10s timeout=20s
+                      interval=10s timeout=20s role=Promoted
+                    monitor: dummy-clone-monitor-interval-11s
+                      interval=11s timeout=20s role=Unpromoted
                 Clone: dummy-clone-1
                   Meta Attributes: dummy-clone-1-meta_attributes
                     promotable=true
-                  Resource: dummy (class=ocf provider=heartbeat type=Dummy)
+                  Resource: dummy (class=ocf provider=pcsmock type=stateful)
                     Operations:
                       monitor: dummy-monitor-interval-10s
-                        interval=10s timeout=20s
+                        interval=10s timeout=20s role=Promoted
+                      monitor: dummy-monitor-interval-11s
+                        interval=11s timeout=20s role=Unpromoted
                 """
             ),
         )
 
     def test_resource_clone_update(self):
         self.assert_pcs_success(
-            "resource create --no-default-ops D1 ocf:heartbeat:Dummy clone".split(),
+            "resource create --no-default-ops D1 ocf:pcsmock:minimal clone".split(),
         )
         self.assert_pcs_success(
             "resource config".split(),
             dedent(
                 """\
                 Clone: D1-clone
-                  Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+                  Resource: D1 (class=ocf provider=pcsmock type=minimal)
                     Operations:
                       monitor: D1-monitor-interval-10s
                         interval=10s timeout=20s
@@ -3224,7 +3178,7 @@ class Resource(TestCase, AssertPcsMixin):
                 Clone: D1-clone
                   Meta Attributes: D1-clone-meta_attributes
                     foo=bar
-                  Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+                  Resource: D1 (class=ocf provider=pcsmock type=minimal)
                     Operations:
                       monitor: D1-monitor-interval-10s
                         interval=10s timeout=20s
@@ -3241,7 +3195,7 @@ class Resource(TestCase, AssertPcsMixin):
                   Meta Attributes: D1-clone-meta_attributes
                     bar=baz
                     foo=bar
-                  Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+                  Resource: D1 (class=ocf provider=pcsmock type=minimal)
                     Operations:
                       monitor: D1-monitor-interval-10s
                         interval=10s timeout=20s
@@ -3257,7 +3211,7 @@ class Resource(TestCase, AssertPcsMixin):
                 Clone: D1-clone
                   Meta Attributes: D1-clone-meta_attributes
                     bar=baz
-                  Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+                  Resource: D1 (class=ocf provider=pcsmock type=minimal)
                     Operations:
                       monitor: D1-monitor-interval-10s
                         interval=10s timeout=20s
@@ -3267,11 +3221,11 @@ class Resource(TestCase, AssertPcsMixin):
 
     def test_group_remove_with_constraints2(self):
         self.assert_pcs_success(
-            "resource create --no-default-ops A ocf:heartbeat:Dummy --group AG".split(),
+            "resource create --no-default-ops A ocf:pcsmock:minimal --group AG".split(),
             stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success(
-            "resource create --no-default-ops B ocf:heartbeat:Dummy --group AG".split(),
+            "resource create --no-default-ops B ocf:pcsmock:minimal --group AG".split(),
             stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success(
@@ -3288,11 +3242,11 @@ class Resource(TestCase, AssertPcsMixin):
             "resource config".split(),
             dedent(
                 """\
-                Resource: A (class=ocf provider=heartbeat type=Dummy)
+                Resource: A (class=ocf provider=pcsmock type=minimal)
                   Operations:
                     monitor: A-monitor-interval-10s
                       interval=10s timeout=20s
-                Resource: B (class=ocf provider=heartbeat type=Dummy)
+                Resource: B (class=ocf provider=pcsmock type=minimal)
                   Operations:
                     monitor: B-monitor-interval-10s
                       interval=10s timeout=20s
@@ -3301,11 +3255,11 @@ class Resource(TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_success(
-            "resource create --no-default-ops A1 ocf:heartbeat:Dummy --group AA".split(),
+            "resource create --no-default-ops A1 ocf:pcsmock:minimal --group AA".split(),
             stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success(
-            "resource create --no-default-ops A2 ocf:heartbeat:Dummy --group AA".split(),
+            "resource create --no-default-ops A2 ocf:pcsmock:minimal --group AA".split(),
             stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         # pcs no longer allows turning resources into masters but supports
@@ -3335,15 +3289,15 @@ class Resource(TestCase, AssertPcsMixin):
 
     def test_mastered_group(self):
         self.assert_pcs_success(
-            "resource create --no-default-ops A ocf:heartbeat:Dummy --group AG".split(),
+            "resource create --no-default-ops A ocf:pcsmock:minimal --group AG".split(),
             stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success(
-            "resource create --no-default-ops B ocf:heartbeat:Dummy --group AG".split(),
+            "resource create --no-default-ops B ocf:pcsmock:minimal --group AG".split(),
             stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success(
-            "resource create --no-default-ops C ocf:heartbeat:Dummy --group AG".split(),
+            "resource create --no-default-ops C ocf:pcsmock:minimal --group AG".split(),
             stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         # pcs no longer allows turning resources into masters but supports
@@ -3352,15 +3306,15 @@ class Resource(TestCase, AssertPcsMixin):
         wrap_element_by_master(self.temp_cib, "AG", master_id="AGMaster")
 
         self.assert_pcs_fail(
-            "resource create --no-default-ops A ocf:heartbeat:Dummy".split(),
+            "resource create --no-default-ops A ocf:pcsmock:minimal".split(),
             "Error: 'A' already exists\n",
         )
         self.assert_pcs_fail(
-            "resource create --no-default-ops AG ocf:heartbeat:Dummy".split(),
+            "resource create --no-default-ops AG ocf:pcsmock:minimal".split(),
             "Error: 'AG' already exists\n",
         )
         self.assert_pcs_fail(
-            "resource create --no-default-ops AGMaster ocf:heartbeat:Dummy".split(),
+            "resource create --no-default-ops AGMaster ocf:pcsmock:minimal".split(),
             "Error: 'AGMaster' already exists\n",
         )
 
@@ -3385,7 +3339,7 @@ class Resource(TestCase, AssertPcsMixin):
                 Clone: AGMaster
                   Meta Attributes:
                     promotable=true
-                  Resource: A (class=ocf provider=heartbeat type=Dummy)
+                  Resource: A (class=ocf provider=pcsmock type=minimal)
                     Operations:
                       monitor: A-monitor-interval-10s
                         interval=10s timeout=20s
@@ -3395,11 +3349,11 @@ class Resource(TestCase, AssertPcsMixin):
 
     def test_cloned_group(self):
         self.assert_pcs_success(
-            "resource create --no-default-ops D1 ocf:heartbeat:Dummy --group DG".split(),
+            "resource create --no-default-ops D1 ocf:pcsmock:minimal --group DG".split(),
             stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success(
-            "resource create --no-default-ops D2 ocf:heartbeat:Dummy --group DG".split(),
+            "resource create --no-default-ops D2 ocf:pcsmock:minimal --group DG".split(),
             stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success("resource clone DG".split())
@@ -3409,11 +3363,11 @@ class Resource(TestCase, AssertPcsMixin):
                 """\
                 Clone: DG-clone
                   Group: DG
-                    Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+                    Resource: D1 (class=ocf provider=pcsmock type=minimal)
                       Operations:
                         monitor: D1-monitor-interval-10s
                           interval=10s timeout=20s
-                    Resource: D2 (class=ocf provider=heartbeat type=Dummy)
+                    Resource: D2 (class=ocf provider=pcsmock type=minimal)
                       Operations:
                         monitor: D2-monitor-interval-10s
                           interval=10s timeout=20s
@@ -3422,30 +3376,30 @@ class Resource(TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_fail(
-            "resource create --no-default-ops D1 ocf:heartbeat:Dummy".split(),
+            "resource create --no-default-ops D1 ocf:pcsmock:minimal".split(),
             "Error: 'D1' already exists\n",
         )
         self.assert_pcs_fail(
-            "resource create --no-default-ops DG ocf:heartbeat:Dummy".split(),
+            "resource create --no-default-ops DG ocf:pcsmock:minimal".split(),
             "Error: 'DG' already exists\n",
         )
         self.assert_pcs_fail(
-            "resource create --no-default-ops DG-clone ocf:heartbeat:Dummy".split(),
+            "resource create --no-default-ops DG-clone ocf:pcsmock:minimal".split(),
             "Error: 'DG-clone' already exists\n",
         )
 
     def test_op_option(self):
         self.assert_pcs_success(
-            "resource create --no-default-ops B ocf:heartbeat:Dummy".split(),
+            "resource create --no-default-ops B ocf:pcsmock:minimal".split(),
         )
 
         self.assert_pcs_fail(
-            "resource update B ocf:heartbeat:Dummy op monitor interval=30s blah=blah".split(),
+            "resource update B ocf:pcsmock:minimal op monitor interval=30s blah=blah".split(),
             "Error: blah is not a valid op option (use --force to override)\n",
         )
 
         self.assert_pcs_success(
-            "resource create --no-default-ops C ocf:heartbeat:Dummy".split(),
+            "resource create --no-default-ops C ocf:pcsmock:minimal".split(),
         )
 
         self.assert_pcs_fail(
@@ -3464,11 +3418,11 @@ class Resource(TestCase, AssertPcsMixin):
             "resource config".split(),
             dedent(
                 """\
-                Resource: B (class=ocf provider=heartbeat type=Dummy)
+                Resource: B (class=ocf provider=pcsmock type=minimal)
                   Operations:
                     monitor: B-monitor-interval-10s
                       interval=10s timeout=20s
-                Resource: C (class=ocf provider=heartbeat type=Dummy)
+                Resource: C (class=ocf provider=pcsmock type=minimal)
                   Operations:
                     monitor: C-monitor-interval-10s
                       interval=10s timeout=20s
@@ -3498,13 +3452,13 @@ class Resource(TestCase, AssertPcsMixin):
             "resource config".split(),
             dedent(
                 f"""\
-                Resource: B (class=ocf provider=heartbeat type=Dummy)
+                Resource: B (class=ocf provider=pcsmock type=minimal)
                   Operations:
                     monitor: B-monitor-interval-30s
                       interval=30s
                     monitor: B-monitor-interval-31s
                       interval=31s role={const.PCMK_ROLE_PROMOTED}
-                Resource: C (class=ocf provider=heartbeat type=Dummy)
+                Resource: C (class=ocf provider=pcsmock type=minimal)
                   Operations:
                     monitor: C-monitor-interval-10s
                       interval=10s timeout=20s
@@ -3538,19 +3492,19 @@ class Resource(TestCase, AssertPcsMixin):
 
     def test_group_ms_and_clone(self):
         self.assert_pcs_fail(
-            "resource create --no-default-ops D3 ocf:heartbeat:Dummy promotable --group xxx clone".split(),
+            "resource create --no-default-ops D3 ocf:pcsmock:minimal promotable --group xxx clone".split(),
             DEPRECATED_DASH_DASH_GROUP
             + "Error: you can specify only one of clone, promotable, bundle or --group\n",
         )
         self.assert_pcs_fail(
-            "resource create --no-default-ops D4 ocf:heartbeat:Dummy promotable --group xxx".split(),
+            "resource create --no-default-ops D4 ocf:pcsmock:minimal promotable --group xxx".split(),
             DEPRECATED_DASH_DASH_GROUP
             + "Error: you can specify only one of clone, promotable, bundle or --group\n",
         )
 
     def test_resource_clone_group(self):
         self.assert_pcs_success(
-            "resource create --no-default-ops dummy0 ocf:heartbeat:Dummy --group group".split(),
+            "resource create --no-default-ops dummy0 ocf:pcsmock:minimal --group group".split(),
             stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success("resource clone group".split())
@@ -3561,92 +3515,47 @@ class Resource(TestCase, AssertPcsMixin):
 
     def test_resource_missing_values(self):
         self.assert_pcs_success(
-            "resource create --no-default-ops myip IPaddr2 --force".split(),
+            "resource create --no-default-ops myip params --force".split(),
             stderr_full=(
-                "Assumed agent name 'ocf:heartbeat:IPaddr2' (deduced from 'IPaddr2')\n"
-                "Warning: required resource option 'ip' is missing\n"
+                "Assumed agent name 'ocf:pcsmock:params' (deduced from 'params')\n"
+                "Warning: required resource option 'mandatory' is missing\n"
             ),
         )
         self.assert_pcs_success(
-            "resource create --no-default-ops myip2 IPaddr2 ip=3.3.3.3".split(),
+            "resource create --no-default-ops myip2 params mandatory=value".split(),
             stderr_full=(
-                "Assumed agent name 'ocf:heartbeat:IPaddr2' (deduced from 'IPaddr2')\n"
-            ),
-        )
-        self.assert_pcs_success(
-            "resource create --no-default-ops myfs Filesystem --force".split(),
-            stderr_full=(
-                "Assumed agent name 'ocf:heartbeat:Filesystem' (deduced from 'Filesystem')\n"
-                "Warning: required resource options 'device', 'directory', 'fstype' are missing\n"
-            ),
-        )
-        self.assert_pcs_success(
-            (
-                "resource create --no-default-ops myfs2 Filesystem device=x"
-                " directory=y --force"
-            ).split(),
-            stderr_full=(
-                "Assumed agent name 'ocf:heartbeat:Filesystem' (deduced from 'Filesystem')\n"
-                "Warning: required resource option 'fstype' is missing\n"
-            ),
-        )
-        self.assert_pcs_success(
-            (
-                "resource create --no-default-ops myfs3 Filesystem device=x"
-                " directory=y fstype=z"
-            ).split(),
-            stderr_full=(
-                "Assumed agent name 'ocf:heartbeat:Filesystem' (deduced from 'Filesystem')\n"
+                "Assumed agent name 'ocf:pcsmock:params' (deduced from 'params')\n"
             ),
         )
         self.assert_pcs_success(
             "resource config".split(),
             dedent(
                 """\
-                Resource: myip (class=ocf provider=heartbeat type=IPaddr2)
+                Resource: myip (class=ocf provider=pcsmock type=params)
                   Operations:
                     monitor: myip-monitor-interval-10s
                       interval=10s timeout=20s
-                Resource: myip2 (class=ocf provider=heartbeat type=IPaddr2)
+                Resource: myip2 (class=ocf provider=pcsmock type=params)
                   Attributes: myip2-instance_attributes
-                    ip=3.3.3.3
+                    mandatory=value
                   Operations:
                     monitor: myip2-monitor-interval-10s
                       interval=10s timeout=20s
-                Resource: myfs (class=ocf provider=heartbeat type=Filesystem)
-                  Operations:
-                    monitor: myfs-monitor-interval-20s
-                      interval=20s timeout=40s
-                Resource: myfs2 (class=ocf provider=heartbeat type=Filesystem)
-                  Attributes: myfs2-instance_attributes
-                    device=x
-                    directory=y
-                  Operations:
-                    monitor: myfs2-monitor-interval-20s
-                      interval=20s timeout=40s
-                Resource: myfs3 (class=ocf provider=heartbeat type=Filesystem)
-                  Attributes: myfs3-instance_attributes
-                    device=x
-                    directory=y
-                    fstype=z
-                  Operations:
-                    monitor: myfs3-monitor-interval-20s
-                      interval=20s timeout=40s
                 """
             ),
         )
 
     def test_cloned_mastered_group(self):
         self.assert_pcs_success(
-            "resource create dummy1 ocf:heartbeat:Dummy --no-default-ops --group dummies".split(),
+            "resource create dummy1 ocf:pcsmock:minimal --no-default-ops --group dummies".split(),
             stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success(
-            "resource create dummy2 ocf:heartbeat:Dummy --no-default-ops --group dummies".split(),
+            "resource create dummy2 ocf:pcsmock:minimal --no-default-ops --group dummies".split(),
             stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success(
-            "resource create dummy3 ocf:heartbeat:Dummy --no-default-ops --group dummies".split(),
+            "resource create dummy3 ocf:pcsmock:minimal --no-default-ops --group dummies".split(),
             stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success("resource clone dummies".split())
@@ -3656,15 +3565,15 @@ class Resource(TestCase, AssertPcsMixin):
                 """\
                 Clone: dummies-clone
                   Group: dummies
-                    Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
+                    Resource: dummy1 (class=ocf provider=pcsmock type=minimal)
                       Operations:
                         monitor: dummy1-monitor-interval-10s
                           interval=10s timeout=20s
-                    Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
+                    Resource: dummy2 (class=ocf provider=pcsmock type=minimal)
                       Operations:
                         monitor: dummy2-monitor-interval-10s
                           interval=10s timeout=20s
-                    Resource: dummy3 (class=ocf provider=heartbeat type=Dummy)
+                    Resource: dummy3 (class=ocf provider=pcsmock type=minimal)
                       Operations:
                         monitor: dummy3-monitor-interval-10s
                           interval=10s timeout=20s
@@ -3684,9 +3593,9 @@ class Resource(TestCase, AssertPcsMixin):
                 outdent(
                     """\
                       * Resource Group: dummies:
-                        * dummy1\t(ocf:heartbeat:Dummy):\t Stopped
-                        * dummy2\t(ocf:heartbeat:Dummy):\t Stopped
-                        * dummy3\t(ocf:heartbeat:Dummy):\t Stopped
+                        * dummy1\t(ocf:pcsmock:minimal):\t Stopped
+                        * dummy2\t(ocf:pcsmock:minimal):\t Stopped
+                        * dummy3\t(ocf:pcsmock:minimal):\t Stopped
                     """
                 ),
             )
@@ -3696,9 +3605,9 @@ class Resource(TestCase, AssertPcsMixin):
                 outdent(
                     """\
                   * Resource Group: dummies:
-                    * dummy1\t(ocf::heartbeat:Dummy):\tStopped
-                    * dummy2\t(ocf::heartbeat:Dummy):\tStopped
-                    * dummy3\t(ocf::heartbeat:Dummy):\tStopped
+                    * dummy1\t(ocf::pcsmock:minimal):\tStopped
+                    * dummy2\t(ocf::pcsmock:minimal):\tStopped
+                    * dummy3\t(ocf::pcsmock:minimal):\tStopped
                 """
                 ),
             )
@@ -3708,9 +3617,9 @@ class Resource(TestCase, AssertPcsMixin):
                 outdent(
                     """\
                  Resource Group: dummies
-                     dummy1\t(ocf::heartbeat:Dummy):\tStopped
-                     dummy2\t(ocf::heartbeat:Dummy):\tStopped
-                     dummy3\t(ocf::heartbeat:Dummy):\tStopped
+                     dummy1\t(ocf::pcsmock:minimal):\tStopped
+                     dummy2\t(ocf::pcsmock:minimal):\tStopped
+                     dummy3\t(ocf::pcsmock:minimal):\tStopped
                 """
                 ),
             )
@@ -3722,15 +3631,15 @@ class Resource(TestCase, AssertPcsMixin):
                 """\
                 Clone: dummies-clone
                   Group: dummies
-                    Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
+                    Resource: dummy1 (class=ocf provider=pcsmock type=minimal)
                       Operations:
                         monitor: dummy1-monitor-interval-10s
                           interval=10s timeout=20s
-                    Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
+                    Resource: dummy2 (class=ocf provider=pcsmock type=minimal)
                       Operations:
                         monitor: dummy2-monitor-interval-10s
                           interval=10s timeout=20s
-                    Resource: dummy3 (class=ocf provider=heartbeat type=Dummy)
+                    Resource: dummy3 (class=ocf provider=pcsmock type=minimal)
                       Operations:
                         monitor: dummy3-monitor-interval-10s
                           interval=10s timeout=20s
@@ -3755,15 +3664,15 @@ class Resource(TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_success(
-            "resource create dummy1 ocf:heartbeat:Dummy --no-default-ops --group dummies".split(),
+            "resource create dummy1 ocf:pcsmock:minimal --no-default-ops --group dummies".split(),
             stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success(
-            "resource create dummy2 ocf:heartbeat:Dummy --no-default-ops --group dummies".split(),
+            "resource create dummy2 ocf:pcsmock:minimal --no-default-ops --group dummies".split(),
             stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success(
-            "resource create dummy3 ocf:heartbeat:Dummy --no-default-ops --group dummies".split(),
+            "resource create dummy3 ocf:pcsmock:minimal --no-default-ops --group dummies".split(),
             stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         # pcs no longer allows turning resources into masters but supports
@@ -3779,15 +3688,15 @@ class Resource(TestCase, AssertPcsMixin):
                   Meta Attributes:
                     promotable=true
                   Group: dummies
-                    Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
+                    Resource: dummy1 (class=ocf provider=pcsmock type=minimal)
                       Operations:
                         monitor: dummy1-monitor-interval-10s
                           interval=10s timeout=20s
-                    Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
+                    Resource: dummy2 (class=ocf provider=pcsmock type=minimal)
                       Operations:
                         monitor: dummy2-monitor-interval-10s
                           interval=10s timeout=20s
-                    Resource: dummy3 (class=ocf provider=heartbeat type=Dummy)
+                    Resource: dummy3 (class=ocf provider=pcsmock type=minimal)
                       Operations:
                         monitor: dummy3-monitor-interval-10s
                           interval=10s timeout=20s
@@ -3807,9 +3716,9 @@ class Resource(TestCase, AssertPcsMixin):
                 outdent(
                     """\
                       * Resource Group: dummies:
-                        * dummy1\t(ocf:heartbeat:Dummy):\t Stopped
-                        * dummy2\t(ocf:heartbeat:Dummy):\t Stopped
-                        * dummy3\t(ocf:heartbeat:Dummy):\t Stopped
+                        * dummy1\t(ocf:pcsmock:minimal):\t Stopped
+                        * dummy2\t(ocf:pcsmock:minimal):\t Stopped
+                        * dummy3\t(ocf:pcsmock:minimal):\t Stopped
                     """
                 ),
             )
@@ -3819,9 +3728,9 @@ class Resource(TestCase, AssertPcsMixin):
                 outdent(
                     """\
                   * Resource Group: dummies:
-                    * dummy1\t(ocf::heartbeat:Dummy):\tStopped
-                    * dummy2\t(ocf::heartbeat:Dummy):\tStopped
-                    * dummy3\t(ocf::heartbeat:Dummy):\tStopped
+                    * dummy1\t(ocf::pcsmock:minimal):\tStopped
+                    * dummy2\t(ocf::pcsmock:minimal):\tStopped
+                    * dummy3\t(ocf::pcsmock:minimal):\tStopped
                 """
                 ),
             )
@@ -3831,9 +3740,9 @@ class Resource(TestCase, AssertPcsMixin):
                 outdent(
                     """\
                  Resource Group: dummies
-                     dummy1\t(ocf::heartbeat:Dummy):\tStopped
-                     dummy2\t(ocf::heartbeat:Dummy):\tStopped
-                     dummy3\t(ocf::heartbeat:Dummy):\tStopped
+                     dummy1\t(ocf::pcsmock:minimal):\tStopped
+                     dummy2\t(ocf::pcsmock:minimal):\tStopped
+                     dummy3\t(ocf::pcsmock:minimal):\tStopped
                 """
                 ),
             )
@@ -3850,15 +3759,15 @@ class Resource(TestCase, AssertPcsMixin):
                   Meta Attributes:
                     promotable=true
                   Group: dummies
-                    Resource: dummy1 (class=ocf provider=heartbeat type=Dummy)
+                    Resource: dummy1 (class=ocf provider=pcsmock type=minimal)
                       Operations:
                         monitor: dummy1-monitor-interval-10s
                           interval=10s timeout=20s
-                    Resource: dummy2 (class=ocf provider=heartbeat type=Dummy)
+                    Resource: dummy2 (class=ocf provider=pcsmock type=minimal)
                       Operations:
                         monitor: dummy2-monitor-interval-10s
                           interval=10s timeout=20s
-                    Resource: dummy3 (class=ocf provider=heartbeat type=Dummy)
+                    Resource: dummy3 (class=ocf provider=pcsmock type=minimal)
                       Operations:
                         monitor: dummy3-monitor-interval-10s
                           interval=10s timeout=20s
@@ -3885,56 +3794,56 @@ class Resource(TestCase, AssertPcsMixin):
     def test_relocate_stickiness(self):
         # pylint: disable=too-many-statements
         self.assert_pcs_success(
-            "resource create D1 ocf:pacemaker:Dummy --no-default-ops".split()
+            "resource create D1 ocf:pcsmock:minimal --no-default-ops".split()
         )
         self.assert_pcs_success(
-            "resource create DG1 ocf:pacemaker:Dummy --no-default-ops --group GR".split(),
+            "resource create DG1 ocf:pcsmock:minimal --no-default-ops --group GR".split(),
             stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success(
-            "resource create DG2 ocf:pacemaker:Dummy --no-default-ops --group GR".split(),
+            "resource create DG2 ocf:pcsmock:minimal --no-default-ops --group GR".split(),
             stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success(
-            "resource create DC ocf:pacemaker:Dummy --no-default-ops clone".split()
+            "resource create DC ocf:pcsmock:minimal --no-default-ops clone".split()
         )
         self.assert_pcs_success(
-            "resource create DGC1 ocf:pacemaker:Dummy --no-default-ops --group GRC".split(),
+            "resource create DGC1 ocf:pcsmock:minimal --no-default-ops --group GRC".split(),
             stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success(
-            "resource create DGC2 ocf:pacemaker:Dummy --no-default-ops --group GRC".split(),
+            "resource create DGC2 ocf:pcsmock:minimal --no-default-ops --group GRC".split(),
             stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success("resource clone GRC".split())
 
         status = dedent(
             """\
-            Resource: D1 (class=ocf provider=pacemaker type=Dummy)
+            Resource: D1 (class=ocf provider=pcsmock type=minimal)
               Operations:
                 monitor: D1-monitor-interval-10s
                   interval=10s timeout=20s
             Group: GR
-              Resource: DG1 (class=ocf provider=pacemaker type=Dummy)
+              Resource: DG1 (class=ocf provider=pcsmock type=minimal)
                 Operations:
                   monitor: DG1-monitor-interval-10s
                     interval=10s timeout=20s
-              Resource: DG2 (class=ocf provider=pacemaker type=Dummy)
+              Resource: DG2 (class=ocf provider=pcsmock type=minimal)
                 Operations:
                   monitor: DG2-monitor-interval-10s
                     interval=10s timeout=20s
             Clone: DC-clone
-              Resource: DC (class=ocf provider=pacemaker type=Dummy)
+              Resource: DC (class=ocf provider=pcsmock type=minimal)
                 Operations:
                   monitor: DC-monitor-interval-10s
                     interval=10s timeout=20s
             Clone: GRC-clone
               Group: GRC
-                Resource: DGC1 (class=ocf provider=pacemaker type=Dummy)
+                Resource: DGC1 (class=ocf provider=pcsmock type=minimal)
                   Operations:
                     monitor: DGC1-monitor-interval-10s
                       interval=10s timeout=20s
-                Resource: DGC2 (class=ocf provider=pacemaker type=Dummy)
+                Resource: DGC2 (class=ocf provider=pcsmock type=minimal)
                   Operations:
                     monitor: DGC2-monitor-interval-10s
                       interval=10s timeout=20s
@@ -3975,7 +3884,7 @@ class Resource(TestCase, AssertPcsMixin):
             "resource config".split(),
             dedent(
                 """\
-                Resource: D1 (class=ocf provider=pacemaker type=Dummy)
+                Resource: D1 (class=ocf provider=pcsmock type=minimal)
                   Meta Attributes: D1-meta_attributes
                     resource-stickiness=0
                   Operations:
@@ -3984,13 +3893,13 @@ class Resource(TestCase, AssertPcsMixin):
                 Group: GR
                   Meta Attributes: GR-meta_attributes
                     resource-stickiness=0
-                  Resource: DG1 (class=ocf provider=pacemaker type=Dummy)
+                  Resource: DG1 (class=ocf provider=pcsmock type=minimal)
                     Meta Attributes: DG1-meta_attributes
                       resource-stickiness=0
                     Operations:
                       monitor: DG1-monitor-interval-10s
                         interval=10s timeout=20s
-                  Resource: DG2 (class=ocf provider=pacemaker type=Dummy)
+                  Resource: DG2 (class=ocf provider=pcsmock type=minimal)
                     Meta Attributes: DG2-meta_attributes
                       resource-stickiness=0
                     Operations:
@@ -3999,7 +3908,7 @@ class Resource(TestCase, AssertPcsMixin):
                 Clone: DC-clone
                   Meta Attributes: DC-clone-meta_attributes
                     resource-stickiness=0
-                  Resource: DC (class=ocf provider=pacemaker type=Dummy)
+                  Resource: DC (class=ocf provider=pcsmock type=minimal)
                     Meta Attributes: DC-meta_attributes
                       resource-stickiness=0
                     Operations:
@@ -4011,13 +3920,13 @@ class Resource(TestCase, AssertPcsMixin):
                   Group: GRC
                     Meta Attributes: GRC-meta_attributes
                       resource-stickiness=0
-                    Resource: DGC1 (class=ocf provider=pacemaker type=Dummy)
+                    Resource: DGC1 (class=ocf provider=pcsmock type=minimal)
                       Meta Attributes: DGC1-meta_attributes
                         resource-stickiness=0
                       Operations:
                         monitor: DGC1-monitor-interval-10s
                           interval=10s timeout=20s
-                    Resource: DGC2 (class=ocf provider=pacemaker type=Dummy)
+                    Resource: DGC2 (class=ocf provider=pcsmock type=minimal)
                       Meta Attributes: DGC2-meta_attributes
                         resource-stickiness=0
                       Operations:
@@ -4042,25 +3951,25 @@ class Resource(TestCase, AssertPcsMixin):
             "resource config".split(),
             dedent(
                 """\
-                Resource: D1 (class=ocf provider=pacemaker type=Dummy)
+                Resource: D1 (class=ocf provider=pcsmock type=minimal)
                   Meta Attributes: D1-meta_attributes
                     resource-stickiness=0
                   Operations:
                     monitor: D1-monitor-interval-10s
                       interval=10s timeout=20s
                 Group: GR
-                  Resource: DG1 (class=ocf provider=pacemaker type=Dummy)
+                  Resource: DG1 (class=ocf provider=pcsmock type=minimal)
                     Meta Attributes: DG1-meta_attributes
                       resource-stickiness=0
                     Operations:
                       monitor: DG1-monitor-interval-10s
                         interval=10s timeout=20s
-                  Resource: DG2 (class=ocf provider=pacemaker type=Dummy)
+                  Resource: DG2 (class=ocf provider=pcsmock type=minimal)
                     Operations:
                       monitor: DG2-monitor-interval-10s
                         interval=10s timeout=20s
                 Clone: DC-clone
-                  Resource: DC (class=ocf provider=pacemaker type=Dummy)
+                  Resource: DC (class=ocf provider=pcsmock type=minimal)
                     Meta Attributes: DC-meta_attributes
                       resource-stickiness=0
                     Operations:
@@ -4068,13 +3977,13 @@ class Resource(TestCase, AssertPcsMixin):
                         interval=10s timeout=20s
                 Clone: GRC-clone
                   Group: GRC
-                    Resource: DGC1 (class=ocf provider=pacemaker type=Dummy)
+                    Resource: DGC1 (class=ocf provider=pcsmock type=minimal)
                       Meta Attributes: DGC1-meta_attributes
                         resource-stickiness=0
                       Operations:
                         monitor: DGC1-monitor-interval-10s
                           interval=10s timeout=20s
-                    Resource: DGC2 (class=ocf provider=pacemaker type=Dummy)
+                    Resource: DGC2 (class=ocf provider=pcsmock type=minimal)
                       Operations:
                         monitor: DGC2-monitor-interval-10s
                           interval=10s timeout=20s
@@ -4097,21 +4006,21 @@ class Resource(TestCase, AssertPcsMixin):
             "resource config".split(),
             dedent(
                 """\
-                Resource: D1 (class=ocf provider=pacemaker type=Dummy)
+                Resource: D1 (class=ocf provider=pcsmock type=minimal)
                   Operations:
                     monitor: D1-monitor-interval-10s
                       interval=10s timeout=20s
                 Group: GR
-                  Resource: DG1 (class=ocf provider=pacemaker type=Dummy)
+                  Resource: DG1 (class=ocf provider=pcsmock type=minimal)
                     Operations:
                       monitor: DG1-monitor-interval-10s
                         interval=10s timeout=20s
-                  Resource: DG2 (class=ocf provider=pacemaker type=Dummy)
+                  Resource: DG2 (class=ocf provider=pcsmock type=minimal)
                     Operations:
                       monitor: DG2-monitor-interval-10s
                         interval=10s timeout=20s
                 Clone: DC-clone
-                  Resource: DC (class=ocf provider=pacemaker type=Dummy)
+                  Resource: DC (class=ocf provider=pcsmock type=minimal)
                     Operations:
                       monitor: DC-monitor-interval-10s
                         interval=10s timeout=20s
@@ -4121,13 +4030,13 @@ class Resource(TestCase, AssertPcsMixin):
                   Group: GRC
                     Meta Attributes: GRC-meta_attributes
                       resource-stickiness=0
-                    Resource: DGC1 (class=ocf provider=pacemaker type=Dummy)
+                    Resource: DGC1 (class=ocf provider=pcsmock type=minimal)
                       Meta Attributes: DGC1-meta_attributes
                         resource-stickiness=0
                       Operations:
                         monitor: DGC1-monitor-interval-10s
                           interval=10s timeout=20s
-                    Resource: DGC2 (class=ocf provider=pacemaker type=Dummy)
+                    Resource: DGC2 (class=ocf provider=pcsmock type=minimal)
                       Meta Attributes: DGC2-meta_attributes
                         resource-stickiness=0
                       Operations:
@@ -4152,20 +4061,20 @@ class Resource(TestCase, AssertPcsMixin):
             "resource config".split(),
             dedent(
                 """\
-                Resource: D1 (class=ocf provider=pacemaker type=Dummy)
+                Resource: D1 (class=ocf provider=pcsmock type=minimal)
                   Operations:
                     monitor: D1-monitor-interval-10s
                       interval=10s timeout=20s
                 Group: GR
                   Meta Attributes: GR-meta_attributes
                     resource-stickiness=0
-                  Resource: DG1 (class=ocf provider=pacemaker type=Dummy)
+                  Resource: DG1 (class=ocf provider=pcsmock type=minimal)
                     Meta Attributes: DG1-meta_attributes
                       resource-stickiness=0
                     Operations:
                       monitor: DG1-monitor-interval-10s
                         interval=10s timeout=20s
-                  Resource: DG2 (class=ocf provider=pacemaker type=Dummy)
+                  Resource: DG2 (class=ocf provider=pcsmock type=minimal)
                     Meta Attributes: DG2-meta_attributes
                       resource-stickiness=0
                     Operations:
@@ -4174,7 +4083,7 @@ class Resource(TestCase, AssertPcsMixin):
                 Clone: DC-clone
                   Meta Attributes: DC-clone-meta_attributes
                     resource-stickiness=0
-                  Resource: DC (class=ocf provider=pacemaker type=Dummy)
+                  Resource: DC (class=ocf provider=pcsmock type=minimal)
                     Meta Attributes: DC-meta_attributes
                       resource-stickiness=0
                     Operations:
@@ -4182,11 +4091,11 @@ class Resource(TestCase, AssertPcsMixin):
                         interval=10s timeout=20s
                 Clone: GRC-clone
                   Group: GRC
-                    Resource: DGC1 (class=ocf provider=pacemaker type=Dummy)
+                    Resource: DGC1 (class=ocf provider=pcsmock type=minimal)
                       Operations:
                         monitor: DGC1-monitor-interval-10s
                           interval=10s timeout=20s
-                    Resource: DGC2 (class=ocf provider=pacemaker type=Dummy)
+                    Resource: DGC2 (class=ocf provider=pcsmock type=minimal)
                       Operations:
                         monitor: DGC2-monitor-interval-10s
                           interval=10s timeout=20s
@@ -4211,7 +4120,7 @@ class OperationDeleteRemoveMixin(
         write_file_to_tmpfile(empty_cib, self.temp_cib)
         write_file_to_tmpfile(large_cib, self.temp_large_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
+        self.pcs_runner.mock_settings = get_mock_settings()
         self.command = "to-be-overridden"
 
     def tearDown(self):
@@ -4220,7 +4129,7 @@ class OperationDeleteRemoveMixin(
 
     fixture_xml_1_monitor = """
         <resources>
-            <primitive class="ocf" id="R" provider="pacemaker" type="Dummy">
+            <primitive class="ocf" id="R" provider="pcsmock" type="minimal">
                 <operations>
                     <op id="R-monitor-interval-10s" interval="10s"
                         name="monitor" timeout="20s"
@@ -4232,7 +4141,7 @@ class OperationDeleteRemoveMixin(
 
     fixture_xml_empty_operations = """
         <resources>
-            <primitive class="ocf" id="R" provider="pacemaker" type="Dummy">
+            <primitive class="ocf" id="R" provider="pcsmock" type="minimal">
                 <operations>
                 </operations>
             </primitive>
@@ -4241,7 +4150,7 @@ class OperationDeleteRemoveMixin(
 
     def fixture_resource(self):
         self.assert_effect(
-            "resource create --no-default-ops R ocf:pacemaker:Dummy".split(),
+            "resource create --no-default-ops R ocf:pcsmock:minimal".split(),
             self.fixture_xml_1_monitor,
         )
 
@@ -4250,8 +4159,8 @@ class OperationDeleteRemoveMixin(
             "resource op add R monitor interval=20s timeout=20s --force".split(),
             """
                 <resources>
-                    <primitive class="ocf" id="R" provider="pacemaker"
-                        type="Dummy"
+                    <primitive class="ocf" id="R" provider="pcsmock"
+                        type="minimal"
                     >
                         <operations>
                             <op id="R-monitor-interval-10s" interval="10s"
@@ -4271,8 +4180,8 @@ class OperationDeleteRemoveMixin(
             "resource op add R start timeout=20s".split(),
             """
                 <resources>
-                    <primitive class="ocf" id="R" provider="pacemaker"
-                        type="Dummy"
+                    <primitive class="ocf" id="R" provider="pcsmock"
+                        type="minimal"
                     >
                         <operations>
                             <op id="R-monitor-interval-10s" interval="10s"
@@ -4324,8 +4233,8 @@ class OperationDeleteRemoveMixin(
             f"resource op {self.command} R monitor".split(),
             """
                 <resources>
-                    <primitive class="ocf" id="R" provider="pacemaker"
-                        type="Dummy"
+                    <primitive class="ocf" id="R" provider="pcsmock"
+                        type="minimal"
                     >
                         <operations>
                             <op id="R-start-interval-0s" interval="0s"
@@ -4375,7 +4284,7 @@ class Utilization(
         write_file_to_tmpfile(empty_cib, self.temp_cib)
         write_file_to_tmpfile(large_cib, self.temp_large_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
+        self.pcs_runner.mock_settings = get_mock_settings()
 
     def tearDown(self):
         self.temp_cib.close()
@@ -4385,7 +4294,7 @@ class Utilization(
     def fixture_xml_resource_no_utilization():
         return """
             <resources>
-                <primitive class="ocf" id="R" provider="pacemaker" type="Dummy">
+                <primitive class="ocf" id="R" provider="pcsmock" type="minimal">
                     <operations>
                         <op id="R-monitor-interval-10s" interval="10s"
                             name="monitor" timeout="20s"
@@ -4399,7 +4308,7 @@ class Utilization(
     def fixture_xml_resource_empty_utilization():
         return """
             <resources>
-                <primitive class="ocf" id="R" provider="pacemaker" type="Dummy">
+                <primitive class="ocf" id="R" provider="pcsmock" type="minimal">
                     <operations>
                         <op id="R-monitor-interval-10s" interval="10s"
                             name="monitor" timeout="20s"
@@ -4414,7 +4323,7 @@ class Utilization(
     def fixture_xml_resource_with_utilization():
         return """
             <resources>
-                <primitive class="ocf" id="R" provider="pacemaker" type="Dummy">
+                <primitive class="ocf" id="R" provider="pcsmock" type="minimal">
                     <operations>
                         <op id="R-monitor-interval-10s" interval="10s"
                             name="monitor" timeout="20s"
@@ -4431,7 +4340,7 @@ class Utilization(
 
     def fixture_resource(self):
         self.assert_effect(
-            "resource create --no-default-ops R ocf:pacemaker:Dummy".split(),
+            "resource create --no-default-ops R ocf:pcsmock:minimal".split(),
             self.fixture_xml_resource_no_utilization(),
         )
 
@@ -4446,6 +4355,7 @@ class Utilization(
     def test_resource_utilization_set(self):
         # see also BundleMiscCommands
         self.pcs_runner = PcsRunner(self.temp_large_cib.name)
+        self.pcs_runner.mock_settings = get_mock_settings()
 
         self.assert_pcs_success(
             "resource utilization dummy test1=10".split(),
@@ -4547,6 +4457,7 @@ class Utilization(
 
     def test_resource_utilization_set_invalid(self):
         self.pcs_runner = PcsRunner(self.temp_large_cib.name)
+        self.pcs_runner.mock_settings = get_mock_settings()
         self.assert_pcs_fail(
             "resource utilization dummy test".split(),
             (
@@ -4609,7 +4520,7 @@ class MetaAttrs(
         self.temp_cib = get_tmp_file("tier1_resource_meta")
         write_file_to_tmpfile(empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
+        self.pcs_runner.mock_settings = get_mock_settings()
 
     def tearDown(self):
         self.temp_cib.close()
@@ -4622,7 +4533,7 @@ class MetaAttrs(
     @staticmethod
     def _fixture_xml_resource_no_meta():
         return """
-        <primitive class="ocf" id="R" provider="pacemaker" type="Dummy">
+        <primitive class="ocf" id="R" provider="pcsmock" type="minimal">
             <operations>
                 <op id="R-monitor-interval-10s" interval="10s"
                     name="monitor" timeout="20s"
@@ -4643,7 +4554,7 @@ class MetaAttrs(
     def fixture_xml_resource_empty_meta():
         return """
             <resources>
-                <primitive class="ocf" id="R" provider="pacemaker" type="Dummy">
+                <primitive class="ocf" id="R" provider="pcsmock" type="minimal">
                     <meta_attributes id="R-meta_attributes" />
                     <operations>
                         <op id="R-monitor-interval-10s" interval="10s"
@@ -4658,7 +4569,7 @@ class MetaAttrs(
     def fixture_xml_resource_with_meta():
         return """
             <resources>
-                <primitive class="ocf" id="R" provider="pacemaker" type="Dummy">
+                <primitive class="ocf" id="R" provider="pcsmock" type="minimal">
                     <meta_attributes id="R-meta_attributes">
                         <nvpair id="R-meta_attributes-a" name="a" value="b"/>
                     </meta_attributes>
@@ -4673,13 +4584,13 @@ class MetaAttrs(
 
     def fixture_resource(self):
         self.assert_effect(
-            "resource create --no-default-ops R ocf:pacemaker:Dummy".split(),
+            "resource create --no-default-ops R ocf:pcsmock:minimal".split(),
             self.fixture_xml_resource_no_meta(),
         )
 
     def fixture_resource_meta(self):
         self.assert_effect(
-            "resource create --no-default-ops R ocf:pacemaker:Dummy meta a=b".split(),
+            "resource create --no-default-ops R ocf:pcsmock:minimal meta a=b".split(),
             self.fixture_xml_resource_with_meta(),
         )
 
@@ -4687,28 +4598,20 @@ class MetaAttrs(
         # see also BundleMiscCommands
         self.assert_pcs_success(
             (
-                "resource create --no-default-ops --force D0 ocf:heartbeat:Dummy"
-                " test=testA test2=test2a op monitor interval=30 meta"
+                "resource create --no-default-ops D0 ocf:pcsmock:params"
+                " mandatory=test1a optional=test2a op monitor interval=30 meta"
                 " test5=test5a test6=test6a"
             ).split(),
-            stderr_full=(
-                "Warning: invalid resource options: 'test', 'test2', allowed"
-                " options are: 'fake', 'state', 'trace_file', 'trace_ra'\n"
-            ),
         )
         self.assert_pcs_success(
             (
-                "resource create --no-default-ops --force D1 ocf:heartbeat:Dummy"
-                " test=testA test2=test2a op monitor interval=30"
+                "resource create --no-default-ops D1 ocf:pcsmock:params"
+                " mandatory=test1a optional=test2a op monitor interval=30"
             ).split(),
-            stderr_full=(
-                "Warning: invalid resource options: 'test', 'test2', allowed"
-                " options are: 'fake', 'state', 'trace_file', 'trace_ra'\n"
-            ),
         )
         self.assert_pcs_success(
             (
-                "resource update --force D0 test=testC test2=test2a op monitor "
+                "resource update D0 mandatory=test1b optional=test2a op monitor "
                 "interval=35 meta test7=test7a test6="
             ).split()
         )
@@ -4721,10 +4624,10 @@ class MetaAttrs(
             "resource config".split(),
             dedent(
                 """\
-                Resource: D0 (class=ocf provider=heartbeat type=Dummy)
+                Resource: D0 (class=ocf provider=pcsmock type=params)
                   Attributes: D0-instance_attributes
-                    test=testC
-                    test2=test2a
+                    mandatory=test1b
+                    optional=test2a
                   Meta Attributes: D0-meta_attributes
                     test5=test5a
                     test7=test7a
@@ -4735,10 +4638,10 @@ class MetaAttrs(
                   Meta Attributes: TestRG-meta_attributes
                     testrgmeta=mymeta
                     testrgmeta2=mymeta2
-                  Resource: D1 (class=ocf provider=heartbeat type=Dummy)
+                  Resource: D1 (class=ocf provider=pcsmock type=params)
                     Attributes: D1-instance_attributes
-                      test=testA
-                      test2=test2a
+                      mandatory=test1a
+                      optional=test2a
                     Meta Attributes: D1-meta_attributes
                       d1meta=superd1meta
                     Operations:
@@ -4780,7 +4683,7 @@ class MetaAttrs(
     def fixture_not_ocf_clone():
         return """
             <clone id="clone-R">
-                <primitive class="systemd" id="R" type="pacemaker">
+                <primitive class="systemd" id="R" type="pcsmock">
                     <instance_attributes id="R-instance_attributes" />
                     <operations>
                         <op id="R-monitor-interval-10s" interval="10s"
@@ -4797,7 +4700,7 @@ class MetaAttrs(
             "resource meta clone-R promotable=1".split(),
             (
                 "Error: Clone option 'promotable' is not compatible with "
-                "'systemd:pacemaker' resource agent of resource 'R'\n"
+                "'systemd:pcsmock' resource agent of resource 'R'\n"
             ),
         )
 
@@ -4807,7 +4710,7 @@ class MetaAttrs(
             "resource meta clone-R globally-unique=1".split(),
             (
                 "Error: Clone option 'globally-unique' is not compatible with "
-                "'systemd:pacemaker' resource agent of resource 'R'\n"
+                "'systemd:pcsmock' resource agent of resource 'R'\n"
             ),
         )
 
@@ -4823,7 +4726,7 @@ class MetaAttrs(
             "resource meta clone-R promotable=1".split(),
             (
                 "Error: Clone option 'promotable' is not compatible with "
-                "'ocf:pacemaker:Dummy' resource agent of resource 'R', use --force to override\n"
+                "'ocf:pcsmock:minimal' resource agent of resource 'R', use --force to override\n"
             ),
         )
 
@@ -4840,8 +4743,8 @@ class MetaAttrs(
             """
                 <resources>
                     <clone id="clone-R">
-                        <primitive class="ocf" id="R" provider="pacemaker"
-                            type="Dummy"
+                        <primitive class="ocf" id="R" provider="pcsmock"
+                            type="minimal"
                         >
                             <operations>
                                 <op id="R-monitor-interval-10s" interval="10s"
@@ -4859,7 +4762,7 @@ class MetaAttrs(
             """,
             stderr_full=(
                 "Warning: Clone option 'promotable' is not compatible with "
-                "'ocf:pacemaker:Dummy' resource agent of resource 'R'\n"
+                "'ocf:pcsmock:minimal' resource agent of resource 'R'\n"
             ),
         )
 
@@ -4881,7 +4784,7 @@ class UpdateInstanceAttrs(
         self.temp_cib = get_tmp_file("tier1_resource_update_instance_attrs")
         write_file_to_tmpfile(empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
+        self.pcs_runner.mock_settings = get_mock_settings()
 
     def tearDown(self):
         self.temp_cib.close()
@@ -4895,7 +4798,7 @@ class UpdateInstanceAttrs(
     def fixture_xml_resource_no_attrs():
         return """
             <resources>
-                <primitive class="ocf" id="R" provider="pacemaker" type="Dummy">
+                <primitive class="ocf" id="R" provider="pcsmock" type="params">
                     <operations>
                         <op id="R-monitor-interval-10s" interval="10s"
                             name="monitor" timeout="20s"
@@ -4908,7 +4811,7 @@ class UpdateInstanceAttrs(
     @staticmethod
     def _fixture_xml_resource_empty_attrs():
         return """
-            <primitive class="ocf" id="R" provider="pacemaker" type="Dummy">
+            <primitive class="ocf" id="R" provider="pcsmock" type="params">
                 <instance_attributes id="R-instance_attributes" />
                 <operations>
                     <op id="R-monitor-interval-10s" interval="10s"
@@ -4930,10 +4833,10 @@ class UpdateInstanceAttrs(
     def fixture_xml_resource_with_attrs():
         return """
             <resources>
-                <primitive class="ocf" id="R" provider="pacemaker" type="Dummy">
+                <primitive class="ocf" id="R" provider="pcsmock" type="params">
                     <instance_attributes id="R-instance_attributes">
-                        <nvpair id="R-instance_attributes-fake" name="fake"
-                            value="F"
+                        <nvpair id="R-instance_attributes-mandatory"
+                            name="mandatory" value="F"
                         />
                     </instance_attributes>
                     <operations>
@@ -4947,13 +4850,14 @@ class UpdateInstanceAttrs(
 
     def fixture_resource(self):
         self.assert_effect(
-            "resource create --no-default-ops R ocf:pacemaker:Dummy".split(),
+            "resource create --no-default-ops R ocf:pcsmock:params --force".split(),
             self.fixture_xml_resource_no_attrs(),
+            stderr_full="Warning: required resource option 'mandatory' is missing\n",
         )
 
     def fixture_resource_attrs(self):
         self.assert_effect(
-            "resource create --no-default-ops R ocf:pacemaker:Dummy fake=F".split(),
+            "resource create --no-default-ops R ocf:pcsmock:params mandatory=F".split(),
             self.fixture_xml_resource_with_attrs(),
         )
 
@@ -4966,27 +4870,30 @@ class UpdateInstanceAttrs(
     def test_bad_instance_variables(self):
         self.assert_pcs_fail(
             (
-                "resource create --no-default-ops D0 ocf:heartbeat:Dummy"
+                "resource create --no-default-ops D0 ocf:pcsmock:params"
                 " test=testC test2=test2a test4=test4A op monitor interval=35"
                 " meta test7=test7a test6="
             ).split(),
             (
-                "Error: invalid resource options: 'test', 'test2', 'test4',"
-                " allowed options are: 'fake', 'state', 'trace_file', "
-                "'trace_ra', use --force to override\n" + ERRORS_HAVE_OCCURRED
+                "Error: invalid resource options: 'test', 'test2', 'test4', "
+                "allowed options are: 'advanced', 'enum', 'mandatory', "
+                "'optional', 'unique1', 'unique2', use --force to override\n"
+                "Error: required resource option 'mandatory' is missing, "
+                "use --force to override\n" + ERRORS_HAVE_OCCURRED
             ),
         )
 
         self.assert_pcs_success(
             (
-                "resource create --no-default-ops --force D0 ocf:heartbeat:Dummy"
+                "resource create --no-default-ops --force D0 ocf:pcsmock:params"
                 " test=testC test2=test2a test4=test4A op monitor interval=35"
                 " meta test7=test7a test6="
             ).split(),
             stderr_full=(
                 "Warning: invalid resource options: 'test', 'test2', 'test4',"
-                " allowed options are: 'fake', 'state', 'trace_file', "
-                "'trace_ra'\n"
+                " allowed options are: 'advanced', 'enum', 'mandatory', "
+                "'optional', 'unique1', 'unique2'\n"
+                "Warning: required resource option 'mandatory' is missing\n"
             ),
         )
 
@@ -4994,8 +4901,8 @@ class UpdateInstanceAttrs(
             "resource update D0 test=testA test2=testB test3=testD".split(),
             (
                 "Error: invalid resource option 'test3', allowed options"
-                " are: 'fake', 'state', 'trace_file', 'trace_ra', use --force "
-                "to override\n"
+                " are: 'advanced', 'enum', 'mandatory', 'optional', 'unique1', "
+                "'unique2', use --force to override\n"
             ),
         )
 
@@ -5003,8 +4910,8 @@ class UpdateInstanceAttrs(
             "resource update D0 test=testB test2=testC test3=testD --force".split(),
             stderr_full=(
                 "Warning: invalid resource option 'test3',"
-                " allowed options are: 'fake', 'state', 'trace_file', "
-                "'trace_ra'\n"
+                " allowed options are: 'advanced', 'enum', 'mandatory', "
+                "'optional', 'unique1', 'unique2'\n"
             ),
         )
 
@@ -5012,7 +4919,7 @@ class UpdateInstanceAttrs(
             "resource config D0".split(),
             dedent(
                 """\
-                Resource: D0 (class=ocf provider=heartbeat type=Dummy)
+                Resource: D0 (class=ocf provider=pcsmock type=params)
                   Attributes: D0-instance_attributes
                     test=testB
                     test2=testC
@@ -5029,7 +4936,7 @@ class UpdateInstanceAttrs(
         )
 
     def test_nonexisting_agent(self):
-        agent = "ocf:pacemaker:nonexistent"
+        agent = "ocf:pcsmock:nonexistent"
         message = (
             f"Agent '{agent}' is not installed or does "
             "not provide valid metadata: "
@@ -5052,19 +4959,19 @@ class UpdateInstanceAttrs(
     def test_update_existing(self):
         xml = """
             <resources>
-                <primitive class="ocf" id="ClusterIP" provider="heartbeat"
-                    type="IPaddr2"
+                <primitive class="ocf" id="Dummy" provider="pcsmock"
+                    type="params"
                 >
-                    <instance_attributes id="ClusterIP-instance_attributes">
-                        <nvpair id="ClusterIP-instance_attributes-cidr_netmask"
-                            name="cidr_netmask" value="32"
+                    <instance_attributes id="Dummy-instance_attributes">
+                        <nvpair id="Dummy-instance_attributes-mandatory"
+                            name="mandatory" value="manda"
                         />
-                        <nvpair id="ClusterIP-instance_attributes-ip" name="ip"
-                            value="{ip}"
+                        <nvpair id="Dummy-instance_attributes-optional"
+                            name="optional" value="{optional}"
                         />
                     </instance_attributes>
                     <operations>
-                        <op id="ClusterIP-monitor-interval-30s" interval="30s"
+                        <op id="Dummy-monitor-interval-30s" interval="30s"
                             name="monitor"
                         />
                     </operations>
@@ -5073,29 +4980,31 @@ class UpdateInstanceAttrs(
         """
         self.assert_effect(
             (
-                "resource create --no-default-ops ClusterIP ocf:heartbeat:IPaddr2"
-                " cidr_netmask=32 ip=192.168.0.99 op monitor interval=30s"
+                "resource create --no-default-ops Dummy ocf:pcsmock:params"
+                " mandatory=manda optional=opti1 op monitor interval=30s"
             ).split(),
-            xml.format(ip="192.168.0.99"),
+            xml.format(optional="opti1"),
         )
 
         self.assert_effect(
-            "resource update ClusterIP ip=192.168.0.100".split(),
-            xml.format(ip="192.168.0.100"),
+            "resource update Dummy optional=opti2".split(),
+            xml.format(optional="opti2"),
         )
 
     def test_keep_empty_nvset(self):
         self.fixture_resource_attrs()
         self.assert_effect(
-            "resource update R fake=".split(),
+            "resource update R mandatory= --force".split(),
             self.fixture_xml_resource_empty_attrs(),
+            stderr_full="Warning: required resource option 'mandatory' is missing\n",
         )
 
     def test_dont_create_nvset_on_removal(self):
         self.fixture_resource()
         self.assert_effect(
-            "resource update R fake=".split(),
+            "resource update R mandatory= --force".split(),
             self.fixture_xml_resource_no_attrs(),
+            stderr_full="Warning: required resource option 'mandatory' is missing\n",
         )
 
     def test_agent_self_validation_failure(self):
@@ -5105,11 +5014,12 @@ class UpdateInstanceAttrs(
                 "resource",
                 "update",
                 "R",
-                "fake=is_invalid=True",
+                "mandatory=is_invalid=True",
                 "--agent-validation",
             ],
-            stderr_start=(
-                "Error: Validation result from agent (use --force to override):"
+            stderr_full=(
+                "Error: Validation result from agent (use --force to override):\n"
+                "  pcsmock validation failure\n"
             ),
         )
 
@@ -5117,7 +5027,7 @@ class UpdateInstanceAttrs(
     def fixture_not_ocf_clone():
         return """
             <clone id="clone-R">
-                <primitive class="systemd" id="R" type="pacemaker">
+                <primitive class="systemd" id="R" type="pcsmock">
                     <instance_attributes id="R-instance_attributes" />
                     <operations>
                         <op id="R-monitor-interval-10s" interval="10s"
@@ -5134,7 +5044,7 @@ class UpdateInstanceAttrs(
             "resource update clone-R promotable=1".split(),
             (
                 "Error: Clone option 'promotable' is not compatible with "
-                "'systemd:pacemaker' resource agent of resource 'R'\n"
+                "'systemd:pcsmock' resource agent of resource 'R'\n"
             ),
         )
 
@@ -5144,7 +5054,7 @@ class UpdateInstanceAttrs(
             "resource update clone-R globally-unique=1".split(),
             (
                 "Error: Clone option 'globally-unique' is not compatible with "
-                "'systemd:pacemaker' resource agent of resource 'R'\n"
+                "'systemd:pcsmock' resource agent of resource 'R'\n"
             ),
         )
 
@@ -5160,7 +5070,7 @@ class UpdateInstanceAttrs(
             "resource update clone-R promotable=1".split(),
             (
                 "Error: Clone option 'promotable' is not compatible with "
-                "'ocf:pacemaker:Dummy' resource agent of resource 'R', "
+                "'ocf:pcsmock:params' resource agent of resource 'R', "
                 "use --force to override\n"
             ),
         )
@@ -5171,13 +5081,14 @@ class ResourcesReferencedFromAcl(TestCase, AssertPcsMixin):
         self.temp_cib = get_tmp_file("tier1_resource_referenced_from_acl")
         write_file_to_tmpfile(empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
+        self.pcs_runner.mock_settings = get_mock_settings()
 
     def tearDown(self):
         self.temp_cib.close()
 
     def test_remove_referenced_primitive_resource(self):
         self.assert_pcs_success(
-            "resource create dummy ocf:heartbeat:Dummy".split()
+            "resource create dummy ocf:pcsmock:minimal".split()
         )
         self.assert_pcs_success(
             "acl role create read-dummy read id dummy".split()
@@ -5189,10 +5100,10 @@ class ResourcesReferencedFromAcl(TestCase, AssertPcsMixin):
 
     def test_remove_group_with_referenced_primitive_resource(self):
         self.assert_pcs_success(
-            "resource create dummy1 ocf:heartbeat:Dummy".split()
+            "resource create dummy1 ocf:pcsmock:minimal".split()
         )
         self.assert_pcs_success(
-            "resource create dummy2 ocf:heartbeat:Dummy".split()
+            "resource create dummy2 ocf:pcsmock:minimal".split()
         )
         self.assert_pcs_success(
             "resource group add dummy-group dummy1 dummy2".split()
@@ -5212,10 +5123,10 @@ class ResourcesReferencedFromAcl(TestCase, AssertPcsMixin):
 
     def test_remove_referenced_group(self):
         self.assert_pcs_success(
-            "resource create dummy1 ocf:heartbeat:Dummy".split()
+            "resource create dummy1 ocf:pcsmock:minimal".split()
         )
         self.assert_pcs_success(
-            "resource create dummy2 ocf:heartbeat:Dummy".split()
+            "resource create dummy2 ocf:pcsmock:minimal".split()
         )
         self.assert_pcs_success(
             "resource group add dummy-group dummy1 dummy2".split()
@@ -5239,20 +5150,21 @@ class CloneMasterUpdate(TestCase, AssertPcsMixin):
         self.temp_cib = get_tmp_file("tier1_resource_clone_master_update")
         write_file_to_tmpfile(empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
+        self.pcs_runner.mock_settings = get_mock_settings()
 
     def tearDown(self):
         self.temp_cib.close()
 
     def test_no_op_allowed_in_clone_update(self):
         self.assert_pcs_success(
-            "resource create dummy ocf:heartbeat:Dummy clone".split()
+            "resource create dummy ocf:pcsmock:minimal clone".split()
         )
         self.assert_pcs_success(
             "resource config dummy-clone".split(),
             dedent(
                 """\
                 Clone: dummy-clone
-                  Resource: dummy (class=ocf provider=heartbeat type=Dummy)
+                  Resource: dummy (class=ocf provider=pcsmock type=minimal)
                     Operations:
                       migrate_from: dummy-migrate_from-interval-0s
                         interval=0s timeout=20s
@@ -5261,6 +5173,8 @@ class CloneMasterUpdate(TestCase, AssertPcsMixin):
                       monitor: dummy-monitor-interval-10s
                         interval=10s timeout=20s
                       reload: dummy-reload-interval-0s
+                        interval=0s timeout=20s
+                      reload-agent: dummy-reload-agent-interval-0s
                         interval=0s timeout=20s
                       start: dummy-start-interval-0s
                         interval=0s timeout=20s
@@ -5282,7 +5196,7 @@ class CloneMasterUpdate(TestCase, AssertPcsMixin):
             dedent(
                 """\
                 Clone: dummy-clone
-                  Resource: dummy (class=ocf provider=heartbeat type=Dummy)
+                  Resource: dummy (class=ocf provider=pcsmock type=minimal)
                     Operations:
                       migrate_from: dummy-migrate_from-interval-0s
                         interval=0s timeout=20s
@@ -5291,6 +5205,8 @@ class CloneMasterUpdate(TestCase, AssertPcsMixin):
                       monitor: dummy-monitor-interval-10s
                         interval=10s timeout=20s
                       reload: dummy-reload-interval-0s
+                        interval=0s timeout=20s
+                      reload-agent: dummy-reload-agent-interval-0s
                         interval=0s timeout=20s
                       start: dummy-start-interval-0s
                         interval=0s timeout=20s
@@ -5309,7 +5225,7 @@ class CloneMasterUpdate(TestCase, AssertPcsMixin):
             Clone: dummy-master
               Meta Attributes:
                 promotable=true
-              Resource: dummy (class=ocf provider=pacemaker type=Stateful)
+              Resource: dummy (class=ocf provider=pcsmock type=stateful)
                 Operations:
                   monitor: dummy-monitor-interval-10
                     interval=10 timeout=20 role={const.PCMK_ROLE_PROMOTED}
@@ -5336,6 +5252,10 @@ class CloneMasterUpdate(TestCase, AssertPcsMixin):
 
 
 class TransformMasterToClone(ResourceTest):
+    def setUp(self):
+        super().setUp()
+        self.pcs_runner.mock_settings = get_mock_settings()
+
     def test_transform_master_without_meta_on_meta(self):
         # pcs no longer allows creating masters but supports existing ones. In
         # order to test it, we need to put a master in the CIB without pcs.
@@ -5344,8 +5264,8 @@ class TransformMasterToClone(ResourceTest):
             "resource meta dummy-master a=b".split(),
             """<resources>
                 <clone id="dummy-master">
-                    <primitive class="ocf" id="dummy" provider="pacemaker"
-                        type="Stateful"
+                    <primitive class="ocf" id="dummy" provider="pcsmock"
+                        type="stateful"
                     >
                         <operations>
                             <op id="dummy-monitor-interval-10" interval="10"
@@ -5388,8 +5308,8 @@ class TransformMasterToClone(ResourceTest):
             "resource meta dummy-master a=AA b= d=D promotable=".split(),
             """<resources>
                 <clone id="dummy-master">
-                    <primitive class="ocf" id="dummy" provider="pacemaker"
-                        type="Stateful"
+                    <primitive class="ocf" id="dummy" provider="pcsmock"
+                        type="stateful"
                     >
                         <operations>
                             <op id="dummy-monitor-interval-10" interval="10"
@@ -5432,8 +5352,8 @@ class TransformMasterToClone(ResourceTest):
             "resource update dummy-master meta a=b".split(),
             """<resources>
                 <clone id="dummy-master">
-                    <primitive class="ocf" id="dummy" provider="pacemaker"
-                        type="Stateful"
+                    <primitive class="ocf" id="dummy" provider="pcsmock"
+                        type="stateful"
                     >
                         <operations>
                             <op id="dummy-monitor-interval-10" interval="10"
@@ -5476,8 +5396,8 @@ class TransformMasterToClone(ResourceTest):
             "resource update dummy-master meta a=AA b= d=D promotable=".split(),
             """<resources>
                 <clone id="dummy-master">
-                    <primitive class="ocf" id="dummy" provider="pacemaker"
-                        type="Stateful"
+                    <primitive class="ocf" id="dummy" provider="pcsmock"
+                        type="stateful"
                     >
                         <operations>
                             <op id="dummy-monitor-interval-10" interval="10"
@@ -5518,12 +5438,13 @@ class ResourceRemoveWithTicket(TestCase, AssertPcsMixin):
         self.temp_cib = get_tmp_file("tier1_resource_remove_with_ticket")
         write_file_to_tmpfile(empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
+        self.pcs_runner.mock_settings = get_mock_settings()
 
     def tearDown(self):
         self.temp_cib.close()
 
     def test_remove_ticket(self):
-        self.assert_pcs_success("resource create A ocf:heartbeat:Dummy".split())
+        self.assert_pcs_success("resource create A ocf:pcsmock:minimal".split())
         role = str(const.PCMK_ROLE_PROMOTED).lower()
         self.assert_pcs_success(
             f"constraint ticket add T {role} A loss-policy=fence".split()
@@ -5555,6 +5476,7 @@ class BundleCommon(
         self.temp_cib = get_tmp_file("tier1_resource_bundle")
         write_file_to_tmpfile(empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
+        self.pcs_runner.mock_settings = get_mock_settings()
 
     def tearDown(self):
         self.temp_cib.close()
@@ -5565,7 +5487,7 @@ class BundleCommon(
                 "resource",
                 "create",
                 name,
-                "ocf:heartbeat:Dummy",
+                "ocf:pcsmock:minimal",
                 "bundle",
                 bundle,
             ]
@@ -5884,12 +5806,13 @@ class ResourceUpdateRemoteAndGuestChecks(TestCase, AssertPcsMixin):
         self.temp_cib = get_tmp_file("tier1_resource_update_remote_guest")
         write_file_to_tmpfile(empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
+        self.pcs_runner.mock_settings = get_mock_settings()
 
     def tearDown(self):
         self.temp_cib.close()
 
     def test_update_fail_on_pacemaker_guest_attempt(self):
-        self.assert_pcs_success("resource create R ocf:heartbeat:Dummy".split())
+        self.assert_pcs_success("resource create R ocf:pcsmock:minimal".split())
         self.assert_pcs_fail(
             "resource update R meta remote-node=HOST".split(),
             (
@@ -5900,7 +5823,7 @@ class ResourceUpdateRemoteAndGuestChecks(TestCase, AssertPcsMixin):
         )
 
     def test_update_warn_on_pacemaker_guest_attempt(self):
-        self.assert_pcs_success("resource create R ocf:heartbeat:Dummy".split())
+        self.assert_pcs_success("resource create R ocf:pcsmock:minimal".split())
         self.assert_pcs_success(
             "resource update R meta remote-node=HOST --force".split(),
             stderr_full=(
@@ -5912,7 +5835,7 @@ class ResourceUpdateRemoteAndGuestChecks(TestCase, AssertPcsMixin):
     def test_update_fail_on_pacemaker_guest_attempt_remove(self):
         self.assert_pcs_success(
             (
-                "resource create R ocf:heartbeat:Dummy meta remote-node=HOST"
+                "resource create R ocf:pcsmock:minimal meta remote-node=HOST"
                 " --force"
             ).split(),
             stderr_full=(
@@ -5932,7 +5855,7 @@ class ResourceUpdateRemoteAndGuestChecks(TestCase, AssertPcsMixin):
     def test_update_warn_on_pacemaker_guest_attempt_remove(self):
         self.assert_pcs_success(
             (
-                "resource create R ocf:heartbeat:Dummy meta remote-node=HOST"
+                "resource create R ocf:pcsmock:minimal meta remote-node=HOST"
                 " --force"
             ).split(),
             stderr_full=(
@@ -5949,7 +5872,7 @@ class ResourceUpdateRemoteAndGuestChecks(TestCase, AssertPcsMixin):
         )
 
     def test_meta_fail_on_pacemaker_guest_attempt(self):
-        self.assert_pcs_success("resource create R ocf:heartbeat:Dummy".split())
+        self.assert_pcs_success("resource create R ocf:pcsmock:minimal".split())
         self.assert_pcs_fail(
             "resource meta R remote-node=HOST".split(),
             (
@@ -5960,7 +5883,7 @@ class ResourceUpdateRemoteAndGuestChecks(TestCase, AssertPcsMixin):
         )
 
     def test_meta_warn_on_pacemaker_guest_attempt(self):
-        self.assert_pcs_success("resource create R ocf:heartbeat:Dummy".split())
+        self.assert_pcs_success("resource create R ocf:pcsmock:minimal".split())
         self.assert_pcs_success(
             "resource meta R remote-node=HOST --force".split(),
             stderr_full=(
@@ -5972,7 +5895,7 @@ class ResourceUpdateRemoteAndGuestChecks(TestCase, AssertPcsMixin):
     def test_meta_fail_on_pacemaker_guest_attempt_remove(self):
         self.assert_pcs_success(
             (
-                "resource create R ocf:heartbeat:Dummy meta remote-node=HOST"
+                "resource create R ocf:pcsmock:minimal meta remote-node=HOST"
                 " --force"
             ).split(),
             stderr_full=(
@@ -5992,7 +5915,7 @@ class ResourceUpdateRemoteAndGuestChecks(TestCase, AssertPcsMixin):
     def test_meta_warn_on_pacemaker_guest_attempt_remove(self):
         self.assert_pcs_success(
             (
-                "resource create R ocf:heartbeat:Dummy meta remote-node=HOST"
+                "resource create R ocf:pcsmock:minimal meta remote-node=HOST"
                 " --force"
             ).split(),
             stderr_full=(
@@ -6014,23 +5937,21 @@ class ResourceUpdateUniqueAttrChecks(TestCase, AssertPcsMixin):
         self.temp_cib = get_tmp_file("tier1_resource_update_unique_attr")
         write_file_to_tmpfile(empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
+        self.pcs_runner.mock_settings = get_mock_settings()
 
     def tearDown(self):
         self.temp_cib.close()
 
     def test_unique_err(self):
         self.assert_pcs_success(
-            "resource create R1 ocf:pacemaker:Dummy state=1".split()
+            "resource create R1 ocf:pcsmock:unique state=1".split()
         )
-        self.assert_pcs_success(
-            "resource create R2 ocf:pacemaker:Dummy".split()
-        )
+        self.assert_pcs_success("resource create R2 ocf:pcsmock:unique".split())
         self.assert_pcs_fail(
             "resource update R2 state=1".split(),
             (
                 "Error: Value '1' of option 'state' is not unique across "
-                "'ocf:pacemaker:Dummy' resources. Following resources are "
+                "'ocf:pcsmock:unique' resources. Following resources are "
                 "configured with the same value of the instance attribute: 'R1', "
                 "use --force to override\n"
             ),
@@ -6038,28 +5959,28 @@ class ResourceUpdateUniqueAttrChecks(TestCase, AssertPcsMixin):
 
     def test_unique_setting_same_value(self):
         self.assert_pcs_success(
-            "resource create R1 ocf:pacemaker:Dummy state=1 --no-default-ops".split()
+            "resource create R1 ocf:pcsmock:unique state=1 --no-default-ops".split()
         )
         self.assert_pcs_success(
-            "resource create R2 ocf:pacemaker:Dummy --no-default-ops".split()
+            "resource create R2 ocf:pcsmock:unique --no-default-ops".split()
         )
         self.assert_pcs_success(
             "resource update R2 state=1 --force".split(),
             stderr_full=(
                 "Warning: Value '1' of option 'state' is not unique across "
-                "'ocf:pacemaker:Dummy' resources. Following resources are "
+                "'ocf:pcsmock:unique' resources. Following resources are "
                 "configured with the same value of the instance attribute: 'R1'\n"
             ),
         )
         res_config = dedent(
             """\
-            Resource: R1 (class=ocf provider=pacemaker type=Dummy)
+            Resource: R1 (class=ocf provider=pcsmock type=unique)
               Attributes: R1-instance_attributes
                 state=1
               Operations:
                 monitor: R1-monitor-interval-10s
                   interval=10s timeout=20s
-            Resource: R2 (class=ocf provider=pacemaker type=Dummy)
+            Resource: R2 (class=ocf provider=pcsmock type=unique)
               Attributes: R2-instance_attributes
                 state=1
               Operations:
@@ -6073,20 +5994,20 @@ class ResourceUpdateUniqueAttrChecks(TestCase, AssertPcsMixin):
             "resource update R2 state=1 --force".split(),
             stderr_full=(
                 "Warning: Value '1' of option 'state' is not unique across "
-                "'ocf:pacemaker:Dummy' resources. Following resources are "
+                "'ocf:pcsmock:unique' resources. Following resources are "
                 "configured with the same value of the instance attribute: 'R1'\n"
             ),
         )
         self.assert_pcs_success("resource config".split(), res_config)
         res_config = dedent(
             """\
-            Resource: R1 (class=ocf provider=pacemaker type=Dummy)
+            Resource: R1 (class=ocf provider=pcsmock type=unique)
               Attributes: R1-instance_attributes
                 state=1
               Operations:
                 monitor: R1-monitor-interval-10s
                   interval=10s timeout=20s
-            Resource: R2 (class=ocf provider=pacemaker type=Dummy)
+            Resource: R2 (class=ocf provider=pcsmock type=unique)
               Attributes: R2-instance_attributes
                 state=2
               Operations:
@@ -6101,19 +6022,19 @@ class ResourceUpdateUniqueAttrChecks(TestCase, AssertPcsMixin):
 
     def test_unique_warn(self):
         self.assert_pcs_success(
-            "resource create R1 ocf:pacemaker:Dummy state=1 --no-default-ops".split()
+            "resource create R1 ocf:pcsmock:unique state=1 --no-default-ops".split()
         )
         self.assert_pcs_success(
-            "resource create R2 ocf:pacemaker:Dummy --no-default-ops".split()
+            "resource create R2 ocf:pcsmock:unique --no-default-ops".split()
         )
         self.assert_pcs_success(
-            "resource create R3 ocf:pacemaker:Dummy --no-default-ops".split()
+            "resource create R3 ocf:pcsmock:unique --no-default-ops".split()
         )
         self.assert_pcs_success(
             "resource update R2 state=1 --force".split(),
             stderr_full=(
                 "Warning: Value '1' of option 'state' is not unique across "
-                "'ocf:pacemaker:Dummy' resources. Following resources are "
+                "'ocf:pcsmock:unique' resources. Following resources are "
                 "configured with the same value of the instance attribute: 'R1'\n"
             ),
         )
@@ -6121,19 +6042,19 @@ class ResourceUpdateUniqueAttrChecks(TestCase, AssertPcsMixin):
             "resource config".split(),
             dedent(
                 """\
-                Resource: R1 (class=ocf provider=pacemaker type=Dummy)
+                Resource: R1 (class=ocf provider=pcsmock type=unique)
                   Attributes: R1-instance_attributes
                     state=1
                   Operations:
                     monitor: R1-monitor-interval-10s
                       interval=10s timeout=20s
-                Resource: R2 (class=ocf provider=pacemaker type=Dummy)
+                Resource: R2 (class=ocf provider=pcsmock type=unique)
                   Attributes: R2-instance_attributes
                     state=1
                   Operations:
                     monitor: R2-monitor-interval-10s
                       interval=10s timeout=20s
-                Resource: R3 (class=ocf provider=pacemaker type=Dummy)
+                Resource: R3 (class=ocf provider=pcsmock type=unique)
                   Operations:
                     monitor: R3-monitor-interval-10s
                       interval=10s timeout=20s
@@ -6144,7 +6065,7 @@ class ResourceUpdateUniqueAttrChecks(TestCase, AssertPcsMixin):
             "resource update R3 state=1 --force".split(),
             stderr_full=(
                 "Warning: Value '1' of option 'state' is not unique across "
-                "'ocf:pacemaker:Dummy' resources. Following resources are "
+                "'ocf:pcsmock:unique' resources. Following resources are "
                 "configured with the same value of the instance attribute: 'R1', "
                 "'R2'\n"
             ),
@@ -6153,19 +6074,19 @@ class ResourceUpdateUniqueAttrChecks(TestCase, AssertPcsMixin):
             "resource config".split(),
             dedent(
                 """\
-                Resource: R1 (class=ocf provider=pacemaker type=Dummy)
+                Resource: R1 (class=ocf provider=pcsmock type=unique)
                   Attributes: R1-instance_attributes
                     state=1
                   Operations:
                     monitor: R1-monitor-interval-10s
                       interval=10s timeout=20s
-                Resource: R2 (class=ocf provider=pacemaker type=Dummy)
+                Resource: R2 (class=ocf provider=pcsmock type=unique)
                   Attributes: R2-instance_attributes
                     state=1
                   Operations:
                     monitor: R2-monitor-interval-10s
                       interval=10s timeout=20s
-                Resource: R3 (class=ocf provider=pacemaker type=Dummy)
+                Resource: R3 (class=ocf provider=pcsmock type=unique)
                   Attributes: R3-instance_attributes
                     state=1
                   Operations:

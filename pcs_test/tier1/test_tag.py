@@ -396,28 +396,28 @@ class PcsConfigTagsTest(TestTagMixin, TestCase):
     expected_resources = outdent(
         """
         Resources:
-          Resource: not-in-tags (class=ocf provider=pacemaker type=Dummy)
+          Resource: not-in-tags (class=ocf provider=pcsmock type=minimal)
             Operations:
               monitor: not-in-tags-monitor-interval-10s
                 interval=10s timeout=20s
-          Resource: x1 (class=ocf provider=pacemaker type=Dummy)
+          Resource: x1 (class=ocf provider=pcsmock type=minimal)
             Operations:
               monitor: x1-monitor-interval-10s
                 interval=10s timeout=20s
-          Resource: x2 (class=ocf provider=pacemaker type=Dummy)
+          Resource: x2 (class=ocf provider=pcsmock type=minimal)
             Operations:
               monitor: x2-monitor-interval-10s
                 interval=10s timeout=20s
-          Resource: x3 (class=ocf provider=pacemaker type=Dummy)
+          Resource: x3 (class=ocf provider=pcsmock type=minimal)
             Operations:
               monitor: x3-monitor-interval-10s
                 interval=10s timeout=20s
-          Resource: y1 (class=ocf provider=pacemaker type=Dummy)
+          Resource: y1 (class=ocf provider=pcsmock type=minimal)
             Operations:
               monitor: y1-monitor-interval-10s
                 interval=10s timeout=20s
           Clone: y2-clone
-            Resource: y2 (class=ocf provider=pacemaker type=Dummy)
+            Resource: y2 (class=ocf provider=pcsmock type=minimal)
               Operations:
                 monitor: y2-monitor-interval-10s
                   interval=10s timeout=20s
@@ -426,15 +426,15 @@ class PcsConfigTagsTest(TestTagMixin, TestCase):
     expected_stonith_devices = outdent(
         """
         Stonith Devices:
-          Resource: fence-rh-1 (class=stonith type=fence_xvm)
+          Resource: fence-rh-1 (class=stonith type=fence_pcsmock_minimal)
             Operations:
               monitor: fence-rh-1-monitor-interval-60s
                 interval=60s
-          Resource: fence-rh-2 (class=stonith type=fence_xvm)
+          Resource: fence-rh-2 (class=stonith type=fence_pcsmock_minimal)
             Operations:
               monitor: fence-rh-2-monitor-interval-60s
                 interval=60s
-          Resource: fence-kdump (class=stonith type=fence_kdump)
+          Resource: fence-kdump (class=stonith type=fence_pcsmock_minimal)
             Attributes: fence-kdump-instance_attributes
               pcmk_host_list="rh-1 rh-2"
             Operations:

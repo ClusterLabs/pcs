@@ -8,6 +8,7 @@ from pcs import settings
 from pcs.lib.external import CommandRunner
 
 from pcs_test.tools.assertions import AssertPcsMixin
+from pcs_test.tools.bin_mock import get_mock_settings
 from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 from pcs_test.tools.misc import (
     get_test_resource,
@@ -33,6 +34,7 @@ class CachedCibFixture(AssertPcsMixin):
         os.makedirs(fixture_dir, exist_ok=True)
         self._cache_path = os.path.join(fixture_dir, self._cache_name)
         self._pcs_runner = PcsRunner(self._cache_path)
+        self._pcs_runner.mock_settings = get_mock_settings()
 
         with (
             open(self._empty_cib_path, "r") as template_file,
@@ -139,7 +141,7 @@ def fixture_master_xml(name, all_ops=True, meta_dict=None):
         meta_xml = "\n".join(meta_lines)
     master = f"""
       <master id="{name}-master">
-        <primitive class="ocf" id="{name}" provider="pacemaker" type="Stateful">
+        <primitive class="ocf" id="{name}" provider="pcsmock" type="stateful">
           <operations>
             <op id="{name}-monitor-interval-10" interval="10" name="monitor"
                 role="Master" timeout="20"

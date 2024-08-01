@@ -1,12 +1,11 @@
 <?xml version='1.0'?>
 <!DOCTYPE resource-agent SYSTEM 'ra-api-1.dtd'>
-<resource-agent name='network' version='0.1'>
+<resource-agent name='pcsmock' version='1.0'>
   <version>1.0</version>
   <longdesc lang='en'>
- Bring up/down networking
+This is a mock agent for pcs test - lsb agent
   </longdesc>
-  <shortdesc lang='en'> Bring up/down networking
-</shortdesc>
+  <shortdesc lang='en'>pcs test mock lsb agent</shortdesc>
   <parameters>
   </parameters>
   <actions>
@@ -19,15 +18,12 @@
     <action name='monitor'      timeout='15' interval='15' />
   </actions>
   <special tag='LSB'>
-    <Provides> $network
-</Provides>
+    <Provides> pcsmock </Provides>
     <Required-Start></Required-Start>
     <Required-Stop></Required-Stop>
-    <Should-Start> iptables ip6tables NetworkManager-wait-online NetworkManager $network-pre
-</Should-Start>
+    <Should-Start></Should-Start>
     <Should-Stop></Should-Stop>
     <Default-Start></Default-Start>
     <Default-Stop></Default-Stop>
   </special>
 </resource-agent>
-

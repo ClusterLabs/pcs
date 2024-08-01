@@ -110,4 +110,3 @@
 ./pcs_test/tier1/legacy/test_utils.py: `dum` -> `dumb`
 ./pcs_test/tier1/legacy/test_utils.py: `ue` -> `use`, `due`
 ./pcs_test/tier1/legacy/test_utils.py: `ue` -> `use`, `due`
-./pcs_test/tools/bin_mock/pcmk/crm_resource.d/list_agents_ocf__heartbeat: `exportfs` -> `exports`

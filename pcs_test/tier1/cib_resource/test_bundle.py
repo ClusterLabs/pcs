@@ -30,7 +30,7 @@ class BundleCreateCommon(
         self.temp_cib = get_tmp_file("tier1_bundle_create")
         write_file_to_tmpfile(self.empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
+        self.pcs_runner.mock_settings = get_mock_settings()
 
     def tearDown(self):
         self.temp_cib.close()
@@ -740,7 +740,7 @@ class BundleShow(TestCase, AssertPcsMixin):
             ).split()
         )
         self.assert_pcs_success(
-            "resource create A ocf:pacemaker:Dummy bundle B1 --no-default-ops".split()
+            "resource create A ocf:pcsmock:minimal bundle B1 --no-default-ops".split()
         )
         self.assert_pcs_success(
             "resource config B1".split(),
@@ -749,7 +749,7 @@ class BundleShow(TestCase, AssertPcsMixin):
                 Bundle: B1
                   Docker: image=pcs:test
                   Network: control-port=1234
-                  Resource: A (class=ocf provider=pacemaker type=Dummy)
+                  Resource: A (class=ocf provider=pcsmock type=minimal)
                     Operations:
                       monitor: A-monitor-interval-10s
                         interval=10s timeout=20s
@@ -793,7 +793,7 @@ class BundleShow(TestCase, AssertPcsMixin):
             ]
         )
         self.assert_pcs_success(
-            "resource create A ocf:pacemaker:Dummy bundle B1 --no-default-ops".split()
+            "resource create A ocf:pcsmock:minimal bundle B1 --no-default-ops".split()
         )
         self.assert_pcs_success(
             "resource config B1".split(),
@@ -811,7 +811,7 @@ class BundleShow(TestCase, AssertPcsMixin):
                   Meta Attributes: B1-meta_attributes
                     is-managed=false
                     target-role=Stopped
-                  Resource: A (class=ocf provider=pacemaker type=Dummy)
+                  Resource: A (class=ocf provider=pcsmock type=minimal)
                     Operations:
                       monitor: A-monitor-interval-10s
                         interval=10s timeout=20s

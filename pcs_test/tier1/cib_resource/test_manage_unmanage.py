@@ -2,6 +2,7 @@ from unittest import TestCase
 
 from lxml import etree
 
+from pcs_test.tools.bin_mock import get_mock_settings
 from pcs_test.tools.cib import get_assert_pcs_effect_mixin
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import (
@@ -27,7 +28,7 @@ class ManageUnmanage(
         empty_meta_b = '<meta_attributes id="B-meta_attributes" />'
         return """
             <resources>
-                <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
+                <primitive class="ocf" id="A" provider="pcsmock" type="minimal">
                     <meta_attributes id="A-meta_attributes">
                         <nvpair id="A-meta_attributes-is-managed"
                             name="is-managed" value="false"
@@ -39,7 +40,7 @@ class ManageUnmanage(
                         />
                     </operations>
                 </primitive>
-                <primitive class="ocf" id="B" provider="heartbeat" type="Dummy">
+                <primitive class="ocf" id="B" provider="pcsmock" type="minimal">
                     {empty_meta_b}<operations>
                         <op id="B-monitor-interval-10s" interval="10s"
                             name="monitor" timeout="20s"
@@ -55,6 +56,7 @@ class ManageUnmanage(
         self.temp_cib = get_tmp_file("tier1_cib_resource_manage_unmanage")
         write_file_to_tmpfile(self.empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
+        self.pcs_runner.mock_settings = get_mock_settings()
 
     def tearDown(self):
         self.temp_cib.close()
@@ -65,7 +67,7 @@ class ManageUnmanage(
                 "resource",
                 "create",
                 name,
-                "ocf:heartbeat:Dummy",
+                "ocf:pcsmock:minimal",
                 "--no-default-ops",
             ]
         )
@@ -111,7 +113,7 @@ class ManageUnmanage(
             "resource unmanage A --monitor".split(),
             """
             <resources>
-                <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
+                <primitive class="ocf" id="A" provider="pcsmock" type="minimal">
                     <meta_attributes id="A-meta_attributes">
                         <nvpair id="A-meta_attributes-is-managed"
                             name="is-managed" value="false"
@@ -133,7 +135,7 @@ class ManageUnmanage(
             "resource unmanage A".split(),
             """
             <resources>
-                <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
+                <primitive class="ocf" id="A" provider="pcsmock" type="minimal">
                     <meta_attributes id="A-meta_attributes">
                         <nvpair id="A-meta_attributes-is-managed"
                             name="is-managed" value="false"
@@ -155,7 +157,7 @@ class ManageUnmanage(
             "resource manage A --monitor".split(),
             """
             <resources>
-                <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
+                <primitive class="ocf" id="A" provider="pcsmock" type="minimal">
                     <operations>
                         <op id="A-monitor-interval-10s" interval="10s"
                             name="monitor" timeout="20s"
@@ -172,7 +174,7 @@ class ManageUnmanage(
             "resource manage A".split(),
             """
             <resources>
-                <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
+                <primitive class="ocf" id="A" provider="pcsmock" type="minimal">
                     <meta_attributes id="A-meta_attributes" />
                     <operations>
                         <op id="A-monitor-interval-10s" interval="10s"
@@ -196,7 +198,7 @@ class ManageUnmanage(
             "resource unmanage TA B".split(),
             """
             <resources>
-                <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
+                <primitive class="ocf" id="A" provider="pcsmock" type="minimal">
                     <meta_attributes id="A-meta_attributes">
                         <nvpair id="A-meta_attributes-is-managed"
                             name="is-managed" value="false"
@@ -208,7 +210,7 @@ class ManageUnmanage(
                         />
                     </operations>
                 </primitive>
-                <primitive class="ocf" id="B" provider="heartbeat" type="Dummy">
+                <primitive class="ocf" id="B" provider="pcsmock" type="minimal">
                     <meta_attributes id="B-meta_attributes">
                         <nvpair id="B-meta_attributes-is-managed"
                             name="is-managed" value="false"
@@ -232,7 +234,7 @@ class ManageUnmanage(
             "resource manage TA B".split(),
             """
             <resources>
-                <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
+                <primitive class="ocf" id="A" provider="pcsmock" type="minimal">
                     <meta_attributes id="A-meta_attributes" />
                     <operations>
                         <op id="A-monitor-interval-10s" interval="10s"
@@ -240,7 +242,7 @@ class ManageUnmanage(
                         />
                     </operations>
                 </primitive>
-                <primitive class="ocf" id="B" provider="heartbeat" type="Dummy">
+                <primitive class="ocf" id="B" provider="pcsmock" type="minimal">
                     <meta_attributes id="B-meta_attributes" />
                     <operations>
                         <op id="B-monitor-interval-10s" interval="10s"
@@ -265,7 +267,7 @@ class ManageUnmanage(
         self.assert_resources_xml_in_cib(
             """
             <resources>
-                <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
+                <primitive class="ocf" id="A" provider="pcsmock" type="minimal">
                     <operations>
                         <op id="A-monitor-interval-10s" interval="10s"
                             name="monitor" timeout="20s"
@@ -289,7 +291,7 @@ class ManageUnmanage(
         self.assert_resources_xml_in_cib(
             """
             <resources>
-                <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
+                <primitive class="ocf" id="A" provider="pcsmock" type="minimal">
                     <meta_attributes id="A-meta_attributes">
                         <nvpair id="A-meta_attributes-is-managed"
                             name="is-managed" value="false"

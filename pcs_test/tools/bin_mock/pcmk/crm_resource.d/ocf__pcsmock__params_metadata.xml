@@ -1,0 +1,70 @@
+<?xml version="1.0"?>
+<resource-agent name="params" version="1.0">
+<version>1.1</version>
+
+<longdesc lang="en">
+This is a mock agent for pcs test - agent with parameters
+</longdesc>
+<shortdesc lang="en">Mock agent for pcs tests - agent with various parameters</shortdesc>
+
+<parameters>
+  <parameter name="mandatory" required="1">
+    <longdesc lang="en">
+      A generic mandatory string parameter
+    </longdesc>
+    <shortdesc lang="en">mandatory string parameter</shortdesc>
+    <content type="string" />
+  </parameter>
+  <parameter name="optional">
+    <longdesc lang="en">
+      A generic optional string parameter
+    </longdesc>
+    <shortdesc lang="en">optional string parameter</shortdesc>
+    <content type="string" default="if not specified"/>
+  </parameter>
+  <parameter name="enum">
+    <longdesc lang="en">
+      An optional enum parameter
+    </longdesc>
+    <shortdesc lang="en">optional enum parameter</shortdesc>
+    <content type="select" default="value1">
+      <option value="value1" />
+      <option value="value2" />
+      <option value="value3" />
+    </content>
+  </parameter>
+  <parameter name="advanced" advanced="1">
+    <longdesc lang="en">
+      This parameter should not be set usually
+    </longdesc>
+    <shortdesc lang="en">advanced parameter</shortdesc>
+    <content type="string" />
+  </parameter>
+  <parameter name="unique1" unique-group="group-A">
+    <longdesc lang="en">
+    First parameter in a unique group
+    </longdesc>
+    <shortdesc lang="en">unique param 1</shortdesc>
+    <content type="string" />
+  </parameter>
+  <parameter name="unique2" unique-group="group-A">
+    <longdesc lang="en">
+    Second parameter in a unique group
+    </longdesc>
+    <shortdesc lang="en">unique param 2</shortdesc>
+    <content type="string" />
+  </parameter>
+</parameters>
+
+<actions>
+<action name="start"        timeout="20s" />
+<action name="stop"         timeout="20s" />
+<action name="monitor"      timeout="20s" interval="10s" depth="0"/>
+<action name="reload"       timeout="20s" />
+<action name="reload-agent" timeout="20s" />
+<action name="migrate_to"   timeout="20s" />
+<action name="migrate_from" timeout="20s" />
+<action name="validate-all" timeout="20s" />
+<action name="meta-data"    timeout="5s" />
+</actions>
+</resource-agent>

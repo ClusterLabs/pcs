@@ -12,9 +12,7 @@ ERRORS_HAVE_OCCURRED = (
 class PlainStonith(ResourceTest):
     def setUp(self):
         super().setUp()
-        self.pcs_runner.mock_settings = get_mock_settings(
-            "crm_resource_exec", "stonith_admin_exec"
-        )
+        self.pcs_runner.mock_settings = get_mock_settings()
 
     def test_simplest(self):
         self.assert_effect(
@@ -180,9 +178,7 @@ class PlainStonith(ResourceTest):
 class WithMeta(ResourceTest):
     def setUp(self):
         super().setUp()
-        self.pcs_runner.mock_settings = get_mock_settings(
-            "crm_resource_exec", "stonith_admin_exec"
-        )
+        self.pcs_runner.mock_settings = get_mock_settings()
 
     def test_simplest_with_meta_provides(self):
         self.assert_effect(
@@ -226,9 +222,7 @@ class WithMeta(ResourceTest):
 class InGroup(ResourceTest):
     def setUp(self):
         super().setUp()
-        self.pcs_runner.mock_settings = get_mock_settings(
-            "crm_resource_exec", "stonith_admin_exec"
-        )
+        self.pcs_runner.mock_settings = get_mock_settings()
 
     def test_fail_create_in_group(self):
         self.assert_pcs_fail(

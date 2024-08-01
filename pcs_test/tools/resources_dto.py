@@ -23,14 +23,17 @@ from pcs.common.pacemaker.resource.primitive import CibResourcePrimitiveDto
 from pcs.common.resource_agent.dto import ResourceAgentNameDto
 
 DUMMY_AGENT_NAME = ResourceAgentNameDto(
-    standard="ocf", provider="pacemaker", type="Dummy"
+    standard="ocf", provider="pcsmock", type="minimal"
 )
 STATEFUL_AGENT_NAME = ResourceAgentNameDto(
-    standard="ocf", provider="pacemaker", type="Stateful"
+    standard="ocf", provider="pcsmock", type="stateful"
 )
 
 STONITH_AGENT_NAME = ResourceAgentNameDto(
-    standard="stonith", provider=None, type="fence_kdump"
+    standard="stonith", provider=None, type="fence_pcsmock_minimal"
+)
+STONITH_AGENT_PARAMS_NAME = ResourceAgentNameDto(
+    standard="stonith", provider=None, type="fence_pcsmock_params"
 )
 
 
@@ -383,7 +386,7 @@ PRIMITIVE_R7 = CibResourcePrimitiveDto(
 )
 STONITH_S1 = CibResourcePrimitiveDto(
     id="S1",
-    agent_name=STONITH_AGENT_NAME,
+    agent_name=STONITH_AGENT_PARAMS_NAME,
     description=None,
     operations=[
         CibResourceOperationDto(
@@ -410,10 +413,20 @@ STONITH_S1 = CibResourcePrimitiveDto(
             rule=None,
             nvpairs=[
                 CibNvpairDto(
-                    id="S1-instance_attributes-nodename",
-                    name="nodename",
-                    value="testnodename",
-                )
+                    id="S1-instance_attributes-action",
+                    name="action",
+                    value="reboot",
+                ),
+                CibNvpairDto(
+                    id="S1-instance_attributes-ip",
+                    name="ip",
+                    value="203.0.113.1",
+                ),
+                CibNvpairDto(
+                    id="S1-instance_attributes-username",
+                    name="username",
+                    value="testuser",
+                ),
             ],
         )
     ],

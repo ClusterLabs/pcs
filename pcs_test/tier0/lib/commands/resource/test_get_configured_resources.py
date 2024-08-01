@@ -1,3 +1,4 @@
+from pprint import pformat
 from unittest import TestCase
 
 from pcs.common import reports
@@ -86,8 +87,11 @@ class GetResourceRelationsTree(TestCase):
         )
 
     def test_success(self):
+        self.maxDiff = None
         self.config.runner.cib.load(filename="cib-resources.xml")
         self.assertEqual(
-            ALL_RESOURCES,
-            resource.get_configured_resources(self.env_assist.get_env()),
+            pformat(ALL_RESOURCES),
+            pformat(
+                resource.get_configured_resources(self.env_assist.get_env())
+            ),
         )

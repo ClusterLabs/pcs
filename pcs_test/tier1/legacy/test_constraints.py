@@ -69,47 +69,25 @@ large_cib = rc("cib-large.xml")
 
 class ConstraintTestCibFixture(CachedCibFixture):
     def _setup_cib(self):
-        line = "resource create D1 ocf:heartbeat:Dummy".split()
-        stdout, stderr, retval = pcs(self.cache_path, line)
-        self.assertEqual(stderr, "")
-        self.assertEqual(stdout, "")
-        self.assertEqual(retval, 0)
-
-        line = "resource create D2 ocf:heartbeat:Dummy".split()
-        stdout, stderr, retval = pcs(self.cache_path, line)
-        self.assertEqual(stderr, "")
-        self.assertEqual(stdout, "")
-        self.assertEqual(retval, 0)
-
-        line = "resource create D3 ocf:heartbeat:Dummy".split()
-        stdout, stderr, retval = pcs(self.cache_path, line)
-        self.assertEqual(stderr, "")
-        self.assertEqual(stdout, "")
-        self.assertEqual(retval, 0)
-
-        line = "resource create D4 ocf:heartbeat:Dummy".split()
-        stdout, stderr, retval = pcs(self.cache_path, line)
-        self.assertEqual(stderr, "")
-        self.assertEqual(stdout, "")
-        self.assertEqual(retval, 0)
-
-        line = "resource create D5 ocf:heartbeat:Dummy".split()
-        stdout, stderr, retval = pcs(self.cache_path, line)
-        self.assertEqual(stderr, "")
-        self.assertEqual(stdout, "")
-        self.assertEqual(retval, 0)
-
-        line = "resource create D6 ocf:heartbeat:Dummy".split()
-        stdout, stderr, retval = pcs(self.cache_path, line)
-        self.assertEqual(stderr, "")
-        self.assertEqual(stdout, "")
-        self.assertEqual(retval, 0)
-
-        line = "resource clone D3".split()
-        stdout, stderr, retval = pcs(self.cache_path, line)
-        self.assertEqual(stderr, "")
-        self.assertEqual(stdout, "")
-        self.assertEqual(retval, 0)
+        self.assert_pcs_success(
+            "resource create D1 ocf:pcsmock:minimal".split()
+        )
+        self.assert_pcs_success(
+            "resource create D2 ocf:pcsmock:minimal".split()
+        )
+        self.assert_pcs_success(
+            "resource create D3 ocf:pcsmock:minimal".split()
+        )
+        self.assert_pcs_success(
+            "resource create D4 ocf:pcsmock:minimal".split()
+        )
+        self.assert_pcs_success(
+            "resource create D5 ocf:pcsmock:minimal".split()
+        )
+        self.assert_pcs_success(
+            "resource create D6 ocf:pcsmock:minimal".split()
+        )
+        self.assert_pcs_success("resource clone D3".split())
 
         # pcs no longer allows turning resources into masters but supports
         # existing ones. In order to test it, we need to put a master in the
@@ -128,6 +106,7 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
         write_file_to_tmpfile(empty_cib, self.temp_cib)
         self.temp_corosync_conf = None
         self.pcs_runner = PcsRunner(self.temp_cib.name)
+        self.pcs_runner.mock_settings = get_mock_settings()
 
     def tearDown(self):
         self.temp_cib.close()
@@ -867,23 +846,15 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
     def test_colocation_sets(self):
         # pylint: disable=too-many-statements
         self.fixture_resources()
-        line = "resource create D7 ocf:heartbeat:Dummy".split()
-        stdout, stderr, retval = pcs(self.temp_cib.name, line)
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
-
-        line = "resource create D8 ocf:heartbeat:Dummy".split()
-        stdout, stderr, retval = pcs(self.temp_cib.name, line)
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
-
-        line = "resource create D9 ocf:heartbeat:Dummy".split()
-        stdout, stderr, retval = pcs(self.temp_cib.name, line)
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
+        self.assert_pcs_success(
+            "resource create D7 ocf:pcsmock:minimal".split()
+        )
+        self.assert_pcs_success(
+            "resource create D8 ocf:pcsmock:minimal".split()
+        )
+        self.assert_pcs_success(
+            "resource create D9 ocf:pcsmock:minimal".split()
+        )
 
         stdout, stderr, retval = pcs(
             self.temp_cib.name, "constraint colocation set".split()
@@ -1176,16 +1147,16 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
 
     def test_constraint_resource_discovery(self):
         self.assert_pcs_success(
-            "resource create crd1 ocf:heartbeat:Dummy".split(),
+            "resource create crd1 ocf:pcsmock:minimal".split(),
         )
         self.assert_pcs_success(
-            "resource create crd2 ocf:heartbeat:Dummy".split(),
+            "resource create crd2 ocf:pcsmock:minimal".split(),
         )
         self.assert_pcs_success(
-            "resource create crd3 ocf:heartbeat:Dummy".split(),
+            "resource create crd3 ocf:pcsmock:minimal".split(),
         )
         self.assert_pcs_success(
-            "resource create crd4 ocf:heartbeat:Dummy".split(),
+            "resource create crd4 ocf:pcsmock:minimal".split(),
         )
 
         self.assert_pcs_success(
@@ -1248,13 +1219,9 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
 
     def test_order_sets_removal(self):
         for i in range(9):
-            stdout, stderr, retval = pcs(
-                self.temp_cib.name,
-                f"resource create T{i} ocf:heartbeat:Dummy".split(),
+            self.assert_pcs_success(
+                f"resource create T{i} ocf:pcsmock:minimal".split(),
             )
-            self.assertEqual(stdout, "")
-            self.assertEqual(stderr, "")
-            self.assertEqual(retval, 0)
 
         stdout, stderr, retval = pcs(
             self.temp_cib.name, "constraint order set T0 T1 T2".split()
@@ -1364,23 +1331,15 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
     def test_order_sets(self):
         # pylint: disable=too-many-statements
         self.fixture_resources()
-        line = "resource create D7 ocf:heartbeat:Dummy".split()
-        stdout, stderr, retval = pcs(self.temp_cib.name, line)
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
-
-        line = "resource create D8 ocf:heartbeat:Dummy".split()
-        stdout, stderr, retval = pcs(self.temp_cib.name, line)
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
-
-        line = "resource create D9 ocf:heartbeat:Dummy".split()
-        stdout, stderr, retval = pcs(self.temp_cib.name, line)
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
+        self.assert_pcs_success(
+            "resource create D7 ocf:pcsmock:minimal".split()
+        )
+        self.assert_pcs_success(
+            "resource create D8 ocf:pcsmock:minimal".split()
+        )
+        self.assert_pcs_success(
+            "resource create D9 ocf:pcsmock:minimal".split()
+        )
 
         stdout, stderr, retval = pcs(
             self.temp_cib.name, "constraint order set".split()
@@ -1712,30 +1671,18 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
             + f' {settings.cibadmin_exec} -R --scope nodes --xml-text \'<nodes><node id="1" uname="rh7-1"/><node id="2" uname="rh7-2"/></nodes>\''
         )
 
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            "resource create dummy1 ocf:heartbeat:Dummy".split(),
+        self.assert_pcs_success(
+            "resource create dummy1 ocf:pcsmock:minimal".split(),
         )
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
 
         # pcs no longer allows creating masters but supports existing ones. In
         # order to test it, we need to put a master in the CIB without pcs.
         fixture_to_cib(self.temp_cib.name, fixture_master_xml("stateful1"))
 
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            "resource create stateful2 ocf:pacemaker:Stateful --group statefulG".split(),
-            mock_settings=get_mock_settings("crm_resource_exec"),
+        self.assert_pcs_success(
+            "resource create stateful2 ocf:pcsmock:stateful --group statefulG".split(),
+            stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
-        self.assertEqual(stdout, "")
-        ac(
-            stderr,
-            DEPRECATED_DASH_DASH_GROUP
-            + "Warning: changing a monitor operation interval from 10s to 11 to make the operation unique\n",
-        )
-        self.assertEqual(retval, 0)
 
         # pcs no longer allows turning resources into masters but supports
         # existing ones. In order to test it, we need to put a master in the
@@ -1941,36 +1888,17 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
             + f' {settings.cibadmin_exec} -R --scope nodes --xml-text \'<nodes><node id="1" uname="rh7-1"/><node id="2" uname="rh7-2"/></nodes>\''
         )
 
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            "resource create dummy1 ocf:heartbeat:Dummy".split(),
+        self.assert_pcs_success(
+            "resource create dummy1 ocf:pcsmock:minimal".split()
         )
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            "resource create dummy ocf:heartbeat:Dummy clone".split(),
+        self.assert_pcs_success(
+            "resource create dummy ocf:pcsmock:minimal clone".split()
         )
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            "resource create dummy2 ocf:heartbeat:Dummy --group dummyG".split(),
+        self.assert_pcs_success(
+            "resource create dummy2 ocf:pcsmock:minimal --group dummyG".split(),
+            stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, DEPRECATED_DASH_DASH_GROUP)
-        self.assertEqual(retval, 0)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name, "resource clone dummyG".split()
-        )
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
+        self.assert_pcs_success("resource clone dummyG".split())
 
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
@@ -2286,50 +2214,22 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
 
     def test_constraint_resource_clone_update(self):
         self.fixture_resources()
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
+        self.assert_pcs_success(
             "constraint location D1 prefers rh7-1".split(),
+            stderr_full=LOCATION_NODE_VALIDATION_SKIP_WARNING,
         )
-        self.assertEqual(stderr, LOCATION_NODE_VALIDATION_SKIP_WARNING)
-        self.assertEqual(stdout, "")
-        self.assertEqual(retval, 0)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
+        self.assert_pcs_success(
             "constraint colocation add D1 with D5".split(),
         )
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name, "constraint order D1 then D5".split()
+        self.assert_pcs_success(
+            "constraint order D1 then D5".split(),
+            stderr_full="Adding D1 D5 (kind: Mandatory) (Options: first-action=start then-action=start)\n",
         )
-        self.assertEqual(stdout, "")
-        ac(
-            stderr,
-            "Adding D1 D5 (kind: Mandatory) (Options: first-action=start then-action=start)\n",
+        self.assert_pcs_success(
+            "constraint order D6 then D1".split(),
+            stderr_full="Adding D6 D1 (kind: Mandatory) (Options: first-action=start then-action=start)\n",
         )
-        self.assertEqual(retval, 0)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name, "constraint order D6 then D1".split()
-        )
-        self.assertEqual(stdout, "")
-        ac(
-            stderr,
-            "Adding D6 D1 (kind: Mandatory) (Options: first-action=start then-action=start)\n",
-        )
-        self.assertEqual(retval, 0)
-
-        self.assertEqual(retval, 0)
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name, "resource clone D1".split()
-        )
-        self.assertEqual(stderr, "")
-        self.assertEqual(stdout, "")
-        self.assertEqual(retval, 0)
-
+        self.assert_pcs_success("resource clone D1".split())
         self.assert_pcs_success(
             "constraint --full".split(),
             stdout_full=outdent(
@@ -2348,57 +2248,23 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
 
     def test_constraint_group_clone_update(self):
         self.fixture_resources()
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name, "resource group add DG D1".split()
-        )
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
+        self.assert_pcs_success("resource group add DG D1".split())
+        self.assert_pcs_success(
             "constraint location DG prefers rh7-1".split(),
+            stderr_full=LOCATION_NODE_VALIDATION_SKIP_WARNING,
         )
-        self.assertEqual(stderr, LOCATION_NODE_VALIDATION_SKIP_WARNING)
-        self.assertEqual(stdout, "")
-        self.assertEqual(retval, 0)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
+        self.assert_pcs_success(
             "constraint colocation add DG with D5".split(),
         )
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name, "constraint order DG then D5".split()
+        self.assert_pcs_success(
+            "constraint order DG then D5".split(),
+            stderr_full="Adding DG D5 (kind: Mandatory) (Options: first-action=start then-action=start)\n",
         )
-        self.assertEqual(stdout, "")
-        ac(
-            stderr,
-            "Adding DG D5 (kind: Mandatory) (Options: first-action=start then-action=start)\n",
+        self.assert_pcs_success(
+            "constraint order D6 then DG".split(),
+            stderr_full="Adding D6 DG (kind: Mandatory) (Options: first-action=start then-action=start)\n",
         )
-        self.assertEqual(retval, 0)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name, "constraint order D6 then DG".split()
-        )
-        self.assertEqual(stdout, "")
-        ac(
-            stderr,
-            "Adding D6 DG (kind: Mandatory) (Options: first-action=start then-action=start)\n",
-        )
-        self.assertEqual(retval, 0)
-
-        self.assertEqual(retval, 0)
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name, "resource clone DG".split()
-        )
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
-        self.assertEqual(retval, 0)
-
+        self.assert_pcs_success("resource clone DG".split())
         self.assert_pcs_success(
             "constraint --full".split(),
             stdout_full=outdent(
@@ -2424,14 +2290,12 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
         # deleting the remote node resource
         self.assert_pcs_success(
             (
-                "resource create vm-guest1 ocf:heartbeat:VirtualDomain "
-                "hypervisor=qemu:///system config=/root/guest1.xml "
+                "resource create vm-guest1 ocf:pcsmock:minimal "
                 "meta remote-node=guest1 --force"
             ).split(),
-            stdout_full="",
-            stderr_start=(
+            stderr_full=(
                 "Warning: this command is not sufficient for creating a guest "
-                "node, use 'pcs cluster node add-guest'\n",
+                "node, use 'pcs cluster node add-guest'\n"
             ),
         )
 
@@ -2511,14 +2375,12 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
         # removing the remote node
         self.assert_pcs_success(
             (
-                "resource create vm-guest1 ocf:heartbeat:VirtualDomain "
-                "hypervisor=qemu:///system config=/root/guest1.xml "
+                "resource create vm-guest1 ocf:pcsmock:minimal "
                 "meta remote-node=guest1 --force"
             ).split(),
-            stdout_full="",
-            stderr_start=(
+            stderr_full=(
                 "Warning: this command is not sufficient for creating a guest "
-                "node, use 'pcs cluster node add-guest'\n",
+                "node, use 'pcs cluster node add-guest'\n"
             ),
         )
 
@@ -2592,14 +2454,12 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
         # deleting the remote node resource
         self.assert_pcs_success(
             (
-                "resource create vm-guest1 ocf:heartbeat:VirtualDomain "
-                "hypervisor=qemu:///system config=/root/guest1.xml "
+                "resource create vm-guest1 ocf:pcsmock:minimal "
                 "meta remote-node=guest1 --force"
             ).split(),
-            stdout_full="",
-            stderr_start=(
+            stderr_full=(
                 "Warning: this command is not sufficient for creating a guest "
-                "node, use 'pcs cluster node add-guest'\n",
+                "node, use 'pcs cluster node add-guest'\n"
             ),
         )
 
@@ -3353,8 +3213,9 @@ class ConstraintBaseTest(unittest.TestCase, AssertPcsMixin):
         self.temp_cib = get_tmp_file("tier1_constraint")
         write_file_to_tmpfile(self.empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
-        self.assert_pcs_success("resource create A ocf:heartbeat:Dummy".split())
-        self.assert_pcs_success("resource create B ocf:heartbeat:Dummy".split())
+        self.pcs_runner.mock_settings = get_mock_settings()
+        self.assert_pcs_success("resource create A ocf:pcsmock:minimal".split())
+        self.assert_pcs_success("resource create B ocf:pcsmock:minimal".split())
 
     def tearDown(self):
         self.temp_cib.close()
@@ -3662,13 +3523,14 @@ class ConstraintEffect(
         self.temp_cib = get_tmp_file("tier1_constraint")
         write_file_to_tmpfile(self.empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
+        self.pcs_runner.mock_settings = get_mock_settings()
 
     def tearDown(self):
         self.temp_cib.close()
 
     def fixture_primitive(self, name):
         self.assert_pcs_success(
-            ["resource", "create", name, "ocf:heartbeat:Dummy"]
+            ["resource", "create", name, "ocf:pcsmock:minimal"]
         )
 
 
@@ -3803,9 +3665,9 @@ class LocationShowWithPattern(ConstraintBaseTest):
     def fixture(self):
         self.assert_pcs_success_all(
             [
-                "resource create R1 ocf:heartbeat:Dummy".split(),
-                "resource create R2 ocf:heartbeat:Dummy".split(),
-                "resource create R3 ocf:heartbeat:Dummy".split(),
+                "resource create R1 ocf:pcsmock:minimal".split(),
+                "resource create R2 ocf:pcsmock:minimal".split(),
+                "resource create R3 ocf:pcsmock:minimal".split(),
                 "constraint location R1 prefers node1 node2=20".split(),
                 "constraint location R1 avoids node3=30 node4".split(),
                 "constraint location R2 prefers node3 node4=20".split(),
@@ -3972,7 +3834,7 @@ class Bundle(ConstraintEffect):
                 "resource",
                 "create",
                 name,
-                "ocf:heartbeat:Dummy",
+                "ocf:pcsmock:minimal",
                 "bundle",
                 bundle,
             ]
@@ -4370,6 +4232,7 @@ class LocationPrefersAvoidsMixin(
         self.temp_cib = get_tmp_file("tier1_constraint_location")
         write_file_to_tmpfile(self.empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
+        self.pcs_runner.mock_settings = get_mock_settings()
         self.command = "to-be-overridden"
 
     def tearDown(self):
@@ -4551,10 +4414,10 @@ class ExpiredConstraints(ConstraintBaseTest):
 
     def fixture_group(self):
         self.assert_pcs_success(
-            "resource create dummy1 ocf:heartbeat:Dummy".split()
+            "resource create dummy1 ocf:pcsmock:minimal".split()
         )
         self.assert_pcs_success(
-            "resource create dummy2 ocf:heartbeat:Dummy".split()
+            "resource create dummy2 ocf:pcsmock:minimal".split()
         )
         self.assert_pcs_success(
             "resource group add dummy_group dummy1 dummy2".split()
@@ -4562,23 +4425,25 @@ class ExpiredConstraints(ConstraintBaseTest):
 
     def fixture_primitive(self):
         self.assert_pcs_success(
-            "resource create dummy ocf:heartbeat:Dummy".split()
+            "resource create dummy ocf:pcsmock:minimal".split()
         )
 
     def fixture_multiple_primitive(self):
         self.assert_pcs_success(
-            "resource create D1 ocf:heartbeat:Dummy".split()
+            "resource create D1 ocf:pcsmock:minimal".split()
         )
         self.assert_pcs_success(
-            "resource create D2 ocf:heartbeat:Dummy".split()
+            "resource create D2 ocf:pcsmock:minimal".split()
         )
         self.assert_pcs_success(
-            "resource create D3 ocf:heartbeat:Dummy".split()
+            "resource create D3 ocf:pcsmock:minimal".split()
         )
 
     def test_crm_rule_missing(self):
+        mock_settings = get_mock_settings()
+        mock_settings["crm_rule_exec"] = ""
         self.pcs_runner = PcsRunner(
-            self.temp_cib.name, mock_settings={"crm_rule_exec": ""}
+            self.temp_cib.name, mock_settings=mock_settings
         )
         self.fixture_primitive()
         self.assert_pcs_success(
@@ -5074,19 +4939,20 @@ class OrderVsGroup(unittest.TestCase, AssertPcsMixin):
         self.temp_cib = get_tmp_file("tier1_constraint_order_vs_group")
         write_file_to_tmpfile(self.empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
+        self.pcs_runner.mock_settings = get_mock_settings()
         self.assert_pcs_success(
-            "resource create A ocf:heartbeat:Dummy --group grAB".split(),
+            "resource create A ocf:pcsmock:minimal --group grAB".split(),
             stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success(
-            "resource create B ocf:heartbeat:Dummy --group grAB".split(),
+            "resource create B ocf:pcsmock:minimal --group grAB".split(),
             stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
         self.assert_pcs_success(
-            "resource create C ocf:heartbeat:Dummy --group grC".split(),
+            "resource create C ocf:pcsmock:minimal --group grC".split(),
             stderr_full=DEPRECATED_DASH_DASH_GROUP,
         )
-        self.assert_pcs_success("resource create D ocf:heartbeat:Dummy".split())
+        self.assert_pcs_success("resource create D ocf:pcsmock:minimal".split())
 
     def tearDown(self):
         self.temp_cib.close()

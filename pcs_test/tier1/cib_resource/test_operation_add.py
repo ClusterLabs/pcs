@@ -1,6 +1,7 @@
 from unittest import TestCase
 
 from pcs_test.tier1.cib_resource.common import get_cib_resources
+from pcs_test.tools.bin_mock import get_mock_settings
 from pcs_test.tools.cib import get_assert_pcs_effect_mixin
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import (
@@ -17,6 +18,7 @@ class OperationAdd(TestCase, get_assert_pcs_effect_mixin(get_cib_resources)):
     def setUp(self):
         self.temp_cib = get_tmp_file("tier1_cib_resource_operation_add")
         self.pcs_runner = PcsRunner(self.temp_cib.name)
+        self.pcs_runner.mock_settings = get_mock_settings()
         write_data_to_tmpfile(self.fixture_cib_cache(), self.temp_cib)
 
     def tearDown(self):
@@ -30,10 +32,10 @@ class OperationAdd(TestCase, get_assert_pcs_effect_mixin(get_cib_resources)):
     def fixture_cib(self):
         write_file_to_tmpfile(self.empty_cib, self.temp_cib)
         self.assert_pcs_success(
-            "resource create --no-default-ops R ocf:heartbeat:Dummy".split()
+            "resource create --no-default-ops R ocf:pcsmock:minimal".split()
         )
         # add to cib:
-        # <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
+        # <primitive class="ocf" id="R" provider="pcsmock" type="minimal">
         #   <operations>
         #     <op id="R-monitor-interval-60s" interval="60s"
         #       name="monitor"
@@ -47,7 +49,7 @@ class OperationAdd(TestCase, get_assert_pcs_effect_mixin(get_cib_resources)):
         self.assert_effect(
             "resource op add R start interval=20s".split(),
             """<resources>
-                <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
+                <primitive class="ocf" id="R" provider="pcsmock" type="minimal">
                     <operations>
                         <op id="R-monitor-interval-10s" interval="10s"
                             name="monitor" timeout="20s"
@@ -68,7 +70,7 @@ class OperationAdd(TestCase, get_assert_pcs_effect_mixin(get_cib_resources)):
                 "description=test-description"
             ).split(),
             """<resources>
-                <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
+                <primitive class="ocf" id="R" provider="pcsmock" type="minimal">
                     <operations>
                         <op id="R-monitor-interval-10s" interval="10s"
                             name="monitor" timeout="20s"
@@ -94,7 +96,7 @@ class OperationAdd(TestCase, get_assert_pcs_effect_mixin(get_cib_resources)):
         self.assert_effect(
             "resource op add R start interval=20s".split(),
             """<resources>
-                <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
+                <primitive class="ocf" id="R" provider="pcsmock" type="minimal">
                     <operations>
                         <op id="R-monitor-interval-10s" interval="10s"
                             name="monitor" timeout="20s"
@@ -109,7 +111,7 @@ class OperationAdd(TestCase, get_assert_pcs_effect_mixin(get_cib_resources)):
         self.assert_effect(
             "resource op add R stop interval=30s".split(),
             """<resources>
-                <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
+                <primitive class="ocf" id="R" provider="pcsmock" type="minimal">
                     <operations>
                         <op id="R-monitor-interval-10s" interval="10s"
                             name="monitor" timeout="20s"
@@ -129,7 +131,7 @@ class OperationAdd(TestCase, get_assert_pcs_effect_mixin(get_cib_resources)):
         self.assert_effect(
             "resource op add R start timeout=30 id=abcd".split(),
             """<resources>
-                <primitive class="ocf" id="R" provider="heartbeat" type="Dummy">
+                <primitive class="ocf" id="R" provider="pcsmock" type="minimal">
                     <operations>
                         <op id="R-monitor-interval-10s" interval="10s"
                             name="monitor" timeout="20s"
