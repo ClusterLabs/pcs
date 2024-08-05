@@ -2,6 +2,7 @@ from unittest import TestCase
 
 from lxml import etree
 
+from pcs_test.tools.bin_mock import get_mock_settings
 from pcs_test.tools.cib import get_assert_pcs_effect_mixin
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import (
@@ -13,7 +14,7 @@ from pcs_test.tools.xml import XmlManipulation
 
 
 def _get_primitive_fixture(
-    res_id, agent_standard="ocf", agent_provider="heartbeat", agent_type="Dummy"
+    res_id, agent_standard="ocf", agent_provider="pcsmock", agent_type="minimal"
 ):
     _provider = ""
     if agent_provider:
@@ -29,7 +30,7 @@ def _get_primitive_fixture(
 
 
 FIXTURE_DUMMY = _get_primitive_fixture("Dummy")
-FIXTURE_PRIMITIVE_FOR_CLONE = _get_primitive_fixture("C")
+FIXTURE_PRIMITIVE_FOR_CLONE = _get_primitive_fixture("C", agent_type="stateful")
 
 FIXTURE_CLONE = f"""<clone id="C-clone">{FIXTURE_PRIMITIVE_FOR_CLONE}</clone>"""
 
@@ -70,13 +71,13 @@ FIXTURE_CLONE_WITH_OPTIONS = f"""
 FIXTURE_CLONED_GROUP = """
     <clone id="Group-clone">
         <group id="Group">
-            <primitive class="ocf" id="G1" provider="heartbeat" type="Dummy">
+            <primitive class="ocf" id="G1" provider="pcsmock" type="stateful">
                 <operations>
                     <op id="G1-monitor-interval-10s" interval="10s"
                         name="monitor" timeout="20s"/>
                 </operations>
             </primitive>
-            <primitive class="ocf" id="G2" provider="heartbeat" type="Dummy">
+            <primitive class="ocf" id="G2" provider="pcsmock" type="stateful">
                 <operations>
                     <op id="G2-monitor-interval-10s" interval="10s"
                         name="monitor" timeout="20s"/>
@@ -152,8 +153,9 @@ def fixture_clone(clone_id, primitive_id, promotable=False):
     parts.append(f"""<clone id="{clone_id}">""")
     parts.append(
         f"""
-        <primitive class="ocf" id="{primitive_id}" provider="heartbeat"
-            type="Dummy">
+        <primitive class="ocf" id="{primitive_id}" provider="pcsmock"
+            type="stateful"
+        >
             <operations>
                 <op id="{primitive_id}-monitor-interval-10s" interval="10s"
                     name="monitor" timeout="20s"/>
@@ -224,6 +226,7 @@ class Unclone(
     def setUp(self):
         self.temp_cib = get_tmp_file("tier1_cib_resource_group_ungroup")
         self.pcs_runner = PcsRunner(self.temp_cib.name)
+        self.pcs_runner.mock_settings = get_mock_settings()
         xml_manip = XmlManipulation.from_file(self.empty_cib)
         xml_manip.append_to_first_tag_name(
             "resources",
@@ -293,6 +296,7 @@ class Clone(
     def setUp(self):
         self.temp_cib = get_tmp_file("tier1_cib_resource_clone_unclone_clone")
         self.pcs_runner = PcsRunner(self.temp_cib.name)
+        self.pcs_runner.mock_settings = get_mock_settings()
         self.set_cib_file(FIXTURE_PRIMITIVE_FOR_CLONE)
         self.stonith_deprecation_warning = (
             "Deprecation Warning: Ability of this command to accept stonith "
@@ -373,14 +377,14 @@ class Clone(
                 "C",
                 agent_standard="systemd",
                 agent_provider=None,
-                agent_type="pacemaker",
+                agent_type="pcsmock",
             )
         )
         self.assert_pcs_fail(
             "resource clone C meta globally-unique=true".split(),
             (
                 "Error: Clone option 'globally-unique' is not compatible with "
-                "'systemd:pacemaker' resource agent of resource 'C'\n"
+                "'systemd:pcsmock' resource agent of resource 'C'\n"
             ),
         )
 
@@ -393,17 +397,14 @@ class Clone(
                         "A",
                         agent_standard="systemd",
                         agent_provider=None,
-                        agent_type="pacemaker",
+                        agent_type="pcsmock",
                     ),
                     _get_primitive_fixture(
                         "B",
-                        agent_provider="pacemaker",
-                        agent_type="Stateful",
+                        agent_provider="pcsmock",
+                        agent_type="stateful",
                     ),
-                    _get_primitive_fixture(
-                        "C",
-                        agent_provider="pacemaker",
-                    ),
+                    _get_primitive_fixture("C"),
                 ]
             )
             + "</group>"
@@ -412,9 +413,10 @@ class Clone(
             "resource clone G meta promotable=true".split(),
             (
                 "Error: Clone option 'promotable' is not compatible with "
-                "'systemd:pacemaker' resource agent of resource 'A' in group "
-                "'G'\nError: Clone option 'promotable' is not compatible with "
-                "'ocf:pacemaker:Dummy' resource agent of resource 'C' in group "
+                "'systemd:pcsmock' resource agent of resource 'A' in group "
+                "'G'\n"
+                "Error: Clone option 'promotable' is not compatible with "
+                "'ocf:pcsmock:minimal' resource agent of resource 'C' in group "
                 "'G', use --force to override\n"
             ),
         )
@@ -425,14 +427,14 @@ class Clone(
                 "C",
                 agent_standard="systemd",
                 agent_provider=None,
-                agent_type="pacemaker",
+                agent_type="pcsmock",
             )
         )
         self.assert_pcs_fail(
             "resource clone C meta promotable=true".split(),
             (
                 "Error: Clone option 'promotable' is not compatible with "
-                "'systemd:pacemaker' resource agent of resource 'C'\n"
+                "'systemd:pcsmock' resource agent of resource 'C'\n"
             ),
         )
 
@@ -450,26 +452,24 @@ class Clone(
                 "C",
                 agent_standard="systemd",
                 agent_provider=None,
-                agent_type="pacemaker",
+                agent_type="pcsmock",
             )
         )
         self.assert_pcs_fail(
             "resource promotable C".split(),
             (
                 "Error: Clone option 'promotable' is not compatible with "
-                "'systemd:pacemaker' resource agent of resource 'C'\n"
+                "'systemd:pcsmock' resource agent of resource 'C'\n"
             ),
         )
 
     def test_promotable_clone_unsupported_agent(self):
-        self.set_cib_file(
-            _get_primitive_fixture("C", agent_provider="pacemaker")
-        )
+        self.set_cib_file(_get_primitive_fixture("C"))
         self.assert_pcs_fail(
             "resource promotable C".split(),
             (
                 "Error: Clone option 'promotable' is not compatible with "
-                "'ocf:pacemaker:Dummy' resource agent of resource 'C', use "
+                "'ocf:pcsmock:minimal' resource agent of resource 'C', use "
                 "--force to override\n"
             ),
         )

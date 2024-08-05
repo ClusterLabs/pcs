@@ -2,6 +2,7 @@ from unittest import TestCase
 
 from lxml import etree
 
+from pcs_test.tools.bin_mock import get_mock_settings
 from pcs_test.tools.cib import get_assert_pcs_effect_mixin
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import (
@@ -27,6 +28,7 @@ class EnableDisable(
         self.temp_cib = get_tmp_file("tier1_cib_resource_enable_disable")
         write_file_to_tmpfile(self.empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
+        self.pcs_runner.mock_settings = get_mock_settings()
 
     def tearDown(self):
         self.temp_cib.close()
@@ -36,7 +38,7 @@ class EnableDisable(
             "resource",
             "create",
             name,
-            "ocf:heartbeat:Dummy",
+            "ocf:pcsmock:minimal",
             "--no-default-ops",
         ]
         if disabled:
@@ -66,7 +68,7 @@ class EnableDisable(
             "resource enable TA B".split(),
             """
             <resources>
-                <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
+                <primitive class="ocf" id="A" provider="pcsmock" type="minimal">
                     <meta_attributes id="A-meta_attributes"/>
                     <operations>
                         <op id="A-monitor-interval-10s" interval="10s"
@@ -74,7 +76,7 @@ class EnableDisable(
                         />
                     </operations>
                 </primitive>
-                <primitive class="ocf" id="B" provider="heartbeat" type="Dummy">
+                <primitive class="ocf" id="B" provider="pcsmock" type="minimal">
                     <meta_attributes id="B-meta_attributes"/>
                     <operations>
                         <op id="B-monitor-interval-10s" interval="10s"
@@ -95,7 +97,7 @@ class EnableDisable(
             "resource disable B TA".split(),
             """
             <resources>
-                <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
+                <primitive class="ocf" id="A" provider="pcsmock" type="minimal">
                     <meta_attributes id="A-meta_attributes">
                         <nvpair id="A-meta_attributes-target-role"
                             name="target-role" value="Stopped"
@@ -107,7 +109,7 @@ class EnableDisable(
                         />
                     </operations>
                 </primitive>
-                <primitive class="ocf" id="B" provider="heartbeat" type="Dummy">
+                <primitive class="ocf" id="B" provider="pcsmock" type="minimal">
                     <meta_attributes id="B-meta_attributes">
                         <nvpair id="B-meta_attributes-target-role"
                             name="target-role" value="Stopped"
@@ -136,7 +138,7 @@ class EnableDisable(
         self.assert_resources_xml_in_cib(
             """
             <resources>
-                <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
+                <primitive class="ocf" id="A" provider="pcsmock" type="minimal">
                     <meta_attributes id="A-meta_attributes">
                         <nvpair id="A-meta_attributes-target-role"
                             name="target-role" value="Stopped"
@@ -165,7 +167,7 @@ class EnableDisable(
         self.assert_resources_xml_in_cib(
             """
             <resources>
-                <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
+                <primitive class="ocf" id="A" provider="pcsmock" type="minimal">
                     <operations>
                         <op id="A-monitor-interval-10s" interval="10s"
                             name="monitor" timeout="20s"
@@ -190,7 +192,7 @@ class EnableDisable(
                 <node_state id="1" uname="rh7-1" in_ccm="true" crmd="online" crm-debug-origin="do_update_resource" join="member" expected="member">
                   <lrm id="1">
                     <lrm_resources>
-                      <lrm_resource id="A" type="apache" class="ocf" provider="heartbeat">
+                      <lrm_resource id="A" type="apache" class="ocf" provider="pcsmock">
                         <lrm_rsc_op id="A_last_0" operation_key="A_monitor_0" operation="monitor" crm-debug-origin="do_update_resource" crm_feature_set="3.0.14" transition-key="1:1104:7:817ee250-d179-483a-819e-9be9cb0e06df" transition-magic="0:7;1:1104:7:817ee250-d179-483a-819e-9be9cb0e06df" exit-reason="" on_node="rh7-1" call-id="1079" rc-code="7" op-status="0" interval="0" last-run="1591791198" last-rc-change="1591791198" exec-time="275" queue-time="0" op-digest="f2317cad3d54cec5d7d7aa7d0bf35cf8"/>
                       </lrm_resource>
                     </lrm_resources>

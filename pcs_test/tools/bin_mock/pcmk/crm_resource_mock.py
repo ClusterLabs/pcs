@@ -42,21 +42,24 @@ def main():
             raise AssertionError()
         arg = argv[0]
         known_agents = (
-            "lsb:network",
-            "ocf:heartbeat:Dummy",
-            "ocf:heartbeat:IPaddr2",
-            "ocf:heartbeat:Filesystem",
-            "ocf:pacemaker:Dummy",
-            "ocf:pacemaker:HealthCPU",
+            "lsb:pcsmock",
+            "ocf:heartbeat:pcsMock",
+            "ocf:pacemaker:pcsMock",
             "ocf:pacemaker:remote",
-            "ocf:pacemaker:Stateful",
-            "ocf:pacemaker:SystemHealth",
+            "ocf:pcsmock:action_method",
+            "ocf:pcsmock:CamelCase",
+            "ocf:pcsmock:duplicate_monitor",
+            "ocf:pcsmock:minimal",
+            "ocf:pcsmock:params",
+            "ocf:pcsmock:stateful",
+            "ocf:pcsmock:unique",
             "stonith:fence_pcsmock_action",
             "stonith:fence_pcsmock_method",
             "stonith:fence_pcsmock_minimal",
             "stonith:fence_pcsmock_params",
             "stonith:fence_pcsmock_unfencing",
-            "systemd:test@a:b",
+            "systemd:pcsmock",
+            "systemd:pcsmock@a:b",
         )
         # known_agents_map = {item.lower()}
         if arg in known_agents:
@@ -76,7 +79,7 @@ def main():
         if len(argv) != 1:
             raise AssertionError()
         arg = argv[0]
-        known_providers = ("ocf:heartbeat", "ocf:pacemaker", "stonith")
+        known_providers = ("ocf:heartbeat", "ocf:pacemaker", "ocf:pcsmock")
         if arg in known_providers:
             write_local_file_to_stdout(
                 "list_agents_{}".format(arg.replace(":", "__"))
@@ -87,7 +90,11 @@ def main():
         if get_arg_values(argv, "--output-as")[0] != "xml":
             raise AssertionError()
         provider = get_arg_values(argv, "--provider")
-        is_invalid = "fake=is_invalid=True" in argv
+        is_invalid = False
+        for arg in argv:
+            if "=" in arg and arg.split("=", 1)[1] == "is_invalid=True":
+                is_invalid = True
+                break
         output = ""
         if is_invalid:
             output = """<output source="stderr">pcsmock validation failure</output>"""

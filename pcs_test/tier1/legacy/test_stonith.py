@@ -34,9 +34,7 @@ empty_cib = rc("cib-empty.xml")
 class StonithDescribeTest(TestCase, AssertPcsMixin):
     def setUp(self):
         self.pcs_runner = PcsRunner(cib_file=None)
-        self.pcs_runner.mock_settings = get_mock_settings(
-            "crm_resource_exec", "pacemaker_fenced_exec"
-        )
+        self.pcs_runner.mock_settings = get_mock_settings()
 
     def test_success(self):
         self.assert_pcs_success(
@@ -792,9 +790,7 @@ class StonithTest(TestCase, AssertPcsMixin):
         self.temp_corosync_conf = get_tmp_file("tier1_test_stonith")
         write_file_to_tmpfile(rc("corosync.conf"), self.temp_corosync_conf)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
-        self.pcs_runner.mock_settings = get_mock_settings(
-            "crm_resource_exec", "stonith_admin_exec"
-        )
+        self.pcs_runner.mock_settings = get_mock_settings()
         self.pcs_runner.mock_settings["corosync_conf_file"] = (
             self.temp_corosync_conf.name
         )
@@ -1035,9 +1031,7 @@ class StonithTest(TestCase, AssertPcsMixin):
         )
 
     def test_stonith_agent_validation(self):
-        self.pcs_runner.mock_settings = get_mock_settings(
-            "crm_resource_exec", "stonith_admin_exec"
-        )
+        self.pcs_runner.mock_settings = get_mock_settings()
         self.assert_pcs_fail(
             (
                 "stonith create fencing fence_pcsmock_params "
@@ -1713,9 +1707,6 @@ _fixture_stonith_level_cache_lock = Lock()
 
 class StonithLevelTestCibFixture(CachedCibFixture):
     def _fixture_stonith_resource(self, name):
-        self._pcs_runner.mock_settings = get_mock_settings(
-            "crm_resource_exec", "stonith_admin_exec"
-        )
         self.assert_pcs_success(
             [
                 "stonith",
@@ -1757,9 +1748,7 @@ class LevelTestsBase(TestCase, AssertPcsMixin):
         self.temp_cib = get_tmp_file("tier1_test_stonith_level")
         write_file_to_tmpfile(rc("cib-empty-withnodes.xml"), self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
-        self.pcs_runner.mock_settings = get_mock_settings(
-            "crm_resource_exec", "stonith_admin_exec"
-        )
+        self.pcs_runner.mock_settings = get_mock_settings()
         self.config = ""
         self.config_lines = []
 
@@ -2999,9 +2988,7 @@ class LevelVerify(LevelTestsBase):
 class StonithUpdate(ResourceTest):
     def setUp(self):
         super().setUp()
-        self.pcs_runner.mock_settings = get_mock_settings(
-            "crm_resource_exec", "stonith_admin_exec"
-        )
+        self.pcs_runner.mock_settings = get_mock_settings()
         self.fixture_create_stonith()
 
     def fixture_create_stonith(self):

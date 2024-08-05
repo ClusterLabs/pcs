@@ -20,6 +20,8 @@ MOCK_SETTINGS = {
 
 
 def get_mock_settings(*required_settings):
+    if not required_settings:
+        required_settings = MOCK_SETTINGS.keys()
     return {
         key: value
         for key, value in MOCK_SETTINGS.items()

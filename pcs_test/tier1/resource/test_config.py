@@ -6,6 +6,7 @@ from pcs.common.interface.dto import to_dict
 from pcs.common.pacemaker.resource.list import CibResourcesDto
 
 from pcs_test.tools import resources_dto
+from pcs_test.tools.bin_mock import get_mock_settings
 from pcs_test.tools.misc import (
     get_test_resource,
     get_tmp_file,
@@ -78,7 +79,9 @@ class ResourceConfigCmdMixin:
         self.pcs_runner_orig = PcsRunner(
             cib_file=get_test_resource("cib-resources.xml")
         )
+        self.pcs_runner_orig.mock_settings = get_mock_settings()
         self.pcs_runner_new = PcsRunner(cib_file=self.new_cib_file.name)
+        self.pcs_runner_new.mock_settings = get_mock_settings()
         write_file_to_tmpfile(
             get_test_resource("cib-empty.xml"), self.new_cib_file
         )

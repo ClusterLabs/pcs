@@ -106,6 +106,9 @@ FIXTURE_RESOURCES_TEMPLATE = """
                 <op id="node-name-reload-interval-0s"
                   interval="0s" name="reload" timeout="60s"
                 />
+                <op id="node-name-reload-agent-interval-0s" interval="0s"
+                    name="reload-agent" timeout="60s"
+                />
                 <op id="node-name-start-interval-0s"
                     interval="0s" name="start" timeout="60s"
                 />

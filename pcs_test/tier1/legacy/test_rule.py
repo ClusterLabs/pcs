@@ -18,6 +18,7 @@ from pcs_test.tools.assertions import (
     ac,
     assert_xml_equal,
 )
+from pcs_test.tools.bin_mock import get_mock_settings
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import (
     get_tmp_file,
@@ -2220,8 +2221,9 @@ class DomRuleAddTest(TestCase, AssertPcsMixin):
         self.temp_cib = get_tmp_file("tier1_rule_dom_rule_add")
         write_file_to_tmpfile(empty_cib, self.temp_cib)
         self.pcs_runner = PcsRunner(self.temp_cib.name)
+        self.pcs_runner.mock_settings = get_mock_settings()
         self.assert_pcs_success(
-            "resource create dummy1 ocf:heartbeat:Dummy".split(),
+            "resource create dummy1 ocf:pcsmock:minimal".split(),
         )
 
     def tearDown(self):

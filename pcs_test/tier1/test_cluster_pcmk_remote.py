@@ -36,7 +36,7 @@ class RemoteTest(ResourceTest):
     def setUp(self):
         super().setUp()
         self.pcs_runner.corosync_conf_opt = self.corosync_conf
-        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
+        self.pcs_runner.mock_settings = get_mock_settings()
 
 
 class NodeAddRemote(RemoteTest):
@@ -92,6 +92,9 @@ class NodeAddRemote(RemoteTest):
                         />
                         <op id="node-name-reload-interval-0s" interval="0s"
                             name="reload" timeout="60s"
+                        />
+                        <op id="node-name-reload-agent-interval-0s"
+                            interval="0s" name="reload-agent" timeout="60s"
                         />
                         <op id="node-name-start-interval-0s" interval="0s"
                             name="start" timeout="60s"
@@ -159,7 +162,7 @@ class NodeAddRemote(RemoteTest):
     def test_fail_when_server_already_used_as_guest(self):
         self.pcs_runner.corosync_conf_opt = None
         self.assert_pcs_success(
-            "resource create G ocf:heartbeat:Dummy --no-default-ops".split(),
+            "resource create G ocf:pcsmock:minimal --no-default-ops".split(),
         )
         self.pcs_runner.corosync_conf_opt = self.corosync_conf
         self.assert_pcs_success(
@@ -179,9 +182,9 @@ class NodeAddGuest(RemoteTest):
     def create_resource(self):
         self.pcs_runner.corosync_conf_opt = None
         self.assert_effect(
-            "resource create G ocf:heartbeat:Dummy --no-default-ops".split(),
+            "resource create G ocf:pcsmock:minimal --no-default-ops".split(),
             """<resources>
-                <primitive class="ocf" id="G" provider="heartbeat" type="Dummy">
+                <primitive class="ocf" id="G" provider="pcsmock" type="minimal">
                     <operations>
                         <op id="G-monitor-interval-10s" interval="10s"
                             name="monitor" timeout="20s"
@@ -212,7 +215,7 @@ class NodeAddGuest(RemoteTest):
         self.pcs_runner.corosync_conf_opt = None
         self.assert_pcs_success(
             (
-                "resource create already-guest-node ocf:heartbeat:Dummy "
+                "resource create already-guest-node ocf:pcsmock:minimal "
                 "meta remote-node=some --force"
             ).split(),
             stderr_full=(
@@ -286,7 +289,7 @@ class NodeAddGuest(RemoteTest):
         self.create_resource()
         self.pcs_runner.corosync_conf_opt = None
         self.assert_pcs_success(
-            "resource create CONFLICT ocf:heartbeat:Dummy".split()
+            "resource create CONFLICT ocf:pcsmock:minimal".split()
         )
         self.pcs_runner.corosync_conf_opt = self.corosync_conf
         self.assert_pcs_fail(
@@ -300,7 +303,7 @@ class NodeAddGuest(RemoteTest):
     def test_fail_when_guest_node_conflicts_with_existing_guest(self):
         self.create_resource()
         self.pcs_runner.corosync_conf_opt = None
-        self.assert_pcs_success("resource create H ocf:heartbeat:Dummy".split())
+        self.assert_pcs_success("resource create H ocf:pcsmock:minimal".split())
         self.pcs_runner.corosync_conf_opt = self.corosync_conf
         self.assert_pcs_success(
             "cluster node add-guest node-name G remote-addr=a".split(),
@@ -357,7 +360,7 @@ class NodeAddGuest(RemoteTest):
         self.assert_effect(
             "cluster node add-guest node-name G remote-addr=node-addr".split(),
             """<resources>
-                <primitive class="ocf" id="G" provider="heartbeat" type="Dummy">
+                <primitive class="ocf" id="G" provider="pcsmock" type="minimal">
                     <meta_attributes id="G-meta_attributes">
                         <nvpair id="G-meta_attributes-remote-addr"
                             name="remote-addr" value="node-addr"
@@ -398,7 +401,7 @@ class NodeAddGuest(RemoteTest):
                 "remote-addr=node-addr remote-connect-timeout=80s"
             ).split(),
             """<resources>
-                <primitive class="ocf" id="G" provider="heartbeat" type="Dummy">
+                <primitive class="ocf" id="G" provider="pcsmock" type="minimal">
                     <meta_attributes id="G-meta_attributes">
                         <nvpair id="G-meta_attributes-remote-addr"
                             name="remote-addr" value="node-addr"
@@ -578,12 +581,12 @@ class NodeDeleteRemoveGuest(RemoteTest):
         self.pcs_runner.corosync_conf_opt = None
         self.assert_effect(
             (
-                "resource create NODE-ID ocf:heartbeat:Dummy --no-default-ops "
+                "resource create NODE-ID ocf:pcsmock:minimal --no-default-ops "
                 "meta remote-node=NODE-NAME remote-addr=NODE-HOST --force"
             ).split(),
             """<resources>
-                <primitive class="ocf" id="NODE-ID" provider="heartbeat"
-                    type="Dummy"
+                <primitive class="ocf" id="NODE-ID" provider="pcsmock"
+                    type="minimal"
                 >
                     <meta_attributes id="NODE-ID-meta_attributes">
                         <nvpair id="NODE-ID-meta_attributes-remote-addr"
@@ -625,8 +628,8 @@ class NodeDeleteRemoveGuest(RemoteTest):
         self.assert_effect(
             ["cluster", "node", self.command, identifier],
             """<resources>
-                <primitive class="ocf" id="NODE-ID" provider="heartbeat"
-                    type="Dummy"
+                <primitive class="ocf" id="NODE-ID" provider="pcsmock"
+                    type="minimal"
                 >
                     <meta_attributes id="NODE-ID-meta_attributes" />
                     <operations>

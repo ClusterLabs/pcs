@@ -5,9 +5,7 @@ from pcs_test.tools.bin_mock import get_mock_settings
 class Enable(ResourceTest):
     def setUp(self):
         super().setUp()
-        self.pcs_runner.mock_settings = get_mock_settings(
-            "crm_resource_exec", "stonith_admin_exec"
-        )
+        self.pcs_runner.mock_settings = get_mock_settings()
 
     def test_enable_disabled_stonith(self):
         self.assert_effect(
@@ -61,9 +59,7 @@ class Enable(ResourceTest):
 class Disable(ResourceTest):
     def setUp(self):
         super().setUp()
-        self.pcs_runner.mock_settings = get_mock_settings(
-            "crm_resource_exec", "stonith_admin_exec"
-        )
+        self.pcs_runner.mock_settings = get_mock_settings()
 
     def test_disable_enabled_stonith(self):
         self.assert_effect(

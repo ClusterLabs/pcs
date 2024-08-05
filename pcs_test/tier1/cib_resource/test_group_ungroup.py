@@ -2,6 +2,7 @@ from unittest import TestCase
 
 from lxml import etree
 
+from pcs_test.tools.bin_mock import get_mock_settings
 from pcs_test.tools.cib import get_assert_pcs_effect_mixin
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import (
@@ -24,8 +25,8 @@ def fixture_resources_xml(resources_xml_list):
 
 def fixture_primitive_xml(primitive_id):
     return f"""
-        <primitive class="ocf" id="{primitive_id}" provider="heartbeat"
-            type="Dummy"
+        <primitive class="ocf" id="{primitive_id}" provider="pcsmock"
+            type="minimal"
         >
             <operations>
                 <op id="{primitive_id}-monitor-interval-10s" interval="10s"
@@ -129,6 +130,7 @@ class TestGroupMixin:
     def setUp(self):
         self.temp_cib = get_tmp_file("tier1_cib_resource_group_ungroup")
         self.pcs_runner = PcsRunner(self.temp_cib.name)
+        self.pcs_runner.mock_settings = get_mock_settings()
         xml_manip = XmlManipulation.from_file(self.empty_cib)
         xml_manip.append_to_first_tag_name("resources", FIXTURE_AGROUP_XML)
         xml_manip.append_to_first_tag_name(

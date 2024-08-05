@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<resource-agent name="minimal" version="1.0">
+<version>1.1</version>
+
+<longdesc lang="en">
+This is a mock agent for pcs test - agent with unique-group parameters
+</longdesc>
+<shortdesc lang="en">Mock agent for pcs tests - unique parameters</shortdesc>
+
+<parameters>
+  <parameter name="state" unique-group="state">
+    <longdesc lang="en">
+      Location to store the resource state in.
+    </longdesc>
+    <shortdesc lang="en">State file</shortdesc>
+    <content type="string" default="/var/run/Dummy-Dummy.state" />
+  </parameter>
+</parameters>
+
+<actions>
+<action name="start"        timeout="20s" />
+<action name="stop"         timeout="20s" />
+<action name="monitor"      timeout="20s" interval="10s" depth="0"/>
+<action name="reload"       timeout="20s" />
+<action name="reload-agent" timeout="20s" />
+<action name="migrate_to"   timeout="20s" />
+<action name="migrate_from" timeout="20s" />
+<action name="validate-all" timeout="20s" />
+<action name="meta-data"    timeout="5s" />
+</actions>
+</resource-agent>

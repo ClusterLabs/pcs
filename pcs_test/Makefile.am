@@ -404,23 +404,27 @@ EXTRA_DIST		= \
 			  tools/bin_mock/__init__.py \
 			  tools/bin_mock/pcmk/crm_resource.d/list_agents_ocf__heartbeat \
 			  tools/bin_mock/pcmk/crm_resource.d/list_agents_ocf__pacemaker \
+			  tools/bin_mock/pcmk/crm_resource.d/list_agents_ocf__pcsmock \
 			  tools/bin_mock/pcmk/crm_resource.d/list_ocf_providers \
 			  tools/bin_mock/pcmk/crm_resource.d/list_standards \
-			  tools/bin_mock/pcmk/crm_resource.d/lsb__network_metadata.xml \
-			  tools/bin_mock/pcmk/crm_resource.d/ocf__heartbeat__Dummy_metadata.xml \
-			  tools/bin_mock/pcmk/crm_resource.d/ocf__heartbeat__Filesystem_metadata.xml \
-			  tools/bin_mock/pcmk/crm_resource.d/ocf__heartbeat__IPaddr2_metadata.xml \
-			  tools/bin_mock/pcmk/crm_resource.d/ocf__pacemaker__Dummy_metadata.xml \
-			  tools/bin_mock/pcmk/crm_resource.d/ocf__pacemaker__HealthCPU_metadata.xml \
+			  tools/bin_mock/pcmk/crm_resource.d/lsb__pcsmock_metadata.xml \
+			  tools/bin_mock/pcmk/crm_resource.d/ocf__heartbeat__pcsMock_metadata.xml \
+			  tools/bin_mock/pcmk/crm_resource.d/ocf__pacemaker__pcsMock_metadata.xml \
 			  tools/bin_mock/pcmk/crm_resource.d/ocf__pacemaker__remote_metadata.xml \
-			  tools/bin_mock/pcmk/crm_resource.d/ocf__pacemaker__Stateful_metadata.xml \
-			  tools/bin_mock/pcmk/crm_resource.d/ocf__pacemaker__SystemHealth_metadata.xml \
+			  tools/bin_mock/pcmk/crm_resource.d/ocf__pcsmock__action_method_metadata.xml \
+			  tools/bin_mock/pcmk/crm_resource.d/ocf__pcsmock__CamelCase_metadata.xml \
+			  tools/bin_mock/pcmk/crm_resource.d/ocf__pcsmock__duplicate_monitor_metadata.xml \
+			  tools/bin_mock/pcmk/crm_resource.d/ocf__pcsmock__minimal_metadata.xml \
+			  tools/bin_mock/pcmk/crm_resource.d/ocf__pcsmock__params_metadata.xml \
+			  tools/bin_mock/pcmk/crm_resource.d/ocf__pcsmock__stateful_metadata.xml \
+			  tools/bin_mock/pcmk/crm_resource.d/ocf__pcsmock__unique_metadata.xml \
 			  tools/bin_mock/pcmk/crm_resource.d/stonith__fence_pcsmock_action_metadata.xml \
 			  tools/bin_mock/pcmk/crm_resource.d/stonith__fence_pcsmock_method_metadata.xml \
 			  tools/bin_mock/pcmk/crm_resource.d/stonith__fence_pcsmock_minimal_metadata.xml \
 			  tools/bin_mock/pcmk/crm_resource.d/stonith__fence_pcsmock_params_metadata.xml \
 			  tools/bin_mock/pcmk/crm_resource.d/stonith__fence_pcsmock_unfencing_metadata.xml \
-			  tools/bin_mock/pcmk/crm_resource.d/systemd__test@a__b_metadata.xml \
+			  tools/bin_mock/pcmk/crm_resource.d/systemd__pcsmock@a__b_metadata.xml \
+			  tools/bin_mock/pcmk/crm_resource.d/systemd__pcsmock_metadata.xml \
 			  tools/bin_mock/pcmk/crm_resource_mock.py \
 			  tools/bin_mock/pcmk/pacemaker_metadata.d/pacemaker_based.xml \
 			  tools/bin_mock/pcmk/pacemaker_metadata.d/pacemaker_controld.xml \

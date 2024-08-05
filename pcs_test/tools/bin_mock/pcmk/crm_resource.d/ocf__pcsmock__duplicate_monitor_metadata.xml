@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<resource-agent name="duplicate_monitor" version="1.0">
+<version>1.1</version>
+
+<longdesc lang="en">
+  This is a mock agent for pcs test - promotable agent with both monitor
+  operations having the same interval
+</longdesc>
+<shortdesc lang="en">Mock agent for pcs tests - promotable agent with duplicate monitors</shortdesc>
+
+<actions>
+<action name="start"   timeout="20s" />
+<action name="stop"    timeout="20s" />
+<action name="monitor" depth="0" timeout="20s" interval="10s" role="Promoted"/>
+<action name="monitor" depth="0" timeout="20s" interval="10s" role="Unpromoted"/>
+<action name="promote" timeout="10s" />
+<action name="demote"  timeout="10s" />
+<action name="notify"  timeout="5s" />
+<action name="meta-data"  timeout="5s" />
+<action name="reload-agent"  timeout="10s" />
+<action name="validate-all"  timeout="30s" depth="0" />
+</actions>
+</resource-agent>
