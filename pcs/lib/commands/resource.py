@@ -66,6 +66,7 @@ from pcs.lib.pacemaker.live import (
     push_cib_diff_xml,
     resource_ban,
     resource_move,
+    resource_restart,
     resource_unmove_unban,
     simulate_cib,
 )
@@ -101,7 +102,7 @@ from pcs.lib.xml_tools import (
 
 @contextmanager
 def resource_environment(
-    env,
+    env: LibraryEnvironment,
     wait: WaitType = False,
     wait_for_resource_ids=None,
     resource_state_reporter=info_resource_state,
@@ -2541,4 +2542,85 @@ def get_configured_resources(env: LibraryEnvironment) -> CibResourcesDto:
             )
         ],
         bundles=bundles,
+    )
+
+
+def restart(
+    env: LibraryEnvironment,
+    resource_id: str,
+    node: Optional[str] = None,
+    timeout: Optional[str] = None,
+) -> None:
+    """
+    Restart a resource
+
+    resource_id -- id of the resource to be restarted
+    node -- name of the node to limit the restart to
+    timeout -- abort if the command doesn't finish in this time (integer + unit)
+    """
+    cib = env.get_cib()
+    try:
+        resource_el = get_element_by_id(cib, resource_id)
+    except ElementNotFound as e:
+        env.report_processor.report(
+            ReportItem.error(
+                reports.messages.IdNotFound(
+                    resource_id, expected_types=["resource"]
+                )
+            )
+        )
+        raise LibraryError() from e
+    if not resource.common.is_resource(resource_el):
+        env.report_processor.report(
+            ReportItem.error(
+                reports.messages.IdBelongsToUnexpectedType(
+                    resource_id,
+                    expected_types=["resource"],
+                    current_type=resource_el.tag,
+                )
+            )
+        )
+        raise LibraryError()
+
+    parent_resource_el = resource.clone.get_parent_any_clone(resource_el)
+    if parent_resource_el is None:
+        parent_resource_el = resource.bundle.get_parent_bundle(resource_el)
+    if parent_resource_el is not None:
+        env.report_processor.report(
+            reports.ReportItem.warning(
+                reports.messages.ResourceRestartUsingParentRersource(
+                    str(resource_el.attrib["id"]),
+                    str(parent_resource_el.attrib["id"]),
+                )
+            )
+        )
+        resource_el = parent_resource_el
+
+    if node and not (
+        resource.clone.is_any_clone(resource_el)
+        or resource.bundle.is_bundle(resource_el)
+    ):
+        env.report_processor.report(
+            reports.ReportItem.error(
+                reports.messages.ResourceRestartNodeIsForMultiinstanceOnly(
+                    str(resource_el.attrib["id"]),
+                    resource_el.tag,
+                    node,
+                )
+            )
+        )
+
+    if timeout is not None:
+        env.report_processor.report_list(
+            ValueTimeInterval("timeout").validate({"timeout": timeout})
+        )
+
+    if env.report_processor.has_errors:
+        raise LibraryError()
+
+    resource_restart(
+        env.cmd_runner(),
+        str(resource_el.attrib["id"]),
+        node=node,
+        timeout=timeout,
     )

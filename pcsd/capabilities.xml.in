@@ -2003,12 +2003,13 @@
         pcs commands: resource relocate ( dry-run | run | show | clear )
       </description>
     </capability>
-    <capability id="pcmk.resource.restart" in-pcs="1" in-pcsd="0">
+    <capability id="pcmk.resource.restart" in-pcs="1" in-pcsd="1">
       <description>
         Restart a resource, allow specifying a node for multi-node resources
         (clones, bundles), allow waiting for the resource to restart.
 
         pcs commands: resource restart
+        API v2: resource.restart
       </description>
     </capability>
     <capability id="pcmk.resource.relations" in-pcs="1" in-pcsd="0">

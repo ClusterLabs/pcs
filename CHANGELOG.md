@@ -3,8 +3,9 @@
 ## [Unreleased]
 
 ### Added
-- Support for output formats `json` and `cmd` to `pcs tag config` command 
+- Support for output formats `json` and `cmd` to `pcs tag config` command
 ([RHEL-46284])
+- Command `resource.restart` in API v2
 
 [RHEL-46284]: https://issues.redhat.com/browse/RHEL-46284
 

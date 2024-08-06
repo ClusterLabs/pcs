@@ -2793,56 +2793,30 @@ def resource_disable(argv: Argv) -> Optional[bool]:
     return None
 
 
-def resource_restart(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
+def resource_restart_cmd(
+    lib: Any, argv: Argv, modifiers: InputModifiers
+) -> None:
     """
     Options:
       * --wait
     """
     modifiers.ensure_only_supported("--wait")
     if not argv:
-        utils.err("You must specify a resource to restart")
-    _check_is_not_stonith(lib, [argv[0]])
-
-    dom = utils.get_cib_dom()
-    node = None
-    resource = argv.pop(0)
-
-    real_res = utils.dom_get_resource_clone_ms_parent(
-        dom, resource
-    ) or utils.dom_get_resource_bundle_parent(dom, resource)
-    if real_res:
-        warn(
-            (
-                "using {resource_id}... (if a resource is a clone or bundle "
-                "you must use the clone or bundle name)"
-            ).format(resource_id=real_res.getAttribute("id"))
+        raise CmdLineInputError(
+            "You must specify a resource to restart",
+            show_both_usage_and_message=True,
         )
-        resource = real_res.getAttribute("id")
-
-    args = ["crm_resource", "--restart", "--resource", resource]
+    resource = argv.pop(0)
+    node = argv.pop(0) if argv else None
     if argv:
-        node = argv.pop(0)
-        if not (
-            utils.dom_get_clone(dom, resource)
-            or utils.dom_get_master(dom, resource)
-            or utils.dom_get_bundle(dom, resource)
-        ):
-            utils.err(
-                "can only restart on a specific node for a clone or bundle "
-                "resource"
-            )
-        args.extend(["--node", node])
+        raise CmdLineInputError()
 
-    if modifiers.is_specified("--wait"):
-        wait = modifiers.get("--wait")
-        if wait:
-            args.extend(["--timeout", str(wait)])
-        else:
-            utils.err("You must specify the number of seconds to wait")
+    _check_is_not_stonith(lib, [resource])
+    timeout = (
+        modifiers.get("--wait") if modifiers.is_specified("--wait") else None
+    )
 
-    output, retval = utils.run(args)
-    if retval != 0:
-        utils.err(output)
+    lib.resource.restart(resource, node, timeout)
 
     print_to_stderr(f"{resource} successfully restarted")
 

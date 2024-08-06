@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 
 from pcs import settings
 
@@ -525,6 +526,44 @@ class PcmkShortcuts:
             ),
             before=before,
             instead=instead,
+        )
+
+    def resource_restart(
+        self,
+        resource: str,
+        node: Optional[str] = None,
+        timeout: Optional[str] = None,
+        stdout: str = "",
+        stderr: str = "",
+        returncode: int = 0,
+        name: str = "runner.pcmk.restart",
+    ):
+        """
+        Create a call for crm_resource --restart
+
+        name -- the key of this call
+        resource -- the id of a resource to be restarted
+        node -- the name of the node where the resource should be restarted
+        timeout -- how long to wait for the resource to restart
+        stdout -- crm_resource's stdout
+        stderr -- crm_resource's stderr
+        returncode -- crm_resource's returncode
+        """
+        cmd = ["crm_resource", "--restart"]
+        if resource:
+            cmd.extend(["--resource", resource])
+        if node:
+            cmd.extend(["--node", node])
+        if timeout:
+            cmd.extend(["--timeout", timeout])
+        self.__calls.place(
+            name,
+            RunnerCall(
+                cmd,
+                stdout=stdout,
+                stderr=stderr,
+                returncode=returncode,
+            ),
         )
 
     def resource_cleanup(

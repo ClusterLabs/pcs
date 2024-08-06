@@ -405,15 +405,16 @@ def load_module(env, middleware_factory, name):
                 "enable": resource.enable,
                 "get_configured_resources": resource.get_configured_resources,
                 "get_failcounts": resource.get_failcounts,
+                "get_resource_relations_tree": (
+                    resource.get_resource_relations_tree
+                ),
                 "group_add": resource.group_add,
                 "is_any_resource_except_stonith": resource.is_any_resource_except_stonith,
                 "is_any_stonith": resource.is_any_stonith,
                 "manage": resource.manage,
                 "move": resource.move,
                 "move_autoclean": resource.move_autoclean,
-                "get_resource_relations_tree": (
-                    resource.get_resource_relations_tree
-                ),
+                "restart": resource.restart,
                 "unmanage": resource.unmanage,
                 "unmove_unban": resource.unmove_unban,
             },

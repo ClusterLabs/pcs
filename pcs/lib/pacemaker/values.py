@@ -93,7 +93,7 @@ def validate_id(
     id_candidate: str,
     description: Optional[str] = None,
     reporter: Union[None, List, ReportItemList] = None,
-):
+) -> None:
     """
     Validate a pacemaker id, raise LibraryError on invalid id.
 
