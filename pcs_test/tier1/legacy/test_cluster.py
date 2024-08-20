@@ -1,8 +1,10 @@
 import os
+import re
 from functools import partial
 from unittest import TestCase
 
 from pcs_test.tools.assertions import AssertPcsMixin
+from pcs_test.tools.misc import compare_version
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import (
     get_tmp_dir,
@@ -16,6 +18,7 @@ from pcs_test.tools.pcs_runner import (
     PcsRunner,
     pcs,
 )
+from pcs_test.tools.xml import str_to_etree
 
 
 class UidGidTest(TestCase):
@@ -278,10 +281,23 @@ class ClusterUpgradeTest(TestCase, AssertPcsMixin):
         self.temp_cib.close()
 
     def test_cluster_upgrade(self):
+        def extract_version(string_value):
+            match = re.match(
+                r"^pacemaker-(?P<major>\d+)\.(?P<minor>\d+)(\.(?P<rev>\d+))?$",
+                string_value,
+            )
+            return (
+                int(match.group("major")),
+                int(match.group("minor")),
+                int(match.group("rev")) if match.group("rev") else 0,
+            )
+
         self.temp_cib.seek(0)
-        data = self.temp_cib.read()
-        assert data.find("pacemaker-1.2") != -1
-        assert data.find("pacemaker-2.") == -1
+        cib = str_to_etree(self.temp_cib.read())
+        validate_with = cib.getroottree().getroot().get("validate-with")
+        self.assertEqual(validate_with, "pacemaker-1.2")
+        version_before = extract_version(validate_with)
+        self.assertEqual(version_before, (1, 2, 0))
 
         stdout, stderr, retval = pcs(
             self.temp_cib.name, "cluster cib-upgrade".split()
@@ -293,10 +309,10 @@ class ClusterUpgradeTest(TestCase, AssertPcsMixin):
         self.assertEqual(retval, 0)
 
         self.temp_cib.seek(0)
-        data = self.temp_cib.read()
-        assert data.find("pacemaker-1.2") == -1
-        assert data.find("pacemaker-2.") == -1
-        assert data.find("pacemaker-3.") != -1
+        cib = str_to_etree(self.temp_cib.read())
+        validate_with = cib.getroottree().getroot().get("validate-with")
+        version_after = extract_version(validate_with)
+        self.assertEqual(compare_version(version_before, version_after), -1)
 
         stdout, stderr, retval = pcs(
             self.temp_cib.name, "cluster cib-upgrade".split()
@@ -306,6 +322,12 @@ class ClusterUpgradeTest(TestCase, AssertPcsMixin):
             stderr, "Cluster CIB has been upgraded to latest version\n"
         )
         self.assertEqual(retval, 0)
+
+        self.temp_cib.seek(0)
+        cib = str_to_etree(self.temp_cib.read())
+        validate_with = cib.getroottree().getroot().get("validate-with")
+        version_after2 = extract_version(validate_with)
+        self.assertEqual(compare_version(version_after, version_after2), 0)
 
 
 @skip_unless_root()
