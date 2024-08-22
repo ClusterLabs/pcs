@@ -6,7 +6,12 @@
 - Support for output formats `json` and `cmd` to `pcs tag config` command
   ([RHEL-21047])
 
+### Fixed
+- Do not end with error when using the instances quantifier in `pcs status
+  query resource is-state` command ([RHEL-55723])
+
 [RHEL-21047]: https://issues.redhat.com/browse/RHEL-21047
+[RHEL-55723]: https://issues.redhat.com/browse/RHEL-55723
 
 
 ## [0.12.0a1] - 2024-06-21
