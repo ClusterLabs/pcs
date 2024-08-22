@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 from functools import partial
 from unittest import (
     TestCase,
@@ -89,6 +90,7 @@ FIXTURE_REFERENCES_IN_CONSTRAINTS = """
     <resource_ref id="A" invalid="position"/>
 """
 
+
 FIXTURE_REFERENCES_IN_TAGS = """
     <tags>
         <tag id="X">
@@ -138,6 +140,29 @@ FIXTURE_ALL_SECTIONS_WITH_REFERENCES = "".join(
         FIXTURE_REFERENCES_IN_CONSTRAINTS,
         FIXTURE_REFERENCES_IN_TAGS,
         FIXTURE_REFERENCES_IN_ACLS,
+    ]
+)
+
+FIXTURE_NODE_REFERENCES_IN_CONSTRAINTS = """
+    <constraints>
+        <rsc_location id="lc1" rsc="R1" node="A"/>
+        <rsc_location id="lc2" rsc="R1" node="B"/>
+        <rsc_location id="lc3" rsc="R2" node="B"/>
+    </constraints>
+"""
+
+FIXTURE_NODE_REFERENCES_IN_FENCING_LEVELS = """
+    <fencing-topology>
+        <fencing-level index="1" devices="s1" target="A" id="fl1"/>
+        <fencing-level index="2" devices="s2" target="B" id="fl2"/>
+        <fencing-level index="3" devices="s3" target="B" id="fl3"/>
+    </fencing-topology>
+"""
+FIXTURE_ALL_SECTION_WITH_NODE_REFERENCES = "".join(
+    [
+        FIXTURE_NODE_REFERENCES_IN_CONSTRAINTS,
+        FIXTURE_NODE_REFERENCES_IN_FENCING_LEVELS,
+        FIXTURE_REFERENCES_IN_TAGS,
     ]
 )
 
@@ -1069,79 +1094,6 @@ def _configuration_fixture(configuration_content):
     """
 
 
-class FindElementsWithoutIdReferencingId(TestCase):
-    # pylint: disable=protected-access
-    def test_constraint_set_reference(self):
-        cib = etree.fromstring(
-            _configuration_fixture(FIXTURE_REFERENCES_IN_CONSTRAINTS)
-        )
-        self.assertEqual(
-            [
-                cib.find(
-                    "./configuration/constraints/rsc_location/resource_set/resource_ref[@id='A']"
-                ),
-                cib.find(
-                    "./configuration/constraints/rsc_colocation/resource_set/resource_ref[@id='A']"
-                ),
-            ],
-            list(lib._find_elements_without_id_referencing_id(cib, "A")),
-        )
-
-    def test_tag_reference(self):
-        cib = etree.fromstring(
-            _configuration_fixture(FIXTURE_REFERENCES_IN_TAGS)
-        )
-        self.assertEqual(
-            [
-                cib.find("./configuration/tags/tag[@id='X']/obj_ref[@id='A']"),
-                cib.find("./configuration/tags/tag[@id='Y']/obj_ref[@id='A']"),
-            ],
-            list(lib._find_elements_without_id_referencing_id(cib, "A")),
-        )
-
-    def test_acl_reference(self):
-        cib = etree.fromstring(
-            _configuration_fixture(FIXTURE_REFERENCES_IN_ACLS)
-        )
-        self.assertEqual(
-            [
-                cib.find("./configuration/acls/acl_target/role[@id='A']"),
-                cib.find("./configuration/acls/acl_group/role[@id='A']"),
-            ],
-            list(lib._find_elements_without_id_referencing_id(cib, "A")),
-        )
-
-    def test_all_references_types(self):
-        cib = etree.fromstring(
-            _configuration_fixture(FIXTURE_ALL_SECTIONS_WITH_REFERENCES)
-        )
-        self.assertEqual(
-            [
-                cib.find(
-                    "./configuration/constraints/rsc_location/resource_set/"
-                    "resource_ref[@id='A']"
-                ),
-                cib.find(
-                    "./configuration/constraints/rsc_colocation/resource_set/"
-                    "resource_ref[@id='A']"
-                ),
-                cib.find("./configuration/tags/tag[@id='X']/obj_ref[@id='A']"),
-                cib.find("./configuration/tags/tag[@id='Y']/obj_ref[@id='A']"),
-                cib.find("./configuration/acls/acl_target/role[@id='A']"),
-                cib.find("./configuration/acls/acl_group/role[@id='A']"),
-            ],
-            list(lib._find_elements_without_id_referencing_id(cib, "A")),
-        )
-
-    def test_no_reference_to_id(self):
-        cib = etree.fromstring(
-            _configuration_fixture(FIXTURE_ALL_SECTIONS_WITH_REFERENCES)
-        )
-        self.assertEqual(
-            [], list(lib._find_elements_without_id_referencing_id(cib, "N"))
-        )
-
-
 class FindElementsReferencingId(TestCase):
     def test_constraint_reference(self):
         cib = etree.fromstring(
@@ -1310,7 +1262,9 @@ class RemoveElementById(TestCase):
                     <resources/>
                     <constraints>
                         <any>
-                            <resource_set/>
+                            <resource_set>
+                                <resource_ref id="id-with-references"/>
+                            </resource_set>
                         </any>
                         <resource_set>
                             <resource_ref id="id-with-references"/>
@@ -1319,15 +1273,19 @@ class RemoveElementById(TestCase):
                     <acls>
                         <role id="id-with-references"/>
                         <acl_target>
+                            <role id="id-with-references"/>
                         </acl_target>
                         <acl_group>
+                            <role id="id-with-references"/>
                         </acl_group>
                     </acls>
                     <tags>
                         <tag id="T1">
+                            <obj_ref id="id-with-references"/>
                             <obj_ref id="B"/>
                         </tag>
                         <tag id="T2">
+                            <obj_ref id="id-with-references"/>
                         </tag>
                     </tags>
                 </configuration>

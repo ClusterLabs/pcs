@@ -629,8 +629,8 @@ def remove_element_by_id(cib: _Element, element_id: str) -> None:
     """
     Remove element with specified id from cib element.
     """
-    for ref_el in _find_elements_without_id_referencing_id(cib, element_id):
-        remove_one_element(ref_el)
+    # raise LibraryError error if configuration section is not in cib
+    _ = get_configuration(cib)
 
     try:
         remove_one_element(get_element_by_id(cib, element_id))

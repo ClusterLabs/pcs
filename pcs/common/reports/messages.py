@@ -137,11 +137,13 @@ _type_translation = {
     "acl_permission": "ACL permission",
     "acl_role": "ACL role",
     "acl_target": "ACL user",
+    "fencing-level": "fencing level",
     # Pacemaker-2.0 deprecated masters. Masters are now called promotable
     # clones. We treat masters as clones. Do not report we were doing something
     # with a master, say we were doing it with a clone instead.
     "master": "clone",
     "primitive": "resource",
+    "resource_set": "resource set",
     "rsc_colocation": "colocation constraint",
     "rsc_location": "location constraint",
     "rsc_order": "order constraint",
@@ -5185,6 +5187,47 @@ class CibRemoveDependantElements(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class CibRemoveReferences(ReportItemMessage):
+    """
+    Information about removal of references from cib elements due to
+    dependencies.
+    """
+
+    id_tag_map: Mapping[str, str]
+    removing_references_from: Mapping[str, StringIterable]
+
+    _code = codes.CIB_REMOVE_REFERENCES
+
+    @property
+    def message(self) -> str:
+        id_tag_map = defaultdict(lambda: "element", self.id_tag_map)
+
+        def _format_line(tag: str, ids: list[str]) -> str:
+            tag_desc = format_plural(ids, _type_to_string(tag)).capitalize()
+            id_list = format_list(ids)
+            return f"    {tag_desc}: {id_list}"
+
+        def _format_one_element(element_id: str, ids: StringIterable) -> str:
+            tag_ids_map = defaultdict(list)
+            for _id in ids:
+                tag_ids_map[id_tag_map[_id]].append(_id)
+            info_lines = "\n".join(
+                sorted(
+                    [_format_line(tag, ids) for tag, ids in tag_ids_map.items()]
+                )
+            )
+            tag_desc = _type_to_string(id_tag_map[element_id]).capitalize()
+            return f"  {tag_desc} '{element_id}' from:\n{info_lines}"
+
+        lines = "\n".join(
+            _format_one_element(key, self.removing_references_from[key])
+            for key in sorted(self.removing_references_from)
+        )
+
+        return f"Removing references:\n{lines}"
+
+
+@dataclass(frozen=True)
 class UseCommandNodeAddRemote(ReportItemMessage):
     """
     Advise the user for more appropriate command.
@@ -5211,16 +5254,35 @@ class UseCommandNodeAddGuest(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class UseCommandNodeRemoveRemote(ReportItemMessage):
+    """
+    Advise the user for more appropriate command.
+    """
+
+    resource_id: Optional[str] = None
+    _code = codes.USE_COMMAND_NODE_REMOVE_REMOTE
+
+    @property
+    def message(self) -> str:
+        return "this command is not sufficient for removing a remote node{id}".format(
+            id=format_optional(self.resource_id, template=": '{}'")
+        )
+
+
+@dataclass(frozen=True)
 class UseCommandNodeRemoveGuest(ReportItemMessage):
     """
     Advise the user for more appropriate command.
     """
 
+    resource_id: Optional[str] = None
     _code = codes.USE_COMMAND_NODE_REMOVE_GUEST
 
     @property
     def message(self) -> str:
-        return "this command is not sufficient for removing a guest node"
+        return "this command is not sufficient for removing a guest node{id}".format(
+            id=format_optional(self.resource_id, template=": '{}")
+        )
 
 
 @dataclass(frozen=True)
@@ -6291,6 +6353,44 @@ class CannotBanResourceStoppedNoNodeSpecified(ReportItemMessage):
         # Use both "moving" and "banning" to let user know using "move" instead
         # of "ban" will not help
         return "You must specify a node when moving/banning a stopped resource"
+
+
+@dataclass(frozen=True)
+class StoppingResourcesBeforeDeleting(ReportItemMessage):
+    """
+    Resources are going to be stopped before deletion
+
+    resource_id_list -- ids of resources that are going to be stopped
+    """
+
+    resource_id_list: list[str]
+    _code = codes.STOPPING_RESOURCES_BEFORE_DELETING
+
+    @property
+    def message(self) -> str:
+        return "Stopping {resource} {resource_list} before deleting".format(
+            resource=format_plural(self.resource_id_list, "resource"),
+            resource_list=format_list(self.resource_id_list),
+        )
+
+
+@dataclass(frozen=True)
+class CannotStopResourcesBeforeDeleting(ReportItemMessage):
+    """
+    Cannot stop a resource that is being removed
+
+    resource_id_list -- ids of resources that cannot be stopped
+    """
+
+    resource_id_list: list[str]
+    _code = codes.CANNOT_STOP_RESOURCES_BEFORE_DELETING
+
+    @property
+    def message(self) -> str:
+        return "Cannot stop {resource} {resource_list} before deleting".format(
+            resource=format_plural(self.resource_id_list, "resource"),
+            resource_list=format_list(self.resource_id_list),
+        )
 
 
 @dataclass(frozen=True)

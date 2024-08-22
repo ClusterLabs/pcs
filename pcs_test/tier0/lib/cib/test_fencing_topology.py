@@ -16,6 +16,7 @@ from pcs.common.reports import ReportItemSeverity as severity
 from pcs.common.reports import codes as report_codes
 from pcs.common.reports.item import ReportItem
 from pcs.lib.cib import fencing_topology as lib
+from pcs.lib.cib.tools import ElementNotFound
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.state import ClusterState
 
@@ -35,6 +36,17 @@ from pcs_test.tools.xml import etree_to_str
 patch_lib = create_patcher("pcs.lib.cib.fencing_topology")
 
 # pylint: disable=protected-access
+
+FIXTURE_NON_UNIQUE_DEVICES = """
+    <fencing-topology>
+        <fencing-level
+            id="fl1" index="1" devices="d1,d1" target="nodeA"
+        />
+        <fencing-level
+            id="fl2" index="2" devices="d1,d2,d1,d3" target="nodeA"
+        />
+    </fencing-topology>
+"""
 
 
 class CibMixin:
@@ -512,6 +524,100 @@ class RemoveLevelsByParams(TestCase, CibMixin):
         )
 
 
+class RemoveDeviceFromAllLevelsDontRemoveElement(TestCase, CibMixin):
+    def setUp(self):
+        self.cib = self.get_cib()
+        self.tree = self.cib.find("configuration/fencing-topology")
+
+    def test_success(self):
+        elements = lib.remove_device_from_all_levels_dont_remove_elements(
+            self.tree, "d3"
+        )
+        assert_xml_equal(
+            """
+            <fencing-topology>
+                <fencing-level
+                    id="fl1" index="1" devices="d1,d2" target="nodeA"
+                />
+                <fencing-level
+                    id="fl2" index="2" devices="" target="nodeA"
+                />
+                <fencing-level
+                    id="fl3" index="1" devices="d2,d1" target="nodeB"
+                />
+                <fencing-level
+                    id="fl4" index="2" devices="" target="nodeB"
+                />
+                <fencing-level
+                    id="fl5" index="1" devices="d4" target-pattern="node\\d+"
+                />
+                <fencing-level
+                    id="fl6" index="2" devices="d1" target-pattern="node\\d+"
+                />
+                <fencing-level
+                    id="fl7" index="3" devices="d4"
+                    target-attribute="fencing" target-value="improved"
+                />
+                <fencing-level
+                    id="fl8" index="4" devices="d5"
+                    target-attribute="fencing" target-value="improved"
+                />
+                <fencing-level
+                    id="fl9" index="3" devices="dR" target-pattern="node-R.*"
+                />
+                <fencing-level
+                    id="fl10" index="4" devices="dR-special"
+                    target-attribute="fencing" target-value="remote-special"
+                />
+            </fencing-topology>
+            """,
+            etree_to_str(self.tree),
+        )
+        self.assertEqual(
+            [
+                self.tree.find(".//fencing-level[@id='fl2']"),
+                self.tree.find(".//fencing-level[@id='fl4']"),
+                self.tree.find(".//fencing-level[@id='fl5']"),
+                self.tree.find(".//fencing-level[@id='fl7']"),
+            ],
+            elements,
+        )
+
+    def test_non_unique_device_ids(self):
+        tree = etree.fromstring(FIXTURE_NON_UNIQUE_DEVICES)
+        elements = lib.remove_device_from_all_levels_dont_remove_elements(
+            tree, "d1"
+        )
+        assert_xml_equal(
+            """
+            <fencing-topology>
+                <fencing-level
+                    id="fl1" index="1" devices="" target="nodeA"
+                />
+                <fencing-level
+                    id="fl2" index="2" devices="d2,d3" target="nodeA"
+                />
+            </fencing-topology>
+            """,
+            etree_to_str(tree),
+        )
+        self.assertEqual(
+            [
+                tree.find(".//fencing-level[@id='fl1']"),
+                tree.find(".//fencing-level[@id='fl2']"),
+            ],
+            elements,
+        )
+
+    def test_no_such_device(self):
+        original_xml = etree_to_str(self.tree)
+        elements = lib.remove_device_from_all_levels_dont_remove_elements(
+            self.tree, "dX"
+        )
+        assert_xml_equal(original_xml, etree_to_str(self.tree))
+        self.assertEqual([], elements)
+
+
 class RemoveDeviceFromAllLevels(TestCase, CibMixin):
     def setUp(self):
         self.cib = self.get_cib()
@@ -554,10 +660,118 @@ class RemoveDeviceFromAllLevels(TestCase, CibMixin):
             etree_to_str(self.tree),
         )
 
+    def test_non_unique_device_ids(self):
+        # pylint: disable=no-self-use
+        tree = etree.fromstring(FIXTURE_NON_UNIQUE_DEVICES)
+        lib.remove_device_from_all_levels(tree, "d1")
+        assert_xml_equal(
+            """
+            <fencing-topology>
+                <fencing-level
+                    id="fl2" index="2" devices="d2,d3" target="nodeA"
+                />
+            </fencing-topology>
+            """,
+            etree_to_str(tree),
+        )
+
     def test_no_such_device(self):
         original_xml = etree_to_str(self.tree)
         lib.remove_device_from_all_levels(self.tree, "dX")
         assert_xml_equal(original_xml, etree_to_str(self.tree))
+
+
+class RemoveDeviceFromOneLevel(TestCase, CibMixin):
+    def setUp(self):
+        self.cib = self.get_cib()
+        self.tree = self.cib.find("configuration/fencing-topology")
+
+    def test_keep_fencing_level(self):
+        lib.remove_device_from_one_level(self.tree, "fl1", "d1")
+        assert_xml_equal(
+            """
+            <fencing-topology>
+                <fencing-level
+                    id="fl1" index="1" devices="d2" target="nodeA"
+                />
+                <fencing-level
+                    id="fl2" index="2" devices="d3" target="nodeA"
+                />
+                <fencing-level
+                    id="fl3" index="1" devices="d2,d1" target="nodeB"
+                />
+                <fencing-level
+                    id="fl4" index="2" devices="d3" target="nodeB"
+                />
+                <fencing-level
+                    id="fl5" index="1" devices="d3,d4" target-pattern="node\\d+"
+                />
+                <fencing-level
+                    id="fl6" index="2" devices="d1" target-pattern="node\\d+"
+                />
+                <fencing-level
+                    id="fl7" index="3" devices="d3,d4"
+                    target-attribute="fencing" target-value="improved"
+                />
+                <fencing-level
+                    id="fl8" index="4" devices="d5"
+                    target-attribute="fencing" target-value="improved"
+                />
+                <fencing-level
+                    id="fl9" index="3" devices="dR" target-pattern="node-R.*"
+                />
+                <fencing-level
+                    id="fl10" index="4" devices="dR-special"
+                    target-attribute="fencing" target-value="remote-special"
+                />
+            </fencing-topology>
+            """,
+            etree_to_str(self.tree),
+        )
+
+    def test_remove_fencing_level(self):
+        lib.remove_device_from_one_level(self.tree, "fl2", "d3")
+        assert_xml_equal(
+            """
+            <fencing-topology>
+                <fencing-level
+                    id="fl1" index="1" devices="d1,d2" target="nodeA"
+                />
+                <fencing-level
+                    id="fl3" index="1" devices="d2,d1" target="nodeB"
+                />
+                <fencing-level
+                    id="fl4" index="2" devices="d3" target="nodeB"
+                />
+                <fencing-level
+                    id="fl5" index="1" devices="d3,d4" target-pattern="node\\d+"
+                />
+                <fencing-level
+                    id="fl6" index="2" devices="d1" target-pattern="node\\d+"
+                />
+                <fencing-level
+                    id="fl7" index="3" devices="d3,d4"
+                    target-attribute="fencing" target-value="improved"
+                />
+                <fencing-level
+                    id="fl8" index="4" devices="d5"
+                    target-attribute="fencing" target-value="improved"
+                />
+                <fencing-level
+                    id="fl9" index="3" devices="dR" target-pattern="node-R.*"
+                />
+                <fencing-level
+                    id="fl10" index="4" devices="dR-special"
+                    target-attribute="fencing" target-value="remote-special"
+                />
+            </fencing-topology>
+            """,
+            etree_to_str(self.tree),
+        )
+
+    def test_nonexistent_level(self):
+        with self.assertRaises(ElementNotFound):
+            lib.remove_device_from_one_level(self.tree, "nonexistent", "d1")
 
 
 class Export(TestCase, CibMixin):

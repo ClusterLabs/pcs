@@ -1,4 +1,5 @@
 from typing import (
+    Final,
     Optional,
     Sequence,
     Set,
@@ -23,14 +24,21 @@ from pcs.common.reports import has_errors
 from pcs.common.reports.item import ReportItem
 from pcs.common.types import StringCollection
 from pcs.common.validate import is_integer
+from pcs.lib.cib.const import TAG_FENCING_LEVEL
 from pcs.lib.cib.resource.stonith import is_stonith_resource
-from pcs.lib.cib.tools import find_unique_id
+from pcs.lib.cib.tools import (
+    find_unique_id,
+    get_element_by_id,
+    get_root,
+)
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.state import _Element as StateElement
 from pcs.lib.pacemaker.values import (
     sanitize_id,
     validate_id,
 )
+
+_DEVICES_ATTRIBUTE: Final = "devices"
 
 
 def add_level(
@@ -155,12 +163,37 @@ def remove_levels_by_params(
     return report_list
 
 
-def remove_device_from_all_levels(topology_el, device_id):
+def remove_device_from_all_levels_dont_remove_elements(
+    topology_el: _Element, device_id: str
+) -> list[_Element]:
+    """
+    Remove specified stonith device from all fencing levels. Do not remove
+    fencing-level elements with empty devices attribute. Instead, return a list
+    of all the elements from which the device was removed.
+
+    topology_el -- etree element with levels to remove the device from
+    device_id -- stonith device to remove
+    """
+    elements = []
+    for level_el in topology_el.findall(TAG_FENCING_LEVEL):
+        old_devices = level_el.get(_DEVICES_ATTRIBUTE, "")
+        _remove_device_from_level(level_el, device_id)
+        new_devices = level_el.get(_DEVICES_ATTRIBUTE, "")
+
+        if old_devices != new_devices:
+            elements.append(level_el)
+
+    return elements
+
+
+def remove_device_from_all_levels(
+    topology_el: _Element, device_id: str
+) -> None:
     """
     Remove specified stonith device from all fencing levels.
 
-    etree topology_el -- etree element with levels to remove the device from
-    string device_id -- stonith device to remove
+    topology_el -- etree element with levels to remove the device from
+    device_id -- stonith device to remove
     """
     # Do not ever remove a fencing-topology element, even if it is empty. There
     # may be ACLs set in pacemaker which allow "write" for fencing-level
@@ -169,16 +202,43 @@ def remove_device_from_all_levels(topology_el, device_id):
     # the whole change to be rejected by pacemaker with a "permission denied"
     # message.
     # https://bugzilla.redhat.com/show_bug.cgi?id=1642514
-    for level_el in topology_el.findall("fencing-level"):
-        new_devices = [
-            dev
-            for dev in level_el.get("devices").split(",")
-            if dev != device_id
-        ]
-        if new_devices:
-            level_el.set("devices", ",".join(new_devices))
-        else:
-            level_el.getparent().remove(level_el)
+    for level_el in remove_device_from_all_levels_dont_remove_elements(
+        topology_el, device_id
+    ):
+        _remove_fencing_level_if_empty(level_el)
+
+
+def remove_device_from_one_level(
+    topology_el: _Element, level_id: str, device_id: str
+) -> None:
+    """
+    Remove specified stonith device from specified fencing level.
+
+    topology_el -- etree element with levels to remove the device from
+    level_id -- level element from which the device is removed
+    device_id -- stonith device to remove
+    """
+    level_el = get_element_by_id(get_root(topology_el), level_id)
+    _remove_device_from_level(level_el, device_id)
+    _remove_fencing_level_if_empty(level_el)
+
+
+def _remove_device_from_level(level_el: _Element, device_id: str) -> None:
+    new_devices = [
+        dev
+        for dev in level_el.get(_DEVICES_ATTRIBUTE, "").split(",")
+        if dev != device_id
+    ]
+    level_el.set(_DEVICES_ATTRIBUTE, ",".join(new_devices))
+
+
+def _remove_fencing_level_if_empty(level_el: _Element) -> None:
+    if level_el.get(_DEVICES_ATTRIBUTE, "") != "":
+        return
+
+    parent = level_el.getparent()
+    if parent is not None:
+        parent.remove(level_el)
 
 
 def export(topology_el):

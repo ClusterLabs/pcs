@@ -584,63 +584,6 @@ class TagDelete(
     command = "delete"
 
 
-class ResourceRemoveDeleteBase(TestTagMixin):
-    command = None
-
-    @staticmethod
-    def fixture_error_message(resource, tags):
-        return (
-            "Error: Unable to remove resource '{resource}' because it is "
-            "referenced in {tags}: {tag_list}\n".format(
-                resource=resource,
-                tags="tags" if len(tags) > 1 else "the tag",
-                tag_list=", ".join(f"'{tag}'" for tag in tags),
-            )
-        )
-
-    def test_resource_not_referenced_in_tags(self):
-        self.assert_pcs_success(
-            ["resource", self.command, "not-in-tags"],
-            stderr_full="Deleting Resource - not-in-tags\n",
-        )
-        self.assert_resources_xml_in_cib(self.fixture_tags_xml())
-
-    def test_resource_referenced_in_a_single_tag(self):
-        self.assert_pcs_fail(
-            ["resource", self.command, "x1"],
-            self.fixture_error_message("x1", ["tag1"]),
-        )
-        self.assert_resources_xml_in_cib(self.fixture_tags_xml())
-
-    def test_resource_referenced_in_multiple_tags(self):
-        self.assert_pcs_fail(
-            ["resource", self.command, "x2"],
-            self.fixture_error_message("x2", ["tag1", "tag2"]),
-        )
-        self.assert_resources_xml_in_cib(self.fixture_tags_xml())
-
-    def test_related_clone_resource_in_tag(self):
-        self.assert_pcs_fail(
-            ["resource", self.command, "y2"],
-            self.fixture_error_message("y2", ["tag3"]),
-        )
-        self.assert_resources_xml_in_cib(self.fixture_tags_xml())
-
-
-class ResourceRemove(
-    ResourceRemoveDeleteBase,
-    TestCase,
-):
-    command = "remove"
-
-
-class ResourceDelete(
-    ResourceRemoveDeleteBase,
-    TestCase,
-):
-    command = "delete"
-
-
 class TagUpdate(TestTagMixin, TestCase):
     def test_success_add_new_existing_before_and_remove(self):
         self.assert_effect(

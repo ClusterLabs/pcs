@@ -993,9 +993,9 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
             stderr,
             outdent(
                 """\
-            Removing D5 from set colocation_set_D5D6D7_set
-            Removing D5 from set colocation_set_D5D6D7-1_set
-            Deleting Resource - D5
+            Removing references:
+              Resource 'D5' from:
+                Resource sets: 'colocation_set_D5D6D7-1_set', 'colocation_set_D5D6D7_set'
             """
             ),
         )
@@ -1010,10 +1010,13 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
             stderr,
             outdent(
                 """\
-            Removing D6 from set colocation_set_D5D6D7_set
-            Removing D6 from set colocation_set_D5D6D7-1_set
-            Removing set colocation_set_D5D6D7-1_set
-            Deleting Resource - D6
+            Removing dependant element:
+              Resource set: 'colocation_set_D5D6D7-1_set'
+            Removing references:
+              Resource 'D6' from:
+                Resource set: 'colocation_set_D5D6D7_set'
+              Resource set 'colocation_set_D5D6D7-1_set' from:
+                Colocation constraint: 'colocation_set_D5D6D7-1'
             """
             ),
         )
@@ -1496,9 +1499,9 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
             stderr,
             outdent(
                 """\
-            Removing D5 from set order_set_D5D6D7_set
-            Removing D5 from set order_set_D5D6D7-1_set
-            Deleting Resource - D5
+            Removing references:
+              Resource 'D5' from:
+                Resource sets: 'order_set_D5D6D7-1_set', 'order_set_D5D6D7_set'
             """
             ),
         )
@@ -1512,10 +1515,13 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
             stderr,
             outdent(
                 """\
-            Removing D6 from set order_set_D5D6D7_set
-            Removing D6 from set order_set_D5D6D7-1_set
-            Removing set order_set_D5D6D7-1_set
-            Deleting Resource - D6
+            Removing dependant element:
+              Resource set: 'order_set_D5D6D7-1_set'
+            Removing references:
+              Resource 'D6' from:
+                Resource set: 'order_set_D5D6D7_set'
+              Resource set 'order_set_D5D6D7-1_set' from:
+                Order constraint: 'order_set_D5D6D7-1'
             """
             ),
         )
@@ -2281,7 +2287,7 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
             ),
         )
 
-    def test_remote_node_constraints_remove(self):
+    def test_guest_node_constraints_remove(self):
         # pylint: disable=too-many-statements
         self.temp_corosync_conf = get_tmp_file("tier1_test_constraints")
         write_file_to_tmpfile(rc("corosync.conf"), self.temp_corosync_conf)
@@ -2345,75 +2351,6 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
         )
 
         stdout, stderr, retval = pcs(
-            self.temp_cib.name, "resource delete vm-guest1".split()
-        )
-        self.assertEqual(
-            stderr,
-            outdent(
-                """\
-            Removing Constraint - location-D1-guest1-200
-            Removing Constraint - location-D2-guest1--400
-            Deleting Resource - vm-guest1
-            """
-            ),
-        )
-        self.assertEqual(stdout, "")
-        self.assertEqual(retval, 0)
-
-        self.assert_pcs_success(
-            "constraint --full".split(),
-            stdout_full=outdent(
-                """\
-                Location Constraints:
-                  resource 'D1' prefers node 'node1' with score 100 (id: location-D1-node1-100)
-                  resource 'D2' avoids node 'node2' with score 300 (id: location-D2-node2--300)
-                """
-            ),
-        )
-
-        # constraints referencing the remote node's name,
-        # removing the remote node
-        self.assert_pcs_success(
-            (
-                "resource create vm-guest1 ocf:pcsmock:minimal "
-                "meta remote-node=guest1 --force"
-            ).split(),
-            stderr_full=(
-                "Warning: this command is not sufficient for creating a guest "
-                "node, use 'pcs cluster node add-guest'\n"
-            ),
-        )
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            "constraint location D1 prefers guest1=200".split(),
-        )
-        self.assertEqual(stderr, LOCATION_NODE_VALIDATION_SKIP_WARNING)
-        self.assertEqual(stdout, "")
-        self.assertEqual(retval, 0)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            "constraint location D2 avoids guest1=400".split(),
-        )
-        self.assertEqual(stderr, LOCATION_NODE_VALIDATION_SKIP_WARNING)
-        self.assertEqual(stdout, "")
-        self.assertEqual(retval, 0)
-
-        self.assert_pcs_success(
-            "constraint --full".split(),
-            stdout_full=outdent(
-                """\
-                Location Constraints:
-                  resource 'D1' prefers node 'node1' with score 100 (id: location-D1-node1-100)
-                  resource 'D2' avoids node 'node2' with score 300 (id: location-D2-node2--300)
-                  resource 'D1' prefers node 'guest1' with score 200 (id: location-D1-guest1-200)
-                  resource 'D2' avoids node 'guest1' with score 400 (id: location-D2-guest1--400)
-                """
-            ),
-        )
-
-        stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "cluster node remove-guest guest1".split(),
             corosync_conf_opt=self.temp_corosync_conf.name,
@@ -2436,57 +2373,12 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
                 """\
                 Location Constraints:
                   resource 'D1' prefers node 'node1' with score 100 (id: location-D1-node1-100)
-                  resource 'D2' avoids node 'node2' with score 300 (id: location-D2-node2--300)
                   resource 'D1' prefers node 'guest1' with score 200 (id: location-D1-guest1-200)
+                  resource 'D2' avoids node 'node2' with score 300 (id: location-D2-node2--300)
                   resource 'D2' avoids node 'guest1' with score 400 (id: location-D2-guest1--400)
                 """
             ),
         )
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name, "resource delete vm-guest1".split()
-        )
-        self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "Deleting Resource - vm-guest1\n")
-        self.assertEqual(retval, 0)
-
-        # constraints referencing the remote node resource
-        # deleting the remote node resource
-        self.assert_pcs_success(
-            (
-                "resource create vm-guest1 ocf:pcsmock:minimal "
-                "meta remote-node=guest1 --force"
-            ).split(),
-            stderr_full=(
-                "Warning: this command is not sufficient for creating a guest "
-                "node, use 'pcs cluster node add-guest'\n"
-            ),
-        )
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name,
-            "constraint location vm-guest1 prefers node1".split(),
-        )
-        self.assertEqual(stderr, LOCATION_NODE_VALIDATION_SKIP_WARNING)
-        self.assertEqual(stdout, "")
-        self.assertEqual(retval, 0)
-
-        stdout, stderr, retval = pcs(
-            self.temp_cib.name, "resource delete vm-guest1".split()
-        )
-        self.assertEqual(stdout, "")
-        ac(
-            stderr,
-            outdent(
-                """\
-            Removing Constraint - location-vm-guest1-node1-INFINITY
-            Removing Constraint - location-D1-guest1-200
-            Removing Constraint - location-D2-guest1--400
-            Deleting Resource - vm-guest1
-            """
-            ),
-        )
-        self.assertEqual(retval, 0)
 
     def test_duplicate_order(self):
         self.fixture_resources()

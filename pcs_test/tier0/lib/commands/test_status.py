@@ -1350,7 +1350,7 @@ class ResourcesStatus(TestCase):
                 fixture.error(
                     report_codes.BAD_CLUSTER_STATE_DATA,
                     reason="Resource 'R7' contains an unknown role 'NotPcmkRole'",
-                ),
+                )
             ],
             False,
         )
