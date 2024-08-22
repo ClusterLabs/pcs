@@ -15,6 +15,7 @@ from pcs.cli.common.parse_args import (
     Argv,
     InputModifiers,
     KeyValueParser,
+    ensure_unique_args,
 )
 from pcs.cli.fencing_topology import target_type_map_cli_to_lib
 from pcs.cli.reports.output import (
@@ -33,10 +34,15 @@ from pcs.common.fencing_topology import (
     TARGET_TYPE_NODE,
     TARGET_TYPE_REGEXP,
 )
+from pcs.common.pacemaker.resource.list import (
+    get_all_resources_ids,
+    get_stonith_resources_ids,
+)
 from pcs.common.resource_agent.dto import ResourceAgentNameDto
 from pcs.common.str_tools import (
     format_list,
     format_optional,
+    format_plural,
     indent,
 )
 from pcs.lib.errors import LibraryError
@@ -989,11 +995,40 @@ def delete_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
       * --force - don't stop a resource before its deletion
     """
     modifiers.ensure_only_supported("-f", "--force")
-    if len(argv) != 1:
+    if not argv:
         raise CmdLineInputError()
-    resource_id = argv[0]
-    _check_is_stonith(lib, [resource_id], "pcs resource delete")
-    resource.resource_remove(resource_id)
+    ensure_unique_args(argv)
+
+    resources_to_remove = set(argv)
+    resources_dto = lib.resource.get_configured_resources()
+    missing_ids = resources_to_remove - get_all_resources_ids(resources_dto)
+    if missing_ids:
+        raise CmdLineInputError(
+            "Unable to find stonith {resource}: {id_list}".format(
+                resource=format_plural(missing_ids, "resource"),
+                id_list=format_list(missing_ids),
+            )
+        )
+
+    non_stonith_ids = resources_to_remove - get_stonith_resources_ids(
+        resources_dto
+    )
+    if non_stonith_ids:
+        raise CmdLineInputError(
+            (
+                "This command cannot remove {resource}: {id_list}. Use 'pcs "
+                "resource remove' instead."
+            ).format(
+                resource=format_plural(non_stonith_ids, "resource"),
+                id_list=format_list(non_stonith_ids),
+            )
+        )
+
+    force_flags = set()
+    if modifiers.is_specified("--force"):
+        force_flags.add(reports.codes.FORCE)
+
+    lib.cib.remove_elements(resources_to_remove, force_flags)
 
 
 def enable_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:

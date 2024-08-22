@@ -1,33 +1,22 @@
-from typing import (
-    Collection,
-    Iterable,
-)
+from typing import Collection
 
-from lxml import etree
 from lxml.etree import _Element
 
 from pcs.common import reports
 from pcs.common.types import StringCollection
-from pcs.lib.cib.const import TAG_OBJREF
-from pcs.lib.cib.constraint.common import is_constraint
-from pcs.lib.cib.constraint.location import (
-    is_location_constraint,
-    is_location_rule,
+from pcs.lib.cib.remove_elements import (
+    ElementsToRemove,
+    ensure_resources_stopped,
+    remove_specified_elements,
+    stop_resources,
 )
-from pcs.lib.cib.constraint.resource_set import is_set_constraint
-from pcs.lib.cib.resource.bundle import is_bundle
-from pcs.lib.cib.resource.clone import is_any_clone
-from pcs.lib.cib.resource.common import get_inner_resources
-from pcs.lib.cib.resource.group import is_group
-from pcs.lib.cib.tag import is_tag
-from pcs.lib.cib.tools import (
-    find_elements_referencing_id,
-    get_elements_by_ids,
-    remove_element_by_id,
+from pcs.lib.cib.resource.guest_node import is_guest_node
+from pcs.lib.cib.resource.remote_node import (
+    get_node_name_from_resource as get_node_name_from_remote_resource,
 )
+from pcs.lib.cib.tools import get_elements_by_ids
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
-from pcs.lib.pacemaker.live import parse_cib_xml
 
 
 def remove_elements(
@@ -43,140 +32,120 @@ def remove_elements(
     ids -- ids of configuration elements to remove
     force_flags -- list of flags codes
     """
-    del force_flags
-    id_set = set(ids)
     cib = env.get_cib()
-    wip_cib = parse_cib_xml(etree.tostring(cib).decode())
     report_processor = env.report_processor
 
-    elements_to_process, not_found_ids = get_elements_by_ids(wip_cib, id_set)
+    elements_to_remove = ElementsToRemove(cib, ids)
 
-    for non_existing_id in not_found_ids:
-        report_processor.report(
-            reports.ReportItem.error(
-                reports.messages.IdNotFound(
-                    non_existing_id, ["configuration element"]
-                )
-            )
-        )
-
-    for element in elements_to_process:
-        # TODO: add support for other CIB elements
-        if not (is_constraint(element) or is_location_rule(element)):
-            report_processor.report(
-                reports.ReportItem.error(
-                    reports.messages.IdBelongsToUnexpectedType(
-                        str(element.get("id")),
-                        ["constraint", "location rule"],
-                        element.tag,
-                    )
-                )
-            )
-
-    if report_processor.has_errors:
+    if report_processor.report_list(
+        _validate_elements_to_remove(elements_to_remove)
+    ).has_errors:
         raise LibraryError()
 
-    element_ids_to_remove = _get_dependencies_to_remove(elements_to_process)
-    dependant_elements, _ = get_elements_by_ids(
-        cib, element_ids_to_remove - id_set
+    if report_processor.report_list(
+        _ensure_not_guest_remote(cib, ids)
+    ).has_errors:
+        raise LibraryError()
+
+    report_processor.report_list(
+        elements_to_remove.dependant_elements.to_reports()
     )
-    if dependant_elements:
-        report_processor.report(
-            reports.ReportItem.info(
-                reports.messages.CibRemoveDependantElements(
-                    {
-                        str(element.attrib["id"]): element.tag
-                        for element in dependant_elements
-                    }
-                )
-            )
-        )
+    report_processor.report_list(
+        elements_to_remove.element_references.to_reports()
+    )
 
-    for element_id in element_ids_to_remove:
-        remove_element_by_id(cib, element_id)
+    if env.is_cib_live and reports.codes.FORCE not in force_flags:
+        cib = _stop_resources_wait(env, cib, elements_to_remove)
 
+    remove_specified_elements(cib, elements_to_remove)
     env.push_cib()
 
 
-def _get_dependencies_to_remove(elements: list[_Element]) -> set[str]:
+def _stop_resources_wait(
+    env: LibraryEnvironment, cib: _Element, elements_to_remove: ElementsToRemove
+) -> _Element:
     """
-    Get ids of all elements that need to be removed (including specified
-    elements) together with specified elements based on their relations.
+    Stop all resources that are going to be removed. Push cib, wait for the
+    cluster to settle down, and check if all resources were properly stopped.
+    If not, report errors. Return cib with the applied changes.
 
-    WARNING: this is a destructive operation for elements and their etree.
-
-    elements -- list of elements that are planned to be removed
+    cib -- whole cib
+    elements -- elements planned to be removed
     """
-    elements_to_process = list(elements)
-    element_ids_to_remove: set[str] = set()
+    resources_to_disable = elements_to_remove.resources_to_disable
+    if not resources_to_disable:
+        return cib
+    env.report_processor.report(
+        reports.ReportItem.info(
+            reports.messages.StoppingResourcesBeforeDeleting(
+                sorted(resources_to_disable)
+            )
+        )
+    )
 
-    while elements_to_process:
-        el = elements_to_process.pop(0)
-        element_id = str(el.attrib["id"])
-        if el.tag not in ("obj_ref", "resource_ref", "role"):
-            if element_id in element_ids_to_remove:
-                continue
-            element_ids_to_remove.add(element_id)
-            elements_to_process.extend(_get_element_references(el))
-            elements_to_process.extend(_get_inner_references(el))
-        parent_el = el.getparent()
-        if parent_el is not None:
-            if _is_empty_after_inner_el_removal(parent_el):
-                elements_to_process.append(parent_el)
-            parent_el.remove(el)
+    if env.report_processor.report_list(
+        stop_resources(cib, env.get_cluster_state(), elements_to_remove)
+    ).has_errors:
+        raise LibraryError()
+    env.push_cib()
 
-    return element_ids_to_remove
+    env.wait_for_idle()
+    if env.report_processor.report_list(
+        ensure_resources_stopped(env.get_cluster_state(), elements_to_remove)
+    ).has_errors:
+        raise LibraryError()
 
-
-def _get_element_references(element: _Element) -> Iterable[_Element]:
-    """
-    Return all CIB elements that are referencing specified element
-
-    element -- references to this element will be
-    """
-    return find_elements_referencing_id(element, str(element.attrib["id"]))
+    return env.get_cib()
 
 
-def _get_inner_references(element: _Element) -> Iterable[_Element]:
-    """
-    Get all inner elements with attribute id, which means that they might be
-    refernenced in IDREF. Elements with attribute id and type IDREF are also
-    returned.
+def _validate_elements_to_remove(
+    element_to_remove: ElementsToRemove,
+) -> reports.ReportItemList:
+    report_list = []
+    for missing_id in sorted(element_to_remove.missing_ids):
+        report_list.append(
+            reports.ReportItem.error(
+                reports.messages.IdNotFound(
+                    missing_id, ["configuration element"]
+                )
+            )
+        )
 
-    Note:
-        Only removing of constraint or location rule elements is supported.
-        Theirs inner elements cannot be referenced or referencing is not
-        supported.
-    """
-    # pylint: disable=unused-argument
-    # return cast(Iterable[_Element], element.xpath("./*[@id]"))
-    # if is_resource(element):
-    #     return get_inner_resources(element)
-    # if element.tag == "alert":
-    #     return element.findall("recipient")
-    # if is_set_constraint(element):
-    #     return element.findall("resource_set")
-    # if element.tag == "acl_role":
-    #     return element.findall("acl_permission")
-    return []
+    unsupported_elements = element_to_remove.unsupported_elements
+    for unsupported_id in sorted(unsupported_elements.id_tag_map):
+        report_list.append(
+            reports.ReportItem.error(
+                reports.messages.IdBelongsToUnexpectedType(
+                    unsupported_id,
+                    list(unsupported_elements.supported_element_types),
+                    unsupported_elements.id_tag_map[unsupported_id],
+                )
+            )
+        )
+
+    return report_list
 
 
-def _is_last_element(parent_element: _Element, child_tag: str) -> bool:
-    return len(parent_element.findall(f"./{child_tag}")) == 1
-
-
-def _is_empty_after_inner_el_removal(parent_el: _Element) -> bool:
-    # pylint: disable=too-many-return-statements
-    if is_bundle(parent_el) or is_any_clone(parent_el):
-        return True
-    if is_group(parent_el):
-        return len(get_inner_resources(parent_el)) == 1
-    if is_tag(parent_el):
-        return _is_last_element(parent_el, TAG_OBJREF)
-    if parent_el.tag == "resource_set":
-        return _is_last_element(parent_el, "resource_ref")
-    if is_set_constraint(parent_el):
-        return _is_last_element(parent_el, "resource_set")
-    if is_location_constraint(parent_el):
-        return _is_last_element(parent_el, "rule")
-    return False
+def _ensure_not_guest_remote(
+    cib: _Element, ids: StringCollection
+) -> reports.ReportItemList:
+    report_list = []
+    elements_to_process, _ = get_elements_by_ids(cib, ids)
+    for element in elements_to_process:
+        if is_guest_node(element):
+            report_list.append(
+                reports.ReportItem.error(
+                    reports.messages.UseCommandNodeRemoveGuest(
+                        str(element.attrib["id"])
+                    )
+                )
+            )
+        if get_node_name_from_remote_resource(element) is not None:
+            report_list.append(
+                reports.ReportItem.error(
+                    reports.messages.UseCommandNodeRemoveRemote(
+                        str(element.attrib["id"])
+                    )
+                )
+            )
+    return report_list

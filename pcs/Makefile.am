@@ -262,6 +262,7 @@ EXTRA_DIST		= \
 			  lib/cib/node.py \
 			  lib/cib/nvpair_multi.py \
 			  lib/cib/nvpair.py \
+			  lib/cib/remove_elements.py \
 			  lib/cib/resource/agent.py \
 			  lib/cib/resource/bundle.py \
 			  lib/cib/resource/clone.py \
