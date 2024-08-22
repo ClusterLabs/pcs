@@ -422,43 +422,62 @@ class ResourcesStatusFacade:
 
         return GroupInstances(cast(list[GroupStatusDto], instance_list))
 
-    def _validate_members_quantifier(
-        self,
-        resource: CheckedResourceType,
-        members_quantifier: Optional[MoreChildrenQuantifierType],
-    ) -> None:
-        if members_quantifier is None:
-            return
+    def can_have_multiple_members(
+        self, resource_id: str, instance_id: Optional[str] = None
+    ) -> bool:
+        """
+        Check if the resource with the given id can have multiple inner members.
 
-        if isinstance(resource, GroupInstances):
-            return
-
-        if isinstance(resource, CloneStatusDto):
-            member_id_list = self.get_members(resource.resource_id, None)
-            if any(
+        resource_id -- id of the resource
+        instance_id -- id describing unique instance of cloned or bundled
+            resource
+        """
+        resource_type = self.get_type(resource_id, instance_id)
+        return resource_type == ResourceType.GROUP or (
+            resource_type == ResourceType.CLONE
+            and any(
                 self.get_type(member_id, None) == ResourceType.GROUP
-                for member_id in member_id_list
-            ):
-                return
+                for member_id in self.get_members(resource_id, instance_id)
+            )
+        )
 
-        raise MembersQuantifierUnsupportedException()
+    def can_have_multiple_instances(
+        self, resource_id: str, instance_id: Optional[str] = None
+    ) -> bool:
+        """
+        Check if the resource with the given id can have multiple instances.
 
-    def _validate_instance_quantifier(
+        resource_id -- id of the resource
+        instance_id -- id describing unique instance of cloned or bundled
+            resource
+        """
+        resource_type = self.get_type(resource_id, instance_id)
+        return instance_id is None and (
+            resource_type in (ResourceType.CLONE, ResourceType.BUNDLE)
+            or self.get_parent_clone_id(resource_id, None) is not None
+            or (
+                resource_type == ResourceType.PRIMITIVE
+                and self.get_parent_bundle_id(resource_id, None) is not None
+            )
+        )
+
+    def _validate_quantifiers(
         self,
-        resource: CheckedResourceType,
+        resource_id: str,
+        instance_id: Optional[str],
+        members_quantifier: Optional[MoreChildrenQuantifierType],
         instances_quantifier: Optional[MoreChildrenQuantifierType],
     ) -> None:
-        # pylint: disable=no-self-use
-        if instances_quantifier is None:
-            return
-
-        if isinstance(resource, (BundleStatusDto, CloneStatusDto)):
-            return
-
-        if len(resource.instances) > 1:
-            return
-
-        raise InstancesQuantifierUnsupportedException()
+        if (
+            members_quantifier is not None
+            and not self.can_have_multiple_members(resource_id, instance_id)
+        ):
+            raise MembersQuantifierUnsupportedException()
+        if (
+            instances_quantifier is not None
+            and not self.can_have_multiple_instances(resource_id, instance_id)
+        ):
+            raise InstancesQuantifierUnsupportedException()
 
     def is_state(
         self,
@@ -496,8 +515,9 @@ class ResourcesStatusFacade:
         """
         resource = self._get_instances_for_state_check(resource_id, instance_id)
 
-        self._validate_members_quantifier(resource, members_quantifier)
-        self._validate_instance_quantifier(resource, instances_quantifier)
+        self._validate_quantifiers(
+            resource_id, instance_id, members_quantifier, instances_quantifier
+        )
 
         if not isinstance(state.value, list):
             checked_state = [state.value]
@@ -554,8 +574,9 @@ class ResourcesStatusFacade:
         """
         resource = self._get_instances_for_state_check(resource_id, instance_id)
 
-        self._validate_members_quantifier(resource, members_quantifier)
-        self._validate_instance_quantifier(resource, instances_quantifier)
+        self._validate_quantifiers(
+            resource_id, instance_id, members_quantifier, instances_quantifier
+        )
 
         if not isinstance(state.value, list):
             checked_state = [state.value]

@@ -7,7 +7,12 @@
 ([RHEL-46284])
 - Command `resource.restart` in API v2
 
+### Fixed
+- Do not end with error when using the instances quantifier in `pcs status
+  query resource is-state` command ([RHEL-55441])
+
 [RHEL-46284]: https://issues.redhat.com/browse/RHEL-46284
+[RHEL-55441]: https://issues.redhat.com/browse/RHEL-55441
 
 
 ## [0.11.8] - 2024-07-09

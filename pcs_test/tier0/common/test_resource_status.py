@@ -1042,6 +1042,84 @@ class TestFacadeGetNodes(TestCase):
         self.assertEqual(cm.exception.instance_id, None)
 
 
+class TestFacadeCanHaveMultipleMembers(TestCase):
+    def test_nonexistent(self):
+        facade = ResourcesStatusFacade([])
+
+        with self.assertRaises(ResourceNonExistentException) as cm:
+            facade.can_have_multiple_members("nonexistent", None)
+        self.assertEqual(cm.exception.resource_id, "nonexistent")
+        self.assertEqual(cm.exception.instance_id, None)
+
+    def test_all(self):
+        facade = fixture_facade()
+        resource_id_list = [
+            ("stonith", False),
+            ("primitive", False),
+            ("group", True),
+            ("group-primitive_1", False),
+            ("clone", False),
+            ("clone-primitive", False),
+            ("cloned_group", True),
+            ("cloned_group-group", True),
+            ("cloned_group-group-primitive_1", False),
+            ("bundle", False),
+            ("bundle-member", False),
+        ]
+        for resource_id, result in resource_id_list:
+            with self.subTest(value=f"{resource_id}"):
+                self.assertEqual(
+                    facade.can_have_multiple_members(resource_id, None), result
+                )
+
+
+class TestFacadeCanHaveMultipleInstances(TestCase):
+    def setUp(self):
+        self.facade = fixture_facade()
+
+    def test_nonexistent(self):
+        with self.assertRaises(ResourceNonExistentException) as cm:
+            self.facade.can_have_multiple_instances("nonexistent", None)
+        self.assertEqual(cm.exception.resource_id, "nonexistent")
+        self.assertEqual(cm.exception.instance_id, None)
+
+    def test_all(self):
+        resource_id_list = [
+            ("stonith", False),
+            ("primitive", False),
+            ("group", False),
+            ("group-primitive_1", False),
+            ("clone", True),
+            ("clone-primitive", True),
+            ("cloned_group", True),
+            ("cloned_group-group", True),
+            ("cloned_group-group-primitive_1", True),
+            ("bundle", True),
+            ("bundle-member", True),
+        ]
+        for resource_id, result in resource_id_list:
+            with self.subTest(value=f"{resource_id}"):
+                self.assertEqual(
+                    self.facade.can_have_multiple_instances(resource_id, None),
+                    result,
+                )
+
+    def test_instance_id(self):
+        self.assertTrue(
+            self.facade.can_have_multiple_instances("clone_unique", None)
+        )
+        self.assertTrue(
+            self.facade.can_have_multiple_instances(
+                "clone_unique-primitive", None
+            )
+        )
+        self.assertFalse(
+            self.facade.can_have_multiple_instances(
+                "clone_unique-primitive", "0"
+            )
+        )
+
+
 class TestFacadeIsState(TestCase):
     # pylint: disable=too-many-public-methods
     def test_nonexistent(self):
@@ -2122,6 +2200,24 @@ class TestFacadeIsState(TestCase):
         )
         self.assertTrue(
             facade.is_state("primitive", None, ResourceState.MANAGED)
+        )
+
+    def test_clone_one_instance_quantifier(self):
+        facade = ResourcesStatusFacade(
+            [
+                fixture_clone_dto(
+                    "clone",
+                    instances=[fixture_primitive_dto("primitive", None)],
+                )
+            ]
+        )
+        self.assertTrue(
+            facade.is_state(
+                "primitive",
+                None,
+                ResourceState.STARTED,
+                instances_quantifier=MoreChildrenQuantifierType.ALL,
+            )
         )
 
     def test_clone_instance_orphans(self):
