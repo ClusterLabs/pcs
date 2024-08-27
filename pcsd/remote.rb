@@ -1018,6 +1018,13 @@ def remove_resource(params, request, auth_user)
     end
   }
   tmp_file = nil
+
+  resource_or_stonith = if params["is-stonith"] == "true" then
+    "stonith"
+  else
+    "resource"
+  end
+
   if force
     resource_to_remove = resource_list
   else
@@ -1027,7 +1034,8 @@ def remove_resource(params, request, auth_user)
       if retval != 0
         return [400, 'Unable to stop resource(s).']
       end
-      cmd = [PCS, '-f', tmp_file.path, '--', 'resource', 'disable']
+
+      cmd = [PCS, '-f', tmp_file.path, '--', resource_or_stonith, 'disable']
       resource_list.each { |resource|
         out, err, retval = run_cmd(user, *(cmd + [resource]))
         if retval != 0
@@ -1061,7 +1069,7 @@ def remove_resource(params, request, auth_user)
     end
   end
   resource_to_remove.each { |resource|
-    cmd = ['resource', 'delete', resource]
+    cmd = [resource_or_stonith, 'delete', resource]
     flags = []
     if force
       flags << '--force'
