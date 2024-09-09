@@ -95,7 +95,7 @@ class CorosyncTransportType(AutoNameEnum):
             raise UnknownCorosyncTransportTypeException(transport) from None
 
 
-class CorosyncNodeAddressType(Enum):
+class CorosyncNodeAddressType(str, Enum):
     IPV4 = "IPv4"
     IPV6 = "IPv6"
     FQDN = "FQDN"

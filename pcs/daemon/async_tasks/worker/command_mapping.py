@@ -116,6 +116,10 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
         cmd=cluster.generate_cluster_uuid,
         required_permission=p.SUPERUSER,
     ),
+    "cluster.get_corosync_conf_struct": _Cmd(
+        cmd=cluster.get_corosync_conf_struct,
+        required_permission=p.READ,
+    ),
     "cluster.node_clear": _Cmd(
         cmd=cluster.node_clear,
         required_permission=p.WRITE,

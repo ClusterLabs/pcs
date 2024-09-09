@@ -249,11 +249,12 @@
         daemon urls: get_corosync_conf
       </description>
     </capability>
-    <capability id="corosync.config.get.struct" in-pcs="1" in-pcsd="0">
+    <capability id="corosync.config.get.struct" in-pcs="1" in-pcsd="1">
       <description>
         Provide the local corosync.conf in a structured format.
 
         pcs commands: cluster config show
+        API v2: cluster.get_corosync_conf_struct
       </description>
     </capability>
     <capability id="corosync.config.set" in-pcs="0" in-pcsd="1">
