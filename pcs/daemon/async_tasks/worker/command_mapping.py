@@ -322,6 +322,10 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
         cmd=resource.enable,
         required_permission=p.WRITE,
     ),
+    "resource.get_configured_resources": _Cmd(
+        cmd=resource.get_configured_resources,
+        required_permission=p.READ,
+    ),
     "resource.group_add": _Cmd(
         cmd=resource.group_add,
         required_permission=p.WRITE,

@@ -1961,6 +1961,13 @@
           stonith config --output-format=text|json|cmd
       </description>
     </capability>
+    <capability id="pcmk.resource.config.rest-api.v2" in-pcs="0" in-pcsd="1">
+      <description>
+        Get configured pacemaker resources.
+
+        API v2: resource.get_configured_resources
+      </description>
+    </capability>
     <capability id="pcmk.resource.refresh" in-pcs="1" in-pcsd="0">
       <description>
         Forget history of resources and redetect their current state. Optionally
