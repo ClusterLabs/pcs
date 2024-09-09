@@ -6,6 +6,7 @@
 - Support for output formats `json` and `cmd` to `pcs tag config` command
 ([RHEL-46284])
 - Command `resource.restart` in API v2
+- Add lib command `cluster.get_corosync_conf_struct` to API v2
 
 ### Fixed
 - Do not end with error when using the instances quantifier in `pcs status
