@@ -5,7 +5,8 @@
 ### Added
 - Support for output formats `json` and `cmd` to `pcs tag config` command
   ([RHEL-21047])
-- Add lib command `cluster.get_corosync_conf_struct` to API v2
+- Add lib commands `cluster.get_corosync_conf_struct` and
+  `resource.get_configured_resources` to API v2
 
 ### Fixed
 - Do not end with error when using the instances quantifier in `pcs status
