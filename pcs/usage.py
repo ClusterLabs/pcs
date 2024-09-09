@@ -1,5 +1,8 @@
 import re
-from typing import Callable
+from typing import (
+    Callable,
+    Final,
+)
 
 from pcs import settings
 from pcs.cli.common.output import format_wrap
@@ -747,8 +750,11 @@ def _resource_config_syntax(obj: str) -> str:
     return f"config [{_output_format_syntax()}] [<{obj} id>]..."
 
 
+_STONITH_DEVICE: Final = "stonith device"
+
+
 def _resource_config_desc(obj: str) -> tuple[str, ...]:
-    return (
+    lines = (
         f"""
         Show options of all currently configured {obj}s or if {obj} ids are
         specified show the options for the specified {obj} ids.
@@ -756,6 +762,14 @@ def _resource_config_desc(obj: str) -> tuple[str, ...]:
         "",
         _output_format_desc(),
     )
+    if obj == _STONITH_DEVICE:
+        lines += (  # type: ignore
+            "",
+            "Note: The 'json' output format does not include fencing levels. "
+            "Use 'pcs stonith level config --output-format=json' to get "
+            "fencing levels.",
+        )
+    return lines
 
 
 _STONITH_DELETE_SYNTAX = "<stonith id>..."
@@ -2028,10 +2042,12 @@ Commands:
         stonith devices are stopped or 1 if the stonith devices have not
         stopped. If 'n' is not specified it defaults to 60 minutes.
 
-    level [config]
+    level [config] [{output_format_syntax}]
         Lists all of the fencing levels currently configured.
 
-    level add <level> <target> <stonith id> [stonith id]...
+{output_format_desc}
+
+    level add <level> <target> <stonith id> [<stonith id>...] [id=<level id>]
         Add the fencing level for the specified target with the list of stonith
         devices to attempt for that target at that level. Fence levels are
         attempted in numerical order (starting with 1). If a level succeeds
@@ -2039,7 +2055,8 @@ Commands:
         other levels are tried, and the target is considered fenced.
         Target may be a node name <node_name> or %<node_name> or
         node%<node_name>, a node name regular expression regexp%<node_pattern>
-        or a node attribute value attrib%<name>=<value>.
+        or a node attribute value attrib%<name>=<value>. Id for the fencing
+        level will be generated if not specified by the id option.
 
     level delete <level> [target <target>] [stonith <stonith id>...]
         Removes the fence level for the level, target and/or devices specified.
@@ -2169,7 +2186,7 @@ Commands:
         user response is required in order to proceed.
 """.format(
         config_syntax=_format_syntax(_resource_config_syntax("stonith")),
-        config_desc=_format_desc(_resource_config_desc("stonith device")),
+        config_desc=_format_desc(_resource_config_desc(_STONITH_DEVICE)),
         delete_syntax=_format_syntax(f"{_DELETE_CMD} {_STONITH_DELETE_SYNTAX}"),
         remove_syntax=_format_syntax(f"{_REMOVE_CMD} {_STONITH_DELETE_SYNTAX}"),
         delete_desc=_format_desc(_STONITH_DELETE_DESC),
@@ -2245,7 +2262,7 @@ Commands:
                 _RESOURCE_OP_ADD_SYNTAX.format(obj="stonith"),
             )
         ),
-        op_add_desc=_format_desc(_resource_op_add_desc_fn("stonith device")),
+        op_add_desc=_format_desc(_resource_op_add_desc_fn(_STONITH_DEVICE)),
         op_remove_syntax=_format_syntax(
             "{} {}".format(
                 _RESOURCE_OP_REMOVE_CMD,
@@ -2273,7 +2290,7 @@ Commands:
             )
         ),
         meta_desc=_format_desc(
-            _resource_meta_desc_fn(obj="stonith device", parent_cmd="stonith")
+            _resource_meta_desc_fn(obj=_STONITH_DEVICE, parent_cmd="stonith")
         ),
         defaults_config_syntax=_format_syntax(
             f"{_RESOURCE_DEFAULTS_CONFIG_CMD} {_RESOURCE_DEFAULTS_CONFIG_SYNTAX}"
@@ -2327,6 +2344,8 @@ Commands:
             )
         ),
         update_desc=_format_desc(_resource_update_desc_fn(is_stonith=True)),
+        output_format_syntax=_output_format_syntax(cmd=True),
+        output_format_desc=_format_desc([_output_format_desc()]),
     )
     return sub_usage(args, output)
 

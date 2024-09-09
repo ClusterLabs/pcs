@@ -96,3 +96,7 @@ def pairs_to_cmd(pairs: Iterable[tuple[str, str]]) -> str:
 
 def lines_to_str(lines: StringSequence) -> str:
     return "\n".join(smart_wrap_text(lines))
+
+
+def format_cmd_list(cmd_lines: StringSequence) -> str:
+    return ";\n".join(cmd_lines)

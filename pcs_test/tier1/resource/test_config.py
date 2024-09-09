@@ -77,7 +77,7 @@ class ResourceConfigJson(TestCase):
 
 class ResourceConfigCmdMixin:
     sub_command = None
-    expected_config_stderr = ""
+    expected_json_config_stderr = ""
 
     def setUp(self):
         self.new_cib_file = get_tmp_file(self._get_tmp_file_name())
@@ -115,7 +115,7 @@ class ResourceConfigCmdMixin:
         stdout, stderr, retval = runner.run(
             [self.sub_command, "config", "--output-format=json"]
         )
-        self.assertEqual(stderr, self.expected_config_stderr)
+        self.assertEqual(stderr, self.expected_json_config_stderr)
         self.assertEqual(retval, 0)
         return json.loads(stdout)
 
@@ -124,7 +124,7 @@ class ResourceConfigCmdMixin:
             [self.sub_command, "config", "--output-format=cmd"]
         )
         self.assertEqual(retval, 0)
-        self.assertEqual(stderr, self.expected_config_stderr)
+        self.assertEqual(stderr, "")
         self._run_commands(stdout)
         self.assertEqual(
             self._get_as_json(self.pcs_runner_new),

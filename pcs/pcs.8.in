@@ -704,6 +704,8 @@ Show status of all currently configured stonith devices. If \fB\-\-hide\-inactiv
 .TP
 config [@OUTPUT_FORMAT_SYNTAX_DOC@] [<stonith id>]...
 Show options of all currently configured stonith devices or if stonith device ids are specified show the options for the specified stonith device ids. @OUTPUT_FORMAT_DESC_DOC@
+
+Note: The 'json' output format does not include fencing levels. Use 'pcs stonith level config \-\-output\-format=json' to get fencing levels.
 .TP
 list [filter] [\fB\-\-nodesc\fR]
 Show list of all available stonith agents (if filter is provided then only stonith agents matching the filter will be shown). If \fB\-\-nodesc\fR is used then descriptions of stonith agents are not printed.
@@ -943,11 +945,11 @@ Allow the cluster to use the stonith devices. If \fB\-\-wait\fR is specified, pc
 disable <stonith id>... [\fB\-\-wait[=n]\fR]
 Attempt to stop the stonith devices if they are running and disallow the cluster to use them. If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the stonith devices to stop and then return 0 if the stonith devices are stopped or 1 if the stonith devices have not stopped. If 'n' is not specified it defaults to 60 minutes.
 .TP
-level [config]
-Lists all of the fencing levels currently configured.
+level [config] [@OUTPUT_FORMAT_SYNTAX_DOC@]
+Lists all of the fencing levels currently configured. @OUTPUT_FORMAT_DESC_DOC@
 .TP
-level add <level> <target> <stonith id> [stonith id]...
-Add the fencing level for the specified target with the list of stonith devices to attempt for that target at that level. Fence levels are attempted in numerical order (starting with 1). If a level succeeds (meaning all devices are successfully fenced in that level) then no other levels are tried, and the target is considered fenced. Target may be a node name <node_name> or %<node_name> or node%<node_name>, a node name regular expression regexp%<node_pattern> or a node attribute value attrib%<name>=<value>.
+level add <level> <target> <stonith id> [<stonith id>...] [id=<level id>]
+Add the fencing level for the specified target with the list of stonith devices to attempt for that target at that level. Fence levels are attempted in numerical order (starting with 1). If a level succeeds (meaning all devices are successfully fenced in that level) then no other levels are tried, and the target is considered fenced. Target may be a node name <node_name> or %<node_name> or node%<node_name>, a node name regular expression regexp%<node_pattern> or a node attribute value attrib%<name>=<value>. Id for the fencing level will be generated if not specified by the id option.
 .TP
 level delete <level> [target <target>] [stonith <stonith id>...]
 Removes the fence level for the level, target and/or devices specified. If no target or devices are specified then the fence level is removed. Target may be a node name <node_name> or %<node_name> or node%<node_name>, a node name regular expression regexp%<node_pattern> or a node attribute value attrib%<name>=<value>.

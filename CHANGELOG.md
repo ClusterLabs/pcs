@@ -18,6 +18,8 @@
 - Lib command `cib.remove_elements` can now remove resources
 - Add lib command `status.full_cluster_status_plaintext` to API v1
   ([RHEL-61747])
+- Support for exporting stonith levels in `json` and `cmd` formats in commands
+  `pcs stonith config` and `pcs stonith level config` commands ([RHEL-38483])
 
 ### Changed
 - Minimal supported version of pacemaker is 3.0
@@ -64,6 +66,7 @@
 [RHEL-61747]: https://issues.redhat.com/browse/RHEL-61747
 [RHEL-61889]: https://issues.redhat.com/browse/RHEL-61889
 [RHEL-62719]: https://issues.redhat.com/browse/RHEL-62719
+[RHEL-38483]: https://issues.redhat.com/browse/RHEL-38483
 
 
 ## [0.12.0a1] - 2024-06-21

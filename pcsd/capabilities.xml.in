@@ -2362,6 +2362,24 @@
          /api/v1/fencing-topology-add-level/v1
       </description>
     </capability>
+    <capability id="pcmk.stonith.levels.add-with-id" in-pcs="1" in-pcsd="1">
+      <description>
+        Add a new stonith level with an ability to set its id.
+
+        pcs commands: stonith level add
+        API v2: fencing_topology.add_level
+      </description>
+    </capability>
+    <capability id="pcmk.stonith.levels.config.output-formats" in-pcs="1" in-pcsd="1">
+      <description>
+        Display configured stonith levels in various formats.
+
+          pcs commands:
+            stonith level config --output-format=text|json|cmd
+            stonith config --output-format=text|cmd
+          API v2: fencing_topology.get_config_dto
+      </description>
+    </capability>
     <capability id="pcmk.stonith.levels.node-attr" in-pcs="1" in-pcsd="1">
       <description>
         Support specifying a target by a node attribute.

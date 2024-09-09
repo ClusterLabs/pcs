@@ -1,5 +1,6 @@
 from functools import partial
 
+import pcs.cli.resource.command as resource_cli
 from pcs import (
     resource,
     usage,
@@ -32,7 +33,7 @@ resource_cmd = create_router(
         "remove": resource.resource_remove_cmd,
         "show": resource_show,
         "status": resource.resource_status,
-        "config": resource.config,
+        "config": resource_cli.config,
         "group": create_router(
             {
                 "add": resource.resource_group_add_cmd,

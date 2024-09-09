@@ -53,12 +53,9 @@ from pcs.cli.reports.output import (
     warn,
 )
 from pcs.cli.resource.output import (
-    ResourcesConfigurationFacade,
     operation_defaults_to_cmd,
     resource_agent_metadata_to_text,
     resource_defaults_to_cmd,
-    resources_to_cmd,
-    resources_to_text,
 )
 from pcs.cli.resource.parse_args import (
     parse_bundle_create_options,
@@ -77,7 +74,6 @@ from pcs.common import (
 from pcs.common.interface import dto
 from pcs.common.pacemaker.defaults import CibDefaultsDto
 from pcs.common.pacemaker.resource.list import (
-    CibResourcesDto,
     get_all_resources_ids,
     get_stonith_resources_ids,
 )
@@ -3176,45 +3172,3 @@ def resource_bundle_update_cmd(
         force_options=modifiers.get("--force"),
         wait=modifiers.get("--wait"),
     )
-
-
-def config(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
-    config_common(lib, argv, modifiers, stonith=False)
-
-
-def config_common(
-    lib: Any, argv: Argv, modifiers: InputModifiers, stonith: bool
-) -> None:
-    """
-    Options:
-      * -f - CIB file
-      * --output-format - supported formats: text, cmd, json
-    """
-    modifiers.ensure_only_supported("-f", output_format_supported=True)
-    resources_facade = (
-        ResourcesConfigurationFacade.from_resources_dto(
-            lib.resource.get_configured_resources()
-        )
-        .filter_stonith(stonith)
-        .filter_resources(argv)
-    )
-    output_format = modifiers.get_output_format()
-    if output_format == OUTPUT_FORMAT_VALUE_CMD:
-        output = ";\n".join(
-            " \\\n".join(cmd) for cmd in resources_to_cmd(resources_facade)
-        )
-    elif output_format == OUTPUT_FORMAT_VALUE_JSON:
-        output = json.dumps(
-            dto.to_dict(
-                CibResourcesDto(
-                    primitives=resources_facade.primitives,
-                    clones=resources_facade.clones,
-                    groups=resources_facade.groups,
-                    bundles=resources_facade.bundles,
-                )
-            )
-        )
-    else:
-        output = "\n".join(smart_wrap_text(resources_to_text(resources_facade)))
-    if output:
-        print(output)

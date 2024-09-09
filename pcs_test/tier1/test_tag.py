@@ -445,12 +445,12 @@ class PcsConfigTagsTest(TestTagMixin, TestCase):
     expected_fencing_levels = outdent(
         """
         Fencing Levels:
-          Target: rh-1
-            Level 1 - fence-kdump
-            Level 2 - fence-rh-1
-          Target: rh-2
-            Level 1 - fence-kdump
-            Level 2 - fence-rh-2
+          Target (node): rh-1
+            Level 1: fence-kdump
+            Level 2: fence-rh-1
+          Target (node): rh-2
+            Level 1: fence-kdump
+            Level 2: fence-rh-2
         """
     )
     expected_tags = outdent(

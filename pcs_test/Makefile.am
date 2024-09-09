@@ -16,6 +16,7 @@ EXTRA_DIST		= \
 			  resources/cib-empty-with3nodes.xml \
 			  resources/cib-empty-withnodes.xml \
 			  resources/cib-empty.xml \
+			  resources/cib-fencing-levels.xml \
 			  resources/cib-largefile.xml \
 			  resources/cib-large.xml \
 			  resources/cib-property.xml \
@@ -116,6 +117,9 @@ EXTRA_DIST		= \
 			  tier0/cli/test_rule.py \
 			  tier0/cli/test_status.py \
 			  tier0/cli/test_stonith.py \
+			  tier0/cli/stonith/__init__.py \
+			  tier0/cli/stonith/levels/__init__.py \
+			  tier0/cli/stonith/levels/test_output.py \
 			  tier0/common/__init__.py \
 			  tier0/common/interface/__init__.py \
 			  tier0/common/interface/test_dto.py \
@@ -403,6 +407,8 @@ EXTRA_DIST		= \
 			  tier1/resource/test_config.py \
 			  tier1/resource/test_remove.py \
 			  tier1/stonith/__init__.py \
+			  tier1/stonith/levels/__init__.py \
+			  tier1/stonith/levels/test_config.py \
 			  tier1/stonith/test_config.py \
 			  tier1/stonith/test_remove.py \
 			  tier1/test_booth.py \

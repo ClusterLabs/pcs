@@ -1473,19 +1473,19 @@ class LevelTestsBase(TestCase, AssertPcsMixin):
             cib_content = cib_file.read()
         config = dedent(
             """\
-            Target: rh7-1
-              Level 1 - F1
-              Level 2 - F2
-            Target: rh7-2
-              Level 1 - F2
-              Level 2 - F1
+            Target (node): rh7-1
+              Level 1: F1
+              Level 2: F2
+            Target (node): rh7-2
+              Level 1: F2
+              Level 2: F1
             Target (regexp): rh7-\\d
-              Level 3 - F2,F1
-              Level 4 - F3
-            Target: fencewith=levels1
-              Level 5 - F3,F2
-            Target: fencewith=levels2
-              Level 6 - F3,F1
+              Level 3: F2 F1
+              Level 4: F3
+            Target (attribute): fencewith=levels1
+              Level 5: F3 F2
+            Target (attribute): fencewith=levels2
+              Level 6: F3 F1
             """
         )
         config_lines = config.splitlines()
@@ -1606,8 +1606,8 @@ class LevelAdd(LevelTestsBase):
             "stonith level".split(),
             dedent(
                 """\
-                Target: rh7-1
-                  Level 2 - F1
+                Target (node): rh7-1
+                  Level 2: F1
                 """
             ),
         )
@@ -1619,8 +1619,8 @@ class LevelAdd(LevelTestsBase):
             "stonith level".split(),
             dedent(
                 """\
-                Target: rh7-1
-                  Level 1 - F1
+                Target (node): rh7-1
+                  Level 1: F1
                 """
             ),
         )
@@ -1636,8 +1636,8 @@ class LevelAdd(LevelTestsBase):
             "stonith level".split(),
             dedent(
                 """\
-                Target: rh7-1
-                  Level 1 - F1
+                Target (node): rh7-1
+                  Level 1: F1
                 """
             ),
         )
@@ -1650,7 +1650,7 @@ class LevelAdd(LevelTestsBase):
             dedent(
                 """\
                 Target (regexp): rh7-\\d
-                  Level 1 - F1
+                  Level 1: F1
                 """
             ),
         )
@@ -1667,7 +1667,7 @@ class LevelAdd(LevelTestsBase):
             dedent(
                 """\
                 Target (regexp): rh7-\\d
-                  Level 1 - F1
+                  Level 1: F1
                 """
             ),
         )
@@ -1681,8 +1681,8 @@ class LevelAdd(LevelTestsBase):
             "stonith level".split(),
             dedent(
                 """\
-                Target: fencewith=levels
-                  Level 1 - F1
+                Target (attribute): fencewith=levels
+                  Level 1: F1
                 """
             ),
         )
@@ -1698,8 +1698,8 @@ class LevelAdd(LevelTestsBase):
             "stonith level".split(),
             dedent(
                 """\
-                Target: fencewith=levels
-                  Level 1 - F1
+                Target (attribute): fencewith=levels
+                  Level 1: F1
                 """
             ),
         )
@@ -1712,8 +1712,8 @@ class LevelAdd(LevelTestsBase):
             "stonith level".split(),
             dedent(
                 """\
-                Target: rh7-1
-                  Level 1 - F1,F2
+                Target (node): rh7-1
+                  Level 1: F1 F2
                 """
             ),
         )
@@ -1768,8 +1768,8 @@ class LevelAdd(LevelTestsBase):
             "stonith level".split(),
             dedent(
                 """\
-                Target: rh7-X
-                  Level 1 - F1
+                Target (node): rh7-X
+                  Level 1: F1
                 """
             ),
         )
@@ -1790,8 +1790,8 @@ class LevelAdd(LevelTestsBase):
             "stonith level".split(),
             dedent(
                 """\
-                Target: rh7-1
-                  Level 1 - F1
+                Target (node): rh7-1
+                  Level 1: F1
                 """
             ),
         )
@@ -1813,8 +1813,8 @@ class LevelAdd(LevelTestsBase):
             "stonith level".split(),
             dedent(
                 """\
-                Target: rh7-1
-                  Level 1 - F1,F2,F3
+                Target (node): rh7-1
+                  Level 1: F1 F2 F3
                 """
             ),
         )

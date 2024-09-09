@@ -1,11 +1,13 @@
 import shlex
 from collections import defaultdict
-from typing import (
+from collections.abc import (
     Container,
+    Sequence,
+)
+from typing import (
     Dict,
     List,
     Optional,
-    Sequence,
     Tuple,
     Union,
 )
