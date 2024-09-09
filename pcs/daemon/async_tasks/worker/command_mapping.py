@@ -188,6 +188,10 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
         cmd=fencing_topology.add_level,
         required_permission=p.WRITE,
     ),
+    "fencing_topology.get_config_dto": _Cmd(
+        cmd=fencing_topology.get_config_dto,
+        required_permission=p.READ,
+    ),
     "fencing_topology.remove_all_levels": _Cmd(
         cmd=fencing_topology.remove_all_levels,
         required_permission=p.WRITE,

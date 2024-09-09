@@ -17,7 +17,11 @@ from typing import (
 )
 
 from pcs.common import file_type_codes
-from pcs.common.fencing_topology import TARGET_TYPE_ATTRIBUTE
+from pcs.common.fencing_topology import (
+    TARGET_TYPE_ATTRIBUTE,
+    FencingTargetType,
+    FencingTargetValue,
+)
 from pcs.common.file import (
     FileAction,
     RawFileError,
@@ -90,11 +94,13 @@ def _resource_move_ban_pcmk_success(stdout: str, stderr: str) -> str:
 
 
 def _format_fencing_level_target(
-    target_type: Optional[str], target_value: Any
+    target_type: FencingTargetType,
+    target_value: FencingTargetValue,
 ) -> str:
     if target_type == TARGET_TYPE_ATTRIBUTE:
         return f"{target_value[0]}={target_value[1]}"
-    return target_value
+    # Other target types guarantee values to be only strings
+    return str(target_value)
 
 
 def _format_booth_default(value: Optional[str], template: str) -> str:
@@ -5082,9 +5088,9 @@ class CibFencingLevelAlreadyExists(ReportItemMessage):
     """
 
     level: str
-    target_type: str
-    target_value: Optional[Tuple[str, str]]
-    devices: List[str]
+    target_type: FencingTargetType
+    target_value: FencingTargetValue
+    devices: list[str]
     _code = codes.CIB_FENCING_LEVEL_ALREADY_EXISTS
 
     @property
@@ -5108,9 +5114,9 @@ class CibFencingLevelDoesNotExist(ReportItemMessage):
     """
 
     level: str = ""
-    target_type: Optional[str] = None
-    target_value: Optional[Tuple[str, str]] = None
-    devices: List[str] = field(default_factory=list)
+    target_type: Optional[FencingTargetType] = None
+    target_value: Optional[FencingTargetValue] = None
+    devices: list[str] = field(default_factory=list)
     _code = codes.CIB_FENCING_LEVEL_DOES_NOT_EXIST
 
     @property

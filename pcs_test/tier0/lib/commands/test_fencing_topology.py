@@ -10,6 +10,10 @@ from pcs.common.fencing_topology import (
     TARGET_TYPE_NODE,
     TARGET_TYPE_REGEXP,
 )
+from pcs.common.pacemaker.fencing_topology import (
+    CibFencingLevelNodeDto,
+    CibFencingTopologyDto,
+)
 from pcs.common.reports import codes as report_codes
 from pcs.lib.commands import fencing_topology as lib
 from pcs.lib.env import LibraryEnvironment
@@ -29,8 +33,6 @@ patch_command = create_patcher("pcs.lib.commands.fencing_topology")
 
 
 @patch_command("cib_fencing_topology.add_level")
-@patch_command("get_resources")
-@patch_command("get_fencing_topology")
 @patch_env("push_cib")
 @patch_command("ClusterState")
 @patch_env("get_cluster_state")
@@ -41,8 +43,6 @@ class AddLevel(TestCase):
         mock_get_cib,
         mock_status_dom,
         mock_status,
-        mock_get_topology,
-        mock_get_resources,
     ):
         # pylint: disable=no-self-use
         mock_get_cib.return_value = "mocked cib"
@@ -50,22 +50,16 @@ class AddLevel(TestCase):
         mock_status.return_value = mock.MagicMock(
             node_section=mock.MagicMock(nodes="nodes")
         )
-        mock_get_topology.return_value = "topology el"
-        mock_get_resources.return_value = "resources_el"
 
     def assert_mocks(
         self,
         mock_status_dom,
         mock_status,
-        mock_get_topology,
-        mock_get_resources,
         mock_push_cib,
     ):
         # pylint: disable=no-self-use
         mock_status_dom.assert_called_once_with()
         mock_status.assert_called_once_with("mock get_cluster_status_dom")
-        mock_get_topology.assert_called_once_with("mocked cib")
-        mock_get_resources.assert_called_once_with("mocked cib")
         mock_push_cib.assert_called_once_with()
 
     def test_success(
@@ -74,38 +68,34 @@ class AddLevel(TestCase):
         mock_status_dom,
         mock_status,
         mock_push_cib,
-        mock_get_topology,
-        mock_get_resources,
         mock_add_level,
     ):
         self.prepare_mocks(
             mock_get_cib,
             mock_status_dom,
             mock_status,
-            mock_get_topology,
-            mock_get_resources,
         )
         lib_env = create_lib_env()
-
         lib.add_level(
             lib_env,
             "level",
             "target type",
             "target value",
             "devices",
+            "level id",
             "force device",
             "force node",
         )
 
         mock_add_level.assert_called_once_with(
             lib_env.report_processor,
-            "topology el",
-            "resources_el",
+            "mocked cib",
             "level",
             "target type",
             "target value",
             "devices",
             "nodes",
+            "level id",
             "force device",
             "force node",
         )
@@ -113,8 +103,6 @@ class AddLevel(TestCase):
         self.assert_mocks(
             mock_status_dom,
             mock_status,
-            mock_get_topology,
-            mock_get_resources,
             mock_push_cib,
         )
 
@@ -124,16 +112,12 @@ class AddLevel(TestCase):
         mock_status_dom,
         mock_status,
         mock_push_cib,
-        mock_get_topology,
-        mock_get_resources,
         mock_add_level,
     ):
         self.prepare_mocks(
             mock_get_cib,
             mock_status_dom,
             mock_status,
-            mock_get_topology,
-            mock_get_resources,
         )
         lib_env = create_lib_env()
 
@@ -143,19 +127,20 @@ class AddLevel(TestCase):
             TARGET_TYPE_ATTRIBUTE,
             "target value",
             "devices",
+            "level id",
             "force device",
             "force node",
         )
 
         mock_add_level.assert_called_once_with(
             lib_env.report_processor,
-            "topology el",
-            "resources_el",
+            "mocked cib",
             "level",
             TARGET_TYPE_ATTRIBUTE,
             "target value",
             "devices",
             "nodes",
+            "level id",
             "force device",
             "force node",
         )
@@ -163,8 +148,6 @@ class AddLevel(TestCase):
         self.assert_mocks(
             mock_status_dom,
             mock_status,
-            mock_get_topology,
-            mock_get_resources,
             mock_push_cib,
         )
 
@@ -174,16 +157,12 @@ class AddLevel(TestCase):
         mock_status_dom,
         mock_status,
         mock_push_cib,
-        mock_get_topology,
-        mock_get_resources,
         mock_add_level,
     ):
         self.prepare_mocks(
             mock_get_cib,
             mock_status_dom,
             mock_status,
-            mock_get_topology,
-            mock_get_resources,
         )
         lib_env = create_lib_env()
 
@@ -193,19 +172,20 @@ class AddLevel(TestCase):
             TARGET_TYPE_REGEXP,
             "target value",
             "devices",
+            "level id",
             "force device",
             "force node",
         )
 
         mock_add_level.assert_called_once_with(
             lib_env.report_processor,
-            "topology el",
-            "resources_el",
+            "mocked cib",
             "level",
             TARGET_TYPE_REGEXP,
             "target value",
             "devices",
             "nodes",
+            "level id",
             "force device",
             "force node",
         )
@@ -213,8 +193,6 @@ class AddLevel(TestCase):
         self.assert_mocks(
             mock_status_dom,
             mock_status,
-            mock_get_topology,
-            mock_get_resources,
             mock_push_cib,
         )
 
@@ -454,8 +432,6 @@ class RemoveLevelsByParams(TestCase):
 
 
 @patch_command("cib_fencing_topology.verify")
-@patch_command("get_resources")
-@patch_command("get_fencing_topology")
 @patch_env("push_cib")
 @patch_command("ClusterState")
 @patch_env("get_cluster_state")
@@ -466,8 +442,6 @@ class Verify(TestCase):
         mock_status_dom,
         mock_status,
         mock_push_cib,
-        mock_get_topology,
-        mock_get_resources,
         mock_verify,
     ):
         # pylint: disable=no-self-use
@@ -475,17 +449,51 @@ class Verify(TestCase):
         mock_status.return_value = mock.MagicMock(
             node_section=mock.MagicMock(nodes="nodes")
         )
-        mock_get_topology.return_value = "topology el"
-        mock_get_resources.return_value = "resources_el"
         lib_env = create_lib_env()
 
         lib.verify(lib_env)
 
-        mock_verify.assert_called_once_with(
-            "topology el", "resources_el", "nodes"
-        )
+        mock_verify.assert_called_once_with("mocked cib", "nodes")
         mock_status_dom.assert_called_once_with()
         mock_status.assert_called_once_with("mock get_cluster_status_dom")
-        mock_get_topology.assert_called_once_with("mocked cib")
-        mock_get_resources.assert_called_once_with("mocked cib")
         mock_push_cib.assert_not_called()
+
+
+class GetConfigDto(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+
+    def test_success_no_levels(self):
+        self.config.runner.cib.load()
+        self.assertEqual(
+            lib.get_config_dto(self.env_assist.get_env()),
+            CibFencingTopologyDto(
+                target_node=[], target_regex=[], target_attribute=[]
+            ),
+        )
+
+    def test_success(self):
+        self.config.runner.cib.load(
+            optional_in_conf="""
+                <fencing-topology>
+                    <fencing-level
+                        id="fl1" index="1" devices="dev1,dev2" target="node1"
+                    />
+                </fencing-topology>
+            """
+        )
+        self.assertEqual(
+            lib.get_config_dto(self.env_assist.get_env()),
+            CibFencingTopologyDto(
+                target_node=[
+                    CibFencingLevelNodeDto(
+                        id="fl1",
+                        target="node1",
+                        index=1,
+                        devices=["dev1", "dev2"],
+                    )
+                ],
+                target_regex=[],
+                target_attribute=[],
+            ),
+        )

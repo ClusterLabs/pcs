@@ -1,3 +1,5 @@
+import pcs.cli.stonith.command as stonith_cli
+import pcs.cli.stonith.levels.command as levels_cli
 from pcs import (
     resource,
     stonith,
@@ -15,7 +17,7 @@ stonith_cmd = create_router(
         "help": lambda lib, argv, modifiers: print(usage.stonith(argv)),
         "list": stonith.stonith_list_available,
         "describe": stonith.stonith_list_options,
-        "config": stonith.config_cmd,
+        "config": stonith_cli.config,
         "create": stonith.stonith_create,
         "update": stonith.update_cmd,
         "update-scsi-devices": stonith.stonith_update_scsi_devices,
@@ -42,7 +44,7 @@ stonith_cmd = create_router(
             {
                 "add": stonith.stonith_level_add_cmd,
                 "clear": stonith.stonith_level_clear_cmd,
-                "config": stonith.stonith_level_config_cmd,
+                "config": levels_cli.config,
                 "remove": stonith.stonith_level_remove_cmd,
                 "delete": stonith.stonith_level_remove_cmd,
                 "verify": stonith.stonith_level_verify_cmd,

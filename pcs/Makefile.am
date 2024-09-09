@@ -75,6 +75,7 @@ EXTRA_DIST		= \
 			  cli/reports/preprocessor.py \
 			  cli/reports/processor.py \
 			  cli/resource/__init__.py \
+			  cli/resource/command.py \
 			  cli/resource/parse_args.py \
 			  cli/resource/output.py \
 			  cli/resource/relations.py \
@@ -102,6 +103,11 @@ EXTRA_DIST		= \
 			  cli/rule.py \
 			  cli/status/command.py \
 			  cli/status/__init__.py \
+			  cli/stonith/__init__.py \
+			  cli/stonith/command.py \
+			  cli/stonith/levels/__init__.py \
+			  cli/stonith/levels/command.py \
+			  cli/stonith/levels/output.py \
 			  cli/tag/__init__.py \
 			  cli/tag/command.py \
 			  cli/tag/output.py \
@@ -135,6 +141,7 @@ EXTRA_DIST		= \
 			  common/pacemaker/constraint/set.py \
 			  common/pacemaker/constraint/ticket.py \
 			  common/pacemaker/defaults.py \
+			  common/pacemaker/fencing_topology.py \
 			  common/pacemaker/nvset.py \
 			  common/pacemaker/resource/__init__.py \
 			  common/pacemaker/resource/bundle.py \

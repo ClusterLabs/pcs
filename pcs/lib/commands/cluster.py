@@ -45,10 +45,6 @@ from pcs.lib.booth import sync as booth_sync
 from pcs.lib.cib import fencing_topology
 from pcs.lib.cib.resource.guest_node import find_node_list as get_guest_nodes
 from pcs.lib.cib.resource.remote_node import find_node_list as get_remote_nodes
-from pcs.lib.cib.tools import (
-    get_fencing_topology,
-    get_resources,
-)
 from pcs.lib.communication import cluster
 from pcs.lib.communication.corosync import (
     CheckCorosyncOffline,
@@ -179,8 +175,7 @@ def verify(env: LibraryEnvironment, verbose=False):
     cib = get_cib(cib_xml)
     env.report_processor.report_list(
         fencing_topology.verify(
-            get_fencing_topology(cib),
-            get_resources(cib),
+            cib,
             ClusterState(env.get_cluster_state()).node_section.nodes,
         )
     )

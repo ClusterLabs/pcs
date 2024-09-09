@@ -21,7 +21,6 @@ from pcs import (
     quorum,
     settings,
     status,
-    stonith,
     usage,
     utils,
 )
@@ -46,6 +45,7 @@ from pcs.cli.resource.output import (
     ResourcesConfigurationFacade,
     resources_to_text,
 )
+from pcs.cli.stonith.levels.output import stonith_level_config_to_text
 from pcs.cli.tag.output import tags_to_text
 from pcs.common.interface import dto
 from pcs.common.pacemaker.constraint import CibConstraintsDto
@@ -152,8 +152,8 @@ def _config_show_cib_lines(lib, properties_facade=None):
         all_lines.append("Stonith Devices:")
         all_lines.extend(stonith_lines)
 
-    levels_lines = stonith.stonith_level_config_to_str(
-        lib.fencing_topology.get_config()
+    levels_lines = stonith_level_config_to_text(
+        lib.fencing_topology.get_config_dto()
     )
     if levels_lines:
         if all_lines:

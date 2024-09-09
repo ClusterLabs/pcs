@@ -284,6 +284,7 @@ def load_module(env, middleware_factory, name):
             {
                 "add_level": fencing_topology.add_level,
                 "get_config": fencing_topology.get_config,
+                "get_config_dto": fencing_topology.get_config_dto,
                 "remove_all_levels": fencing_topology.remove_all_levels,
                 "remove_levels_by_params": (
                     fencing_topology.remove_levels_by_params

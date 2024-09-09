@@ -36,18 +36,6 @@ from . import (
 )
 
 
-# TODO replace by the new finding function
-def is_stonith_resource(resources_el, name):
-    return (
-        len(
-            resources_el.xpath(
-                "primitive[@id=$id and @class='stonith']", id=name
-            )
-        )
-        > 0
-    )
-
-
 def is_stonith(resource_el: _Element):
     return (
         resource_el.tag == TAG_RESOURCE_PRIMITIVE

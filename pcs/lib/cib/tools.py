@@ -447,7 +447,7 @@ def get_crm_config(tree: _Element) -> _Element:
     return sections.get(tree, sections.CRM_CONFIG)
 
 
-def get_fencing_topology(tree):
+def get_fencing_topology(tree: _Element) -> _Element:
     """
     Return the 'fencing-topology' element from the tree
     tree -- cib etree node

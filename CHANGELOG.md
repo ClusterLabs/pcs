@@ -11,6 +11,8 @@
 - Add lib command `status.full_cluster_status_plaintext` to API v1
   ([RHEL-61738])
 - Lib command `cib.remove_elements` can now remove resources
+- Support for exporting stonith levels in `json` and `cmd` formats in commands
+  `pcs stonith config` and `pcs stonith level config` commands ([RHEL-16232])
 
 ### Changed
 - Commands `pcs resource delete | remove` and `pcs stonith delete | remove`
@@ -43,6 +45,7 @@
 [RHEL-61738]: https://issues.redhat.com/browse/RHEL-61738
 [RHEL-61901]: https://issues.redhat.com/browse/RHEL-61901
 [features planned to be removed in pacemaker 3]: https://projects.clusterlabs.org/w/projects/pacemaker/pacemaker_3.0_changes/pacemaker_3.0_configuration_changes/
+[RHEL-16232]: https://issues.redhat.com/browse/RHEL-16232
 
 
 ## [0.11.8] - 2024-07-09

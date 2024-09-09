@@ -22,17 +22,16 @@ from pcs.cli.reports.output import (
     deprecation_warning,
     error,
     print_to_stderr,
-    warn,
 )
 from pcs.cli.resource.output import resource_agent_metadata_to_text
 from pcs.cli.resource.parse_args import (
     parse_primitive as parse_primitive_resource,
 )
+from pcs.cli.stonith.levels.output import stonith_level_config_to_text
 from pcs.common import reports
 from pcs.common.fencing_topology import (
     TARGET_TYPE_ATTRIBUTE,
     TARGET_TYPE_NODE,
-    TARGET_TYPE_REGEXP,
 )
 from pcs.common.pacemaker.resource.list import (
     get_all_resources_ids,
@@ -61,10 +60,10 @@ def stonith_status_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
 
 
 def _print_stonith_levels(lib: Any) -> None:
-    levels = stonith_level_config_to_str(lib.fencing_topology.get_config())
-    if levels:
+    lines = stonith_level_config_to_text(lib.fencing_topology.get_config_dto())
+    if lines:
         print("\nFencing Levels:")
-        print("\n".join(indent(levels, 1)))
+        print("\n".join(indent(lines)))
 
 
 def stonith_list_available(
@@ -317,14 +316,24 @@ def stonith_level_add_cmd(
     modifiers.ensure_only_supported("-f", "--force")
     if len(argv) < 3:
         raise CmdLineInputError()
+    # KeyValueParser supports only key value arguments, so we will only filter
+    # out those by looking for "=" to also include mistyped or missing keys
+    kvpairs = [arg for arg in argv[2:] if "=" in arg]
+    for kvpair in kvpairs:
+        argv.remove(kvpair)
+    parser = KeyValueParser(kvpairs)
+    parser.check_allowed_keys(["id"])
+    level_id = parser.get_unique().get("id")
     target_type, target_value = _stonith_level_parse_node(argv[1])
     stonith_devices = _stonith_level_normalize_devices(argv[2:])
     _check_is_stonith(lib, stonith_devices)
+
     lib.fencing_topology.add_level(
         argv[0],
         target_type,
         target_value,
         stonith_devices,
+        level_id=level_id,
         force_device=modifiers.get("--force"),
         force_node=modifiers.get("--force"),
     )
@@ -402,68 +411,6 @@ def stonith_level_clear_cmd(
             was_error = True
     if was_error:
         raise LibraryError()
-
-
-def stonith_level_config_to_str(config):
-    """
-    Commandline option: no options
-    """
-    config_data = {}
-    for level in config:
-        if level["target_type"] not in config_data:
-            config_data[level["target_type"]] = {}
-        if level["target_value"] not in config_data[level["target_type"]]:
-            config_data[level["target_type"]][level["target_value"]] = []
-        config_data[level["target_type"]][level["target_value"]].append(level)
-
-    lines = []
-    for target_type in [
-        TARGET_TYPE_NODE,
-        TARGET_TYPE_REGEXP,
-        TARGET_TYPE_ATTRIBUTE,
-    ]:
-        if not target_type in config_data:
-            continue
-        for target_value in sorted(config_data[target_type].keys()):
-            lines.append(
-                "Target{0}: {1}".format(
-                    " (regexp)" if target_type == TARGET_TYPE_REGEXP else "",
-                    (
-                        "=".join(target_value)
-                        if target_type == TARGET_TYPE_ATTRIBUTE
-                        else target_value
-                    ),
-                )
-            )
-            level_lines = []
-            for target_level in sorted(
-                config_data[target_type][target_value],
-                key=lambda level: level["level"],
-            ):
-                level_lines.append(
-                    "Level {level} - {devices}".format(
-                        level=target_level["level"],
-                        devices=",".join(target_level["devices"]),
-                    )
-                )
-            lines.extend(indent(level_lines))
-    return lines
-
-
-def stonith_level_config_cmd(
-    lib: Any, argv: Argv, modifiers: InputModifiers
-) -> None:
-    """
-    Options:
-      * -f - CIB file
-    """
-    modifiers.ensure_only_supported("-f")
-    if argv:
-        raise CmdLineInputError()
-    lines = stonith_level_config_to_str(lib.fencing_topology.get_config())
-    # do not print \n when lines are empty
-    if lines:
-        print("\n".join(lines))
 
 
 def stonith_level_remove_cmd(
@@ -1116,17 +1063,3 @@ def meta_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
         raise CmdLineInputError()
     _check_is_stonith(lib, [argv[0]], "pcs resource meta")
     resource.resource_meta(argv, modifiers)
-
-
-def config_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
-    is_text_format = (
-        modifiers.get_output_format() == parse_args.OUTPUT_FORMAT_VALUE_TEXT
-    )
-    if not is_text_format:
-        warn(
-            f"Only '{parse_args.OUTPUT_FORMAT_VALUE_TEXT}' output format is "
-            "supported for stonith levels"
-        )
-    resource.config_common(lib, argv, modifiers, stonith=True)
-    if is_text_format:
-        _print_stonith_levels(lib)

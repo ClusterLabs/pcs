@@ -563,12 +563,12 @@ class StonithStatus(ResourceStonithStatusBase, TestCase):
           * fence-kdump	(stonith:fence_pcsmock_minimal):	 Stopped
 
         Fencing Levels:
-         Target: rh-1
-           Level 1 - fence-kdump
-           Level 2 - fence-rh-1
-         Target: rh-2
-           Level 1 - fence-kdump
-           Level 2 - fence-rh-2
+          Target (node): rh-1
+            Level 1: fence-kdump
+            Level 2: fence-rh-1
+          Target (node): rh-2
+            Level 1: fence-kdump
+            Level 2: fence-rh-2
         """
     )
     active_resources_output = outdent(
@@ -576,12 +576,12 @@ class StonithStatus(ResourceStonithStatusBase, TestCase):
           * fence-rh-1	(stonith:fence_pcsmock_minimal):	 Started rh-1
 
         Fencing Levels:
-         Target: rh-1
-           Level 1 - fence-kdump
-           Level 2 - fence-rh-1
-         Target: rh-2
-           Level 1 - fence-kdump
-           Level 2 - fence-rh-2
+          Target (node): rh-1
+            Level 1: fence-kdump
+            Level 2: fence-rh-1
+          Target (node): rh-2
+            Level 1: fence-kdump
+            Level 2: fence-rh-2
         """
     )
     active_resources_output_node = outdent(

@@ -12,6 +12,12 @@ from pcs.common.fencing_topology import (
     TARGET_TYPE_NODE,
     TARGET_TYPE_REGEXP,
 )
+from pcs.common.pacemaker.fencing_topology import (
+    CibFencingLevelAttributeDto,
+    CibFencingLevelNodeDto,
+    CibFencingLevelRegexDto,
+    CibFencingTopologyDto,
+)
 from pcs.common.reports import ReportItemSeverity as severity
 from pcs.common.reports import codes as report_codes
 from pcs.common.reports.item import ReportItem
@@ -54,6 +60,7 @@ class CibMixin:
         return etree.fromstring(
             """
             <cib><configuration>
+            <resources />
             <fencing-topology>
                 <fencing-level
                     id="fl1" index="1" devices="d1,d2" target="nodeA"
@@ -112,6 +119,8 @@ class StatusNodesMixin:
         ).node_section.nodes
 
 
+@patch_lib("IdProvider", autospec=True)
+@patch_lib("get_fencing_topology")
 @patch_lib("_append_level_element")
 @patch_lib("_validate_level_target_devices_does_not_exist", return_value=[])
 @patch_lib("_validate_devices", return_value=[])
@@ -121,12 +130,14 @@ class AddLevel(TestCase):
     # pylint: disable=too-many-instance-attributes
     def setUp(self):
         self.reporter = MockLibraryReportProcessor()
+        self.cib = "cib"
         self.topology_el = "a topology element"
         self.resources_el = "a resources element"
         self.level = "a level"
         self.target_type = "a target type"
         self.target_value = "a target value"
         self.devices = ["device1", "device2"]
+        self.level_id = None
         self.cluster_status_nodes = "a status"
         self.force_device = "a force for a device"
         self.force_node = "a force for a node"
@@ -137,8 +148,10 @@ class AddLevel(TestCase):
         mock_val_target,
         mock_val_devices,
         mock_val_dupl,
+        mock_id_provider,
         dupl_called=True,
     ):
+        mock_id_provider.assert_called_once()
         mock_val_level.assert_called_once_with(self.level)
         mock_val_target.assert_called_once_with(
             self.cluster_status_nodes,
@@ -147,7 +160,7 @@ class AddLevel(TestCase):
             self.force_node,
         )
         mock_val_devices.assert_called_once_with(
-            self.resources_el, self.devices, self.force_device
+            self.cib, self.devices, self.force_device
         )
         if dupl_called:
             mock_val_dupl.assert_called_once_with(
@@ -167,20 +180,22 @@ class AddLevel(TestCase):
         mock_val_devices,
         mock_val_dupl,
         mock_append,
+        mock_id_provider,
         dupl_called=True,
         report_list=None,
     ):
+        # pylint: disable=too-many-arguments
         report_list = report_list or []
         with self.assertRaises(LibraryError):
             lib.add_level(
                 self.reporter,
-                self.topology_el,
-                self.resources_el,
+                self.cib,
                 self.level,
                 self.target_type,
                 self.target_value,
                 self.devices,
                 self.cluster_status_nodes,
+                self.level_id,
                 self.force_device,
                 self.force_node,
             )
@@ -192,6 +207,7 @@ class AddLevel(TestCase):
             mock_val_target,
             mock_val_devices,
             mock_val_dupl,
+            mock_id_provider,
             dupl_called,
         )
         mock_append.assert_not_called()
@@ -203,22 +219,37 @@ class AddLevel(TestCase):
         mock_val_devices,
         mock_val_dupl,
         mock_append,
+        mock_topology,
+        mock_id_provider,
     ):
-        self.level = 1
+        self.level_id = "level_id"
+        mock_generate_id = mock.patch(
+            "pcs.lib.cib.fencing_topology._generate_level_id",
+            return_value=self.level_id,
+        ).start()
+        self.addCleanup(mock_generate_id.stop)
+
+        mock_topology.return_value = self.topology_el
+
+        self.level = "1"
         lib.add_level(
             self.reporter,
-            self.topology_el,
-            self.resources_el,
+            self.cib,
             self.level,
             self.target_type,
             self.target_value,
             self.devices,
             self.cluster_status_nodes,
-            self.force_device,
-            self.force_node,
+            force_device=self.force_device,
+            force_node=self.force_node,
         )
+        mock_id_provider.assert_called_once_with(self.cib)
         self.assert_validators_called(
-            mock_val_level, mock_val_target, mock_val_devices, mock_val_dupl
+            mock_val_level,
+            mock_val_target,
+            mock_val_devices,
+            mock_val_dupl,
+            mock_id_provider,
         )
         mock_append.assert_called_once_with(
             self.topology_el,
@@ -226,6 +257,54 @@ class AddLevel(TestCase):
             self.target_type,
             self.target_value,
             self.devices,
+            self.level_id,
+        )
+
+    def test_custom_id(
+        self,
+        mock_val_level,
+        mock_val_target,
+        mock_val_devices,
+        mock_val_dupl,
+        mock_append,
+        mock_topology,
+        mock_id_provider,
+    ):
+        mock_topology.return_value = self.topology_el
+        self.level_id = "level_id"
+        self.level = "1"
+        lib.add_level(
+            self.reporter,
+            self.cib,
+            self.level,
+            self.target_type,
+            self.target_value,
+            self.devices,
+            self.cluster_status_nodes,
+            level_id=self.level_id,
+            force_device=self.force_device,
+            force_node=self.force_node,
+        )
+        mock_id_provider.assert_has_calls(
+            [
+                mock.call("cib"),
+                mock.call().book_ids(self.level_id),
+            ]
+        )
+        self.assert_validators_called(
+            mock_val_level,
+            mock_val_target,
+            mock_val_devices,
+            mock_val_dupl,
+            mock_id_provider,
+        )
+        mock_append.assert_called_once_with(
+            self.topology_el,
+            self.level,
+            self.target_type,
+            self.target_value,
+            self.devices,
+            self.level_id,
         )
 
     def test_invalid_level(
@@ -235,7 +314,10 @@ class AddLevel(TestCase):
         mock_val_devices,
         mock_val_dupl,
         mock_append,
+        mock_topology,
+        mock_id_provider,
     ):
+        mock_topology.return_value = self.topology_el
         mock_val_level.return_value = [
             reports.item.ReportItem.error(
                 reports.messages.InvalidOptionValue("level", self.level, "1..9")
@@ -257,6 +339,7 @@ class AddLevel(TestCase):
             mock_val_devices,
             mock_val_dupl,
             mock_append,
+            mock_id_provider,
             dupl_called=False,
             report_list=report_list,
         )
@@ -268,7 +351,10 @@ class AddLevel(TestCase):
         mock_val_devices,
         mock_val_dupl,
         mock_append,
+        mock_topology,
+        mock_id_provider,
     ):
+        mock_topology.return_value = self.topology_el
         mock_val_target.return_value = [
             ReportItem.error(reports.messages.NodeNotFound(self.target_value))
         ]
@@ -285,6 +371,7 @@ class AddLevel(TestCase):
             mock_val_devices,
             mock_val_dupl,
             mock_append,
+            mock_id_provider,
             dupl_called=False,
             report_list=report_list,
         )
@@ -296,7 +383,10 @@ class AddLevel(TestCase):
         mock_val_devices,
         mock_val_dupl,
         mock_append,
+        mock_topology,
+        mock_id_provider,
     ):
+        mock_topology.return_value = self.topology_el
         mock_val_devices.return_value = [
             ReportItem.error(
                 reports.messages.StonithResourcesDoNotExist(self.devices)
@@ -314,6 +404,7 @@ class AddLevel(TestCase):
             mock_val_devices,
             mock_val_dupl,
             mock_append,
+            mock_id_provider,
             dupl_called=False,
             report_list=report_list,
         )
@@ -325,7 +416,10 @@ class AddLevel(TestCase):
         mock_val_devices,
         mock_val_dupl,
         mock_append,
+        mock_topology,
+        mock_id_provider,
     ):
+        mock_topology.return_value = self.topology_el
         mock_val_dupl.return_value = [
             reports.item.ReportItem.error(
                 reports.messages.CibFencingLevelAlreadyExists(
@@ -351,6 +445,7 @@ class AddLevel(TestCase):
             mock_val_devices,
             mock_val_dupl,
             mock_append,
+            mock_id_provider,
             dupl_called=True,
             report_list=report_list,
         )
@@ -486,7 +581,7 @@ class RemoveLevelsByParams(TestCase, CibMixin):
 
     def test_no_such_level(self):
         report_list = lib.remove_levels_by_params(
-            self.tree, 9, TARGET_TYPE_NODE, "nodeB", ["d3"]
+            self.tree, "9", TARGET_TYPE_NODE, "nodeB", ["d3"]
         )
         assert_report_item_list_equal(
             report_list,
@@ -500,7 +595,7 @@ class RemoveLevelsByParams(TestCase, CibMixin):
                         ],
                         "target_type": TARGET_TYPE_NODE,
                         "target_value": "nodeB",
-                        "level": 9,
+                        "level": "9",
                     },
                     None,
                 ),
@@ -524,7 +619,7 @@ class RemoveLevelsByParams(TestCase, CibMixin):
 
     def test_no_such_level_ignore_missing(self):
         report_list = lib.remove_levels_by_params(
-            self.tree, 9, TARGET_TYPE_NODE, "nodeB", ["d3"], True
+            self.tree, "9", TARGET_TYPE_NODE, "nodeB", ["d3"], True
         )
         assert_report_item_list_equal(report_list, [])
         self.assertEqual(
@@ -748,11 +843,8 @@ class Verify(TestCase, CibMixin, StatusNodesMixin):
         rc("pcmk_api_rng/api-result.rng"),
     )
     def test_empty(self):
-        resources = etree.fromstring("<resources />")
-        topology = etree.fromstring("<fencing-topology />")
-
-        report_list = lib.verify(topology, resources, self.get_status())
-
+        self.cib.find("configuration/fencing-topology").clear()
+        report_list = lib.verify(self.cib, self.get_status())
         assert_report_item_list_equal(report_list, [])
 
     @mock.patch.object(
@@ -761,18 +853,16 @@ class Verify(TestCase, CibMixin, StatusNodesMixin):
         rc("pcmk_api_rng/api-result.rng"),
     )
     def test_success(self):
-        resources = etree.fromstring("<resources />")
+        resources = self.cib.find("configuration/resources")
         for name in ["d1", "d2", "d3", "d4", "d5", "dR", "dR-special"]:
             self.fixture_resource(resources, name)
 
-        report_list = lib.verify(self.tree, resources, self.get_status())
+        report_list = lib.verify(self.cib, self.get_status())
 
         assert_report_item_list_equal(report_list, [])
 
     def test_failures(self):
-        resources = etree.fromstring("<resources />")
-
-        report_list = lib.verify(self.tree, resources, [])
+        report_list = lib.verify(self.cib, [])
 
         report = [
             (
@@ -831,7 +921,7 @@ class ValidateLevel(TestCase):
                     [
                         fixture.error(
                             report_codes.INVALID_OPTION_VALUE,
-                            option_value=level,
+                            option_value=str(level),
                             option_name="level",
                             allowed_values="1..9",
                             cannot_be_empty=False,
@@ -1123,7 +1213,7 @@ class AppendLevelElement(TestCase):
 
     def test_node_name(self):
         lib._append_level_element(
-            self.tree, 1, TARGET_TYPE_NODE, "node1", ["d1"]
+            self.tree, "1", TARGET_TYPE_NODE, "node1", ["d1"], "fl-node1-1"
         )
         assert_xml_equal(
             """
@@ -1139,7 +1229,12 @@ class AppendLevelElement(TestCase):
 
     def test_node_pattern(self):
         lib._append_level_element(
-            self.tree, "2", TARGET_TYPE_REGEXP, r"node-\d+", ["d1", "d2"]
+            self.tree,
+            "2",
+            TARGET_TYPE_REGEXP,
+            r"node-\d+",
+            ["d1", "d2"],
+            "fl-node-d-2",
         )
         assert_xml_equal(
             """
@@ -1156,10 +1251,11 @@ class AppendLevelElement(TestCase):
     def test_node_attribute(self):
         lib._append_level_element(
             self.tree,
-            3,
+            "3",
             TARGET_TYPE_ATTRIBUTE,
             ("name%@x", "val%@x"),
             ["d1"],
+            "fl-namex-3",
         )
         assert_xml_equal(
             """
@@ -1279,4 +1375,83 @@ class FindLevelElements(TestCase, CibMixin):
                 )
             ),
             ["fl4"],
+        )
+
+
+class FencingTopologyElToDto(TestCase, CibMixin):
+    def setUp(self):
+        self.cib = self.get_cib()
+        self.tree = self.cib.find("configuration/fencing-topology")
+
+    def test_get_empty_dto(self):
+        fencing_topology = etree.fromstring("<fencing-topology/>")
+        self.assertEqual(
+            lib.fencing_topology_el_to_dto(fencing_topology),
+            CibFencingTopologyDto(
+                target_node=[], target_regex=[], target_attribute=[]
+            ),
+        )
+
+    def test_get_dto(self):
+        self.assertEqual(
+            lib.fencing_topology_el_to_dto(self.tree),
+            CibFencingTopologyDto(
+                target_node=[
+                    CibFencingLevelNodeDto(
+                        id="fl1", target="nodeA", index=1, devices=["d1", "d2"]
+                    ),
+                    CibFencingLevelNodeDto(
+                        id="fl2", target="nodeA", index=2, devices=["d3"]
+                    ),
+                    CibFencingLevelNodeDto(
+                        id="fl3", target="nodeB", index=1, devices=["d2", "d1"]
+                    ),
+                    CibFencingLevelNodeDto(
+                        id="fl4", target="nodeB", index=2, devices=["d3"]
+                    ),
+                ],
+                target_regex=[
+                    CibFencingLevelRegexDto(
+                        id="fl5",
+                        target_pattern="node\\d+",
+                        index=1,
+                        devices=["d3", "d4"],
+                    ),
+                    CibFencingLevelRegexDto(
+                        id="fl6",
+                        target_pattern="node\\d+",
+                        index=2,
+                        devices=["d1"],
+                    ),
+                    CibFencingLevelRegexDto(
+                        id="fl9",
+                        target_pattern="node-R.*",
+                        index=3,
+                        devices=["dR"],
+                    ),
+                ],
+                target_attribute=[
+                    CibFencingLevelAttributeDto(
+                        id="fl7",
+                        target_attribute="fencing",
+                        target_value="improved",
+                        index=3,
+                        devices=["d3", "d4"],
+                    ),
+                    CibFencingLevelAttributeDto(
+                        id="fl8",
+                        target_attribute="fencing",
+                        target_value="improved",
+                        index=4,
+                        devices=["d5"],
+                    ),
+                    CibFencingLevelAttributeDto(
+                        id="fl10",
+                        target_attribute="fencing",
+                        target_value="remote-special",
+                        index=4,
+                        devices=["dR-special"],
+                    ),
+                ],
+            ),
         )
