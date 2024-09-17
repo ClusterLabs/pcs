@@ -1,12 +1,13 @@
-from pcs.common import reports
 from pcs.common.reports import ReportItemList
-from pcs.common.reports.item import ReportItem
 from pcs.lib.cib import alert
 from pcs.lib.cib.nvpair import (
     arrange_first_instance_attributes,
     arrange_first_meta_attributes,
 )
-from pcs.lib.cib.tools import IdProvider
+from pcs.lib.cib.tools import (
+    IdProvider,
+    get_alerts,
+)
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 
@@ -30,16 +31,16 @@ def create_alert(
     meta_attribute_dict -- dictionary of meta attributes
     description -- alert description description
     """
-    if not path:
-        raise LibraryError(
-            ReportItem.error(
-                reports.messages.RequiredOptionsAreMissing(["path"])
-            )
-        )
-
     cib = lib_env.get_cib()
     id_provider = IdProvider(cib)
-    alert_el = alert.create_alert(cib, alert_id, path, description)
+
+    lib_env.report_processor.report_list(
+        alert.validate_create_alert(id_provider, path, alert_id)
+    )
+    if lib_env.report_processor.has_errors:
+        raise LibraryError()
+
+    alert_el = alert.create_alert(cib, id_provider, path, alert_id, description)
     arrange_first_instance_attributes(
         alert_el, instance_attribute_dict, id_provider
     )
@@ -121,28 +122,35 @@ def add_recipient(
     description -- recipient description
     allow_same_value -- if True unique recipient value is not required
     """
-    if not recipient_value:
-        raise LibraryError(
-            ReportItem.error(
-                reports.messages.RequiredOptionsAreMissing(["value"])
-            )
-        )
-
     cib = lib_env.get_cib()
     id_provider = IdProvider(cib)
-    recipient = alert.add_recipient(
-        lib_env.report_processor,
-        cib,
-        alert_id,
+    alert_el = alert.find_alert(get_alerts(cib), alert_id)
+
+    lib_env.report_processor.report_list(
+        alert.validate_add_recipient(
+            id_provider,
+            alert_el,
+            recipient_value,
+            recipient_id,
+            allow_same_value=allow_same_value,
+        )
+    )
+    if lib_env.report_processor.has_errors:
+        raise LibraryError()
+
+    recipient_el = alert.add_recipient(
+        id_provider,
+        alert_el,
         recipient_value,
-        recipient_id=recipient_id,
+        recipient_id,
         description=description,
-        allow_same_value=allow_same_value,
     )
     arrange_first_instance_attributes(
-        recipient, instance_attribute_dict, id_provider
+        recipient_el, instance_attribute_dict, id_provider
     )
-    arrange_first_meta_attributes(recipient, meta_attribute_dict, id_provider)
+    arrange_first_meta_attributes(
+        recipient_el, meta_attribute_dict, id_provider
+    )
 
     lib_env.push_cib()
 
@@ -169,21 +177,24 @@ def update_recipient(
         deleted, if None old value will stay unchanged
     allow_same_value -- if True unique recipient value is not required
     """
-    if not recipient_value and recipient_value is not None:
-        raise LibraryError(
-            ReportItem.error(
-                reports.messages.CibAlertRecipientValueInvalid(recipient_value)
-            )
-        )
     cib = lib_env.get_cib()
     id_provider = IdProvider(cib)
+    recipient_el = alert.find_recipient(get_alerts(cib), recipient_id)
+
+    lib_env.report_processor.report_list(
+        alert.validate_update_recipient(
+            recipient_el,
+            recipient_value,
+            allow_same_value=allow_same_value,
+        )
+    )
+    if lib_env.report_processor.has_errors:
+        raise LibraryError()
+
     recipient = alert.update_recipient(
-        lib_env.report_processor,
-        cib,
-        recipient_id,
+        recipient_el,
         recipient_value=recipient_value,
         description=description,
-        allow_same_value=allow_same_value,
     )
     arrange_first_instance_attributes(
         recipient, instance_attribute_dict, id_provider

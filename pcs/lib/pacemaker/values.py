@@ -89,6 +89,24 @@ def get_valid_timeout_seconds(
     return wait_timeout
 
 
+def validate_id_reports(
+    id_candidate: str,
+    description: Optional[str] = None,
+) -> reports.ReportItemList:
+    """
+    Validate a pacemaker id, return ReportItemList
+
+    id_candidate id's value
+    description id's role description (default "id")
+    """
+    # This is a temporary improvement of validate_id function. It turns it into
+    # a function which returns a ReportItemList. When validate_id is removed,
+    # this function can be removed as well.
+    report_list: ReportItemList = []
+    validate_id(id_candidate, description, report_list)
+    return report_list
+
+
 def validate_id(
     id_candidate: str,
     description: Optional[str] = None,
@@ -143,6 +161,7 @@ def validate_id(
 
 
 def sanitize_id(id_candidate: str, replacement: str = "") -> str:
+    # TODO move this to pcs.lib.cib.tools?
     if not id_candidate:
         return id_candidate
     return "".join(
