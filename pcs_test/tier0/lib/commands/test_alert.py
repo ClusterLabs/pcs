@@ -10,6 +10,7 @@ from pcs.common.reports import ReportItemSeverity as Severities
 from pcs.common.reports import codes as report_codes
 from pcs.lib.env import LibraryEnvironment
 
+from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 
@@ -49,27 +50,33 @@ class CreateAlertTest(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
 
-    def test_no_path(self):
+    def test_validation(self):
+        self.config.runner.cib.load()
         self.env_assist.assert_raise_library_error(
             lambda: cmd_alert.create_alert(
-                self.env_assist.get_env(), None, None, None, None
+                self.env_assist.get_env(), "1alert", None, None, None
             ),
+        )
+        self.env_assist.assert_reports(
             [
-                (
-                    Severities.ERROR,
+                fixture.error(
                     report_codes.REQUIRED_OPTIONS_ARE_MISSING,
-                    {"option_names": ["path"], "option_type": None},
-                    None,
+                    option_names=["path"],
+                    option_type=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_ID_BAD_CHAR,
+                    id="1alert",
+                    id_description="alert-id",
+                    invalid_character="1",
+                    is_first_char=True,
                 ),
             ],
         )
 
     def test_create_no_upgrade(self):
-        (
-            self.config.runner.cib.load().env.push_cib(
-                optional_in_conf=self.fixture_final_alerts
-            )
-        )
+        self.config.runner.cib.load()
+        self.config.env.push_cib(optional_in_conf=self.fixture_final_alerts)
         cmd_alert.create_alert(
             self.env_assist.get_env(),
             "my-alert",
@@ -292,17 +299,34 @@ class AddRecipientTest(TestCase):
             """
         )
 
-    def test_value_not_defined(self):
-        self.config.remove("runner.cib.load")
+    def test_alert_doesnt_exist(self):
         self.env_assist.assert_raise_library_error(
             lambda: cmd_alert.add_recipient(
-                self.env_assist.get_env(), "unknown", "", {}, {}
+                self.env_assist.get_env(), "wrong-id", "value1", {}, {}
             ),
             [
-                (
-                    Severities.ERROR,
+                fixture.error(
+                    report_codes.ID_NOT_FOUND,
+                    context_type="alerts",
+                    context_id="",
+                    id="wrong-id",
+                    expected_types=["alert"],
+                )
+            ],
+        )
+
+    def test_value_not_defined(self):
+        self.env_assist.assert_raise_library_error(
+            lambda: cmd_alert.add_recipient(
+                self.env_assist.get_env(), "alert", "", {}, {}
+            ),
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
                     report_codes.REQUIRED_OPTIONS_ARE_MISSING,
-                    {"option_names": ["value"], "option_type": None},
+                    option_names=["value"],
+                    option_type=None,
                 )
             ],
         )
@@ -317,13 +341,43 @@ class AddRecipientTest(TestCase):
                 {},
                 recipient_id="alert-recipient",
             ),
+        )
+        self.env_assist.assert_reports(
             [
-                (
-                    Severities.ERROR,
+                fixture.error(
                     report_codes.ID_ALREADY_EXISTS,
-                    {"id": "alert-recipient"},
+                    id="alert-recipient",
                 )
             ],
+        )
+
+    def test_duplicity_of_value_forced(self):
+        self.config.env.push_cib(
+            replace={
+                './/alert[@id="alert"]': """
+                    <alert id="alert" path="path">
+                        <recipient id="alert-recipient" value="value1"/>
+                        <recipient id="alert-recipient-1" value="value1"/>
+                    </alert>
+                """
+            }
+        )
+        cmd_alert.add_recipient(
+            self.env_assist.get_env(),
+            "alert",
+            "value1",
+            {},
+            {},
+            allow_same_value=True,
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    report_codes.CIB_ALERT_RECIPIENT_ALREADY_EXISTS,
+                    alert="alert",
+                    recipient="value1",
+                )
+            ]
         )
 
     def test_without_id(self):
@@ -455,7 +509,6 @@ class UpdateRecipientTest(TestCase):
         )
 
     def test_empty_value(self):
-        self.config.remove("runner.cib.load")
         self.env_assist.assert_raise_library_error(
             lambda: cmd_alert.update_recipient(
                 self.env_assist.get_env(),
@@ -464,11 +517,12 @@ class UpdateRecipientTest(TestCase):
                 {},
                 recipient_value="",
             ),
+        )
+        self.env_assist.assert_reports(
             [
-                (
-                    Severities.ERROR,
+                fixture.error(
                     report_codes.CIB_ALERT_RECIPIENT_VALUE_INVALID,
-                    {"recipient": ""},
+                    recipient="",
                 )
             ],
         )
@@ -479,18 +533,70 @@ class UpdateRecipientTest(TestCase):
                 self.env_assist.get_env(), "recipient", {}, {}
             ),
             [
-                (
-                    Severities.ERROR,
+                fixture.error(
                     report_codes.ID_NOT_FOUND,
-                    {
-                        "id": "recipient",
-                        "expected_types": ["recipient"],
-                        "context_id": "",
-                        "context_type": "alerts",
-                    },
-                    None,
+                    id="recipient",
+                    expected_types=["recipient"],
+                    context_id="",
+                    context_type="alerts",
                 )
             ],
+        )
+
+    def test_update_duplicity_allowed(self):
+        self.config.env.push_cib(
+            replace={
+                './/alert[@id="alert"]': """
+                <alert id="alert" path="path">
+                    <recipient id="alert-recipient" value="value1"/>
+                    <recipient id="alert-recipient-1" value="value1"
+                        description="d"
+                    >
+                        <meta_attributes
+                            id="alert-recipient-1-meta_attributes"
+                        >
+                            <nvpair
+                                id="alert-recipient-1-meta_attributes-attr1"
+                                name="attr1"
+                                value="val1"
+                            />
+                            <nvpair
+                                id="alert-recipient-1-meta_attributes-attr2"
+                                name="attr2"
+                                value="val2"
+                            />
+                        </meta_attributes>
+                        <instance_attributes
+                            id="alert-recipient-1-instance_attributes"
+                        >
+                            <nvpair
+                                id="alert-recipient-1-instance_attributes-attr1"
+                                name="attr1"
+                                value="val1"
+                            />
+                        </instance_attributes>
+                    </recipient>
+                </alert>
+                """,
+            }
+        )
+        cmd_alert.update_recipient(
+            self.env_assist.get_env(),
+            "alert-recipient-1",
+            {},
+            {},
+            recipient_value="value1",
+            description=None,
+            allow_same_value=True,
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    report_codes.CIB_ALERT_RECIPIENT_ALREADY_EXISTS,
+                    alert="alert",
+                    recipient="value1",
+                )
+            ]
         )
 
     def test_update_all(self):

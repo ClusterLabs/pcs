@@ -87,7 +87,7 @@ Alerts:
         self.assert_pcs_success("alert create id=alert1 path=test".split())
         self.assert_pcs_fail(
             "alert create id=alert1 path=test".split(),
-            "Error: 'alert1' already exists\n",
+            "Error: 'alert1' already exists\n" + ERRORS_HAVE_OCCURRED,
         )
         self.assert_pcs_success(
             "alert config".split(),
@@ -100,7 +100,7 @@ Alerts:
     def test_path_is_required(self):
         self.assert_pcs_fail(
             "alert create id=alert1".split(),
-            "Error: required option 'path' is missing\n",
+            "Error: required option 'path' is missing\n" + ERRORS_HAVE_OCCURRED,
         )
 
 
@@ -272,11 +272,11 @@ Alerts:
         )
         self.assert_pcs_fail(
             "alert recipient add alert value=value id=rec".split(),
-            "Error: 'rec' already exists\n",
+            "Error: 'rec' already exists\n" + ERRORS_HAVE_OCCURRED,
         )
         self.assert_pcs_fail(
             "alert recipient add alert value=value id=alert".split(),
-            "Error: 'alert' already exists\n",
+            "Error: 'alert' already exists\n" + ERRORS_HAVE_OCCURRED,
         )
 
     def test_same_value(self):
@@ -319,7 +319,8 @@ Alerts:
         self.assert_pcs_success("alert create path=test".split())
         self.assert_pcs_fail(
             "alert recipient add alert id=rec".split(),
-            "Error: required option 'value' is missing\n",
+            "Error: required option 'value' is missing\n"
+            + ERRORS_HAVE_OCCURRED,
         )
 
 
@@ -456,7 +457,7 @@ Alerts:
         )
         self.assert_pcs_fail(
             "alert recipient update rec value=".split(),
-            "Error: Recipient value '' is not valid.\n",
+            "Error: Recipient value '' is not valid.\n" + ERRORS_HAVE_OCCURRED,
         )
 
 

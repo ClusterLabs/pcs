@@ -1,19 +1,21 @@
 from functools import partial
+from typing import (
+    Optional,
+    cast,
+)
 
 from lxml import etree
+from lxml.etree import _Element
 
 from pcs.common import reports
-from pcs.common.reports import ReportProcessor
-from pcs.common.reports.item import ReportItem
 from pcs.lib.cib.nvpair import get_nvset
 from pcs.lib.cib.tools import (
-    check_new_id_applicable,
+    IdProvider,
+    create_subelement_id,
     find_element_by_tag_and_id,
-    find_unique_id,
     get_alerts,
-    validate_id_does_not_exist,
 )
-from pcs.lib.errors import LibraryError
+from pcs.lib.pacemaker.values import validate_id_reports
 from pcs.lib.xml_tools import get_sub_element
 
 TAG_ALERT = "alert"
@@ -23,7 +25,9 @@ find_alert = partial(find_element_by_tag_and_id, TAG_ALERT)
 find_recipient = partial(find_element_by_tag_and_id, TAG_RECIPIENT)
 
 
-def _update_optional_attribute(element, attribute, value):
+def _update_optional_attribute(
+    element: _Element, attribute: str, value: Optional[str]
+) -> None:
     """
     Update optional attribute of element. Remove existing element if value
     is empty.
@@ -40,65 +44,95 @@ def _update_optional_attribute(element, attribute, value):
         del element.attrib[attribute]
 
 
-def ensure_recipient_value_is_unique(
-    reporter: ReportProcessor,
-    alert,
-    recipient_value,
-    recipient_id="",
-    allow_duplicity=False,
-):
+def _validate_recipient_value_is_unique(
+    alert_el: _Element,
+    recipient_value: str,
+    recipient_id: Optional[str] = None,
+    allow_duplicity: bool = False,
+) -> reports.ReportItemList:
     """
-    Ensures that recipient_value is unique in alert.
+    Validate that the recipient_value is unique in the specified alert
 
-    reporter -- report processor
-    alert -- alert
+    alert_el -- alert
     recipient_value -- recipient value
-    recipient_id -- recipient id of to which value belongs to
-    allow_duplicity -- if True only warning will be shown if value already
-        exists
+    recipient_id -- id of the recipient to which the value belongs
+    allow_duplicity -- if True, report a warning if the value already exists
     """
-    recipient_list = alert.xpath(
+    report_list: reports.ReportItemList = []
+    recipient_list = alert_el.xpath(
         "./recipient[@value=$value and @id!=$id]",
         value=recipient_value,
-        id=recipient_id,
+        id=recipient_id or "",
     )
     if recipient_list:
-        reporter.report(
-            ReportItem(
+        report_list.append(
+            reports.ReportItem(
                 severity=reports.item.get_severity(
                     reports.codes.FORCE,
                     allow_duplicity,
                 ),
                 message=reports.messages.CibAlertRecipientAlreadyExists(
-                    alert.get("id", None),
+                    str(alert_el.attrib["id"]),
                     recipient_value,
                 ),
             )
         )
-        if reporter.has_errors:
-            raise LibraryError()
+    return report_list
 
 
-def create_alert(tree, alert_id, path, description=""):
+def validate_create_alert(
+    id_provider: IdProvider,
+    path: str,
+    alert_id: Optional[str] = None,
+) -> reports.ReportItemList:
+    """
+    validate new alert creation
+
+    id_provider -- elements' ids generator
+    path -- path to script
+    alert_id -- id of new alert or None
+    """
+    report_list: reports.ReportItemList = []
+    if not path:
+        report_list.append(
+            reports.ReportItem.error(
+                reports.messages.RequiredOptionsAreMissing(["path"])
+            )
+        )
+    if alert_id:
+        report_list.extend(
+            validate_id_reports(alert_id, description="alert-id")
+        )
+        report_list.extend(id_provider.book_ids(alert_id))
+    return report_list
+
+
+def create_alert(
+    tree: _Element,
+    id_provider: IdProvider,
+    path: str,
+    alert_id: Optional[str] = None,
+    description: Optional[str] = None,
+) -> _Element:
     """
     Create new alert element. Returns newly created element.
-    Raises LibraryError if element with specified id already exists.
 
     tree -- cib etree node
-    alert_id -- id of new alert, it will be generated if it is None
+    id_provider -- elements' ids generator
     path -- path to script
+    alert_id -- id of new alert, it will be generated if it is None
     description -- description
     """
-    if alert_id:
-        check_new_id_applicable(tree, "alert-id", alert_id)
-    else:
-        alert_id = find_unique_id(tree, "alert")
+    if not alert_id:
+        alert_id = id_provider.allocate_id(TAG_ALERT)
 
-    alert = etree.SubElement(get_alerts(tree), "alert", id=alert_id, path=path)
+    alert_el = etree.SubElement(
+        get_alerts(tree), TAG_ALERT, id=alert_id, path=path
+    )
     if description:
-        alert.set("description", description)
+        alert_el.set("description", description)
 
-    return alert
+    return alert_el
 
 
 def update_alert(tree, alert_id, path, description=None):
@@ -131,79 +165,130 @@ def remove_alert(tree, alert_id):
     alert.getparent().remove(alert)
 
 
+def validate_add_recipient(
+    id_provider: IdProvider,
+    alert_el: _Element,
+    recipient_value: str,
+    recipient_id: Optional[str] = None,
+    allow_same_value: bool = False,
+) -> reports.ReportItemList:
+    """
+    Validate adding a recipient to the specified alert
+
+    id_provider -- elements' ids generator
+    alert_el -- alert which should be the parent of the new recipient
+    recipient_value -- value of the new recipient
+    recipient_id -- id of the new recipient or None
+    allow_same_value -- if True, unique recipient value is not required
+    """
+    report_list: reports.ReportItemList = []
+
+    if not recipient_value:
+        report_list.append(
+            reports.ReportItem.error(
+                reports.messages.RequiredOptionsAreMissing(["value"])
+            )
+        )
+
+    if recipient_id:
+        report_list.extend(
+            validate_id_reports(recipient_id, description="recipient-id")
+        )
+        report_list.extend(id_provider.book_ids(recipient_id))
+
+    report_list.extend(
+        _validate_recipient_value_is_unique(
+            alert_el,
+            recipient_value,
+            recipient_id,
+            allow_duplicity=allow_same_value,
+        )
+    )
+
+    return report_list
+
+
 def add_recipient(
-    reporter: ReportProcessor,
-    tree,
-    alert_id,
-    recipient_value,
-    recipient_id=None,
-    description="",
-    allow_same_value=False,
-):
+    id_provider: IdProvider,
+    alert_el: _Element,
+    recipient_value: str,
+    recipient_id: Optional[str] = None,
+    description: Optional[str] = None,
+) -> _Element:
     """
-    Add recipient to alert with specified id. Returns added recipient element.
-    Raises LibraryError if alert with specified recipient_id doesn't exist.
-    Raises LibraryError if recipient already exists.
+    Add new recipient to the specified alert, return added recipient element
 
-    reporter -- report processor
-    tree -- cib etree node
-    alert_id -- id of alert which should be parent of new recipient
-    recipient_value -- value of recipient
-    recipient_id -- id of new recipient, if None it will be generated
-    description -- description of recipient
-    allow_same_value -- if True unique recipient value is not required
+    id_provider -- elements' ids generator
+    alert_el -- alert which should be the parent of the new recipient
+    recipient_value -- value of the new recipient
+    recipient_id -- id of the new recipient or None
+    description -- description of the new recipient
     """
-    if recipient_id is None:
-        recipient_id = find_unique_id(tree, f"{alert_id}-recipient")
-    else:
-        validate_id_does_not_exist(tree, recipient_id)
-
-    alert = find_alert(get_alerts(tree), alert_id)
-    ensure_recipient_value_is_unique(
-        reporter, alert, recipient_value, allow_duplicity=allow_same_value
+    if not recipient_id:
+        recipient_id = create_subelement_id(
+            alert_el, TAG_RECIPIENT, id_provider
+        )
+    recipient_el = etree.SubElement(
+        alert_el, TAG_RECIPIENT, id=recipient_id, value=recipient_value
     )
-    recipient = etree.SubElement(
-        alert, "recipient", id=recipient_id, value=recipient_value
-    )
-
     if description:
-        recipient.attrib["description"] = description
+        recipient_el.attrib["description"] = description
+    return recipient_el
 
-    return recipient
+
+def validate_update_recipient(
+    recipient_el: _Element,
+    recipient_value: Optional[str] = None,
+    allow_same_value: bool = False,
+) -> reports.ReportItemList:
+    """
+    validate updating specified recipient
+
+    recipient_el -- the recipient to be updated
+    recipient_value -- new recipient value, stay unchanged if None
+    allow_same_value -- if True, unique recipient value is not required
+    """
+    report_list: reports.ReportItemList = []
+
+    if recipient_value is not None:
+        if not recipient_value:
+            report_list.append(
+                reports.ReportItem.error(
+                    reports.messages.CibAlertRecipientValueInvalid(
+                        recipient_value
+                    )
+                )
+            )
+        else:
+            report_list.extend(
+                _validate_recipient_value_is_unique(
+                    cast(_Element, recipient_el.getparent()),
+                    recipient_value,
+                    str(recipient_el.attrib["id"]),
+                    allow_duplicity=allow_same_value,
+                )
+            )
+
+    return report_list
 
 
 def update_recipient(
-    reporter: ReportProcessor,
-    tree,
-    recipient_id,
-    recipient_value=None,
-    description=None,
-    allow_same_value=False,
-):
+    recipient_el: _Element,
+    recipient_value: Optional[str] = None,
+    description: Optional[str] = None,
+) -> _Element:
     """
     Update specified recipient. Returns updated recipient element.
-    Raises LibraryError if recipient doesn't exist.
 
-    reporter -- report processor
-    tree -- cib etree node
-    recipient_id -- id of recipient to be updated
-    recipient_value -- recipient value, stay unchanged if None
+    recipient_el -- the recipient to be updated
+    recipient_value -- new recipient value, stay unchanged if None
     description -- description, if empty it will be removed, stay unchanged
         if None
-    allow_same_value -- if True unique recipient value is not required
     """
-    recipient = find_recipient(get_alerts(tree), recipient_id)
     if recipient_value is not None:
-        ensure_recipient_value_is_unique(
-            reporter,
-            recipient.getparent(),
-            recipient_value,
-            recipient_id=recipient_id,
-            allow_duplicity=allow_same_value,
-        )
-        recipient.set("value", recipient_value)
-    _update_optional_attribute(recipient, "description", description)
-    return recipient
+        recipient_el.set("value", recipient_value)
+    _update_optional_attribute(recipient_el, "description", description)
+    return recipient_el
 
 
 def remove_recipient(tree, recipient_id):
