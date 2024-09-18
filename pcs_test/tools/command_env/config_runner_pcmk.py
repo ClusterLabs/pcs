@@ -488,6 +488,59 @@ class PcmkShortcuts:
             instead=instead,
         )
 
+    def load_fake_agent_crm_attribute_metadata(
+        self,
+        name="runner.pcmk.load_fake_agent_crm_attribute_metadata",
+        agent_name="cluster-options",
+        stdout=None,
+        stderr="",
+        returncode=0,
+        instead=None,
+        before=None,
+    ):
+        """
+        Create a call for loading fake agent crm_attribute metadata - metadata
+        provided by crm_attribute --list-options=TYPE
+
+        string name -- the key of this call
+        string agent_name -- name of the fake agent
+        string stdout -- fake agent stdout, default metadata if None
+        string stderr -- fake agent stderr
+        int returncode -- fake agent returncode
+        string instead -- the key of a call instead of which this new call is to
+            be placed
+        string before -- the key of a call before which this new call is to be
+            placed
+        """
+        name_to_metadata_file = {
+            "cluster-options": "cluster-options_metadata.xml"
+        }
+        name_to_list_options_type = {"cluster-options": "cluster"}
+        if stdout is None:
+            with open(rc(name_to_metadata_file[agent_name])) as a_file:
+                stdout = a_file.read()
+        self.__calls.place(
+            name,
+            RunnerCall(
+                [
+                    settings.crm_attribute_exec,
+                    "--list-options",
+                    (
+                        name_to_list_options_type[agent_name]
+                        if agent_name in name_to_list_options_type
+                        else agent_name
+                    ),
+                    "--output-as",
+                    "xml",
+                ],
+                stdout=stdout,
+                stderr=stderr,
+                returncode=returncode,
+            ),
+            before=before,
+            instead=instead,
+        )
+
     def local_node_name(
         self,
         name="runner.pcmk.local_node_name",
