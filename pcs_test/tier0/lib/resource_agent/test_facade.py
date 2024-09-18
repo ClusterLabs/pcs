@@ -147,6 +147,39 @@ class ResourceAgentFacadeFactory(TestCase):
             ["fenced-param"],
         )
 
+    def test_facade_crm_attribute(self):
+        agent_name = "cluster-options"
+        fake_agent_name = ra.ResourceAgentName(
+            ra.const.FAKE_AGENT_STANDARD, None, agent_name
+        )
+        self.config.runner.pcmk.load_fake_agent_crm_attribute_metadata(
+            agent_name=agent_name
+        )
+        env = self.env_assist.get_env()
+        facade = ra.ResourceAgentFacadeFactory(
+            env.cmd_runner(), env.report_processor
+        ).facade_from_crm_attribute(agent_name)
+        self.assertEqual(facade.metadata.name, fake_agent_name)
+        self.assertTrue(facade.metadata.agent_exists)
+        self.assertTrue(
+            set(
+                [
+                    "enable-acl",
+                    "stonith-watchdog-timeout",
+                    "maintenance-mode",
+                ]
+            ).issubset(set(param.name for param in facade.metadata.parameters))
+        )
+
+    def test_facade_crm_attribute_unknown_agent(self):
+        agent_name = "unknown"
+        env = self.env_assist.get_env()
+        with self.assertRaises(ra.UnableToGetAgentMetadata) as cm:
+            ra.ResourceAgentFacadeFactory(
+                env.cmd_runner(), env.report_processor
+            ).facade_from_crm_attribute(agent_name)
+        self.assertEqual(cm.exception.agent_name, agent_name)
+
     def test_facade_missing_agent(self):
         name = ra.ResourceAgentName("service", None, "daemon")
         self.config.runner.pcmk.load_agent(
