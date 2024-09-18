@@ -328,6 +328,7 @@ EXTRA_DIST		= \
 			  tier0/lib/__init__.py \
 			  tier0/lib/misc.py \
 			  tier0/lib/pacemaker/__init__.py \
+			  tier0/lib/pacemaker/test_api_result.py \
 			  tier0/lib/pacemaker/test_live.py \
 			  tier0/lib/pacemaker/test_simulate.py \
 			  tier0/lib/pacemaker/test_state.py \

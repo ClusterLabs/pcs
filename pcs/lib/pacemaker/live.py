@@ -29,7 +29,10 @@ from pcs.lib import tools
 from pcs.lib.cib.tools import get_pacemaker_version_by_which_cib_was_validated
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
-from pcs.lib.pacemaker import api_result
+from pcs.lib.pacemaker.api_result import (
+    get_api_result_dom,
+    get_status_from_api_result,
+)
 from pcs.lib.pacemaker.state import ClusterState
 from pcs.lib.resource_agent import ResourceAgentName
 from pcs.lib.xml_tools import etree_to_str
@@ -79,7 +82,7 @@ def _get_cluster_status_xml(runner: CommandRunner) -> str:
     # the exception as a plaintext. If we got an XML but it doesn't conform to
     # the schema, we raise an error.
     try:
-        status = _get_status_from_api_result(_get_api_result_dom(stdout))
+        status = get_status_from_api_result(get_api_result_dom(stdout))
         message = join_multilines([status.message] + list(status.errors))
     except etree.XMLSyntaxError:
         message = join_multilines([stderr, stdout])
@@ -97,7 +100,7 @@ def _get_cluster_status_xml(runner: CommandRunner) -> str:
 
 def get_cluster_status_dom(runner: CommandRunner) -> _Element:
     try:
-        return _get_api_result_dom(_get_cluster_status_xml(runner))
+        return get_api_result_dom(_get_cluster_status_xml(runner))
     except (etree.XMLSyntaxError, etree.DocumentInvalid) as e:
         raise LibraryError(
             ReportItem.error(reports.messages.BadClusterStateFormat())
@@ -833,31 +836,6 @@ def get_rule_in_effect_status(
     return translation_map.get(retval, CibRuleInEffectStatus.UNKNOWN)
 
 
-def _get_api_result_dom(xml: str) -> _Element:
-    # raises etree.XMLSyntaxError and etree.DocumentInvalid
-    rng = settings.pacemaker_api_result_schema
-    dom = xml_fromstring(xml)
-    if os.path.isfile(rng):
-        etree.RelaxNG(file=rng).assertValid(dom)
-    return dom
-
-
-def _get_status_from_api_result(dom: _Element) -> api_result.Status:
-    errors = []
-    status_el = cast(_Element, dom.find("./status"))
-    errors_el = status_el.find("errors")
-    if errors_el is not None:
-        errors = [
-            str((error_el.text or "")).strip()
-            for error_el in errors_el.iterfind("error")
-        ]
-    return api_result.Status(
-        code=int(str(status_el.get("code"))),
-        message=str(status_el.get("message")),
-        errors=errors,
-    )
-
-
 def _is_in_pcmk_tool_help(
     runner: CommandRunner, tool: str, text_list: StringCollection
 ) -> bool:
@@ -921,12 +899,12 @@ def get_resource_digests(
         )
 
     try:
-        dom = _get_api_result_dom(stdout)
+        dom = get_api_result_dom(stdout)
     except (etree.XMLSyntaxError, etree.DocumentInvalid) as e:
         raise error_exception(join_multilines([stderr, stdout])) from e
 
     if retval != 0:
-        status = _get_status_from_api_result(dom)
+        status = get_status_from_api_result(dom)
         raise error_exception(
             join_multilines([status.message] + list(status.errors))
         )
@@ -1003,7 +981,7 @@ def _handle_instance_attributes_validation_via_pcmk(
         full_cmd.extend(["--option", f"{key}={value}"])
     stdout, dummy_stderr, return_value = cmd_runner.run(full_cmd)
     try:
-        # dom = _get_api_result_dom(stdout)
+        # dom = get_api_result_dom(stdout)
         dom = xml_fromstring(stdout)
     except (etree.XMLSyntaxError, etree.DocumentInvalid) as e:
         return None, str(e)
