@@ -173,14 +173,25 @@ RNGs. Thank you.
             <attribute name="type">
               <choice>
                 <!--
-                  OCF 1.1 allows values: boolean, integer, string. Other values
-                  are used sometimes: percentage (pacemaker metadata), time
-                  (pacemaker metadata)
+                  OCF 1.1 allows values: boolean, integer, string.
+                  Pacemaker extends allowed types: duration, epoch_time,
+                  nonnegative_integer, percentage, port, score, timeout,
+                  version, time
                 -->
                 <value>boolean</value>
                 <value>string</value>
                 <value>integer</value>
+
+                <value>duration</value>
+                <value>epoch_time</value>
+                <value>nonnegative_integer</value>
                 <value>percentage</value>
+                <value>port</value>
+                <value>score</value>
+                <value>timeout</value>
+                <value>version</value>
+
+                <!-- @COMPAT Deprecated -->
                 <value>time</value>
               </choice>
             </attribute>
