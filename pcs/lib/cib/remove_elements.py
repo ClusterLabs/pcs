@@ -20,10 +20,7 @@ from pcs.common.types import (
     StringCollection,
     StringSequence,
 )
-from pcs.lib.cib import (
-    const,
-    sections,
-)
+from pcs.lib.cib import const
 from pcs.lib.cib.constraint.common import (
     is_constraint,
     is_set_constraint,
@@ -33,8 +30,9 @@ from pcs.lib.cib.constraint.location import (
     is_location_rule,
 )
 from pcs.lib.cib.fencing_topology import (
-    remove_device_from_all_levels_dont_remove_elements,
-    remove_device_from_one_level,
+    find_levels_with_device,
+    has_any_devices,
+    remove_device_from_level,
 )
 from pcs.lib.cib.resource.clone import is_any_clone
 from pcs.lib.cib.resource.common import (
@@ -336,21 +334,16 @@ def _remove_element_reference(
     # need to be removed using this reference mapping. Therefore, we need to
     # only remove elements that do not have id here, such as obj_ref and
     # resource_ref.
-
-    if referenced_in_tag == const.TAG_FENCING_LEVEL:
-        if not sections.exists(cib, sections.FENCING_TOPOLOGY):
-            return
-
-        remove_device_from_one_level(
-            get_fencing_topology(cib), referenced_in_id, element_id
-        )
-        return
-
-    if referenced_in_tag not in _REFERENCE_TAG_XPATH_MAP:
-        return
     try:
         element = get_element_by_id(cib, referenced_in_id)
     except ElementNotFound:
+        return
+
+    if referenced_in_tag == const.TAG_FENCING_LEVEL:
+        remove_device_from_level(element, element_id)
+        return
+
+    if referenced_in_tag not in _REFERENCE_TAG_XPATH_MAP:
         return
     for el in cast(
         list[_Element],
@@ -433,13 +426,14 @@ def _get_dependencies_to_remove(
             elements_to_process.extend(_get_element_references(el))
             elements_to_process.extend(_get_inner_references(el))
 
-            for level_el in remove_device_from_all_levels_dont_remove_elements(
+            for level_el in find_levels_with_device(
                 get_fencing_topology(get_root(el)), element_id
             ):
                 removing_references_from[element_id].add(
                     str(level_el.attrib["id"])
                 )
-                if level_el.get("devices", "") == "":
+                remove_device_from_level(level_el, element_id)
+                if not has_any_devices(level_el):
                     elements_to_process.append(level_el)
 
         parent_el = el.getparent()
