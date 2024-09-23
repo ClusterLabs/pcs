@@ -146,15 +146,33 @@ def validate_set_cluster_properties(
                     property_metadata.name, severity=severity
                 )
             )
-        elif property_metadata.type == "integer":
+        elif property_metadata.type == "duration":
+            validators.append(
+                validate.ValueTimeIntervalOrDuration(
+                    runner, property_metadata.name, severity=severity
+                )
+            )
+        elif property_metadata.type in ["integer", "score"]:
             validators.append(
                 validate.ValuePcmkInteger(
+                    property_metadata.name, severity=severity
+                )
+            )
+        elif property_metadata.type == "nonnegative_integer":
+            validators.append(
+                validate.ValuePcmkPositiveInteger(
                     property_metadata.name, severity=severity
                 )
             )
         elif property_metadata.type == "percentage":
             validators.append(
                 validate.ValuePcmkPercentage(
+                    property_metadata.name, severity=severity
+                )
+            )
+        elif property_metadata.type == "port":
+            validators.append(
+                validate.ValuePortNumber(
                     property_metadata.name, severity=severity
                 )
             )
@@ -166,7 +184,7 @@ def validate_set_cluster_properties(
                     severity=severity,
                 )
             )
-        elif property_metadata.type == "time":
+        elif property_metadata.type in ["time", "timeout"]:
             # make stonith-watchdog-timeout value not forcable
             if property_metadata.name == "stonith-watchdog-timeout":
                 validators.append(
@@ -175,12 +193,19 @@ def validate_set_cluster_properties(
                         severity=reports.ReportItemSeverity.error(),
                     )
                 )
-            else:
+            elif property_metadata.type == "timeout":
+                validators.append(
+                    validate.ValueTimeInterval(
+                        property_metadata.name, severity=severity
+                    )
+                )
+            else:  # time
                 validators.append(
                     validate.ValueTimeIntervalOrDuration(
                         runner, property_metadata.name, severity=severity
                     )
                 )
+
     report_list.extend(
         validate.ValidatorAll(validators).validate(to_be_set_properties)
     )

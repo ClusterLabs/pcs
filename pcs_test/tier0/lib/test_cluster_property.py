@@ -68,32 +68,52 @@ PARAMETER_DEFINITIONS = [
     ("cluster-name", "string", "(null)", None),
     ("dc-version", "string", "none", None),
     ("have-watchdog", "boolean", "false", None),
+    ("duration_param", "duration", "P15S", None),
+    ("nonnegative_param", "nonnegative_integer", "9", None),
+    ("port_param", "port", "1234", None),
+    ("score_param", "score", "INFINITY", None),
+    ("timeout_param", "timeout", "60s", None),
 ]
 
 ALLOWED_PROPERTIES = [
     "bool_param",
+    "duration_param",
     "integer_param",
+    "nonnegative_param",
     "percentage_param",
+    "port_param",
+    "score_param",
     "select_param",
     "stonith-watchdog-timeout",
     "time_param",
+    "timeout_param",
 ]
 
 FIXTURE_VALID_OPTIONS_DICT = {
     "bool_param": "true",
+    "duration_param": "P1S",
     "integer_param": "10",
+    "nonnegative_param": "9",
     "percentage_param": "20%",
+    "port_param": "1234",
+    "score_param": "-INFINITY",
     "select_param": "s3",
     "stonith-watchdog-timeout": "0",
     "time_param": "5min",
+    "timeout_param": "5",
 }
 
 FIXTURE_INVALID_OPTIONS_DICT = {
     "bool_param": "Falsch",
+    "duration_param": "Pxy",
     "integer_param": "3.14",
+    "nonnegative_param": "-1",
     "percentage_param": "20",
+    "port_param": "70000",
+    "score_param": "xyz",
     "select_param": "not-in-enum-values",
     "time_param": "10x",
+    "timeout_param": "P1S",
     "unknown": "value",
     "have-watchdog": "100",
 }
@@ -144,9 +164,27 @@ FIXTURE_ERROR_REPORTS = [
     fixture.error(
         reports.codes.INVALID_OPTION_VALUE,
         force_code=reports.codes.FORCE,
+        option_name="duration_param",
+        option_value="Pxy",
+        allowed_values="time interval (e.g. 1, 2s, 3m, 4h, PT1H2M3S, ...)",
+        cannot_be_empty=False,
+        forbidden_characters=None,
+    ),
+    fixture.error(
+        reports.codes.INVALID_OPTION_VALUE,
+        force_code=reports.codes.FORCE,
         option_name="integer_param",
         option_value="3.14",
         allowed_values="an integer or INFINITY or -INFINITY",
+        cannot_be_empty=False,
+        forbidden_characters=None,
+    ),
+    fixture.error(
+        reports.codes.INVALID_OPTION_VALUE,
+        force_code=reports.codes.FORCE,
+        option_name="nonnegative_param",
+        option_value="-1",
+        allowed_values="a positive integer or INFINITY",
         cannot_be_empty=False,
         forbidden_characters=None,
     ),
@@ -165,6 +203,24 @@ FIXTURE_ERROR_REPORTS = [
     fixture.error(
         reports.codes.INVALID_OPTION_VALUE,
         force_code=reports.codes.FORCE,
+        option_name="port_param",
+        option_value="70000",
+        allowed_values=("a port number (1..65535)"),
+        cannot_be_empty=False,
+        forbidden_characters=None,
+    ),
+    fixture.error(
+        reports.codes.INVALID_OPTION_VALUE,
+        force_code=reports.codes.FORCE,
+        option_name="score_param",
+        option_value="xyz",
+        allowed_values="an integer or INFINITY or -INFINITY",
+        cannot_be_empty=False,
+        forbidden_characters=None,
+    ),
+    fixture.error(
+        reports.codes.INVALID_OPTION_VALUE,
+        force_code=reports.codes.FORCE,
         option_name="select_param",
         option_value="not-in-enum-values",
         allowed_values=["s1", "s2", "s3"],
@@ -177,6 +233,15 @@ FIXTURE_ERROR_REPORTS = [
         option_name="time_param",
         option_value="10x",
         allowed_values="time interval (e.g. 1, 2s, 3m, 4h, PT1H2M3S, ...)",
+        cannot_be_empty=False,
+        forbidden_characters=None,
+    ),
+    fixture.error(
+        reports.codes.INVALID_OPTION_VALUE,
+        force_code=reports.codes.FORCE,
+        option_name="timeout_param",
+        option_value="P1S",
+        allowed_values="time interval (e.g. 1, 2s, 3m, 4h, ...)",
         cannot_be_empty=False,
         forbidden_characters=None,
     ),
@@ -244,13 +309,15 @@ class TestValidateSetClusterProperties(TestCase):
         sbd_devices=False,
         force=False,
         valid_value=True,
+        returncode=0,
     ):
+        # pylint: disable=too-many-arguments
         self.mock_is_sbd_enabled.return_value = sbd_enabled
         self.mock_sbd_devices.return_value = ["devices"] if sbd_devices else []
         self.mock_sbd_timeout.return_value = 10
         assert_report_item_list_equal(
             lib_cluster_property.validate_set_cluster_properties(
-                get_runner_mock(),
+                get_runner_mock(returncode=returncode),
                 self.mock_facade_list,
                 "property-set-id",
                 configured_properties,
@@ -331,7 +398,10 @@ class TestValidateSetClusterProperties(TestCase):
 
     def test_set_invalid_properties_and_values(self):
         self.assert_validate_set(
-            [], FIXTURE_INVALID_OPTIONS_DICT, FIXTURE_ERROR_REPORTS
+            [],
+            FIXTURE_INVALID_OPTIONS_DICT,
+            FIXTURE_ERROR_REPORTS,
+            returncode=1,
         )
 
     def test_set_invalid_properties_and_values_forced(self):
@@ -340,6 +410,7 @@ class TestValidateSetClusterProperties(TestCase):
             FIXTURE_INVALID_OPTIONS_DICT,
             warning_reports(FIXTURE_ERROR_REPORTS),
             force=True,
+            returncode=1,
         )
 
     def test_unset_stonith_watchdog_timeout_sbd_disabled(self):
@@ -638,14 +709,7 @@ class TestValidateSetClusterProperties(TestCase):
                 fixture.error(
                     reports.codes.INVALID_OPTIONS,
                     option_names=FORBIDDEN_OPTIONS_LIST,
-                    allowed=[
-                        "bool_param",
-                        "integer_param",
-                        "percentage_param",
-                        "select_param",
-                        "stonith-watchdog-timeout",
-                        "time_param",
-                    ],
+                    allowed=ALLOWED_PROPERTIES,
                     option_type="cluster property",
                     allowed_patterns=[],
                 )
@@ -660,14 +724,7 @@ class TestValidateSetClusterProperties(TestCase):
                 fixture.error(
                     reports.codes.INVALID_OPTIONS,
                     option_names=FORBIDDEN_OPTIONS_LIST,
-                    allowed=[
-                        "bool_param",
-                        "integer_param",
-                        "percentage_param",
-                        "select_param",
-                        "stonith-watchdog-timeout",
-                        "time_param",
-                    ],
+                    allowed=ALLOWED_PROPERTIES,
                     option_type="cluster property",
                     allowed_patterns=[],
                 )
