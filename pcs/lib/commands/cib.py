@@ -1,4 +1,7 @@
-from typing import Collection
+from typing import (
+    Collection,
+    Sequence,
+)
 
 from lxml.etree import _Element
 
@@ -9,6 +12,7 @@ from pcs.lib.cib.remove_elements import (
     ensure_resources_stopped,
     remove_specified_elements,
     stop_resources,
+    warn_resource_unmanaged,
 )
 from pcs.lib.cib.resource.guest_node import is_guest_node
 from pcs.lib.cib.resource.remote_node import (
@@ -39,11 +43,7 @@ def remove_elements(
 
     if report_processor.report_list(
         _validate_elements_to_remove(elements_to_remove)
-    ).has_errors:
-        raise LibraryError()
-
-    if report_processor.report_list(
-        _ensure_not_guest_remote(cib, ids)
+        + _ensure_not_guest_remote(cib, ids)
     ).has_errors:
         raise LibraryError()
 
@@ -55,14 +55,18 @@ def remove_elements(
     )
 
     if env.is_cib_live and reports.codes.FORCE not in force_flags:
-        cib = _stop_resources_wait(env, cib, elements_to_remove)
+        cib = _stop_resources_wait(
+            env, cib, elements_to_remove.resources_to_disable
+        )
 
     remove_specified_elements(cib, elements_to_remove)
     env.push_cib()
 
 
 def _stop_resources_wait(
-    env: LibraryEnvironment, cib: _Element, elements_to_remove: ElementsToRemove
+    env: LibraryEnvironment,
+    cib: _Element,
+    resource_elements: Sequence[_Element],
 ) -> _Element:
     """
     Stop all resources that are going to be removed. Push cib, wait for the
@@ -70,28 +74,29 @@ def _stop_resources_wait(
     If not, report errors. Return cib with the applied changes.
 
     cib -- whole cib
-    elements -- elements planned to be removed
+    resource_elements -- resources that should be stopped
     """
-    resources_to_disable = elements_to_remove.resources_to_disable
-    if not resources_to_disable:
+    if not resource_elements:
         return cib
+
+    resource_ids = [str(el.attrib["id"]) for el in resource_elements]
+
     env.report_processor.report(
         reports.ReportItem.info(
-            reports.messages.StoppingResourcesBeforeDeleting(
-                sorted(resources_to_disable)
-            )
+            reports.messages.StoppingResourcesBeforeDeleting(resource_ids)
         )
     )
 
     if env.report_processor.report_list(
-        stop_resources(cib, env.get_cluster_state(), elements_to_remove)
+        warn_resource_unmanaged(env.get_cluster_state(), resource_ids)
     ).has_errors:
         raise LibraryError()
+    stop_resources(cib, resource_elements)
     env.push_cib()
 
     env.wait_for_idle()
     if env.report_processor.report_list(
-        ensure_resources_stopped(env.get_cluster_state(), elements_to_remove)
+        ensure_resources_stopped(env.get_cluster_state(), resource_ids)
     ).has_errors:
         raise LibraryError()
 
@@ -105,9 +110,7 @@ def _validate_elements_to_remove(
     for missing_id in sorted(element_to_remove.missing_ids):
         report_list.append(
             reports.ReportItem.error(
-                reports.messages.IdNotFound(
-                    missing_id, ["configuration element"]
-                )
+                reports.messages.IdNotFound(missing_id, [])
             )
         )
 

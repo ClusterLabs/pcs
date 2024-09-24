@@ -90,7 +90,6 @@ FIXTURE_REFERENCES_IN_CONSTRAINTS = """
     <resource_ref id="A" invalid="position"/>
 """
 
-
 FIXTURE_REFERENCES_IN_TAGS = """
     <tags>
         <tag id="X">

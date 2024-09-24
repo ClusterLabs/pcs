@@ -74,12 +74,8 @@ class RemoveElements(TestCase):
         )
         self.env_assist.assert_reports(
             [
-                fixture.report_not_found(
-                    "A", expected_types=["configuration element"]
-                ),
-                fixture.report_not_found(
-                    "C", expected_types=["configuration element"]
-                ),
+                fixture.report_not_found("A", expected_types=[]),
+                fixture.report_not_found("C", expected_types=[]),
                 fixture.report_unexpected_element(
                     "T", "tag", EXPECTED_TYPES_FOR_REMOVE
                 ),
@@ -675,6 +671,191 @@ class RemoveElementsStopResources(TestCase):
                 fixture.info(
                     reports.codes.CIB_REMOVE_DEPENDANT_ELEMENTS,
                     id_tag_map={"L": "rsc_location", "T": "tag"},
+                ),
+            ]
+        )
+
+    def test_stop_inner_elements(self):
+        self.fixture_env(
+            initial_cib_modifiers={
+                "resources": """
+                    <resources>
+                        <clone id="C">
+                            <group id="G">
+                                <primitive id="A"/>
+                                <primitive id="B"/>
+                            </group>
+                        </clone>
+                    </resources>
+                """
+            },
+            initial_state_modifiers={
+                "resources": """
+                    <resources>
+                        <clone id="C" multi_state="false" unique="false" maintenance="false" managed="true" disabled="false" failed="false" failure_ignored="false">
+                            <group id="G:0" number_resources="1" maintenance="false" managed="true" disabled="false">
+                                <resource id="A" role="Started" managed="true"/>
+                                <resource id="B" role="Started" managed="true"/>
+                            </group>
+                            <group id="G:1" number_resources="2" maintenance="false" managed="true" disabled="false">
+                                <resource id="A" role="Started" managed="true"/>
+                                <resource id="B" role="Started" managed="true"/>
+                            </group>
+                        </clone>
+                    </resources>
+                """
+            },
+            after_disable_cib_modifiers={
+                "resources": """
+                    <resources>
+                        <clone id="C">
+                            <meta_attributes id="C-meta_attributes">
+                                <nvpair id="C-meta_attributes-target-role" name="target-role" value="Stopped"/>
+                            </meta_attributes>
+                            <group id="G">
+                                <meta_attributes id="G-meta_attributes">
+                                    <nvpair id="G-meta_attributes-target-role" name="target-role" value="Stopped"/>
+                                </meta_attributes>
+                                <primitive id="A">
+                                    <meta_attributes id="A-meta_attributes">
+                                        <nvpair id="A-meta_attributes-target-role" name="target-role" value="Stopped"/>
+                                    </meta_attributes>
+                                </primitive>
+                                <primitive id="B">
+                                    <meta_attributes id="B-meta_attributes">
+                                        <nvpair id="B-meta_attributes-target-role" name="target-role" value="Stopped"/>
+                                    </meta_attributes>
+                                </primitive>
+                            </group>
+                        </clone>
+                    </resources>
+                """
+            },
+            after_disable_state_modifiers={
+                "resources": """
+                    <resources>
+                        <clone id="C" multi_state="false" unique="false" maintenance="false" managed="true" disabled="false" failed="false" failure_ignored="false">
+                            <group id="G:0" number_resources="1" maintenance="false" managed="true" disabled="false">
+                                <resource id="A" role="Stopped" managed="true"/>
+                                <resource id="B" role="Stopped" managed="true"/>
+                            </group>
+                            <group id="G:1" number_resources="2" maintenance="false" managed="true" disabled="false">
+                                <resource id="A" role="Stopped" managed="true"/>
+                                <resource id="B" role="Stopped" managed="true"/>
+                            </group>
+                        </clone>
+                    </resources>
+                """
+            },
+            after_delete_cib_modifiers={"resources": "<resources/>"},
+        )
+
+        lib.remove_elements(self.env_assist.get_env(), ["C"])
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    reports.codes.STOPPING_RESOURCES_BEFORE_DELETING,
+                    resource_id_list=["A", "B", "C", "G"],
+                ),
+                fixture.info(reports.codes.WAIT_FOR_IDLE_STARTED, timeout=0),
+                fixture.info(
+                    reports.codes.CIB_REMOVE_DEPENDANT_ELEMENTS,
+                    id_tag_map={
+                        "G": "group",
+                        "A": "primitive",
+                        "B": "primitive",
+                    },
+                ),
+            ]
+        )
+
+    def test_disable_only_needed_resources(self):
+        self.fixture_env(
+            initial_cib_modifiers={
+                "resources": """
+                    <resources>
+                        <clone id="C">
+                            <group id="G">
+                                <primitive id="A"/>
+                                <primitive id="B"/>
+                            </group>
+                        </clone>
+                    </resources>
+                """
+            },
+            initial_state_modifiers={
+                "resources": """
+                    <resources>
+                        <clone id="C" multi_state="false" unique="false" maintenance="false" managed="true" disabled="false" failed="false" failure_ignored="false">
+                            <group id="G:0" number_resources="1" maintenance="false" managed="true" disabled="false">
+                                <resource id="A" role="Started" managed="true"/>
+                                <resource id="B" role="Started" managed="true"/>
+                            </group>
+                            <group id="G:1" number_resources="2" maintenance="false" managed="true" disabled="false">
+                                <resource id="A" role="Started" managed="true"/>
+                                <resource id="B" role="Started" managed="true"/>
+                            </group>
+                        </clone>
+                    </resources>
+                """
+            },
+            after_disable_cib_modifiers={
+                "resources": """
+                    <resources>
+                        <clone id="C">
+                            <group id="G">
+                                <primitive id="A">
+                                    <meta_attributes id="A-meta_attributes">
+                                        <nvpair id="A-meta_attributes-target-role" name="target-role" value="Stopped"/>
+                                    </meta_attributes>
+                                </primitive>
+                                <primitive id="B"/>
+                            </group>
+                        </clone>
+                    </resources>
+                """
+            },
+            after_disable_state_modifiers={
+                "resources": """
+                    <resources>
+                        <clone id="C" multi_state="false" unique="false" maintenance="false" managed="true" disabled="false" failed="false" failure_ignored="false">
+                            <group id="G:0" number_resources="1" maintenance="false" managed="true" disabled="false">
+                                <resource id="A" role="Stopped" managed="true"/>
+                                <resource id="B" role="Started" managed="true"/>
+                            </group>
+                            <group id="G:1" number_resources="2" maintenance="false" managed="true" disabled="false">
+                                <resource id="A" role="Stopped" managed="true"/>
+                                <resource id="B" role="Started" managed="true"/>
+                            </group>
+                        </clone>
+                    </resources>
+                """
+            },
+            after_delete_cib_modifiers={
+                "resources": """
+                    <resources>
+                        <clone id="C">
+                            <group id="G">
+                                <primitive id="B"/>
+                            </group>
+                        </clone>
+                    </resources>
+                """
+            },
+        )
+
+        lib.remove_elements(self.env_assist.get_env(), ["A"])
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    reports.codes.STOPPING_RESOURCES_BEFORE_DELETING,
+                    resource_id_list=["A"],
+                ),
+                fixture.info(reports.codes.WAIT_FOR_IDLE_STARTED, timeout=0),
+                fixture.info(
+                    reports.codes.CIB_REMOVE_REFERENCES,
+                    id_tag_map={"A": "primitive", "G": "group"},
+                    removing_references_from={"A": {"G"}},
                 ),
             ]
         )
