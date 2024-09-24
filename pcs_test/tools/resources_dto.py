@@ -28,9 +28,6 @@ DUMMY_AGENT_NAME = ResourceAgentNameDto(
 STATEFUL_AGENT_NAME = ResourceAgentNameDto(
     standard="ocf", provider="pcsmock", type="stateful"
 )
-REMOTE_AGENT_NAME = ResourceAgentNameDto(
-    standard="ocf", provider="pacemaker", type="remote"
-)
 
 STONITH_AGENT_NAME = ResourceAgentNameDto(
     standard="stonith", provider=None, type="fence_pcsmock_minimal"

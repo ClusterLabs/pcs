@@ -4,6 +4,7 @@ from itertools import chain
 from typing import (
     Iterable,
     Mapping,
+    Sequence,
     cast,
 )
 
@@ -130,6 +131,9 @@ class ElementsToRemove:
             _get_dependencies_to_remove(supported_elements)
         )
 
+        # We need to use ids of the elements, since we will work with cib, but
+        # the the elements were instantiated using the wip_cib, which means we
+        # cannot reuse the elements
         self._ids_to_remove = element_ids_to_remove
         self._dependant_element_ids = self._ids_to_remove - initial_ids
         self._missing_ids = set(missing_ids)
@@ -149,15 +153,15 @@ class ElementsToRemove:
             for el in get_elements_by_ids(cib, all_ids)[0]
         }
         self._element_references = removing_references_from
-        self._resource_ids_to_disable = set(
-            str(el.attrib["id"])
-            for el in get_elements_by_ids(cib, element_ids_to_remove)[0]
+        self._resources_to_disable = [
+            el
+            for el in get_elements_by_ids(cib, sorted(element_ids_to_remove))[0]
             if is_resource(el)
-        )
+        ]
 
     @property
-    def resources_to_disable(self) -> set[str]:
-        return set(self._resource_ids_to_disable)
+    def resources_to_disable(self) -> list[_Element]:
+        return list(self._resources_to_disable)
 
     @property
     def ids_to_remove(self) -> set[str]:
@@ -196,31 +200,71 @@ class ElementsToRemove:
                 element_id: self._id_tag_map[element_id]
                 for element_id in self._unsupported_ids
             },
+            # the list of tags should match the validations done in
+            # _validate_element_types function
             supported_element_types=["constraint", "location rule", "resource"],
         )
 
 
-def stop_resources(
-    cib: _Element, state: _Element, elements: ElementsToRemove
+def warn_resource_unmanaged(
+    state: _Element, resource_ids: StringSequence
 ) -> reports.ReportItemList:
+    """
+
+    state -- state of the cluster
+    resource_ids -- ids of resources to be checked
+    """
+    report_list: reports.ReportItemList = []
+    try:
+        parser = ClusterStatusParser(state)
+        try:
+            status_dto = parser.status_xml_to_dto()
+        except ClusterStatusParsingError as e:
+            report_list.append(cluster_status_parsing_error_to_report(e))
+            return report_list
+        report_list.extend(parser.get_warnings())
+
+        status = ResourcesStatusFacade.from_resources_status_dto(status_dto)
+        report_list.extend(
+            reports.ReportItem.warning(
+                reports.messages.ResourceIsUnmanaged(resource_id)
+            )
+            for resource_id in resource_ids
+            if status.is_state(
+                resource_id,
+                None,
+                ResourceState.UNMANAGED,
+            )
+        )
+    except NotImplementedError:
+        # TODO remove when issue with bundles in status is fixed
+        report_list.extend(
+            reports.ReportItem.warning(
+                reports.messages.ResourceIsUnmanaged(resource_id)
+            )
+            for resource_id in resource_ids
+            if not is_resource_managed(state, resource_id)
+        )
+
+    return report_list
+
+
+def stop_resources(
+    cib: _Element, resource_elements: Sequence[_Element]
+) -> None:
     """
     Stop all resources that are going to be removed.
 
     cib -- the whole cib
-    state -- state of the cluster
-    elements -- elements planned to be removed
+    resource_elements -- sequence of elements that should be stopped
     """
-    resources_to_disable = sorted(elements.resources_to_disable)
-    report_list = _warn_resource_unmanaged(state, resources_to_disable)
-    resources, _ = get_elements_by_ids(cib, resources_to_disable)
     provider = IdProvider(cib)
-    for el in resources:
+    for el in resource_elements:
         disable(el, provider)
-    return report_list
 
 
 def ensure_resources_stopped(
-    state: _Element, elements: ElementsToRemove
+    state: _Element, resource_ids: StringSequence
 ) -> reports.ReportItemList:
     """
     Ensure that all resources that should be stopped are stopped.
@@ -228,7 +272,6 @@ def ensure_resources_stopped(
     state -- state of the cluster
     elements -- elements planned to be removed
     """
-    resources_to_disable = sorted(elements.resources_to_disable)
     not_stopped_ids = []
     report_list: reports.ReportItemList = []
     try:
@@ -243,7 +286,7 @@ def ensure_resources_stopped(
         status = ResourcesStatusFacade.from_resources_status_dto(status_dto)
         not_stopped_ids = [
             resource_id
-            for resource_id in resources_to_disable
+            for resource_id in resource_ids
             if not status.is_state(
                 resource_id,
                 None,
@@ -259,7 +302,7 @@ def ensure_resources_stopped(
         # TODO remove when issue with bundles in status is fixed
         not_stopped_ids = [
             resource_id
-            for resource_id in resources_to_disable
+            for resource_id in resource_ids
             if ensure_resource_state(False, state, resource_id).severity.level
             == reports.item.ReportItemSeverity.ERROR
         ]
@@ -310,6 +353,8 @@ def _validate_element_types(
     unsupported_elements = []
 
     for el in elements:
+        # valid elements should match the valid tags reported from
+        # ElementsToRemove.unsupported_elements property
         if is_constraint(el) or is_location_rule(el) or is_resource(el):
             supported_elements.append(el)
         else:
@@ -355,44 +400,6 @@ def _remove_element_reference(
         remove_one_element(el)
 
 
-def _warn_resource_unmanaged(
-    state: _Element, resource_ids: StringSequence
-) -> reports.ReportItemList:
-    report_list: reports.ReportItemList = []
-    try:
-        parser = ClusterStatusParser(state)
-        try:
-            status_dto = parser.status_xml_to_dto()
-        except ClusterStatusParsingError as e:
-            report_list.append(cluster_status_parsing_error_to_report(e))
-            return report_list
-        report_list.extend(parser.get_warnings())
-
-        status = ResourcesStatusFacade.from_resources_status_dto(status_dto)
-        report_list.extend(
-            reports.ReportItem.warning(
-                reports.messages.ResourceIsUnmanaged(resource_id)
-            )
-            for resource_id in resource_ids
-            if status.is_state(
-                resource_id,
-                None,
-                ResourceState.UNMANAGED,
-            )
-        )
-    except NotImplementedError:
-        # TODO remove when issue with bundles in status is fixed
-        report_list.extend(
-            reports.ReportItem.warning(
-                reports.messages.ResourceIsUnmanaged(resource_id)
-            )
-            for resource_id in resource_ids
-            if not is_resource_managed(state, resource_id)
-        )
-
-    return report_list
-
-
 def _get_dependencies_to_remove(
     elements: Iterable[_Element],
 ) -> tuple[set[str], dict[str, set[str]]]:
@@ -415,6 +422,11 @@ def _get_dependencies_to_remove(
         el = elements_to_process.pop(0)
         element_id = str(el.attrib["id"])
 
+        # Elements with these tags are only used for referencing other elements.
+        # The 'id' attribute in these does not represent the id of the element
+        # itself, but the id of the element that they refer to.
+        # Therefore, it does not make sense to try finding any references to
+        # these elements.
         if el.tag not in (
             const.TAG_OBJREF,
             const.TAG_RESOURCE_REF,
@@ -438,6 +450,13 @@ def _get_dependencies_to_remove(
 
         parent_el = el.getparent()
         if parent_el is not None:
+            # We only want to remove parent elements that are invalid when
+            # empty. There may be ACLs set in pacemaker which allow "write" for
+            # the child elements (adding, changing and removing) but not their
+            # parent elements. In such case, removing the parent element would
+            # cause the whole change to be rejected by pacemaker with a
+            # "permission denied" message.
+            # https://bugzilla.redhat.com/show_bug.cgi?id=1642514
             if _is_empty_after_inner_el_removal(parent_el):
                 elements_to_process.append(parent_el)
             parent_el.remove(el)
@@ -446,6 +465,10 @@ def _get_dependencies_to_remove(
             if parent_id is not None:
                 removing_references_from[element_id].add(parent_id)
 
+    # Removing references from parent elements that are going to be removed
+    # (they are present in the 'element_ids_to_remove') is unncesary, since all
+    # of the child elements are removed when parent is removed. This means we
+    # can filter out such references from the resulting mapping.
     for key in list(removing_references_from):
         removing_references_from[key].difference_update(element_ids_to_remove)
         if not removing_references_from[key]:

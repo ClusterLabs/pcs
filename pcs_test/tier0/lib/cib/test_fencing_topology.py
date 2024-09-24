@@ -523,7 +523,7 @@ class RemoveLevelsByParams(TestCase, CibMixin):
         )
 
 
-class FindLevelsReferencingDevice(TestCase, CibMixin):
+class FindLevelsWithDevice(TestCase, CibMixin):
     def setUp(self):
         self.cib = self.get_cib()
         self.tree = self.cib.find("configuration/fencing-topology")

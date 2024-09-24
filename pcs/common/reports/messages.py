@@ -6377,7 +6377,7 @@ class StoppingResourcesBeforeDeleting(ReportItemMessage):
 @dataclass(frozen=True)
 class CannotStopResourcesBeforeDeleting(ReportItemMessage):
     """
-    Cannot stop a resource that is being removed
+    Cannot stop resources that are being removed
 
     resource_id_list -- ids of resources that cannot be stopped
     """
