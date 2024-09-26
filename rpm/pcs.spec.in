@@ -242,10 +242,6 @@ done
 for i in license; do
  for x in `find %{pcs_bundled_dir}/src -type f -iname "${i}*" | grep -v pyagentx`; do
   srcfile=`echo $x | sed -e 's#.*\/##g'`
-  # pycurl copies the files into pcs_bundled/usr/share/doc/pycurl instead of pcs_bundled/src/pycurl
-  # installation with pip also leaves .dist-info and greedy matching would only remove "info", deleting that first
-  # pycurl also doesn't append version after a dash, so first we cut the srcpkg after slash and then
-  # the part after the dash is also cut for other packages that append version after it
   srcpkg=`echo $x | sed -e 's#.*src/##g' -e 's/\(.*\)-.*/\1/'`
   mv $x dynamic_files/${srcpkg}_${srcfile}
   echo "@license dynamic_files/${srcpkg}_${srcfile}" >> dynamic_files/pcs
