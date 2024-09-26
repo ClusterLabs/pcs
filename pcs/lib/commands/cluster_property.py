@@ -37,9 +37,12 @@ def _get_property_facade_list(
     factory: ResourceAgentFacadeFactory,
     runner: CommandRunner,
 ) -> list[ResourceAgentFacade]:
+    cluster_property_facade_list = []
     if is_crm_attribute_list_options_supported(runner):
         try:
-            return [factory.facade_from_crm_attribute(ra_const.CLUSTER_OPTIONS)]
+            cluster_property_facade_list.append(
+                factory.facade_from_crm_attribute(ra_const.CLUSTER_OPTIONS)
+            )
         except ResourceAgentError as e:
             report_processor.report_list(
                 [
@@ -49,25 +52,11 @@ def _get_property_facade_list(
                 ]
             )
     else:
-        pacemaker_daemons = [
-            ra_const.PACEMAKER_BASED,
-            ra_const.PACEMAKER_CONTROLD,
-            ra_const.PACEMAKER_SCHEDULERD,
-        ]
-        cluster_property_facade_list = []
-        for daemon in pacemaker_daemons:
-            try:
-                cluster_property_facade_list.append(
-                    factory.facade_from_pacemaker_daemon_name(daemon)
-                )
-            except ResourceAgentError as e:
-                report_processor.report_list(
-                    [
-                        resource_agent_error_to_report_item(
-                            e, reports.ReportItemSeverity.error()
-                        )
-                    ]
-                )
+        report_processor.report(
+            reports.ReportItem.error(
+                reports.messages.ClusterOptionsMetadataNotSupported()
+            )
+        )
     if report_processor.has_errors:
         raise LibraryError()
     return cluster_property_facade_list

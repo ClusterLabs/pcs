@@ -108,21 +108,6 @@ def fixture_crm_config_properties(set_list, score_list=None):
     )
 
 
-class PcmkDaemonsLoadMetadataMixin:
-    def load_fake_agent_metadata(self):
-        self.config.runner.pcmk.is_crm_attribute_list_options_supported(
-            is_supported=False
-        )
-        for fake_agent in [
-            "pacemaker-based",
-            "pacemaker-controld",
-            "pacemaker-schedulerd",
-        ]:
-            self.config.runner.pcmk.load_fake_agent_metadata(
-                name=fake_agent, agent_name=fake_agent
-            )
-
-
 class CrmAttributeLoadMetadataMixin:
     def load_fake_agent_metadata(self):
         self.config.runner.pcmk.is_crm_attribute_list_options_supported(
@@ -229,14 +214,6 @@ class SetStonithWatchdogTimeoutSBDIsDisabledMixin(StonithWatchdogTimeoutMixin):
                 ),
             ]
         )
-
-
-class TestSetStonithWatchdogTimeoutSBDIsDisabledPcmkDaemonsMetadata(
-    PcmkDaemonsLoadMetadataMixin,
-    SetStonithWatchdogTimeoutSBDIsDisabledMixin,
-    TestCase,
-):
-    pass
 
 
 @mock.patch.object(
@@ -404,21 +381,6 @@ class TestSetStonithWatchdogTimeoutSBDIsEnabledWatchdogOnlyMixinCrmAttributeMeta
     pass
 
 
-@mock.patch.object(
-    settings,
-    "pacemaker_api_result_schema",
-    rc("pcmk_api_rng/api-result.rng"),
-)
-@mock.patch("pcs.lib.sbd._get_local_sbd_watchdog_timeout", lambda: 10)
-@mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
-class TestSetStonithWatchdogTimeoutSBDIsEnabledWatchdogOnlyMixinPcmkDaemonsMetadata(
-    PcmkDaemonsLoadMetadataMixin,
-    SetStonithWatchdogTimeoutSBDIsEnabledWatchdogOnlyMixin,
-    TestCase,
-):
-    pass
-
-
 class SetStonithWatchdogTimeoutSBDIsEnabledSharedDevicesMixin(
     StonithWatchdogTimeoutMixin
 ):
@@ -470,15 +432,6 @@ class SetStonithWatchdogTimeoutSBDIsEnabledSharedDevicesMixin(
                 )
             ]
         )
-
-
-@mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: ["dev1", "dev2"])
-class TestSetStonithWatchdogTimeoutSBDIsEnabledSharedDevicesPcmkDaemonsMetadata(
-    PcmkDaemonsLoadMetadataMixin,
-    SetStonithWatchdogTimeoutSBDIsEnabledSharedDevicesMixin,
-    TestCase,
-):
-    pass
 
 
 @mock.patch.object(
@@ -580,88 +533,19 @@ class CrmAttributeMetadataErrorMixin:
             stdout=stdout, returncode=0, unsupported_version=True
         )
 
-
-class PcmkDaemonsMetadataErrorMixin:
-    _load_cib_when_metadata_error = None
-
-    def metadata_error_command(self):
-        raise NotImplementedError
-
-    def _metadata_error(
-        self, error_agent, stdout=None, reason=None, unsupported_version=False
-    ):
+    def test_facade_crm_attribute_metadata_not_supported(self):
         if self._load_cib_when_metadata_error:
             self.config.runner.cib.load()
         self.config.runner.pcmk.is_crm_attribute_list_options_supported(
             is_supported=False
         )
-        for agent in [
-            "pacemaker-based",
-            "pacemaker-controld",
-            "pacemaker-schedulerd",
-        ]:
-            if agent == error_agent:
-                kwargs = dict(
-                    name=agent,
-                    agent_name=agent,
-                    stdout="" if stdout is None else stdout,
-                    stderr="error",
-                    returncode=2,
-                )
-            else:
-                kwargs = dict(name=agent, agent_name=agent)
-            self.config.runner.pcmk.load_fake_agent_metadata(**kwargs)
         self.env_assist.assert_raise_library_error(self.metadata_error_command)
-        if unsupported_version:
-            report = fixture.error(
-                reports.codes.AGENT_IMPLEMENTS_UNSUPPORTED_OCF_VERSION,
-                agent=f"__pcmk_internal:{error_agent}",
-                ocf_version="1.2",
-                supported_versions=["1.0", "1.1"],
-            )
-        else:
-            report = fixture.error(
-                reports.codes.UNABLE_TO_GET_AGENT_METADATA,
-                agent=error_agent,
-                reason="error" if reason is None else reason,
-            )
-        self.env_assist.assert_reports([report])
-
-    def test_metadata_error_pacemaker_based(self):
-        self._metadata_error("pacemaker-based")
-
-    def test_metadata_error_pacemaker_controld(self):
-        self._metadata_error("pacemaker-controld")
-
-    def test_metadata_error_pacemaker_schedulerd(self):
-        self._metadata_error("pacemaker-schedulerd")
-
-    def test_metadata_error_xml_syntax_error(self):
-        self._metadata_error(
-            "pacemaker-schedulerd",
-            stdout="not an xml",
-            reason=(
-                "Start tag expected, '<' not found, line 1, column 1 (<string>,"
-                " line 1)"
-            ),
-        )
-
-    def test_metadata_error_invalid_schema(self):
-        self._metadata_error(
-            "pacemaker-based",
-            stdout="<xml/>",
-            reason="Expecting element resource-agent, got xml, line 1",
-        )
-
-    def test_metadata_error_invalid_version(self):
-        self._metadata_error(
-            "pacemaker-controld",
-            stdout="""
-                <resource-agent name="pacemaker-based">
-                    <version>1.2</version>
-                </resource-agent>
-            """,
-            unsupported_version=True,
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.CLUSTER_OPTIONS_METADATA_NOT_SUPPORTED
+                )
+            ]
         )
 
 
@@ -968,15 +852,6 @@ class TestPropertySetMixin:
         )
 
 
-class TestPropertySetPcmkDaemons(
-    TestPropertySetMixin,
-    PcmkDaemonsLoadMetadataMixin,
-    PcmkDaemonsMetadataErrorMixin,
-    TestCase,
-):
-    pass
-
-
 @mock.patch.object(
     settings,
     "pacemaker_api_result_schema",
@@ -1222,80 +1097,6 @@ class TestGetPropertiesMetadataMixin:
             ),
         )
         self.env_assist.assert_reports([])
-
-
-class TestGetPropertiesMetadataPcmkDaemons(
-    TestGetPropertiesMetadataMixin, PcmkDaemonsMetadataErrorMixin, TestCase
-):
-    def _load_fake_agent_test_metadata(self):
-        self.config.runner.pcmk.is_crm_attribute_list_options_supported(
-            is_supported=False
-        )
-        self.config.runner.pcmk.load_fake_agent_metadata(
-            name="pacemaker-based",
-            agent_name="pacemaker-based",
-            stdout="""
-                <?xml version="1.0"?>
-                <resource-agent name="pacemaker-based" version="2.1.5-7.el9">
-                  <version>1.1</version>
-                  <longdesc lang="en"></longdesc>
-                  <shortdesc lang="en"></shortdesc>
-                  <parameters>
-                    <parameter name="property-name">
-                      <longdesc lang="en">longdesc</longdesc>
-                      <shortdesc lang="en">shortdesc</shortdesc>
-                      <content type="boolean" default="false"/>
-                    </parameter>
-                  </parameters>
-                </resource-agent>
-            """,
-        )
-        self.config.runner.pcmk.load_fake_agent_metadata(
-            name="pacemaker-controld",
-            agent_name="pacemaker-controld",
-            stdout="""
-                <?xml version="1.0"?>
-                <resource-agent name="pacemaker-based" version="2.1.5-7.el9">
-                  <version>1.1</version>
-                  <longdesc lang="en"></longdesc>
-                  <shortdesc lang="en"></shortdesc>
-                  <parameters>
-                    <parameter name="enum-property">
-                      <longdesc lang="en">same desc</longdesc>
-                      <shortdesc lang="en">same desc</shortdesc>
-                      <content type="select" default="stop">
-                        <option value="stop" />
-                        <option value="freeze" />
-                        <option value="ignore" />
-                        <option value="demote" />
-                        <option value="suicide" />
-                      </content>
-                    </parameter>
-                  </parameters>
-                </resource-agent>
-            """,
-        )
-        self.config.runner.pcmk.load_fake_agent_metadata(
-            name="pacemaker-schedulerd",
-            agent_name="pacemaker-schedulerd",
-            stdout="""
-                <?xml version="1.0"?>
-                <resource-agent name="pacemaker-based" version="2.1.5-7.el9">
-                  <version>1.0</version>
-                  <longdesc lang="en"></longdesc>
-                  <shortdesc lang="en"></shortdesc>
-                  <parameters>
-                    <parameter name="advanced-property">
-                      <longdesc lang="en">longdesc</longdesc>
-                      <shortdesc lang="en">
-                        *** Advanced Use Only *** advanced shortdesc
-                      </shortdesc>
-                      <content type="boolean" default="false"/>
-                    </parameter>
-                  </parameters>
-                </resource-agent>
-            """,
-        )
 
 
 @mock.patch.object(

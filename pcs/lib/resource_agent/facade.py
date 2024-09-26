@@ -230,11 +230,6 @@ class ResourceAgentFacadeFactory:
         """
         return self._facade_from_metadata(name_to_void_metadata(name))
 
-    def facade_from_pacemaker_daemon_name(
-        self, daemon_name: FakeAgentName
-    ) -> ResourceAgentFacade:
-        return ResourceAgentFacade(self._get_fake_agent_metadata(daemon_name))
-
     def facade_from_crm_attribute(
         self, agent_name: FakeAgentName
     ) -> ResourceAgentFacade:

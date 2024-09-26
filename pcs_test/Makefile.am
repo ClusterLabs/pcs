@@ -3,7 +3,6 @@ MAINTAINERCLEANFILES	= Makefile.in
 EXTRA_DIST		= \
 			  curl_test.py \
 			  __init__.py \
-			  resources/based_metadata.xml \
 			  resources/capabilities.xml \
 			  resources/cib-all.xml \
 			  resources/cib-empty-1.2.xml \
@@ -27,7 +26,6 @@ EXTRA_DIST		= \
 			  resources/cib-unexportable-constraints.xml \
 			  resources/cib-unsupported-stonith-config.xml \
 			  resources/cluster-options_metadata.xml \
-			  resources/controld_metadata.xml \
 			  resources/corosync-3nodes.conf \
 			  resources/corosync-3nodes-qdevice.conf \
 			  resources/corosync-3nodes-qdevice-heuristics.conf \
@@ -38,7 +36,6 @@ EXTRA_DIST		= \
 			  resources/crm_mon.minimal.xml \
 			  resources/crm_mon.all_resources.xml \
 			  resources/fenced_metadata.xml \
-			  resources/schedulerd_metadata.xml \
 			  resources/pcmk_api_rng/api-result.rng \
 			  resources/pcmk_api_rng/crm_attribute-2.36.rng \
 			  resources/pcmk_api_rng/crm_mon-2.29.rng \
@@ -439,10 +436,7 @@ EXTRA_DIST		= \
 			  tools/bin_mock/pcmk/crm_resource.d/systemd__pcsmock_metadata.xml \
 			  tools/bin_mock/pcmk/crm_resource_mock.py \
 			  tools/bin_mock/pcmk/pacemaker_metadata.d/cluster_options.xml \
-			  tools/bin_mock/pcmk/pacemaker_metadata.d/pacemaker_based.xml \
-			  tools/bin_mock/pcmk/pacemaker_metadata.d/pacemaker_controld.xml \
 			  tools/bin_mock/pcmk/pacemaker_metadata.d/pacemaker_fenced.xml \
-			  tools/bin_mock/pcmk/pacemaker_metadata.d/pacemaker_schedulerd.xml \
 			  tools/bin_mock/pcmk/pacemaker_metadata.py \
 			  tools/bin_mock/pcmk/stonith_admin_mock.py \
 			  tools/case_analysis.py \
