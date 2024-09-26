@@ -10,7 +10,7 @@
 - Lib command `cib.remove_elements` can now remove resources
 
 ### Changed
-- Commands `pcs resource delete | remove` and `pcs stonith delete | remove` 
+- Commands `pcs resource delete | remove` and `pcs stonith delete | remove`
   now allow ([RHEL-61889]):
     - deletion of multiple resources or stonith resources with one command
     - deletion of resources or stonith resources included in tags
@@ -21,7 +21,11 @@
 - Commands `pcs cluster node delete-remote | remove-remote` no longer remove
   location constraints referencing the node name of the removed node. This new
   behavior is consistent with the other node removal commands.
-
+- With deprecation of installation using setup.py, the project was migrated to
+  standard PEP517, PEP518 and PEP621 packaging mechanism. Setuptools is used
+  as a build backend and pip as a build frontend. If you build pcs from source
+  (not using a package), look at the changes in Makefile.am and rpm/spec.in.
+  Update of your building processes might be needed.
 
 ### Fixed
 - Do not end with error when using the instances quantifier in `pcs status

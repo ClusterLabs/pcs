@@ -18,6 +18,7 @@ pcs/snmp/pcs_snmp_agent.service
 pcs.pc
 pcs-*
 .mypy_cache/
+pyproject.toml
 requirements.txt
 setup.py
 setup.cfg
