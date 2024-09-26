@@ -14,6 +14,13 @@
 - Do not display a warning in `pcs status` when a fence\_sbd stonith device has
   its `method` option set to `cycle` ([RHEL-44432])
 
+### Changed
+- With deprecation of installation using setup.py, the project was migrated to
+  standard PEP517, PEP518 and PEP621 packaging mechanism. Setuptools is used
+  as a build backend and pip as a build frontend. If you build pcs from source
+  (not using a package), look at the changes in Makefile.am and rpm/spec.in.
+  Update of your building processes might be needed.
+
 [RHEL-21047]: https://issues.redhat.com/browse/RHEL-21047
 [RHEL-44432]: https://issues.redhat.com/browse/RHEL-44432
 [RHEL-55723]: https://issues.redhat.com/browse/RHEL-55723

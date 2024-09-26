@@ -11,7 +11,7 @@ AC_CONFIG_AUX_DIR([.])
 AM_INIT_AUTOMAKE([dist-bzip2 dist-xz -Wno-portability tar-pax])
 
 AC_CONFIG_MACRO_DIR([m4])
-AC_CONFIG_SRCDIR([setup.py.in])
+AC_CONFIG_SRCDIR([pyproject.toml.in])
 
 AC_CANONICAL_HOST
 
@@ -484,7 +484,7 @@ AC_SUBST([BOOTH_ENABLE_AUTHFILE_SET_ENABLED], [$(if test "x$booth_enable_authfil
 AC_SUBST([BOOTH_ENABLE_AUTHFILE_UNSET_ENABLED], [$(if test "x$booth_enable_authfile_unset" = "xyes"; then echo "True"; else echo "False"; fi)])
 AC_SUBST([BOOTH_ENABLE_AUTHFILE_SET_CAPABILITY], [$(test "x$booth_enable_authfile_set" != "xyes"; echo "$?")])
 AC_SUBST([BOOTH_ENABLE_AUTHFILE_UNSET_CAPABILITY], [$(test "x$booth_enable_authfile_unset" != "xyes"; echo "$?")])
-AC_SUBST([PACKAGE_WEBUI_BACKEND], [$(if test "x$webui" = "xyes"; then echo "True"; else echo "False"; fi)])
+AC_SUBST([PACKAGE_WEBUI_BACKEND], [$(if test "x$webui" != "xyes"; then echo "pcs.daemon.app.webui*"; fi)])
 PCSD_PUBLIC_DIR="$LIB_DIR/pcsd/public"
 AC_SUBST([PCSD_PUBLIC_DIR])
 PCSD_WEBUI_DIR="$PCSD_PUBLIC_DIR/ui"
@@ -620,8 +620,7 @@ AC_SUBST([UTC_DATE])
 
 AC_CONFIG_FILES([Makefile
 		 pcs.pc
-		 setup.py
-		 setup.cfg
+		 pyproject.toml
 		 data/Makefile
 		 pcs/Makefile
 		 pcs/settings.py

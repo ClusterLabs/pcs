@@ -1,0 +1,59 @@
+[project]
+name = "pcs"
+version = "@VERSION@"
+requires-python = ">=3.9"
+description = "Pacemaker/Corosync Configuration System"
+authors = [
+  {name = "Chris Feist", email = "cfeist@redhat.com"},
+]
+readme = "README.md"
+
+[project.urls]
+Repository = "https://github.com/ClusterLabs/pcs"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project.scripts]
+pcs = "pcs.entry_points.cli:main"
+pcsd = "pcs.entry_points.daemon:main"
+pcs_snmp_agent = "pcs.entry_points.snmp_agent:main"
+pcs_internal = "pcs.entry_points.internal:main"
+
+[tool.setuptools]
+# True by default in pyproject.toml, keeping old behavior
+include-package-data = false
+
+# If newly excluded packages still persist, try to remove `./*.egg-info` and
+# `./build`. Don't waste time: https://stackoverflow.com/a/59686298/22796102
+[tool.setuptools.packages.find]
+exclude = [
+  "pcs_*",
+  "@PACKAGE_WEBUI_BACKEND@",
+]
+
+[tool.setuptools.package-data]
+pcs = ["py.typed"]
+
+
+
+################################################################################
+# NON-BUILD TOOLS
+################################################################################
+[tool.black]
+line-length = 80
+target-version = ['py39']
+
+[tool.isort]
+profile = "black"
+line_length = 80
+multi_line_output = 3
+force_grid_wrap = 2
+atomic = true
+py_version = 39
+skip_gitignore = true
+sections = ['FUTURE', 'STDLIB', 'THIRDPARTY', 'FIRSTPARTY', 'TESTS', 'LOCALFOLDER']
+known_first_party = ["pcs"]
+known_tests = ["pcs_test"]
+supported_extensions = ["py", "py.in"]
