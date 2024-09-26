@@ -1,6 +1,0 @@
-[build]
-executable = @PYTHON@ -Es
-[install]
-install-platlib = @PYTHON_SITELIB@
-install-purelib = @PYTHON_SITELIB@
-install-scripts = @SBINDIR@
