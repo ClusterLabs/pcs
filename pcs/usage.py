@@ -1870,9 +1870,11 @@ Commands:
         will be printed.
 
     report [--from "YYYY-M-D H:M:S" [--to "YYYY-M-D H:M:S"]] <dest>
+            [--overwrite]
         Create a tarball containing everything needed when reporting cluster
-        problems.  If --from and --to are not used, the report will include
-        the past 24 hours.
+        problems. If --from and --to are not used, the report will include
+        the past 24 hours. No existing files will be overwritten, unless
+        --overwrite is specified.
 """.format(
         config_show_syntax=_format_syntax(_CLUSTER_CONFIG_SHOW_SYNTAX),
         config_show_desc=_format_desc(_CLUSTER_CONFIG_SHOW_DESC),

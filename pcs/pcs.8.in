@@ -695,8 +695,8 @@ Permanently destroy the cluster on the current node, killing all cluster process
 verify [\fB\-\-full\fR] [\fB\-f\fR <filename>]
 Checks the pacemaker configuration (CIB) for syntax and common conceptual errors. If no filename is specified the check is performed on the currently running cluster. If \fB\-\-full\fR is used more verbose output will be printed.
 .TP
-report [\fB\-\-from\fR "YYYY\-M\-D H:M:S" [\fB\-\-to\fR "YYYY\-M\-D H:M:S"]] <dest>
-Create a tarball containing everything needed when reporting cluster problems.  If \fB\-\-from\fR and \fB\-\-to\fR are not used, the report will include the past 24 hours.
+report [\fB\-\-from\fR "YYYY\-M\-D H:M:S" [\fB\-\-to\fR "YYYY\-M\-D H:M:S"]] <dest> [\fB\-\-overwrite]\fR
+Create a tarball containing everything needed when reporting cluster problems. If \fB\-\-from\fR and \fB\-\-to\fR are not used, the report will include the past 24 hours. No existing files will be overwritten, unless \fB\-\-overwrite\fR is specified.
 .SS "stonith"
 .TP
 [status [<resource id | tag id>] [node=<node>] [\fB\-\-hide\-inactive\fR]]
