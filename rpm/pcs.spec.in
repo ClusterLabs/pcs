@@ -208,6 +208,16 @@ make all
 %install
 make install DESTDIR=%{buildroot}
 
+# fix shebangs according to packaging guidelines
+# add E to default Python arguments (-sP)
+%global py3_shbang_opts_pcs %{py3_shbang_opts}E
+%global py3_shbang_opts %{py3_shbang_opts_pcs}
+%if 0%{?rhel} || 0%{?fedora}
+# the script recurses directories, so shell globbing cannot be used for libdir
+%py3_shebang_fix %{buildroot}/%{_sbindir}/* \
+     $(find %{buildroot}/%{_libdir}/pcs -maxdepth 1 -type f)
+%endif
+
 %if %{defined suse_version}
 rm -rf %{buildroot}/usr/share/doc/pcs/
 %endif
