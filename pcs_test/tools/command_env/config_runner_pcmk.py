@@ -488,6 +488,28 @@ class PcmkShortcuts:
             instead=instead,
         )
 
+    def is_crm_attribute_list_options_supported(
+        self,
+        name="runner.pcmk.is_crm_attribute_list_options_supported",
+        is_supported=True,
+    ):
+        """
+        Create call for `crm_attribute --help-all`. If is_supported is True,
+        option --list-options is included in command output.
+
+        name -- key of the call
+        is_supported -- flags which decides if digests are supported
+        """
+        self.__calls.place(
+            name,
+            RunnerCall(
+                [settings.crm_attribute_exec, "--help-all"],
+                stdout="--list-options" if is_supported else "",
+                stderr="",
+                returncode=0,
+            ),
+        )
+
     def load_fake_agent_crm_attribute_metadata(
         self,
         name="runner.pcmk.load_fake_agent_crm_attribute_metadata",

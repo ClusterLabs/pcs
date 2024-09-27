@@ -847,6 +847,12 @@ def _is_in_pcmk_tool_help(
     )
 
 
+def is_crm_attribute_list_options_supported(runner: CommandRunner) -> bool:
+    return _is_in_pcmk_tool_help(
+        runner, settings.crm_attribute_exec, ["--list-options"]
+    )
+
+
 def is_getting_resource_digest_supported(runner: CommandRunner) -> bool:
     return _is_in_pcmk_tool_help(
         runner, settings.crm_resource_exec, ["--digests"]
