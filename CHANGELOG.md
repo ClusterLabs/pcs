@@ -18,6 +18,10 @@
   node resources. The `pcs cluster node delete-remote | remove-remote` or
   `pcs cluster node delete-guest | remove-guest` should be used to properly
   delete remote or guest nodes. ([RHEL-61889])
+- Commands `pcs cluster node delete-remote | remove-remote` no longer remove
+  location constraints referencing the node name of the removed node. This new
+  behavior is consistent with the other node removal commands.
+
 
 ### Fixed
 - Do not end with error when using the instances quantifier in `pcs status

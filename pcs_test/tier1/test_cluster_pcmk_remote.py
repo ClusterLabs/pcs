@@ -518,8 +518,8 @@ class NodeDeleteRemoveRemote(RemoteTest):
             ["cluster", "node", self.command, "NODE-HOST"],
             "<resources/>",
             stderr_full=(
-                fixture_nolive_remove_report(["NODE-NAME"])
-                + "Deleting Resource - NODE-NAME\n"
+                "Removing resource: 'NODE-NAME'\n"
+                + fixture_nolive_remove_report(["NODE-NAME"])
             ),
         )
 
@@ -529,8 +529,8 @@ class NodeDeleteRemoveRemote(RemoteTest):
             ["cluster", "node", self.command, "NODE-NAME"],
             "<resources/>",
             stderr_full=(
-                fixture_nolive_remove_report(["NODE-NAME"])
-                + "Deleting Resource - NODE-NAME\n"
+                "Removing resource: 'NODE-NAME'\n"
+                + fixture_nolive_remove_report(["NODE-NAME"])
             ),
         )
 
@@ -551,13 +551,8 @@ class NodeDeleteRemoveRemote(RemoteTest):
             stderr_full=(
                 "Warning: more than one resource for 'HOST-A' found: "
                 "'HOST-A', 'NODE-NAME'\n"
+                + "Removing resources: 'HOST-A', 'NODE-NAME'\n"
                 + fixture_nolive_remove_report(["HOST-A", "NODE-NAME"])
-                + dedent(
-                    """\
-                    Deleting Resource - NODE-NAME
-                    Deleting Resource - HOST-A
-                    """
-                )
             ),
         )
 

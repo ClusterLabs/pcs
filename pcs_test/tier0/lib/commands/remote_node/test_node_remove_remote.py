@@ -4,6 +4,7 @@ from unittest import (
     mock,
 )
 
+from pcs.common import reports
 from pcs.common.host import Destination
 from pcs.common.reports import codes as report_codes
 from pcs.lib.commands.remote_node import (
@@ -53,13 +54,26 @@ FIXTURE_RESOURCES = """
     REMOTE_HOST,
 )
 
-REPORTS = base_reports_for_host(NODE_NAME)
+REPORTS = fixture.ReportSequenceBuilder().info(
+    report_codes.CIB_REMOVE_RESOURCES,
+    id_list=[NODE_NAME],
+    _name="cib_remove_resources",
+).fixtures + base_reports_for_host(NODE_NAME)
+
 
 get_env_tools = partial(
     get_env_tools, local_extensions={"local": EnvConfigMixin}
 )
 
 
+def _stop_resources_wait_mock(_env, cib, _elements_to_remove):
+    return cib
+
+
+@mock.patch(
+    "pcs.lib.commands.remote_node._stop_resources_wait",
+    _stop_resources_wait_mock,
+)
 class RemoveRemote(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
@@ -68,7 +82,6 @@ class RemoveRemote(TestCase):
                 NODE_NAME: NODE_DEST_LIST,
             }
         )
-        self.remove_resource = mock.Mock()
 
     def find_by(self, identifier):
         # Instance of 'Config' has no 'local' member
@@ -82,14 +95,11 @@ class RemoveRemote(TestCase):
                 dict(label=NODE_NAME, dest_list=NODE_DEST_LIST)
             ],
         )
-        node_remove_remote(
-            self.env_assist.get_env(),
-            node_identifier=identifier,
-            remove_resource=self.remove_resource,
-        )
-        self.remove_resource.assert_called_once_with(
-            NODE_NAME, is_remove_remote_context=True
-        )
+        self.config.env.push_cib(resources="<resources/>")
+        self.config.runner.pcmk.remove_node(NODE_NAME)
+
+        env = self.env_assist.get_env()
+        node_remove_remote(env, node_identifier=identifier)
         self.env_assist.assert_reports(REPORTS)
 
     def test_success_base(self):
@@ -99,10 +109,14 @@ class RemoveRemote(TestCase):
         self.find_by(NODE_NAME)
 
 
+@mock.patch(
+    "pcs.lib.commands.remote_node._stop_resources_wait",
+    _stop_resources_wait_mock,
+)
 class RemoveRemoteOthers(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
-        self.remove_resource = mock.Mock()
+        # self.remove_resource = mock.Mock()
         self.config.env.set_known_hosts_dests(
             {
                 NODE_NAME: NODE_DEST_LIST,
@@ -122,14 +136,11 @@ class RemoveRemoteOthers(TestCase):
             ],
             **FAIL_HTTP_KWARGS,
         )
+        self.config.env.push_cib(resources="<resources/>")
+        self.config.runner.pcmk.remove_node(NODE_NAME)
 
         node_remove_remote(
-            self.env_assist.get_env(),
-            remove_resource=self.remove_resource,
-            skip_offline_nodes=True,
-        )
-        self.remove_resource.assert_called_once_with(
-            NODE_NAME, is_remove_remote_context=True
+            self.env_assist.get_env(), [reports.codes.SKIP_OFFLINE_NODES]
         )
         my_reports = REPORTS.copy()
         my_reports.replace(
@@ -147,9 +158,7 @@ class RemoveRemoteOthers(TestCase):
         (self.config.runner.cib.load(resources=FIXTURE_RESOURCES))
         self.env_assist.assert_raise_library_error(
             lambda: node_remove_remote(
-                self.env_assist.get_env(),
-                remove_resource=self.remove_resource,
-                node_identifier="NOEXISTENT",
+                self.env_assist.get_env(), node_identifier="NOEXISTENT"
             ),
             [
                 fixture.error(
@@ -188,7 +197,7 @@ class MultipleResults(TestCase):
 
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
-        self.remove_resource = mock.Mock()
+        # self.remove_resource = mock.Mock()
         (self.config.runner.cib.load(resources=self.fixture_multi_resources))
         self.report_multiple_results = fixture.error(
             report_codes.MULTIPLE_RESULTS_FOUND,
@@ -210,9 +219,7 @@ class MultipleResults(TestCase):
     def test_fail(self):
         self.env_assist.assert_raise_library_error(
             lambda: node_remove_remote(
-                self.env_assist.get_env(),
-                node_identifier=REMOTE_HOST,
-                remove_resource=self.remove_resource,
+                self.env_assist.get_env(), node_identifier=REMOTE_HOST
             )
         )
         self.env_assist.assert_reports([self.report_multiple_results])
@@ -232,14 +239,26 @@ class MultipleResults(TestCase):
                 dict(label=REMOTE_HOST, dest_list=REMOTE_DEST_LIST),
             ],
         )
+        self.config.env.push_cib(resources="<resources/>")
+        self.config.runner.pcmk.remove_node(
+            NODE_NAME, name="remove_node.node_name"
+        )
+        self.config.runner.pcmk.remove_node(
+            REMOTE_HOST, name="remove_node.remote_host"
+        )
 
         node_remove_remote(
             self.env_assist.get_env(),
             node_identifier=REMOTE_HOST,
-            remove_resource=self.remove_resource,
-            allow_remove_multiple_nodes=True,
+            force_flags=[reports.codes.FORCE],
         )
         my_reports = REPORTS.copy()
+        my_reports.replace(
+            "cib_remove_resources",
+            REPORTS["cib_remove_resources"].adapt(
+                id_list=[NODE_NAME, REMOTE_HOST]
+            ),
+        )
         my_reports.replace(
             "pcmk_remote_disable_stop_started",
             REPORTS["pcmk_remote_disable_stop_started"].adapt(
@@ -265,6 +284,10 @@ class MultipleResults(TestCase):
         self.env_assist.assert_reports(my_reports)
 
 
+@mock.patch(
+    "pcs.lib.commands.remote_node._stop_resources_wait",
+    _stop_resources_wait_mock,
+)
 class AuthkeyRemove(TestCase):
     def setUp(self):
         # Instance of 'Config' has no 'local' member
@@ -279,7 +302,6 @@ class AuthkeyRemove(TestCase):
         self.config.local.destroy_pacemaker_remote(
             label=NODE_NAME, dest_list=NODE_DEST_LIST
         )
-        self.remove_resource = mock.Mock()
 
     def test_fails_when_offline(self):
         # Instance of 'Config' has no 'local' member
@@ -291,10 +313,7 @@ class AuthkeyRemove(TestCase):
             **FAIL_HTTP_KWARGS,
         )
         self.env_assist.assert_raise_library_error(
-            lambda: node_remove_remote(
-                self.env_assist.get_env(),
-                remove_resource=self.remove_resource,
-            )
+            lambda: node_remove_remote(self.env_assist.get_env())
         )
         my_reports = REPORTS.copy()
         my_reports.replace(
@@ -316,10 +335,7 @@ class AuthkeyRemove(TestCase):
             },
         )
         self.env_assist.assert_raise_library_error(
-            lambda: node_remove_remote(
-                self.env_assist.get_env(),
-                remove_resource=self.remove_resource,
-            )
+            lambda: node_remove_remote(self.env_assist.get_env())
         )
         my_reports = REPORTS.copy()
         my_reports.replace(
@@ -340,11 +356,10 @@ class AuthkeyRemove(TestCase):
                 "message": "Access denied",
             },
         )
-        node_remove_remote(
-            self.env_assist.get_env(),
-            remove_resource=self.remove_resource,
-            allow_pacemaker_remote_service_fail=True,
-        )
+        self.config.env.push_cib(resources="<resources/>")
+        self.config.runner.pcmk.remove_node(NODE_NAME)
+
+        node_remove_remote(self.env_assist.get_env(), [reports.codes.FORCE])
         my_reports = REPORTS.copy()
         my_reports.replace(
             "authkey_remove_success",
@@ -353,11 +368,14 @@ class AuthkeyRemove(TestCase):
         self.env_assist.assert_reports(my_reports)
 
 
+@mock.patch(
+    "pcs.lib.commands.remote_node._stop_resources_wait",
+    _stop_resources_wait_mock,
+)
 class PcmkRemoteServiceDestroy(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         self.config.runner.cib.load(resources=FIXTURE_RESOURCES)
-        self.remove_resource = mock.Mock()
         self.config.env.set_known_hosts_dests(
             {
                 NODE_NAME: NODE_DEST_LIST,
@@ -371,10 +389,7 @@ class PcmkRemoteServiceDestroy(TestCase):
             label=NODE_NAME, dest_list=NODE_DEST_LIST, **FAIL_HTTP_KWARGS
         )
         self.env_assist.assert_raise_library_error(
-            lambda: node_remove_remote(
-                self.env_assist.get_env(),
-                remove_resource=self.remove_resource,
-            )
+            lambda: node_remove_remote(self.env_assist.get_env())
         )
         my_reports = REPORTS[:"pcmk_remote_disable_success"]
         my_reports.append(report_manage_services_connection_failed(NODE_NAME))
@@ -392,10 +407,7 @@ class PcmkRemoteServiceDestroy(TestCase):
             },
         )
         self.env_assist.assert_raise_library_error(
-            lambda: node_remove_remote(
-                self.env_assist.get_env(),
-                remove_resource=self.remove_resource,
-            )
+            lambda: node_remove_remote(self.env_assist.get_env())
         )
         my_reports = REPORTS[:"pcmk_remote_disable_success"]
         my_reports.append(report_pcmk_remote_disable_failed(NODE_NAME))
@@ -417,11 +429,10 @@ class PcmkRemoteServiceDestroy(TestCase):
                 dict(label=NODE_NAME, dest_list=NODE_DEST_LIST)
             ],
         )
-        node_remove_remote(
-            self.env_assist.get_env(),
-            remove_resource=self.remove_resource,
-            allow_pacemaker_remote_service_fail=True,
-        )
+        self.config.env.push_cib(resources="<resources/>")
+        self.config.runner.pcmk.remove_node(NODE_NAME)
+
+        node_remove_remote(self.env_assist.get_env(), [reports.codes.FORCE])
         my_reports = REPORTS.copy()
         my_reports.replace(
             "pcmk_remote_disable_success",

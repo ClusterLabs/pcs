@@ -5161,6 +5161,23 @@ class CibFencingLevelDoesNotExist(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class CibRemoveResources(ReportItemMessage):
+    """
+    Information about removal of resources from cib.
+    """
+
+    id_list: list[str]
+    _code = codes.CIB_REMOVE_RESOURCES
+
+    @property
+    def message(self) -> str:
+        return "Removing {resource_pl}: {resource_list}".format(
+            resource_pl=format_plural(self.id_list, "resource"),
+            resource_list=format_list(self.id_list),
+        )
+
+
+@dataclass(frozen=True)
 class CibRemoveDependantElements(ReportItemMessage):
     """
     Information about removal of additional cib elements due to dependencies.

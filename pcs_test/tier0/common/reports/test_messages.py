@@ -3753,6 +3753,19 @@ class CibFencingLevelDoesNotExist(NameBuildTest):
         )
 
 
+class CibRemoveResources(NameBuildTest):
+    def test_single_id(self):
+        self.assert_message_from_report(
+            "Removing resource: 'id1'", reports.CibRemoveResources(["id1"])
+        )
+
+    def test_multiple_ids(self):
+        self.assert_message_from_report(
+            "Removing resources: 'id1', 'id2', 'id3'",
+            reports.CibRemoveResources(["id1", "id2", "id3"]),
+        )
+
+
 class CibRemoveDependantElements(NameBuildTest):
     def test_single_element_type_with_single_id(self):
         self.assert_message_from_report(
