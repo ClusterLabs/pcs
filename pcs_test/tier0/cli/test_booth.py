@@ -6,7 +6,6 @@ from unittest import (
 from pcs.cli.booth import command as booth_cmd
 from pcs.cli.common.errors import CmdLineInputError
 
-from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.misc import dict_to_modifiers
 
 
@@ -107,9 +106,7 @@ class AddTicketTest(TestCase):
         )
 
 
-class DeleteRemoveTicketMixin:
-    command = None
-
+class RemoveTicketTest(TestCase):
     def setUp(self):
         self.lib = mock.Mock(spec_set=["booth"])
         self.lib.booth = mock.Mock(spec_set=["config_ticket_remove"])
@@ -141,15 +138,7 @@ class DeleteRemoveTicketMixin:
         )
 
 
-class DeleteTicketTest(DeleteRemoveTicketMixin, TestCase):
-    command = "delete"
-
-
-class RemoveTicketTest(DeleteRemoveTicketMixin, TestCase):
-    command = "remove"
-
-
-class CreateTest(AssertPcsMixin, TestCase):
+class CreateTest(TestCase):
     def setUp(self):
         self.lib = mock.Mock(spec_set=["booth"])
         self.lib.booth = mock.Mock(spec_set=["create_in_cluster"])
@@ -177,9 +166,7 @@ class CreateTest(AssertPcsMixin, TestCase):
         )
 
 
-class DeleteRemoveTestMixin(AssertPcsMixin):
-    command = None
-
+class RemoveTest(TestCase):
     def setUp(self):
         self.lib = mock.Mock(spec_set=["booth"])
         self.lib.booth = mock.Mock(spec_set=["remove_from_cluster"])
@@ -209,14 +196,6 @@ class DeleteRemoveTestMixin(AssertPcsMixin):
             instance_name="my_booth",
             allow_remove_multiple=True,
         )
-
-
-class DeleteTest(DeleteRemoveTestMixin, TestCase):
-    command = "delete"
-
-
-class RemoveTest(DeleteRemoveTestMixin, TestCase):
-    command = "remove"
 
 
 class TicketGrantTest(TestCase):
