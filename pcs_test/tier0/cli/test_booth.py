@@ -5,6 +5,7 @@ from unittest import (
 
 from pcs.cli.booth import command as booth_cmd
 from pcs.cli.common.errors import CmdLineInputError
+from pcs.common.reports import codes as report_codes
 
 from pcs_test.tools.misc import dict_to_modifiers
 
@@ -166,35 +167,33 @@ class CreateTest(TestCase):
         )
 
 
-class RemoveTest(TestCase):
+class RemoveFromCluster(TestCase):
     def setUp(self):
         self.lib = mock.Mock(spec_set=["booth"])
-        self.lib.booth = mock.Mock(spec_set=["remove_from_cluster"])
+        self.booth = mock.Mock(spec_set=["remove_from_cluster"])
+        self.lib.booth = self.booth
 
-    def test_lib_call_minimal(self):
-        def resource_remove(something):
-            return something
-
-        booth_cmd.get_remove_from_cluster(resource_remove)(
-            self.lib, [], dict_to_modifiers({})
-        )
-        self.lib.booth.remove_from_cluster.assert_called_once_with(
-            resource_remove,
-            instance_name=None,
-            allow_remove_multiple=False,
+    def _call_cmd(self, argv, modifiers=None):
+        booth_cmd.remove_from_cluster(
+            self.lib, argv, dict_to_modifiers(modifiers or {})
         )
 
-    def test_lib_call_full(self):
-        def resource_remove(something):
-            return something
+    def test_args(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self._call_cmd(["A"])
+        self.assertIsNone(cm.exception.message)
+        self.booth.remove_from_cluster.assert_not_called()
 
-        booth_cmd.get_remove_from_cluster(resource_remove)(
-            self.lib, [], dict_to_modifiers(dict(name="my_booth", force=True))
+    def test_name(self):
+        self._call_cmd([], {"name": "A"})
+        self.booth.remove_from_cluster.assert_called_once_with(
+            instance_name="A", force_flags=[]
         )
-        self.lib.booth.remove_from_cluster.assert_called_once_with(
-            resource_remove,
-            instance_name="my_booth",
-            allow_remove_multiple=True,
+
+    def test_force(self):
+        self._call_cmd([], {"force": True})
+        self.booth.remove_from_cluster.assert_called_once_with(
+            instance_name=None, force_flags=[report_codes.FORCE]
         )
 
 
