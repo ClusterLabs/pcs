@@ -2,6 +2,7 @@ from pcs.common.resource_agent import const
 
 from .types import (
     _FAKE_AGENT_STANDARD,
+    CrmAttrAgent,
     FakeAgentName,
     OcfVersion,
 )
@@ -11,7 +12,7 @@ OCF_1_1 = OcfVersion("1.1")
 SUPPORTED_OCF_VERSIONS = [OCF_1_0, OCF_1_1]
 
 FAKE_AGENT_STANDARD = _FAKE_AGENT_STANDARD
-CLUSTER_OPTIONS = FakeAgentName("cluster-options")
+CLUSTER_OPTIONS = CrmAttrAgent("cluster-options")
 PACEMAKER_FENCED = FakeAgentName("pacemaker-fenced")
 
 

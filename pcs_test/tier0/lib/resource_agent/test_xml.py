@@ -111,7 +111,7 @@ class LoadFakeAgentMetadataXml(TestCase):
     "pacemaker_api_result_schema",
     rc("pcmk_api_rng/api-result.rng"),
 )
-class LoadFakeAgentCrmAttributeMetadataXml(TestCase):
+class LoadCrmAttributeMetadataXml(TestCase):
     def setUp(self):
         self.maxDiff = None
         self.env_assist, self.config = get_env_tools(test_case=self)
@@ -137,7 +137,7 @@ class LoadFakeAgentCrmAttributeMetadataXml(TestCase):
             </pacemaker-result>
         """
 
-        self.config.runner.pcmk.load_fake_agent_crm_attribute_metadata(
+        self.config.runner.pcmk.load_crm_attribute_metadata(
             agent_name="cluster-options", stdout=api_result.strip()
         )
 
@@ -145,7 +145,7 @@ class LoadFakeAgentCrmAttributeMetadataXml(TestCase):
         assert_xml_equal(
             metadata,
             # pylint: disable=protected-access
-            ra.xml._load_fake_agent_crm_attribute_metadata_xml(
+            ra.xml._load_crm_attribute_metadata_xml(
                 env.cmd_runner(), agent_name
             ),
         )
@@ -155,7 +155,7 @@ class LoadFakeAgentCrmAttributeMetadataXml(TestCase):
         env = self.env_assist.get_env()
         with self.assertRaises(ra.UnableToGetAgentMetadata) as cm:
             # pylint: disable=protected-access
-            ra.xml._load_fake_agent_crm_attribute_metadata_xml(
+            ra.xml._load_crm_attribute_metadata_xml(
                 env.cmd_runner(), agent_name
             )
         self.assertEqual(cm.exception.agent_name, agent_name)
@@ -169,13 +169,13 @@ class LoadFakeAgentCrmAttributeMetadataXml(TestCase):
                 <status code="0" message="OK" />
             </pacemaker-result>
         """
-        self.config.runner.pcmk.load_fake_agent_crm_attribute_metadata(
+        self.config.runner.pcmk.load_crm_attribute_metadata(
             agent_name=agent_name, stdout=api_result, stderr="stderr"
         )
         env = self.env_assist.get_env()
         with self.assertRaises(ra.UnableToGetAgentMetadata) as cm:
             # pylint: disable=protected-access
-            ra.xml._load_fake_agent_crm_attribute_metadata_xml(
+            ra.xml._load_crm_attribute_metadata_xml(
                 env.cmd_runner(), agent_name
             )
         self.assertEqual(cm.exception.agent_name, agent_name)
@@ -195,7 +195,7 @@ class LoadFakeAgentCrmAttributeMetadataXml(TestCase):
                 </status>
             </pacemaker-result>
         """
-        self.config.runner.pcmk.load_fake_agent_crm_attribute_metadata(
+        self.config.runner.pcmk.load_crm_attribute_metadata(
             agent_name=agent_name,
             stdout=api_result,
             returncode=1,
@@ -204,7 +204,7 @@ class LoadFakeAgentCrmAttributeMetadataXml(TestCase):
         env = self.env_assist.get_env()
         with self.assertRaises(ra.UnableToGetAgentMetadata) as cm:
             # pylint: disable=protected-access
-            ra.xml._load_fake_agent_crm_attribute_metadata_xml(
+            ra.xml._load_crm_attribute_metadata_xml(
                 env.cmd_runner(), agent_name
             )
         self.assertEqual(cm.exception.agent_name, agent_name)
@@ -218,14 +218,14 @@ class LoadFakeAgentCrmAttributeMetadataXml(TestCase):
             </pacemaker-result>
         """
 
-        self.config.runner.pcmk.load_fake_agent_crm_attribute_metadata(
+        self.config.runner.pcmk.load_crm_attribute_metadata(
             agent_name="cluster-options", stdout=api_result
         )
 
         env = self.env_assist.get_env()
         with self.assertRaises(ra.UnableToGetAgentMetadata) as cm:
             # pylint: disable=protected-access
-            ra.xml._load_fake_agent_crm_attribute_metadata_xml(
+            ra.xml._load_crm_attribute_metadata_xml(
                 env.cmd_runner(), agent_name
             )
         self.assertEqual(cm.exception.agent_name, agent_name)

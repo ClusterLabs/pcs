@@ -25,13 +25,14 @@ from .pcs_transform import (
     ocf_unified_to_pcs,
 )
 from .types import (
+    CrmAttrAgent,
     FakeAgentName,
     ResourceAgentMetadata,
     ResourceAgentName,
     ResourceAgentParameter,
 )
 from .xml import (
-    load_fake_agent_crm_attribute_metadata_xml,
+    load_crm_attribute_metadata,
     load_fake_agent_metadata,
     load_metadata,
     parse_metadata,
@@ -231,7 +232,7 @@ class ResourceAgentFacadeFactory:
         return self._facade_from_metadata(name_to_void_metadata(name))
 
     def facade_from_crm_attribute(
-        self, agent_name: FakeAgentName
+        self, agent_name: CrmAttrAgent
     ) -> ResourceAgentFacade:
         return ResourceAgentFacade(self._get_crm_attribute_metadata(agent_name))
 
@@ -261,14 +262,12 @@ class ResourceAgentFacadeFactory:
         )
 
     def _get_crm_attribute_metadata(
-        self, agent_name: FakeAgentName
+        self, agent_name: CrmAttrAgent
     ) -> ResourceAgentMetadata:
         return ocf_version_to_ocf_unified(
             parse_metadata(
                 ResourceAgentName(const.FAKE_AGENT_STANDARD, None, agent_name),
-                load_fake_agent_crm_attribute_metadata_xml(
-                    self._runner, agent_name
-                ),
+                load_crm_attribute_metadata(self._runner, agent_name),
             )
         )
 

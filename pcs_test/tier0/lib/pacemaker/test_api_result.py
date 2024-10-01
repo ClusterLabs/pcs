@@ -11,6 +11,7 @@ from pcs.lib.pacemaker import api_result
 from pcs_test.tools import fixture_crm_mon
 from pcs_test.tools.assertions import assert_xml_equal
 from pcs_test.tools.misc import get_test_resource as rc
+from pcs_test.tools.xml import etree_to_str
 
 
 @mock.patch.object(
@@ -25,7 +26,7 @@ class GetApiResultDom(TestCase):
             </pacemaker-result>
         """
         result_el = api_result.get_api_result_dom(xml)
-        assert_xml_equal(xml, etree.tostring(result_el).decode())
+        assert_xml_equal(xml, etree_to_str(result_el))
 
     def test_syntax_error_xml(self):
         xml = "<syntax_error>"

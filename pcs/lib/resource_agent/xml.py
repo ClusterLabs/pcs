@@ -24,6 +24,7 @@ from .error import (
     UnsupportedOcfVersion,
 )
 from .types import (
+    CrmAttrAgent,
     FakeAgentName,
     ResourceAgentActionOcf1_0,
     ResourceAgentActionOcf1_1,
@@ -89,8 +90,8 @@ def _load_fake_agent_metadata_xml(
     return metadata
 
 
-def _load_fake_agent_crm_attribute_metadata_xml(
-    runner: CommandRunner, agent_name: FakeAgentName
+def _load_crm_attribute_metadata_xml(
+    runner: CommandRunner, agent_name: CrmAttrAgent
 ) -> str:
     """
     Run pacemaker crm_attribute to get raw metadata from pacemaker in form of
@@ -191,8 +192,8 @@ def load_fake_agent_metadata(
         raise UnableToGetAgentMetadata(agent_name, str(e)) from e
 
 
-def load_fake_agent_crm_attribute_metadata_xml(
-    runner: CommandRunner, agent_name: FakeAgentName
+def load_crm_attribute_metadata(
+    runner: CommandRunner, agent_name: CrmAttrAgent
 ) -> _Element:
     """
     Return pacemaker metadata as an XML document
@@ -202,7 +203,7 @@ def load_fake_agent_crm_attribute_metadata_xml(
     """
     try:
         return _metadata_xml_to_dom(
-            _load_fake_agent_crm_attribute_metadata_xml(runner, agent_name)
+            _load_crm_attribute_metadata_xml(runner, agent_name)
         )
     except (etree.XMLSyntaxError, etree.DocumentInvalid) as e:
         raise UnableToGetAgentMetadata(agent_name, str(e)) from e

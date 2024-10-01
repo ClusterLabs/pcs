@@ -134,6 +134,12 @@ def validate_set_cluster_properties(
         )
     )
 
+    # Validators are based on pacemaker validation:
+    #   * https://github.com/ClusterLabs/pacemaker/blob/main/lib/common/options.c
+    # There are no pacemaker validators for these types:
+    #   * string - just arbitrary strings
+    #   * version - used only by pacemaker generated option 'dc-version'
+    #   * epoch_time - type is not used at all
     validators: list[validate.ValidatorInterface] = []
     for property_name in to_be_set_properties:
         if property_name not in possible_properties_dict:

@@ -133,7 +133,7 @@ class ResourceAgentFacadeFactory(TestCase):
         fake_agent_name = ra.ResourceAgentName(
             ra.const.FAKE_AGENT_STANDARD, None, agent_name
         )
-        self.config.runner.pcmk.load_fake_agent_crm_attribute_metadata(
+        self.config.runner.pcmk.load_crm_attribute_metadata(
             agent_name=agent_name
         )
         env = self.env_assist.get_env()

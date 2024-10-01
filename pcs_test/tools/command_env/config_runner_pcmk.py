@@ -510,29 +510,28 @@ class PcmkShortcuts:
             ),
         )
 
-    def load_fake_agent_crm_attribute_metadata(
+    def load_crm_attribute_metadata(
         self,
-        name="runner.pcmk.load_fake_agent_crm_attribute_metadata",
-        agent_name="cluster-options",
-        stdout=None,
-        stderr="",
-        returncode=0,
-        instead=None,
-        before=None,
-    ):
+        name: str = "runner.pcmk.load_crm_attribute_metadata",
+        agent_name: str = "cluster-options",
+        stdout: Optional[str] = None,
+        stderr: str = "",
+        returncode: int = 0,
+        instead: Optional[str] = None,
+        before: Optional[str] = None,
+    ) -> None:
         """
-        Create a call for loading fake agent crm_attribute metadata - metadata
-        provided by crm_attribute --list-options=TYPE
+        Create a call for loading crm_attribute metadata - metadata provided by
+        `crm_attribute --list-options=TYPE`
 
-        string name -- the key of this call
-        string agent_name -- name of the fake agent
-        string stdout -- fake agent stdout, default metadata if None
-        string stderr -- fake agent stderr
-        int returncode -- fake agent returncode
-        string instead -- the key of a call instead of which this new call is to
+        name -- the key of this call
+        agent_name -- name of the crm_attribute agent
+        stdout -- crm_attribute agent stdout, default metadata if None
+        stderr -- crm_attribute agent stderr
+        returncode -- crm_attribute agent returncode
+        instead -- the key of a call instead of which this new call is to
             be placed
-        string before -- the key of a call before which this new call is to be
-            placed
+        before -- the key of a call before which this new call is to be placed
         """
         name_to_metadata_file = {
             "cluster-options": "cluster-options_metadata.xml"

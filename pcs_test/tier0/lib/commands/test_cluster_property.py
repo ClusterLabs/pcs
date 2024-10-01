@@ -113,7 +113,7 @@ class CrmAttributeLoadMetadataMixin:
         self.config.runner.pcmk.is_crm_attribute_list_options_supported(
             is_supported=True
         )
-        self.config.runner.pcmk.load_fake_agent_crm_attribute_metadata()
+        self.config.runner.pcmk.load_crm_attribute_metadata()
 
 
 class StonithWatchdogTimeoutMixin:
@@ -468,7 +468,7 @@ class CrmAttributeMetadataErrorMixin:
         self.config.runner.pcmk.is_crm_attribute_list_options_supported(
             is_supported=True
         )
-        self.config.runner.pcmk.load_fake_agent_crm_attribute_metadata(
+        self.config.runner.pcmk.load_crm_attribute_metadata(
             agent_name=agent,
             stdout=stdout,
             stderr=stderr,
@@ -1111,7 +1111,7 @@ class TestGetPropertiesMetadataCrmAttribute(
         self.config.runner.pcmk.is_crm_attribute_list_options_supported(
             is_supported=True
         )
-        self.config.runner.pcmk.load_fake_agent_crm_attribute_metadata(
+        self.config.runner.pcmk.load_crm_attribute_metadata(
             agent_name="cluster-options",
             stdout="""
                 <pacemaker-result api-version="2.38" request="crm_attribute --list-options=cluster --output-as xml">
