@@ -7,6 +7,17 @@
   ([RHEL-21047])
 - Add lib commands `cluster.get_corosync_conf_struct` and
   `resource.get_configured_resources` to API v2
+- Lib command `cib.remove_elements` can now remove resources
+
+### Changed
+- Commands `pcs resource delete | remove` and `pcs stonith delete | remove` 
+  now allow ([RHEL-61889]):
+    - deletion of multiple resources or stonith resources with one command
+    - deletion of resources or stonith resources included in tags
+- Commands `pcs resource delete | remove` can no longer remove remote and guest
+  node resources. The `pcs cluster node delete-remote | remove-remote` or
+  `pcs cluster node delete-guest | remove-guest` should be used to properly
+  delete remote or guest nodes. ([RHEL-61889])
 
 ### Fixed
 - Do not end with error when using the instances quantifier in `pcs status
@@ -20,6 +31,7 @@
 [RHEL-33386]: https://issues.redhat.com/browse/RHEL-33386
 [RHEL-44432]: https://issues.redhat.com/browse/RHEL-44432
 [RHEL-55723]: https://issues.redhat.com/browse/RHEL-55723
+[RHEL-61889]: https://issues.redhat.com/browse/RHEL-61889
 
 
 ## [0.12.0a1] - 2024-06-21

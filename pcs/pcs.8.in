@@ -120,11 +120,11 @@ Example: Create a new resource called 'VirtualIP' with IP address 192.168.0.99, 
 .br
 pcs resource create VirtualIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 nic=eth2 op monitor interval=30s
 .TP
-delete <resource id|group id|bundle id|clone id>
-Deletes the resource, group, bundle or clone (and all resources within the group/bundle/clone).
+delete <resource id|group id|bundle id|clone id>...
+Deletes the specified resources, groups, bundles or clones (and all resources within the groups/bundles/clones).
 .TP
-remove <resource id|group id|bundle id|clone id>
-Deletes the resource, group, bundle or clone (and all resources within the group/bundle/clone).
+remove <resource id|group id|bundle id|clone id>...
+Deletes the specified resources, groups, bundles or clones (and all resources within the groups/bundles/clones).
 .TP
 enable <resource id | tag id>... [\fB\-\-wait\fR[=n]]
 Allow the cluster to start the resources. Depending on the rest of the configuration (constraints, options, failures, etc), the resources may remain stopped. If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the resources to start and then return 0 if the resources are started, or 1 if the resources have not yet started. If 'n' is not specified it defaults to 60 minutes.
@@ -740,11 +740,11 @@ If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the changes 
 update\-scsi\-devices <stonith id> (set <device\-path> [<device\-path>...]) | (add <device\-path> [<device\-path>...] delete|remove <device\-path> [<device\-path>...] )
 Update scsi fencing devices without affecting other resources. You must specify either list of set devices or at least one device for add or delete/remove devices. Stonith resource must be running on one cluster node. Each device will be unfenced on each cluster node running cluster. Supported fence agents: fence_scsi, fence_mpath.
 .TP
-delete <stonith id>
-Remove stonith id from configuration.
+delete <stonith id>...
+Remove stonith resources from configuration.
 .TP
-remove <stonith id>
-Remove stonith id from configuration.
+remove <stonith id>...
+Remove stonith resources from configuration.
 .TP
 op add <stonith id> <operation action> [operation properties]
 Add operation for specified stonith device.

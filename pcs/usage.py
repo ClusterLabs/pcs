@@ -312,11 +312,11 @@ def _output_format_desc(cmd: bool = True) -> str:
 
 _DELETE_CMD = "delete"
 _REMOVE_CMD = "remove"
-_RESOURCE_DELETE_SYNTAX = "<resource id|group id|bundle id|clone id>"
+_RESOURCE_DELETE_SYNTAX = "<resource id|group id|bundle id|clone id>..."
 _RESOURCE_DELETE_DESC = (
     """
-    Deletes the resource, group, bundle or clone (and all resources within the
-    group/bundle/clone).
+    Deletes the specified resources, groups, bundles or clones (and all
+    resources within the groups/bundles/clones).
     """,
 )
 
@@ -758,8 +758,8 @@ def _resource_config_desc(obj: str) -> tuple[str, ...]:
     )
 
 
-_STONITH_DELETE_SYNTAX = "<stonith id>"
-_STONITH_DELETE_DESC = ("Remove stonith id from configuration.",)
+_STONITH_DELETE_SYNTAX = "<stonith id>..."
+_STONITH_DELETE_DESC = ("Remove stonith resources from configuration.",)
 
 _CLUSTER_CONFIG_SHOW_SYNTAX = (
     f"config [show] [{_output_format_syntax()}] [--corosync_conf <path>]"
