@@ -2059,36 +2059,39 @@ class CreateInCluster(TestCase, FixtureMixin):
         )
 
 
+@mock.patch(
+    "pcs.lib.commands.booth._stop_resources_wait",
+    lambda env, cib, elements: cib,
+)
 class RemoveFromCluster(TestCase, FixtureMixin):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
-        # mock pcs.resource.remove function which does all the CIB editing
-        self.resource_remove = mock.Mock()
 
     def test_invalid_instance(self):
         instance_name = "/tmp/booth/booth"
         self.env_assist.assert_raise_library_error(
             lambda: commands.remove_from_cluster(
-                self.env_assist.get_env(),
-                self.resource_remove,
-                instance_name=instance_name,
+                self.env_assist.get_env(), instance_name=instance_name
             ),
-            [
-                fixture_report_invalid_name(instance_name),
-            ],
+            [fixture_report_invalid_name(instance_name)],
             expected_in_processor=False,
         )
-        self.resource_remove.assert_not_called()
 
     def test_success_default_instance(self):
         self.config.runner.cib.load(resources=self.fixture_cib_booth_group())
-        commands.remove_from_cluster(
-            self.env_assist.get_env(), self.resource_remove
-        )
-        self.resource_remove.assert_has_calls(
+        self.config.env.push_cib(resources="<resources/>")
+
+        commands.remove_from_cluster(self.env_assist.get_env())
+        self.env_assist.assert_reports(
             [
-                mock.call("booth-booth-ip"),
-                mock.call("booth-booth-service"),
+                fixture.info(
+                    reports.codes.CIB_REMOVE_RESOURCES,
+                    id_list=["booth-booth-ip", "booth-booth-service"],
+                ),
+                fixture.info(
+                    reports.codes.CIB_REMOVE_DEPENDANT_ELEMENTS,
+                    id_tag_map={"booth-booth-group": "group"},
+                ),
             ]
         )
 
@@ -2097,15 +2100,21 @@ class RemoveFromCluster(TestCase, FixtureMixin):
         self.config.runner.cib.load(
             resources=self.fixture_cib_booth_group(instance_name)
         )
+        self.config.env.push_cib(resources="<resources/>")
         commands.remove_from_cluster(
             self.env_assist.get_env(),
-            self.resource_remove,
             instance_name=instance_name,
         )
-        self.resource_remove.assert_has_calls(
+        self.env_assist.assert_reports(
             [
-                mock.call(f"booth-{instance_name}-ip"),
-                mock.call(f"booth-{instance_name}-service"),
+                fixture.info(
+                    reports.codes.CIB_REMOVE_RESOURCES,
+                    id_list=["booth-my_booth-ip", "booth-my_booth-service"],
+                ),
+                fixture.info(
+                    reports.codes.CIB_REMOVE_DEPENDANT_ELEMENTS,
+                    id_tag_map={"booth-my_booth-group": "group"},
+                ),
             ]
         )
 
@@ -2120,13 +2129,20 @@ class RemoveFromCluster(TestCase, FixtureMixin):
         self.config.env.set_cib_data(str(cib_xml_man), cib_tempfile=tmp_file)
         # This instructs the runner to actually return our mocked cib
         self.config.runner.cib.load_content(str(cib_xml_man), env=env)
-        commands.remove_from_cluster(
-            self.env_assist.get_env(), self.resource_remove
+        self.config.env.push_cib(
+            resources="<resources/>", load_key="runner.cib.load_content"
         )
-        self.resource_remove.assert_has_calls(
+        commands.remove_from_cluster(self.env_assist.get_env())
+        self.env_assist.assert_reports(
             [
-                mock.call("booth-booth-ip"),
-                mock.call("booth-booth-service"),
+                fixture.info(
+                    reports.codes.CIB_REMOVE_RESOURCES,
+                    id_list=["booth-booth-ip", "booth-booth-service"],
+                ),
+                fixture.info(
+                    reports.codes.CIB_REMOVE_DEPENDANT_ELEMENTS,
+                    id_tag_map={"booth-booth-group": "group"},
+                ),
             ]
         )
 
@@ -2139,9 +2155,7 @@ class RemoveFromCluster(TestCase, FixtureMixin):
             }
         )
         self.env_assist.assert_raise_library_error(
-            lambda: commands.remove_from_cluster(
-                self.env_assist.get_env(), self.resource_remove
-            ),
+            lambda: commands.remove_from_cluster(self.env_assist.get_env()),
             [
                 fixture.error(
                     reports.codes.LIVE_ENVIRONMENT_REQUIRED,
@@ -2153,14 +2167,11 @@ class RemoveFromCluster(TestCase, FixtureMixin):
             ],
             expected_in_processor=False,
         )
-        self.resource_remove.assert_not_called()
 
     def test_booth_resource_does_not_exist(self):
         (self.config.runner.cib.load())
         self.env_assist.assert_raise_library_error(
-            lambda: commands.remove_from_cluster(
-                self.env_assist.get_env(), self.resource_remove
-            ),
+            lambda: commands.remove_from_cluster(self.env_assist.get_env()),
         )
         self.env_assist.assert_reports(
             [
@@ -2170,14 +2181,11 @@ class RemoveFromCluster(TestCase, FixtureMixin):
                 ),
             ]
         )
-        self.resource_remove.assert_not_called()
 
     def test_more_booth_resources(self):
         self.config.runner.cib.load(resources=self.fixture_cib_more_resources())
         self.env_assist.assert_raise_library_error(
-            lambda: commands.remove_from_cluster(
-                self.env_assist.get_env(), self.resource_remove
-            ),
+            lambda: commands.remove_from_cluster(self.env_assist.get_env()),
         )
         self.env_assist.assert_reports(
             [
@@ -2188,27 +2196,23 @@ class RemoveFromCluster(TestCase, FixtureMixin):
                 ),
             ]
         )
-        self.resource_remove.assert_not_called()
 
     def test_more_booth_resources_forced(self):
         self.config.runner.cib.load(resources=self.fixture_cib_more_resources())
+        self.config.env.push_cib(resources="<resources/>")
         commands.remove_from_cluster(
-            self.env_assist.get_env(),
-            self.resource_remove,
-            allow_remove_multiple=True,
+            self.env_assist.get_env(), force_flags=[reports.codes.FORCE]
         )
         self.env_assist.assert_reports(
             [
+                fixture.info(
+                    reports.codes.CIB_REMOVE_RESOURCES,
+                    id_list=["booth1", "booth2"],
+                ),
                 fixture.warn(
                     reports.codes.BOOTH_MULTIPLE_TIMES_IN_CIB,
                     name="booth",
                 ),
-            ]
-        )
-        self.resource_remove.assert_has_calls(
-            [
-                mock.call("booth1"),
-                mock.call("booth2"),
             ]
         )
 

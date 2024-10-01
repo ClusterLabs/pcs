@@ -1,4 +1,7 @@
-from typing import cast
+from typing import (
+    Iterable,
+    cast,
+)
 
 from lxml.etree import _Element
 
@@ -33,15 +36,17 @@ def find_grouped_ip_element_to_remove(booth_element):
     return None
 
 
-def get_remover(resource_remove):
-    def remove_from_cluster(booth_element_list):
-        for element in booth_element_list:
-            ip_resource_to_remove = find_grouped_ip_element_to_remove(element)
-            if ip_resource_to_remove is not None:
-                resource_remove(ip_resource_to_remove.attrib["id"])
-            resource_remove(element.attrib["id"])
+def find_elements_to_remove(
+    booth_element_list: Iterable[_Element],
+) -> list[_Element]:
+    elements_to_remove = []
+    for element in booth_element_list:
+        ip_resource_to_remove = find_grouped_ip_element_to_remove(element)
+        if ip_resource_to_remove is not None:
+            elements_to_remove.append(ip_resource_to_remove)
+        elements_to_remove.append(element)
 
-    return remove_from_cluster
+    return elements_to_remove
 
 
 def find_for_config(
