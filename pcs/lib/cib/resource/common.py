@@ -357,39 +357,3 @@ def unmanage(resource_el: _Element, id_provider: IdProvider) -> None:
         {"is-managed": "false"},
         id_provider,
     )
-
-
-def find_resources_to_delete(resource_el: _Element) -> List[_Element]:
-    """
-    Get resources to delete, children and parents of the given resource if
-    necessary.
-
-    If element is a primitive which is in a clone and you specify one of them,
-    you will get elements for both of them. If you specify group element which
-    is in a clone then will you get clone, group, and all primitive elements in
-    a group and etc.
-
-    resource_el - resource element (bundle, clone, group, primitive)
-    """
-    result = [resource_el]
-    # childrens of bundle, clone, group, clone-with-group
-    inner_resource_list = get_inner_resources(resource_el)
-    if inner_resource_list:
-        result.extend(inner_resource_list)
-        inner_resource = inner_resource_list[0]
-        if is_group(inner_resource):
-            result.extend(get_inner_resources(inner_resource))
-    # parents of primitive if needed (group, clone)
-    parent_el = get_parent_resource(resource_el)
-    if parent_el is None or is_bundle(parent_el):
-        return result
-    if is_any_clone(parent_el):
-        result.insert(0, parent_el)
-    if is_group(parent_el):
-        group_inner_resources = get_group_inner_resources(parent_el)
-        if len(group_inner_resources) <= 1:
-            result = [parent_el] + group_inner_resources
-            clone_el = get_parent_resource(parent_el)
-            if clone_el is not None:
-                result.insert(0, clone_el)
-    return result
