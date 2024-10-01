@@ -1179,19 +1179,6 @@ def parallel_for_nodes(action, node_list, *args, **kwargs):
     return node_errors
 
 
-# Check if something exists in the CIB
-def does_exist(xpath_query):
-    """
-    Commandline options:
-      * -f - CIB file
-    """
-    args = ["cibadmin", "-Q", "--xpath", xpath_query]
-    dummy_output, retval = run(args)
-    if retval != 0:
-        return False
-    return True
-
-
 def get_group_children(group_id):
     """
     Commandline options: no options
@@ -1361,16 +1348,6 @@ def dom_get_any_resource(dom, resource_id):
         or dom_get_group(dom, resource_id)
         or dom_get_clone(dom, resource_id)
         or dom_get_master(dom, resource_id)
-    )
-
-
-def is_stonith_resource(resource_id):
-    """
-    Commandline options:
-      * -f - CIB file
-    """
-    return does_exist(
-        "//primitive[@id='" + resource_id + "' and @class='stonith']"
     )
 
 
