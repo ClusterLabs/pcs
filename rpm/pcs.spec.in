@@ -39,21 +39,6 @@ Summary: Pacemaker/Corosync Configuration System
 %global required_pacemaker_version 2.1.0
 
 
-# mangling shebang in /usr/lib/pcsd/vendor/bundle/ruby/gems/rack-2.0.5/test/cgi/test from /usr/bin/env ruby to #!/usr/bin/ruby
-#*** ERROR: ./usr/lib/pcsd/vendor/bundle/ruby/gems/rack-2.0.5/test/cgi/test.ru has shebang which doesn't start with '/' (../../bin/rackup)
-#mangling shebang in /usr/lib/pcsd/vendor/bundle/ruby/gems/rack-2.0.5/test/cgi/rackup_stub.rb from /usr/bin/env ruby to #!/usr/bin/ruby
-#*** WARNING: ./usr/lib/pcsd/vendor/bundle/ruby/gems/rack-2.0.5/test/cgi/sample_rackup.ru is executable but has empty or no shebang, removing executable bit
-#*** WARNING: ./usr/lib/pcsd/vendor/bundle/ruby/gems/rack-2.0.5/test/cgi/lighttpd.conf is executable but has empty or no shebang, removing executable bit
-#*** ERROR: ambiguous python shebang in /usr/lib/pcsd/vendor/bundle/ruby/gems/ffi-1.9.25/ext/ffi_c/libffi/generate-darwin-source-and-headers.py: #!/usr/bin/env python. Change it to python3 (or python2) explicitly.
-%undefine __brp_mangle_shebangs
-
-# https://fedoraproject.org/wiki/Changes/Avoid_usr_bin_python_in_RPM_Build#Python_bytecompilation
-# Enforce python3 because bytecompilation of tornado produced warnings:
-# DEPRECATION WARNING: python2 invoked with /usr/bin/python.
-#    Use /usr/bin/python3 or /usr/bin/python2
-#    /usr/bin/python will be removed or switched to Python 3 in the future.
-#global __python {__python3}
-
 Source0: %{name}-%{version}%{?numcomm:+%{numcomm}}%{?alphatag:-%{alphatag}}%{?dirty:-%{dirty}}.tar.gz
 
 Source41: pyagentx-%{pyagentx_version}.tar.gz
@@ -295,6 +280,17 @@ done
 
 # escaping % in spec file is "interesting"
 sed -i -e 's#^@#%#g' dynamic_files/pcs-snmp
+
+# Sinatra contains example applications which are unnecessary (discovered by brp_mangle_shebangs)
+rm -rfv %{buildroot}/%{_libdir}/pcsd/vendor/bundle/gems/sinatra-*/examples/
+# Puma contains an unnecessary rc init script (discovered by brp_mangle_shebangs)
+rm -rfv %{buildroot}/%{_libdir}/pcsd/vendor/bundle/gems/puma-*/docs/jungle/rc.d/
+# Remove unused rubygem executables with wrong shebangs (discovered by brp_mangle_shebangs)
+rm -fv %{buildroot}/%{_libdir}/pcsd/vendor/bundle/gems/puma-*/bin/puma
+rm -fv %{buildroot}/%{_libdir}/pcsd/vendor/bundle/gems/puma-*/bin/pumactl
+rm -fv %{buildroot}/%{_libdir}/pcsd/vendor/bundle/gems/rackup-*/bin/rackup
+rm -fv %{buildroot}/%{_libdir}/pcsd/vendor/bundle/gems/tilt-*/bin/tilt
+
 
 %posttrans
 # Make sure the new version of the daemon is running.
