@@ -1008,80 +1008,31 @@ def remove_resource(params, request, auth_user)
   end
   force = params['force']
   user = PCSAuth.getSuperuserAuth()
-  no_error_if_not_exists = params.include?('no_error_if_not_exists')
   resource_list = []
-  errors = ''
-  resource_to_remove = []
   params.each { |param,_|
     if param.start_with?('resid-')
       resource_list << param.split('resid-', 2)[1]
     end
   }
-  tmp_file = nil
-  if force
-    resource_to_remove = resource_list
+
+  resource_or_stonith = if params["is-stonith"] == "true" then
+    "stonith"
   else
-    begin
-      tmp_file = Tempfile.new('temp_cib')
-      _, err, retval = run_cmd(user, PCS, '--', 'cluster', 'cib', tmp_file.path)
-      if retval != 0
-        return [400, 'Unable to stop resource(s).']
-      end
-      cmd = [PCS, '-f', tmp_file.path, '--', 'resource', 'disable']
-      resource_list.each { |resource|
-        out, err, retval = run_cmd(user, *(cmd + [resource]))
-        if retval != 0
-          unless (
-            (out + err).join('').include?(' does not exist') and
-            no_error_if_not_exists
-          )
-            errors += "Unable to stop resource '#{resource}': #{err.join('')}"
-          end
-        else
-          resource_to_remove << resource
-        end
-      }
-      _, _, retval = run_cmd(
-        user, PCS, '--config', '--wait', '--', 'cluster', 'cib-push', tmp_file.path
-      )
-      if retval != 0
-        return [400, 'Unable to stop resource(s).']
-      end
-      errors.strip!
-      unless errors.empty?
-        $logger.info("Stopping resource(s) errors:\n#{errors}")
-        return [400, errors]
-      end
-    rescue IOError
-      return [400, 'Unable to stop resource(s).']
-    ensure
-      if tmp_file
-        tmp_file.close!
-      end
-    end
+    "resource"
   end
-  resource_to_remove.each { |resource|
-    cmd = ['resource', 'delete', resource]
-    flags = []
-    if force
-      flags << '--force'
-    end
-    out, err, retval = run_cmd(auth_user, PCS, *flags, '--', *cmd)
-    if retval != 0
-      unless (
-        (out + err).join('').include?(' does not exist.') and
-        no_error_if_not_exists
-      )
-        errors += err.join(' ').strip + "\n"
-      end
-    end
-  }
-  errors.strip!
-  if errors.empty?
+
+  cmd = [resource_or_stonith, 'delete']
+  flags = []
+  if force
+    flags << '--force'
+  end
+  out, err, retval = run_cmd(auth_user, PCS, *flags, '--', *cmd, *resource_list)
+
+  if retval == 0
     return 200
   else
-    $logger.info("Remove resource errors:\n"+errors)
-    return [400, errors]
+    $logger.info("Remove resource errors:\n"+err)
+    return [400, err]
   end
 end
 
