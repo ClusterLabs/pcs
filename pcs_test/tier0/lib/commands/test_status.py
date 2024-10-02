@@ -746,6 +746,11 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
                             <nvpair name="action" value="value" />
                         </instance_attributes>
                     </primitive>
+                    <primitive id="S4" class="stonith" type="fence_sbd">
+                        <instance_attributes>
+                            <nvpair name="method" value="cycle" />
+                        </instance_attributes>
+                    </primitive>
                 </resources>
             """
             )

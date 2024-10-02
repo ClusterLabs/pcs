@@ -1,0 +1,186 @@
+<resource-agent name="fence_sbd" shortdesc="Fence agent for sbd">
+  <longdesc>
+    fence_sbd is an I/O Fencing agent which can be used in environments where sbd can be used (shared storage).
+  </longdesc>
+  <vendor-url/>
+  <parameters>
+    <parameter name="action" unique="0" required="0">
+      <getopt mixed="-o, --action=[action]"/>
+      <content type="string" default="reboot"/>
+      <shortdesc lang="en">
+        Fencing action
+      </shortdesc>
+    </parameter>
+    <parameter name="devices" unique="0" required="1">
+      <getopt mixed="--devices=[device_a,device_b]"/>
+      <content type="string"/>
+      <shortdesc lang="en">
+        SBD Device
+      </shortdesc>
+    </parameter>
+    <parameter name="method" unique="0" required="0">
+      <getopt mixed="-m, --method=[method]"/>
+      <content type="select" default="cycle">
+        <option value="onoff"/>
+        <option value="cycle"/>
+      </content>
+      <shortdesc lang="en">
+        Method to fence
+      </shortdesc>
+    </parameter>
+    <parameter name="plug" unique="0" required="0" obsoletes="port">
+      <getopt mixed="-n, --plug=[id]"/>
+      <content type="string"/>
+      <shortdesc lang="en">
+        Physical plug number on device, UUID or identification of machine
+      </shortdesc>
+    </parameter>
+    <parameter name="port" unique="0" required="0" deprecated="1">
+      <getopt mixed="-n, --plug=[id]"/>
+      <content type="string"/>
+      <shortdesc lang="en">
+        Physical plug number on device, UUID or identification of machine
+      </shortdesc>
+    </parameter>
+    <parameter name="quiet" unique="0" required="0">
+      <getopt mixed="-q, --quiet"/>
+      <content type="boolean"/>
+      <shortdesc lang="en">
+        Disable logging to stderr. Does not affect --verbose or --debug-file or logging to syslog.
+      </shortdesc>
+    </parameter>
+    <parameter name="verbose" unique="0" required="0">
+      <getopt mixed="-v, --verbose"/>
+      <content type="boolean"/>
+      <shortdesc lang="en">
+        Verbose mode. Multiple -v flags can be stacked on the command line (e.g., -vvv) to increase verbosity.
+      </shortdesc>
+    </parameter>
+    <parameter name="verbose_level" unique="0" required="0">
+      <getopt mixed="--verbose-level"/>
+      <content type="integer"/>
+      <shortdesc lang="en">
+        Level of debugging detail in output. Defaults to the number of --verbose flags specified on the command line, or to 1 if verbose=1 in a stonith device configuration (i.e., on stdin).
+      </shortdesc>
+    </parameter>
+    <parameter name="debug" unique="0" required="0" deprecated="1">
+      <getopt mixed="-D, --debug-file=[debugfile]"/>
+      <content type="string"/>
+      <shortdesc lang="en">
+        Write debug information to given file
+      </shortdesc>
+    </parameter>
+    <parameter name="debug_file" unique="0" required="0" obsoletes="debug">
+      <getopt mixed="-D, --debug-file=[debugfile]"/>
+      <content type="string"/>
+      <shortdesc lang="en">
+        Write debug information to given file
+      </shortdesc>
+    </parameter>
+    <parameter name="version" unique="0" required="0">
+      <getopt mixed="-V, --version"/>
+      <content type="boolean"/>
+      <shortdesc lang="en">
+        Display version information and exit
+      </shortdesc>
+    </parameter>
+    <parameter name="help" unique="0" required="0">
+      <getopt mixed="-h, --help"/>
+      <content type="boolean"/>
+      <shortdesc lang="en">
+        Display help and exit
+      </shortdesc>
+    </parameter>
+    <parameter name="plug_separator" unique="0" required="0">
+      <getopt mixed="--plug-separator=[char]"/>
+      <content type="string" default=","/>
+      <shortdesc lang="en">
+        Separator for plug parameter when specifying more than 1 plug
+      </shortdesc>
+    </parameter>
+    <parameter name="separator" unique="0" required="0">
+      <getopt mixed="-C, --separator=[char]"/>
+      <content type="string" default=","/>
+      <shortdesc lang="en">
+        Separator for CSV created by 'list' operation
+      </shortdesc>
+    </parameter>
+    <parameter name="delay" unique="0" required="0">
+      <getopt mixed="--delay=[seconds]"/>
+      <content type="second" default="0"/>
+      <shortdesc lang="en">
+        Wait X seconds before fencing is started
+      </shortdesc>
+    </parameter>
+    <parameter name="disable_timeout" unique="0" required="0">
+      <getopt mixed="--disable-timeout=[true/false]"/>
+      <content type="string"/>
+      <shortdesc lang="en">
+        Disable timeout (true/false) (default: true when run from Pacemaker 2.0+)
+      </shortdesc>
+    </parameter>
+    <parameter name="login_timeout" unique="0" required="0">
+      <getopt mixed="--login-timeout=[seconds]"/>
+      <content type="second" default="5"/>
+      <shortdesc lang="en">
+        Wait X seconds for cmd prompt after login
+      </shortdesc>
+    </parameter>
+    <parameter name="power_timeout" unique="0" required="0">
+      <getopt mixed="--power-timeout=[seconds]"/>
+      <content type="second" default="30"/>
+      <shortdesc lang="en">
+        Test X seconds for status change after ON/OFF
+      </shortdesc>
+    </parameter>
+    <parameter name="power_wait" unique="0" required="0">
+      <getopt mixed="--power-wait=[seconds]"/>
+      <content type="second" default="0"/>
+      <shortdesc lang="en">
+        Wait X seconds after issuing ON/OFF
+      </shortdesc>
+    </parameter>
+    <parameter name="sbd_path" unique="0" required="0">
+      <getopt mixed="--sbd-path=[path]"/>
+      <content type="string" default="/usr/sbin/sbd"/>
+      <shortdesc lang="en">
+        Path to SBD binary
+      </shortdesc>
+    </parameter>
+    <parameter name="shell_timeout" unique="0" required="0">
+      <getopt mixed="--shell-timeout=[seconds]"/>
+      <content type="second" default="3"/>
+      <shortdesc lang="en">
+        Wait X seconds for cmd prompt after issuing command
+      </shortdesc>
+    </parameter>
+    <parameter name="stonith_status_sleep" unique="0" required="0">
+      <getopt mixed="--stonith-status-sleep=[seconds]"/>
+      <content type="second" default="1"/>
+      <shortdesc lang="en">
+        Sleep X seconds between status calls during a STONITH action
+      </shortdesc>
+    </parameter>
+    <parameter name="retry_on" unique="0" required="0">
+      <getopt mixed="--retry-on=[attempts]"/>
+      <content type="integer" default="1"/>
+      <shortdesc lang="en">
+        Count of attempts to retry power on
+      </shortdesc>
+    </parameter>
+  </parameters>
+  <actions>
+    <action name="on" automatic="0"/>
+    <action name="off"/>
+    <action name="reboot"/>
+    <action name="status"/>
+    <action name="list"/>
+    <action name="list-status"/>
+    <action name="monitor"/>
+    <action name="metadata"/>
+    <action name="manpage"/>
+    <action name="validate-all"/>
+    <action name="stop" timeout="20s"/>
+    <action name="start" timeout="20s"/>
+  </actions>
+</resource-agent>

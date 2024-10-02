@@ -58,6 +58,7 @@ def main():
             "stonith:fence_pcsmock_minimal",
             "stonith:fence_pcsmock_params",
             "stonith:fence_pcsmock_unfencing",
+            "stonith:fence_sbd",
             "systemd:pcsmock",
             "systemd:pcsmock@a:b",
         )

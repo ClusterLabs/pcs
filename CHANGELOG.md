@@ -11,8 +11,11 @@
 ### Fixed
 - Do not end with error when using the instances quantifier in `pcs status
   query resource is-state` command ([RHEL-55723])
+- Do not display a warning in `pcs status` when a fence\_sbd stonith device has
+  its `method` option set to `cycle` ([RHEL-44432])
 
 [RHEL-21047]: https://issues.redhat.com/browse/RHEL-21047
+[RHEL-44432]: https://issues.redhat.com/browse/RHEL-44432
 [RHEL-55723]: https://issues.redhat.com/browse/RHEL-55723
 
 
