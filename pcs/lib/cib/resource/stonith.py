@@ -85,7 +85,8 @@ def get_misconfigured_resources(
             if nvpair.get("name") == "action" and nvpair.get("value"):
                 stonith_with_action.append(stonith)
             if (
-                nvpair.get("name") == "method"
+                stonith.get("type") != "fence_sbd"
+                and nvpair.get("name") == "method"
                 and nvpair.get("value") == "cycle"
             ):
                 stonith_with_method_cycle.append(stonith)

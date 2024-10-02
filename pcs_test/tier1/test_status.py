@@ -45,8 +45,11 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
         )
 
     def fixture_stonith_cycle(self):
-        self.assert_pcs_success(
-            "stonith create Sc fence_pcsmock_method method=cycle".split()
+        self.assert_pcs_success_all(
+            [
+                "stonith create Sc fence_pcsmock_method method=cycle".split(),
+                "stonith create Ssbd fence_sbd devices=device1 method=cycle".split(),
+            ]
         )
 
     def fixture_resource(self):

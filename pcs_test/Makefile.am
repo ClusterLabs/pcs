@@ -423,6 +423,7 @@ EXTRA_DIST		= \
 			  tools/bin_mock/pcmk/crm_resource.d/stonith__fence_pcsmock_minimal_metadata.xml \
 			  tools/bin_mock/pcmk/crm_resource.d/stonith__fence_pcsmock_params_metadata.xml \
 			  tools/bin_mock/pcmk/crm_resource.d/stonith__fence_pcsmock_unfencing_metadata.xml \
+			  tools/bin_mock/pcmk/crm_resource.d/stonith__fence_sbd_metadata.xml \
 			  tools/bin_mock/pcmk/crm_resource.d/systemd__pcsmock@a__b_metadata.xml \
 			  tools/bin_mock/pcmk/crm_resource.d/systemd__pcsmock_metadata.xml \
 			  tools/bin_mock/pcmk/crm_resource_mock.py \
