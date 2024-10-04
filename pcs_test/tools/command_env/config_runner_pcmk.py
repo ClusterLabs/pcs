@@ -488,6 +488,80 @@ class PcmkShortcuts:
             instead=instead,
         )
 
+    def is_crm_attribute_list_options_supported(
+        self,
+        name="runner.pcmk.is_crm_attribute_list_options_supported",
+        is_supported=True,
+    ):
+        """
+        Create call for `crm_attribute --help-all`. If is_supported is True,
+        option --list-options is included in command output.
+
+        name -- key of the call
+        is_supported -- flags which decides if digests are supported
+        """
+        self.__calls.place(
+            name,
+            RunnerCall(
+                [settings.crm_attribute_exec, "--help-all"],
+                stdout="--list-options" if is_supported else "",
+                stderr="",
+                returncode=0,
+            ),
+        )
+
+    def load_crm_attribute_metadata(
+        self,
+        name: str = "runner.pcmk.load_crm_attribute_metadata",
+        agent_name: str = "cluster-options",
+        stdout: Optional[str] = None,
+        stderr: str = "",
+        returncode: int = 0,
+        instead: Optional[str] = None,
+        before: Optional[str] = None,
+    ) -> None:
+        """
+        Create a call for loading crm_attribute metadata - metadata provided by
+        `crm_attribute --list-options=TYPE`
+
+        name -- the key of this call
+        agent_name -- name of the crm_attribute agent
+        stdout -- crm_attribute agent stdout, default metadata if None
+        stderr -- crm_attribute agent stderr
+        returncode -- crm_attribute agent returncode
+        instead -- the key of a call instead of which this new call is to
+            be placed
+        before -- the key of a call before which this new call is to be placed
+        """
+        name_to_metadata_file = {
+            "cluster-options": "cluster-options_metadata.xml"
+        }
+        name_to_list_options_type = {"cluster-options": "cluster"}
+        if stdout is None:
+            with open(rc(name_to_metadata_file[agent_name])) as a_file:
+                stdout = a_file.read()
+        self.__calls.place(
+            name,
+            RunnerCall(
+                [
+                    settings.crm_attribute_exec,
+                    "--list-options",
+                    (
+                        name_to_list_options_type[agent_name]
+                        if agent_name in name_to_list_options_type
+                        else agent_name
+                    ),
+                    "--output-as",
+                    "xml",
+                ],
+                stdout=stdout,
+                stderr=stderr,
+                returncode=returncode,
+            ),
+            before=before,
+            instead=instead,
+        )
+
     def local_node_name(
         self,
         name="runner.pcmk.local_node_name",

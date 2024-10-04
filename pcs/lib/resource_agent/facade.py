@@ -25,12 +25,14 @@ from .pcs_transform import (
     ocf_unified_to_pcs,
 )
 from .types import (
+    CrmAttrAgent,
     FakeAgentName,
     ResourceAgentMetadata,
     ResourceAgentName,
     ResourceAgentParameter,
 )
 from .xml import (
+    load_crm_attribute_metadata,
     load_fake_agent_metadata,
     load_metadata,
     parse_metadata,
@@ -229,10 +231,10 @@ class ResourceAgentFacadeFactory:
         """
         return self._facade_from_metadata(name_to_void_metadata(name))
 
-    def facade_from_pacemaker_daemon_name(
-        self, daemon_name: FakeAgentName
+    def facade_from_crm_attribute(
+        self, agent_name: CrmAttrAgent
     ) -> ResourceAgentFacade:
-        return ResourceAgentFacade(self._get_fake_agent_metadata(daemon_name))
+        return ResourceAgentFacade(self._get_crm_attribute_metadata(agent_name))
 
     def _facade_from_metadata(
         self, metadata: ResourceAgentMetadata
@@ -256,6 +258,16 @@ class ResourceAgentFacadeFactory:
             parse_metadata(
                 ResourceAgentName(const.FAKE_AGENT_STANDARD, None, agent_name),
                 load_fake_agent_metadata(self._runner, agent_name),
+            )
+        )
+
+    def _get_crm_attribute_metadata(
+        self, agent_name: CrmAttrAgent
+    ) -> ResourceAgentMetadata:
+        return ocf_version_to_ocf_unified(
+            parse_metadata(
+                ResourceAgentName(const.FAKE_AGENT_STANDARD, None, agent_name),
+                load_crm_attribute_metadata(self._runner, agent_name),
             )
         )
 

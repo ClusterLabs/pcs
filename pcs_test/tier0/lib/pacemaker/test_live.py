@@ -13,7 +13,6 @@ from pcs.common.reports import codes as report_codes
 from pcs.common.tools import Version
 from pcs.common.types import CibRuleInEffectStatus
 from pcs.lib.external import CommandRunner
-from pcs.lib.pacemaker import api_result
 from pcs.lib.resource_agent import ResourceAgentName
 
 from pcs_test.tools import (
@@ -39,31 +38,6 @@ from pcs_test.tools.xml import (
 )
 
 _EXITCODE_NOT_CONNECTED = 102
-
-
-class GetStatusFromApiResult(TestCase):
-    # pylint: disable=protected-access
-    def test_errors(self):
-        self.assertEqual(
-            lib._get_status_from_api_result(
-                etree.fromstring(
-                    fixture_crm_mon.error_xml(
-                        123, "short message", ["error1", "error2"]
-                    )
-                )
-            ),
-            api_result.Status(123, "short message", ["error1", "error2"]),
-        )
-
-    def test_no_errors(self):
-        self.assertEqual(
-            lib._get_status_from_api_result(
-                etree.fromstring(
-                    fixture_crm_mon.error_xml(123, "short message")
-                )
-            ),
-            api_result.Status(123, "short message", []),
-        )
 
 
 class GetClusterStatusMixin(TestCase):

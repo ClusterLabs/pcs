@@ -20,6 +20,8 @@ from pcs.lib.cib.tools import (
 )
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
+from pcs.lib.external import CommandRunner
+from pcs.lib.pacemaker.live import is_crm_attribute_list_options_supported
 from pcs.lib.resource_agent import (
     ResourceAgentError,
     ResourceAgentFacade,
@@ -33,17 +35,13 @@ from pcs.lib.resource_agent.facade import ResourceAgentFacadeFactory
 def _get_property_facade_list(
     report_processor: reports.ReportProcessor,
     factory: ResourceAgentFacadeFactory,
+    runner: CommandRunner,
 ) -> list[ResourceAgentFacade]:
-    pacemaker_daemons = [
-        ra_const.PACEMAKER_BASED,
-        ra_const.PACEMAKER_CONTROLD,
-        ra_const.PACEMAKER_SCHEDULERD,
-    ]
     cluster_property_facade_list = []
-    for daemon in pacemaker_daemons:
+    if is_crm_attribute_list_options_supported(runner):
         try:
             cluster_property_facade_list.append(
-                factory.facade_from_pacemaker_daemon_name(daemon)
+                factory.facade_from_crm_attribute(ra_const.CLUSTER_OPTIONS)
             )
         except ResourceAgentError as e:
             report_processor.report_list(
@@ -53,6 +51,12 @@ def _get_property_facade_list(
                     )
                 ]
             )
+    else:
+        report_processor.report(
+            reports.ReportItem.error(
+                reports.messages.ClusterOptionsMetadataNotSupported()
+            )
+        )
     if report_processor.has_errors:
         raise LibraryError()
     return cluster_property_facade_list
@@ -108,12 +112,12 @@ def get_cluster_properties_definition_legacy(
 
     env -- provides communication with externals
     """
-    facade_factory = ResourceAgentFacadeFactory(
-        env.cmd_runner(), env.report_processor
-    )
+    runner = env.cmd_runner()
     property_dict = {}
     for facade in _get_property_facade_list(
-        env.report_processor, facade_factory
+        env.report_processor,
+        ResourceAgentFacadeFactory(runner, env.report_processor),
+        runner,
     ):
         property_dict.update(
             _cluster_property_metadata_to_dict(facade.metadata)
@@ -147,6 +151,7 @@ def set_properties(
     property_facade_list = _get_property_facade_list(
         env.report_processor,
         ResourceAgentFacadeFactory(runner, env.report_processor),
+        runner,
     )
 
     configured_properties = [
@@ -215,10 +220,12 @@ def get_properties_metadata(
 
     env -- provides communication with externals
     """
+    runner = env.cmd_runner()
     property_definition_list = []
     for facade in _get_property_facade_list(
         env.report_processor,
-        ResourceAgentFacadeFactory(env.cmd_runner(), env.report_processor),
+        ResourceAgentFacadeFactory(runner, env.report_processor),
+        runner,
     ):
         property_definition_list.extend(facade.metadata.parameters)
     return ClusterPropertyMetadataDto(

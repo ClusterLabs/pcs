@@ -128,24 +128,38 @@ class ResourceAgentFacadeFactory(TestCase):
         self.assertEqual(facade.metadata.name, name)
         self.assertTrue(facade.metadata.agent_exists)
 
-    def test_facade_pacemaker(self):
-        daemon_name = "pacemaker-fenced"
+    def test_facade_crm_attribute(self):
+        agent_name = "cluster-options"
         fake_agent_name = ra.ResourceAgentName(
-            ra.const.FAKE_AGENT_STANDARD, None, daemon_name
+            ra.const.FAKE_AGENT_STANDARD, None, agent_name
         )
-        self.config.runner.pcmk.load_fake_agent_metadata(
-            agent_name=daemon_name, stdout=self._fixture_fenced_xml
+        self.config.runner.pcmk.load_crm_attribute_metadata(
+            agent_name=agent_name
         )
         env = self.env_assist.get_env()
         facade = ra.ResourceAgentFacadeFactory(
             env.cmd_runner(), env.report_processor
-        ).facade_from_pacemaker_daemon_name(daemon_name)
+        ).facade_from_crm_attribute(agent_name)
         self.assertEqual(facade.metadata.name, fake_agent_name)
         self.assertTrue(facade.metadata.agent_exists)
-        self.assertEqual(
-            [param.name for param in facade.metadata.parameters],
-            ["fenced-param"],
+        self.assertTrue(
+            set(
+                [
+                    "enable-acl",
+                    "stonith-watchdog-timeout",
+                    "maintenance-mode",
+                ]
+            ).issubset(set(param.name for param in facade.metadata.parameters))
         )
+
+    def test_facade_crm_attribute_unknown_agent(self):
+        agent_name = "unknown"
+        env = self.env_assist.get_env()
+        with self.assertRaises(ra.UnableToGetAgentMetadata) as cm:
+            ra.ResourceAgentFacadeFactory(
+                env.cmd_runner(), env.report_processor
+            ).facade_from_crm_attribute(agent_name)
+        self.assertEqual(cm.exception.agent_name, agent_name)
 
     def test_facade_missing_agent(self):
         name = ra.ResourceAgentName("service", None, "daemon")
@@ -159,29 +173,6 @@ class ResourceAgentFacadeFactory(TestCase):
                 env.cmd_runner(), env.report_processor
             ).facade_from_parsed_name(name)
         self.assertEqual(cm.exception.agent_name, name.full_name)
-
-    def test_facade_pacemaker_unsupported_agent(self):
-        daemon_name = "unsupported"
-        env = self.env_assist.get_env()
-        with self.assertRaises(ra.UnableToGetAgentMetadata) as cm:
-            ra.ResourceAgentFacadeFactory(
-                env.cmd_runner(), env.report_processor
-            ).facade_from_pacemaker_daemon_name(daemon_name)
-        self.assertEqual(cm.exception.agent_name, daemon_name)
-        self.assertEqual(cm.exception.message, "Unknown agent")
-
-    def test_facade_pacemaker_load_error(self):
-        daemon_name = "pacemaker-fenced"
-        self.config.runner.pcmk.load_fake_agent_metadata(
-            agent_name=daemon_name, stdout="", stderr="error", returncode=1
-        )
-        env = self.env_assist.get_env()
-        with self.assertRaises(ra.UnableToGetAgentMetadata) as cm:
-            ra.ResourceAgentFacadeFactory(
-                env.cmd_runner(), env.report_processor
-            ).facade_from_pacemaker_daemon_name(daemon_name)
-        self.assertEqual(cm.exception.agent_name, daemon_name)
-        self.assertEqual(cm.exception.message, "error")
 
     def test_void_load_and_cache_fenced_for_stonith(self):
         name1 = ra.ResourceAgentName("stonith", None, "fence_xvm")

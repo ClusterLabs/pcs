@@ -3,6 +3,7 @@ from unittest import (
     mock,
 )
 
+from pcs import settings
 from pcs.common import reports
 from pcs.common.pacemaker.cluster_property import ClusterPropertyMetadataDto
 from pcs.common.pacemaker.nvset import (
@@ -15,6 +16,7 @@ from pcs.lib.commands import cluster_property
 
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
+from pcs_test.tools.misc import get_test_resource as rc
 
 ALLOWED_PROPERTIES = [
     "batch-limit",
@@ -39,6 +41,7 @@ ALLOWED_PROPERTIES = [
     "node-health-red",
     "node-health-strategy",
     "node-health-yellow",
+    "node-pending-timeout",
     "pe-error-series-max",
     "pe-input-series-max",
     "pe-warn-series-max",
@@ -105,19 +108,15 @@ def fixture_crm_config_properties(set_list, score_list=None):
     )
 
 
-class LoadMetadataMixin:
+class CrmAttributeLoadMetadataMixin:
     def load_fake_agent_metadata(self):
-        for fake_agent in [
-            "pacemaker-based",
-            "pacemaker-controld",
-            "pacemaker-schedulerd",
-        ]:
-            self.config.runner.pcmk.load_fake_agent_metadata(
-                name=fake_agent, agent_name=fake_agent
-            )
+        self.config.runner.pcmk.is_crm_attribute_list_options_supported(
+            is_supported=True
+        )
+        self.config.runner.pcmk.load_crm_attribute_metadata()
 
 
-class StonithWatchdogTimeoutMixin(LoadMetadataMixin):
+class StonithWatchdogTimeoutMixin:
     sbd_enabled = None
 
     def setUp(self):
@@ -170,9 +169,7 @@ class StonithWatchdogTimeoutMixin(LoadMetadataMixin):
         self._set_invalid_value(forced=True)
 
 
-class TestSetStonithWatchdogTimeoutSBDIsDisabled(
-    StonithWatchdogTimeoutMixin, TestCase
-):
+class SetStonithWatchdogTimeoutSBDIsDisabledMixin(StonithWatchdogTimeoutMixin):
     sbd_enabled = False
 
     def test_set_empty(self):
@@ -219,10 +216,21 @@ class TestSetStonithWatchdogTimeoutSBDIsDisabled(
         )
 
 
-@mock.patch("pcs.lib.sbd._get_local_sbd_watchdog_timeout", lambda: 10)
-@mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
-class TestSetStonithWatchdogTimeoutSBDIsEnabledWatchdogOnly(
-    StonithWatchdogTimeoutMixin, TestCase
+@mock.patch.object(
+    settings,
+    "pacemaker_api_result_schema",
+    rc("pcmk_api_rng/api-result.rng"),
+)
+class TestSetStonithWatchdogTimeoutSBDIsDisabledCrmAttributeMetadata(
+    CrmAttributeLoadMetadataMixin,
+    SetStonithWatchdogTimeoutSBDIsDisabledMixin,
+    TestCase,
+):
+    pass
+
+
+class SetStonithWatchdogTimeoutSBDIsEnabledWatchdogOnlyMixin(
+    StonithWatchdogTimeoutMixin
 ):
     sbd_enabled = True
 
@@ -363,9 +371,18 @@ class TestSetStonithWatchdogTimeoutSBDIsEnabledWatchdogOnly(
         self._set_success({"stonith-watchdog-timeout": "11s"})
 
 
-@mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: ["dev1", "dev2"])
-class TestSetStonithWatchdogTimeoutSBDIsEnabledSharedDevices(
-    StonithWatchdogTimeoutMixin, TestCase
+@mock.patch("pcs.lib.sbd._get_local_sbd_watchdog_timeout", lambda: 10)
+@mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
+class TestSetStonithWatchdogTimeoutSBDIsEnabledWatchdogOnlyMixinCrmAttributeMetadata(
+    CrmAttributeLoadMetadataMixin,
+    SetStonithWatchdogTimeoutSBDIsEnabledWatchdogOnlyMixin,
+    TestCase,
+):
+    pass
+
+
+class SetStonithWatchdogTimeoutSBDIsEnabledSharedDevicesMixin(
+    StonithWatchdogTimeoutMixin
 ):
     sbd_enabled = True
 
@@ -417,88 +434,124 @@ class TestSetStonithWatchdogTimeoutSBDIsEnabledSharedDevices(
         )
 
 
-class MetadataErrorMixin:
-    _load_cib_when_metadata_error = True
+@mock.patch.object(
+    settings,
+    "pacemaker_api_result_schema",
+    rc("pcmk_api_rng/api-result.rng"),
+)
+@mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: ["dev1", "dev2"])
+class TestSetStonithWatchdogTimeoutSBDIsEnabledSharedDevicesCrmAttributeMetadata(
+    CrmAttributeLoadMetadataMixin,
+    SetStonithWatchdogTimeoutSBDIsEnabledSharedDevicesMixin,
+    TestCase,
+):
+    pass
+
+
+class CrmAttributeMetadataErrorMixin:
+    _load_cib_when_metadata_error = None
 
     def metadata_error_command(self):
         raise NotImplementedError
 
     def _metadata_error(
-        self, error_agent, stdout=None, reason=None, unsupported_version=False
+        self,
+        agent="cluster-options",
+        stdout=None,
+        stderr="",
+        reason=None,
+        returncode=2,
+        unsupported_version=False,
     ):
         if self._load_cib_when_metadata_error:
             self.config.runner.cib.load()
-        for agent in [
-            "pacemaker-based",
-            "pacemaker-controld",
-            "pacemaker-schedulerd",
-        ]:
-            if agent == error_agent:
-                kwargs = dict(
-                    name=agent,
-                    agent_name=agent,
-                    stdout="" if stdout is None else stdout,
-                    stderr="error",
-                    returncode=2,
-                )
-            else:
-                kwargs = dict(name=agent, agent_name=agent)
-            self.config.runner.pcmk.load_fake_agent_metadata(**kwargs)
+        self.config.runner.pcmk.is_crm_attribute_list_options_supported(
+            is_supported=True
+        )
+        self.config.runner.pcmk.load_crm_attribute_metadata(
+            agent_name=agent,
+            stdout=stdout,
+            stderr=stderr,
+            returncode=returncode,
+        )
         self.env_assist.assert_raise_library_error(self.metadata_error_command)
         if unsupported_version:
             report = fixture.error(
                 reports.codes.AGENT_IMPLEMENTS_UNSUPPORTED_OCF_VERSION,
-                agent=f"__pcmk_internal:{error_agent}",
-                ocf_version="1.2",
+                agent=f"__pcmk_internal:{agent}",
+                ocf_version="5.2",
                 supported_versions=["1.0", "1.1"],
             )
         else:
             report = fixture.error(
                 reports.codes.UNABLE_TO_GET_AGENT_METADATA,
-                agent=error_agent,
+                agent=agent,
                 reason="error" if reason is None else reason,
             )
         self.env_assist.assert_reports([report])
 
-    def test_metadata_error_pacemaker_based(self):
-        self._metadata_error("pacemaker-based")
-
-    def test_metadata_error_pacemaker_controld(self):
-        self._metadata_error("pacemaker-controld")
-
-    def test_metadata_error_pacemaker_schedulerd(self):
-        self._metadata_error("pacemaker-schedulerd")
+    def test_metadata_error_returncode(self):
+        stdout = """
+            <pacemaker-result api-version="2.38" request="crm_attribute">
+                <status code="2" message="ERROR" />
+            </pacemaker-result>
+        """
+        self._metadata_error(stdout=stdout, reason="ERROR")
 
     def test_metadata_error_xml_syntax_error(self):
+        stdout = "not an xml"
+        stderr = "syntax error"
         self._metadata_error(
-            "pacemaker-schedulerd",
-            stdout="not an xml",
-            reason=(
-                "Start tag expected, '<' not found, line 1, column 1 (<string>,"
-                " line 1)"
-            ),
+            stdout=stdout, stderr=stderr, reason=f"{stderr}\n{stdout}"
         )
 
     def test_metadata_error_invalid_schema(self):
+        stdout = "<xml/>"
+        stderr = "invalid schema"
         self._metadata_error(
-            "pacemaker-based",
-            stdout="<xml/>",
-            reason="Expecting element resource-agent, got xml, line 1",
+            stdout=stdout, stderr=stderr, reason=f"{stderr}\n{stdout}"
         )
 
     def test_metadata_error_invalid_version(self):
-        self._metadata_error(
-            "pacemaker-controld",
-            stdout="""
-                <resource-agent name="pacemaker-based">
-                    <version>1.2</version>
+        stdout = """
+            <pacemaker-result api-version="2.38" request="crm_attribute">
+                <resource-agent name="cluster-options">
+                    <version>5.2</version>
+                    <parameters>
+                        <parameter name="parameter-name" advanced="0"
+                                generated="0">
+                            <longdesc lang="en">longdesc</longdesc>
+                            <shortdesc lang="en">shortdesc</shortdesc>
+                            <content type="string"/>
+                        </parameter>
+                    </parameters>
                 </resource-agent>
-            """,
-            unsupported_version=True,
+                <status code="0" message="OK" />
+            </pacemaker-result>
+        """
+        self._metadata_error(
+            stdout=stdout, returncode=0, unsupported_version=True
+        )
+
+    def test_facade_crm_attribute_metadata_not_supported(self):
+        if self._load_cib_when_metadata_error:
+            self.config.runner.cib.load()
+        self.config.runner.pcmk.is_crm_attribute_list_options_supported(
+            is_supported=False
+        )
+        self.env_assist.assert_raise_library_error(self.metadata_error_command)
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.CLUSTER_OPTIONS_METADATA_NOT_SUPPORTED
+                )
+            ]
         )
 
 
-class TestPropertySet(LoadMetadataMixin, MetadataErrorMixin, TestCase):
+class TestPropertySetMixin:
+    _load_cib_when_metadata_error = True
+
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
 
@@ -799,6 +852,20 @@ class TestPropertySet(LoadMetadataMixin, MetadataErrorMixin, TestCase):
         )
 
 
+@mock.patch.object(
+    settings,
+    "pacemaker_api_result_schema",
+    rc("pcmk_api_rng/api-result.rng"),
+)
+class TestPropertySetCrmAttribute(
+    TestPropertySetMixin,
+    CrmAttributeLoadMetadataMixin,
+    CrmAttributeMetadataErrorMixin,
+    TestCase,
+):
+    pass
+
+
 class TestGetProperties(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
@@ -951,7 +1018,7 @@ class TestGetProperties(TestCase):
         )
 
 
-class TestGetPropertiesMetadata(MetadataErrorMixin, TestCase):
+class TestGetPropertiesMetadataMixin:
     _load_cib_when_metadata_error = False
 
     def setUp(self):
@@ -965,72 +1032,11 @@ class TestGetPropertiesMetadata(MetadataErrorMixin, TestCase):
             self.env_assist.get_env()
         )
 
+    def _load_fake_agent_test_metadata(self):
+        raise NotImplementedError
+
     def test_get_properties_metadata(self):
-        self.config.runner.pcmk.load_fake_agent_metadata(
-            name="pacemaker-based",
-            agent_name="pacemaker-based",
-            stdout="""
-                <?xml version="1.0"?>
-                <resource-agent name="pacemaker-based" version="2.1.5-7.el9">
-                  <version>1.1</version>
-                  <longdesc lang="en"></longdesc>
-                  <shortdesc lang="en"></shortdesc>
-                  <parameters>
-                    <parameter name="property-name">
-                      <longdesc lang="en">longdesc</longdesc>
-                      <shortdesc lang="en">shortdesc</shortdesc>
-                      <content type="boolean" default="false"/>
-                    </parameter>
-                  </parameters>
-                </resource-agent>
-            """,
-        )
-        self.config.runner.pcmk.load_fake_agent_metadata(
-            name="pacemaker-controld",
-            agent_name="pacemaker-controld",
-            stdout="""
-                <?xml version="1.0"?>
-                <resource-agent name="pacemaker-based" version="2.1.5-7.el9">
-                  <version>1.1</version>
-                  <longdesc lang="en"></longdesc>
-                  <shortdesc lang="en"></shortdesc>
-                  <parameters>
-                    <parameter name="enum-property">
-                      <longdesc lang="en">same desc</longdesc>
-                      <shortdesc lang="en">same desc</shortdesc>
-                      <content type="select" default="stop">
-                        <option value="stop" />
-                        <option value="freeze" />
-                        <option value="ignore" />
-                        <option value="demote" />
-                        <option value="suicide" />
-                      </content>
-                    </parameter>
-                  </parameters>
-                </resource-agent>
-            """,
-        )
-        self.config.runner.pcmk.load_fake_agent_metadata(
-            name="pacemaker-schedulerd",
-            agent_name="pacemaker-schedulerd",
-            stdout="""
-                <?xml version="1.0"?>
-                <resource-agent name="pacemaker-based" version="2.1.5-7.el9">
-                  <version>1.0</version>
-                  <longdesc lang="en"></longdesc>
-                  <shortdesc lang="en"></shortdesc>
-                  <parameters>
-                    <parameter name="advanced-property">
-                      <longdesc lang="en">longdesc</longdesc>
-                      <shortdesc lang="en">
-                        *** Advanced Use Only *** advanced shortdesc
-                      </shortdesc>
-                      <content type="boolean" default="false"/>
-                    </parameter>
-                  </parameters>
-                </resource-agent>
-            """,
-        )
+        self._load_fake_agent_test_metadata()
         self.assertEqual(
             self.command(),
             ClusterPropertyMetadataDto(
@@ -1091,3 +1097,55 @@ class TestGetPropertiesMetadata(MetadataErrorMixin, TestCase):
             ),
         )
         self.env_assist.assert_reports([])
+
+
+@mock.patch.object(
+    settings,
+    "pacemaker_api_result_schema",
+    rc("pcmk_api_rng/api-result.rng"),
+)
+class TestGetPropertiesMetadataCrmAttribute(
+    TestGetPropertiesMetadataMixin, CrmAttributeMetadataErrorMixin, TestCase
+):
+    def _load_fake_agent_test_metadata(self):
+        self.config.runner.pcmk.is_crm_attribute_list_options_supported(
+            is_supported=True
+        )
+        self.config.runner.pcmk.load_crm_attribute_metadata(
+            agent_name="cluster-options",
+            stdout="""
+                <pacemaker-result api-version="2.38" request="crm_attribute --list-options=cluster --output-as xml">
+                  <resource-agent name="cluster-options" version="2.1.5-7.el9">
+                    <version>1.1</version>
+                    <longdesc lang="en">agent longdesc</longdesc>
+                    <shortdesc lang="en">agent shortdesc</shortdesc>
+                    <parameters>
+                      <parameter name="property-name" advanced="0" generated="0">
+                        <longdesc lang="en">longdesc</longdesc>
+                        <shortdesc lang="en">shortdesc</shortdesc>
+                        <content type="boolean" default="false"/>
+                      </parameter>
+                      <parameter name="enum-property" advanced="0" generated="0">
+                        <longdesc lang="en">same desc</longdesc>
+                        <shortdesc lang="en">same desc</shortdesc>
+                        <content type="select" default="stop">
+                          <option value="stop" />
+                          <option value="freeze" />
+                          <option value="ignore" />
+                          <option value="demote" />
+                          <option value="suicide" />
+                        </content>
+                      </parameter>
+                      <parameter name="advanced-property" advanced="0" generated="0">
+                        <longdesc lang="en">longdesc</longdesc>
+                        <shortdesc lang="en">
+                          *** Advanced Use Only *** advanced shortdesc
+                        </shortdesc>
+                        <content type="boolean" default="false"/>
+                      </parameter>
+                    </parameters>
+                  </resource-agent>
+                  <status code="0" message="OK"/>
+                </pacemaker-result>
+            """,
+        )

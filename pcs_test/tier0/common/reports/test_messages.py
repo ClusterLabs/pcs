@@ -5934,3 +5934,14 @@ class ResourceRestartUsingParentRersource(NameBuildTest):
                 "resourceId", "parentId"
             ),
         )
+
+
+class ClusterOptionsMetadataNotSupported(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "Cluster options metadata are not supported, please upgrade "
+                "pacemaker"
+            ),
+            reports.ClusterOptionsMetadataNotSupported(),
+        )

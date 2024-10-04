@@ -8017,3 +8017,19 @@ class CommandArgumentTypeMismatch(ReportItemMessage):
     @property
     def message(self) -> str:
         return f"This command does not accept {self.not_accepted_type}."
+
+
+@dataclass(frozen=True)
+class ClusterOptionsMetadataNotSupported(ReportItemMessage):
+    """
+    Pacemaker crm_attribute does not support new cluster options metadata.
+    """
+
+    _code = codes.CLUSTER_OPTIONS_METADATA_NOT_SUPPORTED
+
+    @property
+    def message(self) -> str:
+        return (
+            "Cluster options metadata are not supported, please upgrade "
+            "pacemaker"
+        )

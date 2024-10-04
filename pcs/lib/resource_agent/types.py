@@ -15,6 +15,7 @@ from pcs.common.resource_agent.dto import (
     ResourceAgentParameterDto,
 )
 
+CrmAttrAgent = NewType("CrmAttrAgent", str)
 FakeAgentName = NewType("FakeAgentName", str)
 OcfVersion = NewType("OcfVersion", str)
 _FAKE_AGENT_STANDARD = "__pcmk_internal"

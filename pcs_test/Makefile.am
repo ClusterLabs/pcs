@@ -3,7 +3,6 @@ MAINTAINERCLEANFILES	= Makefile.in
 EXTRA_DIST		= \
 			  curl_test.py \
 			  __init__.py \
-			  resources/based_metadata.xml \
 			  resources/capabilities.xml \
 			  resources/cib-all.xml \
 			  resources/cib-empty-1.2.xml \
@@ -26,7 +25,7 @@ EXTRA_DIST		= \
 			  resources/cib-tags.xml \
 			  resources/cib-unexportable-constraints.xml \
 			  resources/cib-unsupported-stonith-config.xml \
-			  resources/controld_metadata.xml \
+			  resources/cluster-options_metadata.xml \
 			  resources/corosync-3nodes.conf \
 			  resources/corosync-3nodes-qdevice.conf \
 			  resources/corosync-3nodes-qdevice-heuristics.conf \
@@ -37,8 +36,8 @@ EXTRA_DIST		= \
 			  resources/crm_mon.minimal.xml \
 			  resources/crm_mon.all_resources.xml \
 			  resources/fenced_metadata.xml \
-			  resources/schedulerd_metadata.xml \
 			  resources/pcmk_api_rng/api-result.rng \
+			  resources/pcmk_api_rng/crm_attribute-2.36.rng \
 			  resources/pcmk_api_rng/crm_mon-2.29.rng \
 			  resources/pcmk_api_rng/digests-2.9.rng \
 			  resources/pcmk_api_rng/failure-2.8.rng \
@@ -46,6 +45,8 @@ EXTRA_DIST		= \
 			  resources/pcmk_api_rng/node-attrs-2.8.rng \
 			  resources/pcmk_api_rng/node-history-2.12.rng \
 			  resources/pcmk_api_rng/nodes-2.29.rng \
+			  resources/pcmk_api_rng/ocf-ra-1.1.rng \
+			  resources/pcmk_api_rng/options-2.36.rng \
 			  resources/pcmk_api_rng/pacemakerd-health-2.25.rng \
 			  resources/pcmk_api_rng/resources-2.29.rng \
 			  resources/pcmk_api_rng/status-2.0.rng \
@@ -328,6 +329,7 @@ EXTRA_DIST		= \
 			  tier0/lib/__init__.py \
 			  tier0/lib/misc.py \
 			  tier0/lib/pacemaker/__init__.py \
+			  tier0/lib/pacemaker/test_api_result.py \
 			  tier0/lib/pacemaker/test_live.py \
 			  tier0/lib/pacemaker/test_simulate.py \
 			  tier0/lib/pacemaker/test_state.py \
@@ -433,10 +435,8 @@ EXTRA_DIST		= \
 			  tools/bin_mock/pcmk/crm_resource.d/systemd__pcsmock@a__b_metadata.xml \
 			  tools/bin_mock/pcmk/crm_resource.d/systemd__pcsmock_metadata.xml \
 			  tools/bin_mock/pcmk/crm_resource_mock.py \
-			  tools/bin_mock/pcmk/pacemaker_metadata.d/pacemaker_based.xml \
-			  tools/bin_mock/pcmk/pacemaker_metadata.d/pacemaker_controld.xml \
+			  tools/bin_mock/pcmk/pacemaker_metadata.d/cluster_options.xml \
 			  tools/bin_mock/pcmk/pacemaker_metadata.d/pacemaker_fenced.xml \
-			  tools/bin_mock/pcmk/pacemaker_metadata.d/pacemaker_schedulerd.xml \
 			  tools/bin_mock/pcmk/pacemaker_metadata.py \
 			  tools/bin_mock/pcmk/stonith_admin_mock.py \
 			  tools/case_analysis.py \
