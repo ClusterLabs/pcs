@@ -13,8 +13,11 @@
   query resource is-state` command ([RHEL-55723])
 - Do not display a warning in `pcs status` when a fence\_sbd stonith device has
   its `method` option set to `cycle` ([RHEL-44432])
+- Do not display expired constraints in `pcs constraint location config
+  resources` unless `--all` is specified ([RHEL-33386])
 
 [RHEL-21047]: https://issues.redhat.com/browse/RHEL-21047
+[RHEL-33386]: https://issues.redhat.com/browse/RHEL-33386
 [RHEL-44432]: https://issues.redhat.com/browse/RHEL-44432
 [RHEL-55723]: https://issues.redhat.com/browse/RHEL-55723
 

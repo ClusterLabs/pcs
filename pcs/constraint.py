@@ -28,6 +28,7 @@ from pcs.cli.constraint.location.command import (
 )
 from pcs.cli.constraint.output import (
     CibConstraintLocationAnyDto,
+    filter_constraints_by_rule_expired_status,
     location,
     print_config,
 )
@@ -768,9 +769,9 @@ def location_config_cmd(
                 "with grouping and filtering by nodes or resources"
             )
 
-    constraints_dto = cast(
-        CibConstraintsDto,
+    constraints_dto = filter_constraints_by_rule_expired_status(
         lib.constraint.get_config(evaluate_rules=True),
+        modifiers.is_specified("--all"),
     )
 
     constraints_dto = CibConstraintsDto(
