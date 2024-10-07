@@ -83,6 +83,7 @@ EXTRA_DIST		= \
 			  tier0/cli/constraint/__init__.py \
 			  tier0/cli/constraint/location/__init__.py \
 			  tier0/cli/constraint/location/test_command.py \
+			  tier0/cli/constraint/output/test_all.py \
 			  tier0/cli/constraint/rule/__init__.py \
 			  tier0/cli/constraint/rule/test_command.py \
 			  tier0/cli/constraint/test_command.py \

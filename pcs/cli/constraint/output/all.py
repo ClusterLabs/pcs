@@ -113,7 +113,7 @@ def _filter_out_expired_base(
     ]
 
 
-def _filter_constraints(
+def filter_constraints_by_rule_expired_status(
     constraints_dto: CibConstraintsDto, include_expired: bool
 ) -> CibConstraintsDto:
     return CibConstraintsDto(
@@ -139,7 +139,7 @@ def _filter_constraints(
 def print_config(
     constraints_dto: CibConstraintsDto, modifiers: InputModifiers
 ) -> None:
-    constraints_dto = _filter_constraints(
+    constraints_dto = filter_constraints_by_rule_expired_status(
         constraints_dto,
         include_expired=modifiers.is_specified("--all"),
     )
