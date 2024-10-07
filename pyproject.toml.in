@@ -12,7 +12,7 @@ readme = "README.md"
 Repository = "https://github.com/ClusterLabs/pcs"
 
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools >= 66.1"]
 build-backend = "setuptools.build_meta"
 
 [project.scripts]

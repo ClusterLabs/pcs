@@ -62,19 +62,17 @@ Source41: pyagentx-%{pyagentx_version}.tar.gz
 @gemsrc@
 
 # python for pcs
-%if 0%{?fedora} >= 30
-BuildRequires: python3 >= 3.9
-BuildRequires: python3-setuptools
-%endif
-
-%if 0%{?rhel} >= 8 && 0%{?rhel} <= 9
-BuildRequires: platform-python
-BuildRequires: platform-python-setuptools
-# for bundled python dateutil
-BuildRequires: python3-setuptools_scm
-%endif
-
 BuildRequires: python3-devel
+BuildRequires: python3-pip >= 23
+BuildRequires: python3-setuptools >= 66.1
+
+# for building wheel during make install
+BuildRequires: python3-wheel
+
+# for bundling dateutil
+BuildRequires: python3-setuptools_scm
+
+
 # for tier0 tests
 BuildRequires: python3-cryptography
 BuildRequires: python3-pyparsing >= 3.0.0
