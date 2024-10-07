@@ -52,7 +52,7 @@ SUBDIRS			= pcs pcsd pcs_test data
 PCS_PYTHON_PACKAGES = pcs/ pcs_test/
 
 # options for any pip command
-pipopts	= --disable-pip-version-check
+pipopts	= --disable-pip-version-check --verbose
 # options for pip install
 # --no-build-isolation - disables installing dependencies for embedded python
 #   modules. All dependencies are installed by autotools in our case.
