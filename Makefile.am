@@ -84,7 +84,7 @@ endif
 
 stamps/download_python_deps: rpm/requirements.txt stamps/download_pyagentx dev_requirements.txt
 if ENABLE_DOWNLOAD
-	PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring $(PIP) $(pipopts) download --no-deps --dest rpm/ --no-binary :all: --requirement rpm/requirements.txt
+	PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring $(PIP) $(pipopts) download --no-deps --no-build-isolation --dest rpm/ --no-binary :all: --requirement rpm/requirements.txt
 endif
 	touch $@
 
