@@ -333,15 +333,14 @@ AC_SUBST([PYAGENTX_VERSION])
 
 # those MUST be available in BaseOS
 
-# required for --no-build-isolation
-AC_PIP_MODULE([pip], [>= 10.0.0], [have_isolation=yes], [have_isolation=no], [have_isolation=no])
-AM_CONDITIONAL([PIP_HAS_ISOLATION], [test "x$have_isolation" = xyes])
+# pip 19.0 required for PEP517 support
+PCS_CHECK_PYMOD([pip], [>= 23.0])
+# pip builds a wheel first
+PCS_CHECK_PYMOD([wheel])
 
 if test "x$tests_only" != "xyes"; then
-	PCS_CHECK_PYMOD([setuptools])
-	if test "x$local_build" = "xyes"; then
-		PCS_CHECK_PYMOD([wheel])
-	fi
+	# setuptools 61.0.0 required for PEP621 support
+	PCS_CHECK_PYMOD([setuptools], [>= 66.1])
 	PCS_CHECK_PYMOD([cryptography])
 	PCS_CHECK_PYMOD([lxml])
 	PCS_CHECK_PYMOD([pyparsing], [>= 3.0.0])
