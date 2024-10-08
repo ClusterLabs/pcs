@@ -352,8 +352,9 @@ if test "x$tests_only" != "xyes"; then
 	PCS_CHECK_PYMOD([python-dateutil], [>= 2.7.0], [yes])
 	# setuptoools_scm is needed for bundling dateutil, this uses variables
 	# set by the PCS_CHECK_PYMOD macro, so it must be executed right after it
-	if test "x$bundle_module" = "xyes" && test "x$cache_only" = "xyes"; then
+	if test "x$bundle_module" = "xyes" && test "x$local_build" = "xyes"; then
 		PCS_CHECK_PYMOD([setuptools-scm])
+		PCS_CHECK_PYMOD([six])
 	fi
 	PCS_CHECK_PYMOD([pycurl], [], [yes])
 	# Building pycurl requires devel packages that contain pkg-config, so devel
