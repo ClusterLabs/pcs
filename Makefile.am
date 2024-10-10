@@ -11,7 +11,6 @@ EXTRA_DIST		= \
 			  mypy.ini \
 			  pcs.pc.in \
 			  pylintrc \
-			  pyproject.toml \
 			  rpm/pcs.spec.in \
 			  scripts/pcsd.sh.in \
 			  .version
@@ -51,19 +50,26 @@ ACLOCAL_AMFLAGS		= -I m4
 SUBDIRS			= pcs pcsd pcs_test data
 
 PCS_PYTHON_PACKAGES = pcs/ pcs_test/
+
+# options for any pip command
+pipopts	= --disable-pip-version-check --verbose
+# options for pip install
+# --no-build-isolation - disables installing dependencies for embedded python
+#   modules. All dependencies are installed by autotools in our case.
+pipinstallopts = --force-reinstall --no-build-isolation --no-warn-script-location
+
 # dependency management
 
 # 1 - sources directory - with python package sources
 # 2 - destination directory - python package will be installed into the
 #     `packages` subdirectory of this destination directory
 # switched to pip installation since setup.py installation is deprecated
-# --no-build-isolation - disables installing dependencies for embedded python
-#   modules. All dependencies are installed by autotools in our case.
+# --no-binary - disallows downloading wheels
 define build_python_bundle
 	cd $(1) && \
 	PYTHONPATH=$(2)/packages/ \
 	LC_ALL=C.utf8 \
-	$(PIP) install --no-build-isolation --target $(2)/packages .
+	${PIP} ${pipopts} install ${pipinstallopts} --no-binary :all: --target $(2)/packages .
 endef
 
 PYAGENTX_URI="https://github.com/ondrejmular/pyagentx/archive/v${PYAGENTX_VERSION}.tar.gz"
@@ -76,13 +82,9 @@ if ENABLE_DOWNLOAD
 endif
 	touch $@
 
-if PIP_HAS_ISOLATION
-pipopts	= --no-build-isolation
-endif
-
 stamps/download_python_deps: rpm/requirements.txt stamps/download_pyagentx dev_requirements.txt
 if ENABLE_DOWNLOAD
-	PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring $(PIP) download --disable-pip-version-check --no-deps $(pipopts) --dest rpm/ --no-binary :all: -r rpm/requirements.txt
+	PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring $(PIP) $(pipopts) download --no-deps --no-build-isolation --dest rpm/ --no-binary :all: --requirement rpm/requirements.txt
 endif
 	touch $@
 
@@ -164,23 +166,52 @@ if ENABLE_DOWNLOAD
 endif
 	touch $@
 
+# * Pip installs scripts into bin directory and that cannot be changed, so the
+# files are moved manually. Some of the folders do not exist in DESTDIR or
+# prefix locations, so they need to be created first, otherwise mv fails
 install-exec-local: install_python_embedded_mods stamps/install_ruby_deps_local
-	$(MKDIR_P) $(or ${DESTDIR}, /)/$(PYTHON_SITELIB)/pcs/
-	$(PYTHON) setup.py install --root=$(or ${DESTDIR}, /) ${EXTRA_SETUP_OPTS} --record $(or ${DESTDIR}, /)/$(PYTHON_SITELIB)/pcs/deinstall.txt \
-		--install-scripts $(SBINDIR) --install-purelib $(PYTHON_SITELIB) --install-platlib $(PYTHON_SITELIB)
-	$(MKDIR_P) ${DESTDIR}/$(LIB_DIR)/pcs
-	mv ${DESTDIR}/$(SBINDIR)/pcs_internal ${DESTDIR}/$(LIB_DIR)/pcs/pcs_internal
-	mv ${DESTDIR}/$(SBINDIR)/pcs_snmp_agent ${DESTDIR}/$(LIB_DIR)/pcs/pcs_snmp_agent
+	if $$(python -c "import sys; exit(sys.base_prefix == sys.prefix)"); then \
+		echo "WARNING: Virtual environment is activated, shebangs in Python " \
+		"entry points will point to this virtual environment. Fix shebangs " \
+		"manually to use the system interpreter. Entry points in rpm will be " \
+		"corrected automatically to point to the system interpreter"; \
+	fi
+	if test -n "${DESTDIR}" || test "${prefix}" != "/usr"; then \
+		$(MKDIR_P) ${DESTDIR}/$(LIB_DIR)/pcs/; \
+		$(MKDIR_P) ${DESTDIR}/$(SBINDIR); \
+	fi
+	${PIP} ${pipopts} install ${pipinstallopts} \
+		--root=$(or ${DESTDIR}, /) \
+		--prefix=${prefix} ${EXTRA_SETUP_OPTS} .
+	mv ${DESTDIR}/$(prefix)/bin/pcs ${DESTDIR}/$(SBINDIR)/
+	mv ${DESTDIR}/$(prefix)/bin/pcsd ${DESTDIR}/$(SBINDIR)/
+	mv ${DESTDIR}/$(prefix)/bin/pcs_internal ${DESTDIR}/$(LIB_DIR)/pcs/
+	mv ${DESTDIR}/$(prefix)/bin/pcs_snmp_agent ${DESTDIR}/$(LIB_DIR)/pcs/
 
+# * Uses PEP627 RECORD file - CSV, first column is a path relative to dist-info
+# * Before uninstallation, the manually moved scripts need to go back where pip
+# installed them - that's what's written in the RECORD file
+# * RECORD file only contains files not directories - deleting empty directory
+# tree by find is needed afterwards
+# * dist-info folder needs to be deleted for the same reason, pip uses it to
+# detect installed packages and if it's empty, pip reports error on every run
 uninstall-local:
-	rm -rf $(or ${DESTDIR}, /)/$(PCS_BUNDLED_DIR)
-	mv ${DESTDIR}/$(LIB_DIR)/pcs/pcs_internal ${DESTDIR}/$(SBINDIR)/pcs_internal || :
-	mv ${DESTDIR}/$(LIB_DIR)/pcs/pcs_snmp_agent ${DESTDIR}/$(SBINDIR)/pcs_snmp_agent || :
-	for i in $(shell cat $(or ${DESTDIR}, /)/$(PYTHON_SITELIB)/pcs/deinstall.txt); do \
-		rm -rf $(or ${DESTDIR}, /)/$${i}; \
-	done
-	rm -rf $(or ${DESTDIR}, /)/$(PYTHON_SITELIB)/pcs/deinstall.txt
-	rmdir ${DESTDIR}/$(LIB_DIR)/pcs
+	rm -rf ${DESTDIR}/$(PCS_BUNDLED_DIR)
+	mv ${DESTDIR}/$(SBINDIR)/pcs ${DESTDIR}/$(prefix)/bin || :
+	mv ${DESTDIR}/$(SBINDIR)/pcsd ${DESTDIR}/$(prefix)/bin || :
+	mv ${DESTDIR}/$(LIB_DIR)/pcs/pcs_internal ${DESTDIR}/$(prefix)/bin || :
+	mv ${DESTDIR}/$(LIB_DIR)/pcs/pcs_snmp_agent ${DESTDIR}/$(prefix)/bin || :
+	recordfile=$$(echo ${DESTDIR}/$(PYTHON_SITELIB)/pcs*.dist-info/RECORD); \
+	while read fname; do \
+	  rm -rf $$(echo "${DESTDIR}/$(PYTHON_SITELIB)/$$fname" | cut -d',' -f1); \
+	done < $$recordfile
+	if test -n "${DESTDIR}" || test "${prefix}" != "/usr"; then \
+		rmdir ${DESTDIR}/$(SBINDIR); \
+	fi
+	find ${DESTDIR}/$(LIB_DIR)/pcs -empty -type d -delete
+	find ${DESTDIR}/$(LIB_DIR)/pcsd -empty -type d -delete
+	find ${DESTDIR}/${PYTHON_SITELIB}/pcs -empty -type d -delete
+	rmdir ${DESTDIR}/$(PYTHON_SITELIB)/pcs*.dist-info
 
 dist_doc_DATA	= README.md CHANGELOG.md
 
@@ -330,8 +361,10 @@ test-tree-clean:
 
 check-local: check-local-deps test-tree-prep typos_check pylint isort_check black_check mypy tests_tier0 tests_tier1 pcsd-tests test-tree-clean
 
+# New setuptools use the build directory to build wheels
 clean-local: test-tree-clean
-	$(PYTHON) setup.py clean
+	rm -rf ./*.pyc ./*.egg-info ./*.dist-info build/
+	rm -rf $(PCS_BUNDLED_DIR)/*
 	rm -rf Gemfile.lock .bundle pcs_test/resources/temp
 	rm -rf $(PACKAGE_NAME)-$(VERSION).tar.* rpm/*tar* rpm/*.gem rpm/*.rpm
 	rm -rf stamps/*
@@ -340,7 +373,7 @@ clean-local: test-tree-clean
 distclean-local:
 	rm -rf Gemfile
 	rm -rf .mypy_cache
-	rm -rf rpm/requirements.txt rpm/Gemfile rpm/pcs-*
+	rm -rf rpm/requirements.txt rpm/Gemfile rpm/pcs-* build/
 	rm -rf stamps
 	rm -rf ${abs_top_builddir}/${PCS_BUNDLED_DIR_LOCAL} ${abs_top_builddir}/${PCSD_BUNDLED_DIR_ROOT_LOCAL}
 	rm -rf $(filter-out \

@@ -16,6 +16,13 @@
 - Do not display expired constraints in `pcs constraint location config
   resources` unless `--all` is specified ([RHEL-33386])
 
+### Changed
+- With deprecation of installation using setup.py, the project was migrated to
+  standard PEP517, PEP518 and PEP621 packaging mechanism. Setuptools is used
+  as a build backend and pip as a build frontend. If you build pcs from source
+  (not using a package), look at the changes in Makefile.am and rpm/spec.in.
+  Update of your building processes might be needed.
+
 [RHEL-21047]: https://issues.redhat.com/browse/RHEL-21047
 [RHEL-33386]: https://issues.redhat.com/browse/RHEL-33386
 [RHEL-44432]: https://issues.redhat.com/browse/RHEL-44432
