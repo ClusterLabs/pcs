@@ -921,7 +921,7 @@ def _warn_stonith_unsupported(
     elif isinstance(dto, CibResourceCloneDto):
         element = "clone"
     else:
-        raise AssertionError(f"unexpedted cib resource dto: {dto}")
+        raise AssertionError(f"unexpected cib resource dto: {dto}")
     if not omitted_element:
         omitted_element = element
     warn(
