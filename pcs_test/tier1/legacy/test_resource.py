@@ -2051,6 +2051,10 @@ class Resource(TestCase, AssertPcsMixin):
             stderr_full="Deleting Resource - dummylarge\n",
         )
 
+    @skip(
+        "test skipped because of pacemaker bug: "
+        "https://issues.redhat.com/browse/RHEL-60534"
+    )
     def test_master_slave_group_large_resource_remove(self):
         self.pcs_runner = PcsRunner(self.temp_large_cib.name)
         self.pcs_runner.mock_settings = get_mock_settings()
@@ -3545,6 +3549,10 @@ class Resource(TestCase, AssertPcsMixin):
             ),
         )
 
+    @skip(
+        "test skipped because of pacemaker bug: "
+        "https://issues.redhat.com/browse/RHEL-60534"
+    )
     def test_cloned_mastered_group(self):
         self.assert_pcs_success(
             "resource create dummy1 ocf:pcsmock:minimal --no-default-ops --group dummies".split(),
