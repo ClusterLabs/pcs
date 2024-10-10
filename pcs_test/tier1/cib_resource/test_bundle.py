@@ -195,7 +195,7 @@ class BundleCreate(BundleCreateCommon):
         self.assert_pcs_fail_regardless_of_force(
             "resource bundle create B1".split(),
             "Error: '' is not a valid container type value, use 'docker', "
-            "'podman', 'rkt'\n" + ERRORS_HAVE_OCCURRED,
+            "'podman'\n" + ERRORS_HAVE_OCCURRED,
         )
 
     def test_fail_when_missing_required(self):

@@ -32,7 +32,7 @@ from pcs.lib.xml_tools import (
     update_attributes_remove_empty,
 )
 
-GENERIC_CONTAINER_TYPES = {"docker", "podman", "rkt"}
+GENERIC_CONTAINER_TYPES = {"docker", "podman"}
 
 GENERIC_CONTAINER_OPTIONS = frozenset(
     (
@@ -186,6 +186,23 @@ def _bundle_network_element_to_dto(
     )
 
 
+def verify(resources_el: _Element) -> reports.ReportItemList:
+    """
+    Check if there are configuration errors in existing bundles
+
+    resource_el -- element with bundles
+    """
+    report_list = []
+    for bundle_el in resources_el.iterfind(TAG):
+        if not _is_supported_container(_get_container_element(bundle_el)):
+            report_list.append(
+                _get_report_unsupported_container(
+                    bundle_el, updating_options=False
+                )
+            )
+    return report_list
+
+
 def validate_new(
     id_provider,
     bundle_id,
@@ -329,11 +346,20 @@ def reset_to_minimal(bundle_element):
             reset_element(child, keep_attrs=["image"])
 
 
-def _get_report_unsupported_container(bundle_el):
+def _get_report_unsupported_container(
+    bundle_el: _Element, updating_options: bool = True
+) -> reports.ReportItem:
+    """
+    Create an error report for unsupported bundle container type
+
+    bundle_el -- bundle with an unsupported container
+    updating_options -- True if this was detected when changing the bundle
+    """
     return reports.ReportItem.error(
         reports.messages.ResourceBundleUnsupportedContainerType(
-            bundle_el.get("id"),
+            bundle_el.get("id", ""),
             sorted(GENERIC_CONTAINER_TYPES),
+            updating_options=updating_options,
         )
     )
 
@@ -523,22 +549,7 @@ def _validate_container(container_type, container_options, force_options=False):
                 )
             )
         ]
-    report_list = []
-    if container_type == "rkt":
-        # TODO deprecated in pacemaker 2, to be removed in pacemaker 3
-        # added to pcs after 0.11.7
-        report_list.append(
-            reports.ReportItem.deprecation(
-                reports.messages.DeprecatedOptionValue(
-                    "container type", container_type
-                )
-            )
-        )
-
-    report_list += _validate_generic_container_options(
-        container_options, force_options
-    )
-    return report_list
+    return _validate_generic_container_options(container_options, force_options)
 
 
 def _validate_generic_container_options(container_options, force_options=False):

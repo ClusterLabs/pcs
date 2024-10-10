@@ -1715,14 +1715,14 @@
         pcs commands: resource bundle
       </description>
     </capability>
-    <capability id="pcmk.resource.bundle.container-rkt" in-pcs="1" in-pcsd="0">
+    <capability id="pcmk.resource.bundle.container-rkt" in-pcs="0" in-pcsd="0">
       <description>
         Support rkt container in bundle resources.
 
         pcs commands: resource bundle
       </description>
     </capability>
-    <capability id="pcmk.resource.bundle.container-rkt.promoted-max" in-pcs="1" in-pcsd="0">
+    <capability id="pcmk.resource.bundle.container-rkt.promoted-max" in-pcs="0" in-pcsd="0">
       <description>
         Support promoted-max option of rkt container in bundle resources.
 

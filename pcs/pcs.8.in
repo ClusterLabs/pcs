@@ -1646,6 +1646,8 @@ This section summarizes the most important changes in commands done in pcs-0.12.
 Following pacemaker 3, pcs has dropped support for:
 .br
 nagios and upstart resource classes
+.br
+rkt containers in bundle resources
 .SS "Legacy role names"
 .TP
 Legacy role names and derived options and keywords are no longer accepted, use 'Promoted', 'Unpromoted', \fB\-\-promoted\fR, 'promotable', 'promoted-max'.

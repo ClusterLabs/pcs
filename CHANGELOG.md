@@ -5,6 +5,8 @@
 ### Removed
 - Following pacemaker 3, support for nagios and upstart resource classes has
   been removed ([RHEL-49520])
+- Following pacemaker 3, support for rkt containers in bundle resources has
+  been removed ([RHEL-49521])
 
 ### Added
 - Support for output formats `json` and `cmd` to `pcs tag config` command
@@ -48,6 +50,7 @@
 [RHEL-33386]: https://issues.redhat.com/browse/RHEL-33386
 [RHEL-44432]: https://issues.redhat.com/browse/RHEL-44432
 [RHEL-49520]: https://issues.redhat.com/browse/RHEL-49520
+[RHEL-49521]: https://issues.redhat.com/browse/RHEL-49521
 [RHEL-55723]: https://issues.redhat.com/browse/RHEL-55723
 [RHEL-61747]: https://issues.redhat.com/browse/RHEL-61747
 [RHEL-61889]: https://issues.redhat.com/browse/RHEL-61889
