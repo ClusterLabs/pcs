@@ -1641,6 +1641,11 @@ no_proxy, https_proxy, all_proxy, NO_PROXY, HTTPS_PROXY, ALL_PROXY
  These environment variables (listed according to their priorities) control how pcs handles proxy servers when connecting to cluster nodes. See curl(1) man page for details.
 .SH CHANGES IN PCS-0.12
 This section summarizes the most important changes in commands done in pcs-0.12.x compared to pcs-0.11.x. For detailed description of current commands see above.
+.SS "Pacemaker 3 changes"
+.TP
+Following pacemaker 3, pcs has dropped support for:
+.br
+nagios and upstart resource classes
 .SS "Legacy role names"
 .TP
 Legacy role names and derived options and keywords are no longer accepted, use 'Promoted', 'Unpromoted', \fB\-\-promoted\fR, 'promotable', 'promoted-max'.
