@@ -107,14 +107,15 @@ class _Exporter:
                     )
                 ),
                 "boolean-op": boolean.operator.lower(),
-                # Score or score-attribute is required for nested rules,
-                # otherwise the CIB is not valid. Pacemaker doesn't use the
-                # score of nested rules. Score for the top rule, which is used
-                # by pacemaker, is supposed to be set by the caller of the
-                # export function.
-                "score": "0",
             },
         )
+        if self.cib_schema_version < Version(3, 9, 0):
+            # Score or score-attribute is required for nested rules,
+            # otherwise the CIB is not valid. Pacemaker doesn't use the
+            # score of nested rules. Score for the top rule, which is used
+            # by pacemaker, is supposed to be set by the caller of the
+            # export function.
+            element.attrib["score"] = "0"
         for child in boolean.children:
             self._export_part(element, child)
         return element

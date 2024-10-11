@@ -613,13 +613,13 @@ class NvsetAppendNew(TestCase):
             etree_to_str(context_element),
         )
 
-    def test_rule(self):
+    def assert_rule(self, cib_version, score_present):
         context_element = etree.fromstring("""<context id="a" />""")
         id_provider = IdProvider(context_element)
         nvpair_multi.nvset_append_new(
             context_element,
             id_provider,
-            Version(3, 5, 0),
+            cib_version,
             nvpair_multi.NVSET_META,
             {},
             {},
@@ -646,11 +646,12 @@ class NvsetAppendNew(TestCase):
             ),
         )
         assert_xml_equal(
-            """
+            f"""
                 <context id="a">
                     <meta_attributes id="a-meta_attributes">
                         <rule id="a-meta_attributes-rule"
-                            boolean-op="and" score="INFINITY"
+                            boolean-op="and"
+                            {'score="INFINITY"' if score_present else ''}
                         >
                             <rsc_expression
                                 id="a-meta_attributes-rule-rsc-ocf-pacemaker-Dummy"
@@ -660,7 +661,8 @@ class NvsetAppendNew(TestCase):
                                 name="start"
                             />
                             <rule id="a-meta_attributes-rule-rule"
-                                boolean-op="or" score="0"
+                                boolean-op="or"
+                                {'score="0"' if score_present else ''}
                             >
                                 <expression id="a-meta_attributes-rule-rule-expr"
                                     operation="defined" attribute="attr1"
@@ -676,6 +678,12 @@ class NvsetAppendNew(TestCase):
             """,
             etree_to_str(context_element),
         )
+
+    def test_rule_cib_3_5(self):
+        self.assert_rule(Version(3, 5, 0), score_present=True)
+
+    def test_rule_cib_3_9(self):
+        self.assert_rule(Version(3, 9, 0), score_present=False)
 
     def test_custom_id(self):
         context_element = etree.fromstring("""<context id="a" />""")

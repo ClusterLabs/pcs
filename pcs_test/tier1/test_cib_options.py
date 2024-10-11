@@ -22,6 +22,7 @@ from pcs_test.tools.cib import get_assert_pcs_effect_mixin
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import (
     get_tmp_file,
+    is_minimum_cib_schema_version,
     skip_unless_crm_rule,
     skip_unless_pacemaker_supports_rsc_and_op_rules,
     write_data_to_tmpfile,
@@ -703,6 +704,7 @@ class RscDefaultsSetCreate(
 
     @skip_unless_pacemaker_supports_rsc_and_op_rules()
     def test_success_rules_rsc_op(self):
+        score_present = not is_minimum_cib_schema_version(3, 9, 0)
         self.assert_effect(
             (
                 self.cli_command
@@ -712,7 +714,9 @@ class RscDefaultsSetCreate(
             f"""\
             <{self.cib_tag}>
                 <meta_attributes id="X">
-                    <rule id="X-rule" boolean-op="and" score="INFINITY">
+                    <rule id="X-rule" boolean-op="and"
+                        {'score="INFINITY"' if score_present else ''}
+                    >
                         <rsc_expression id="X-rule-rsc-Dummy" type="Dummy"/>
                     </rule>
                     <nvpair id="X-nam1" name="nam1" value="val1"/>
@@ -770,6 +774,7 @@ class OpDefaultsSetCreate(
 
     @skip_unless_pacemaker_supports_rsc_and_op_rules()
     def test_success_rules_rsc_op(self):
+        score_present = not is_minimum_cib_schema_version(3, 9, 0)
         self.assert_effect(
             self.cli_command
             + "-- set create id=X meta nam1=val1 rule".split()
@@ -781,9 +786,13 @@ class OpDefaultsSetCreate(
             f"""\
             <{self.cib_tag}>
                 <meta_attributes id="X">
-                    <rule id="X-rule" boolean-op="and" score="INFINITY">
+                    <rule id="X-rule" boolean-op="and"
+                        {'score="INFINITY"' if score_present else ''}
+                    >
                         <rsc_expression id="X-rule-rsc-Dummy" type="Dummy"/>
-                        <rule id="X-rule-rule" boolean-op="or" score="0">
+                        <rule id="X-rule-rule" boolean-op="or"
+                            {'score="0"' if score_present else ''}
+                        >
                             <op_expression id="X-rule-rule-op-start"
                                 name="start"
                             />
@@ -791,7 +800,9 @@ class OpDefaultsSetCreate(
                                 name="stop"
                             />
                         </rule>
-                        <rule id="X-rule-rule-1" boolean-op="or" score="0">
+                        <rule id="X-rule-rule-1" boolean-op="or"
+                            {'score="0"' if score_present else ''}
+                        >
                             <expression id="X-rule-rule-1-expr"
                                 operation="defined" attribute="attr1"
                             />

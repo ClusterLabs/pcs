@@ -252,9 +252,10 @@ def nvset_append_new(
         rule_el = rule_to_cib(
             nvset_el, id_provider, cib_schema_version, nvset_rule
         )
-        # It is required to set a score to make the CIB valid. In later pcmk
-        # versions, the score may be changed not to be required.
-        rule_el.attrib["score"] = INFINITY
+        if cib_schema_version < Version(3, 9, 0):
+            # It is required to set a score to make the CIB valid. In later pcmk
+            # versions, the score is optional required or even not allowed.
+            rule_el.attrib["score"] = INFINITY
     for name, value in nvpair_dict.items():
         _set_nvpair(nvset_el, id_provider, name, value)
     return nvset_el
