@@ -15,6 +15,7 @@ from pcs.common.file import RawFileError
 from pcs.lib.booth import constants
 from pcs.lib.commands import booth as commands
 
+from pcs_test.tier0.lib.commands.test_cib import StopResourcesWaitMixin
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.misc import get_test_resource as rc
@@ -70,14 +71,41 @@ class FixtureMixin:
         """
 
     def fixture_cib_booth_group(
-        self, name="booth", default_operations=False, wrap_in_resources=True
+        self,
+        name="booth",
+        default_operations=False,
+        wrap_in_resources=True,
+        disabled_resources=False,
     ):
+        disabled_template = """
+            <meta_attributes id="{name}-meta_attributes">
+                <nvpair
+                    id="{name}-meta_attributes-target-role"
+                    name="target-role"
+                    value="Stopped"
+                />
+            </meta_attributes>
+        """
         return (
             ("<resources>" if wrap_in_resources else "")
             + f"""<group id="booth-{name}-group">
+            """
+            + (
+                disabled_template.format(name=f"booth-{name}-group")
+                if disabled_resources
+                else ""
+            )
+            + f"""
                 <primitive class="ocf" provider="heartbeat" type="IPaddr2"
                     id="booth-{name}-ip"
                 >
+            """
+            + (
+                disabled_template.format(name=f"booth-{name}-ip")
+                if disabled_resources
+                else ""
+            )
+            + f"""
                     <instance_attributes
                         id="booth-{name}-ip-instance_attributes"
                     >
@@ -112,6 +140,13 @@ class FixtureMixin:
                 <primitive class="ocf" provider="pacemaker" type="booth-site"
                     id="booth-{name}-service"
                 >
+            """
+            + (
+                disabled_template.format(name=f"booth-{name}-service")
+                if disabled_resources
+                else ""
+            )
+            + f"""
                     <instance_attributes
                         id="booth-{name}-service-instance_attributes"
                     >
@@ -174,6 +209,18 @@ class FixtureMixin:
             if extra_lines:
                 config += "\n".join(extra_lines) + "\n"
         return config.encode("utf-8")
+
+    def fixture_group_status(self, name="booth", running=True):
+        # pylint: disable=no-self-use
+        role = "Started" if running else "Stopped"
+        return f"""
+            <resources>
+                <group id="booth-{name}-group" number_resources="2" maintenance="false" managed="true" disabled="false">
+                    <resource id="booth-{name}-ip" managed="true" role="{role}"/>
+                    <resource id="booth-{name}-service" managed="true" role="{role}"/>
+                </group>
+            </resources>
+        """
 
 
 @mock.patch(
@@ -2091,13 +2138,10 @@ class CreateInCluster(TestCase, FixtureMixin):
         )
 
 
-@mock.patch(
-    "pcs.lib.commands.booth._stop_resources_wait",
-    lambda env, cib, elements: cib,
-)
-class RemoveFromCluster(TestCase, FixtureMixin):
+class RemoveFromCluster(TestCase, FixtureMixin, StopResourcesWaitMixin):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
+        self.fixture_init_tmp_file_mocker()
 
     def test_invalid_instance(self):
         instance_name = "/tmp/booth/booth"
@@ -2111,7 +2155,21 @@ class RemoveFromCluster(TestCase, FixtureMixin):
 
     def test_success_default_instance(self):
         self.config.runner.cib.load(resources=self.fixture_cib_booth_group())
-        self.config.env.push_cib(resources="<resources/>")
+        self.fixture_stop_resources_wait_calls(
+            self.config.calls.get("runner.cib.load").stdout,
+            initial_state_modifiers={
+                "resources": self.fixture_group_status(running=True)
+            },
+            after_disable_cib_modifiers={
+                "resources": self.fixture_cib_booth_group(
+                    disabled_resources=True
+                )
+            },
+            after_disable_state_modifiers={
+                "resources": self.fixture_group_status(running=False)
+            },
+        )
+        self.fixture_push_cib_after_stopping(resources="<resources/>")
 
         commands.remove_from_cluster(self.env_assist.get_env())
         self.env_assist.assert_reports(
@@ -2124,6 +2182,15 @@ class RemoveFromCluster(TestCase, FixtureMixin):
                     reports.codes.CIB_REMOVE_DEPENDANT_ELEMENTS,
                     id_tag_map={"booth-booth-group": "group"},
                 ),
+                fixture.info(
+                    reports.codes.STOPPING_RESOURCES_BEFORE_DELETING,
+                    resource_id_list=[
+                        "booth-booth-group",
+                        "booth-booth-ip",
+                        "booth-booth-service",
+                    ],
+                ),
+                fixture.info(reports.codes.WAIT_FOR_IDLE_STARTED, timeout=0),
             ]
         )
 
@@ -2132,7 +2199,26 @@ class RemoveFromCluster(TestCase, FixtureMixin):
         self.config.runner.cib.load(
             resources=self.fixture_cib_booth_group(instance_name)
         )
-        self.config.env.push_cib(resources="<resources/>")
+        self.fixture_stop_resources_wait_calls(
+            self.config.calls.get("runner.cib.load").stdout,
+            initial_state_modifiers={
+                "resources": self.fixture_group_status(
+                    instance_name, running=True
+                )
+            },
+            after_disable_cib_modifiers={
+                "resources": self.fixture_cib_booth_group(
+                    instance_name, disabled_resources=True
+                )
+            },
+            after_disable_state_modifiers={
+                "resources": self.fixture_group_status(
+                    instance_name, running=False
+                )
+            },
+        )
+        self.fixture_push_cib_after_stopping(resources="<resources/>")
+
         commands.remove_from_cluster(
             self.env_assist.get_env(),
             instance_name=instance_name,
@@ -2147,6 +2233,15 @@ class RemoveFromCluster(TestCase, FixtureMixin):
                     reports.codes.CIB_REMOVE_DEPENDANT_ELEMENTS,
                     id_tag_map={"booth-my_booth-group": "group"},
                 ),
+                fixture.info(
+                    reports.codes.STOPPING_RESOURCES_BEFORE_DELETING,
+                    resource_id_list=[
+                        "booth-my_booth-group",
+                        "booth-my_booth-ip",
+                        "booth-my_booth-service",
+                    ],
+                ),
+                fixture.info(reports.codes.WAIT_FOR_IDLE_STARTED, timeout=0),
             ]
         )
 
