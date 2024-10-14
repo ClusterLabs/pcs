@@ -95,8 +95,11 @@ class TmpFileMock:
             )
 
     def set_calls(self, calls):
-        self._calls = calls
+        self._calls = list(calls)
         self._calls_iter = iter(self._calls)
+
+    def extend_calls(self, calls):
+        self._calls.extend(calls)
 
     def get_mock_side_effect(self):
         return self._mock_side_effect

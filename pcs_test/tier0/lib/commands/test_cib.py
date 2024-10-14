@@ -1,3 +1,4 @@
+from typing import Optional
 from unittest import (
     TestCase,
     mock,
@@ -65,6 +66,97 @@ def fixture_guest_resource(resource_id: str) -> str:
             </meta_attributes>
         </primitive>
     """
+
+
+class StopResourcesWaitMixin:
+    def fixture_init_tmp_file_mocker(self):
+        self.tmp_file_mock_obj = TmpFileMock(
+            file_content_checker=assert_xml_equal,
+        )
+        self.addCleanup(self.tmp_file_mock_obj.assert_all_done)
+        tmp_file_patcher = mock.patch("pcs.lib.tools.get_tmp_file")
+        self.addCleanup(tmp_file_patcher.stop)
+        tmp_file_mock = tmp_file_patcher.start()
+        tmp_file_mock.side_effect = (
+            self.tmp_file_mock_obj.get_mock_side_effect()
+        )
+
+    def fixture_stop_resources_wait_calls(
+        self,
+        initial_cib: str,
+        initial_state_modifiers: Optional[dict[str, str]] = None,
+        after_disable_cib_modifiers: Optional[dict[str, str]] = None,
+        after_disable_state_modifiers: Optional[dict[str, str]] = None,
+        successful_stop: bool = True,
+    ):
+        self.config.runner.pcmk.load_state(
+            name="stop_wait.load_state.before",
+            **(initial_state_modifiers or {}),
+        )
+
+        self.__disabled_cib = modify_cib(
+            initial_cib, **(after_disable_cib_modifiers or {})
+        )
+        self.tmp_file_mock_obj.set_calls(
+            [
+                TmpFileCall(
+                    "stop_wait.cib.disable.before", orig_content=initial_cib
+                ),
+                TmpFileCall(
+                    "stop_wait.cib.disable.after",
+                    orig_content=self.__disabled_cib,
+                ),
+            ]
+        )
+        self.config.runner.cib.diff(
+            "stop_wait.cib.disable.before",
+            "stop_wait.cib.disable.after",
+            name="stop_wait.cib.diff.disable",
+            stdout="stop_wait.cib.diff.disable",
+        )
+        self.config.runner.cib.push_diff(
+            name="stop_wait.cib.push.disable",
+            cib_diff="stop_wait.cib.diff.disable",
+        )
+
+        self.config.runner.pcmk.wait(timeout=0)
+        self.config.runner.pcmk.load_state(
+            name="stop_wait.state.after",
+            **(after_disable_state_modifiers or {}),
+        )
+
+        if successful_stop:
+            self.config.runner.cib.load_content(
+                self.__disabled_cib, name="stop_wait.cib.load.after"
+            )
+
+    def fixture_push_cib_after_stopping(self, **modifiers):
+        self.tmp_file_mock_obj.extend_calls(
+            [
+                TmpFileCall(
+                    "stop_wait.cib.delete.before",
+                    orig_content=self.__disabled_cib,
+                ),
+                TmpFileCall(
+                    "stop_wait.cib.delete.after",
+                    orig_content=modify_cib(
+                        read_test_resource("cib-empty.xml"), **modifiers
+                    ),
+                ),
+            ]
+        )
+
+        self.config.runner.cib.diff(
+            "stop_wait.cib.delete.before",
+            "stop_wait.cib.delete.after",
+            name="stop_wait.cib.diff.delete",
+            stdout="stop_wait.cib.diff.delete",
+        )
+
+        self.config.runner.cib.push_diff(
+            name="stop_wait.cib.push.delete",
+            cib_diff="stop_wait.cib.diff.delete",
+        )
 
 
 class RemoveElements(TestCase):
@@ -466,108 +558,21 @@ class RemoveElements(TestCase):
         )
 
 
-class RemoveElementsStopResources(TestCase):
+class RemoveElementsStopResources(TestCase, StopResourcesWaitMixin):
     def setUp(self):
-        self.tmp_file_mock_obj = TmpFileMock(
-            file_content_checker=assert_xml_equal,
-        )
-        self.addCleanup(self.tmp_file_mock_obj.assert_all_done)
-        tmp_file_patcher = mock.patch("pcs.lib.tools.get_tmp_file")
-        self.addCleanup(tmp_file_patcher.stop)
-        tmp_file_mock = tmp_file_patcher.start()
-        tmp_file_mock.side_effect = (
-            self.tmp_file_mock_obj.get_mock_side_effect()
-        )
         self.env_assist, self.config = get_env_tools(self)
-
-    def fixture_env(
-        self,
-        initial_cib_modifiers: dict[str, str],
-        initial_state_modifiers: dict[str, str],
-        after_disable_cib_modifiers: dict[str, str],
-        after_disable_state_modifiers: dict[str, str],
-        after_delete_cib_modifiers: dict[str, str],
-        successful_stop=True,
-    ):
-
-        self.config.runner.cib.load(
-            name="load.disable", **initial_cib_modifiers
-        )
-        self.config.runner.pcmk.load_state(
-            name="state.disable", **initial_state_modifiers
-        )
-        self.config.runner.cib.diff(
-            "cib.disable.before",
-            "cib.disable.after",
-            name="diff.disable",
-            stdout="diff_disable",
-        )
-        self.config.runner.cib.push_diff(
-            name="push.disable", cib_diff="diff_disable"
-        )
-
-        original_cib = self.config.calls.get("load.disable").stdout
-        after_disable_cib = modify_cib(
-            original_cib, **after_disable_cib_modifiers
-        )
-
-        self.config.runner.pcmk.wait(timeout=0)
-        self.config.runner.pcmk.load_state(
-            name="state.delete", **after_disable_state_modifiers
-        )
-
-        mock_files = [
-            TmpFileCall(
-                "cib.disable.before",
-                orig_content=self.config.calls.get("load.disable").stdout,
-            ),
-            TmpFileCall(
-                "cib.disable.after",
-                orig_content=after_disable_cib,
-            ),
-        ]
-
-        if successful_stop:
-            self.config.runner.cib.load(
-                name="load.delete", **after_disable_cib_modifiers
-            )
-            self.config.runner.cib.diff(
-                "cib.delete.before",
-                "cib.delete.after",
-                name="diff.delete",
-                stdout="diff_delete",
-            )
-
-            self.config.runner.cib.push_diff(
-                name="push.delete", cib_diff="diff_delete"
-            )
-
-            mock_files.extend(
-                [
-                    TmpFileCall(
-                        "cib.delete.before", orig_content=after_disable_cib
-                    ),
-                    TmpFileCall(
-                        "cib.delete.after",
-                        orig_content=modify_cib(
-                            read_test_resource("cib-empty.xml"),
-                            **after_delete_cib_modifiers,
-                        ),
-                    ),
-                ]
-            )
-
-        self.tmp_file_mock_obj.set_calls(mock_files)
+        self.fixture_init_tmp_file_mocker()
 
     def test_one_resource(self):
-        self.fixture_env(
-            initial_cib_modifiers={
-                "resources": """
-                    <resources>
-                        <primitive id="A"/>
-                    </resources>
-                """
-            },
+        self.config.runner.cib.load(
+            resources="""
+                <resources>
+                    <primitive id="A"/>
+                </resources>
+            """
+        )
+        self.fixture_stop_resources_wait_calls(
+            self.config.calls.get("runner.cib.load").stdout,
             initial_state_modifiers={
                 "resources": """
                     <resources>
@@ -593,8 +598,8 @@ class RemoveElementsStopResources(TestCase):
                     </resources>
                 """
             },
-            after_delete_cib_modifiers={"resources": "<resources/>"},
         )
+        self.fixture_push_cib_after_stopping(resources="<resources/>")
 
         lib.remove_elements(self.env_assist.get_env(), ["A"])
         self.env_assist.assert_reports(
@@ -608,14 +613,15 @@ class RemoveElementsStopResources(TestCase):
         )
 
     def test_resource_unmanaged(self):
-        self.fixture_env(
-            initial_cib_modifiers={
-                "resources": """
-                    <resources>
-                        <primitive id="A"/>
-                    </resources>
-                """
-            },
+        self.config.runner.cib.load(
+            resources="""
+                <resources>
+                    <primitive id="A"/>
+                </resources>
+            """
+        )
+        self.fixture_stop_resources_wait_calls(
+            self.config.calls.get("runner.cib.load").stdout,
             initial_state_modifiers={
                 "resources": """
                     <resources>
@@ -641,8 +647,8 @@ class RemoveElementsStopResources(TestCase):
                     </resources>
                 """
             },
-            after_delete_cib_modifiers={"resources": "<resources/>"},
         )
+        self.fixture_push_cib_after_stopping(resources="<resources/>")
 
         lib.remove_elements(self.env_assist.get_env(), ["A"])
         self.env_assist.assert_reports(
@@ -659,14 +665,15 @@ class RemoveElementsStopResources(TestCase):
         )
 
     def test_resource_remove_failed_to_stop(self):
-        self.fixture_env(
-            initial_cib_modifiers={
-                "resources": """
-                    <resources>
-                        <primitive id="A"/>
-                    </resources>
-                """
-            },
+        self.config.runner.cib.load(
+            resources="""
+                <resources>
+                    <primitive id="A"/>
+                </resources>
+            """
+        )
+        self.fixture_stop_resources_wait_calls(
+            self.config.calls.get("runner.cib.load").stdout,
             initial_state_modifiers={
                 "resources": """
                     <resources>
@@ -692,7 +699,6 @@ class RemoveElementsStopResources(TestCase):
                     </resources>
                 """
             },
-            after_delete_cib_modifiers={},
             successful_stop=False,
         )
 
@@ -727,17 +733,17 @@ class RemoveElementsStopResources(TestCase):
                 </tag>
             </tags>
         """
-
-        self.fixture_env(
-            initial_cib_modifiers={
-                "resources": """
-                    <resources>
-                        <primitive id="A"/>
-                    </resources>
-                """,
-                "constraints": constraints,
-                "tags": tags,
-            },
+        self.config.runner.cib.load(
+            resources="""
+                <resources>
+                    <primitive id="A"/>
+                </resources>
+            """,
+            constraints=constraints,
+            tags=tags,
+        )
+        self.fixture_stop_resources_wait_calls(
+            self.config.calls.get("runner.cib.load").stdout,
             initial_state_modifiers={
                 "resources": """
                     <resources>
@@ -765,11 +771,11 @@ class RemoveElementsStopResources(TestCase):
                     </resources>
                 """
             },
-            after_delete_cib_modifiers={
-                "resources": "<resources/>",
-                "constraints": "<constraints/>",
-                "tags": "<tags/>",
-            },
+        )
+        self.fixture_push_cib_after_stopping(
+            resources="<resources/>",
+            constraints="<constraints/>",
+            tags="<tags/>",
         )
 
         lib.remove_elements(self.env_assist.get_env(), ["A"])
@@ -788,19 +794,20 @@ class RemoveElementsStopResources(TestCase):
         )
 
     def test_stop_inner_elements(self):
-        self.fixture_env(
-            initial_cib_modifiers={
-                "resources": """
-                    <resources>
-                        <clone id="C">
-                            <group id="G">
-                                <primitive id="A"/>
-                                <primitive id="B"/>
-                            </group>
-                        </clone>
-                    </resources>
-                """
-            },
+        self.config.runner.cib.load(
+            resources="""
+                <resources>
+                    <clone id="C">
+                        <group id="G">
+                            <primitive id="A"/>
+                            <primitive id="B"/>
+                        </group>
+                    </clone>
+                </resources>
+            """
+        )
+        self.fixture_stop_resources_wait_calls(
+            self.config.calls.get("runner.cib.load").stdout,
             initial_state_modifiers={
                 "resources": """
                     <resources>
@@ -859,8 +866,8 @@ class RemoveElementsStopResources(TestCase):
                     </resources>
                 """
             },
-            after_delete_cib_modifiers={"resources": "<resources/>"},
         )
+        self.fixture_push_cib_after_stopping(resources="<resources/>")
 
         lib.remove_elements(self.env_assist.get_env(), ["C"])
         self.env_assist.assert_reports(
@@ -882,19 +889,20 @@ class RemoveElementsStopResources(TestCase):
         )
 
     def test_disable_only_needed_resources(self):
-        self.fixture_env(
-            initial_cib_modifiers={
-                "resources": """
-                    <resources>
-                        <clone id="C">
-                            <group id="G">
-                                <primitive id="A"/>
-                                <primitive id="B"/>
-                            </group>
-                        </clone>
-                    </resources>
-                """
-            },
+        self.config.runner.cib.load(
+            resources="""
+                <resources>
+                    <clone id="C">
+                        <group id="G">
+                            <primitive id="A"/>
+                            <primitive id="B"/>
+                        </group>
+                    </clone>
+                </resources>
+            """
+        )
+        self.fixture_stop_resources_wait_calls(
+            self.config.calls.get("runner.cib.load").stdout,
             initial_state_modifiers={
                 "resources": """
                     <resources>
@@ -943,17 +951,17 @@ class RemoveElementsStopResources(TestCase):
                     </resources>
                 """
             },
-            after_delete_cib_modifiers={
-                "resources": """
-                    <resources>
-                        <clone id="C">
-                            <group id="G">
-                                <primitive id="B"/>
-                            </group>
-                        </clone>
-                    </resources>
-                """
-            },
+        )
+        self.fixture_push_cib_after_stopping(
+            resources="""
+                <resources>
+                    <clone id="C">
+                        <group id="G">
+                            <primitive id="B"/>
+                        </group>
+                    </clone>
+                </resources>
+            """
         )
 
         lib.remove_elements(self.env_assist.get_env(), ["A"])
