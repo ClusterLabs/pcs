@@ -315,7 +315,10 @@ class RemoveElements(TestCase):
                         "C-G-2": "primitive",
                         "B-1": "primitive",
                     },
-                )
+                ),
+                fixture.warn(
+                    reports.codes.STOPPING_RESOURCES_BEFORE_DELETING_SKIPPED
+                ),
             ]
         )
 
@@ -357,6 +360,9 @@ class RemoveElements(TestCase):
             [
                 fixture.deprecation(
                     reports.codes.USE_COMMAND_NODE_REMOVE_GUEST
+                ),
+                fixture.warn(
+                    reports.codes.STOPPING_RESOURCES_BEFORE_DELETING_SKIPPED
                 ),
                 fixture.warn(
                     reports.codes.GUEST_NODE_REMOVAL_INCOMPLETE,
@@ -424,6 +430,9 @@ class RemoveElements(TestCase):
             [
                 fixture.deprecation(
                     reports.codes.USE_COMMAND_NODE_REMOVE_REMOTE
+                ),
+                fixture.warn(
+                    reports.codes.STOPPING_RESOURCES_BEFORE_DELETING_SKIPPED
                 ),
                 fixture.warn(
                     reports.codes.REMOTE_NODE_REMOVAL_INCOMPLETE, node_name="R1"
@@ -553,6 +562,9 @@ class RemoveElements(TestCase):
                         "A": {"T", "SET"},
                         "PERMISSION": {"ROLE"},
                     },
+                ),
+                fixture.warn(
+                    reports.codes.STOPPING_RESOURCES_BEFORE_DELETING_SKIPPED
                 ),
             ]
         )

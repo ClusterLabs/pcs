@@ -580,10 +580,9 @@ def remove_from_cluster(
         elements_to_remove.element_references.to_reports()
     )
 
-    if env.is_cib_live and reports.codes.FORCE not in force_flags:
-        cib = _stop_resources_wait(
-            env, cib, elements_to_remove.resources_to_disable
-        )
+    cib = _stop_resources_wait(
+        env, cib, elements_to_remove.resources_to_disable, force_flags
+    )
 
     remove_specified_elements(cib, elements_to_remove)
     env.push_cib()

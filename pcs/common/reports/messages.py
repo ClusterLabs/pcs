@@ -6401,6 +6401,22 @@ class StoppingResourcesBeforeDeleting(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class StoppingResourcesBeforeDeletingSkipped(ReportItemMessage):
+    """
+    Resources are not going to be stopped before deletion.
+    """
+
+    _code = codes.STOPPING_RESOURCES_BEFORE_DELETING_SKIPPED
+
+    @property
+    def message(self) -> str:
+        return (
+            "Resources are not going to be stopped before deletion, this may "
+            "result in orphaned resources being present in the cluster"
+        )
+
+
+@dataclass(frozen=True)
 class CannotStopResourcesBeforeDeleting(ReportItemMessage):
     """
     Cannot stop resources that are being removed

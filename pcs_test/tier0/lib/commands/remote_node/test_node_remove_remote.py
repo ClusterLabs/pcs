@@ -331,6 +331,11 @@ class MultipleResults(TestCase):
             REPORTS["authkey_remove_success"].adapt(node=REMOTE_HOST)
         )
         my_reports.append(self.report_multiple_results.to_warn())
+        my_reports.append(
+            fixture.warn(
+                reports.codes.STOPPING_RESOURCES_BEFORE_DELETING_SKIPPED
+            )
+        )
         self.env_assist.assert_reports(my_reports)
 
 
@@ -430,6 +435,11 @@ class AuthkeyRemove(TestCase, StopResourcesWaitMixin):
             "authkey_remove_success",
             report_authkey_remove_failed(NODE_NAME).to_warn(),
         )
+        my_reports.append(
+            fixture.warn(
+                reports.codes.STOPPING_RESOURCES_BEFORE_DELETING_SKIPPED
+            )
+        )
         self.env_assist.assert_reports(my_reports)
 
 
@@ -515,5 +525,10 @@ class PcmkRemoteServiceDestroy(TestCase, StopResourcesWaitMixin):
         my_reports.replace(
             "pcmk_remote_stop_success",
             report_pcmk_remote_stop_failed(NODE_NAME).to_warn(),
+        )
+        my_reports.append(
+            fixture.warn(
+                reports.codes.STOPPING_RESOURCES_BEFORE_DELETING_SKIPPED
+            )
         )
         self.env_assist.assert_reports(my_reports)
