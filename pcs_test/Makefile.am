@@ -104,6 +104,7 @@ EXTRA_DIST		= \
 			  tier0/cli/resource/test_defaults.py \
 			  tier0/cli/resource/test_parse_args.py \
 			  tier0/cli/resource/test_relations.py \
+			  tier0/cli/resource/test_remove.py \
 			  tier0/cli/tag/__init__.py \
 			  tier0/cli/tag/test_command.py \
 			  tier0/cli/test_booth.py \
@@ -120,6 +121,8 @@ EXTRA_DIST		= \
 			  tier0/common/interface/test_dto.py \
 			  tier0/common/pacemaker/constraint/__init__.py \
 			  tier0/common/pacemaker/constraint/all.py \
+			  tier0/common/pacemaker/resource/__init__.py \
+			  tier0/common/pacemaker/resource/list.py \
 			  tier0/common/reports/__init__.py \
 			  tier0/common/reports/test_item.py \
 			  tier0/common/reports/test_messages.py \
@@ -202,6 +205,7 @@ EXTRA_DIST		= \
 			  tier0/lib/cib/test_node.py \
 			  tier0/lib/cib/test_nvpair_multi.py \
 			  tier0/lib/cib/test_nvpair.py \
+			  tier0/lib/cib/test_remove_elements.py \
 			  tier0/lib/cib/test_resource_bundle.py \
 			  tier0/lib/cib/test_resource_clone.py \
 			  tier0/lib/cib/test_resource_common.py \
@@ -398,8 +402,10 @@ EXTRA_DIST		= \
 			  tier1/legacy/test_utils.py \
 			  tier1/resource/__init__.py \
 			  tier1/resource/test_config.py \
+			  tier1/resource/test_remove.py \
 			  tier1/stonith/__init__.py \
 			  tier1/stonith/test_config.py \
+			  tier1/stonith/test_remove.py \
 			  tier1/test_booth.py \
 			  tier1/test_cib_options.py \
 			  tier1/test_cluster_pcmk_remote.py \

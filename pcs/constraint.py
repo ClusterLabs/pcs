@@ -1304,30 +1304,6 @@ def remove_constraints_containing(
     return None
 
 
-def remove_constraints_containing_node(dom, node, output=False):
-    """
-    Commandline options: no options
-    """
-    for constraint in find_constraints_containing_node(dom, node):
-        if output:
-            print_to_stderr(
-                "Removing Constraint - {}".format(constraint.getAttribute("id"))
-            )
-        constraint.parentNode.removeChild(constraint)
-    return dom
-
-
-def find_constraints_containing_node(dom, node):
-    """
-    Commandline options: no options
-    """
-    return [
-        constraint
-        for constraint in dom.getElementsByTagName("rsc_location")
-        if constraint.getAttribute("node") == node
-    ]
-
-
 # Re-assign any constraints referencing a resource to its parent (a clone
 # or master)
 def constraint_resource_update(old_id, dom):

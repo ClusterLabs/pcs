@@ -904,6 +904,13 @@
         API v2: cib.remove_elements
       </description>
     </capability>
+    <capability id="pcmk.cib.remove_elements.resources" in-pcs="0" in-pcsd="1">
+      <description>
+        Remove resources by ids.
+
+        API v2: cib.remove_elements
+      </description>
+    </capability>
     <capability id="pcmk.cib.remove_elements.rest-api.v2" in-pcs="0" in-pcsd="1">
       <description>
         Remove cib elements by ids.
@@ -1487,13 +1494,16 @@
 
         pcs commands: resource ( delete | remove )
         daemon urls: remove_resource
+        API v2: cib.remove_elements
       </description>
     </capability>
-    <capability id="pcmk.resource.delete.list" in-pcs="0" in-pcsd="1">
+    <capability id="pcmk.resource.delete.list" in-pcs="1" in-pcsd="1">
       <description>
         Delete several resources at once.
 
+        pcs commands: resource ( delete | remove )
         daemon urls: remove_resource
+        API v2: cib.remove_elements
       </description>
     </capability>
 
@@ -2130,13 +2140,16 @@
         pcs commands: stonith ( delete | remove )
         daemon urls: currently missing, remove_resource is used instead which
           works for now
+        API v2: cib.remove_elements
       </description>
     </capability>
-    <capability id="pcmk.stonith.delete.list" in-pcs="0" in-pcsd="1">
+    <capability id="pcmk.stonith.delete.list" in-pcs="1" in-pcsd="1">
       <description>
         Delete several stonith resources at once.
 
+        pcs commands: stonith ( delete | remove )
         daemon urls: remove_resource
+        API v2: cib.remove_elements
       </description>
     </capability>
     <capability id="pcmk.stonith.update" in-pcs="1" in-pcsd="1">

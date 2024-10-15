@@ -10,6 +10,7 @@ from pcs.cli.common.parse_args import (
     KeyValueParser,
     group_by_keywords,
 )
+from pcs.common.reports import codes as report_codes
 
 
 def config_setup(lib: Any, arg_list: Argv, modifiers: InputModifiers) -> None:
@@ -211,29 +212,26 @@ def create_in_cluster(
     )
 
 
-def get_remove_from_cluster(resource_remove):  # type:ignore
-    # TODO resource_remove is provisional hack until resources are not moved to
-    # lib
-    def remove_from_cluster(
-        lib: Any, arg_list: Argv, modifiers: InputModifiers
-    ) -> None:
-        """
-        Options:
-          * --force - allow remove of multiple
-          * -f - CIB file
-          * --name - name of a booth instance
-        """
-        modifiers.ensure_only_supported("--force", "-f", "--name")
-        if arg_list:
-            raise CmdLineInputError()
+def remove_from_cluster(
+    lib: Any, arg_list: Argv, modifiers: InputModifiers
+) -> None:
+    """
+    Options:
+      * --force - allow remove of multiple
+      * -f - CIB file
+      * --name - name of a booth instance
+    """
+    modifiers.ensure_only_supported("--force", "-f", "--name")
+    if arg_list:
+        raise CmdLineInputError()
 
-        lib.booth.remove_from_cluster(
-            resource_remove,
-            instance_name=modifiers.get("--name"),
-            allow_remove_multiple=modifiers.get("--force"),
-        )
+    force_flags = []
+    if modifiers.get("--force"):
+        force_flags.append(report_codes.FORCE)
 
-    return remove_from_cluster
+    lib.booth.remove_from_cluster(
+        instance_name=modifiers.get("--name"), force_flags=force_flags
+    )
 
 
 def restart(lib: Any, arg_list: Argv, modifiers: InputModifiers) -> None:

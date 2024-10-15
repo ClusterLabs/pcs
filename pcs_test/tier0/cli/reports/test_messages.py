@@ -333,6 +333,17 @@ class UseCommandNodeRemoveGuest(CliReportMessageTestBase):
         )
 
 
+class UseCommandNodeRemoveRemote(CliReportMessageTestBase):
+    def test_success(self):
+        self.assert_message(
+            messages.UseCommandNodeRemoveRemote(),
+            (
+                "this command is not sufficient for removing a remote node, use"
+                " 'pcs cluster node remove-remote'"
+            ),
+        )
+
+
 class UseCommandNodeAddGuest(CliReportMessageTestBase):
     def test_success(self):
         self.assert_message(

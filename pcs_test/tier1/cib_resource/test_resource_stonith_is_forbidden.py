@@ -96,8 +96,8 @@ class ResourceStonithIsForbidden(
         self.assert_pcs_fail(
             "resource delete S1".split(),
             stderr_full=(
-                "Error: This command does not accept stonith resources. "
-                "Please use 'pcs stonith delete' instead.\n"
+                "Error: This command cannot remove stonith resource: 'S1'. "
+                "Use 'pcs stonith remove' instead.\n"
             ),
         )
 
@@ -105,8 +105,8 @@ class ResourceStonithIsForbidden(
         self.assert_pcs_fail(
             "resource remove S1".split(),
             stderr_full=(
-                "Error: This command does not accept stonith resources. "
-                "Please use 'pcs stonith delete' instead.\n"
+                "Error: This command cannot remove stonith resource: 'S1'. "
+                "Use 'pcs stonith remove' instead.\n"
             ),
         )
 

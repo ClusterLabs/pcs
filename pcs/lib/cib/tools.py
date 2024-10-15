@@ -559,25 +559,6 @@ def _get_configuration(element: _Element) -> _Element:
     return get_configuration(get_root(element))
 
 
-def _find_elements_without_id_referencing_id(
-    element: _Element,
-    referenced_id: str,
-) -> list[_Element]:
-    """
-    Find elements which are referencing specified id (resource or tag).
-
-    element -- any element within CIB tree
-    referenced_id -- id which references should be found
-    """
-    return cast(
-        list[_Element],
-        _get_configuration(element).xpath(
-            _ELEMENTS_WITH_IDREF_WITHOUT_ID_XPATH,
-            referenced_id=referenced_id,
-        ),
-    )
-
-
 def find_elements_referencing_id(
     element: _Element,
     referenced_id: str,
@@ -629,10 +610,49 @@ def remove_element_by_id(cib: _Element, element_id: str) -> None:
     """
     Remove element with specified id from cib element.
     """
-    for ref_el in _find_elements_without_id_referencing_id(cib, element_id):
-        remove_one_element(ref_el)
-
     try:
         remove_one_element(get_element_by_id(cib, element_id))
     except ElementNotFound:
         pass
+
+
+def multivalue_attr_contains_value(
+    element: _Element, attr_name: str, value: str
+) -> bool:
+    """
+    Return whether attribute, that can contain multiple comma separated values,
+    contains specified value
+
+    element -- any element
+    attribute_name -- name of the multivalue attribute
+    value -- value that should be present in the attribute
+    """
+    return value in str(element.attrib[attr_name]).split(",")
+
+
+def multivalue_attr_has_any_values(element: _Element, attr_name: str) -> bool:
+    """
+    Return whether attribute, that can contain multiple comma separated values,
+    contains any value
+
+    element -- any element
+    attribute_name -- name of the multivalue attribute
+    """
+    return element.attrib[attr_name] != ""
+
+
+def multivalue_attr_delete_value(
+    element: _Element, attr_name: str, value: str
+) -> None:
+    """
+    Remove value from attribute, that can contain multiple comma separated
+    values.
+
+    element -- any element
+    attribute_name -- name of the multivalue attribute
+    value -- value to remove
+    """
+    new_attribute_value = [
+        val for val in str(element.attrib[attr_name]).split(",") if val != value
+    ]
+    element.set(attr_name, ",".join(new_attribute_value))

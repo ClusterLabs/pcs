@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 from functools import partial
 from unittest import (
     TestCase,
@@ -1069,79 +1070,6 @@ def _configuration_fixture(configuration_content):
     """
 
 
-class FindElementsWithoutIdReferencingId(TestCase):
-    # pylint: disable=protected-access
-    def test_constraint_set_reference(self):
-        cib = etree.fromstring(
-            _configuration_fixture(FIXTURE_REFERENCES_IN_CONSTRAINTS)
-        )
-        self.assertEqual(
-            [
-                cib.find(
-                    "./configuration/constraints/rsc_location/resource_set/resource_ref[@id='A']"
-                ),
-                cib.find(
-                    "./configuration/constraints/rsc_colocation/resource_set/resource_ref[@id='A']"
-                ),
-            ],
-            list(lib._find_elements_without_id_referencing_id(cib, "A")),
-        )
-
-    def test_tag_reference(self):
-        cib = etree.fromstring(
-            _configuration_fixture(FIXTURE_REFERENCES_IN_TAGS)
-        )
-        self.assertEqual(
-            [
-                cib.find("./configuration/tags/tag[@id='X']/obj_ref[@id='A']"),
-                cib.find("./configuration/tags/tag[@id='Y']/obj_ref[@id='A']"),
-            ],
-            list(lib._find_elements_without_id_referencing_id(cib, "A")),
-        )
-
-    def test_acl_reference(self):
-        cib = etree.fromstring(
-            _configuration_fixture(FIXTURE_REFERENCES_IN_ACLS)
-        )
-        self.assertEqual(
-            [
-                cib.find("./configuration/acls/acl_target/role[@id='A']"),
-                cib.find("./configuration/acls/acl_group/role[@id='A']"),
-            ],
-            list(lib._find_elements_without_id_referencing_id(cib, "A")),
-        )
-
-    def test_all_references_types(self):
-        cib = etree.fromstring(
-            _configuration_fixture(FIXTURE_ALL_SECTIONS_WITH_REFERENCES)
-        )
-        self.assertEqual(
-            [
-                cib.find(
-                    "./configuration/constraints/rsc_location/resource_set/"
-                    "resource_ref[@id='A']"
-                ),
-                cib.find(
-                    "./configuration/constraints/rsc_colocation/resource_set/"
-                    "resource_ref[@id='A']"
-                ),
-                cib.find("./configuration/tags/tag[@id='X']/obj_ref[@id='A']"),
-                cib.find("./configuration/tags/tag[@id='Y']/obj_ref[@id='A']"),
-                cib.find("./configuration/acls/acl_target/role[@id='A']"),
-                cib.find("./configuration/acls/acl_group/role[@id='A']"),
-            ],
-            list(lib._find_elements_without_id_referencing_id(cib, "A")),
-        )
-
-    def test_no_reference_to_id(self):
-        cib = etree.fromstring(
-            _configuration_fixture(FIXTURE_ALL_SECTIONS_WITH_REFERENCES)
-        )
-        self.assertEqual(
-            [], list(lib._find_elements_without_id_referencing_id(cib, "N"))
-        )
-
-
 class FindElementsReferencingId(TestCase):
     def test_constraint_reference(self):
         cib = etree.fromstring(
@@ -1238,7 +1166,7 @@ class RemoveElementById(TestCase):
         lib.remove_element_by_id(cib, "id-not-found")
         assert_xml_equal(expected_cib, etree_to_str(cib))
 
-    def test_remove_element_without_references(self):
+    def test_remove_element(self):
         cib = etree.fromstring(
             """
             <cib>
@@ -1258,86 +1186,6 @@ class RemoveElementById(TestCase):
             </cib>
         """
         lib.remove_element_by_id(cib, "id-without-references")
-        assert_xml_equal(expected_cib, etree_to_str(cib))
-
-    def test_remove_element_with_references(self):
-        cib = etree.fromstring(
-            """
-            <cib>
-                <configuration>
-                    <resources>
-                        <primitive id="id-with-references"/>
-                    </resources>
-                    <constraints>
-                        <any>
-                            <resource_set>
-                                <resource_ref id="id-with-references"/>
-                            </resource_set>
-                        </any>
-                        <resource_set>
-                            <resource_ref id="id-with-references"/>
-                        </resource_set>
-                    </constraints>
-                    <acls>
-                        <role id="id-with-references"/>
-                        <acl_target>
-                            <role id="id-with-references"/>
-                        </acl_target>
-                        <acl_group>
-                            <role id="id-with-references"/>
-                        </acl_group>
-                    </acls>
-                    <tags>
-                        <tag id="T1">
-                            <obj_ref id="id-with-references"/>
-                            <obj_ref id="B"/>
-                        </tag>
-                        <tag id="T2">
-                            <obj_ref id="id-with-references"/>
-                        </tag>
-                    </tags>
-                </configuration>
-                <status>
-                    <element id="id-with-references"/>
-                </status>
-                <element id="id-with-references"/>
-            </cib>
-            """
-        )
-        expected_cib = """
-            <cib>
-                <configuration>
-                    <resources/>
-                    <constraints>
-                        <any>
-                            <resource_set/>
-                        </any>
-                        <resource_set>
-                            <resource_ref id="id-with-references"/>
-                        </resource_set>
-                    </constraints>
-                    <acls>
-                        <role id="id-with-references"/>
-                        <acl_target>
-                        </acl_target>
-                        <acl_group>
-                        </acl_group>
-                    </acls>
-                    <tags>
-                        <tag id="T1">
-                            <obj_ref id="B"/>
-                        </tag>
-                        <tag id="T2">
-                        </tag>
-                    </tags>
-                </configuration>
-                <status>
-                    <element id="id-with-references"/>
-                </status>
-                <element id="id-with-references"/>
-            </cib>
-        """
-        lib.remove_element_by_id(cib, "id-with-references")
         assert_xml_equal(expected_cib, etree_to_str(cib))
 
     def test_assert_raised_for_duplicate_ids(self):
@@ -1374,16 +1222,83 @@ class RemoveElementById(TestCase):
         lib.remove_element_by_id(cib, "duplicate-id")
         assert_xml_equal(expected_cib, etree_to_str(cib))
 
-    def test_missing_configuration_section(self):
-        expected_cib = """
-            <cib><element id="missing-configuration-section"/></cib>
-        """
-        cib = etree.fromstring(expected_cib)
-        assert_raise_library_error(
-            lambda: lib.remove_element_by_id(cib, "missing-config-section"),
-            fixture.error(
-                report_codes.CIB_CANNOT_FIND_MANDATORY_SECTION,
-                section="configuration",
-            ),
+
+class MultivalueAttrContainsValue(TestCase):
+    def test_true(self):
+        element = etree.fromstring(
+            '<element attr1="A" attr2="B,A,B" attr3="A,A"/>'
         )
-        assert_xml_equal(expected_cib, etree_to_str(cib))
+        for attr in ["attr1", "attr2", "attr3"]:
+            with self.subTest(value=attr):
+                self.assertTrue(
+                    lib.multivalue_attr_contains_value(element, attr, "A")
+                )
+
+    def test_false(self):
+        element = etree.fromstring(
+            '<element attr1="" attr2="B" attr3="B,C,D"/>'
+        )
+        for attr in ["attr1", "attr2", "attr3"]:
+            with self.subTest(value=attr):
+                self.assertFalse(
+                    lib.multivalue_attr_contains_value(element, attr, "A")
+                )
+
+    def test_no_attribute(self):
+        element = etree.fromstring('<element attr="A"/>')
+        self.assertRaises(
+            KeyError,
+            lambda: lib.multivalue_attr_contains_value(element, "attr1", "A"),
+        )
+
+
+class MultivalueAttrDeleteValue(TestCase):
+    # pylint: disable=no-self-use
+    def test_remove_one(self):
+        element = etree.fromstring('<element attr1="A" attr2="A"/>')
+        lib.multivalue_attr_delete_value(element, "attr1", "A")
+        assert_xml_equal('<element attr1="" attr2="A"/>', etree_to_str(element))
+
+    def test_remove_one_multiple_from_multiple(self):
+        element = etree.fromstring('<element attr1="A,B,C" attr2="A,B,C"/>')
+        lib.multivalue_attr_delete_value(element, "attr1", "A")
+        assert_xml_equal(
+            '<element attr1="B,C" attr2="A,B,C"/>', etree_to_str(element)
+        )
+
+    def test_remove_multiple_occurrences(self):
+        element = etree.fromstring('<element attr1="A,B,A,C" attr2="A,B,C"/>')
+        lib.multivalue_attr_delete_value(element, "attr1", "A")
+        assert_xml_equal(
+            '<element attr1="B,C" attr2="A,B,C"/>', etree_to_str(element)
+        )
+
+    def test_no_attribute(self):
+        element = etree.fromstring('<element attr="A"/>')
+        self.assertRaises(
+            KeyError,
+            lambda: lib.multivalue_attr_delete_value(element, "attr1", "A"),
+        )
+
+
+class MultivalueAttrHasAnyValues(TestCase):
+    def test_true(self):
+        element = etree.fromstring(
+            '<element attr1="A" attr2="A,B,C" attr3=""/>'
+        )
+        for attr in ["attr1", "attr2"]:
+            with self.subTest(value=attr):
+                self.assertTrue(
+                    lib.multivalue_attr_has_any_values(element, attr)
+                )
+
+    def test_false(self):
+        element = etree.fromstring('<element attr1="" attr2="A"/>')
+        self.assertFalse(lib.multivalue_attr_has_any_values(element, "attr1"))
+
+    def test_no_attribute(self):
+        element = etree.fromstring('<element attr="A"/>')
+        self.assertRaises(
+            KeyError,
+            lambda: lib.multivalue_attr_has_any_values(element, "attr1"),
+        )

@@ -1,7 +1,6 @@
 import pcs.cli.cluster.command as cluster_command
 from pcs import (
     cluster,
-    resource,
     status,
     usage,
 )
@@ -72,16 +71,10 @@ cluster_cmd = create_router(
                 "clear": cluster_command.node_clear,
                 "delete": cluster.node_remove,
                 "delete-guest": cluster_command.node_remove_guest,
-                # ignoring mypy errors, these functions need to be fixed, they
-                # are passing a function to pcs.lib
-                "delete-remote": cluster_command.create_node_remove_remote(
-                    resource.resource_remove
-                ),  # type:ignore
+                "delete-remote": cluster_command.node_remove_remote,
                 "remove": cluster.node_remove,
                 "remove-guest": cluster_command.node_remove_guest,
-                "remove-remote": cluster_command.create_node_remove_remote(
-                    resource.resource_remove
-                ),  # type:ignore
+                "remove-remote": cluster_command.node_remove_remote,
             },
             ["cluster", "node"],
         ),

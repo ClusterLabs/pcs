@@ -580,53 +580,6 @@ class Resource(TestCase, AssertPcsMixin):
             ),
         )
 
-    def _test_delete_remove_resources(self, command):
-        assert command in {"delete", "remove"}
-
-        self.assert_pcs_success(
-            "resource create --no-default-ops ClusterIP ocf:pcsmock:minimal".split()
-        )
-
-        self.assert_pcs_success(
-            f"resource {command} ClusterIP".split(),
-            stderr_full="Deleting Resource - ClusterIP\n",
-        )
-
-        self.assert_pcs_fail(
-            "resource config ClusterIP".split(),
-            "Warning: Unable to find resource 'ClusterIP'\nError: No resource found\n",
-        )
-
-        self.assert_pcs_success(
-            "resource status".split(),
-            "NO resources configured\n",
-        )
-
-        self.assert_pcs_fail(
-            f"resource {command} ClusterIP".split(),
-            "Error: Resource 'ClusterIP' does not exist.\n",
-        )
-
-    def test_delete_resources(self):
-        # Verify deleting resources works
-        # Additional tests are in class BundleDeleteTest
-        self.assert_pcs_fail(
-            "resource delete".split(),
-            stderr_start="\nUsage: pcs resource delete...",
-        )
-
-        self._test_delete_remove_resources("delete")
-
-    def test_remove_resources(self):
-        # Verify deleting resources works
-        # Additional tests are in class BundleDeleteTest
-        self.assert_pcs_fail(
-            "resource remove".split(),
-            stderr_start="\nUsage: pcs resource remove...",
-        )
-
-        self._test_delete_remove_resources("remove")
-
     def test_resource_show(self):
         self.assert_pcs_success(
             (
@@ -1527,98 +1480,8 @@ class Resource(TestCase, AssertPcsMixin):
             ),
         )
 
-    def test_group_delete_test(self):
-        self.assert_pcs_success(
-            "resource create --no-default-ops A1 ocf:pcsmock:minimal --group AGroup".split(),
-            stderr_full=DEPRECATED_DASH_DASH_GROUP,
-        )
-        self.assert_pcs_success(
-            "resource create --no-default-ops A2 ocf:pcsmock:minimal --group AGroup".split(),
-            stderr_full=DEPRECATED_DASH_DASH_GROUP,
-        )
-        self.assert_pcs_success(
-            "resource create --no-default-ops A3 ocf:pcsmock:minimal --group AGroup".split(),
-            stderr_full=DEPRECATED_DASH_DASH_GROUP,
-        )
-
-        stdout, stderr, returncode = self.pcs_runner.run(
-            "resource status".split()
-        )
-        self.assertEqual(stderr, "")
-        self.assertEqual(returncode, 0)
-        if is_pacemaker_21_without_20_compatibility():
-            self.assertEqual(
-                stdout,
-                outdent(
-                    """\
-                      * Resource Group: AGroup:
-                        * A1\t(ocf:pcsmock:minimal):\t Stopped
-                        * A2\t(ocf:pcsmock:minimal):\t Stopped
-                        * A3\t(ocf:pcsmock:minimal):\t Stopped
-                    """
-                ),
-            )
-        elif PCMK_2_0_3_PLUS:
-            assert_pcs_status(
-                stdout,
-                """\
-  * Resource Group: AGroup:
-    * A1\t(ocf::pcsmock:minimal):\tStopped
-    * A2\t(ocf::pcsmock:minimal):\tStopped
-    * A3\t(ocf::pcsmock:minimal):\tStopped
-""",
-            )
-        else:
-            self.assertEqual(
-                stdout,
-                """\
- Resource Group: AGroup
-     A1\t(ocf::pcsmock:minimal):\tStopped
-     A2\t(ocf::pcsmock:minimal):\tStopped
-     A3\t(ocf::pcsmock:minimal):\tStopped
-""",
-            )
-
-        self.assert_pcs_success(
-            "resource delete AGroup".split(),
-            stderr_full=dedent(
-                """\
-                Removing group: AGroup (and all resources within group)
-                Stopping all resources in group: AGroup...
-                Deleting Resource - A1
-                Deleting Resource - A2
-                Deleting Resource (and group) - A3
-                """
-            ),
-        )
-
-        self.assert_pcs_success(
-            "resource status".split(), "NO resources configured\n"
-        )
-
     @skip_unless_crm_rule()
     def test_group_ungroup(self):
-        self.setup_cluster_a()
-        self.assert_pcs_success(
-            "constraint location ClusterIP3 prefers rh7-1".split(),
-            stderr_full=LOCATION_NODE_VALIDATION_SKIP_WARNING,
-        )
-
-        self.assert_pcs_success(
-            "resource delete ClusterIP2".split(),
-            stderr_full="Deleting Resource - ClusterIP2\n",
-        )
-
-        self.assert_pcs_success(
-            "resource delete ClusterIP3".split(),
-            stderr_full=dedent(
-                """\
-                Removing Constraint - location-ClusterIP3-rh7-1-INFINITY
-                Deleting Resource (and group) - ClusterIP3
-                """
-            ),
-        )
-
         self.assert_pcs_success(
             "resource create --no-default-ops A1 ocf:pcsmock:minimal".split(),
         )
@@ -1664,23 +1527,6 @@ class Resource(TestCase, AssertPcsMixin):
                     Operations:
                       monitor: A5-monitor-interval-10s
                         interval=10s timeout=20s
-                """
-            ),
-        )
-
-    def test_group_large_resource_remove(self):
-        self.pcs_runner = PcsRunner(self.temp_large_cib.name)
-        self.pcs_runner.mock_settings = get_mock_settings()
-        self.assert_pcs_success(
-            "resource group add dummies dummylarge".split(),
-        )
-        self.assert_pcs_success(
-            "resource delete dummies".split(),
-            stderr_full=dedent(
-                """\
-                Removing group: dummies (and all resources within group)
-                Stopping all resources in group: dummies...
-                Deleting Resource (and group) - dummylarge
                 """
             ),
         )
@@ -1842,236 +1688,6 @@ class Resource(TestCase, AssertPcsMixin):
             ),
         )
 
-    def test_clone_remove(self):
-        self.assert_pcs_success(
-            "resource create --no-default-ops D1 ocf:pcsmock:minimal clone".split(),
-        )
-
-        self.assert_pcs_success(
-            "constraint location D1-clone prefers rh7-1".split(),
-            stderr_full=LOCATION_NODE_VALIDATION_SKIP_WARNING,
-        )
-
-        self.assert_pcs_success(
-            "constraint location D1 prefers rh7-1 --force".split(),
-            stderr_full=LOCATION_NODE_VALIDATION_SKIP_WARNING,
-        )
-
-        self.assert_pcs_success(
-            "resource config".split(),
-            dedent(
-                """\
-                Clone: D1-clone
-                  Resource: D1 (class=ocf provider=pcsmock type=minimal)
-                    Operations:
-                      monitor: D1-monitor-interval-10s
-                        interval=10s timeout=20s
-                """
-            ),
-        )
-
-        self.assert_pcs_success(
-            "resource delete D1-clone".split(),
-            stderr_full=dedent(
-                """\
-                Removing Constraint - location-D1-clone-rh7-1-INFINITY
-                Removing Constraint - location-D1-rh7-1-INFINITY
-                Deleting Resource - D1
-                """
-            ),
-        )
-
-        self.assert_pcs_success(
-            "resource config".split(),
-        )
-
-        self.assert_pcs_success(
-            "resource create d99 ocf:pcsmock:minimal clone globally-unique=true".split(),
-            stderr_full=(
-                "Deprecation Warning: Configuring clone meta attributes without "
-                "specifying the 'meta' keyword after the 'clone' keyword is "
-                "deprecated and will be removed in a future release. Specify "
-                "--future to switch to the future behavior.\n"
-            ),
-        )
-
-        self.assert_pcs_success(
-            "resource delete d99".split(),
-            stderr_full="Deleting Resource - d99\n",
-        )
-
-    def test_clone_remove_large(self):
-        self.pcs_runner = PcsRunner(self.temp_large_cib.name)
-        self.pcs_runner.mock_settings = get_mock_settings()
-        self.assert_pcs_success("resource clone dummylarge".split())
-        self.assert_pcs_success(
-            "resource delete dummylarge".split(),
-            stderr_full="Deleting Resource - dummylarge\n",
-        )
-
-    def test_clone_group_large_resource_remove(self):
-        self.pcs_runner = PcsRunner(self.temp_large_cib.name)
-        self.pcs_runner.mock_settings = get_mock_settings()
-        self.assert_pcs_success(
-            "resource group add dummies dummylarge".split(),
-        )
-        self.assert_pcs_success("resource clone dummies".split())
-        self.assert_pcs_success(
-            "resource delete dummies".split(),
-            stderr_full=dedent(
-                """\
-                Removing group: dummies (and all resources within group)
-                Stopping all resources in group: dummies...
-                Deleting Resource (and group and clone) - dummylarge
-                """
-            ),
-        )
-
-    @skip_unless_crm_rule()
-    def test_master_slave_remove(self):
-        self.setup_cluster_a()
-        self.assert_pcs_success(
-            "constraint location ClusterIP5 prefers rh7-1 --force".split(),
-            stderr_full=LOCATION_NODE_VALIDATION_SKIP_WARNING,
-        )
-
-        self.assert_pcs_success(
-            "constraint location Master prefers rh7-2".split(),
-            stderr_full=LOCATION_NODE_VALIDATION_SKIP_WARNING,
-        )
-
-        self.assert_pcs_success(
-            "resource delete Master".split(),
-            stderr_full=dedent(
-                """\
-                Removing Constraint - location-ClusterIP5-rh7-1-INFINITY
-                Removing Constraint - location-Master-rh7-2-INFINITY
-                Deleting Resource - ClusterIP5
-                """
-            ),
-        )
-
-        self.assert_pcs_success(
-            "resource create --no-default-ops ClusterIP5 ocf:pcsmock:minimal".split(),
-        )
-
-        self.assert_pcs_success(
-            "constraint location ClusterIP5 prefers rh7-1".split(),
-            stderr_full=LOCATION_NODE_VALIDATION_SKIP_WARNING,
-        )
-
-        self.assert_pcs_success(
-            "constraint location ClusterIP5 prefers rh7-2".split(),
-            stderr_full=LOCATION_NODE_VALIDATION_SKIP_WARNING,
-        )
-
-        self.assert_pcs_success(
-            "resource delete ClusterIP5".split(),
-            stderr_full=dedent(
-                """\
-                Removing Constraint - location-ClusterIP5-rh7-1-INFINITY
-                Removing Constraint - location-ClusterIP5-rh7-2-INFINITY
-                Deleting Resource - ClusterIP5
-                """
-            ),
-        )
-
-        self.assert_pcs_success(
-            "resource create --no-default-ops ClusterIP5 ocf:pcsmock:minimal".split()
-        )
-
-        self.assert_pcs_success(
-            "constraint location ClusterIP5 prefers rh7-1".split(),
-            stderr_full=LOCATION_NODE_VALIDATION_SKIP_WARNING,
-        )
-
-        self.assert_pcs_success(
-            "constraint location ClusterIP5 prefers rh7-2".split(),
-            stderr_full=LOCATION_NODE_VALIDATION_SKIP_WARNING,
-        )
-
-        self.pcs_runner.mock_settings = {
-            "corosync_conf_file": rc("corosync.conf"),
-        }
-        self.assert_pcs_success(
-            ["config"],
-            dedent(
-                """\
-                Cluster Name: test99
-                Corosync Nodes:
-                 rh7-1 rh7-2
-                Pacemaker Nodes:
-
-                Resources:
-                  Resource: ClusterIP6 (class=ocf provider=pcsmock type=minimal)
-                    Operations:
-                      monitor: ClusterIP6-monitor-interval-10s
-                        interval=10s timeout=20s
-                  Resource: ClusterIP5 (class=ocf provider=pcsmock type=minimal)
-                    Operations:
-                      monitor: ClusterIP5-monitor-interval-10s
-                        interval=10s timeout=20s
-                  Group: TestGroup1
-                    Resource: ClusterIP (class=ocf provider=pcsmock type=minimal)
-                      Operations:
-                        monitor: ClusterIP-monitor-interval-10s
-                          interval=10s timeout=20s
-                  Group: TestGroup2
-                    Resource: ClusterIP2 (class=ocf provider=pcsmock type=minimal)
-                      Operations:
-                        monitor: ClusterIP2-monitor-interval-10s
-                          interval=10s timeout=20s
-                    Resource: ClusterIP3 (class=ocf provider=pcsmock type=minimal)
-                      Operations:
-                        monitor: ClusterIP3-monitor-interval-10s
-                          interval=10s timeout=20s
-                  Clone: ClusterIP4-clone
-                    Resource: ClusterIP4 (class=ocf provider=pcsmock type=minimal)
-                      Operations:
-                        monitor: ClusterIP4-monitor-interval-10s
-                          interval=10s timeout=20s
-
-                Location Constraints:
-                  resource 'ClusterIP5' prefers node 'rh7-1' with score INFINITY (id: location-ClusterIP5-rh7-1-INFINITY)
-                  resource 'ClusterIP5' prefers node 'rh7-2' with score INFINITY (id: location-ClusterIP5-rh7-2-INFINITY)
-            """
-            ),
-        )
-        del self.pcs_runner.mock_settings["corosync_conf_file"]
-
-        # pcs no longer allows turning resources into masters but supports
-        # existing ones. In order to test it, we need to put a master in the
-        # CIB without pcs.
-        wrap_element_by_master(self.temp_large_cib, "dummylarge")
-
-        self.pcs_runner = PcsRunner(self.temp_large_cib.name)
-        self.pcs_runner.mock_settings = get_mock_settings()
-        self.assert_pcs_success(
-            "resource delete dummylarge".split(),
-            stderr_full="Deleting Resource - dummylarge\n",
-        )
-
-    def test_master_slave_group_large_resource_remove(self):
-        self.pcs_runner = PcsRunner(self.temp_large_cib.name)
-        self.pcs_runner.mock_settings = get_mock_settings()
-        self.assert_pcs_success(
-            "resource group add dummies dummylarge".split(),
-        )
-        # pcs no longer allows turning resources into masters but supports
-        # existing ones. In order to test it, we need to put a master in the
-        # CIB without pcs.
-        wrap_element_by_master(self.temp_large_cib, "dummies")
-        self.assert_pcs_success(
-            "resource delete dummies".split(),
-            stderr_full=dedent(
-                """\
-                Removing group: dummies (and all resources within group)
-                Stopping all resources in group: dummies...
-                Deleting Resource (and group and M/S) - dummylarge
-                """
-            ),
-        )
-
     def test_ms_group(self):
         self.assert_pcs_success(
             "resource create --no-default-ops D0 ocf:pcsmock:minimal".split(),
@@ -2104,14 +1720,6 @@ class Resource(TestCase, AssertPcsMixin):
                           interval=10s timeout=20s
                 """
             ),
-        )
-        self.assert_pcs_success(
-            "resource delete D0".split(),
-            stderr_full="Deleting Resource - D0\n",
-        )
-        self.assert_pcs_success(
-            "resource delete D1".split(),
-            stderr_full="Deleting Resource (and group and M/S) - D1\n",
         )
 
     def test_unclone(self):
@@ -2732,59 +2340,6 @@ class Resource(TestCase, AssertPcsMixin):
             ),
         )
 
-        self.assert_pcs_success(
-            "resource delete D0".split(),
-            stderr_full="Deleting Resource - D0\n",
-        )
-        self.assert_pcs_success(
-            "resource delete D2".split(),
-            stderr_full="Deleting Resource - D2\n",
-        )
-
-        self.assert_pcs_success(
-            "resource create --no-default-ops D0 ocf:pcsmock:stateful".split(),
-        )
-        self.assert_pcs_success(
-            "resource create --no-default-ops D2 ocf:pcsmock:stateful".split(),
-        )
-        self.assert_pcs_success(
-            "resource config".split(),
-            dedent(
-                """\
-                Resource: D0 (class=ocf provider=pcsmock type=stateful)
-                  Operations:
-                    monitor: D0-monitor-interval-10s
-                      interval=10s timeout=20s role=Promoted
-                    monitor: D0-monitor-interval-11s
-                      interval=11s timeout=20s role=Unpromoted
-                Resource: D2 (class=ocf provider=pcsmock type=stateful)
-                  Operations:
-                    monitor: D2-monitor-interval-10s
-                      interval=10s timeout=20s role=Promoted
-                    monitor: D2-monitor-interval-11s
-                      interval=11s timeout=20s role=Unpromoted
-                Clone: D3-clone
-                  Meta Attributes: D3-clone-meta_attributes
-                    promotable=true
-                  Resource: D3 (class=ocf provider=pcsmock type=stateful)
-                    Operations:
-                      monitor: D3-monitor-interval-10s
-                        interval=10s timeout=20s role=Promoted
-                      monitor: D3-monitor-interval-11s
-                        interval=11s timeout=20s role=Unpromoted
-                Clone: D1-master-custom
-                  Meta Attributes:
-                    promotable=true
-                  Resource: D1 (class=ocf provider=pcsmock type=stateful)
-                    Operations:
-                      monitor: D1-monitor-interval-10s
-                        interval=10s timeout=20s role=Promoted
-                      monitor: D1-monitor-interval-11s
-                        interval=11s timeout=20s role=Unpromoted
-                """
-            ),
-        )
-
     def test_lsb_resource(self):
         self.assert_pcs_fail(
             "resource create --no-default-ops D2 lsb:pcsmock foo=bar".split(),
@@ -2943,107 +2498,13 @@ class Resource(TestCase, AssertPcsMixin):
             "Error: cannot clone a group that has already been cloned\n",
         )
 
-    @skip_unless_crm_rule()
-    def test_group_remove_with_constraints1(self):
-        # Load nodes into cib so move will work
-        self.temp_cib.seek(0)
-        xml = etree.fromstring(self.temp_cib.read())
-        nodes_el = xml.find(".//nodes")
-        etree.SubElement(nodes_el, "node", {"id": "1", "uname": "rh7-1"})
-        etree.SubElement(nodes_el, "node", {"id": "2", "uname": "rh7-2"})
-        write_data_to_tmpfile(etree.tounicode(xml), self.temp_cib)
-
-        self.assert_pcs_success(
-            "resource create --no-default-ops D1 ocf:pcsmock:minimal --group DGroup".split(),
-            stderr_full=DEPRECATED_DASH_DASH_GROUP,
-        )
-        self.assert_pcs_success(
-            "resource create --no-default-ops D2 ocf:pcsmock:minimal --group DGroup".split(),
-            stderr_full=DEPRECATED_DASH_DASH_GROUP,
-        )
-
-        stdout, stderr, returncode = self.pcs_runner.run(
-            "resource status".split()
-        )
-        self.assertEqual(stderr, "")
-        self.assertEqual(returncode, 0)
-        if is_pacemaker_21_without_20_compatibility():
-            self.assertEqual(
-                stdout,
-                outdent(
-                    """\
-                      * Resource Group: DGroup:
-                        * D1\t(ocf:pcsmock:minimal):\t Stopped
-                        * D2\t(ocf:pcsmock:minimal):\t Stopped
-                    """
-                ),
-            )
-        elif PCMK_2_0_3_PLUS:
-            assert_pcs_status(
-                stdout,
-                """\
-  * Resource Group: DGroup:
-    * D1\t(ocf::pcsmock:minimal):\tStopped
-    * D2\t(ocf::pcsmock:minimal):\tStopped
-""",
-            )
-        else:
-            self.assertEqual(
-                stdout,
-                """\
- Resource Group: DGroup
-     D1\t(ocf::pcsmock:minimal):\tStopped
-     D2\t(ocf::pcsmock:minimal):\tStopped
-""",
-            )
-
-        # The mock executable for crm_resource does not support the
-        # `move-with-constraint` command, and so the real executable is used.
-        self.pcs_runner.mock_settings = {}
-        self.assert_pcs_success(
-            "resource move-with-constraint DGroup rh7-1".split(),
-            stderr_full=(
-                "Warning: A move constraint has been created and the resource "
-                "'DGroup' may or may not move depending on other configuration"
-                "\n"
-            ),
-        )
-        self.pcs_runner.mock_settings = get_mock_settings()
-        self.assert_pcs_success(
-            ["constraint"],
-            outdent(
-                """\
-                Location Constraints:
-                  Started resource 'DGroup' prefers node 'rh7-1' with score INFINITY
-                """
-            ),
-        )
-        self.assert_pcs_success(
-            "resource delete D1".split(),
-            stderr_full="Deleting Resource - D1\n",
-        )
-        self.assert_pcs_success(
-            "resource delete D2".split(),
-            stderr_full=dedent(
-                """\
-                Removing Constraint - cli-prefer-DGroup
-                Deleting Resource (and group) - D2
-                """
-            ),
-        )
-
-        self.assert_pcs_success(
-            "resource status".split(),
-            "NO resources configured\n",
-        )
-
     def test_resource_clone_creation(self):
         self.pcs_runner = PcsRunner(self.temp_large_cib.name)
         self.pcs_runner.mock_settings = get_mock_settings()
         # resource "dummy1" is already in "temp_large_cib
         self.assert_pcs_success("resource clone dummy1".split())
 
-    def test_resource_clone_id(self):
+    def test_resource_clone_id_clone_command(self):
         self.assert_pcs_success(
             "resource create --no-default-ops dummy-clone ocf:pcsmock:minimal".split(),
         )
@@ -3068,9 +2529,9 @@ class Resource(TestCase, AssertPcsMixin):
             ),
         )
 
+    def test_resource_clone_id_create_command(self):
         self.assert_pcs_success(
-            "resource delete dummy".split(),
-            stderr_full="Deleting Resource - dummy\n",
+            "resource create --no-default-ops dummy-clone ocf:pcsmock:minimal".split(),
         )
         self.assert_pcs_success(
             "resource create --no-default-ops dummy ocf:pcsmock:minimal clone".split(),
@@ -3092,7 +2553,7 @@ class Resource(TestCase, AssertPcsMixin):
             ),
         )
 
-    def test_resource_promotable_id(self):
+    def test_resource_promotable_id_promotable_command(self):
         self.assert_pcs_success(
             "resource create --no-default-ops dummy-clone ocf:pcsmock:stateful".split(),
         )
@@ -3123,9 +2584,9 @@ class Resource(TestCase, AssertPcsMixin):
             ),
         )
 
+    def test_resource_promotable_id_create_command(self):
         self.assert_pcs_success(
-            "resource delete dummy".split(),
-            stderr_full="Deleting Resource - dummy\n",
+            "resource create --no-default-ops dummy-clone ocf:pcsmock:stateful".split(),
         )
         self.assert_pcs_success(
             "resource create --no-default-ops dummy ocf:pcsmock:stateful promotable".split(),
@@ -3219,74 +2680,6 @@ class Resource(TestCase, AssertPcsMixin):
             ),
         )
 
-    def test_group_remove_with_constraints2(self):
-        self.assert_pcs_success(
-            "resource create --no-default-ops A ocf:pcsmock:minimal --group AG".split(),
-            stderr_full=DEPRECATED_DASH_DASH_GROUP,
-        )
-        self.assert_pcs_success(
-            "resource create --no-default-ops B ocf:pcsmock:minimal --group AG".split(),
-            stderr_full=DEPRECATED_DASH_DASH_GROUP,
-        )
-        self.assert_pcs_success(
-            "constraint location AG prefers rh7-1".split(),
-            stderr_full=LOCATION_NODE_VALIDATION_SKIP_WARNING,
-        )
-
-        self.assert_pcs_success(
-            "resource ungroup AG".split(),
-            stderr_full="Removing Constraint - location-AG-rh7-1-INFINITY\n",
-        )
-
-        self.assert_pcs_success(
-            "resource config".split(),
-            dedent(
-                """\
-                Resource: A (class=ocf provider=pcsmock type=minimal)
-                  Operations:
-                    monitor: A-monitor-interval-10s
-                      interval=10s timeout=20s
-                Resource: B (class=ocf provider=pcsmock type=minimal)
-                  Operations:
-                    monitor: B-monitor-interval-10s
-                      interval=10s timeout=20s
-                """
-            ),
-        )
-
-        self.assert_pcs_success(
-            "resource create --no-default-ops A1 ocf:pcsmock:minimal --group AA".split(),
-            stderr_full=DEPRECATED_DASH_DASH_GROUP,
-        )
-        self.assert_pcs_success(
-            "resource create --no-default-ops A2 ocf:pcsmock:minimal --group AA".split(),
-            stderr_full=DEPRECATED_DASH_DASH_GROUP,
-        )
-        # pcs no longer allows turning resources into masters but supports
-        # existing ones. In order to test it, we need to put a master in the
-        # CIB without pcs.
-        wrap_element_by_master(self.temp_cib, "AA")
-        self.assert_pcs_success(
-            "constraint location AA-master prefers rh7-1".split(),
-            stderr_full=(
-                "Warning: Validation for node existence in the cluster will be skipped\n"
-            ),
-        )
-
-        self.assert_pcs_success(
-            "resource delete A1".split(),
-            stderr_full="Deleting Resource - A1\n",
-        )
-        self.assert_pcs_success(
-            "resource delete A2".split(),
-            stderr_full=dedent(
-                """\
-                Removing Constraint - location-AA-master-rh7-1-INFINITY
-                Deleting Resource (and group and M/S) - A2
-                """
-            ),
-        )
-
     def test_mastered_group(self):
         self.assert_pcs_success(
             "resource create --no-default-ops A ocf:pcsmock:minimal --group AG".split(),
@@ -3325,11 +2718,23 @@ class Resource(TestCase, AssertPcsMixin):
 
         self.assert_pcs_success(
             "resource delete B".split(),
-            stderr_full="Deleting Resource - B\n",
+            stderr_full=dedent(
+                """\
+                Removing references:
+                  Resource 'B' from:
+                    Group: 'AG'
+                """
+            ),
         )
         self.assert_pcs_success(
             "resource delete C".split(),
-            stderr_full="Deleting Resource - C\n",
+            stderr_full=dedent(
+                """\
+                Removing references:
+                  Resource 'C' from:
+                    Group: 'AG'
+                """
+            ),
         )
         self.assert_pcs_success("resource ungroup AG".split())
         self.assert_pcs_success(
@@ -3502,17 +2907,6 @@ class Resource(TestCase, AssertPcsMixin):
             + "Error: you can specify only one of clone, promotable, bundle or --group\n",
         )
 
-    def test_resource_clone_group(self):
-        self.assert_pcs_success(
-            "resource create --no-default-ops dummy0 ocf:pcsmock:minimal --group group".split(),
-            stderr_full=DEPRECATED_DASH_DASH_GROUP,
-        )
-        self.assert_pcs_success("resource clone group".split())
-        self.assert_pcs_success(
-            "resource delete dummy0".split(),
-            stderr_full="Deleting Resource (and group and clone) - dummy0\n",
-        )
-
     def test_resource_missing_values(self):
         self.assert_pcs_success(
             "resource create --no-default-ops myip params --force".split(),
@@ -3651,11 +3045,9 @@ class Resource(TestCase, AssertPcsMixin):
             "resource delete dummies-clone".split(),
             stderr_full=dedent(
                 """\
-                Removing group: dummies (and all resources within group)
-                Stopping all resources in group: dummies...
-                Deleting Resource - dummy1
-                Deleting Resource - dummy2
-                Deleting Resource (and group and clone) - dummy3
+                Removing dependant elements:
+                  Group: 'dummies'
+                  Resources: 'dummy1', 'dummy2', 'dummy3'
                 """
             ),
         )
@@ -3779,11 +3171,9 @@ class Resource(TestCase, AssertPcsMixin):
             "resource delete dummies-master".split(),
             stderr_full=dedent(
                 """\
-                Removing group: dummies (and all resources within group)
-                Stopping all resources in group: dummies...
-                Deleting Resource - dummy1
-                Deleting Resource - dummy2
-                Deleting Resource (and group and M/S) - dummy3
+                Removing dependant elements:
+                  Group: 'dummies'
+                  Resources: 'dummy1', 'dummy2', 'dummy3'
                 """
             ),
         )
@@ -5076,75 +4466,6 @@ class UpdateInstanceAttrs(
         )
 
 
-class ResourcesReferencedFromAcl(TestCase, AssertPcsMixin):
-    def setUp(self):
-        self.temp_cib = get_tmp_file("tier1_resource_referenced_from_acl")
-        write_file_to_tmpfile(empty_cib, self.temp_cib)
-        self.pcs_runner = PcsRunner(self.temp_cib.name)
-        self.pcs_runner.mock_settings = get_mock_settings()
-
-    def tearDown(self):
-        self.temp_cib.close()
-
-    def test_remove_referenced_primitive_resource(self):
-        self.assert_pcs_success(
-            "resource create dummy ocf:pcsmock:minimal".split()
-        )
-        self.assert_pcs_success(
-            "acl role create read-dummy read id dummy".split()
-        )
-        self.assert_pcs_success(
-            "resource delete dummy".split(),
-            stderr_full="Deleting Resource - dummy\n",
-        )
-
-    def test_remove_group_with_referenced_primitive_resource(self):
-        self.assert_pcs_success(
-            "resource create dummy1 ocf:pcsmock:minimal".split()
-        )
-        self.assert_pcs_success(
-            "resource create dummy2 ocf:pcsmock:minimal".split()
-        )
-        self.assert_pcs_success(
-            "resource group add dummy-group dummy1 dummy2".split()
-        )
-        self.assert_pcs_success(
-            "acl role create read-dummy read id dummy2".split()
-        )
-        self.assert_pcs_success(
-            "resource delete dummy-group".split(),
-            stderr_full=(
-                "Removing group: dummy-group (and all resources within group)\n"
-                "Stopping all resources in group: dummy-group...\n"
-                "Deleting Resource - dummy1\n"
-                "Deleting Resource (and group) - dummy2\n"
-            ),
-        )
-
-    def test_remove_referenced_group(self):
-        self.assert_pcs_success(
-            "resource create dummy1 ocf:pcsmock:minimal".split()
-        )
-        self.assert_pcs_success(
-            "resource create dummy2 ocf:pcsmock:minimal".split()
-        )
-        self.assert_pcs_success(
-            "resource group add dummy-group dummy1 dummy2".split()
-        )
-        self.assert_pcs_success(
-            "acl role create acl-role-a read id dummy-group".split()
-        )
-        self.assert_pcs_success(
-            "resource delete dummy-group".split(),
-            stderr_full=(
-                "Removing group: dummy-group (and all resources within group)\n"
-                "Stopping all resources in group: dummy-group...\n"
-                "Deleting Resource - dummy1\n"
-                "Deleting Resource (and group) - dummy2\n"
-            ),
-        )
-
-
 class CloneMasterUpdate(TestCase, AssertPcsMixin):
     def setUp(self):
         self.temp_cib = get_tmp_file("tier1_resource_clone_master_update")
@@ -5433,39 +4754,6 @@ class TransformMasterToClone(ResourceTest):
         )
 
 
-class ResourceRemoveWithTicket(TestCase, AssertPcsMixin):
-    def setUp(self):
-        self.temp_cib = get_tmp_file("tier1_resource_remove_with_ticket")
-        write_file_to_tmpfile(empty_cib, self.temp_cib)
-        self.pcs_runner = PcsRunner(self.temp_cib.name)
-        self.pcs_runner.mock_settings = get_mock_settings()
-
-    def tearDown(self):
-        self.temp_cib.close()
-
-    def test_remove_ticket(self):
-        self.assert_pcs_success("resource create A ocf:pcsmock:minimal".split())
-        role = str(const.PCMK_ROLE_PROMOTED).lower()
-        self.assert_pcs_success(
-            f"constraint ticket add T {role} A loss-policy=fence".split()
-        )
-        self.assert_pcs_success(
-            "constraint ticket config".split(),
-            (
-                "Ticket Constraints:\n"
-                f"  {const.PCMK_ROLE_PROMOTED} resource 'A' depends on ticket 'T'\n"
-                "    loss-policy=fence\n"
-            ),
-        )
-        self.assert_pcs_success(
-            "resource delete A".split(),
-            stderr_full=(
-                "Removing Constraint - ticket-T-A-Master\n"
-                "Deleting Resource - A\n"
-            ),
-        )
-
-
 class BundleCommon(
     TestCase,
     get_assert_pcs_effect_mixin(
@@ -5543,44 +4831,6 @@ class BundleShow(BundleCommon):
                   Network: control-port=1234
                 """
             ),
-        )
-
-
-class BundleDelete(BundleCommon):
-    def test_without_primitive(self):
-        self.fixture_bundle("B")
-        self.assert_effect(
-            "resource delete B".split(),
-            "<resources/>",
-            stderr_full="Deleting bundle 'B'\n",
-        )
-
-    def test_with_primitive(self):
-        self.fixture_bundle("B")
-        self.fixture_primitive("R", "B")
-        self.assert_effect(
-            "resource delete B".split(),
-            "<resources/>",
-            stderr_full=(
-                "Deleting bundle 'B' and its inner resource 'R'\n"
-                "Deleting Resource - R\n"
-            ),
-        )
-
-    def test_remove_primitive(self):
-        self.fixture_bundle("B")
-        self.fixture_primitive("R", "B")
-        self.assert_effect(
-            "resource delete R".split(),
-            """
-                <resources>
-                    <bundle id="B">
-                        <docker image="pcs:test" />
-                        <network control-port="1234" />
-                    </bundle>
-                </resources>
-            """,
-            stderr_full="Deleting Resource - R\n",
         )
 
 
