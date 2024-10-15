@@ -54,10 +54,9 @@ def remove_elements(
         elements_to_remove.element_references.to_reports()
     )
 
-    if env.is_cib_live and reports.codes.FORCE not in force_flags:
-        cib = _stop_resources_wait(
-            env, cib, elements_to_remove.resources_to_disable
-        )
+    cib = _stop_resources_wait(
+        env, cib, elements_to_remove.resources_to_disable, force_flags
+    )
 
     remove_specified_elements(cib, elements_to_remove)
     env.push_cib()
@@ -67,6 +66,7 @@ def _stop_resources_wait(
     env: LibraryEnvironment,
     cib: _Element,
     resource_elements: Sequence[_Element],
+    force_flags: Collection[reports.types.ForceCode] = (),
 ) -> _Element:
     """
     Stop all resources that are going to be removed. Push cib, wait for the
@@ -75,8 +75,18 @@ def _stop_resources_wait(
 
     cib -- whole cib
     resource_elements -- resources that should be stopped
+    force_flags -- list of flags codes
     """
     if not resource_elements:
+        return cib
+    if not env.is_cib_live:
+        return cib
+    if reports.codes.FORCE in force_flags:
+        env.report_processor.report(
+            reports.ReportItem.warning(
+                reports.messages.StoppingResourcesBeforeDeletingSkipped()
+            )
+        )
         return cib
 
     resource_ids = [str(el.attrib["id"]) for el in resource_elements]

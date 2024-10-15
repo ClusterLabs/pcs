@@ -6055,6 +6055,17 @@ class StoppingResourcesBeforeDeleting(NameBuildTest):
         )
 
 
+class StoppingResourcesBeforeDeletingSkipped(NameBuildTest):
+    def test_success(self) -> str:
+        self.assert_message_from_report(
+            (
+                "Resources are not going to be stopped before deletion, this "
+                "may result in orphaned resources being present in the cluster"
+            ),
+            reports.StoppingResourcesBeforeDeletingSkipped(),
+        )
+
+
 class CannotStopResourcesBeforeDeleting(NameBuildTest):
     def test_one_resource(self) -> str:
         self.assert_message_from_report(

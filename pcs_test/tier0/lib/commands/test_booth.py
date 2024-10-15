@@ -2332,13 +2332,16 @@ class RemoveFromCluster(TestCase, FixtureMixin, StopResourcesWaitMixin):
         )
         self.env_assist.assert_reports(
             [
+                fixture.warn(
+                    reports.codes.BOOTH_MULTIPLE_TIMES_IN_CIB,
+                    name="booth",
+                ),
                 fixture.info(
                     reports.codes.CIB_REMOVE_RESOURCES,
                     id_list=["booth1", "booth2"],
                 ),
                 fixture.warn(
-                    reports.codes.BOOTH_MULTIPLE_TIMES_IN_CIB,
-                    name="booth",
+                    reports.codes.STOPPING_RESOURCES_BEFORE_DELETING_SKIPPED
                 ),
             ]
         )

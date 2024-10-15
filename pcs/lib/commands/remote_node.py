@@ -737,13 +737,14 @@ def node_remove_remote(
     """
     cib = env.get_cib()
     report_processor = env.report_processor
+    force = reports.codes.FORCE in force_flags
 
     resource_element_list = _find_resources_to_remove(
         cib,
         report_processor,
         "remote",
         node_identifier,
-        allow_remove_multiple_nodes=reports.codes.FORCE in force_flags,
+        allow_remove_multiple_nodes=force,
         find_resources=remote_node.find_node_resources,
     )
 
@@ -772,11 +773,10 @@ def node_remove_remote(
         elements_to_remove.element_references.to_reports()
     )
 
-    if env.is_cib_live and reports.codes.FORCE not in force_flags:
-        # we use private function from lib.commands.cib to reduce code repetition
-        cib = _stop_resources_wait(
-            env, cib, elements_to_remove.resources_to_disable
-        )
+    # we use private function from lib.commands.cib to reduce code repetition
+    cib = _stop_resources_wait(
+        env, cib, elements_to_remove.resources_to_disable, force_flags
+    )
 
     if not env.is_cib_live:
         report_processor.report_list(
@@ -787,7 +787,7 @@ def node_remove_remote(
             env,
             node_names_list,
             skip_offline_nodes=reports.codes.SKIP_OFFLINE_NODES in force_flags,
-            allow_fails=reports.codes.FORCE in force_flags,
+            allow_fails=force,
         )
 
     remove_specified_elements(cib, elements_to_remove)

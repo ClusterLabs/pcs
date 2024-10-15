@@ -301,7 +301,10 @@ class RemoveElements(TestCase):
                         "C-G-2": "primitive",
                         "B-1": "primitive",
                     },
-                )
+                ),
+                fixture.warn(
+                    reports.codes.STOPPING_RESOURCES_BEFORE_DELETING_SKIPPED
+                ),
             ]
         )
 
@@ -441,6 +444,9 @@ class RemoveElements(TestCase):
                         "A": {"T", "SET"},
                         "PERMISSION": {"ROLE"},
                     },
+                ),
+                fixture.warn(
+                    reports.codes.STOPPING_RESOURCES_BEFORE_DELETING_SKIPPED
                 ),
             ]
         )
