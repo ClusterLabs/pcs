@@ -352,6 +352,7 @@ class StonithUpdateScsiDevices(TestCase):
         )
 
 
+@mock.patch("pcs.stonith.deprecation_warning")
 class StonithRemove(TestCase):
     def setUp(self):
         self.lib = mock.Mock(spec_set=["cib", "resource"])
@@ -364,24 +365,27 @@ class StonithRemove(TestCase):
     def _call_cmd(self, argv, modifiers=None):
         stonith_delete_cmd(self.lib, argv, dict_to_modifiers(modifiers or {}))
 
-    def test_no_args(self):
+    def test_no_args(self, mock_deprecation_warning):
         with self.assertRaises(CmdLineInputError) as cm:
             self._call_cmd([])
         self.assertIsNone(cm.exception.message)
         self.resource.get_configured_resources.assert_not_called()
         self.cib.remove_elements.assert_not_called()
+        mock_deprecation_warning.assert_not_called()
 
-    def test_remove_one(self):
+    def test_remove_one(self, mock_deprecation_warning):
         self._call_cmd(["S1"])
         self.resource.get_configured_resources.assert_called_once_with()
         self.cib.remove_elements.assert_called_once_with({"S1"}, set())
+        mock_deprecation_warning.assert_not_called()
 
-    def test_remove_multiple(self):
+    def test_remove_multiple(self, mock_deprecation_warning):
         self._call_cmd(["S1", "S2"])
         self.resource.get_configured_resources.assert_called_once_with()
         self.cib.remove_elements.assert_called_once_with({"S1", "S2"}, set())
+        mock_deprecation_warning.assert_not_called()
 
-    def test_duplicate_args(self):
+    def test_duplicate_args(self, mock_deprecation_warning):
         with self.assertRaises(CmdLineInputError) as cm:
             self._call_cmd(["S1", "S2", "S1", "S2"])
         self.assertEqual(
@@ -390,8 +394,9 @@ class StonithRemove(TestCase):
 
         self.resource.get_configured_resources.assert_not_called()
         self.cib.remove_elements.assert_not_called()
+        mock_deprecation_warning.assert_not_called()
 
-    def test_not_resource_id(self):
+    def test_not_resource_id(self, mock_deprecation_warning):
         with self.assertRaises(CmdLineInputError) as cm:
             self._call_cmd(["nonexistent"])
         self.assertEqual(
@@ -400,29 +405,26 @@ class StonithRemove(TestCase):
         )
         self.resource.get_configured_resources.assert_called_once_with()
         self.cib.remove_elements.assert_not_called()
+        mock_deprecation_warning.assert_not_called()
 
-    def test_not_stonith_id(self):
-        with self.assertRaises(CmdLineInputError) as cm:
-            self._call_cmd(["R1"])
-        self.assertEqual(
-            cm.exception.message,
-            (
-                "This command cannot remove resource: 'R1'. "
-                "Use 'pcs resource remove' instead."
-            ),
-        )
+    def test_not_stonith_id(self, mock_deprecation_warning):
+        self._call_cmd(["R1"])
         self.resource.get_configured_resources.assert_called_once_with()
-        self.cib.remove_elements.assert_not_called()
+        self.cib.remove_elements.assert_called_once_with({"R1"}, set())
+        mock_deprecation_warning.assert_called_once_with(
+            "Ability of this command to accept resources is deprecated and "
+            "will be removed in a future release. Please use "
+            "'pcs resource remove' instead."
+        )
 
-    def test_multiple_not_stonith_id(self):
-        with self.assertRaises(CmdLineInputError) as cm:
-            self._call_cmd(["S1", "R1", "R2", "R3", "S2"])
-        self.assertEqual(
-            cm.exception.message,
-            (
-                "This command cannot remove resources: 'R1', 'R2', 'R3'. "
-                "Use 'pcs resource remove' instead."
-            ),
-        )
+    def test_multiple_not_stonith_id(self, mock_deprecation_warning):
+        self._call_cmd(["S1", "R1", "R2", "R3", "S2"])
         self.resource.get_configured_resources.assert_called_once_with()
-        self.cib.remove_elements.assert_not_called()
+        self.cib.remove_elements.assert_called_once_with(
+            {"R1", "R2", "R3", "S1", "S2"}, set()
+        )
+        mock_deprecation_warning.assert_called_once_with(
+            "Ability of this command to accept resources is deprecated and "
+            "will be removed in a future release. Please use "
+            "'pcs resource remove' instead."
+        )

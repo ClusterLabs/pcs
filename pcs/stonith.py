@@ -1014,14 +1014,11 @@ def delete_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
         resources_dto
     )
     if non_stonith_ids:
-        raise CmdLineInputError(
-            (
-                "This command cannot remove {resource}: {id_list}. Use 'pcs "
-                "resource remove' instead."
-            ).format(
-                resource=format_plural(non_stonith_ids, "resource"),
-                id_list=format_list(non_stonith_ids),
-            )
+        deprecation_warning(
+            reports.messages.ResourceStonithCommandsMismatch(
+                "resources"
+            ).message
+            + " Please use 'pcs resource remove' instead."
         )
 
     force_flags = set()

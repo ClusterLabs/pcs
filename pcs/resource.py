@@ -2012,14 +2012,11 @@ def resource_remove_cmd(
 
     stonith_ids = resources_to_remove & get_stonith_resources_ids(resources_dto)
     if stonith_ids:
-        raise CmdLineInputError(
-            (
-                "This command cannot remove stonith {resource}: {id_list}. Use "
-                "'pcs stonith remove' instead."
-            ).format(
-                resource=format_plural(stonith_ids, "resource"),
-                id_list=format_list(stonith_ids),
-            )
+        deprecation_warning(
+            reports.messages.ResourceStonithCommandsMismatch(
+                "stonith resources"
+            ).message
+            + " Please use 'pcs stonith remove' instead."
         )
 
     force_flags = set()
