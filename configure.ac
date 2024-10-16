@@ -11,7 +11,7 @@ AC_CONFIG_AUX_DIR([.])
 AM_INIT_AUTOMAKE([dist-bzip2 dist-xz -Wno-portability tar-pax])
 
 AC_CONFIG_MACRO_DIR([m4])
-AC_CONFIG_SRCDIR([setup.py.in])
+AC_CONFIG_SRCDIR([pyproject.toml.in])
 
 AC_CANONICAL_HOST
 
@@ -333,15 +333,14 @@ AC_SUBST([PYAGENTX_VERSION])
 
 # those MUST be available in BaseOS
 
-# required for --no-build-isolation
-AC_PIP_MODULE([pip], [>= 10.0.0], [have_isolation=yes], [have_isolation=no], [have_isolation=no])
-AM_CONDITIONAL([PIP_HAS_ISOLATION], [test "x$have_isolation" = xyes])
+# pip 19.0 required for PEP517 support
+PCS_CHECK_PYMOD([pip], [>= 23.0])
+# pip builds a wheel first
+PCS_CHECK_PYMOD([wheel])
 
 if test "x$tests_only" != "xyes"; then
-	PCS_CHECK_PYMOD([setuptools])
-	if test "x$local_build" = "xyes"; then
-		PCS_CHECK_PYMOD([wheel])
-	fi
+	# setuptools 61.0.0 required for PEP621 support
+	PCS_CHECK_PYMOD([setuptools], [>= 66.1])
 	PCS_CHECK_PYMOD([cryptography])
 	PCS_CHECK_PYMOD([lxml])
 	PCS_CHECK_PYMOD([pyparsing], [>= 3.0.0])
@@ -353,8 +352,9 @@ if test "x$tests_only" != "xyes"; then
 	PCS_CHECK_PYMOD([python-dateutil], [>= 2.7.0], [yes])
 	# setuptoools_scm is needed for bundling dateutil, this uses variables
 	# set by the PCS_CHECK_PYMOD macro, so it must be executed right after it
-	if test "x$bundle_module" = "xyes" && test "x$cache_only" = "xyes"; then
+	if test "x$bundle_module" = "xyes" && test "x$local_build" = "xyes"; then
 		PCS_CHECK_PYMOD([setuptools-scm])
+		PCS_CHECK_PYMOD([six])
 	fi
 	PCS_CHECK_PYMOD([pycurl], [], [yes])
 	# Building pycurl requires devel packages that contain pkg-config, so devel
@@ -484,7 +484,7 @@ AC_SUBST([BOOTH_ENABLE_AUTHFILE_SET_ENABLED], [$(if test "x$booth_enable_authfil
 AC_SUBST([BOOTH_ENABLE_AUTHFILE_UNSET_ENABLED], [$(if test "x$booth_enable_authfile_unset" = "xyes"; then echo "True"; else echo "False"; fi)])
 AC_SUBST([BOOTH_ENABLE_AUTHFILE_SET_CAPABILITY], [$(test "x$booth_enable_authfile_set" != "xyes"; echo "$?")])
 AC_SUBST([BOOTH_ENABLE_AUTHFILE_UNSET_CAPABILITY], [$(test "x$booth_enable_authfile_unset" != "xyes"; echo "$?")])
-AC_SUBST([PACKAGE_WEBUI_BACKEND], [$(if test "x$webui" = "xyes"; then echo "True"; else echo "False"; fi)])
+AC_SUBST([PACKAGE_WEBUI_BACKEND], [$(if test "x$webui" != "xyes"; then echo "pcs.daemon.app.webui*"; fi)])
 PCSD_PUBLIC_DIR="$LIB_DIR/pcsd/public"
 AC_SUBST([PCSD_PUBLIC_DIR])
 PCSD_WEBUI_DIR="$PCSD_PUBLIC_DIR/ui"
@@ -620,8 +620,7 @@ AC_SUBST([UTC_DATE])
 
 AC_CONFIG_FILES([Makefile
 		 pcs.pc
-		 setup.py
-		 setup.cfg
+		 pyproject.toml
 		 data/Makefile
 		 pcs/Makefile
 		 pcs/settings.py

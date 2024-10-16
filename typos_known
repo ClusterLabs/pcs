@@ -110,3 +110,7 @@
 ./pcs_test/tier1/legacy/test_utils.py: `dum` -> `dumb`
 ./pcs_test/tier1/legacy/test_utils.py: `ue` -> `use`, `due`
 ./pcs_test/tier1/legacy/test_utils.py: `ue` -> `use`, `due`
+./rpm/pcs.spec.in: `shbang` -> `shebang`
+./rpm/pcs.spec.in: `shbang` -> `shebang`
+./rpm/pcs.spec.in: `shbang` -> `shebang`
+./rpm/pcs.spec.in: `shbang` -> `shebang`
