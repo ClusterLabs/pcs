@@ -606,6 +606,23 @@ def find_elements_referencing_id(
     )
 
 
+def find_location_constraints_referencing_node_name(
+    element: _Element, node_name: str
+) -> list[_Element]:
+    """
+    Find location constraints which are referencing specified node name.
+
+    element -- any element within CIB tree
+    node_name -- name of the node which references should be found
+    """
+    return cast(
+        list[_Element],
+        _get_configuration(element).xpath(
+            "./constraints/rsc_location[@node=$node_name]", node_name=node_name
+        ),
+    )
+
+
 def remove_element_by_id(cib: _Element, element_id: str) -> None:
     """
     Remove element with specified id from cib element.

@@ -42,11 +42,19 @@ from pcs.lib.cib.resource.common import (
     is_resource,
 )
 from pcs.lib.cib.resource.group import is_group
+from pcs.lib.cib.resource.guest_node import (
+    get_node_name_from_resource as get_node_name_from_guest,
+)
+from pcs.lib.cib.resource.guest_node import is_guest_node
+from pcs.lib.cib.resource.remote_node import (
+    get_node_name_from_resource as get_node_name_from_remote,
+)
 from pcs.lib.cib.tag import is_tag
 from pcs.lib.cib.tools import (
     ElementNotFound,
     IdProvider,
     find_elements_referencing_id,
+    find_location_constraints_referencing_node_name,
     get_element_by_id,
     get_elements_by_ids,
     get_fencing_topology,
@@ -437,6 +445,9 @@ def _get_dependencies_to_remove(
             element_ids_to_remove.add(element_id)
             elements_to_process.extend(_get_element_references(el))
             elements_to_process.extend(_get_inner_references(el))
+            elements_to_process.extend(
+                _get_remote_node_name_constraint_references(el)
+            )
 
             for level_el in find_levels_with_device(
                 get_fencing_topology(get_root(el)), element_id
@@ -528,3 +539,26 @@ def _is_empty_after_inner_el_removal(parent_el: _Element) -> bool:
     if is_location_constraint(parent_el):
         return _is_last_element(parent_el, const.TAG_RULE)
     return False
+
+
+def _get_remote_node_name_constraint_references(
+    element: _Element,
+) -> Iterable[_Element]:
+    """
+    Return all location constraints referencing remote or guest node name.
+    """
+    if not is_resource(element):
+        return []
+
+    if is_guest_node(element):
+        return find_location_constraints_referencing_node_name(
+            element, get_node_name_from_guest(element)
+        )
+
+    remote_node_name = get_node_name_from_remote(element)
+    if remote_node_name is not None:
+        return find_location_constraints_referencing_node_name(
+            element, remote_node_name
+        )
+
+    return []

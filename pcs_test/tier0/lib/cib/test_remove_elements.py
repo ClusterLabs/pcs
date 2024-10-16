@@ -968,6 +968,39 @@ class ElementsToRemoveFindElements(TestCase, GetCibMixin):
             ),
         )
 
+    def test_remote_guest_node_name_constraint(self):
+        cib = self.get_cib(
+            resources="""
+                <resources>
+                    <primitive id="R1">
+                        <meta_attributes id="meta">
+                            <nvpair id="meta-remote-node" name="remote-node" value="guest"/>
+                        </meta_attributes>
+                    </primitive>
+                    <primitive id="R2" class="ocf" provider="pacemaker" type="remote"/>
+                </resources>
+            """,
+            constraints="""
+                <constraints>
+                    <rsc_location id="l1" rsc="C" node="guest" score="100"/>
+                    <rsc_location id="l2" rsc="C" node="R2" score="100"/>
+                    <rsc_location id="l3" rsc="C" node="node" score="100"/>
+                </constraints>
+            """,
+        )
+        elements_to_remove = lib.ElementsToRemove(cib, ["R1", "R2"])
+        self.assert_elements_to_remove(
+            elements_to_remove,
+            {"R1", "R2", "l1", "l2"},
+            resources_to_disable=[
+                cib.find("./configuration/resources/primitive[@id='R1']"),
+                cib.find("./configuration/resources/primitive[@id='R2']"),
+            ],
+            dependant_elements=lib.DependantElements(
+                {"l1": "rsc_location", "l2": "rsc_location"}
+            ),
+        )
+
 
 class RemoveSpecifiedElements(TestCase, GetCibMixin):
     def setUp(self):
