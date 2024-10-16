@@ -21,7 +21,7 @@
 - Commands `pcs cluster node delete-remote | remove-remote` no longer remove
   location constraints referencing the node name of the removed node. This new
   behavior is consistent with the other node removal commands.
-
+- Minimal required version of python3-pyparsing has been changed to 3.0.0
 
 ### Fixed
 - Do not end with error when using the instances quantifier in `pcs status
@@ -115,9 +115,6 @@
   ([RHEL-35670])
 - Standalone webui backend support in pcsd is now optional. It can be enabled
   by adding `--enable-webui` option to `./configure` command. ([RHEL-29739])
-
-### Changed
-- Minimal required version of python3-pyparsing has been changed to 3.0.0
 
 ### Deprecated
 - Pcs produces warnings about [features planned to be removed in pacemaker 3](https://projects.clusterlabs.org/w/projects/pacemaker/pacemaker_3.0_changes/pacemaker_3.0_configuration_changes/):
