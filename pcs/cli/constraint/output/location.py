@@ -185,52 +185,49 @@ def _rule_to_cmd_pairs(rule: CibRuleExpressionDto) -> list[tuple[str, str]]:
     return pairs
 
 
-def _add_rule_cmd(constraint_id: str, rule: CibRuleExpressionDto) -> list[str]:
-    result = [f"pcs -- constraint rule add {shlex.quote(constraint_id)}"]
-    result.extend(
-        indent(
-            [
-                pairs_to_cmd([("id", rule.id)] + _rule_to_cmd_pairs(rule)),
-                shlex.quote(rule.as_string),
-            ],
-            indent_step=INDENT_STEP,
-        )
-    )
-    return result
-
-
 def _plain_constraint_rule_to_cmd(
     constraint_dto: CibConstraintLocationDto,
 ) -> list[list[str]]:
-    result = [
-        "pcs -- constraint location {resource} rule".format(
-            resource=_plain_constraint_get_resource_for_cmd(constraint_dto)
+    if len(constraint_dto.attributes.rules) > 1:
+        warn(
+            f"Constraint '{constraint_dto.attributes.constraint_id}' contains "
+            "more than one rule, which is no longer supported. Instead, each "
+            "rule will be put in a separate constraint."
         )
-    ]
-    first_rule, *rest_rules = constraint_dto.attributes.rules
-    result.extend(
-        indent(
-            [
-                pairs_to_cmd(
-                    [
-                        ("id", first_rule.id),
-                        (
-                            "constraint-id",
-                            constraint_dto.attributes.constraint_id,
-                        ),
-                    ]
-                    + _attributes_to_pairs(constraint_dto.attributes)
-                    + _rule_to_cmd_pairs(first_rule)
-                ),
-                shlex.quote(first_rule.as_string),
-            ],
-            indent_step=INDENT_STEP,
+
+    result = []
+    for rule_index, one_rule in enumerate(constraint_dto.attributes.rules):
+        command = [
+            "pcs -- constraint location {resource} rule".format(
+                resource=_plain_constraint_get_resource_for_cmd(constraint_dto)
+            )
+        ]
+        pairs = [("id", one_rule.id)]
+        if rule_index == 0:
+            # Constraint ID must be unique. Since we split additional rules
+            # into their own constraints, we cannot use the original constraint
+            # ID for the newly created constraints.
+            pairs.append(
+                (
+                    "constraint-id",
+                    constraint_dto.attributes.constraint_id,
+                )
+            )
+        command.extend(
+            indent(
+                [
+                    pairs_to_cmd(
+                        pairs
+                        + _attributes_to_pairs(constraint_dto.attributes)
+                        + _rule_to_cmd_pairs(one_rule)
+                    ),
+                    shlex.quote(one_rule.as_string),
+                ],
+                indent_step=INDENT_STEP,
+            )
         )
-    )
-    return [result] + [
-        _add_rule_cmd(constraint_dto.attributes.constraint_id, rule)
-        for rule in rest_rules
-    ]
+        result.append(command)
+    return result
 
 
 def plain_constraint_to_cmd(

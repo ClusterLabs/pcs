@@ -70,3 +70,10 @@ DUPLICATE_CONSTRAINTS_LIST = _D("DUPLICATE_CONSTRAINTS_LIST")
 # Removed in the first pcs-0.12.x version
 # Replaced by COMMAND_MISMATCH_ARGUMENT_TYPE
 RESOURCE_STONITH_COMMANDS_MISMATCH = _D("RESOURCE_STONITH_COMMANDS_MISMATCH")
+
+# Removed in the first pcs-0.12.x version
+# Pacemaker 3 no longer allows several rules in one constraint. Related code
+# was removed from pcs and the report is no longer produced.
+CANNOT_ADD_RULE_TO_CONSTRAINT_WRONG_TYPE = _D(
+    "CANNOT_ADD_RULE_TO_CONSTRAINT_WRONG_TYPE"
+)

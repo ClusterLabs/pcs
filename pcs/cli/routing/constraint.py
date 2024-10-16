@@ -7,6 +7,7 @@ from pcs import (
 )
 from pcs.cli.common.errors import (
     CmdLineInputError,
+    raise_command_removed,
     raise_command_replaced,
 )
 from pcs.cli.common.parse_args import (
@@ -16,7 +17,6 @@ from pcs.cli.common.parse_args import (
 from pcs.cli.common.routing import create_router
 from pcs.cli.constraint import command as constraint_command
 from pcs.cli.constraint.location import command as location_command
-from pcs.cli.constraint.rule import command as rule_command
 from pcs.cli.constraint_ticket import command as ticket_command
 from pcs.utils import exit_on_cmdline_input_error
 
@@ -96,13 +96,8 @@ constraint_cmd = create_router(
         ),
         "config": constraint.config_cmd,
         "ref": constraint.ref,
-        "rule": create_router(
-            {
-                "add": location_command.rule_add,
-                "remove": rule_command.remove,
-                "delete": rule_command.remove,
-            },
-            ["constraint", "rule"],
+        "rule": lambda lib, argv, modifiers: raise_command_removed(
+            pcs_version="0.12"
         ),
     },
     ["constraint"],

@@ -2549,32 +2549,6 @@ Commands:
 
     ref <resource>...
         List constraints referencing specified resource.
-
-    rule add <constraint id> [id=<rule id>] [role=Promoted|Unpromoted]
-             [score=<score>|score-attribute=<attribute>] <expression>
-        Add a rule to a location constraint specified by 'constraint id' where
-        the expression looks like one of the following:
-          defined|not_defined <node attribute>
-          <node attribute> lt|gt|lte|gte|eq|ne [string|integer|number|version]
-              <value>
-          date gt|lt <date>
-          date in_range <date> to <date>
-          date in_range <date> to duration <duration options>...
-          date-spec <date spec options>...
-          <expression> and|or <expression>
-          ( <expression> )
-        where duration options and date spec options are: hours, monthdays,
-        weekdays, yeardays, months, weeks, years, weekyears, moon.
-        If score is omitted it defaults to INFINITY. If id is omitted, one is
-        generated from the constraint id.
-
-    rule delete <rule id>...
-        Remove rules from their location constraints. If all rules are
-        removed from a constraint, the constraint will also be removed.
-
-    rule remove <rule id>...
-        Remove rules from their location constraints. If all rules are
-        removed from a constraint, the constraint will also be removed.
 """.format(
         output_format_syntax=_output_format_syntax(),
         output_format_desc=_format_desc((" ", _output_format_desc())),

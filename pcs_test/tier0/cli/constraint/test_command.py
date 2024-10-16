@@ -67,7 +67,7 @@ class TestRemoveConstraint(TestCase):
         constraint_or_rule_ids = [
             "location-R7-localhost-INFINITY",
             "loc_constr_with_expired_rule-rule",
-            "loc_constr_with_not_expired_rule-rule-1",
+            "loc_constr_with_not_expired_rule-1-rule",
             "colocation-G1-clone-R6-clone--100",
             "order_set_B2R6-cloneSe",
             "ticket_set_R7B2G2",

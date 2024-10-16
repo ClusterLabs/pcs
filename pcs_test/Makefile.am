@@ -20,6 +20,7 @@ EXTRA_DIST		= \
 			  resources/cib-property.xml \
 			  resources/cib-remote.xml \
 			  resources/cib-resources.xml \
+			  resources/cib-rule-several-times-in-constraint.xml \
 			  resources/cib-rule-with-spaces-in-date.xml \
 			  resources/cib-status.xml \
 			  resources/cib-tags.xml \
@@ -86,8 +87,6 @@ EXTRA_DIST		= \
 			  tier0/cli/constraint/location/__init__.py \
 			  tier0/cli/constraint/location/test_command.py \
 			  tier0/cli/constraint/output/test_all.py \
-			  tier0/cli/constraint/rule/__init__.py \
-			  tier0/cli/constraint/rule/test_command.py \
 			  tier0/cli/constraint/test_command.py \
 			  tier0/cli/constraint/test_parse_args.py \
 			  tier0/cli/constraint_colocation/__init__.py \

@@ -180,9 +180,45 @@ class DuplicatesCheckerLocationRulePlainTest(TestCase):
                     )
 
 
-class ValidateWithRuleCommonMixin:
-    def get_validator(self, id_provider, rule_str, rule_options):
-        raise NotImplementedError()
+class ValidateCreatePlainWithRuleCommonMixin:
+    def setUp(self):
+        self.cib = etree.fromstring(
+            """
+            <cib>
+              <configuration>
+                <resources>
+                  <primitive id="R1" class="ocf" provider="pacemaker" type="Dummy">
+                    <operations>
+                      <op id="R1-monitor" name="monitor" interval="60s" />
+                    </operations>
+                  </primitive>
+                  <clone id="C1">
+                    <primitive id="C1R1" class="ocf" provider="pacemaker" type="Dummy" />
+                  </clone>
+                </resources>
+                <constraints />
+              </configuration>
+            </cib>
+            """
+        )
+        self.resource = self.cib.xpath(".//primitive[@id='R1']")[0]
+        self.id_provider = IdProvider(self.cib)
+
+    def get_validator(
+        self,
+        id_provider,
+        rule_str,
+        rule_options,
+        constraint_options=None,
+        constrained_el=None,
+    ):
+        return location.ValidateCreatePlainWithRule(
+            id_provider,
+            rule_str,
+            rule_options,
+            constraint_options or {},
+            constrained_el if constrained_el is not None else self.resource,
+        )
 
     def test_success_minimal(self):
         validator = self.get_validator(self.id_provider, "#uname eq node1", {})
@@ -357,47 +393,6 @@ class ValidateWithRuleCommonMixin:
                     ],
                 )
 
-
-class ValidateCreatePlainWithRuleCommonMixin(ValidateWithRuleCommonMixin):
-    def setUp(self):
-        self.cib = etree.fromstring(
-            """
-            <cib>
-              <configuration>
-                <resources>
-                  <primitive id="R1" class="ocf" provider="pacemaker" type="Dummy">
-                    <operations>
-                      <op id="R1-monitor" name="monitor" interval="60s" />
-                    </operations>
-                  </primitive>
-                  <clone id="C1">
-                    <primitive id="C1R1" class="ocf" provider="pacemaker" type="Dummy" />
-                  </clone>
-                </resources>
-                <constraints />
-              </configuration>
-            </cib>
-            """
-        )
-        self.resource = self.cib.xpath(".//primitive[@id='R1']")[0]
-        self.id_provider = IdProvider(self.cib)
-
-    def get_validator(
-        self,
-        id_provider,
-        rule_str,
-        rule_options,
-        constraint_options=None,
-        constrained_el=None,
-    ):
-        return location.ValidateCreatePlainWithRule(
-            id_provider,
-            rule_str,
-            rule_options,
-            constraint_options or {},
-            constrained_el if constrained_el is not None else self.resource,
-        )
-
     def test_success_constraint_options(self):
         validator = location.ValidateCreatePlainWithRule(
             self.id_provider,
@@ -558,82 +553,6 @@ class ValidateCreatePlainWithRuleWithoutResource(
         self.resource = None
 
 
-class ValidateAddRuleToConstraintTest(ValidateWithRuleCommonMixin, TestCase):
-    def setUp(self):
-        self.cib = etree.fromstring(
-            """
-            <cib>
-              <configuration>
-                <resources>
-                  <primitive id="R1" class="ocf" provider="pacemaker" type="Dummy">
-                    <operations>
-                      <op id="R1-monitor" name="monitor" interval="60s" />
-                    </operations>
-                  </primitive>
-                </resources>
-                <constraints>
-                  <rsc_location id="L1" rsc="R1" node="node1" score="123" />
-                  <rsc_location id="L2" rsc="R1">
-                    <rule id="L2-rule" boolean-op="and" score="0">
-                      <expression id="L2-rule-expr"
-                          attribute="#uname" operation="eq" value="node3"
-                      />
-                    </rule>
-                  </rsc_location>
-                </constraints>
-              </configuration>
-            </cib>
-            """
-        )
-        self.constraint = self.cib.xpath(".//rsc_location[@id='L1']")[0]
-        self.rule_constraint = self.cib.xpath(".//rsc_location[@id='L2']")[0]
-        self.id_provider = IdProvider(self.cib)
-
-    def get_validator(
-        self,
-        id_provider,
-        rule_str,
-        rule_options,
-        constraint_el=None,
-    ):
-        return location.ValidateAddRuleToConstraint(
-            id_provider,
-            rule_str,
-            rule_options,
-            constraint_el if constraint_el is not None else self.constraint,
-        )
-
-    def test_add_to_location_constraint(self):
-        validator = self.get_validator(
-            self.id_provider, "#uname eq node1", {}, self.constraint
-        )
-        assert_report_item_list_equal(validator.validate(), [])
-
-    def test_add_to_location_constraint_with_rule(self):
-        validator = self.get_validator(
-            self.id_provider, "#uname eq node1", {}, self.rule_constraint
-        )
-        assert_report_item_list_equal(validator.validate(), [])
-
-    def test_add_to_element(self):
-        element = self.cib.xpath(".//*[@id='R1-monitor']")[0]
-        for force_flags in ({}, {reports.codes.FORCE}):
-            with self.subTest(force_flags=force_flags):
-                validator = self.get_validator(
-                    self.id_provider, "#uname eq node1", {}, element
-                )
-                assert_report_item_list_equal(
-                    validator.validate(force_flags),
-                    [
-                        fixture.error(
-                            reports.codes.CANNOT_ADD_RULE_TO_CONSTRAINT_WRONG_TYPE,
-                            element_id="R1-monitor",
-                            element_type="op",
-                        )
-                    ],
-                )
-
-
 class CreatePlainWithRule(TestCase):
     @staticmethod
     def fixture_cib(constraint=""):
@@ -729,117 +648,26 @@ class CreatePlainWithRule(TestCase):
         )
         assert_xml_equal(cib_expected, etree_to_str(cib))
 
-
-class AddRuleToConstraint(TestCase):
-    @staticmethod
-    def fixture_cib_rule_constraint(second_rule=""):
-        return f"""
-            <constraints>
-              <rsc_location id="L1" rsc="R1">
-                <rule id="L1-rule" boolean-op="and" score="INFINITY">
-                  <expression id="L1-rule-expr"
-                    attribute="#uname" operation="eq" value="node1"
-                  />
-                </rule>{second_rule}
-              </rsc_location>
-            </constraints>
-        """
-
-    @staticmethod
-    def fixture_cib_constraint():
-        return """
-            <constraints>
-              <rsc_location id="L1" rsc="R1" node="node1" score="123" />
-            </constraints>
-        """
-
-    @staticmethod
-    def run_add_rule(cib, constraint_id, rule_options, rule="#uname eq node2"):
-        element = cib.xpath(".//rsc_location[@id=$id]", id=constraint_id)[0]
-        id_provider = IdProvider(cib)
-        rule_tree = parse_rule(rule)
-        location.add_rule_to_constraint(
-            element,
-            id_provider,
-            const.PCMK_NEW_ROLES_CIB_VERSION,
-            rule_tree,
-            rule_options,
-        )
-
-    def test_minimal(self):
-        cib = etree.fromstring(self.fixture_cib_rule_constraint())
-        cib_expected = self.fixture_cib_rule_constraint(
-            """
-                <rule id="L1-rule-1" boolean-op="and" score="INFINITY">
-                  <expression id="L1-rule-1-expr"
-                      attribute="#uname" operation="eq" value="node2"
-                  />
-                </rule>
-            """
-        )
-        self.run_add_rule(cib, "L1", {})
-        assert_xml_equal(cib_expected, etree_to_str(cib))
-
-    def test_score(self):
-        cib = etree.fromstring(self.fixture_cib_rule_constraint())
-        cib_expected = self.fixture_cib_rule_constraint(
-            """
-                <rule id="L1-rule-1" boolean-op="and" score="321">
-                  <expression id="L1-rule-1-expr"
-                      attribute="#uname" operation="eq" value="node2"
-                  />
-                </rule>
-            """
-        )
-        self.run_add_rule(cib, "L1", {"score": "321"})
-        assert_xml_equal(cib_expected, etree_to_str(cib))
-
     def test_score_attribute(self):
-        cib = etree.fromstring(self.fixture_cib_rule_constraint())
-        cib_expected = self.fixture_cib_rule_constraint(
+        cib = etree.fromstring(self.fixture_cib())
+        cib_expected = self.fixture_cib(
             """
-                <rule id="L1-rule-1" boolean-op="and" score-attribute="something">
-                  <expression id="L1-rule-1-expr"
-                      attribute="#uname" operation="eq" value="node2"
-                  />
-                </rule>
-            """
-        )
-        self.run_add_rule(cib, "L1", {"score-attribute": "something"})
-        assert_xml_equal(cib_expected, etree_to_str(cib))
-
-    def test_role(self):
-        cib = etree.fromstring(self.fixture_cib_rule_constraint())
-        cib_expected = self.fixture_cib_rule_constraint(
-            f"""
-                <rule id="L1-rule-1" boolean-op="and" score="INFINITY"
-                    role="{const.PCMK_ROLE_PROMOTED}"
+                <rsc_location id="location-R1" rsc="R1">
+                  <rule id="location-R1-rule" boolean-op="and"
+                    score-attribute="something"
                 >
-                  <expression id="L1-rule-1-expr"
-                      attribute="#uname" operation="eq" value="node2"
-                  />
-                </rule>
+                    <expression id="location-R1-rule-expr"
+                        attribute="#uname" operation="eq" value="node1"
+                    />
+                  </rule>
+                </rsc_location>
             """
         )
-        self.run_add_rule(cib, "L1", {"role": const.PCMK_ROLE_PROMOTED})
-        assert_xml_equal(cib_expected, etree_to_str(cib))
-
-    def test_custom_id(self):
-        cib = etree.fromstring(self.fixture_cib_rule_constraint())
-        cib_expected = self.fixture_cib_rule_constraint(
-            """
-                <rule id="id1" boolean-op="and" score="INFINITY">
-                  <expression id="id1-expr"
-                      attribute="#uname" operation="eq" value="node2"
-                  />
-                </rule>
-            """
+        self.run_create_constraint(
+            cib,
+            const.RESOURCE_ID_TYPE_PLAIN,
+            "R1",
+            {"score-attribute": "something"},
+            {},
         )
-        self.run_add_rule(cib, "L1", {"id": "id1"})
-        assert_xml_equal(cib_expected, etree_to_str(cib))
-
-    def test_replace_node_score(self):
-        cib = etree.fromstring(self.fixture_cib_constraint())
-        cib_expected = self.fixture_cib_rule_constraint()
-        self.run_add_rule(cib, "L1", {}, "#uname eq node1")
         assert_xml_equal(cib_expected, etree_to_str(cib))

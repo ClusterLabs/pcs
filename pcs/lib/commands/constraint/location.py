@@ -3,8 +3,6 @@ from typing import (
     Mapping,
 )
 
-from lxml import etree
-
 from pcs.common import (
     const,
     reports,
@@ -130,102 +128,6 @@ def create_plain_with_rule(
     )
     if env.report_processor.has_errors:
         raise LibraryError()
-
-    # push CIB
-    env.push_cib()
-
-
-def add_rule_to_constraint(
-    env: LibraryEnvironment,
-    constraint_id: str,
-    rule: str,
-    rule_options: Mapping[str, str],
-    force_flags: Collection[reports.types.ForceCode] = (),
-) -> None:
-    """
-    Add a rule to an existing constraint, remove its simple node-score settings
-
-    env --
-    constraint_id -- ID of a location constraint to be modified
-    rule -- constraint's rule - specifies when the constraint is active
-    rule_options -- additional options for the rule
-    force_flags -- list of flags codes
-    """
-    # Parse the rule to see if we need to upgrade CIB schema. All errors
-    # would be properly reported by a validator called bellow, so we can
-    # safely ignore them here.
-    nice_to_have_cib_version = None
-    try:
-        rule_tree = parse_rule(rule)
-        if has_node_attr_expr_with_type_integer(rule_tree):
-            nice_to_have_cib_version = (
-                const.PCMK_RULES_NODE_ATTR_EXPR_WITH_INT_TYPE_CIB_VERSION
-            )
-    except RuleParseError:
-        pass
-
-    cib = env.get_cib(
-        nice_to_have_version=nice_to_have_cib_version,
-    )
-    id_provider = IdProvider(cib)
-
-    # load the constraint to be modified
-    try:
-        constraint_el = get_element_by_id(cib, constraint_id)
-    except ElementNotFound:
-        if env.report_processor.report(
-            reports.ReportItem.error(
-                reports.messages.IdNotFound(constraint_id, [])
-            )
-        ).has_errors:
-            raise LibraryError() from None
-
-    # validation
-    rule_options_pairs = validate.values_to_pairs(
-        rule_options,
-        validate.option_value_normalization(
-            {"role": lambda value: value.capitalize()}
-        ),
-    )
-    validator = location.ValidateAddRuleToConstraint(
-        id_provider, rule, rule_options_pairs, constraint_el
-    )
-    env.report_processor.report_list(validator.validate(force_flags))
-
-    if env.report_processor.has_errors:
-        raise LibraryError()
-
-    # check for duplicities
-    mock_constraint_el = etree.Element(
-        constraint_el.tag,
-        attrib=dict(constraint_el.attrib.items()),  # type: ignore
-    )
-    cib_validated_with = get_pacemaker_version_by_which_cib_was_validated(cib)
-    rule_options_clean = validate.pairs_to_values(rule_options_pairs)
-    location.add_rule_to_constraint(
-        mock_constraint_el,
-        IdProvider(cib),
-        cib_validated_with,
-        validator.get_parsed_rule(),
-        rule_options_clean,
-    )
-    env.report_processor.report_list(
-        location.DuplicatesCheckerLocationRulePlain().check(
-            get_constraints(cib), mock_constraint_el, force_flags
-        )
-    )
-
-    if env.report_processor.has_errors:
-        raise LibraryError()
-
-    # modify CIB
-    location.add_rule_to_constraint(
-        constraint_el,
-        id_provider,
-        cib_validated_with,
-        validator.get_parsed_rule(),
-        rule_options_clean,
-    )
 
     # push CIB
     env.push_cib()

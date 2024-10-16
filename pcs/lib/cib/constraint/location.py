@@ -1,4 +1,3 @@
-import abc
 from typing import (
     Collection,
     Mapping,
@@ -180,9 +179,9 @@ class DuplicatesCheckerLocationRulePlain(DuplicatesChecker):
         )
 
 
-class ValidateWithRuleBase:
+class ValidateCreatePlainWithRule:
     """
-    Common tools for validating rule constraints
+    Validator for creating new constraint with a rule and appending it to CIB
     """
 
     def __init__(
@@ -190,18 +189,23 @@ class ValidateWithRuleBase:
         id_provider: IdProvider,
         rule_str: str,
         rule_options: validate.TypeOptionMap,
+        constraint_options: validate.TypeOptionMap,
+        constrained_el: Optional[_Element] = None,
     ):
         """
         id_provider -- elements' ids generator
         rule_str -- rule as a string, to be parsed and validated
         rule_options -- additional options for the rule
+        constraint_options -- additional options for the constraint
+        constrained_el -- an element for which the constraint is being created
         """
         self._id_provider = id_provider
         self._rule_str = rule_str
         self._rule_options = rule_options
         self._rule_parsed: Optional[rule.RuleRoot] = None
+        self._resource_el = constrained_el
+        self._constraint_options = constraint_options
 
-    @abc.abstractmethod
     def validate(
         self, force_flags: Collection[reports.types.ForceCode] = ()
     ) -> reports.ReportItemList:
@@ -210,7 +214,53 @@ class ValidateWithRuleBase:
 
         force_flags -- list of flags codes
         """
-        raise NotImplementedError()
+        force_options = reports.codes.FORCE in force_flags
+        allow_in_multiinstance_resources = reports.codes.FORCE in force_flags
+        report_list: reports.ReportItemList = []
+
+        # validate resource specification
+        if self._resource_el is not None:
+            report_list.extend(
+                validate_constrainable_elements(
+                    [self._resource_el], allow_in_multiinstance_resources
+                )
+            )
+
+        # validate constraint options
+        validators_constraint = [
+            validate.NamesIn(
+                ("id", "resource-discovery"), option_type="constraint"
+            ),
+            # with id_provider it validates that the id is available as well
+            validate.ValueId(
+                "id",
+                option_name_for_report="constraint id",
+                id_provider=self._id_provider,
+            ),
+            validate.ValueIn(
+                "resource-discovery",
+                [
+                    CibResourceDiscovery.ALWAYS,
+                    CibResourceDiscovery.EXCLUSIVE,
+                    CibResourceDiscovery.NEVER,
+                ],
+                severity=reports.item.get_severity(
+                    reports.codes.FORCE, force_options
+                ),
+            ),
+        ]
+        report_list.extend(
+            validate.ValidatorAll(validators_constraint).validate(
+                self._constraint_options
+            )
+        )
+
+        # validate rule options
+        report_list.extend(self._validate_rule_options())
+        # parse and validate rule
+        report_list.extend(self._validate_rule())
+
+        return report_list
 
     def get_parsed_rule(self) -> rule.RuleRoot:
         """
@@ -281,121 +331,6 @@ class ValidateWithRuleBase:
         return report_list
 
 
-class ValidateCreatePlainWithRule(ValidateWithRuleBase):
-    """
-    Validator for creating new constraint with a rule and appending it to CIB
-    """
-
-    def __init__(
-        self,
-        id_provider: IdProvider,
-        rule_str: str,
-        rule_options: validate.TypeOptionMap,
-        constraint_options: validate.TypeOptionMap,
-        constrained_el: Optional[_Element] = None,
-    ):
-        """
-        constraint_options -- additional options for the constraint
-        constrained_el -- an element for which the constraint is being created
-        """
-        super().__init__(id_provider, rule_str, rule_options)
-        self._resource_el = constrained_el
-        self._constraint_options = constraint_options
-
-    def validate(
-        self, force_flags: Collection[reports.types.ForceCode] = ()
-    ) -> reports.ReportItemList:
-        force_options = reports.codes.FORCE in force_flags
-        allow_in_multiinstance_resources = reports.codes.FORCE in force_flags
-        report_list: reports.ReportItemList = []
-
-        # validate resource specification
-        if self._resource_el is not None:
-            report_list.extend(
-                validate_constrainable_elements(
-                    [self._resource_el], allow_in_multiinstance_resources
-                )
-            )
-
-        # validate constraint options
-        validators_constraint = [
-            validate.NamesIn(
-                ("id", "resource-discovery"), option_type="constraint"
-            ),
-            # with id_provider it validates that the id is available as well
-            validate.ValueId(
-                "id",
-                option_name_for_report="constraint id",
-                id_provider=self._id_provider,
-            ),
-            validate.ValueIn(
-                "resource-discovery",
-                [
-                    CibResourceDiscovery.ALWAYS,
-                    CibResourceDiscovery.EXCLUSIVE,
-                    CibResourceDiscovery.NEVER,
-                ],
-                severity=reports.item.get_severity(
-                    reports.codes.FORCE, force_options
-                ),
-            ),
-        ]
-        report_list.extend(
-            validate.ValidatorAll(validators_constraint).validate(
-                self._constraint_options
-            )
-        )
-
-        # validate rule options
-        report_list.extend(self._validate_rule_options())
-        # parse and validate rule
-        report_list.extend(self._validate_rule())
-
-        return report_list
-
-
-class ValidateAddRuleToConstraint(ValidateWithRuleBase):
-    """
-    Validator for adding new rule to an existing location constraint
-    """
-
-    def __init__(
-        self,
-        id_provider: IdProvider,
-        rule_str: str,
-        rule_options: validate.TypeOptionMap,
-        constraint_el: _Element,
-    ):
-        """
-        constraint_el -- location constraint to be modified
-        """
-        super().__init__(id_provider, rule_str, rule_options)
-        self._constraint_el = constraint_el
-
-    def validate(
-        self, force_flags: Collection[reports.types.ForceCode] = ()
-    ) -> reports.ReportItemList:
-        del force_flags
-        report_list: reports.ReportItemList = []
-        # To keep backwards compatibility, adding rules to simple node-score
-        # location constraints is allowed. The rule replaces node-score
-        # preference.
-        if not is_location_constraint(self._constraint_el):
-            report_list.append(
-                reports.ReportItem.error(
-                    reports.messages.CannotAddRuleToConstraintWrongType(
-                        self._constraint_el.get("id", ""),
-                        self._constraint_el.tag,
-                    )
-                )
-            )
-        # validate rule options
-        report_list.extend(self._validate_rule_options())
-        # parse and validate rule
-        report_list.extend(self._validate_rule())
-        return report_list
-
-
 def create_plain_with_rule(
     parent_element: _Element,
     id_provider: IdProvider,
@@ -440,14 +375,14 @@ def create_plain_with_rule(
             constraint_el.attrib[name] = value
 
     # create a rule element
-    add_rule_to_constraint(
+    _add_rule_to_constraint(
         constraint_el, id_provider, cib_schema_version, rule_tree, rule_options
     )
 
     return constraint_el
 
 
-def add_rule_to_constraint(
+def _add_rule_to_constraint(
     constraint_el: _Element,
     id_provider: IdProvider,
     cib_schema_version: Version,

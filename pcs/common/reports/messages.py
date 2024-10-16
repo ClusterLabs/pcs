@@ -7641,28 +7641,6 @@ class RuleNoExpressionSpecified(ReportItemMessage):
 
 
 @dataclass(frozen=True)
-class CannotAddRuleToConstraintWrongType(ReportItemMessage):
-    """
-    It was attempted to add a rule to constraint other than location
-
-    constraint_id -- id of the element which cannot hold rules
-    constraint_type -- tag of the element which cannot hold rules
-    """
-
-    element_id: str
-    element_type: str
-    _code = codes.CANNOT_ADD_RULE_TO_CONSTRAINT_WRONG_TYPE
-
-    @property
-    def message(self) -> str:
-        _element_type = _type_to_string(self.element_type, article=True)
-        return (
-            "Rules can only be added to location constraints, "
-            f"'{self.element_id}' is {_element_type}"
-        )
-
-
-@dataclass(frozen=True)
 class CibNvsetAmbiguousProvideNvsetId(ReportItemMessage):
     """
     An old command supporting only one nvset have been used when several nvsets

@@ -4570,9 +4570,6 @@ class ExpiredConstraints(ConstraintBaseTest):
             "resource create D2 ocf:pcsmock:minimal".split()
         )
         self.assert_pcs_success(
-            "resource create D3 ocf:pcsmock:minimal".split()
-        )
-        self.assert_pcs_success(
             "constraint location D1 rule id=test-rule-D1-1 score=INFINITY".split()
             + ["not_defined pingd"]
         )
@@ -4585,16 +4582,8 @@ class ExpiredConstraints(ConstraintBaseTest):
             + ["date in_range 2019-01-01 to 2019-02-01"]
         )
         self.assert_pcs_success(
-            "constraint rule add location-D2 id=test-duration score=INFINITY".split()
+            "constraint location D2 rule id=test-duration score=INFINITY".split()
             + ["date in_range 2019-03-01 to duration weeks=2"]
-        )
-        self.assert_pcs_success(
-            "constraint location D3 rule id=test-rule-D3-0 score=INFINITY".split()
-            + ["date in_range 2019-03-01 to duration weeks=2"]
-        )
-        self.assert_pcs_success(
-            "constraint rule add location-D3 id=test-defined score=INFINITY".split()
-            + ["not_defined pingd"]
         )
 
     def test_complex_primitive_plain(self):
@@ -4615,13 +4604,6 @@ class ExpiredConstraints(ConstraintBaseTest):
                           Expression: date eq 2019-01-01
                           Expression: date eq 2019-01-30
                         Expression: #uname eq node1
-                  resource 'D3'
-                    Rules:
-                      Rule (expired): boolean-op=and score=INFINITY
-                        Expression: date in_range 2019-03-01 to duration
-                          Duration: weeks=2
-                      Rule: boolean-op=and score=INFINITY
-                        Expression: not_defined pingd
                 """
             ),
         )
@@ -4648,16 +4630,11 @@ class ExpiredConstraints(ConstraintBaseTest):
                     Rules:
                       Rule (expired): boolean-op=and score=INFINITY
                         Expression: date in_range 2019-01-01 to 2019-02-01
-                      Rule (expired): boolean-op=and score=INFINITY
-                        Expression: date in_range 2019-03-01 to duration
-                          Duration: weeks=2
-                  resource 'D3'
+                  resource 'D2'
                     Rules:
                       Rule (expired): boolean-op=and score=INFINITY
                         Expression: date in_range 2019-03-01 to duration
                           Duration: weeks=2
-                      Rule: boolean-op=and score=INFINITY
-                        Expression: not_defined pingd
                 """
             ),
         )

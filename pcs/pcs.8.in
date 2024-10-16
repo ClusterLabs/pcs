@@ -1199,33 +1199,6 @@ Remove constraint(s) or constraint rules with the specified id(s).
 .TP
 ref <resource>...
 List constraints referencing specified resource.
-.TP
-rule add <constraint id> [id=<rule id>] [role=Promoted|Unpromoted] [score=<score>|score\-attribute=<attribute>] <expression>
-Add a rule to a location constraint specified by 'constraint id' where the expression looks like one of the following:
-.br
-  defined|not_defined <node attribute>
-.br
-  <node attribute> lt|gt|lte|gte|eq|ne [string|integer|number|version] <value>
-.br
-  date gt|lt <date>
-.br
-  date in_range <date> to <date>
-.br
-  date in_range <date> to duration <duration options>...
-.br
-  date\-spec <date spec options>...
-.br
-  <expression> and|or <expression>
-.br
-  ( <expression> )
-.br
-where duration options and date spec options are: hours, monthdays, weekdays, yeardays, months, weeks, years, weekyears, moon. If score is omitted it defaults to INFINITY. If id is omitted one is generated from the constraint id.
-.TP
-rule delete <rule id>...
-Remove rules from their location constraints. If all rules are removed from a constraint, the constraint will also be removed.
-.TP
-rule remove <rule id>...
-Remove rules from their location constraints. If all rules are removed from a constraint, the constraint will also be removed.
 .SS "qdevice"
 .TP
 status <device model> [\fB\-\-full\fR] [<cluster name>]
@@ -1648,6 +1621,8 @@ Following pacemaker 3, pcs has dropped support for:
 nagios and upstart resource classes
 .br
 rkt containers in bundle resources
+.br
+multiple rules in a single location constraint
 .SS "Legacy role names"
 .TP
 Legacy role names and derived options and keywords are no longer accepted, use 'Promoted', 'Unpromoted', \fB\-\-promoted\fR, 'promotable', 'promoted-max'.
@@ -1697,6 +1672,9 @@ This deprecated command, as well as its variants 'pcs constraint [location | col
 .TP
 location add
 Specifying score as a standalone value is deprecated in favor of score=value. This makes the command consistent with other commands for creating constraints.
+.TP
+rule add | delete | remove
+These deprecated commands have been removed, as pacemaker 3 no longer allows location constraints to contain more than one rule.
 .TP
 show
 This deprecated command, as well as its variants 'pcs constraint [location | colocation | order | ticket] show', has been removed. Use 'pcs constraint [location | colocation | order | ticket] config' instead.

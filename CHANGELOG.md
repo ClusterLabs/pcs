@@ -7,6 +7,8 @@
   been removed ([RHEL-49520])
 - Following pacemaker 3, support for rkt containers in bundle resources has
   been removed ([RHEL-49521])
+- Following pacemaker 3, support for multiple rules in a single location
+  constraint has been removed ([RHEL-62719])
 
 ### Added
 - Support for output formats `json` and `cmd` to `pcs tag config` command
@@ -54,6 +56,7 @@
 [RHEL-55723]: https://issues.redhat.com/browse/RHEL-55723
 [RHEL-61747]: https://issues.redhat.com/browse/RHEL-61747
 [RHEL-61889]: https://issues.redhat.com/browse/RHEL-61889
+[RHEL-62719]: https://issues.redhat.com/browse/RHEL-62719
 
 
 ## [0.12.0a1] - 2024-06-21
