@@ -146,6 +146,8 @@ _type_translation = {
     "resource_set": "resource set",
     "rsc_colocation": "colocation constraint",
     "rsc_location": "location constraint",
+    "rsc_order": "order constraint",
+    "rsc_ticket": "ticket constraint",
 }
 _type_articles = {
     "ACL group": "an",

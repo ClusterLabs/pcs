@@ -1955,7 +1955,14 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
             "constraint rule remove location-D1-rh7-1-INFINITY-rule-1".split(),
         )
         self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
+        self.assertEqual(
+            stderr,
+            (
+                "Removing references:\n"
+                "  Rule 'location-D1-rh7-1-INFINITY-rule-1' from:\n"
+                "    Location constraint: 'location-D1-rh7-1-INFINITY'\n"
+            ),
+        )
         self.assertEqual(retval, 0)
 
         stdout, stderr, retval = pcs(
@@ -1963,7 +1970,14 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
             "constraint rule remove location-D1-rh7-1-INFINITY-rule-2".split(),
         )
         self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
+        self.assertEqual(
+            stderr,
+            (
+                "Removing references:\n"
+                "  Rule 'location-D1-rh7-1-INFINITY-rule-2' from:\n"
+                "    Location constraint: 'location-D1-rh7-1-INFINITY'\n"
+            ),
+        )
         self.assertEqual(retval, 0)
 
         self.assert_pcs_success(
