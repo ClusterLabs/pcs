@@ -2681,6 +2681,13 @@
         daemon urls: pacemaker_node_status
       </description>
     </capability>
+    <capability id="status.pcmk.full-cluster-status-plaintext" in-pcs="0" in-pcsd="1">
+      <description>
+        Display status of the remote site cluster.
+
+        daemon urls: /api/v1/status-full-cluster-status-plaintext/v1
+      </description>
+    </capability>
     <capability id="status.pcmk.query.resource" in-pcs="1" in-pcsd="0">
       <description>
         Query status of resources.
