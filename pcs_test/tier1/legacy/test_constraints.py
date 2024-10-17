@@ -5112,17 +5112,6 @@ class ExpiredConstraints(ConstraintBaseTest):
             "resource create dummy ocf:pcsmock:minimal".split()
         )
 
-    def fixture_multiple_primitive(self):
-        self.assert_pcs_success(
-            "resource create D1 ocf:pcsmock:minimal".split()
-        )
-        self.assert_pcs_success(
-            "resource create D2 ocf:pcsmock:minimal".split()
-        )
-        self.assert_pcs_success(
-            "resource create D3 ocf:pcsmock:minimal".split()
-        )
-
     def test_crm_rule_missing(self):
         mock_settings = get_mock_settings()
         mock_settings["crm_rule_exec"] = ""
@@ -5150,7 +5139,7 @@ class ExpiredConstraints(ConstraintBaseTest):
             stderr_full=f"Warning: {CRM_RULE_MISSING_MSG}\n",
         )
 
-    def test_in_effect_primitive_plain(self):
+    def assert_in_effect_primitive(self, flag_all, flag_full):
         self.fixture_primitive()
         self.assert_pcs_success(
             (
@@ -5159,80 +5148,33 @@ class ExpiredConstraints(ConstraintBaseTest):
             ).split()
         )
         self.assert_pcs_success(
-            ["constraint"],
+            (
+                "constraint"
+                f"{' --full' if flag_full else ''}"
+                f"{' --all' if flag_all else ''}"
+            ).split(),
             outdent(
-                """\
+                f"""\
                 Location Constraints:
-                  resource 'dummy'
+                  resource 'dummy'{' (id: location-dummy)' if flag_full else ''}
                     Rules:
-                      Rule: score=INFINITY
-                        Expression: date gt 2019-01-01
+                      Rule: score=INFINITY{' (id: test-rule)' if flag_full else ''}
+                        Expression: date gt 2019-01-01{' (id: test-rule-expr)' if flag_full else ''}
                 """
             ),
         )
+
+    def test_in_effect_primitive_plain(self):
+        self.assert_in_effect_primitive(flag_full=False, flag_all=False)
 
     def test_in_effect_primitive_full(self):
-        self.fixture_primitive()
-        self.assert_pcs_success(
-            (
-                "constraint location dummy rule id=test-rule score=INFINITY "
-                "date gt 2019-01-01"
-            ).split()
-        )
-        self.assert_pcs_success(
-            "constraint --full".split(),
-            outdent(
-                """\
-                Location Constraints:
-                  resource 'dummy' (id: location-dummy)
-                    Rules:
-                      Rule: score=INFINITY (id: test-rule)
-                        Expression: date gt 2019-01-01 (id: test-rule-expr)
-                """
-            ),
-        )
+        self.assert_in_effect_primitive(flag_full=True, flag_all=False)
 
     def test_in_effect_primitive_all(self):
-        self.fixture_primitive()
-        self.assert_pcs_success(
-            (
-                "constraint location dummy rule id=test-rule score=INFINITY "
-                "date gt 2019-01-01"
-            ).split()
-        )
-        self.assert_pcs_success(
-            "constraint --all".split(),
-            outdent(
-                """\
-                Location Constraints:
-                  resource 'dummy'
-                    Rules:
-                      Rule: score=INFINITY
-                        Expression: date gt 2019-01-01
-                """
-            ),
-        )
+        self.assert_in_effect_primitive(flag_full=False, flag_all=True)
 
     def test_in_effect_primitive_full_all(self):
-        self.fixture_primitive()
-        self.assert_pcs_success(
-            (
-                "constraint location dummy rule id=test-rule score=INFINITY "
-                "date gt 2019-01-01"
-            ).split()
-        )
-        self.assert_pcs_success(
-            "constraint --full --all".split(),
-            outdent(
-                """\
-                Location Constraints:
-                  resource 'dummy' (id: location-dummy)
-                    Rules:
-                      Rule: score=INFINITY (id: test-rule)
-                        Expression: date gt 2019-01-01 (id: test-rule-expr)
-                """
-            ),
-        )
+        self.assert_in_effect_primitive(flag_full=True, flag_all=True)
 
     def test_in_effect_group_plain(self):
         self.fixture_group()
@@ -5255,7 +5197,7 @@ class ExpiredConstraints(ConstraintBaseTest):
             ),
         )
 
-    def test_expired_primitive_plain(self):
+    def fixture_expired_primitive_plain(self):
         self.fixture_primitive()
         self.assert_pcs_success(
             (
@@ -5263,26 +5205,17 @@ class ExpiredConstraints(ConstraintBaseTest):
                 "date lt 2019-01-01"
             ).split()
         )
+
+    def test_expired_primitive_plain(self):
+        self.fixture_expired_primitive_plain()
         self.assert_pcs_success(["constraint"])
 
     def test_expired_primitive_full(self):
-        self.fixture_primitive()
-        self.assert_pcs_success(
-            (
-                "constraint location dummy rule id=test-rule score=INFINITY "
-                "date lt 2019-01-01"
-            ).split()
-        )
+        self.fixture_expired_primitive_plain()
         self.assert_pcs_success("constraint --full".split())
 
     def test_expired_primitive_all(self):
-        self.fixture_primitive()
-        self.assert_pcs_success(
-            (
-                "constraint location dummy rule id=test-rule score=INFINITY "
-                "date lt 2019-01-01"
-            ).split()
-        )
+        self.fixture_expired_primitive_plain()
         self.assert_pcs_success(
             "constraint --all".split(),
             outdent(
@@ -5297,13 +5230,7 @@ class ExpiredConstraints(ConstraintBaseTest):
         )
 
     def test_expired_primitive_full_all(self):
-        self.fixture_primitive()
-        self.assert_pcs_success(
-            (
-                "constraint location dummy rule id=test-rule score=INFINITY "
-                "date lt 2019-01-01"
-            ).split()
-        )
+        self.fixture_expired_primitive_plain()
         self.assert_pcs_success(
             "constraint --full --all".split(),
             outdent(
@@ -5327,7 +5254,7 @@ class ExpiredConstraints(ConstraintBaseTest):
         )
         self.assert_pcs_success(["constraint"])
 
-    def test_indeterminate_primitive_plain(self):
+    def assert_indeterminate_primitive(self, flag_full, flag_all):
         self.fixture_primitive()
         self.assert_pcs_success(
             (
@@ -5336,84 +5263,34 @@ class ExpiredConstraints(ConstraintBaseTest):
             ).split()
         )
         self.assert_pcs_success(
-            ["constraint"],
+            (
+                "constraint"
+                f"{' --full' if flag_full else ''}"
+                f"{' --all' if flag_all else ''}"
+            ).split(),
             outdent(
-                """\
+                f"""\
                 Location Constraints:
-                  resource 'dummy'
+                  resource 'dummy'{' (id: location-dummy)' if flag_full else ''}
                     Rules:
-                      Rule: boolean-op=or score=INFINITY
-                        Expression: date eq 2019-01-01
-                        Expression: date eq 2019-03-01
+                      Rule: boolean-op=or score=INFINITY{' (id: test-rule)' if flag_full else ''}
+                        Expression: date eq 2019-01-01{' (id: test-rule-expr)' if flag_full else ''}
+                        Expression: date eq 2019-03-01{' (id: test-rule-expr-1)' if flag_full else ''}
                 """
             ),
         )
+
+    def test_indeterminate_primitive_plain(self):
+        self.assert_indeterminate_primitive(flag_full=False, flag_all=False)
 
     def test_indeterminate_primitive_full(self):
-        self.fixture_primitive()
-        self.assert_pcs_success(
-            (
-                "constraint location dummy rule id=test-rule score=INFINITY "
-                "date eq 2019-01-01 or date eq 2019-03-01"
-            ).split()
-        )
-        self.assert_pcs_success(
-            "constraint --full".split(),
-            outdent(
-                """\
-                Location Constraints:
-                  resource 'dummy' (id: location-dummy)
-                    Rules:
-                      Rule: boolean-op=or score=INFINITY (id: test-rule)
-                        Expression: date eq 2019-01-01 (id: test-rule-expr)
-                        Expression: date eq 2019-03-01 (id: test-rule-expr-1)
-                """
-            ),
-        )
+        self.assert_indeterminate_primitive(flag_full=True, flag_all=False)
 
     def test_indeterminate_primitive_all(self):
-        self.fixture_primitive()
-        self.assert_pcs_success(
-            (
-                "constraint location dummy rule id=test-rule score=INFINITY "
-                "date eq 2019-01-01 or date eq 2019-03-01"
-            ).split()
-        )
-        self.assert_pcs_success(
-            "constraint --all".split(),
-            outdent(
-                """\
-                Location Constraints:
-                  resource 'dummy'
-                    Rules:
-                      Rule: boolean-op=or score=INFINITY
-                        Expression: date eq 2019-01-01
-                        Expression: date eq 2019-03-01
-                """
-            ),
-        )
+        self.assert_indeterminate_primitive(flag_full=False, flag_all=True)
 
     def test_indeterminate_primitive_full_all(self):
-        self.fixture_primitive()
-        self.assert_pcs_success(
-            (
-                "constraint location dummy rule id=test-rule score=INFINITY "
-                "date eq 2019-01-01 or date eq 2019-03-01"
-            ).split()
-        )
-        self.assert_pcs_success(
-            "constraint --full --all".split(),
-            outdent(
-                """\
-                Location Constraints:
-                  resource 'dummy' (id: location-dummy)
-                    Rules:
-                      Rule: boolean-op=or score=INFINITY (id: test-rule)
-                        Expression: date eq 2019-01-01 (id: test-rule-expr)
-                        Expression: date eq 2019-03-01 (id: test-rule-expr-1)
-                """
-            ),
-        )
+        self.assert_indeterminate_primitive(flag_full=True, flag_all=True)
 
     def test_indeterminate_group_plain(self):
         self.fixture_group()
@@ -5437,81 +5314,40 @@ class ExpiredConstraints(ConstraintBaseTest):
             ),
         )
 
-    def test_not_yet_in_effect_primitive_plain(self):
+    def assert_not_yet_in_effect_primitive(self, flag_full, flag_all):
         self.fixture_primitive()
         self.assert_pcs_success(
             "constraint location dummy rule id=test-rule score=INFINITY date gt".split()
             + [self._tomorrow]
         )
         self.assert_pcs_success(
-            ["constraint"],
+            (
+                "constraint"
+                f"{' --full' if flag_full else ''}"
+                f"{' --all' if flag_all else ''}"
+            ).split(),
             outdent(
                 f"""\
                 Location Constraints:
-                  resource 'dummy'
+                  resource 'dummy'{' (id: location-dummy)' if flag_full else ''}
                     Rules:
-                      Rule (not yet in effect): score=INFINITY
-                        Expression: date gt {self._tomorrow}
+                      Rule (not yet in effect): score=INFINITY{' (id: test-rule)' if flag_full else ''}
+                        Expression: date gt {self._tomorrow}{' (id: test-rule-expr)' if flag_full else ''}
                 """
             ),
         )
+
+    def test_not_yet_in_effect_primitive_plain(self):
+        self.assert_not_yet_in_effect_primitive(flag_full=False, flag_all=False)
 
     def test_not_yet_in_effect_primitive_full(self):
-        self.fixture_primitive()
-        self.assert_pcs_success(
-            "constraint location dummy rule id=test-rule score=INFINITY date gt".split()
-            + [self._tomorrow]
-        )
-        self.assert_pcs_success(
-            "constraint --full".split(),
-            outdent(
-                f"""\
-                Location Constraints:
-                  resource 'dummy' (id: location-dummy)
-                    Rules:
-                      Rule (not yet in effect): score=INFINITY (id: test-rule)
-                        Expression: date gt {self._tomorrow} (id: test-rule-expr)
-                """
-            ),
-        )
+        self.assert_not_yet_in_effect_primitive(flag_full=True, flag_all=False)
 
     def test_not_yet_in_effect_primitive_all(self):
-        self.fixture_primitive()
-        self.assert_pcs_success(
-            "constraint location dummy rule id=test-rule score=INFINITY date gt".split()
-            + [self._tomorrow]
-        )
-        self.assert_pcs_success(
-            "constraint --all".split(),
-            outdent(
-                f"""\
-                Location Constraints:
-                  resource 'dummy'
-                    Rules:
-                      Rule (not yet in effect): score=INFINITY
-                        Expression: date gt {self._tomorrow}
-                """
-            ),
-        )
+        self.assert_not_yet_in_effect_primitive(flag_full=False, flag_all=True)
 
     def test_not_yet_in_effect_primitive_full_all(self):
-        self.fixture_primitive()
-        self.assert_pcs_success(
-            "constraint location dummy rule id=test-rule score=INFINITY date gt".split()
-            + [self._tomorrow]
-        )
-        self.assert_pcs_success(
-            "constraint --full --all".split(),
-            outdent(
-                f"""\
-                Location Constraints:
-                  resource 'dummy' (id: location-dummy)
-                    Rules:
-                      Rule (not yet in effect): score=INFINITY (id: test-rule)
-                        Expression: date gt {self._tomorrow} (id: test-rule-expr)
-                """
-            ),
-        )
+        self.assert_not_yet_in_effect_primitive(flag_full=True, flag_all=True)
 
     def test_not_yet_in_effect_group_plain(self):
         self.fixture_group()
@@ -5532,8 +5368,16 @@ class ExpiredConstraints(ConstraintBaseTest):
             ),
         )
 
-    def test_complex_primitive_plain(self):
-        self.fixture_multiple_primitive()
+    def fixture_complex_primitive(self):
+        self.assert_pcs_success(
+            "resource create D1 ocf:pcsmock:minimal".split()
+        )
+        self.assert_pcs_success(
+            "resource create D2 ocf:pcsmock:minimal".split()
+        )
+        self.assert_pcs_success(
+            "resource create D3 ocf:pcsmock:minimal".split()
+        )
         self.assert_pcs_success(
             (
                 "constraint location D1 rule id=test-rule-D1-1 score=INFINITY "
@@ -5571,6 +5415,8 @@ class ExpiredConstraints(ConstraintBaseTest):
             ).split()
         )
 
+    def test_complex_primitive_plain(self):
+        self.fixture_complex_primitive()
         self.assert_pcs_success(
             ["constraint"],
             outdent(
@@ -5599,44 +5445,7 @@ class ExpiredConstraints(ConstraintBaseTest):
         )
 
     def test_complex_primitive_all(self):
-        self.fixture_multiple_primitive()
-        self.assert_pcs_success(
-            (
-                "constraint location D1 rule id=test-rule-D1 score=INFINITY "
-                "not_defined pingd"
-            ).split()
-        )
-        self.assert_pcs_success(
-            (
-                "constraint location D1 rule id=test-rule-D1-2 score=INFINITY "
-                "( date eq 2019-01-01 or date eq 2019-01-30 ) and #uname eq node1"
-            ).split()
-        )
-        self.assert_pcs_success(
-            (
-                "constraint location D2 rule id=test-constr-D2 score=INFINITY "
-                "date in_range 2019-01-01 to 2019-02-01"
-            ).split()
-        )
-        self.assert_pcs_success(
-            (
-                "constraint rule add location-D2 id=test-duration score=INFINITY "
-                "date in_range 2019-03-01 to duration weeks=2"
-            ).split()
-        )
-        self.assert_pcs_success(
-            (
-                "constraint location D3 rule id=test-rule-D3-0 score=INFINITY "
-                "date in_range 2019-03-01 to duration weeks=2"
-            ).split()
-        )
-        self.assert_pcs_success(
-            (
-                "constraint rule add location-D3 id=test-defined score=INFINITY "
-                "not_defined pingd"
-            ).split()
-        )
-
+        self.fixture_complex_primitive()
         self.assert_pcs_success(
             "constraint --all".split(),
             outdent(
