@@ -101,6 +101,7 @@ API_V1_MAP: Mapping[str, str] = {
     "sbd-enable-sbd/v1": "sbd.enable_sbd",
     "scsi-unfence-node/v2": "scsi.unfence_node",
     "scsi-unfence-node-mpath/v1": "scsi.unfence_node_mpath",
+    "status-full-cluster-status-plaintext/v1": "status.full_cluster_status_plaintext",
     # deprecated, use resource-agent-get-agent-metadata/v1 instead
     "stonith-agent-describe-agent/v1": "stonith_agent.describe_agent",
     # deprecated, use resource-agent-get-agents-list/v1 instead
@@ -300,7 +301,7 @@ class LegacyApiV1Handler(_BaseApiV1Handler):
 class ClusterStatusLegacyHandler(LegacyApiV1Handler):
     @staticmethod
     def _get_cmd() -> str:
-        return "status.full_cluster_status_plaintext"
+        return "status-full-cluster-status-plaintext/v1"
 
 
 class ClusterAddNodesLegacyHandler(LegacyApiV1Handler):
