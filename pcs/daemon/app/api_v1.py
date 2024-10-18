@@ -307,7 +307,7 @@ class ClusterStatusLegacyHandler(LegacyApiV1Handler):
 class ClusterAddNodesLegacyHandler(LegacyApiV1Handler):
     @staticmethod
     def _get_cmd() -> str:
-        return "cluster.add_nodes"
+        return "cluster-add-nodes/v1"
 
 
 def get_routes(scheduler: Scheduler, auth_provider: AuthProvider) -> RoutesType:
