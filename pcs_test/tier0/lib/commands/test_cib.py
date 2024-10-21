@@ -53,6 +53,20 @@ FIXTURE_TWO_LOC_CONSTRAINTS_WITH_RULES = _constraints(
 EXPECTED_TYPES_FOR_REMOVE = ["constraint", "location rule", "resource"]
 
 
+def fixture_remote_resource(resource_id: str) -> str:
+    return f'<primitive id="{resource_id}" class="ocf" type="remote" provider="pacemaker"/>'
+
+
+def fixture_guest_resource(resource_id: str) -> str:
+    return f"""
+        <primitive id="{resource_id}" class="ocf" type="VirtualDomain" provider="heartbeat">
+            <meta_attributes id="meta">
+                <nvpair id="meta-remote-node" name="remote-node" value="{resource_id}-remote"/>
+            </meta_attributes>
+        </primitive>
+    """
+
+
 class RemoveElements(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
@@ -214,34 +228,132 @@ class RemoveElements(TestCase):
         )
 
     def test_remove_resource_guest(self):
-        self.config.runner.cib.load(filename="cib-largefile.xml")
-        self.env_assist.assert_raise_library_error(
-            lambda: lib.remove_elements(
-                self.env_assist.get_env(), ["container1"]
-            )
+        cib = modify_cib(
+            read_test_resource("cib-empty.xml"),
+            resources=f"""
+                <resources>
+                    {fixture_guest_resource("R1")}
+                    <group id="G1">
+                        {fixture_guest_resource("R2")}
+                    </group>
+                    <clone id="C1">
+                        {fixture_guest_resource("R3")}
+                    </clone>
+                    <clone id="C2">
+                        <group id="G2">
+                            {fixture_guest_resource("R4")}
+                        </group>
+                    </clone>
+                </resources>
+            """,
+        )
+        self.config.runner.cib.load_content(cib)
+        self.config.env.push_cib(
+            load_key="runner.cib.load_content", resources="<resources/>"
+        )
+        self.config.runner.pcmk.remove_node("R1-remote", name="remove_node-R1")
+        self.config.runner.pcmk.remove_node("R2-remote", name="remove_node-R2")
+        self.config.runner.pcmk.remove_node("R3-remote", name="remove_node-R3")
+        self.config.runner.pcmk.remove_node("R4-remote", name="remove_node-R4")
+
+        lib.remove_elements(
+            self.env_assist.get_env(),
+            ["R1", "R2", "R3", "R4"],
+            [reports.codes.FORCE],
         )
         self.env_assist.assert_reports(
             [
-                fixture.error(
-                    reports.codes.USE_COMMAND_NODE_REMOVE_GUEST,
-                    resource_id="container1",
-                )
+                fixture.deprecation(
+                    reports.codes.USE_COMMAND_NODE_REMOVE_GUEST
+                ),
+                fixture.warn(
+                    reports.codes.GUEST_NODE_REMOVAL_INCOMPLETE,
+                    node_name="R1-remote",
+                ),
+                fixture.warn(
+                    reports.codes.GUEST_NODE_REMOVAL_INCOMPLETE,
+                    node_name="R2-remote",
+                ),
+                fixture.warn(
+                    reports.codes.GUEST_NODE_REMOVAL_INCOMPLETE,
+                    node_name="R3-remote",
+                ),
+                fixture.warn(
+                    reports.codes.GUEST_NODE_REMOVAL_INCOMPLETE,
+                    node_name="R4-remote",
+                ),
+                fixture.info(
+                    reports.codes.CIB_REMOVE_DEPENDANT_ELEMENTS,
+                    id_tag_map={
+                        "C1": "clone",
+                        "C2": "clone",
+                        "G1": "group",
+                        "G2": "group",
+                    },
+                ),
             ]
         )
 
     def test_remove_resource_remote(self):
-        self.config.runner.cib.load(filename="cib-remote.xml")
-        self.env_assist.assert_raise_library_error(
-            lambda: lib.remove_elements(
-                self.env_assist.get_env(), ["rh93-remote"]
-            )
+        cib = modify_cib(
+            read_test_resource("cib-empty.xml"),
+            resources=f"""
+                <resources>
+                    {fixture_remote_resource("R1")}
+                    <group id="G1">
+                        {fixture_remote_resource("R2")}
+                    </group>
+                    <clone id="C1">
+                        {fixture_remote_resource("R3")}
+                    </clone>
+                    <clone id="C2">
+                        <group id="G2">
+                            {fixture_remote_resource("R4")}
+                        </group>
+                    </clone>
+                </resources>
+            """,
+        )
+        self.config.runner.cib.load_content(cib)
+        self.config.env.push_cib(
+            resources="<resources/>", load_key="runner.cib.load_content"
+        )
+        self.config.runner.pcmk.remove_node("R1", name="remove_node-R1")
+        self.config.runner.pcmk.remove_node("R2", name="remove_node-R2")
+        self.config.runner.pcmk.remove_node("R3", name="remove_node-R3")
+        self.config.runner.pcmk.remove_node("R4", name="remove_node-R4")
+
+        lib.remove_elements(
+            self.env_assist.get_env(),
+            ["R1", "R2", "R3", "R4"],
+            [reports.codes.FORCE],
         )
         self.env_assist.assert_reports(
             [
-                fixture.error(
-                    reports.codes.USE_COMMAND_NODE_REMOVE_REMOTE,
-                    resource_id="rh93-remote",
-                )
+                fixture.deprecation(
+                    reports.codes.USE_COMMAND_NODE_REMOVE_REMOTE
+                ),
+                fixture.warn(
+                    reports.codes.REMOTE_NODE_REMOVAL_INCOMPLETE, node_name="R1"
+                ),
+                fixture.warn(
+                    reports.codes.REMOTE_NODE_REMOVAL_INCOMPLETE, node_name="R2"
+                ),
+                fixture.warn(
+                    reports.codes.REMOTE_NODE_REMOVAL_INCOMPLETE, node_name="R3"
+                ),
+                fixture.warn(
+                    reports.codes.REMOTE_NODE_REMOVAL_INCOMPLETE, node_name="R4"
+                ),
+                fixture.info(
+                    reports.codes.CIB_REMOVE_DEPENDANT_ELEMENTS,
+                    id_tag_map={
+                        "C1": "clone",
+                        "C2": "clone",
+                        "G1": "group",
+                        "G2": "group",
+                    },
+                ),
             ]
         )
 

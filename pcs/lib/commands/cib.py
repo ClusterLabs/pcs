@@ -1,12 +1,16 @@
 from typing import (
     Collection,
+    Iterable,
     Sequence,
 )
 
 from lxml.etree import _Element
 
 from pcs.common import reports
-from pcs.common.types import StringCollection
+from pcs.common.types import (
+    StringCollection,
+    StringSequence,
+)
 from pcs.lib.cib.remove_elements import (
     ElementsToRemove,
     ensure_resources_stopped,
@@ -14,13 +18,16 @@ from pcs.lib.cib.remove_elements import (
     stop_resources,
     warn_resource_unmanaged,
 )
+from pcs.lib.cib.resource.guest_node import (
+    get_node_name_from_resource as get_node_name_from_guest_resource,
+)
 from pcs.lib.cib.resource.guest_node import is_guest_node
 from pcs.lib.cib.resource.remote_node import (
     get_node_name_from_resource as get_node_name_from_remote_resource,
 )
-from pcs.lib.cib.tools import get_elements_by_ids
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
+from pcs.lib.pacemaker.live import remove_node
 
 
 def remove_elements(
@@ -40,10 +47,29 @@ def remove_elements(
     report_processor = env.report_processor
 
     elements_to_remove = ElementsToRemove(cib, ids)
+    remote_node_names = _get_remote_node_names(
+        elements_to_remove.resources_to_disable
+    )
+    guest_node_names = _get_guest_node_names(
+        elements_to_remove.resources_to_disable
+    )
+
+    if remote_node_names:
+        report_processor.report(
+            reports.ReportItem.deprecation(
+                reports.messages.UseCommandNodeRemoveRemote()
+            )
+        )
+    if guest_node_names:
+        report_processor.report(
+            reports.ReportItem.deprecation(
+                reports.messages.UseCommandNodeRemoveGuest()
+            )
+        )
 
     if report_processor.report_list(
         _validate_elements_to_remove(elements_to_remove)
-        + _ensure_not_guest_remote(cib, ids)
+        + _warn_remote_guest(remote_node_names, guest_node_names)
     ).has_errors:
         raise LibraryError()
 
@@ -61,6 +87,10 @@ def remove_elements(
 
     remove_specified_elements(cib, elements_to_remove)
     env.push_cib()
+
+    if env.is_cib_live:
+        for node_name in remote_node_names + guest_node_names:
+            remove_node(env.cmd_runner(), node_name)
 
 
 def _stop_resources_wait(
@@ -129,26 +159,33 @@ def _validate_elements_to_remove(
     return report_list
 
 
-def _ensure_not_guest_remote(
-    cib: _Element, ids: StringCollection
+def _warn_remote_guest(
+    remote_node_names: StringSequence, guest_node_names: StringSequence
 ) -> reports.ReportItemList:
-    report_list = []
-    elements_to_process, _ = get_elements_by_ids(cib, ids)
-    for element in elements_to_process:
-        if is_guest_node(element):
-            report_list.append(
-                reports.ReportItem.error(
-                    reports.messages.UseCommandNodeRemoveGuest(
-                        str(element.attrib["id"])
-                    )
-                )
-            )
-        if get_node_name_from_remote_resource(element) is not None:
-            report_list.append(
-                reports.ReportItem.error(
-                    reports.messages.UseCommandNodeRemoveRemote(
-                        str(element.attrib["id"])
-                    )
-                )
-            )
-    return report_list
+    return [
+        reports.ReportItem.warning(
+            reports.messages.RemoteNodeRemovalIncomplete(node_name)
+        )
+        for node_name in remote_node_names
+    ] + [
+        reports.ReportItem.warning(
+            reports.messages.GuestNodeRemovalIncomplete(node_name)
+        )
+        for node_name in guest_node_names
+    ]
+
+
+def _get_remote_node_names(resource_elements: Iterable[_Element]) -> list[str]:
+    return [
+        get_node_name_from_remote_resource(el)
+        for el in resource_elements
+        if get_node_name_from_remote_resource(el) is not None
+    ]
+
+
+def _get_guest_node_names(resource_elements: Iterable[_Element]) -> list[str]:
+    return [
+        get_node_name_from_guest_resource(el)
+        for el in resource_elements
+        if is_guest_node(el)
+    ]

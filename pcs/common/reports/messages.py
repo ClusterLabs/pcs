@@ -5234,14 +5234,11 @@ class UseCommandNodeRemoveRemote(ReportItemMessage):
     Advise the user for more appropriate command.
     """
 
-    resource_id: Optional[str] = None
     _code = codes.USE_COMMAND_NODE_REMOVE_REMOTE
 
     @property
     def message(self) -> str:
-        return "this command is not sufficient for removing a remote node{id}".format(
-            id=format_optional(self.resource_id, template=": '{}'")
-        )
+        return "this command is not sufficient for removing a remote node"
 
 
 @dataclass(frozen=True)
@@ -5250,14 +5247,51 @@ class UseCommandNodeRemoveGuest(ReportItemMessage):
     Advise the user for more appropriate command.
     """
 
-    resource_id: Optional[str] = None
     _code = codes.USE_COMMAND_NODE_REMOVE_GUEST
 
     @property
     def message(self) -> str:
-        return "this command is not sufficient for removing a guest node{id}".format(
-            id=format_optional(self.resource_id, template=": '{}")
-        )
+        return "this command is not sufficient for removing a guest node"
+
+
+@dataclass(frozen=True)
+class RemoteNodeRemovalIncomplete(ReportItemMessage):
+    """
+    Warn the user about needed manual steps after removal of remote node.
+
+    node_name -- name of the remote node
+    """
+
+    node_name: str
+    _code = codes.REMOTE_NODE_REMOVAL_INCOMPLETE
+
+    @property
+    def message(self) -> str:
+        return (
+            "This command is not sufficient for removing remote node: "
+            "'{name}'. To complete the removal, remove pacemaker authkey and "
+            "stop and disable pacemaker_remote on the node manually."
+        ).format(name=self.node_name)
+
+
+@dataclass(frozen=True)
+class GuestNodeRemovalIncomplete(ReportItemMessage):
+    """
+    Warn the user about needed manual steps after removal of guest node.
+
+    node_name -- name of the guest node
+    """
+
+    node_name: str
+    _code = codes.GUEST_NODE_REMOVAL_INCOMPLETE
+
+    @property
+    def message(self) -> str:
+        return (
+            "This command is not sufficient for removing guest node: '{name}'. "
+            "To complete the removal, remove pacemaker authkey and stop and "
+            "disable pacemaker_remote on the node manually."
+        ).format(name=self.node_name)
 
 
 @dataclass(frozen=True)

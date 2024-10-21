@@ -5993,3 +5993,29 @@ class CannotStopResourcesBeforeDeleting(NameBuildTest):
                 ["resourceId1", "resourceId2"]
             ),
         )
+
+
+class RemoteNodeRemovalIncomplete(NameBuildTest):
+    def test_success(self) -> str:
+        self.assert_message_from_report(
+            (
+                "This command is not sufficient for removing remote node: "
+                "'remote-node'. To complete the removal, remove pacemaker "
+                "authkey and stop and disable pacemaker_remote on the node "
+                "manually."
+            ),
+            reports.RemoteNodeRemovalIncomplete("remote-node"),
+        )
+
+
+class GuestNodeRemovalIncomplete(NameBuildTest):
+    def test_success(self) -> str:
+        self.assert_message_from_report(
+            (
+                "This command is not sufficient for removing guest node: "
+                "'guest-node'. To complete the removal, remove pacemaker "
+                "authkey and stop and disable pacemaker_remote on the node "
+                "manually."
+            ),
+            reports.GuestNodeRemovalIncomplete("guest-node"),
+        )

@@ -28,6 +28,11 @@
 - Displaying status of local and remote cluster sites in `pcs dr status`
   command. ([RHEL-61738])
 
+### Deprecated
+- Using `pcs resource delete | remove` to delete resources representing remote
+  and guest nodes. Use `pcs cluster node remove-remote` and `pcs cluster node
+  remove-guest` instead.
+
 [RHEL-46284]: https://issues.redhat.com/browse/RHEL-46284
 [RHEL-46286]: https://issues.redhat.com/browse/RHEL-46286
 [RHEL-46293]: https://issues.redhat.com/browse/RHEL-46293
