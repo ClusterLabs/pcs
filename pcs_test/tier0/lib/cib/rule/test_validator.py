@@ -250,31 +250,14 @@ class DateUnaryExpression(TestCase):
 
 class DateInrangeExpression(TestCase):
     part_list = {
+        "seconds",
+        "minutes",
         "hours",
-        "monthdays",
-        "weekdays",
-        "yearsdays",
-        "months",
+        "days",
         "weeks",
+        "months",
         "years",
-        "weekyears",
-        "moon",
     }
-    deprecation_reports = [
-        fixture.deprecation(
-            reports.codes.DEPRECATED_OPTION,
-            option_name=option,
-            replaced_by=[],
-            option_type="duration",
-        )
-        for option in (
-            "monthdays",
-            "weekdays",
-            "weekyears",
-            "moon",
-            "yearsdays",
-        )
-    ]
 
     def test_date_date_ok(self):
         # pylint: disable=no-self-use
@@ -311,7 +294,7 @@ class DateInrangeExpression(TestCase):
                     ],
                 ),
             ).get_reports(),
-            [] + self.deprecation_reports,
+            [],
         )
 
     def test_until_greater_than_since(self):
@@ -384,7 +367,15 @@ class DateInrangeExpression(TestCase):
                 ),
                 fixture.error(
                     reports.codes.INVALID_OPTION_VALUE,
-                    option_name="monthdays",
+                    option_name="minutes",
+                    option_value="0",
+                    allowed_values="a positive integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    reports.codes.INVALID_OPTION_VALUE,
+                    option_name="seconds",
                     option_value="0",
                     allowed_values="a positive integer",
                     cannot_be_empty=False,
@@ -400,15 +391,7 @@ class DateInrangeExpression(TestCase):
                 ),
                 fixture.error(
                     reports.codes.INVALID_OPTION_VALUE,
-                    option_name="moon",
-                    option_value="0",
-                    allowed_values="a positive integer",
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-                fixture.error(
-                    reports.codes.INVALID_OPTION_VALUE,
-                    option_name="weekdays",
+                    option_name="days",
                     option_value="0",
                     allowed_values="a positive integer",
                     cannot_be_empty=False,
@@ -424,23 +407,7 @@ class DateInrangeExpression(TestCase):
                 ),
                 fixture.error(
                     reports.codes.INVALID_OPTION_VALUE,
-                    option_name="weekyears",
-                    option_value="0",
-                    allowed_values="a positive integer",
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-                fixture.error(
-                    reports.codes.INVALID_OPTION_VALUE,
                     option_name="years",
-                    option_value="0",
-                    allowed_values="a positive integer",
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-                fixture.error(
-                    reports.codes.INVALID_OPTION_VALUE,
-                    option_name="yearsdays",
                     option_value="0",
                     allowed_values="a positive integer",
                     cannot_be_empty=False,
@@ -457,37 +424,23 @@ class DateInrangeExpression(TestCase):
                     reports.codes.RULE_EXPRESSION_OPTIONS_DUPLICATION,
                     duplicate_option_list=["hours"],
                 ),
-            ]
-            + self.deprecation_reports,
+            ],
         )
 
 
 class DatespecExpression(TestCase):
     part_list = {
+        "seconds",
+        "minutes",
         "hours",
         "monthdays",
         "weekdays",
-        "yearsdays",
+        "yeardays",
         "months",
         "weeks",
         "years",
         "weekyears",
-        "moon",
     }
-    deprecation_reports = [
-        fixture.deprecation(
-            reports.codes.DEPRECATED_OPTION,
-            option_name="yearsdays",
-            replaced_by=[],
-            option_type="datespec",
-        ),
-        fixture.deprecation(
-            reports.codes.DEPRECATED_OPTION,
-            option_name="moon",
-            replaced_by=[],
-            option_type="datespec",
-        ),
-    ]
 
     def test_ok(self):
         assert_report_item_list_equal(
@@ -497,7 +450,7 @@ class DatespecExpression(TestCase):
                     [DatespecExpr([(name, "3") for name in self.part_list])],
                 ),
             ).get_reports(),
-            [] + self.deprecation_reports,
+            [],
         )
 
     def test_range_ok(self):
@@ -508,7 +461,7 @@ class DatespecExpression(TestCase):
                     [DatespecExpr([(name, "3-5") for name in self.part_list])],
                 ),
             ).get_reports(),
-            [] + self.deprecation_reports,
+            [],
         )
 
     def test_bad_value(self):
@@ -520,6 +473,22 @@ class DatespecExpression(TestCase):
                 ),
             ).get_reports(),
             [
+                fixture.error(
+                    reports.codes.INVALID_OPTION_VALUE,
+                    option_name="seconds",
+                    option_value="5-3",
+                    allowed_values="0..59 or 0..58-1..59",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    reports.codes.INVALID_OPTION_VALUE,
+                    option_name="minutes",
+                    option_value="5-3",
+                    allowed_values="0..59 or 0..58-1..59",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
                 fixture.error(
                     reports.codes.INVALID_OPTION_VALUE,
                     option_name="hours",
@@ -541,14 +510,6 @@ class DatespecExpression(TestCase):
                     option_name="months",
                     option_value="5-3",
                     allowed_values="1..12 or 1..11-2..12",
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-                fixture.error(
-                    reports.codes.INVALID_OPTION_VALUE,
-                    option_name="moon",
-                    option_value="5-3",
-                    allowed_values="0..7 or 0..6-1..7",
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),
@@ -586,14 +547,13 @@ class DatespecExpression(TestCase):
                 ),
                 fixture.error(
                     reports.codes.INVALID_OPTION_VALUE,
-                    option_name="yearsdays",
+                    option_name="yeardays",
                     option_value="5-3",
                     allowed_values="1..366 or 1..365-2..366",
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),
-            ]
-            + self.deprecation_reports,
+            ],
         )
 
     def test_bad_name(self):

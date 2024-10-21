@@ -78,9 +78,7 @@ class DefaultsCreateMixin:
         defaults_xml = f"""
             <{self.tag}>
                 <meta_attributes id="{self.tag}-meta_attributes">
-                    <rule id="{self.tag}-meta_attributes-rule"
-                        boolean-op="and" score="INFINITY"
-                    >
+                    <rule id="{self.tag}-meta_attributes-rule" boolean-op="and">
                         <rsc_expression
                             id="{self.tag}-meta_attributes-rule-rsc-ocf-pacemaker-Dummy"
                             class="ocf" provider="pacemaker" type="Dummy"
@@ -91,12 +89,12 @@ class DefaultsCreateMixin:
         """
         self.config.runner.cib.load(
             name="load_cib_old_version",
-            filename="cib-empty-3.3.xml",
+            filename="cib-empty-3.7.xml",
             before="runner.cib.load",
         )
         self.config.runner.cib.upgrade(before="runner.cib.load")
         self.config.runner.cib.load(
-            filename="cib-empty-3.4.xml", instead="runner.cib.load"
+            filename="cib-empty-3.9.xml", instead="runner.cib.load"
         )
         self.config.env.push_cib(optional_in_conf=defaults_xml)
 
@@ -116,7 +114,7 @@ class DefaultsCreateMixin:
 
     def test_validation(self):
         self.config.runner.cib.load(
-            filename="cib-empty-3.4.xml", instead="runner.cib.load"
+            filename="cib-empty-3.9.xml", instead="runner.cib.load"
         )
         self.env_assist.assert_raise_library_error(
             lambda: self.command(
@@ -185,7 +183,7 @@ class ResourceDefaultsCreate(DefaultsCreateMixin, TestCase):
 
     def test_rule_op_expression_not_allowed(self):
         self.config.runner.cib.load(
-            filename="cib-empty-3.4.xml", instead="runner.cib.load"
+            filename="cib-empty-3.9.xml", instead="runner.cib.load"
         )
         self.env_assist.assert_raise_library_error(
             lambda: self.command(
@@ -207,7 +205,7 @@ class ResourceDefaultsCreate(DefaultsCreateMixin, TestCase):
 
     def test_rule_node_attr_expression_not_allowed(self):
         self.config.runner.cib.load(
-            filename="cib-empty-3.4.xml", instead="runner.cib.load"
+            filename="cib-empty-3.9.xml", instead="runner.cib.load"
         )
         self.env_assist.assert_raise_library_error(
             lambda: self.command(
@@ -231,11 +229,11 @@ class ResourceDefaultsCreate(DefaultsCreateMixin, TestCase):
         defaults_xml = f"""
             <{self.tag}>
                 <meta_attributes id="my-id" score="10">
-                    <rule id="my-id-rule" boolean-op="and" score="INFINITY">
+                    <rule id="my-id-rule" boolean-op="and">
                         <rsc_expression id="my-id-rule-rsc-ocf-pacemaker-Dummy"
                             class="ocf" provider="pacemaker" type="Dummy"
                         />
-                        <rule id="my-id-rule-rule" boolean-op="or" score="0">
+                        <rule id="my-id-rule-rule" boolean-op="or">
                             <date_expression id="my-id-rule-rule-expr"
                                 operation="lt" end="2020-08-07"
                             />
@@ -268,7 +266,7 @@ class ResourceDefaultsCreate(DefaultsCreateMixin, TestCase):
             </{self.tag}>
         """
         self.config.runner.cib.load(
-            filename="cib-empty-3.4.xml", instead="runner.cib.load"
+            filename="cib-empty-3.9.xml", instead="runner.cib.load"
         )
         self.config.env.push_cib(optional_in_conf=defaults_xml)
 
@@ -299,14 +297,14 @@ class OperationDefaultsCreate(DefaultsCreateMixin, TestCase):
         defaults_xml = f"""
             <{self.tag}>
                 <meta_attributes id="my-id" score="10">
-                    <rule id="my-id-rule" boolean-op="and" score="INFINITY">
+                    <rule id="my-id-rule" boolean-op="and">
                         <rsc_expression id="my-id-rule-rsc-ocf-pacemaker-Dummy"
                             class="ocf" provider="pacemaker" type="Dummy"
                         />
                         <op_expression id="my-id-rule-op-monitor" name="monitor"
                             interval="30"
                         />
-                        <rule id="my-id-rule-rule" boolean-op="or" score="0">
+                        <rule id="my-id-rule-rule" boolean-op="or">
                             <expression id="my-id-rule-rule-expr"
                                 operation="defined" attribute="attr1"
                             />
@@ -346,7 +344,7 @@ class OperationDefaultsCreate(DefaultsCreateMixin, TestCase):
             </{self.tag}>
         """
         self.config.runner.cib.load(
-            filename="cib-empty-3.4.xml", instead="runner.cib.load"
+            filename="cib-empty-3.9.xml", instead="runner.cib.load"
         )
         self.config.env.push_cib(optional_in_conf=defaults_xml)
 
@@ -368,13 +366,11 @@ class OperationDefaultsCreate(DefaultsCreateMixin, TestCase):
             [fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDDEN)]
         )
 
-    def test_success_cib_upgrade_node_attr_type_int(self):
+    def test_success_node_attr_type_int(self):
         defaults_xml = f"""
             <{self.tag}>
                 <meta_attributes id="{self.tag}-meta_attributes">
-                    <rule id="{self.tag}-meta_attributes-rule"
-                        boolean-op="and" score="INFINITY"
-                    >
+                    <rule id="{self.tag}-meta_attributes-rule" boolean-op="and">
                         <expression id="{self.tag}-meta_attributes-rule-expr"
                             attribute="attr" operation="eq" type="integer" value="5"
                         />
@@ -383,13 +379,7 @@ class OperationDefaultsCreate(DefaultsCreateMixin, TestCase):
             </{self.tag}>
         """
         self.config.runner.cib.load(
-            name="load_cib_old_version",
-            filename="cib-empty-3.3.xml",
-            before="runner.cib.load",
-        )
-        self.config.runner.cib.upgrade(before="runner.cib.load")
-        self.config.runner.cib.load(
-            filename="cib-empty-3.5.xml", instead="runner.cib.load"
+            filename="cib-empty-3.9.xml", instead="runner.cib.load"
         )
         self.config.env.push_cib(optional_in_conf=defaults_xml)
 
@@ -401,93 +391,7 @@ class OperationDefaultsCreate(DefaultsCreateMixin, TestCase):
         )
 
         self.env_assist.assert_reports(
-            [
-                fixture.info(reports.codes.CIB_UPGRADE_SUCCESSFUL),
-                fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDDEN),
-            ]
-        )
-
-    def test_success_cib_upgrade_node_attr_type_int_not_upgraded(self):
-        defaults_xml = f"""
-            <{self.tag}>
-                <meta_attributes id="{self.tag}-meta_attributes">
-                    <rule id="{self.tag}-meta_attributes-rule"
-                        boolean-op="and" score="INFINITY"
-                    >
-                        <expression id="{self.tag}-meta_attributes-rule-expr"
-                            attribute="attr" operation="eq" type="number" value="5"
-                        />
-                    </rule>
-                </meta_attributes>
-            </{self.tag}>
-        """
-        self.config.runner.cib.load(
-            name="load_cib_old_version",
-            filename="cib-empty-3.3.xml",
-            before="runner.cib.load",
-        )
-        self.config.runner.cib.upgrade(before="runner.cib.load")
-        self.config.runner.cib.load(
-            filename="cib-empty-3.4.xml", instead="runner.cib.load"
-        )
-        self.config.env.push_cib(optional_in_conf=defaults_xml)
-
-        self.command(
-            self.env_assist.get_env(),
-            {},
-            {},
-            nvset_rule="attr eq integer 5",
-        )
-
-        self.env_assist.assert_reports(
-            [
-                fixture.info(reports.codes.CIB_UPGRADE_SUCCESSFUL),
-                fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDDEN),
-            ]
-        )
-
-    def test_success_cib_upgrade_mixed(self):
-        defaults_xml = f"""
-            <{self.tag}>
-                <meta_attributes id="{self.tag}-meta_attributes">
-                    <rule id="{self.tag}-meta_attributes-rule"
-                        boolean-op="and" score="INFINITY"
-                    >
-                        <op_expression
-                            id="{self.tag}-meta_attributes-rule-op-monitor"
-                            name="monitor"
-                        />
-                        <expression id="{self.tag}-meta_attributes-rule-expr"
-                            attribute="attr" operation="eq" type="integer"
-                            value="5"
-                        />
-                    </rule>
-                </meta_attributes>
-            </{self.tag}>
-        """
-        self.config.runner.cib.load(
-            name="load_cib_old_version",
-            filename="cib-empty-3.3.xml",
-            before="runner.cib.load",
-        )
-        self.config.runner.cib.upgrade(before="runner.cib.load")
-        self.config.runner.cib.load(
-            filename="cib-empty-3.5.xml", instead="runner.cib.load"
-        )
-        self.config.env.push_cib(optional_in_conf=defaults_xml)
-
-        self.command(
-            self.env_assist.get_env(),
-            {},
-            {},
-            nvset_rule="op monitor and attr eq integer 5",
-        )
-
-        self.env_assist.assert_reports(
-            [
-                fixture.info(reports.codes.CIB_UPGRADE_SUCCESSFUL),
-                fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDDEN),
-            ]
+            [fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDDEN)]
         )
 
 

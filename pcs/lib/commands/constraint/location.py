@@ -9,11 +9,6 @@ from pcs.common import (
 )
 from pcs.lib import validate
 from pcs.lib.cib.constraint import location
-from pcs.lib.cib.rule import (
-    RuleParseError,
-    has_node_attr_expr_with_type_integer,
-    parse_rule,
-)
 from pcs.lib.cib.tools import (
     ElementNotFound,
     IdProvider,
@@ -46,23 +41,9 @@ def create_plain_with_rule(
     force_flags -- list of flags codes
     """
     # pylint: disable=too-many-locals
-
-    # Parse the rule to see if we need to upgrade CIB schema. All errors
-    # would be properly reported by a validator called bellow, so we can
-    # safely ignore them here.
-    nice_to_have_cib_version = None
-    try:
-        rule_tree = parse_rule(rule)
-        if has_node_attr_expr_with_type_integer(rule_tree):
-            nice_to_have_cib_version = (
-                const.PCMK_RULES_NODE_ATTR_EXPR_WITH_INT_TYPE_CIB_VERSION
-            )
-    except RuleParseError:
-        pass
-
-    cib = env.get_cib(
-        nice_to_have_version=nice_to_have_cib_version,
-    )
+    # Pacemaker 3 changed CIB schema for rules. We no longer support the
+    # old schema, so we require CIB to be upgraded to the new one.
+    cib = env.get_cib(minimal_version=const.PCMK_RULES_PCMK3_SYNTAX_CIB_VERSION)
     id_provider = IdProvider(cib)
     constraint_section = get_constraints(cib)
 

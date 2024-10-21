@@ -20,13 +20,7 @@ from pcs.lib.cib import (
     nvpair_multi,
     sections,
 )
-from pcs.lib.cib.rule import (
-    RuleInEffectEval,
-    RuleParseError,
-    has_node_attr_expr_with_type_integer,
-    has_rsc_or_op_expression,
-    parse_rule,
-)
+from pcs.lib.cib.rule import RuleInEffectEval
 from pcs.lib.cib.rule.in_effect import get_rule_evaluator
 from pcs.lib.cib.tools import (
     IdProvider,
@@ -108,28 +102,12 @@ def _defaults_create(
     force_flags: Container[reports.types.ForceCode] = (),
 ) -> None:
     required_cib_version = None
-    nice_to_have_cib_version = None
     if nvset_rule:
-        # Parse the rule to see if we need to upgrade CIB schema. All errors
-        # would be properly reported by a validator called bellow, so we can
-        # safely ignore them here.
-        try:
-            rule_tree = parse_rule(nvset_rule)
-            if has_rsc_or_op_expression(rule_tree):
-                required_cib_version = (
-                    const.PCMK_RULES_WITH_RSC_OR_OP_EXPR_CIB_VERSION
-                )
-            if has_node_attr_expr_with_type_integer(rule_tree):
-                nice_to_have_cib_version = (
-                    const.PCMK_RULES_NODE_ATTR_EXPR_WITH_INT_TYPE_CIB_VERSION
-                )
-        except RuleParseError:
-            pass
+        # Pacemaker 3 changed CIB schema for rules. We no longer support the
+        # old schema, so we require CIB to be upgraded to the new one.
+        required_cib_version = const.PCMK_RULES_PCMK3_SYNTAX_CIB_VERSION
 
-    cib = env.get_cib(
-        minimal_version=required_cib_version,
-        nice_to_have_version=nice_to_have_cib_version,
-    )
+    cib = env.get_cib(minimal_version=required_cib_version)
     id_provider = IdProvider(cib)
 
     validator = nvpair_multi.ValidateNvsetAppendNew(

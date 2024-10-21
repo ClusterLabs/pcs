@@ -24,7 +24,7 @@ RULE_ARGV_DEPRECATED = (
     "deprecated and might be removed in a future release, specify the rule as "
     "a single string instead\n"
 )
-empty_cib = get_test_resource("cib-empty-3.7.xml")
+empty_cib = get_test_resource("cib-empty-3.9.xml")
 
 
 class RuleBaseMixin(

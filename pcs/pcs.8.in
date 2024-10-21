@@ -287,9 +287,9 @@ You may specify all or any of 'standard', 'provider' and 'type' in a resource ex
 
 Dates are expected to conform to ISO 8601 format.
 
-Duration options are: hours, monthdays, weekdays, yearsdays, months, weeks, years, weekyears, moon. Value for these options is an integer.
+Duration options are: years, months, weeks, days, hours, minutes, seconds. Value for these options is an integer.
 
-Date\-spec options are: hours, monthdays, weekdays, yeardays, months, weeks, years, weekyears, moon. Value for these options is an integer or a range written as integer\-integer.
+Date\-spec options are: years, weekyears, months, weeks, yeardays, monthdays, weekdays, hours, minutes, seconds. Value for these options is an integer or a range written as integer\-integer.
 
 NOTE: Defaults do not apply to resources / stonith devices which override them with their own defined values.
 .TP
@@ -394,9 +394,9 @@ You may specify all or any of 'standard', 'provider' and 'type' in a resource ex
 
 Dates are expected to conform to ISO 8601 format.
 
-Duration options are: hours, monthdays, weekdays, yearsdays, months, weeks, years, weekyears, moon. Value for these options is an integer.
+Duration options are: years, months, weeks, days, hours, minutes, seconds. Value for these options is an integer.
 
-Date\-spec options are: hours, monthdays, weekdays, yearsdays, months, weeks, years, weekyears, moon. Value for these options is an integer or a range written as integer\-integer.
+Date\-spec options are: years, weekyears, months, weeks, yeardays, monthdays, weekdays, hours, minutes, seconds. Value for these options is an integer or a range written as integer\-integer.
 
 NOTE: Defaults do not apply to resources / stonith devices which override them with their own defined values.
 .TP
@@ -806,9 +806,9 @@ You may specify all or any of 'standard', 'provider' and 'type' in a resource ex
 
 Dates are expected to conform to ISO 8601 format.
 
-Duration options are: hours, monthdays, weekdays, yearsdays, months, weeks, years, weekyears, moon. Value for these options is an integer.
+Duration options are: years, months, weeks, days, hours, minutes, seconds. Value for these options is an integer.
 
-Date\-spec options are: hours, monthdays, weekdays, yearsdays, months, weeks, years, weekyears, moon. Value for these options is an integer or a range written as integer\-integer.
+Date\-spec options are: years, weekyears, months, weeks, yeardays, monthdays, weekdays, hours, minutes, seconds. Value for these options is an integer or a range written as integer\-integer.
 
 NOTE: Defaults do not apply to resources / stonith devices which override them with their own defined values.
 .TP
@@ -880,9 +880,9 @@ You may specify all or any of 'standard', 'provider' and 'type' in a resource ex
 
 Dates are expected to conform to ISO 8601 format.
 
-Duration options are: hours, monthdays, weekdays, yearsdays, months, weeks, years, weekyears, moon. Value for these options is an integer.
+Duration options are: years, months, weeks, days, hours, minutes, seconds. Value for these options is an integer.
 
-Date\-spec options are: hours, monthdays, weekdays, yearsdays, months, weeks, years, weekyears, moon. Value for these options is an integer or a range written as integer\-integer.
+Date\-spec options are: years, weekyears, months, weeks, yeardays, monthdays, weekdays, hours, minutes, seconds. Value for these options is an integer or a range written as integer\-integer.
 
 NOTE: Defaults do not apply to resources / stonith devices which override them with their own defined values.
 .TP
@@ -1126,13 +1126,21 @@ Creates a location constraint with a rule on the specified resource where expres
 .br
   date in_range <date> to duration <duration options>...
 .br
-  date\-spec <date spec options>...
+  date\-spec <date\-spec options>...
 .br
   <expression> and|or <expression>
 .br
   ( <expression> )
 .br
-where duration options and date spec options are: hours, monthdays, weekdays, yeardays, months, weeks, years, weekyears, moon. Resource may be either a resource id <resource_id> or %<resource_id> or resource%<resource_id>, or a resource name regular expression regexp%<resource_pattern>. If score is omitted it defaults to INFINITY. If id is omitted one is generated from the resource id. If resource\-discovery is omitted it defaults to 'always'.
+Dates are expected to conform to ISO 8601 format.
+
+Duration options are: years, months, weeks, days, hours, minutes, seconds. Value for these options is an integer.
+
+Date\-spec options are: years, weekyears, months, weeks, yeardays, monthdays, weekdays, hours, minutes, seconds. Value for these options is an integer or a range written as integer\-integer.
+
+Resource may be either a resource id <resource_id> or %<resource_id> or resource%<resource_id>, or a resource name regular expression regexp%<resource_pattern>.
+
+If score is omitted it defaults to INFINITY. If id is omitted one is generated from the resource id. If resource\-discovery is omitted it defaults to 'always'.
 .TP
 location [config [resources [<resource reference>...]] | [nodes [<node>...]]] [\fB\-\-full\fR] [\fB\-\-all\fR] [@OUTPUT_FORMAT_SYNTAX_DOC@]
 List all the current location constraints that are not expired. If 'resources' is specified, location constraints are displayed per resource. If 'nodes' is specified, location constraints are displayed per node. If specific nodes, resources or resource name regular expressions are specified, only constraints containing those will be shown. Resource reference may be either a resource id <resource_id> or %<resource_id> or resource%<resource_id>, or a resource name regular expression regexp%<resource_pattern>. If \fB\-\-full\fR is specified show the internal constraint id's as well. If \fB\-\-all\fR is specified show the expired constraints. @OUTPUT_FORMAT_DESC_DOC@
@@ -1631,7 +1639,7 @@ Legacy role names and derived options and keywords are no longer accepted, use '
 .SS "Resources validation"
 When creating or updating a resource or stonith, its options are now validated by the resource or stonith agent. Unless \fB\-\-agent\-validation\fR is specified, this does not prevent misconfiguring the resource or stonith by exiting with an error. In pcs-0.11, the validation was done only when \fB\-\-agent\-validation\fR was specified.
 .SS "Pacemaker rules"
-Several date-spec and duration options have been removed in pacemaker 3. Therefore, pcs no longer supports them either.
+Several date\-spec and duration options have been removed in pacemaker 3. Therefore, pcs no longer supports them either. Previously supported date\-spec and duration options were: hours, monthdays, weekdays, yearsdays, months, weeks, years, weekyears, moon. New date\-spec options are: seconds, minutes, hours, monthdays, weekdays, yeardays, months, weeks, years, weekyears. New duration options are: seconds, minutes, hours, days, weeks, months, years.
 .br
 Using spaces in dates in location constraint rules is no longer allowed.
 .br

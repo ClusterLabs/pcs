@@ -511,16 +511,16 @@ _RESOURCE_OP_DEFAULTS_SET_CREATE_DESC = (
     "",
     _unwrap(
         """
-        Duration options are: hours, monthdays, weekdays, yearsdays, months,
-        weeks, years, weekyears, moon. Value for these options is an integer.
+        Duration options are: years, months, weeks, days, hours, minutes,
+        seconds. Value for these options is an integer.
         """
     ),
     "",
     _unwrap(
         """
-        Date-spec options are: hours, monthdays, weekdays, yeardays, months,
-        weeks, years, weekyears, moon. Value for these options is an integer or
-        a range written as integer-integer.
+        Date-spec options are: years, weekyears, months, weeks, yeardays,
+        monthdays, weekdays, hours, minutes, seconds. Value for these options
+        is an integer or a range written as integer-integer.
         """
     ),
     "",
@@ -646,16 +646,16 @@ _RESOURCE_DEFAULTS_SET_CREATE_DESC = (
     "",
     _unwrap(
         """
-        Duration options are: hours, monthdays, weekdays, yearsdays, months,
-        weeks, years, weekyears, moon. Value for these options is an integer.
+        Duration options are: years, months, weeks, days, hours, minutes,
+        seconds. Value for these options is an integer.
         """
     ),
     "",
     _unwrap(
         """
-        Date-spec options are: hours, monthdays, weekdays, yearsdays, months,
-        weeks, years, weekyears, moon. Value for these options is an integer or
-        a range written as integer-integer.
+        Date-spec options are: years, weekyears, months, weeks, yeardays,
+        monthdays, weekdays, hours, minutes, seconds. Value for these options
+        is an integer or a range written as integer-integer.
         """
     ),
     "",
@@ -2419,11 +2419,15 @@ Commands:
           date gt|lt <date>
           date in_range <date> to <date>
           date in_range <date> to duration <duration options>...
-          date-spec <date spec options>...
+          date-spec <date-spec options>...
           <expression> and|or <expression>
           ( <expression> )
-        where duration options and date spec options are: hours, monthdays,
-        weekdays, yeardays, months, weeks, years, weekyears, moon.
+        Dates are expected to conform to ISO 8601 format.
+        Duration options are: years, months, weeks, days, hours, minutes,
+        seconds. Value for these options is an integer.
+        Date-spec options are: years, weekyears, months, weeks, yeardays,
+        monthdays, weekdays, hours, minutes, seconds. Value for these options
+        is an integer or a range written as integer-integer.
         Resource may be either a resource id <resource_id> or %<resource_id> or
         resource%<resource_id>, or a resource name regular expression
         regexp%<resource_pattern>. If score is omitted it defaults to INFINITY.

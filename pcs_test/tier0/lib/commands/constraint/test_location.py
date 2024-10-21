@@ -48,23 +48,74 @@ class CreatePlainWithRule(TestCase):
           {other_constraint}
         </constraints>
     """
-    constraints_xml_integer = """
-        <constraints>
-          <rsc_location id="location-R1" rsc="R1">
-            <rule id="location-R1-rule" boolean-op="and" score="INFINITY">
-              <expression id="location-R1-rule-expr"
-                  attribute="attr" operation="gt" type="{type}" value="7"
-              />
-            </rule>
-          </rsc_location>
-        </constraints>
-    """
 
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
 
-    def assert_success_minimal(self, resource_id):
+    def test_old_cib(self):
+        resource_id = "R1"
         self.config.runner.cib.load(resources=self.resources_xml)
+        self.config.runner.cib.upgrade()
+        self.config.runner.cib.load(
+            resources=self.resources_xml,
+            filename="cib-empty-3.9.xml",
+            name="runner.cib.load.2",
+        )
+        constraints_xml = self.constraints_xml_minimal.format(
+            resource_id=resource_id, other_constraint=""
+        )
+        self.config.env.push_cib(
+            constraints=constraints_xml,
+            load_key="runner.cib.load.2",
+        )
+
+        location.create_plain_with_rule(
+            self.env_assist.get_env(),
+            const.RESOURCE_ID_TYPE_PLAIN,
+            resource_id,
+            "#uname eq node1",
+            {},
+            {},
+            [],
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.info(reports.codes.CIB_UPGRADE_SUCCESSFUL),
+            ]
+        )
+
+    def test_old_cib_update_not_possible(self):
+        resource_id = "R1"
+        self.config.runner.cib.load(resources=self.resources_xml)
+        self.config.runner.cib.upgrade()
+        self.config.runner.cib.load(
+            resources=self.resources_xml, name="runner.cib.load.2"
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: location.create_plain_with_rule(
+                self.env_assist.get_env(),
+                const.RESOURCE_ID_TYPE_PLAIN,
+                resource_id,
+                "#uname eq node1",
+                {},
+                {},
+                [],
+            ),
+            [
+                fixture.error(
+                    reports.codes.CIB_UPGRADE_FAILED_TO_MINIMAL_REQUIRED_VERSION,
+                    current_version="3.1",
+                    required_version="3.9.0",
+                )
+            ],
+            expected_in_processor=False,
+        )
+
+    def assert_success_minimal(self, resource_id):
+        self.config.runner.cib.load(
+            resources=self.resources_xml, filename="cib-empty-3.9.xml"
+        )
         constraints_xml = self.constraints_xml_minimal.format(
             resource_id=resource_id, other_constraint=""
         )
@@ -96,7 +147,7 @@ class CreatePlainWithRule(TestCase):
         constraints_xml = """
             <constraints>
               <rsc_location id="L1" rsc="R1" resource-discovery="always">
-                <rule id="X" boolean-op="and" score="9" role="Master">
+                <rule id="X" boolean-op="and" score="9" role="Promoted">
                   <expression id="X-expr"
                       attribute="#uname" operation="eq" value="node1"
                   />
@@ -104,7 +155,9 @@ class CreatePlainWithRule(TestCase):
               </rsc_location>
             </constraints>
         """
-        self.config.runner.cib.load(resources=self.resources_xml)
+        self.config.runner.cib.load(
+            resources=self.resources_xml, filename="cib-empty-3.9.xml"
+        )
         self.config.env.push_cib(constraints=constraints_xml)
 
         location.create_plain_with_rule(
@@ -139,7 +192,7 @@ class CreatePlainWithRule(TestCase):
             </constraints>
         """
         self.config.runner.cib.load(
-            resources=self.resources_xml, filename="cib-empty-3.7.xml"
+            resources=self.resources_xml, filename="cib-empty-3.9.xml"
         )
         self.config.env.push_cib(constraints=constraints_xml)
 
@@ -153,61 +206,22 @@ class CreatePlainWithRule(TestCase):
             [],
         )
 
-    def test_rule_with_integer_new_cib(self):
+    def test_rule_with_integer(self):
+        constraints_xml = """
+            <constraints>
+              <rsc_location id="location-R1" rsc="R1">
+                <rule id="location-R1-rule" boolean-op="and" score="INFINITY">
+                  <expression id="location-R1-rule-expr"
+                      attribute="attr" operation="gt" type="integer" value="7"
+                  />
+                </rule>
+              </rsc_location>
+            </constraints>
+        """
         self.config.runner.cib.load(
-            resources=self.resources_xml, filename="cib-empty-3.7.xml"
+            resources=self.resources_xml, filename="cib-empty-3.9.xml"
         )
-        self.config.env.push_cib(
-            constraints=self.constraints_xml_integer.format(type="integer")
-        )
-
-        location.create_plain_with_rule(
-            self.env_assist.get_env(),
-            const.RESOURCE_ID_TYPE_PLAIN,
-            "R1",
-            "attr gt integer 7",
-            {},
-            {},
-            [],
-        )
-
-    def test_rule_with_integer_old_cib(self):
-        self.config.runner.cib.load(resources=self.resources_xml)
-        self.config.runner.cib.upgrade()
-        self.config.runner.cib.load(
-            resources=self.resources_xml,
-            filename="cib-empty-3.7.xml",
-            name="runner.cib.load.2",
-        )
-        self.config.env.push_cib(
-            constraints=self.constraints_xml_integer.format(type="integer"),
-            load_key="runner.cib.load.2",
-        )
-
-        location.create_plain_with_rule(
-            self.env_assist.get_env(),
-            const.RESOURCE_ID_TYPE_PLAIN,
-            "R1",
-            "attr gt integer 7",
-            {},
-            {},
-            [],
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.info(reports.codes.CIB_UPGRADE_SUCCESSFUL),
-            ]
-        )
-
-    def test_rule_with_integer_old_cib_update_not_possible(self):
-        self.config.runner.cib.load(resources=self.resources_xml)
-        self.config.runner.cib.upgrade()
-        self.config.runner.cib.load(
-            resources=self.resources_xml, name="runner.cib.load.2"
-        )
-        self.config.env.push_cib(
-            constraints=self.constraints_xml_integer.format(type="number")
-        )
+        self.config.env.push_cib(constraints=constraints_xml)
 
         location.create_plain_with_rule(
             self.env_assist.get_env(),
@@ -225,6 +239,7 @@ class CreatePlainWithRule(TestCase):
             constraints=self.constraints_xml_minimal.format(
                 resource_id="R1", other_constraint=""
             ),
+            filename="cib-empty-3.9.xml",
         )
         self.env_assist.assert_raise_library_error(
             lambda: location.create_plain_with_rule(
@@ -253,6 +268,7 @@ class CreatePlainWithRule(TestCase):
             constraints=self.constraints_xml_minimal.format(
                 resource_id="R1", other_constraint=""
             ),
+            filename="cib-empty-3.9.xml",
         )
         constraints_xml = self.constraints_xml_minimal.format(
             resource_id="R1",
@@ -289,7 +305,9 @@ class CreatePlainWithRule(TestCase):
     def assert_resource_in_multiinstance(
         self, resource_id, parent_type, parent_id
     ):
-        self.config.runner.cib.load(resources=self.resources_xml)
+        self.config.runner.cib.load(
+            resources=self.resources_xml, filename="cib-empty-3.9.xml"
+        )
         self.env_assist.assert_raise_library_error(
             lambda: location.create_plain_with_rule(
                 self.env_assist.get_env(),
@@ -319,7 +337,9 @@ class CreatePlainWithRule(TestCase):
         constraints_xml = self.constraints_xml_minimal.format(
             resource_id=resource_id, other_constraint=""
         )
-        self.config.runner.cib.load(resources=self.resources_xml)
+        self.config.runner.cib.load(
+            resources=self.resources_xml, filename="cib-empty-3.9.xml"
+        )
         self.config.env.push_cib(constraints=constraints_xml)
 
         location.create_plain_with_rule(
@@ -355,7 +375,9 @@ class CreatePlainWithRule(TestCase):
         self.assert_resource_in_multiinstance_forced("B1R1", "bundle", "B1")
 
     def test_resource_not_found(self):
-        self.config.runner.cib.load(resources=self.resources_xml)
+        self.config.runner.cib.load(
+            resources=self.resources_xml, filename="cib-empty-3.9.xml"
+        )
         self.env_assist.assert_raise_library_error(
             lambda: location.create_plain_with_rule(
                 self.env_assist.get_env(),
@@ -380,7 +402,9 @@ class CreatePlainWithRule(TestCase):
         )
 
     def test_not_resource(self):
-        self.config.runner.cib.load(resources=self.resources_xml)
+        self.config.runner.cib.load(
+            resources=self.resources_xml, filename="cib-empty-3.9.xml"
+        )
         self.env_assist.assert_raise_library_error(
             lambda: location.create_plain_with_rule(
                 self.env_assist.get_env(),
@@ -404,7 +428,9 @@ class CreatePlainWithRule(TestCase):
         )
 
     def test_errors(self):
-        self.config.runner.cib.load(resources=self.resources_xml)
+        self.config.runner.cib.load(
+            resources=self.resources_xml, filename="cib-empty-3.9.xml"
+        )
         self.env_assist.assert_raise_library_error(
             lambda: location.create_plain_with_rule(
                 self.env_assist.get_env(),

@@ -4303,6 +4303,7 @@ class ExpiredConstraints(ConstraintBaseTest):
     _tomorrow = (datetime.date.today() + datetime.timedelta(days=2)).strftime(
         "%Y-%m-%d"
     )
+    empty_cib = rc("cib-empty-3.9.xml")
 
     def fixture_group(self):
         self.assert_pcs_success(
@@ -4600,7 +4601,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                   resource 'D1'
                     Rules:
                       Rule: boolean-op=and score=INFINITY
-                        Rule: boolean-op=or score=0
+                        Rule: boolean-op=or
                           Expression: date eq 2019-01-01
                           Expression: date eq 2019-01-30
                         Expression: #uname eq node1
@@ -4622,7 +4623,7 @@ class ExpiredConstraints(ConstraintBaseTest):
                   resource 'D1'
                     Rules:
                       Rule: boolean-op=and score=INFINITY
-                        Rule: boolean-op=or score=0
+                        Rule: boolean-op=or
                           Expression: date eq 2019-01-01
                           Expression: date eq 2019-01-30
                         Expression: #uname eq node1

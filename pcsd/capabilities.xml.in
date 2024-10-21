@@ -1011,6 +1011,8 @@
 
         pcs commands: constraint location rule
         daemon urls: add_constraint_rule_remote (param: c_type=loc)
+        API v2:
+          constraint.location.create_with_rule
       </description>
     </capability>
     <capability id="pcmk.constraint.location.simple.rule.options" in-pcs="1" in-pcsd="0">
@@ -1020,6 +1022,20 @@
         constraint listing.
 
         pcs commands: constraint location rule
+      </description>
+    </capability>
+    <capability id="pcmk.constraint.location.simple.rule.pcmk3-date-options" in-pcs="1" in-pcsd="1">
+      <description>
+        Duration and date-spec options have been changed to follow pacemaker 3.
+        date-spec options are: seconds, minutes, hours, monthdays, weekdays,
+        yeardays, months, weeks, years, weekyears
+        duration options are: seconds, minutes, hours, days, weeks, months,
+        years
+
+        pcs commands: constraint location rule
+        daemon urls: add_constraint_rule_remote (param: c_type=loc)
+        API v2:
+          constraint.location.create_with_rule
       </description>
     </capability>
     <capability id="pcmk.constraint.location.simple.rule.rule-add-remove" in-pcs="0" in-pcsd="0">
@@ -1289,6 +1305,17 @@
         pcs commands: resource op defaults set create
       </description>
     </capability>
+    <capability id="pcmk.properties.operation-defaults.rule.pcmk3-date-options" in-pcs="1" in-pcsd="0">
+      <description>
+        Duration and date-spec options have been changed to follow pacemaker 3.
+        date-spec options are: seconds, minutes, hours, monthdays, weekdays,
+        yeardays, months, weeks, years, weekyears
+        duration options are: seconds, minutes, hours, days, weeks, months,
+        years
+
+        pcs commands: resource op defaults set create
+      </description>
+    </capability>
     <capability id="pcmk.properties.operation-defaults.rule-rsc-op" in-pcs="1" in-pcsd="0">
       <description>
         Support for rules with 'resource' and 'op' expressions in sets of
@@ -1348,6 +1375,17 @@
     <capability id="pcmk.properties.resource-defaults.rule.node-attr-type-number" in-pcs="1" in-pcsd="0">
       <description>
         Rules support a node attribute type 'number'.
+
+        pcs commands: resource defaults set create
+      </description>
+    </capability>
+    <capability id="pcmk.properties.resource-defaults.rule.pcmk3-date-options" in-pcs="1" in-pcsd="0">
+      <description>
+        Duration and date-spec options have been changed to follow pacemaker 3.
+        date-spec options are: seconds, minutes, hours, monthdays, weekdays,
+        yeardays, months, weeks, years, weekyears
+        duration options are: seconds, minutes, hours, days, weeks, months,
+        years
 
         pcs commands: resource defaults set create
       </description>
