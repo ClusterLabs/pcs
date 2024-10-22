@@ -1675,6 +1675,9 @@ This deprecated command has been removed. Use 'pcs pcsd certkey' instead.
 node add\-remote | add\-guest
 \fB\-\-wait\fR option is deprecated. Instead, use the 'pcs status wait' command to wait for the cluster to settle into stable state. Use the 'pcs status query resource' commands to verify that the resource is in the expected state after the wait.
 .TP
+node remove\-remote | delete\-remote
+These commands no longer remove location constraints referencing the node name of the removed remote node.
+.TP
 pcsd-status
 This deprecated command has been removed. Use 'pcs status pcsd' or 'pcs pcsd status' instead.
 .SS "constraint"
@@ -1710,6 +1713,9 @@ Since pcs-0.11, this command automatically deletes location constraints used for
 .TP
 op defaults <name>=<value>...
 This deprecated command has been removed. Use 'pcs resource op defaults update <name>=<value>...' if you only manage one set of defaults, or 'pcs resource op defaults set' if you manage several sets of defaults.
+.TP
+remove | delete
+Removing resources representing remote and guest nodes is no longer possible. Use 'pcs cluster node remove\-remote' to remove remote nodes and 'pcs cluster node remove\-guest' to remove guest nodes.
 .SS "stonith"
 .TP
 create \fB\-\-group\fR
