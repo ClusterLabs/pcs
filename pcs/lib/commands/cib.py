@@ -1,5 +1,6 @@
 from typing import (
     Collection,
+    Iterable,
     Sequence,
 )
 
@@ -18,7 +19,6 @@ from pcs.lib.cib.resource.guest_node import is_guest_node
 from pcs.lib.cib.resource.remote_node import (
     get_node_name_from_resource as get_node_name_from_remote_resource,
 )
-from pcs.lib.cib.tools import get_elements_by_ids
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 
@@ -43,7 +43,7 @@ def remove_elements(
 
     if report_processor.report_list(
         _validate_elements_to_remove(elements_to_remove)
-        + _ensure_not_guest_remote(cib, ids)
+        + _ensure_not_guest_remote(elements_to_remove.resources_to_remove)
     ).has_errors:
         raise LibraryError()
 
@@ -55,7 +55,7 @@ def remove_elements(
     )
 
     cib = _stop_resources_wait(
-        env, cib, elements_to_remove.resources_to_disable, force_flags
+        env, cib, elements_to_remove.resources_to_remove, force_flags
     )
 
     remove_specified_elements(cib, elements_to_remove)
@@ -140,11 +140,10 @@ def _validate_elements_to_remove(
 
 
 def _ensure_not_guest_remote(
-    cib: _Element, ids: StringCollection
+    resource_elements: Iterable[_Element],
 ) -> reports.ReportItemList:
     report_list = []
-    elements_to_process, _ = get_elements_by_ids(cib, ids)
-    for element in elements_to_process:
+    for element in resource_elements:
         if is_guest_node(element):
             report_list.append(
                 reports.ReportItem.error(

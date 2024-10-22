@@ -107,7 +107,7 @@ class ElementsToRemoveFindElements(TestCase, GetCibMixin):
         self,
         elements_to_remove: lib.ElementsToRemove,
         ids_to_remove: set[str],
-        resources_to_disable: Optional[list[etree._Element]] = None,
+        resources_to_remove: Optional[list[etree._Element]] = None,
         dependant_elements: lib.DependantElements = lib.DependantElements({}),
         element_references: lib.ElementReferences = lib.ElementReferences(
             {}, {}
@@ -119,8 +119,8 @@ class ElementsToRemoveFindElements(TestCase, GetCibMixin):
     ):
         self.assertEqual(elements_to_remove.ids_to_remove, ids_to_remove)
         self.assertEqual(
-            elements_to_remove.resources_to_disable,
-            resources_to_disable or [],
+            elements_to_remove.resources_to_remove,
+            resources_to_remove or [],
         )
         self.assertEqual(
             elements_to_remove.dependant_elements, dependant_elements
@@ -245,7 +245,7 @@ class ElementsToRemoveFindElements(TestCase, GetCibMixin):
         self.assert_elements_to_remove(
             elements_to_remove,
             {"A"},
-            resources_to_disable=fixture_primitive_to_disable(cib),
+            resources_to_remove=fixture_primitive_to_disable(cib),
         )
 
     def test_resource_primitive_in_tag(self):
@@ -272,7 +272,7 @@ class ElementsToRemoveFindElements(TestCase, GetCibMixin):
         self.assert_elements_to_remove(
             elements_to_remove,
             {"A", "T2"},
-            resources_to_disable=fixture_primitive_to_disable(cib),
+            resources_to_remove=fixture_primitive_to_disable(cib),
             dependant_elements=lib.DependantElements({"T2": const.TAG_TAG}),
             element_references=lib.ElementReferences(
                 {"A": {"T1"}},
@@ -303,7 +303,7 @@ class ElementsToRemoveFindElements(TestCase, GetCibMixin):
         self.assert_elements_to_remove(
             elements_to_remove,
             {"A", "l1", "o1", "c1", "t1"},
-            resources_to_disable=fixture_primitive_to_disable(cib),
+            resources_to_remove=fixture_primitive_to_disable(cib),
             dependant_elements=lib.DependantElements(
                 {
                     "l1": const.TAG_CONSTRAINT_LOCATION,
@@ -327,7 +327,7 @@ class ElementsToRemoveFindElements(TestCase, GetCibMixin):
         self.assert_elements_to_remove(
             elements_to_remove,
             {"G", "A", "B"},
-            resources_to_disable=fixture_group_to_disable(cib),
+            resources_to_remove=fixture_group_to_disable(cib),
             dependant_elements=lib.DependantElements(
                 {
                     "A": const.TAG_RESOURCE_PRIMITIVE,
@@ -349,7 +349,7 @@ class ElementsToRemoveFindElements(TestCase, GetCibMixin):
         self.assert_elements_to_remove(
             elements_to_remove,
             {"A"},
-            resources_to_disable=[
+            resources_to_remove=[
                 cib.find("./configuration/resources/group/primitive[@id='A']"),
             ],
             element_references=lib.ElementReferences(
@@ -374,7 +374,7 @@ class ElementsToRemoveFindElements(TestCase, GetCibMixin):
         self.assert_elements_to_remove(
             elements_to_remove,
             {"A", "B", "G"},
-            resources_to_disable=fixture_group_to_disable(cib),
+            resources_to_remove=fixture_group_to_disable(cib),
             dependant_elements=lib.DependantElements(
                 {"G": const.TAG_RESOURCE_GROUP}
             ),
@@ -402,7 +402,7 @@ class ElementsToRemoveFindElements(TestCase, GetCibMixin):
         self.assert_elements_to_remove(
             elements_to_remove,
             {"G", "A", "B", "l1", "o1", "c1", "t1"},
-            resources_to_disable=fixture_group_to_disable(cib),
+            resources_to_remove=fixture_group_to_disable(cib),
             dependant_elements=lib.DependantElements(
                 {
                     "A": const.TAG_RESOURCE_PRIMITIVE,
@@ -435,7 +435,7 @@ class ElementsToRemoveFindElements(TestCase, GetCibMixin):
         self.assert_elements_to_remove(
             elements_to_remove,
             {"G", "A", "B", "T"},
-            resources_to_disable=fixture_group_to_disable(cib),
+            resources_to_remove=fixture_group_to_disable(cib),
             dependant_elements=lib.DependantElements(
                 {
                     "A": const.TAG_RESOURCE_PRIMITIVE,
@@ -457,7 +457,7 @@ class ElementsToRemoveFindElements(TestCase, GetCibMixin):
         self.assert_elements_to_remove(
             elements_to_remove,
             {"C", "A"},
-            resources_to_disable=fixture_clone_to_disable(cib),
+            resources_to_remove=fixture_clone_to_disable(cib),
             dependant_elements=lib.DependantElements(
                 {"A": const.TAG_RESOURCE_PRIMITIVE}
             ),
@@ -476,7 +476,7 @@ class ElementsToRemoveFindElements(TestCase, GetCibMixin):
         self.assert_elements_to_remove(
             elements_to_remove,
             {"C", "A"},
-            resources_to_disable=fixture_clone_to_disable(cib),
+            resources_to_remove=fixture_clone_to_disable(cib),
             dependant_elements=lib.DependantElements(
                 {"C": const.TAG_RESOURCE_CLONE}
             ),
@@ -501,7 +501,7 @@ class ElementsToRemoveFindElements(TestCase, GetCibMixin):
         self.assert_elements_to_remove(
             elements_to_remove,
             {"C", "A", "l1", "l2"},
-            resources_to_disable=fixture_clone_to_disable(cib),
+            resources_to_remove=fixture_clone_to_disable(cib),
             dependant_elements=lib.DependantElements(
                 {
                     "A": const.TAG_RESOURCE_PRIMITIVE,
@@ -531,7 +531,7 @@ class ElementsToRemoveFindElements(TestCase, GetCibMixin):
         self.assert_elements_to_remove(
             elements_to_remove,
             {"C", "A", "T"},
-            resources_to_disable=fixture_clone_to_disable(cib),
+            resources_to_remove=fixture_clone_to_disable(cib),
             dependant_elements=lib.DependantElements(
                 {"A": const.TAG_RESOURCE_PRIMITIVE, "T": const.TAG_TAG}
             ),
@@ -549,7 +549,7 @@ class ElementsToRemoveFindElements(TestCase, GetCibMixin):
         self.assert_elements_to_remove(
             elements_to_remove,
             {"B"},
-            resources_to_disable=[
+            resources_to_remove=[
                 cib.find("./configuration/resources/bundle[@id='B']")
             ],
         )
@@ -568,7 +568,7 @@ class ElementsToRemoveFindElements(TestCase, GetCibMixin):
         self.assert_elements_to_remove(
             elements_to_remove,
             {"B", "A"},
-            resources_to_disable=[
+            resources_to_remove=[
                 cib.find("./configuration/resources/bundle/primitive[@id='A']"),
                 cib.find("./configuration/resources/bundle[@id='B']"),
             ],
@@ -591,7 +591,7 @@ class ElementsToRemoveFindElements(TestCase, GetCibMixin):
         self.assert_elements_to_remove(
             elements_to_remove,
             {"A"},
-            resources_to_disable=[
+            resources_to_remove=[
                 cib.find("./configuration/resources/bundle/primitive[@id='A']")
             ],
             element_references=lib.ElementReferences(
@@ -626,7 +626,7 @@ class ElementsToRemoveFindElements(TestCase, GetCibMixin):
         self.assert_elements_to_remove(
             elements_to_remove,
             {"vohrablo", "ucesat_se2"},
-            resources_to_disable=[
+            resources_to_remove=[
                 cib.find("./configuration/resources/primitive[@id='vohrablo']")
             ],
             dependant_elements=lib.DependantElements(
@@ -663,7 +663,7 @@ class ElementsToRemoveFindElements(TestCase, GetCibMixin):
         self.assert_elements_to_remove(
             elements_to_remove,
             {"G", "A", "B", "PERMISSION"},
-            resources_to_disable=fixture_group_to_disable(cib),
+            resources_to_remove=fixture_group_to_disable(cib),
             dependant_elements=lib.DependantElements(
                 {
                     "A": const.TAG_RESOURCE_PRIMITIVE,
@@ -698,7 +698,7 @@ class ElementsToRemoveFindElements(TestCase, GetCibMixin):
         self.assert_elements_to_remove(
             elements_to_remove,
             {"A"},
-            resources_to_disable=fixture_primitive_to_disable(cib),
+            resources_to_remove=fixture_primitive_to_disable(cib),
             element_references=lib.ElementReferences(
                 {"A": {"fl"}},
                 {
@@ -725,7 +725,7 @@ class ElementsToRemoveFindElements(TestCase, GetCibMixin):
         self.assert_elements_to_remove(
             elements_to_remove,
             {"A", "fl-NODE-A-1"},
-            resources_to_disable=fixture_primitive_to_disable(cib),
+            resources_to_remove=fixture_primitive_to_disable(cib),
             dependant_elements=lib.DependantElements(
                 {"fl-NODE-A-1": const.TAG_FENCING_LEVEL}
             ),
@@ -754,7 +754,7 @@ class ElementsToRemoveFindElements(TestCase, GetCibMixin):
         self.assert_elements_to_remove(
             elements_to_remove,
             {"A"},
-            resources_to_disable=fixture_primitive_to_disable(cib),
+            resources_to_remove=fixture_primitive_to_disable(cib),
             element_references=lib.ElementReferences(
                 {"A": {"set1"}},
                 {
@@ -789,7 +789,7 @@ class ElementsToRemoveFindElements(TestCase, GetCibMixin):
         self.assert_elements_to_remove(
             elements_to_remove,
             {"A", "set1"},
-            resources_to_disable=fixture_primitive_to_disable(cib),
+            resources_to_remove=fixture_primitive_to_disable(cib),
             dependant_elements=lib.DependantElements(
                 {"set1": const.TAG_RESOURCE_SET}
             ),
@@ -823,7 +823,7 @@ class ElementsToRemoveFindElements(TestCase, GetCibMixin):
         self.assert_elements_to_remove(
             elements_to_remove,
             {"A", "set1", "c1"},
-            resources_to_disable=fixture_primitive_to_disable(cib),
+            resources_to_remove=fixture_primitive_to_disable(cib),
             dependant_elements=lib.DependantElements(
                 {
                     "set1": const.TAG_RESOURCE_SET,
@@ -858,7 +858,7 @@ class ElementsToRemoveFindElements(TestCase, GetCibMixin):
         self.assert_elements_to_remove(
             elements_to_remove,
             {"A", "set1", "c1", "set2", "c2"},
-            resources_to_disable=fixture_primitive_to_disable(cib),
+            resources_to_remove=fixture_primitive_to_disable(cib),
             dependant_elements=lib.DependantElements(
                 {
                     "set1": const.TAG_RESOURCE_SET,
@@ -883,7 +883,7 @@ class ElementsToRemoveFindElements(TestCase, GetCibMixin):
         self.assert_elements_to_remove(
             elements_to_remove,
             {"MS", "A"},
-            resources_to_disable=[
+            resources_to_remove=[
                 cib.find("./configuration/resources/master/primitive[@id='A']"),
                 cib.find("./configuration/resources/master/[@id='MS']"),
             ],
@@ -906,7 +906,7 @@ class ElementsToRemoveFindElements(TestCase, GetCibMixin):
         self.assert_elements_to_remove(
             elements_to_remove,
             {"A", "MS"},
-            resources_to_disable=[
+            resources_to_remove=[
                 cib.find("./configuration/resources/master/primitive[@id='A']"),
                 cib.find("./configuration/resources/master/[@id='MS']"),
             ],
@@ -926,7 +926,7 @@ class ElementsToRemoveFindElements(TestCase, GetCibMixin):
             elements_to_remove,
             {"A"},
             missing_ids={"B", "C", "D"},
-            resources_to_disable=fixture_primitive_to_disable(cib),
+            resources_to_remove=fixture_primitive_to_disable(cib),
         )
 
     def test_unsupported_id_types(self):

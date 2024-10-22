@@ -153,22 +153,34 @@ class ElementsToRemove:
             for el in get_elements_by_ids(cib, all_ids)[0]
         }
         self._element_references = removing_references_from
-        self._resources_to_disable = [
+        self._resources_to_remove = [
             el
             for el in get_elements_by_ids(cib, sorted(element_ids_to_remove))[0]
             if is_resource(el)
         ]
 
     @property
-    def resources_to_disable(self) -> list[_Element]:
-        return list(self._resources_to_disable)
-
-    @property
     def ids_to_remove(self) -> set[str]:
+        """
+        Ids of ALL cib elements with id that should be removed, including all
+        resource and dependant elements
+        """
         return set(self._ids_to_remove)
 
     @property
+    def resources_to_remove(self) -> list[_Element]:
+        """
+        List of cib resources that should be removed. Used for operations
+        needed for resources before their deletion, e.g. disabling them.
+        """
+        return list(self._resources_to_remove)
+
+    @property
     def dependant_elements(self) -> DependantElements:
+        """
+        Information about cib elements that are removed indirectly as
+        dependencies of other removed cib elements
+        """
         return DependantElements(
             {
                 element_id: self._id_tag_map[element_id]
@@ -178,6 +190,12 @@ class ElementsToRemove:
 
     @property
     def element_references(self) -> ElementReferences:
+        """
+        Information about cib element references that need to be removed.
+        These references does not have their own id and need special handling
+        while removing, e.g. references to stonith devices in fencing-level
+        elements, or obj-ref elements inside tag elements.
+        """
         return ElementReferences(
             dict(self._element_references),
             {
@@ -191,10 +209,17 @@ class ElementsToRemove:
 
     @property
     def missing_ids(self) -> set[str]:
+        """
+        Set of ids not present in the cib
+        """
         return set(self._missing_ids)
 
     @property
     def unsupported_elements(self) -> UnsupportedElements:
+        """
+        Information about cib elements that cannot be removed using this
+        mechanism
+        """
         return UnsupportedElements(
             id_tag_map={
                 element_id: self._id_tag_map[element_id]
@@ -210,6 +235,7 @@ def warn_resource_unmanaged(
     state: _Element, resource_ids: StringSequence
 ) -> reports.ReportItemList:
     """
+    Warn about unmanaged resources
 
     state -- state of the cluster
     resource_ids -- ids of resources to be checked
