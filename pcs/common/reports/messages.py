@@ -260,7 +260,7 @@ def _stonith_watchdog_timeout_reason_to_str(
     }.get(reason, reason)
 
 
-@dataclass(frozen=True, init=False)
+@dataclass(frozen=True)
 class LegacyCommonMessage(ReportItemMessage):
     """
     This class is used for legacy report transport protocol from
@@ -268,22 +268,19 @@ class LegacyCommonMessage(ReportItemMessage):
     should be replaced with transporting DTOs of reports in the future.
     """
 
-    def __init__(
-        self, code: types.MessageCode, info: Mapping[str, Any], message: str
-    ) -> None:
-        self.__code = code
-        self.info = info
-        self._message = message
+    legacy_code: types.MessageCode
+    legacy_info: Mapping[str, Any]
+    legacy_message: str
 
     @property
     def message(self) -> str:
-        return self._message
+        return self.legacy_message
 
     def to_dto(self) -> ReportItemMessageDto:
         return ReportItemMessageDto(
-            code=self.__code,
+            code=self.legacy_code,
             message=self.message,
-            payload=dict(self.info),
+            payload=dict(self.legacy_info),
         )
 
 
