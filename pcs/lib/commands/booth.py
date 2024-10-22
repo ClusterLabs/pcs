@@ -581,7 +581,7 @@ def remove_from_cluster(
     )
 
     cib = _stop_resources_wait(
-        env, cib, elements_to_remove.resources_to_disable, force_flags
+        env, cib, elements_to_remove.resources_to_remove, force_flags
     )
 
     remove_specified_elements(cib, elements_to_remove)
