@@ -8,6 +8,8 @@
 - Command `resource.restart` in API v2
 - Add lib commands `cluster.get_corosync_conf_struct` and
   `resource.get_configured_resources` to API v2
+- Add lib command `status.full_cluster_status_plaintext` to API v1
+  ([RHEL-61738])
 
 ### Fixed
 - Do not end with error when using the instances quantifier in `pcs status
@@ -16,11 +18,14 @@
   its `method` option set to `cycle` ([RHEL-46286])
 - Do not display expired constraints in `pcs constraint location config
   resources` unless `--all` is specified ([RHEL-46293])
+- Displaying status of local and remote cluster sites in `pcs dr status`
+  command. ([RHEL-61738])
 
 [RHEL-46284]: https://issues.redhat.com/browse/RHEL-46284
 [RHEL-46286]: https://issues.redhat.com/browse/RHEL-46286
 [RHEL-46293]: https://issues.redhat.com/browse/RHEL-46293
 [RHEL-55441]: https://issues.redhat.com/browse/RHEL-55441
+[RHEL-61738]: https://issues.redhat.com/browse/RHEL-61738
 
 
 ## [0.11.8] - 2024-07-09
