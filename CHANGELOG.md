@@ -8,6 +8,8 @@
 - Add lib commands `cluster.get_corosync_conf_struct` and
   `resource.get_configured_resources` to API v2
 - Lib command `cib.remove_elements` can now remove resources
+- Add lib command `status.full_cluster_status_plaintext` to API v1
+  ([RHEL-61747])
 
 ### Changed
 - Commands `pcs resource delete | remove` and `pcs stonith delete | remove` 
@@ -32,11 +34,14 @@
   its `method` option set to `cycle` ([RHEL-44432])
 - Do not display expired constraints in `pcs constraint location config
   resources` unless `--all` is specified ([RHEL-33386])
+- Displaying status of local and remote cluster sites in `pcs dr status`
+  command. ([RHEL-61747])
 
 [RHEL-21047]: https://issues.redhat.com/browse/RHEL-21047
 [RHEL-33386]: https://issues.redhat.com/browse/RHEL-33386
 [RHEL-44432]: https://issues.redhat.com/browse/RHEL-44432
 [RHEL-55723]: https://issues.redhat.com/browse/RHEL-55723
+[RHEL-61747]: https://issues.redhat.com/browse/RHEL-61747
 [RHEL-61889]: https://issues.redhat.com/browse/RHEL-61889
 
 

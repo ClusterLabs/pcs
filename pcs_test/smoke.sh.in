@@ -23,12 +23,6 @@ output_file=$(mktemp)
 token_file=$(mktemp)
 cookie_file=$(mktemp)
 
-# Sanity check of API V0
-token=$(python3 -c "import json; print(json.load(open('@LOCALSTATEDIR@/lib/pcsd/known-hosts'))['known_hosts']['localhost']['token']);")
-curl -kb "token=${token}" https://localhost:2224/remote/cluster_status_plaintext -d 'data_json={}' > "${output_file}"
-cat "${output_file}"; echo ""
-python3 -c "import json; import sys; json.load(open('${output_file}'))['status'] == 'exception' and (sys.exit(1))";
-
 dd if=/dev/urandom bs=32 count=1 status=none | base64 > "${token_file}"
 custom_localhost_node_name="custom-node-name"
 
@@ -86,6 +80,12 @@ else
   exit 1
 fi
 
+# Sanity check of API V0
+token=$(python3 -c "import json; print(json.load(open('@LOCALSTATEDIR@/lib/pcsd/known-hosts'))['known_hosts']['localhost']['token']);")
+curl -kb "token=${token}" https://localhost:2224/remote/cluster_status_plaintext -d 'data_json={}' > "${output_file}"
+cat "${output_file}"; echo ""
+python3 -c "import json; import sys; json.load(open('${output_file}'))['status'] != 'success' and (sys.exit(1))";
+
 # Sanity check of API V1
 curl -kb "token=${token}" https://localhost:2224/api/v1/resource-agent-get-agents-list/v1 --data '{}' > "${output_file}"
 cat "${output_file}"; echo ""
@@ -113,5 +113,5 @@ rm "${output_file}"
 rm "${cookie_file}"
 rm "${pcsd_settings_conf_path}"
 pcs cluster destroy --force
-userdel -r testuser
+userdel -rf testuser
 exit 0
