@@ -48,10 +48,10 @@ def remove_elements(
 
     elements_to_remove = ElementsToRemove(cib, ids)
     remote_node_names = _get_remote_node_names(
-        elements_to_remove.resources_to_disable
+        elements_to_remove.resources_to_remove
     )
     guest_node_names = _get_guest_node_names(
-        elements_to_remove.resources_to_disable
+        elements_to_remove.resources_to_remove
     )
 
     if remote_node_names:
@@ -81,7 +81,7 @@ def remove_elements(
     )
 
     cib = _stop_resources_wait(
-        env, cib, elements_to_remove.resources_to_disable, force_flags
+        env, cib, elements_to_remove.resources_to_remove, force_flags
     )
 
     remove_specified_elements(cib, elements_to_remove)

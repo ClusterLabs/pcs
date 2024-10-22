@@ -759,7 +759,7 @@ def node_remove_remote(
 
     # we use private function from lib.commands.cib to reduce code repetition
     cib = _stop_resources_wait(
-        env, cib, elements_to_remove.resources_to_disable, force_flags
+        env, cib, elements_to_remove.resources_to_remove, force_flags
     )
 
     if not env.is_cib_live:
