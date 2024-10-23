@@ -8,9 +8,9 @@ from pcs.common.pacemaker.constraint import (
 from pcs.common.pacemaker.types import CibResourceDiscovery
 from pcs.lib.cib.const import TAG_CONSTRAINT_LOCATION as TAG
 from pcs.lib.cib.const import TAG_RULE
+from pcs.lib.cib.constraint.common import is_set_constraint
 from pcs.lib.cib.constraint.resource_set import (
     constraint_element_to_resource_set_dto_list,
-    is_set_constraint,
 )
 from pcs.lib.cib.rule import RuleInEffectEval
 from pcs.lib.cib.rule.cib_to_dto import rule_element_to_dto
