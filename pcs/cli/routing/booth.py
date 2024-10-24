@@ -4,7 +4,6 @@ from pcs import (
 )
 from pcs.cli.booth import command
 from pcs.cli.common.routing import create_router
-from pcs.resource import resource_remove
 
 mapping = {
     "help": lambda lib, argv, modifiers: print(usage.booth(argv)),
@@ -23,10 +22,8 @@ mapping = {
         ["booth", "ticket"],
     ),
     "create": command.create_in_cluster,
-    # ignoring mypy errors, these functions need to be fixed, they are passing
-    # a function to pcs.lib
-    "delete": command.get_remove_from_cluster(resource_remove),  # type:ignore
-    "remove": command.get_remove_from_cluster(resource_remove),  # type:ignore
+    "delete": command.remove_from_cluster,
+    "remove": command.remove_from_cluster,
     "restart": command.restart,
     "sync": command.sync,
     "pull": command.pull,

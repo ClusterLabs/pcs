@@ -95,13 +95,7 @@ class FindBoothResourceElementsTest(TestCase):
         )
 
 
-class RemoveFromClusterTest(TestCase):
-    @staticmethod
-    def call(element_list):
-        mock_resource_remove = mock.Mock()
-        booth_resource.get_remover(mock_resource_remove)(element_list)
-        return mock_resource_remove
-
+class FindElementsToRemove(TestCase):
     @staticmethod
     def find_booth_resources(tree):
         return tree.xpath('.//primitive[@type="booth-site"]')
@@ -120,13 +114,15 @@ class RemoveFromClusterTest(TestCase):
         """
         )
 
-        mock_resource_remove = self.call(self.find_booth_resources(group))
+        elements = booth_resource.find_elements_to_remove(
+            self.find_booth_resources(group)
+        )
         self.assertEqual(
-            mock_resource_remove.mock_calls,
             [
-                mock.call("ip"),
-                mock.call("booth"),
+                group.find("./primitive[@id='ip']"),
+                group.find("./primitive[@id='booth']"),
             ],
+            elements,
         )
 
     def test_remove_ip_when_group_is_disabled_1(self):
@@ -146,13 +142,15 @@ class RemoveFromClusterTest(TestCase):
         """
         )
 
-        mock_resource_remove = self.call(self.find_booth_resources(group))
+        elements = booth_resource.find_elements_to_remove(
+            self.find_booth_resources(group)
+        )
         self.assertEqual(
-            mock_resource_remove.mock_calls,
             [
-                mock.call("ip"),
-                mock.call("booth"),
+                group.find("./primitive[@id='ip']"),
+                group.find("./primitive[@id='booth']"),
             ],
+            elements,
         )
 
     def test_remove_ip_when_group_is_disabled_2(self):
@@ -172,13 +170,15 @@ class RemoveFromClusterTest(TestCase):
         """
         )
 
-        mock_resource_remove = self.call(self.find_booth_resources(group))
+        elements = booth_resource.find_elements_to_remove(
+            self.find_booth_resources(group)
+        )
         self.assertEqual(
-            mock_resource_remove.mock_calls,
             [
-                mock.call("ip"),
-                mock.call("booth"),
+                group.find("./primitive[@id='ip']"),
+                group.find("./primitive[@id='booth']"),
             ],
+            elements,
         )
 
     def test_dont_remove_ip_when_group_has_other_resources(self):
@@ -196,13 +196,10 @@ class RemoveFromClusterTest(TestCase):
         """
         )
 
-        mock_resource_remove = self.call(self.find_booth_resources(group))
-        self.assertEqual(
-            mock_resource_remove.mock_calls,
-            [
-                mock.call("booth"),
-            ],
+        elements = booth_resource.find_elements_to_remove(
+            self.find_booth_resources(group)
         )
+        self.assertEqual([group.find("./primitive[@id='booth']")], elements)
 
 
 class FindBoundIpTest(TestCase):

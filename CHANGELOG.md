@@ -10,6 +10,13 @@
   `resource.get_configured_resources` to API v2
 - Add lib command `status.full_cluster_status_plaintext` to API v1
   ([RHEL-61738])
+- Lib command `cib.remove_elements` can now remove resources
+
+### Changed
+- Commands `pcs resource delete | remove` and `pcs stonith delete | remove` 
+  now allow ([RHEL-61901]):
+    - deletion of multiple resources or stonith resources with one command
+    - deletion of resources or stonith resources included in tags
 
 ### Fixed
 - Do not end with error when using the instances quantifier in `pcs status
@@ -21,11 +28,17 @@
 - Displaying status of local and remote cluster sites in `pcs dr status`
   command. ([RHEL-61738])
 
+### Deprecated
+- Using `pcs resource delete | remove` to delete resources representing remote
+  and guest nodes. Use `pcs cluster node remove-remote` and `pcs cluster node
+  remove-guest` instead.
+
 [RHEL-46284]: https://issues.redhat.com/browse/RHEL-46284
 [RHEL-46286]: https://issues.redhat.com/browse/RHEL-46286
 [RHEL-46293]: https://issues.redhat.com/browse/RHEL-46293
 [RHEL-55441]: https://issues.redhat.com/browse/RHEL-55441
 [RHEL-61738]: https://issues.redhat.com/browse/RHEL-61738
+[RHEL-61901]: https://issues.redhat.com/browse/RHEL-61901
 
 
 ## [0.11.8] - 2024-07-09

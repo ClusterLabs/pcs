@@ -1,4 +1,7 @@
-from typing import Mapping
+from typing import (
+    Mapping,
+    cast,
+)
 
 from lxml.etree import _Element
 
@@ -212,47 +215,51 @@ def find_node_list(tree):
     return node_list
 
 
-def find_node_resources(resources_section, node_identifier):
+def find_node_resources(
+    resources_section: _Element, node_identifier: str
+) -> list[_Element]:
     """
-    Return list of etree.Element primitives that are guest nodes.
+    Return list of primitive elements that are guest nodes.
 
-    etree.Element resources_section is a researched element
-    string node_identifier could be id of resource, node name or node address
+    resources_section -- searched element
+    node_identifier -- could be id of resource, node name or node address
     """
-    resources = resources_section.xpath(
-        """
-        .//primitive[
-            (
-                @id=$node_id
-                and
+    return cast(
+        list[_Element],
+        resources_section.xpath(
+            """
+            .//primitive[
+                (
+                    @id=$node_id
+                    and
+                    meta_attributes[
+                        nvpair[
+                            @name="remote-node"
+                            and
+                            string-length(@value) > 0
+                        ]
+                    ]
+                )
+                or
                 meta_attributes[
                     nvpair[
                         @name="remote-node"
                         and
                         string-length(@value) > 0
                     ]
-                ]
-            )
-            or
-            meta_attributes[
-                nvpair[
-                    @name="remote-node"
                     and
-                    string-length(@value) > 0
-                ]
-                and
-                nvpair[
-                    (
-                        @name="remote-addr"
-                        or
-                        @name="remote-node"
-                    )
-                    and
-                    @value=$node_id
+                    nvpair[
+                        (
+                            @name="remote-addr"
+                            or
+                            @name="remote-node"
+                        )
+                        and
+                        @value=$node_id
+                    ]
                 ]
             ]
-        ]
-    """,
-        node_id=node_identifier,
+            """,
+            node_id=node_identifier,
+        ),
     )
-    return resources

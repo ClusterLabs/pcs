@@ -266,15 +266,20 @@ class HostNotFound(CliReportMessageCustom):
         )
 
 
+class UseCommandNodeRemoveRemote(CliReportMessageCustom):
+    _obj: messages.UseCommandNodeRemoveRemote
+
+    @property
+    def message(self) -> str:
+        return self._obj.message + ", use 'pcs cluster node remove-remote'"
+
+
 class UseCommandNodeRemoveGuest(CliReportMessageCustom):
     _obj: messages.UseCommandNodeRemoveGuest
 
     @property
     def message(self) -> str:
-        return (
-            "this command is not sufficient for removing a guest node, use"
-            " 'pcs cluster node remove-guest'"
-        )
+        return self._obj.message + ", use 'pcs cluster node remove-guest'"
 
 
 class UseCommandNodeAddGuest(CliReportMessageCustom):

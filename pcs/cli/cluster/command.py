@@ -12,6 +12,7 @@ from pcs.cli.common.parse_args import (
 from pcs.cli.resource.parse_args import (
     parse_primitive as parse_primitive_resource,
 )
+from pcs.common.reports import codes as report_codes
 
 
 def _node_add_remote_separate_name_and_addr(
@@ -83,39 +84,37 @@ def node_add_remote(
     )
 
 
-def create_node_remove_remote(remove_resource):  # type:ignore
-    def node_remove_remote(
-        lib: Any, arg_list: Argv, modifiers: InputModifiers
-    ) -> None:
-        """
-        Options:
-          * --force - allow multiple nodes removal, allow pcmk remote service
-            to fail, don't stop a resource before its deletion (this is side
-            effect of old resource delete command used here)
-          * --skip-offline - skip offline nodes
-          * --request-timeout - HTTP request timeout
-          For tests:
-          * --corosync_conf
-          * -f
-        """
-        modifiers.ensure_only_supported(
-            "--force",
-            "--skip-offline",
-            "--request-timeout",
-            "--corosync_conf",
-            "-f",
-        )
-        if len(arg_list) != 1:
-            raise CmdLineInputError()
-        lib.remote_node.node_remove_remote(
-            arg_list[0],
-            remove_resource,
-            skip_offline_nodes=modifiers.get("--skip-offline"),
-            allow_remove_multiple_nodes=modifiers.get("--force"),
-            allow_pacemaker_remote_service_fail=modifiers.get("--force"),
-        )
+def node_remove_remote(
+    lib: Any, arg_list: Argv, modifiers: InputModifiers
+) -> None:
+    """
+    Options:
+      * --force - allow multiple nodes removal, allow pcmk remote service
+        to fail, don't stop a resource before its deletion (this is side
+        effect of old resource delete command used here)
+      * --skip-offline - skip offline nodes
+      * --request-timeout - HTTP request timeout
+      For tests:
+      * --corosync_conf
+      * -f
+    """
+    modifiers.ensure_only_supported(
+        "--force",
+        "--skip-offline",
+        "--request-timeout",
+        "--corosync_conf",
+        "-f",
+    )
+    if len(arg_list) != 1:
+        raise CmdLineInputError()
 
-    return node_remove_remote
+    force_flags = []
+    if modifiers.get("--force"):
+        force_flags.append(report_codes.FORCE)
+    if modifiers.get("--skip-offline"):
+        force_flags.append(report_codes.SKIP_OFFLINE_NODES)
+
+    lib.remote_node.node_remove_remote(arg_list[0], force_flags)
 
 
 def node_add_guest(lib: Any, arg_list: Argv, modifiers: InputModifiers) -> None:

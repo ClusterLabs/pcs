@@ -23,9 +23,9 @@ from pcs.lib.booth.config_validators import validate_ticket_name
 from pcs.lib.cib import tools
 from pcs.lib.cib.const import TAG_CONSTRAINT_TICKET as TAG
 from pcs.lib.cib.constraint import constraint
+from pcs.lib.cib.constraint.common import is_set_constraint
 from pcs.lib.cib.constraint.resource_set import (
     constraint_element_to_resource_set_dto_list,
-    is_set_constraint,
 )
 from pcs.lib.cib.tools import role_constructor
 from pcs.lib.errors import LibraryError

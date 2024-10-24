@@ -7,12 +7,20 @@ from pcs.lib.cib.const import (
     TAG_LIST_CONSTRAINABLE,
     TAG_LIST_CONSTRAINT,
     TAG_LIST_RESOURCE_MULTIINSTANCE,
+    TAG_RESOURCE_SET,
 )
 from pcs.lib.xml_tools import find_parent
 
 
 def is_constraint(element: _Element) -> bool:
     return element.tag in TAG_LIST_CONSTRAINT
+
+
+def is_set_constraint(element: _Element) -> bool:
+    return (
+        is_constraint(element)
+        and element.find(f"./{TAG_RESOURCE_SET}") is not None
+    )
 
 
 def validate_constrainable_elements(

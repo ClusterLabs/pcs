@@ -3740,6 +3740,19 @@ class CibFencingLevelDoesNotExist(NameBuildTest):
         )
 
 
+class CibRemoveResources(NameBuildTest):
+    def test_single_id(self):
+        self.assert_message_from_report(
+            "Removing resource: 'id1'", reports.CibRemoveResources(["id1"])
+        )
+
+    def test_multiple_ids(self):
+        self.assert_message_from_report(
+            "Removing resources: 'id1', 'id2', 'id3'",
+            reports.CibRemoveResources(["id1", "id2", "id3"]),
+        )
+
+
 class CibRemoveDependantElements(NameBuildTest):
     def test_single_element_type_with_single_id(self):
         self.assert_message_from_report(
@@ -3791,6 +3804,77 @@ class CibRemoveDependantElements(NameBuildTest):
         )
 
 
+class CibRemoveReferences(NameBuildTest):
+    def test_one_element_single_reference(self):
+        self.assert_message_from_report(
+            (
+                "Removing references:\n"
+                "  Resource 'id1' from:\n"
+                "    Tag: 'id2'"
+            ),
+            reports.CibRemoveReferences(
+                {"id1": "primitive", "id2": "tag"}, {"id1": ["id2"]}
+            ),
+        )
+
+    def test_missing_tag_mapping(self):
+        self.assert_message_from_report(
+            (
+                "Removing references:\n"
+                "  Element 'id1' from:\n"
+                "    Element: 'id2'"
+            ),
+            reports.CibRemoveReferences({}, {"id1": ["id2"]}),
+        )
+
+    def test_one_element_multiple_references_same_type(self):
+        self.assert_message_from_report(
+            (
+                "Removing references:\n"
+                "  Resource 'id1' from:\n"
+                "    Tags: 'id2', 'id3'"
+            ),
+            reports.CibRemoveReferences(
+                {"id1": "primitive", "id2": "tag", "id3": "tag"},
+                {"id1": ["id2", "id3"]},
+            ),
+        )
+
+    def test_one_element_multiple_references_multiple_types(self):
+        self.assert_message_from_report(
+            (
+                "Removing references:\n"
+                "  Resource 'id1' from:\n"
+                "    Group: 'id3'\n"
+                "    Tag: 'id2'"
+            ),
+            reports.CibRemoveReferences(
+                {"id1": "primitive", "id2": "tag", "id3": "group"},
+                {"id1": ["id2", "id3"]},
+            ),
+        )
+
+    def test_multiple_elements_single_reference(self):
+        self.assert_message_from_report(
+            (
+                "Removing references:\n"
+                "  Resource 'id1' from:\n"
+                "    Tag: 'id2'\n"
+                "  Resource 'id3' from:\n"
+                "    Tag: 'id4'"
+            ),
+            reports.CibRemoveReferences(
+                {
+                    "id1": "primitive",
+                    "id2": "tag",
+                    "id3": "primitive",
+                    "id4": "tag",
+                },
+                {"id1": ["id2"], "id3": ["id4"]},
+            ),
+        )
+
+
 class UseCommandNodeAddRemote(NameBuildTest):
     def test_build_messages(self):
         self.assert_message_from_report(
@@ -3804,6 +3888,14 @@ class UseCommandNodeAddGuest(NameBuildTest):
         self.assert_message_from_report(
             "this command is not sufficient for creating a guest node",
             reports.UseCommandNodeAddGuest(),
+        )
+
+
+class UseCommandNodeRemoveRemote(NameBuildTest):
+    def test_build_messages(self):
+        self.assert_message_from_report(
+            "this command is not sufficient for removing a remote node",
+            reports.UseCommandNodeRemoveRemote(),
         )
 
 
@@ -5881,4 +5973,73 @@ class ResourceRestartUsingParentRersource(NameBuildTest):
             reports.ResourceRestartUsingParentRersource(
                 "resourceId", "parentId"
             ),
+        )
+
+
+class StoppingResourcesBeforeDeleting(NameBuildTest):
+    def test_one_resource(self) -> str:
+        self.assert_message_from_report(
+            "Stopping resource 'resourceId' before deleting",
+            reports.StoppingResourcesBeforeDeleting(["resourceId"]),
+        )
+
+    def test_multiple_resources(self) -> str:
+        self.assert_message_from_report(
+            "Stopping resources 'resourceId1', 'resourceId2' before deleting",
+            reports.StoppingResourcesBeforeDeleting(
+                ["resourceId1", "resourceId2"]
+            ),
+        )
+
+
+class StoppingResourcesBeforeDeletingSkipped(NameBuildTest):
+    def test_success(self) -> str:
+        self.assert_message_from_report(
+            (
+                "Resources are not going to be stopped before deletion, this "
+                "may result in orphaned resources being present in the cluster"
+            ),
+            reports.StoppingResourcesBeforeDeletingSkipped(),
+        )
+
+
+class CannotStopResourcesBeforeDeleting(NameBuildTest):
+    def test_one_resource(self) -> str:
+        self.assert_message_from_report(
+            "Cannot stop resource 'resourceId' before deleting",
+            reports.CannotStopResourcesBeforeDeleting(["resourceId"]),
+        )
+
+    def test_multiple_resources(self) -> str:
+        self.assert_message_from_report(
+            "Cannot stop resources 'resourceId1', 'resourceId2' before deleting",
+            reports.CannotStopResourcesBeforeDeleting(
+                ["resourceId1", "resourceId2"]
+            ),
+        )
+
+
+class RemoteNodeRemovalIncomplete(NameBuildTest):
+    def test_success(self) -> str:
+        self.assert_message_from_report(
+            (
+                "This command is not sufficient for removing remote node: "
+                "'remote-node'. To complete the removal, remove pacemaker "
+                "authkey and stop and disable pacemaker_remote on the node "
+                "manually."
+            ),
+            reports.RemoteNodeRemovalIncomplete("remote-node"),
+        )
+
+
+class GuestNodeRemovalIncomplete(NameBuildTest):
+    def test_success(self) -> str:
+        self.assert_message_from_report(
+            (
+                "This command is not sufficient for removing guest node: "
+                "'guest-node'. To complete the removal, remove pacemaker "
+                "authkey and stop and disable pacemaker_remote on the node "
+                "manually."
+            ),
+            reports.GuestNodeRemovalIncomplete("guest-node"),
         )

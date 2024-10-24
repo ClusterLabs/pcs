@@ -2,6 +2,7 @@ import base64
 import os.path
 from functools import partial
 from typing import (
+    Collection,
     Optional,
     cast,
 )
@@ -37,6 +38,10 @@ from pcs.lib.booth import (
     status,
 )
 from pcs.lib.booth.env import BoothEnv
+from pcs.lib.cib.remove_elements import (
+    ElementsToRemove,
+    remove_specified_elements,
+)
 from pcs.lib.cib.resource import (
     group,
     hierarchy,
@@ -46,6 +51,7 @@ from pcs.lib.cib.tools import (
     IdProvider,
     get_resources,
 )
+from pcs.lib.commands.cib import _stop_resources_wait
 from pcs.lib.communication.booth import (
     BoothGetConfig,
     BoothSendConfig,
@@ -533,33 +539,53 @@ def create_in_cluster(
 
 def remove_from_cluster(
     env: LibraryEnvironment,
-    resource_remove,
-    instance_name=None,
-    allow_remove_multiple=False,
+    instance_name: Optional[str] = None,
+    force_flags: Collection[reports.types.ForceCode] = (),
 ):
     """
     Remove group with ip resource and booth resource
 
     env -- provides all for communication with externals
-    function resource_remove -- provisional hack til resources are moved to lib
-    string instance_name -- booth instance name
-    bool allow_remove_multiple -- remove all resources if more than one found
+    instance_name -- booth instance name
+    force_flags -- list of flags codes
     """
-    # TODO resource_remove is provisional hack til resources are moved to lib
     report_processor = env.report_processor
     booth_env = env.get_booth_env(instance_name)
     # This command does not work with booth config files at all, let's reject
     # them then.
     _ensure_live_booth_env(booth_env)
 
-    resource.get_remover(resource_remove)(
+    cib = env.get_cib()
+    booth_elements_to_remove = resource.find_elements_to_remove(
         _find_resource_elements_for_operation(
             report_processor,
-            get_resources(env.get_cib()),
+            get_resources(cib),
             booth_env,
-            allow_remove_multiple,
+            allow_multiple=reports.codes.FORCE in force_flags,
         )
     )
+
+    resource_ids = [str(el.attrib["id"]) for el in booth_elements_to_remove]
+    elements_to_remove = ElementsToRemove(cib, resource_ids)
+
+    report_processor.report(
+        reports.ReportItem.info(
+            reports.messages.CibRemoveResources(resource_ids)
+        )
+    )
+    report_processor.report_list(
+        elements_to_remove.dependant_elements.to_reports()
+    )
+    report_processor.report_list(
+        elements_to_remove.element_references.to_reports()
+    )
+
+    cib = _stop_resources_wait(
+        env, cib, elements_to_remove.resources_to_remove, force_flags
+    )
+
+    remove_specified_elements(cib, elements_to_remove)
+    env.push_cib()
 
 
 def restart(

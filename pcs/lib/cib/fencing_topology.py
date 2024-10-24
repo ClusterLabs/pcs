@@ -1,4 +1,5 @@
 from typing import (
+    Final,
     Optional,
     Sequence,
     Set,
@@ -23,14 +24,22 @@ from pcs.common.reports import has_errors
 from pcs.common.reports.item import ReportItem
 from pcs.common.types import StringCollection
 from pcs.common.validate import is_integer
+from pcs.lib.cib.const import TAG_FENCING_LEVEL
 from pcs.lib.cib.resource.stonith import is_stonith_resource
-from pcs.lib.cib.tools import find_unique_id
+from pcs.lib.cib.tools import (
+    find_unique_id,
+    multivalue_attr_contains_value,
+    multivalue_attr_delete_value,
+    multivalue_attr_has_any_values,
+)
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.state import _Element as StateElement
 from pcs.lib.pacemaker.values import (
     sanitize_id,
     validate_id,
 )
+
+_DEVICES_ATTRIBUTE: Final = "devices"
 
 
 def add_level(
@@ -93,7 +102,7 @@ def remove_all_levels(topology_el):
     # the whole change to be rejected by pacemaker with a "permission denied"
     # message.
     # https://bugzilla.redhat.com/show_bug.cgi?id=1642514
-    for level_el in topology_el.findall("fencing-level"):
+    for level_el in topology_el.findall(TAG_FENCING_LEVEL):
         level_el.getparent().remove(level_el)
 
 
@@ -162,30 +171,42 @@ def remove_levels_by_params(
     return report_list
 
 
-def remove_device_from_all_levels(topology_el, device_id):
+def find_levels_with_device(
+    topology_el: _Element, device_id: str
+) -> list[_Element]:
     """
-    Remove specified stonith device from all fencing levels.
+    Return list of all fencing-level elements that reference the specified
+    device
 
-    etree topology_el -- etree element with levels to remove the device from
-    string device_id -- stonith device to remove
+    topology_el -- etree element with fencing levels
+    device_id -- id of the stonith device
     """
-    # Do not ever remove a fencing-topology element, even if it is empty. There
-    # may be ACLs set in pacemaker which allow "write" for fencing-level
-    # elements (adding, changing and removing) but not fencing-topology
-    # elements. In such a case, removing a fencing-topology element would cause
-    # the whole change to be rejected by pacemaker with a "permission denied"
-    # message.
-    # https://bugzilla.redhat.com/show_bug.cgi?id=1642514
-    for level_el in topology_el.findall("fencing-level"):
-        new_devices = [
-            dev
-            for dev in level_el.get("devices").split(",")
-            if dev != device_id
-        ]
-        if new_devices:
-            level_el.set("devices", ",".join(new_devices))
-        else:
-            level_el.getparent().remove(level_el)
+    return [
+        level_el
+        for level_el in topology_el.findall(TAG_FENCING_LEVEL)
+        if multivalue_attr_contains_value(
+            level_el, _DEVICES_ATTRIBUTE, device_id
+        )
+    ]
+
+
+def remove_device_from_level(level_el: _Element, device_id: str) -> None:
+    """
+    Remove specified stonith device from fencing level.
+
+    level_el -- level element from which the device is removed
+    device_id -- stonith device to remove
+    """
+    multivalue_attr_delete_value(level_el, _DEVICES_ATTRIBUTE, device_id)
+
+
+def has_any_devices(level_el: _Element) -> bool:
+    """
+    Return whether there are any devices references in the fencing level
+
+    level_el -- fencing level element
+    """
+    return multivalue_attr_has_any_values(level_el, _DEVICES_ATTRIBUTE)
 
 
 def export(topology_el):
@@ -198,7 +219,7 @@ def export(topology_el):
     etree topology_el -- etree element to export
     """
     export_levels = []
-    for level_el in topology_el.iterfind("fencing-level"):
+    for level_el in topology_el.iterfind(TAG_FENCING_LEVEL):
         target_type = target_value = None
         if "target" in level_el.attrib:
             target_type = TARGET_TYPE_NODE
@@ -218,7 +239,7 @@ def export(topology_el):
                     "target_type": target_type,
                     "target_value": target_value,
                     "level": level_el.get("index"),
-                    "devices": level_el.get("devices").split(","),
+                    "devices": level_el.get(_DEVICES_ATTRIBUTE).split(","),
                 }
             )
     return export_levels
@@ -240,8 +261,10 @@ def verify(
     used_nodes: Set[str] = set()
     used_devices: Set[str] = set()
 
-    for level_el in topology_el.iterfind("fencing-level"):
-        used_devices.update(str(level_el.get("devices", "")).split(","))
+    for level_el in topology_el.iterfind(TAG_FENCING_LEVEL):
+        used_devices.update(
+            str(level_el.get(_DEVICES_ATTRIBUTE, "")).split(",")
+        )
         if "target" in level_el.attrib:
             used_nodes.add(str(level_el.get("target", "")))
 
@@ -398,7 +421,7 @@ def _validate_level_target_devices_does_not_exist(
 
 def _append_level_element(tree, level, target_type, target_value, devices):
     level_el = etree.SubElement(
-        tree, "fencing-level", index=str(level), devices=",".join(devices)
+        tree, TAG_FENCING_LEVEL, index=str(level), devices=",".join(devices)
     )
     if target_type == TARGET_TYPE_NODE:
         level_el.set("target", target_value)
@@ -449,9 +472,9 @@ def _find_level_elements(
     )
     if xpath_attrs:
         return tree.xpath(
-            f"fencing-level[{xpath_attrs}]",
+            f"{TAG_FENCING_LEVEL}[{xpath_attrs}]",
             var_devices=(",".join(devices) if devices else ""),
             var_level=level,
             **xpath_vars,
         )
-    return tree.findall("fencing-level")
+    return tree.findall(TAG_FENCING_LEVEL)

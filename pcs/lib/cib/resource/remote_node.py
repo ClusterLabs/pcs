@@ -2,6 +2,7 @@ from typing import (
     Iterable,
     Mapping,
     Optional,
+    cast,
 )
 
 from lxml.etree import _Element
@@ -70,16 +71,20 @@ def find_node_list(tree):
     return node_list
 
 
-def find_node_resources(resources_section, node_identifier):
+def find_node_resources(
+    resources_section: _Element, node_identifier: str
+) -> list[_Element]:
     """
     Return list of resource elements that match to node_identifier
 
-    etree.Element resources_section is a search element
-    string node_identifier could be id of the resource or its instance attribute
+    resources_section -- search element
+    node_identifier -- could be id of the resource or its instance attribute
         "server"
     """
-    return resources_section.xpath(
-        f"""
+    return cast(
+        list[_Element],
+        resources_section.xpath(
+            f"""
             .//primitive[
                 {_IS_REMOTE_AGENT_XPATH_SNIPPET} and (
                     @id=$identifier
@@ -92,7 +97,8 @@ def find_node_resources(resources_section, node_identifier):
                 )
             ]
         """,
-        identifier=node_identifier,
+            identifier=node_identifier,
+        ),
     )
 
 
