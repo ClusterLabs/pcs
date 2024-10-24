@@ -11,9 +11,10 @@ Release: 99+git%{?numcomm:.%{numcomm}}%{?alphatag:.%{alphatag}}%{?dirty:.%{dirty
 # GPL-2.0-only: pcs
 # Apache-2.0: dataclasses, tornado
 # Apache-2.0 or BSD-3-Clause: dateutil
-# MIT: backports, childprocess, dacite, ethon, mustermann, nio4r, rack,
-#      rack-protection, rack-test, sinatra, tilt
-# BSD-2-Clause or Ruby: ruby2_keywords
+# MIT: backports, childprocess, dacite, ethon, mustermann, nio4r, rack, rackup,
+#      rack-protection, rack-session, rack-test, sinatra, tilt
+# BSD-2-Clause: rexml
+# BSD-2-Clause or Ruby: base64, ruby2_keywords, strscan, webrick
 # BSD 3-Clause: puma
 # BSD-3-Clause and MIT: ffi
 # Some gems we bundle are just dependencies of gems that we use,
@@ -24,8 +25,18 @@ Release: 99+git%{?numcomm:.%{numcomm}}%{?alphatag:.%{alphatag}}%{?dirty:.%{dirty
 #   nio4r
 # sinatra:
 #   mustermann:
-#     ruby2_keywords
+#     ruby2_keywords (might be included with Ruby)
+#   rack
+#   rack-protection
+#   rack-session
 #   tilt
+# rack:
+#   rackup (for Rack::Handler):
+#     webrick (not used, just a dependency)
+# rack-protection:
+#   base64
+# rexml:
+#   strscan (might be included with Ruby)
 License: GPL-2.0-only AND Apache-2.0 AND MIT AND BSD-2-Clause AND BSD-3-Clause AND (Apache-2.0 OR BSD-3-CLause) AND (BSD-2-Clause OR Ruby)
 URL: https://github.com/ClusterLabs/pcs
 Summary: Pacemaker/Corosync Configuration System
@@ -39,21 +50,6 @@ Summary: Pacemaker/Corosync Configuration System
 %global required_pacemaker_version 2.1.0
 
 
-# mangling shebang in /usr/lib/pcsd/vendor/bundle/ruby/gems/rack-2.0.5/test/cgi/test from /usr/bin/env ruby to #!/usr/bin/ruby
-#*** ERROR: ./usr/lib/pcsd/vendor/bundle/ruby/gems/rack-2.0.5/test/cgi/test.ru has shebang which doesn't start with '/' (../../bin/rackup)
-#mangling shebang in /usr/lib/pcsd/vendor/bundle/ruby/gems/rack-2.0.5/test/cgi/rackup_stub.rb from /usr/bin/env ruby to #!/usr/bin/ruby
-#*** WARNING: ./usr/lib/pcsd/vendor/bundle/ruby/gems/rack-2.0.5/test/cgi/sample_rackup.ru is executable but has empty or no shebang, removing executable bit
-#*** WARNING: ./usr/lib/pcsd/vendor/bundle/ruby/gems/rack-2.0.5/test/cgi/lighttpd.conf is executable but has empty or no shebang, removing executable bit
-#*** ERROR: ambiguous python shebang in /usr/lib/pcsd/vendor/bundle/ruby/gems/ffi-1.9.25/ext/ffi_c/libffi/generate-darwin-source-and-headers.py: #!/usr/bin/env python. Change it to python3 (or python2) explicitly.
-%undefine __brp_mangle_shebangs
-
-# https://fedoraproject.org/wiki/Changes/Avoid_usr_bin_python_in_RPM_Build#Python_bytecompilation
-# Enforce python3 because bytecompilation of tornado produced warnings:
-# DEPRECATION WARNING: python2 invoked with /usr/bin/python.
-#    Use /usr/bin/python3 or /usr/bin/python2
-#    /usr/bin/python will be removed or switched to Python 3 in the future.
-#global __python {__python3}
-
 Source0: %{name}-%{version}%{?numcomm:+%{numcomm}}%{?alphatag:-%{alphatag}}%{?dirty:-%{dirty}}.tar.gz
 
 Source41: pyagentx-%{pyagentx_version}.tar.gz
@@ -62,19 +58,17 @@ Source41: pyagentx-%{pyagentx_version}.tar.gz
 @gemsrc@
 
 # python for pcs
-%if 0%{?fedora} >= 30
-BuildRequires: python3 >= 3.9
-BuildRequires: python3-setuptools
-%endif
-
-%if 0%{?rhel} >= 8 && 0%{?rhel} <= 9
-BuildRequires: platform-python
-BuildRequires: platform-python-setuptools
-# for bundled python dateutil
-BuildRequires: python3-setuptools_scm
-%endif
-
 BuildRequires: python3-devel
+BuildRequires: python3-pip >= 23
+BuildRequires: python3-setuptools >= 66.1
+
+# for building wheel during make install
+BuildRequires: python3-wheel
+
+# for bundling dateutil
+BuildRequires: python3-setuptools_scm
+
+
 # for tier0 tests
 BuildRequires: python3-cryptography
 BuildRequires: python3-pyparsing >= 3.0.0
@@ -208,6 +202,16 @@ make all
 %install
 make install DESTDIR=%{buildroot}
 
+# fix shebangs according to packaging guidelines
+# add E to default Python arguments (-sP)
+%global py3_shbang_opts_pcs %{py3_shbang_opts}E
+%global py3_shbang_opts %{py3_shbang_opts_pcs}
+%if 0%{?rhel} || 0%{?fedora}
+# the script recurses directories, so shell globbing cannot be used for libdir
+%py3_shebang_fix %{buildroot}/%{_sbindir}/* \
+     $(find %{buildroot}/%{_libdir}/pcs -maxdepth 1 -type f)
+%endif
+
 %if %{defined suse_version}
 rm -rf %{buildroot}/usr/share/doc/pcs/
 %endif
@@ -242,10 +246,6 @@ done
 for i in license; do
  for x in `find %{pcs_bundled_dir}/src -type f -iname "${i}*" | grep -v pyagentx`; do
   srcfile=`echo $x | sed -e 's#.*\/##g'`
-  # pycurl copies the files into pcs_bundled/usr/share/doc/pycurl instead of pcs_bundled/src/pycurl
-  # installation with pip also leaves .dist-info and greedy matching would only remove "info", deleting that first
-  # pycurl also doesn't append version after a dash, so first we cut the srcpkg after slash and then
-  # the part after the dash is also cut for other packages that append version after it
   srcpkg=`echo $x | sed -e 's#.*src/##g' -e 's/\(.*\)-.*/\1/'`
   mv $x dynamic_files/${srcpkg}_${srcfile}
   echo "@license dynamic_files/${srcpkg}_${srcfile}" >> dynamic_files/pcs
@@ -291,6 +291,17 @@ done
 
 # escaping % in spec file is "interesting"
 sed -i -e 's#^@#%#g' dynamic_files/pcs-snmp
+
+# Sinatra contains example applications which are unnecessary (discovered by brp_mangle_shebangs)
+rm -rfv %{buildroot}/%{_libdir}/pcsd/vendor/bundle/gems/sinatra-*/examples/
+# Puma contains an unnecessary rc init script (discovered by brp_mangle_shebangs)
+rm -rfv %{buildroot}/%{_libdir}/pcsd/vendor/bundle/gems/puma-*/docs/jungle/rc.d/
+# Remove unused rubygem executables with wrong shebangs (discovered by brp_mangle_shebangs)
+rm -fv %{buildroot}/%{_libdir}/pcsd/vendor/bundle/gems/puma-*/bin/puma
+rm -fv %{buildroot}/%{_libdir}/pcsd/vendor/bundle/gems/puma-*/bin/pumactl
+rm -fv %{buildroot}/%{_libdir}/pcsd/vendor/bundle/gems/rackup-*/bin/rackup
+rm -fv %{buildroot}/%{_libdir}/pcsd/vendor/bundle/gems/tilt-*/bin/tilt
+
 
 %posttrans
 # Make sure the new version of the daemon is running.
