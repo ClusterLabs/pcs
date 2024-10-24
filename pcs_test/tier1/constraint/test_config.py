@@ -25,7 +25,7 @@ RULE_EVAL = RuleInEffectEvalMock(
     {
         "loc_constr_with_expired_rule-rule": CibRuleInEffectStatus.EXPIRED,
         "loc_constr_with_not_expired_rule-rule": CibRuleInEffectStatus.IN_EFFECT,
-        "loc_constr_with_not_expired_rule-rule-1": CibRuleInEffectStatus.IN_EFFECT,
+        "loc_constr_with_not_expired_rule-1-rule": CibRuleInEffectStatus.IN_EFFECT,
     }
 )
 
@@ -193,14 +193,66 @@ class ConstraintConfigCmdSpaceInDate(ConstraintConfigCmdMixin, TestCase):
                 "  id=location-R1-rule constraint-id=location-R1 score=INFINITY \\\n"
                 "  '#uname eq node1 and date gt 2023-01-01T12:00 and "
                 "date lt 2023-12-31T12:00 and date in_range 2023-01-01T12:00 "
-                "to 2023-12-31T12:00';\n"
-                "pcs -- constraint rule add location-R1 \\\n"
-                "  id=location-R1-rule-1 score=INFINITY \\\n"
-                "  '#uname eq node2 and date gt 2023-01-01T12:00 and "
-                "date lt 2023-12-31T12:00 and date in_range 2023-01-01T12:00 "
                 "to 2023-12-31T12:00'\n"
             ),
         )
+
+
+class ConstraintConfigCmdMultipleRulesInConstraint(
+    ConstraintConfigCmdMixin, TestCase
+):
+    # This class tests that pcs exports a constraint containing more than one
+    # rule. This configuration is no longer supported by pacemaker and thus pcs
+    # cannot create it. So instead of 'pcs constraint rule add', the extra
+    # rules are exported as separate constraints. Json export, however, matches
+    # the CIB structure.
+    orig_cib_file_path = get_test_resource(
+        "cib-rule-several-times-in-constraint.xml"
+    )
+
+    @staticmethod
+    def _get_tmp_file_name():
+        return "tier1_constraint_test_config_cib_multiple_rules.xml"
+
+    def test_commands(self):
+        stdout, stderr, retval = self.pcs_runner_orig.run(
+            ["constraint", "config", "--output-format=cmd"]
+        )
+        self.assertEqual(retval, 0)
+        self.assertEqual(
+            stderr,
+            (
+                "Warning: Constraint 'location-R1' contains more than one "
+                "rule, which is no longer supported. Instead, each rule will "
+                "be put in a separate constraint.\n"
+            ),
+        )
+        self.assertEqual(
+            stdout,
+            (
+                "pcs -- constraint location resource%R1 rule \\\n"
+                "  id=location-R1-rule constraint-id=location-R1 score=INFINITY \\\n"
+                "  '#uname eq node1 and date gt 2023-01-01T12:00';\n"
+                "pcs -- constraint location resource%R1 rule \\\n"
+                "  id=location-R1-rule-1 score=INFINITY \\\n"
+                "  '#uname eq node2 and date gt 2023-01-01T12:00';\n"
+                "pcs -- constraint location resource%R1 rule \\\n"
+                "  id=location-R1-rule-2 score=INFINITY \\\n"
+                "  '#uname eq node3 and date gt 2023-01-01T12:00'\n"
+            ),
+        )
+
+    def test_all(self):
+        # Multiple rules in a single constraint are transformed to multimple
+        # constraints with a single rule. Therefore the json exports don't
+        # match and so this test is disabled. We only test export to commands.
+        pass
+
+    def test_not_all(self):
+        # Multiple rules in a single constraint are transformed to multimple
+        # constraints with a single rule. Therefore the json exports don't
+        # match and so this test is disabled. We only test export to commands.
+        pass
 
 
 class ConstraintConfigCmdUnsupported(TestCase):
@@ -273,6 +325,8 @@ class ConstraintConfigText(TestCase):
                   Rule: boolean-op=and role=Unpromoted score=500
                     Expression: #uname eq node1
                     Expression: date gt 2000-01-01
+              resource 'R6-clone'
+                Rules:
                   Rule: boolean-op=and role=Promoted score-attribute=test-attr
                     Expression: date gt 2010-12-31
                     Expression: #uname eq node1
@@ -339,6 +393,8 @@ class ConstraintConfigText(TestCase):
                   Rule: boolean-op=and role=Unpromoted score=500
                     Expression: #uname eq node1
                     Expression: date gt 2000-01-01
+              resource 'R6-clone'
+                Rules:
                   Rule: boolean-op=and role=Promoted score-attribute=test-attr
                     Expression: date gt 2010-12-31
                     Expression: #uname eq node1
@@ -401,9 +457,11 @@ class ConstraintConfigText(TestCase):
                   Rule: boolean-op=and role=Unpromoted score=500 (id: loc_constr_with_not_expired_rule-rule)
                     Expression: #uname eq node1 (id: loc_constr_with_not_expired_rule-rule-expr)
                     Expression: date gt 2000-01-01 (id: loc_constr_with_not_expired_rule-rule-expr-1)
-                  Rule: boolean-op=and role=Promoted score-attribute=test-attr (id: loc_constr_with_not_expired_rule-rule-1)
-                    Expression: date gt 2010-12-31 (id: loc_constr_with_not_expired_rule-rule-1-expr)
-                    Expression: #uname eq node1 (id: loc_constr_with_not_expired_rule-rule-1-expr-1)
+              resource 'R6-clone' (id: loc_constr_with_not_expired_rule-1)
+                Rules:
+                  Rule: boolean-op=and role=Promoted score-attribute=test-attr (id: loc_constr_with_not_expired_rule-1-rule)
+                    Expression: date gt 2010-12-31 (id: loc_constr_with_not_expired_rule-1-rule-expr)
+                    Expression: #uname eq node1 (id: loc_constr_with_not_expired_rule-1-rule-expr-1)
             Colocation Constraints:
               Promoted resource 'G1-clone' with Stopped resource 'R6-clone' (id: colocation-G1-clone-R6-clone--100)
                 score=-100
@@ -467,9 +525,11 @@ class ConstraintConfigText(TestCase):
                   Rule: boolean-op=and role=Unpromoted score=500 (id: loc_constr_with_not_expired_rule-rule)
                     Expression: #uname eq node1 (id: loc_constr_with_not_expired_rule-rule-expr)
                     Expression: date gt 2000-01-01 (id: loc_constr_with_not_expired_rule-rule-expr-1)
-                  Rule: boolean-op=and role=Promoted score-attribute=test-attr (id: loc_constr_with_not_expired_rule-rule-1)
-                    Expression: date gt 2010-12-31 (id: loc_constr_with_not_expired_rule-rule-1-expr)
-                    Expression: #uname eq node1 (id: loc_constr_with_not_expired_rule-rule-1-expr-1)
+              resource 'R6-clone' (id: loc_constr_with_not_expired_rule-1)
+                Rules:
+                  Rule: boolean-op=and role=Promoted score-attribute=test-attr (id: loc_constr_with_not_expired_rule-1-rule)
+                    Expression: date gt 2010-12-31 (id: loc_constr_with_not_expired_rule-1-rule-expr)
+                    Expression: #uname eq node1 (id: loc_constr_with_not_expired_rule-1-rule-expr-1)
             Colocation Constraints:
               Promoted resource 'G1-clone' with Stopped resource 'R6-clone' (id: colocation-G1-clone-R6-clone--100)
                 score=-100

@@ -5577,17 +5577,6 @@ class RuleNoExpressionSpecified(NameBuildTest):
         )
 
 
-class CannotAddRuleToConstraintWrongType(NameBuildTest):
-    def test_success(self):
-        self.assert_message_from_report(
-            (
-                "Rules can only be added to location constraints, "
-                "'my_id' is a ticket constraint"
-            ),
-            reports.CannotAddRuleToConstraintWrongType("my_id", "rsc_ticket"),
-        )
-
-
 class CibNvsetAmbiguousProvideNvsetId(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(

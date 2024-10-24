@@ -351,20 +351,12 @@ class ResetParametrizedContainerMixin(BaseMixin, ParametrizedContainerMixin):
     pass
 
 
-class MinimalRkt(MinimalMixin, TestCase):
-    container_type = "rkt"
-
-
 class MinimalPodman(MinimalMixin, TestCase):
     container_type = "podman"
 
 
 class MinimalDocker(MinimalMixin, TestCase):
     container_type = "docker"
-
-
-class FullRkt(FullMixin, TestCase):
-    container_type = "rkt"
 
 
 class FullPodman(FullMixin, TestCase):
@@ -381,10 +373,6 @@ class ResetParametrizedPodman(ResetParametrizedContainerMixin, TestCase):
 
 class ResetParametrizedDocker(ResetParametrizedContainerMixin, TestCase):
     container_type = "docker"
-
-
-class ResetParametrizedRkt(ResetParametrizedContainerMixin, TestCase):
-    container_type = "rkt"
 
 
 class ResetWithNetwork(BaseMixin, NetworkMixin, TestCase):
@@ -453,7 +441,7 @@ class ResetUnknownContainerType(BaseMixin, SetUpMixin, TestCase):
                 fixture.error(
                     report_codes.RESOURCE_BUNDLE_UNSUPPORTED_CONTAINER_TYPE,
                     bundle_id="B1",
-                    supported_container_types=["docker", "podman", "rkt"],
+                    supported_container_types=["docker", "podman"],
                     updating_options=True,
                 ),
             ]
@@ -520,7 +508,3 @@ class NoMetaIdRegenerationDocker(NoMetaIdRegenerationMixin, TestCase):
 
 class NoMetaIdRegenerationPodman(NoMetaIdRegenerationMixin, TestCase):
     container_type = "podman"
-
-
-class NoMetaIdRegenerationRkt(NoMetaIdRegenerationMixin, TestCase):
-    container_type = "rkt"

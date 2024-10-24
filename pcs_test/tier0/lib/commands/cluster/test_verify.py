@@ -21,7 +21,6 @@ BAD_FENCING_TOPOLOGY = """
         <fencing-level devices="FX" index="2" target="node1" id="fl-node1-2"/>
     </fencing-topology>
 """
-
 BAD_FENCING_TOPOLOGY_REPORTS = [
     fixture.error(
         report_codes.STONITH_RESOURCES_DO_NOT_EXIST,
@@ -31,6 +30,22 @@ BAD_FENCING_TOPOLOGY_REPORTS = [
         report_codes.NODE_NOT_FOUND,
         node="node1",
         searched_types=[],
+    ),
+]
+
+BAD_RESOURCES = """
+    <resources>
+        <bundle id="bundle-bad">
+            <rkt image="pcs:test" />
+        </bundle>
+    </resources>
+"""
+BAD_RESOURCES_REPORTS = [
+    fixture.error(
+        report_codes.RESOURCE_BUNDLE_UNSUPPORTED_CONTAINER_TYPE,
+        bundle_id="bundle-bad",
+        supported_container_types=["docker", "podman"],
+        updating_options=False,
     ),
 ]
 
@@ -68,19 +83,26 @@ class CibAsWholeValid(TestCase):
         self.config.runner.pcmk.verify()
 
     def test_success_on_valid(self):
-        (self.config.runner.cib.load().runner.pcmk.load_state())
+        self.config.runner.cib.load().runner.pcmk.load_state()
         verify(self.env_assist.get_env())
 
     def test_fail_on_invalid_fence_topology(self):
-        (
-            self.config.runner.cib.load(
-                optional_in_conf=BAD_FENCING_TOPOLOGY
-            ).runner.pcmk.load_state()
-        )
+        self.config.runner.cib.load(
+            optional_in_conf=BAD_FENCING_TOPOLOGY
+        ).runner.pcmk.load_state()
         self.env_assist.assert_raise_library_error(
             lambda: verify(self.env_assist.get_env())
         )
         self.env_assist.assert_reports(BAD_FENCING_TOPOLOGY_REPORTS)
+
+    def test_fail_on_invalid_bundle_containers(self):
+        self.config.runner.cib.load(
+            resources=BAD_RESOURCES
+        ).runner.pcmk.load_state()
+        self.env_assist.assert_raise_library_error(
+            lambda: verify(self.env_assist.get_env())
+        )
+        self.env_assist.assert_reports(BAD_RESOURCES_REPORTS)
 
 
 class CibAsWholeInvalid(TestCase, AssertInvalidCibMixin):
@@ -100,7 +122,7 @@ class CibAsWholeInvalid(TestCase, AssertInvalidCibMixin):
         rc("pcmk_api_rng/api-result.rng"),
     )
     def test_continue_on_loadable_cib(self):
-        (self.config.runner.cib.load().runner.pcmk.load_state())
+        self.config.runner.cib.load().runner.pcmk.load_state()
         self.assert_raises_invalid_cib_content(CRM_VERIFY_ERROR_REPORT_LINES[0])
 
     @mock.patch.object(
@@ -111,14 +133,12 @@ class CibAsWholeInvalid(TestCase, AssertInvalidCibMixin):
     def test_add_following_errors(self):
         # More fencing topology tests are provided by tests of
         # pcs.lib.commands.fencing_topology
-        (
-            self.config.runner.cib.load(
-                optional_in_conf=BAD_FENCING_TOPOLOGY
-            ).runner.pcmk.load_state()
-        )
+        self.config.runner.cib.load(
+            resources=BAD_RESOURCES, optional_in_conf=BAD_FENCING_TOPOLOGY
+        ).runner.pcmk.load_state()
         self.assert_raises_invalid_cib_content(
             CRM_VERIFY_ERROR_REPORT_LINES[0],
-            extra_reports=list(BAD_FENCING_TOPOLOGY_REPORTS),
+            extra_reports=BAD_FENCING_TOPOLOGY_REPORTS + BAD_RESOURCES_REPORTS,
         )
 
 
@@ -133,25 +153,21 @@ class CibIsMocked(TestCase, AssertInvalidCibMixin):
         self.config.env.set_cib_data("<cib/>", cib_tempfile=self.cib_tempfile)
 
     def test_success_on_valid_cib(self):
-        (
-            self.config.runner.pcmk.verify(
-                cib_tempfile=self.cib_tempfile, env=self.cmd_env
-            )
-            .runner.cib.load(env=self.cmd_env)
-            .runner.pcmk.load_state(env=self.cmd_env)
+        self.config.runner.pcmk.verify(
+            cib_tempfile=self.cib_tempfile, env=self.cmd_env
         )
+        self.config.runner.cib.load(env=self.cmd_env)
+        self.config.runner.pcmk.load_state(env=self.cmd_env)
         verify(self.env_assist.get_env())
 
     def test_fail_on_invalid_cib(self):
-        (
-            self.config.runner.pcmk.verify(
-                stderr="".join(CRM_VERIFY_ERROR_REPORT_LINES),
-                cib_tempfile=self.cib_tempfile,
-                env=self.cmd_env,
-            )
-            .runner.cib.load(env=self.cmd_env)
-            .runner.pcmk.load_state(env=self.cmd_env)
+        self.config.runner.pcmk.verify(
+            stderr="".join(CRM_VERIFY_ERROR_REPORT_LINES),
+            cib_tempfile=self.cib_tempfile,
+            env=self.cmd_env,
         )
+        self.config.runner.cib.load(env=self.cmd_env)
+        self.config.runner.pcmk.load_state(env=self.cmd_env)
         self.assert_raises_invalid_cib_content(CRM_VERIFY_ERROR_REPORT_LINES[0])
 
 
@@ -163,22 +179,18 @@ class VerboseMode(TestCase, AssertInvalidCibMixin):
         self.env_assist, self.config = get_env_tools(test_case=self)
 
     def test_success_on_valid_cib(self):
-        (
-            self.config.runner.pcmk.verify(verbose=True)
-            .runner.cib.load()
-            .runner.pcmk.load_state()
-        )
+        self.config.runner.pcmk.verify(verbose=True)
+        self.config.runner.cib.load()
+        self.config.runner.pcmk.load_state()
         verify(self.env_assist.get_env(), verbose=True)
 
     def test_fail_on_invalid_cib(self):
-        (
-            self.config.runner.pcmk.verify(
-                stderr=CRM_VERIFY_ERROR_REPORT_LINES[0],
-                verbose=True,
-            )
-            .runner.cib.load()
-            .runner.pcmk.load_state()
+        self.config.runner.pcmk.verify(
+            stderr=CRM_VERIFY_ERROR_REPORT_LINES[0],
+            verbose=True,
         )
+        self.config.runner.cib.load()
+        self.config.runner.pcmk.load_state()
         self.assert_raises_invalid_cib_content(
             CRM_VERIFY_ERROR_REPORT_LINES[0],
             can_be_more_verbose=False,

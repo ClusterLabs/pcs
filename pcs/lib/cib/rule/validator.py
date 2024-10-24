@@ -1,8 +1,10 @@
 import dataclasses
-from collections import Counter
+from collections import (
+    Counter,
+    OrderedDict,
+)
 from typing import (
-    List,
-    Set,
+    Optional,
     cast,
 )
 
@@ -45,7 +47,7 @@ class Validator:
         self._allow_op_expr = allow_op_expr
         self._allow_rsc_expr = allow_rsc_expr
         self._allow_node_attr_expr = allow_node_attr_expr
-        self._disallowed_expr_list: Set[CibRuleExpressionType] = set()
+        self._disallowed_expr_list: set[CibRuleExpressionType] = set()
 
     def get_reports(self) -> reports.ReportItemList:
         report_list = self._call_validate(self._rule)
@@ -85,26 +87,15 @@ class Validator:
     def _validate_date_inrange_expr(
         expr: DateInRangeExpr,
     ) -> reports.ReportItemList:
-        # TODO This is taken from the CIB schema. There is an ongoing
-        # discussion that the schema doesn't match Pacemaker Explained. Based
-        # on the result of the discussion, this might need to be updated.
-        # TODO This is planned to be updated in Pacemaker 3 and corresponding
-        # pcs version.
-        duration_parts = {
-            "hours",
+        duration_parts = [
+            "years",
             "months",
             "weeks",
-            "years",
-        }
-        # Options planned to be removed in pacemaker 3
-        deprecated_parts = {
-            "monthdays",
-            "weekdays",
-            "weekyears",
-            "yearsdays",
-            "moon",
-        }
-        all_duration_parts = duration_parts | deprecated_parts
+            "days",
+            "hours",
+            "minutes",
+            "seconds",
+        ]
         start_date, end_date = None, None
         report_list = []
 
@@ -154,17 +145,11 @@ class Validator:
                 ).items()
                 if count > 1
             }
-            validator_list: List[validate.ValidatorInterface] = [
-                validate.ValuePositiveInteger(name)
-                for name in sorted(all_duration_parts)
+            validator_list: list[validate.ValidatorInterface] = [
+                validate.ValuePositiveInteger(name) for name in duration_parts
             ]
             validator_list.append(
-                validate.NamesIn(all_duration_parts, option_type="duration")
-            )
-            validator_list.append(
-                validate.DeprecatedOption(
-                    deprecated_parts, [], option_type="duration"
-                )
+                validate.NamesIn(duration_parts, option_type="duration")
             )
             report_list += validate.ValidatorAll(validator_list).validate(
                 dict(expr.duration_parts)
@@ -182,26 +167,20 @@ class Validator:
 
     @staticmethod
     def _validate_datespec_expr(expr: DatespecExpr) -> reports.ReportItemList:
-        # TODO This is taken from the CIB schema. There is an ongoing
-        # discussion that the schema doesn't match Pacemaker Explained. Based
-        # on the result of the discussion, this might need to be updated.
-        # TODO This is planned to be updated in Pacemaker 3 and corresponding
-        # pcs version.
-        part_limits = {
-            "hours": (0, 23),
-            "monthdays": (1, 31),
-            "weekdays": (1, 7),
-            "months": (1, 12),
-            "weeks": (1, 53),
-            "years": (None, None),
-            "weekyears": (None, None),
-        }
-        # Options planned to be removed in pacemaker 3
-        deprecated_part_limits = {
-            "yearsdays": (1, 366),
-            "moon": (0, 7),
-        }
-        all_part_limits = part_limits | deprecated_part_limits
+        part_limits: dict[str, tuple[Optional[int], Optional[int]]] = (
+            OrderedDict(
+                years=(None, None),
+                weekyears=(None, None),
+                months=(1, 12),
+                weeks=(1, 53),
+                yeardays=(1, 366),
+                monthdays=(1, 31),
+                weekdays=(1, 7),
+                hours=(0, 23),
+                minutes=(0, 59),
+                seconds=(0, 59),
+            )
+        )
 
         duplicate_keys = {
             key
@@ -210,17 +189,12 @@ class Validator:
             ).items()
             if count > 1
         }
-        validator_list: List[validate.ValidatorInterface] = [
+        validator_list: list[validate.ValidatorInterface] = [
             validate.ValuePcmkDatespecPart(name, limits[0], limits[1])
-            for name, limits in sorted(all_part_limits.items())
+            for name, limits in part_limits.items()
         ]
         validator_list.append(
-            validate.NamesIn(all_part_limits.keys(), option_type="datespec")
-        )
-        validator_list.append(
-            validate.DeprecatedOption(
-                deprecated_part_limits, [], option_type="datespec"
-            )
+            validate.NamesIn(part_limits.keys(), option_type="datespec")
         )
 
         report_list = validate.ValidatorAll(validator_list).validate(
@@ -260,7 +234,7 @@ class Validator:
             self._disallowed_expr_list.add(CibRuleExpressionType.EXPRESSION)
             return []
 
-        validator_list: List[validate.ValidatorInterface] = []
+        validator_list: list[validate.ValidatorInterface] = []
         if expr.attr_type == NODE_ATTR_TYPE_INTEGER:
             validator_list.append(
                 validate.ValueInteger(

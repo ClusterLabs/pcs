@@ -22,6 +22,7 @@ from pcs_test.tools.cib import get_assert_pcs_effect_mixin
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import (
     get_tmp_file,
+    is_minimum_cib_schema_version,
     skip_unless_crm_rule,
     skip_unless_pacemaker_supports_rsc_and_op_rules,
     write_data_to_tmpfile,
@@ -31,12 +32,17 @@ from pcs_test.tools.pcs_runner import PcsRunner
 from pcs_test.tools.xml import XmlManipulation
 
 empty_cib = rc("cib-empty.xml")
-empty_cib_rules = rc("cib-empty-3.4.xml")
+empty_cib_rules = rc("cib-empty-3.9.xml")
 RULE_ARGV_DEPRECATED = (
     "Deprecation Warning: Specifying a rule as multiple arguments is "
     "deprecated and might be removed in a future release, specify the rule as "
     "a single string instead\n"
 )
+DEFAULTS_MAY_BE_OVERRIDDEN = (
+    "Warning: Defaults do not apply to resources which override them "
+    "with their own defined values\n"
+)
+CIB_HAS_BEEN_UPGRADED = "CIB has been upgraded to the latest schema version.\n"
 
 
 def fixture_defaults_dto(prefix, include_expired):
@@ -48,7 +54,7 @@ def fixture_defaults_dto(prefix, include_expired):
                 id=f"{prefix}-set1-rule",
                 type=CibRuleExpressionType.RULE,
                 in_effect=CibRuleInEffectStatus.NOT_YET_IN_EFFECT,
-                options={"boolean-op": "and", "score": "INFINITY"},
+                options={"boolean-op": "and"},
                 date_spec=None,
                 duration=None,
                 expressions=[
@@ -78,7 +84,7 @@ def fixture_defaults_dto(prefix, include_expired):
                 id=f"{prefix}-set2-rule",
                 type="RULE",
                 in_effect=CibRuleInEffectStatus.EXPIRED,
-                options={"boolean-op": "and", "score": "INFINITY"},
+                options={"boolean-op": "and"},
                 date_spec=None,
                 duration=None,
                 expressions=[
@@ -113,7 +119,7 @@ def fixture_defaults_dto(prefix, include_expired):
                 id=f"{prefix}-set3-rule",
                 type="RULE",
                 in_effect=CibRuleInEffectStatus.IN_EFFECT,
-                options={"boolean-op": "and", "score": "INFINITY"},
+                options={"boolean-op": "and"},
                 date_spec=None,
                 duration=None,
                 expressions=[
@@ -165,10 +171,10 @@ class DefaultsConfigMixin(TestDefaultsMixin, AssertPcsMixin):
     cli_command = []
     prefix = ""
 
-    def _prepare_cib_data(self, xml_template):
+    def _prepare_cib_data(self, xml_template, cib=None):
         xml_rsc = xml_template.format(tag="rsc")
         xml_op = xml_template.format(tag="op")
-        xml_manip = XmlManipulation.from_file(empty_cib)
+        xml_manip = XmlManipulation.from_file(cib or empty_cib)
         xml_manip.append_to_first_tag_name("configuration", xml_rsc, xml_op)
         write_data_to_tmpfile(str(xml_manip), self.temp_cib)
 
@@ -218,8 +224,8 @@ class DefaultsConfigMixin(TestDefaultsMixin, AssertPcsMixin):
     def test_success_rule(self):
         xml_template = """<{tag}_defaults>
             <meta_attributes id="{tag}-set1">
-                <rule id="{tag}-set1-rule" boolean-op="and" score="INFINITY">
-                    <rule id="{tag}-set1-rule-rule" boolean-op="or" score="0">
+                <rule id="{tag}-set1-rule" boolean-op="and">
+                    <rule id="{tag}-set1-rule-rule" boolean-op="or">
                         <expression id="{tag}-set1-rule-rule-expr"
                             operation="defined" attribute="attr1"
                         />
@@ -239,7 +245,7 @@ class DefaultsConfigMixin(TestDefaultsMixin, AssertPcsMixin):
                             attribute="attr5" operation="lt" value="3"
                         />
                     </rule>
-                    <rule id="{tag}-set1-rule-rule-1" boolean-op="or" score="0">
+                    <rule id="{tag}-set1-rule-rule-1" boolean-op="or">
                         <date_expression id="{tag}-set1-rule-rule-1-expr"
                             operation="gt" start="2018-05-17T13:28:19"
                         />
@@ -270,7 +276,7 @@ class DefaultsConfigMixin(TestDefaultsMixin, AssertPcsMixin):
                 <nvpair id="{tag}-set1-nam2" name="nam2" value="val2"/>
             </meta_attributes>
         </{tag}_defaults>"""
-        self._prepare_cib_data(xml_template)
+        self._prepare_cib_data(xml_template, empty_cib_rules)
 
         self.assert_pcs_success(
             self.cli_command,
@@ -279,14 +285,14 @@ class DefaultsConfigMixin(TestDefaultsMixin, AssertPcsMixin):
                 Meta Attrs: {self.prefix}-set1
                   nam1=val1
                   nam2=val2
-                  Rule: boolean-op=and score=INFINITY
-                    Rule: boolean-op=or score=0
+                  Rule: boolean-op=and
+                    Rule: boolean-op=or
                       Expression: defined attr1
                       Expression: attr2 gte number 12
                       Expression: attr3 lt version 3.2.1
                       Expression: attr4 ne string test
                       Expression: attr5 lt 3
-                    Rule: boolean-op=or score=0
+                    Rule: boolean-op=or
                       Expression: date gt 2018-05-17T13:28:19
                       Expression: date in_range 2019-01-01 to 2019-03-15
                       Expression: date in_range 2019-05-01 to duration
@@ -300,7 +306,7 @@ class DefaultsConfigMixin(TestDefaultsMixin, AssertPcsMixin):
 
     xml_expired_template = """<{tag}_defaults>
         <meta_attributes id="{tag}-set1">
-            <rule id="{tag}-set1-rule" boolean-op="and" score="INFINITY">
+            <rule id="{tag}-set1-rule" boolean-op="and">
                 <date_expression id="{tag}-set1-rule-expr"
                     operation="gt" start="3000-01-01"
                 />
@@ -308,7 +314,7 @@ class DefaultsConfigMixin(TestDefaultsMixin, AssertPcsMixin):
             <nvpair id="{tag}-set1-name1" name="name1" value="value1"/>
         </meta_attributes>
         <meta_attributes id="{tag}-set2">
-            <rule id="{tag}-set2-rule" boolean-op="and" score="INFINITY">
+            <rule id="{tag}-set2-rule" boolean-op="and">
                 <date_expression id="{tag}-set2-rule-expr"
                     operation="lt" end="1000-01-01"
                 />
@@ -316,7 +322,7 @@ class DefaultsConfigMixin(TestDefaultsMixin, AssertPcsMixin):
             <nvpair id="{tag}-set2-name2" name="name2" value="value2"/>
         </meta_attributes>
         <meta_attributes id="{tag}-set3">
-            <rule id="{tag}-set3-rule" boolean-op="and" score="INFINITY">
+            <rule id="{tag}-set3-rule" boolean-op="and">
                 <date_expression id="{tag}-set3-rule-expr"
                     operation="in_range" start="1000-01-01" end="3000-01-01"
                 />
@@ -327,18 +333,18 @@ class DefaultsConfigMixin(TestDefaultsMixin, AssertPcsMixin):
 
     @skip_unless_crm_rule()
     def test_success_rule_expired(self):
-        self._prepare_cib_data(self.xml_expired_template)
+        self._prepare_cib_data(self.xml_expired_template, empty_cib_rules)
         self.assert_pcs_success(
             self.cli_command,
             stdout_full=dedent(
                 f"""\
                 Meta Attrs (not yet in effect): {self.prefix}-set1
                   name1=value1
-                  Rule (not yet in effect): boolean-op=and score=INFINITY
+                  Rule (not yet in effect): boolean-op=and
                     Expression: date gt 3000-01-01
                 Meta Attrs: {self.prefix}-set3
                   name3=value3
-                  Rule: boolean-op=and score=INFINITY
+                  Rule: boolean-op=and
                     Expression: date in_range 1000-01-01 to 3000-01-01
             """
             ),
@@ -346,29 +352,29 @@ class DefaultsConfigMixin(TestDefaultsMixin, AssertPcsMixin):
 
     @skip_unless_crm_rule()
     def test_success_rule_expired_all(self):
-        self._prepare_cib_data(self.xml_expired_template)
+        self._prepare_cib_data(self.xml_expired_template, empty_cib_rules)
         self.assert_pcs_success(
             self.cli_command + ["--all"],
             stdout_full=dedent(
                 f"""\
                 Meta Attrs (not yet in effect): {self.prefix}-set1
                   name1=value1
-                  Rule (not yet in effect): boolean-op=and score=INFINITY
+                  Rule (not yet in effect): boolean-op=and
                     Expression: date gt 3000-01-01
                 Meta Attrs (expired): {self.prefix}-set2
                   name2=value2
-                  Rule (expired): boolean-op=and score=INFINITY
+                  Rule (expired): boolean-op=and
                     Expression: date lt 1000-01-01
                 Meta Attrs: {self.prefix}-set3
                   name3=value3
-                  Rule: boolean-op=and score=INFINITY
+                  Rule: boolean-op=and
                     Expression: date in_range 1000-01-01 to 3000-01-01
             """
             ),
         )
 
     def _test_success_json(self, use_all):
-        self._prepare_cib_data(self.xml_expired_template)
+        self._prepare_cib_data(self.xml_expired_template, empty_cib_rules)
         args = ["--output-format=json"]
         if use_all:
             args.append("--all")
@@ -398,9 +404,9 @@ class DefaultsConfigMixin(TestDefaultsMixin, AssertPcsMixin):
         return json.loads(stdout)
 
     def _test_success_cmd(self, use_all):
-        self._prepare_cib_data(self.xml_expired_template)
+        self._prepare_cib_data(self.xml_expired_template, empty_cib_rules)
         new_cib = get_tmp_file("tier1_cib_options_new")
-        xml_manip = XmlManipulation.from_file(empty_cib)
+        xml_manip = XmlManipulation.from_file(empty_cib_rules)
         write_data_to_tmpfile(str(xml_manip), new_cib)
         pcs_runner_new = PcsRunner(new_cib.name)
         args = ["--output-format=cmd"]
@@ -452,18 +458,18 @@ class DefaultsConfigMixin(TestDefaultsMixin, AssertPcsMixin):
         self._test_full_error("cmd")
 
     def test_full_text(self):
-        self._prepare_cib_data(self.xml_expired_template)
+        self._prepare_cib_data(self.xml_expired_template, empty_cib_rules)
         self.assert_pcs_success(
             self.cli_command + ["--full"],
             stdout_full=dedent(
                 f"""\
                 Meta Attrs (not yet in effect): {self.prefix}-set1
                   name1=value1 (id: {self.prefix}-set1-name1)
-                  Rule (not yet in effect): boolean-op=and score=INFINITY (id: {self.prefix}-set1-rule)
+                  Rule (not yet in effect): boolean-op=and (id: {self.prefix}-set1-rule)
                     Expression: date gt 3000-01-01 (id: {self.prefix}-set1-rule-expr)
                 Meta Attrs: {self.prefix}-set3
                   name3=value3 (id: {self.prefix}-set3-name3)
-                  Rule: boolean-op=and score=INFINITY (id: {self.prefix}-set3-rule)
+                  Rule: boolean-op=and (id: {self.prefix}-set3-rule)
                     Expression: date in_range 1000-01-01 to 3000-01-01 (id: {self.prefix}-set3-rule-expr)
             """
             ),
@@ -482,7 +488,7 @@ class RscDefaultsConfig(
         xml = """
             <rsc_defaults>
                 <meta_attributes id="X">
-                    <rule id="X-rule" boolean-op="and" score="INFINITY">
+                    <rule id="X-rule" boolean-op="and">
                         <rsc_expression id="X-rule-rsc-Dummy" type="Dummy"/>
                     </rule>
                     <nvpair id="X-nam1" name="nam1" value="val1"/>
@@ -499,7 +505,7 @@ class RscDefaultsConfig(
                 """\
                 Meta Attrs: X
                   nam1=val1
-                  Rule: boolean-op=and score=INFINITY
+                  Rule: boolean-op=and
                     Expression: resource ::Dummy
             """
             ),
@@ -518,7 +524,7 @@ class OpDefaultsConfig(
         xml = """
             <op_defaults>
                 <meta_attributes id="X">
-                    <rule id="X-rule" boolean-op="and" score="INFINITY">
+                    <rule id="X-rule" boolean-op="and">
                         <rsc_expression id="X-rule-rsc-Dummy" type="Dummy"/>
                         <op_expression id="X-rule-op-monitor" name="monitor"/>
                     </rule>
@@ -536,7 +542,7 @@ class OpDefaultsConfig(
                 """\
                 Meta Attrs: X
                   nam1=val1
-                  Rule: boolean-op=and score=INFINITY
+                  Rule: boolean-op=and
                     Expression: resource ::Dummy
                     Expression: op monitor
             """
@@ -562,10 +568,7 @@ class DefaultsSetCreateMixin(TestDefaultsMixin, AssertPcsMixin):
                 </{self.cib_tag}>
             """
             ),
-            stderr_full=(
-                "Warning: Defaults do not apply to resources which override "
-                "them with their own defined values\n"
-            ),
+            stderr_full=DEFAULTS_MAY_BE_OVERRIDDEN,
         )
 
     def test_success(self):
@@ -582,10 +585,7 @@ class DefaultsSetCreateMixin(TestDefaultsMixin, AssertPcsMixin):
                 </{self.cib_tag}>
             """
             ),
-            stderr_full=(
-                "Warning: Defaults do not apply to resources which override "
-                "them with their own defined values\n"
-            ),
+            stderr_full=DEFAULTS_MAY_BE_OVERRIDDEN,
         )
 
     def _assert_success_rule(self, deprecated_rule_form):
@@ -611,7 +611,7 @@ class DefaultsSetCreateMixin(TestDefaultsMixin, AssertPcsMixin):
                 f"""\
                 <{self.cib_tag}>
                     <meta_attributes id="mine" score="10">
-                        <rule id="mine-rule" boolean-op="or" score="INFINITY">
+                        <rule id="mine-rule" boolean-op="or">
                             <date_expression id="mine-rule-expr"
                                 operation="gt" start="2018-05-17T13:28:19"
                             />
@@ -646,8 +646,8 @@ class DefaultsSetCreateMixin(TestDefaultsMixin, AssertPcsMixin):
             ),
             stderr_full=(
                 (RULE_ARGV_DEPRECATED if deprecated_rule_form else "")
-                + "Warning: Defaults do not apply to resources which override "
-                "them with their own defined values\n"
+                + CIB_HAS_BEEN_UPGRADED
+                + DEFAULTS_MAY_BE_OVERRIDDEN
             ),
         )
 
@@ -667,22 +667,23 @@ class DefaultsSetCreateMixin(TestDefaultsMixin, AssertPcsMixin):
                 "date in_range 2019-05-0X to duration months=2 months=3a x=y or "
                 "date-spec years=2019 months=7-X weekdays=7-6 years=202a x=y)"
             ],
-            (
+            CIB_HAS_BEEN_UPGRADED
+            + (
                 "Error: '2018-05-1X' is not a valid date value, use ISO 8601 date\n"
                 "Error: Since '2019-03-05' is not sooner than until '2019-01-11'\n"
                 "Error: '2019-05-0X' is not a valid date value, use ISO 8601 date\n"
                 "Error: '3a' is not a valid months value, use a positive integer\n"
                 "Error: invalid duration option 'x', allowed options are: "
-                "'hours', 'monthdays', 'months', 'moon', 'weekdays', "
-                "'weeks', 'weekyears', 'years', 'yearsdays'\n"
+                "'days', 'hours', 'minutes', 'months', 'seconds', 'weeks', "
+                "'years'\n"
                 "Error: Duplicate options in a single (sub)expression: 'months'\n"
-                "Error: '7-X' is not a valid months value, use 1..12 or 1..11-2..12\n"
-                "Error: '7-6' is not a valid weekdays value, use 1..7 or 1..6-2..7\n"
                 "Error: '202a' is not a valid years value, use an integer or "
                 "integer-integer\n"
+                "Error: '7-X' is not a valid months value, use 1..12 or 1..11-2..12\n"
+                "Error: '7-6' is not a valid weekdays value, use 1..7 or 1..6-2..7\n"
                 "Error: invalid datespec option 'x', allowed options are: "
-                "'hours', 'monthdays', 'months', 'moon', 'weekdays', "
-                "'weeks', 'weekyears', 'years', 'yearsdays'\n"
+                "'hours', 'minutes', 'monthdays', 'months', 'seconds', "
+                "'weekdays', 'weeks', 'weekyears', 'yeardays', 'years'\n"
                 "Error: Duplicate options in a single (sub)expression: 'years'\n"
                 "Error: Errors have occurred, therefore pcs is unable to continue\n"
             ),
@@ -703,6 +704,7 @@ class RscDefaultsSetCreate(
 
     @skip_unless_pacemaker_supports_rsc_and_op_rules()
     def test_success_rules_rsc_op(self):
+        score_present = not is_minimum_cib_schema_version(3, 9, 0)
         self.assert_effect(
             (
                 self.cli_command
@@ -712,24 +714,23 @@ class RscDefaultsSetCreate(
             f"""\
             <{self.cib_tag}>
                 <meta_attributes id="X">
-                    <rule id="X-rule" boolean-op="and" score="INFINITY">
+                    <rule id="X-rule" boolean-op="and"
+                        {'score="INFINITY"' if score_present else ''}
+                    >
                         <rsc_expression id="X-rule-rsc-Dummy" type="Dummy"/>
                     </rule>
                     <nvpair id="X-nam1" name="nam1" value="val1"/>
                 </meta_attributes>
             </{self.cib_tag}>
             """,
-            stderr_full=(
-                "CIB has been upgraded to the latest schema version.\n"
-                "Warning: Defaults do not apply to resources which override "
-                "them with their own defined values\n"
-            ),
+            stderr_full=(CIB_HAS_BEEN_UPGRADED + DEFAULTS_MAY_BE_OVERRIDDEN),
         )
 
     def test_node_attr_expressions(self):
         self.assert_pcs_fail(
             self.cli_command + ["set", "create", "rule", "defined attr"],
-            (
+            CIB_HAS_BEEN_UPGRADED
+            + (
                 "Error: Keywords 'defined', 'not_defined', 'eq', 'ne', 'gte', "
                 "'gt', 'lte' and 'lt' cannot be used in a rule in this command\n"
                 "Error: Errors have occurred, therefore pcs is unable to continue\n"
@@ -759,7 +760,8 @@ class OpDefaultsSetCreate(
                 "defined attr1 or attr2 gte number 12a or "
                 "attr3 lt version 3.2.1a or attr4 ne string test or attr5 lt 3 ",
             ],
-            (
+            CIB_HAS_BEEN_UPGRADED
+            + (
                 "Error: '12a' is not a valid number attribute value, use a "
                 "floating-point number\n"
                 "Error: '3.2.1a' is not a valid version attribute value, use "
@@ -770,6 +772,7 @@ class OpDefaultsSetCreate(
 
     @skip_unless_pacemaker_supports_rsc_and_op_rules()
     def test_success_rules_rsc_op(self):
+        score_present = not is_minimum_cib_schema_version(3, 9, 0)
         self.assert_effect(
             self.cli_command
             + "-- set create id=X meta nam1=val1 rule".split()
@@ -781,9 +784,13 @@ class OpDefaultsSetCreate(
             f"""\
             <{self.cib_tag}>
                 <meta_attributes id="X">
-                    <rule id="X-rule" boolean-op="and" score="INFINITY">
+                    <rule id="X-rule" boolean-op="and"
+                        {'score="INFINITY"' if score_present else ''}
+                    >
                         <rsc_expression id="X-rule-rsc-Dummy" type="Dummy"/>
-                        <rule id="X-rule-rule" boolean-op="or" score="0">
+                        <rule id="X-rule-rule" boolean-op="or"
+                            {'score="0"' if score_present else ''}
+                        >
                             <op_expression id="X-rule-rule-op-start"
                                 name="start"
                             />
@@ -791,7 +798,9 @@ class OpDefaultsSetCreate(
                                 name="stop"
                             />
                         </rule>
-                        <rule id="X-rule-rule-1" boolean-op="or" score="0">
+                        <rule id="X-rule-rule-1" boolean-op="or"
+                            {'score="0"' if score_present else ''}
+                        >
                             <expression id="X-rule-rule-1-expr"
                                 operation="defined" attribute="attr1"
                             />
@@ -816,11 +825,7 @@ class OpDefaultsSetCreate(
                 </meta_attributes>
             </{self.cib_tag}>
             """,
-            stderr_full=(
-                "CIB has been upgraded to the latest schema version.\n"
-                "Warning: Defaults do not apply to resources which override "
-                "them with their own defined values\n"
-            ),
+            stderr_full=(CIB_HAS_BEEN_UPGRADED + DEFAULTS_MAY_BE_OVERRIDDEN),
         )
 
 
@@ -916,10 +921,6 @@ class DefaultsSetUpdateMixin(TestDefaultsMixin, AssertPcsMixin):
         xml_manip = XmlManipulation.from_file(empty_cib)
         xml_manip.append_to_first_tag_name("configuration", xml)
         write_data_to_tmpfile(str(xml_manip), self.temp_cib)
-        warnings = (
-            "Warning: Defaults do not apply to resources which override "
-            "them with their own defined values\n"
-        )
 
         self.assert_effect(
             self.cli_command
@@ -934,7 +935,7 @@ class DefaultsSetUpdateMixin(TestDefaultsMixin, AssertPcsMixin):
                 </{self.cib_tag}>
             """
             ),
-            stderr_full=warnings,
+            stderr_full=DEFAULTS_MAY_BE_OVERRIDDEN,
         )
 
         self.assert_effect(
@@ -946,7 +947,7 @@ class DefaultsSetUpdateMixin(TestDefaultsMixin, AssertPcsMixin):
                 </{self.cib_tag}>
             """
             ),
-            stderr_full=warnings,
+            stderr_full=DEFAULTS_MAY_BE_OVERRIDDEN,
         )
 
 
@@ -1015,12 +1016,6 @@ class DefaultsUpdateMixin(TestDefaultsMixin, AssertPcsMixin):
 
     def test_success_legacy(self):
         write_file_to_tmpfile(empty_cib, self.temp_cib)
-        warning_lines = []
-        warning_lines.append(
-            "Warning: Defaults do not apply to resources which override "
-            "them with their own defined values\n"
-        )
-        warnings = "".join(warning_lines)
 
         command = self.cli_command[:]
         command.append("update")
@@ -1044,7 +1039,7 @@ class DefaultsUpdateMixin(TestDefaultsMixin, AssertPcsMixin):
                 </{self.cib_tag}>
             """
             ),
-            stderr_full=warnings,
+            stderr_full=DEFAULTS_MAY_BE_OVERRIDDEN,
         )
 
         self.assert_effect(
@@ -1063,7 +1058,7 @@ class DefaultsUpdateMixin(TestDefaultsMixin, AssertPcsMixin):
                 </{self.cib_tag}>
             """
             ),
-            stderr_full=warnings,
+            stderr_full=DEFAULTS_MAY_BE_OVERRIDDEN,
         )
 
         self.assert_effect(
@@ -1075,7 +1070,7 @@ class DefaultsUpdateMixin(TestDefaultsMixin, AssertPcsMixin):
                 </{self.cib_tag}>
             """
             ),
-            stderr_full=warnings,
+            stderr_full=DEFAULTS_MAY_BE_OVERRIDDEN,
         )
 
 

@@ -43,7 +43,10 @@ from pcs_test.tools.misc import (
     write_file_to_tmpfile,
 )
 from pcs_test.tools.pcs_runner import PcsRunner
-from pcs_test.tools.xml import XmlManipulation
+from pcs_test.tools.xml import (
+    XmlManipulation,
+    etree_to_str,
+)
 
 PCMK_2_0_3_PLUS = is_minimum_pacemaker_version(2, 0, 3)
 
@@ -4782,11 +4785,6 @@ class BundleCommon(
         )
 
     def fixture_bundle(self, name, container="docker"):
-        deprecated_rkt = (
-            "Deprecation Warning: Value 'rkt' of option container type is "
-            "deprecated and might be removed in a future release, therefore it should "
-            "not be used\n"
-        )
         self.assert_pcs_success(
             [
                 "resource",
@@ -4799,12 +4797,10 @@ class BundleCommon(
                 "network",
                 "control-port=1234",
             ],
-            stderr_full=(deprecated_rkt if container == "rkt" else None),
         )
 
 
 class BundleShow(BundleCommon):
-    # TODO: add test for podman (requires pcmk features 3.2)
     empty_cib = rc("cib-empty.xml")
 
     def test_docker(self):
@@ -4820,16 +4816,43 @@ class BundleShow(BundleCommon):
             ),
         )
 
-    def test_rkt(self):
-        self.fixture_bundle("B1", "rkt")
+    def test_podman(self):
+        write_file_to_tmpfile(rc("cib-empty-3.2.xml"), self.temp_cib)
+        self.fixture_bundle("B1", "podman")
         self.assert_pcs_success(
             "resource config B1".split(),
             dedent(
                 """\
                 Bundle: B1
-                  Rkt: image=pcs:test
+                  Podman: image=pcs:test
                   Network: control-port=1234
                 """
+            ),
+        )
+
+    def test_unknown_container(self):
+        write_file_to_tmpfile(rc("cib-empty-3.7.xml"), self.temp_cib)
+        self.fixture_bundle("B1")
+
+        # pcs no longer allows creating rkt bundles
+        cib_tree = etree.parse(
+            self.temp_cib.name, etree.XMLParser(huge_tree=True)
+        ).getroot()
+        element = cib_tree.find('.//*[@id="B1"]/docker')
+        element.tag = "rkt"
+        write_data_to_tmpfile(etree_to_str(cib_tree), self.temp_cib)
+
+        self.assert_pcs_success(
+            "resource config B1".split(),
+            dedent(
+                """\
+                Bundle: B1
+                  Network: control-port=1234
+                """
+            ),
+            stderr_full=(
+                "Warning: Bundle 'B1' uses unsupported container type. "
+                "Supported container types are: 'docker', 'podman'\n"
             ),
         )
 

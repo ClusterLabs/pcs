@@ -51,8 +51,6 @@ EXTRA_DIST		= \
 			  cli/constraint/output/order.py \
 			  cli/constraint/output/set.py \
 			  cli/constraint/output/ticket.py \
-			  cli/constraint/rule/__init__.py \
-			  cli/constraint/rule/command.py \
 			  cli/constraint/__init__.py \
 			  cli/constraint_order/command.py \
 			  cli/constraint_order/__init__.py \
@@ -289,7 +287,6 @@ EXTRA_DIST		= \
 			  lib/cib/rule/__init__.py \
 			  lib/cib/rule/parsed_to_cib.py \
 			  lib/cib/rule/parser.py \
-			  lib/cib/rule/tools.py \
 			  lib/cib/rule/validator.py \
 			  lib/cib/sections.py \
 			  lib/cib/status.py \

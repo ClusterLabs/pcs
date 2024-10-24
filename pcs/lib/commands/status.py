@@ -1,7 +1,6 @@
 import os.path
 from typing import (
     Iterable,
-    List,
     Mapping,
     NamedTuple,
 )
@@ -24,6 +23,7 @@ from pcs.common.str_tools import (
 )
 from pcs.common.types import (
     CibRuleInEffectStatus,
+    StringIterable,
     StringSequence,
 )
 from pcs.lib.booth import status as booth_status
@@ -31,6 +31,7 @@ from pcs.lib.booth.env import BoothEnv
 from pcs.lib.cib import nvpair
 from pcs.lib.cib.constraint.location import get_all_as_dtos
 from pcs.lib.cib.resource import stonith
+from pcs.lib.cib.resource.bundle import verify as verify_bundles
 from pcs.lib.cib.rule.in_effect import get_rule_evaluator
 from pcs.lib.cib.tools import (
     get_constraints,
@@ -174,7 +175,7 @@ def full_cluster_status_plaintext(
                 node_name_list,
             )
 
-    # check stonith configuration
+    # check and warn about various issues
     warning_list = list(warning_list)
     warning_list.extend(_stonith_warnings(cib, is_sbd_running))
     warning_list.extend(
@@ -183,6 +184,7 @@ def full_cluster_status_plaintext(
     warning_list.extend(
         _booth_authfile_warning(env.report_processor, env.get_booth_env(None))
     )
+    warning_list.extend(_bundle_warnings(cib))
 
     # put it all together
     if report_processor.has_errors:
@@ -228,7 +230,7 @@ def full_cluster_status_plaintext(
     return "\n".join(parts)
 
 
-def _stonith_warnings(cib: _Element, is_sbd_running: bool) -> List[str]:
+def _stonith_warnings(cib: _Element, is_sbd_running: bool) -> StringIterable:
     warning_list = []
 
     is_stonith_enabled = stonith.is_stonith_enabled(get_crm_config(cib))
@@ -272,8 +274,8 @@ def _stonith_warnings(cib: _Element, is_sbd_running: bool) -> List[str]:
 
 def _move_constraints_warnings(
     cib: _Element, runner: CommandRunner, report_processor: ReportProcessor
-) -> List[str]:
-    warning_list: List[str] = []
+) -> StringIterable:
+    warning_list = []
     rule_evaluator = get_rule_evaluator(cib, runner, report_processor, True)
     constraint_el = get_constraints(cib)
 
@@ -307,8 +309,8 @@ def _move_constraints_warnings(
 
 def _booth_authfile_warning(
     report_processor: ReportProcessor, env: BoothEnv
-) -> List[str]:
-    warning_list: List[str] = []
+) -> StringIterable:
+    warning_list = []
     report_msg = booth_status.check_authfile_misconfiguration(
         env, report_processor
     )
@@ -330,9 +332,15 @@ def _booth_authfile_warning(
     return warning_list
 
 
+def _bundle_warnings(cib: _Element) -> StringIterable:
+    return [
+        report.message.message for report in verify_bundles(get_resources(cib))
+    ]
+
+
 def _get_local_services_status(
     service_manager: ServiceManagerInterface,
-) -> List[_ServiceStatus]:
+) -> list[_ServiceStatus]:
     service_def = [
         # (service name, display even if not enabled nor running)
         ("corosync", True),
@@ -359,7 +367,7 @@ def _get_local_services_status(
 
 def _format_local_services_status(
     service_status_list: Iterable[_ServiceStatus],
-) -> List[str]:
+) -> StringIterable:
     return [
         "{service}: {active}/{enabled}".format(
             service=status.service,
@@ -390,7 +398,7 @@ def _get_node_reachability(
 
 def _format_node_reachability(
     node_name_list: StringSequence, node_reachability: Mapping[str, str]
-) -> List[str]:
+) -> StringIterable:
     translate = {
         CheckReachability.REACHABLE: "Online",
         CheckReachability.UNAUTH: "Unable to authenticate",

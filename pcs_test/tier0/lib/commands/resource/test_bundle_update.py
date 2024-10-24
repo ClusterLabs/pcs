@@ -458,10 +458,6 @@ class ContainerPodman(
     container_type = "podman"
 
 
-class ContainerRkt(ContainerParametrized, metaclass=ParametrizedTestMetaClass):
-    container_type = "rkt"
-
-
 class ContainerUnknown(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
@@ -587,9 +583,7 @@ class ContainerUnknown(TestCase):
                 fixture.error(
                     report_codes.RESOURCE_BUNDLE_UNSUPPORTED_CONTAINER_TYPE,
                     bundle_id="B1",
-                    supported_container_types=sorted(
-                        ["rkt", "docker", "podman"]
-                    ),
+                    supported_container_types=sorted(["docker", "podman"]),
                     updating_options=True,
                 )
             ]

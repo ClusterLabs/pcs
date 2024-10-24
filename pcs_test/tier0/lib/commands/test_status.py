@@ -1115,6 +1115,49 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
             ),
         )
 
+    def test_bundle_warnings(self):
+        self.config.runner.pcmk.load_state_plaintext(
+            stdout="crm_mon cluster status",
+        )
+        self.config.fs.exists(settings.corosync_conf_file, return_value=True)
+        self.config.corosync_conf.load()
+        self.config.runner.cib.load(
+            resources="""
+            <resources>
+                <bundle id="bundle-bad">
+                    <rkt image="pcs:test" />
+                </bundle>
+                <bundle id="bundle-good">
+                    <docker image="pcs:test" />
+                </bundle>
+            </resources>
+        """,
+        )
+        self.config.services.is_running(
+            "sbd", return_value=True, name="services.is_running.sbd"
+        )
+        self._fixture_config_local_daemons(sbd_enabled=True, sbd_active=True)
+        self.config.fs.isfile(settings.crm_rule_exec, return_value=True)
+
+        self.assertEqual(
+            status.full_cluster_status_plaintext(self.env_assist.get_env()),
+            dedent(
+                """\
+                Cluster name: test99
+
+                WARNINGS:
+                Bundle 'bundle-bad' uses unsupported container type. Supported container types are: 'docker', 'podman'
+
+                crm_mon cluster status
+
+                Daemon Status:
+                  corosync: active/enabled
+                  pacemaker: active/enabled
+                  pcsd: active/enabled
+                  sbd: active/enabled"""
+            ),
+        )
+
 
 class FullClusterStatusPlaintextBoothWarning(FullClusterStatusPlaintextBase):
     def setUp(self):

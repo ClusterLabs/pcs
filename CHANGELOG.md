@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### Removed
+- Following pacemaker 3, support for nagios and upstart resource classes has
+  been removed ([RHEL-49520])
+- Following pacemaker 3, support for rkt containers in bundle resources has
+  been removed ([RHEL-49521])
+- Following pacemaker 3, support for multiple rules in a single location
+  constraint has been removed ([RHEL-62719])
+
 ### Added
 - Support for output formats `json` and `cmd` to `pcs tag config` command
   ([RHEL-21047])
@@ -29,6 +37,8 @@
   as a build backend and pip as a build frontend. If you build pcs from source
   (not using a package), look at the changes in Makefile.am and rpm/spec.in.
   Update of your building processes might be needed.
+- Following pacemaker 3, date-spec and duration options in rules have been
+  changed ([RHEL-49524], [RHEL-49527])
 
 ### Fixed
 - Do not end with error when using the instances quantifier in `pcs status
@@ -43,9 +53,14 @@
 [RHEL-21047]: https://issues.redhat.com/browse/RHEL-21047
 [RHEL-33386]: https://issues.redhat.com/browse/RHEL-33386
 [RHEL-44432]: https://issues.redhat.com/browse/RHEL-44432
+[RHEL-49520]: https://issues.redhat.com/browse/RHEL-49520
+[RHEL-49521]: https://issues.redhat.com/browse/RHEL-49521
+[RHEL-49524]: https://issues.redhat.com/browse/RHEL-49524
+[RHEL-49527]: https://issues.redhat.com/browse/RHEL-49527
 [RHEL-55723]: https://issues.redhat.com/browse/RHEL-55723
 [RHEL-61747]: https://issues.redhat.com/browse/RHEL-61747
 [RHEL-61889]: https://issues.redhat.com/browse/RHEL-61889
+[RHEL-62719]: https://issues.redhat.com/browse/RHEL-62719
 
 
 ## [0.12.0a1] - 2024-06-21

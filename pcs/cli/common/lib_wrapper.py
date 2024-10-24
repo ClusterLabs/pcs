@@ -255,7 +255,6 @@ def load_module(env, middleware_factory, name):
             middleware.build(middleware_factory.cib),
             {
                 "create_plain_with_rule": constraint_location.create_plain_with_rule,
-                "add_rule_to_constraint": constraint_location.add_rule_to_constraint,
             },
         )
 

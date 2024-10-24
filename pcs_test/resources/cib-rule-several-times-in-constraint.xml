@@ -14,7 +14,9 @@
     <!--
     commands used to create this CIB:
     pcs resource create R1 ocf:pacemaker:Dummy;
-    pcs constraint location R1 rule \#uname eq node1 and date gt '2023-01-01 12:00' and date lt '2023-12-31 12:00' and date in_range '2023-01-01 12:00' to '2023-12-31 12:00';
+    pcs constraint location R1 rule '#uname eq node1 and date gt 2023-01-01T12:00'
+    pcs constraint rule add location-R1 '#uname eq node2 and date gt 2023-01-01T12:00'
+    pcs constraint rule add location-R1 '#uname eq node3 and date gt 2023-01-01T12:00'
     -->
     <resources>
       <primitive id="R1" class="ocf" type="Dummy" provider="pacemaker">
@@ -26,10 +28,16 @@
     <constraints>
       <rsc_location id="location-R1" rsc="R1">
         <rule id="location-R1-rule" boolean-op="and" score="INFINITY">
-          <expression id="location-R1-rule-expr" operation="eq" attribute="#uname" value="node1"/>
-          <date_expression id="location-R1-rule-expr-1" operation="gt" start="2023-01-01 12:00"/>
-          <date_expression id="location-R1-rule-expr-2" operation="lt" end="2023-12-31 12:00"/>
-          <date_expression id="location-R1-rule-expr-3" operation="in_range" start="2023-01-01 12:00" end="2023-12-31 12:00"/>
+          <expression id="location-R1-rule-expr" attribute="#uname" operation="eq" value="node1"/>
+          <date_expression id="location-R1-rule-expr-1" operation="gt" start="2023-01-01T12:00"/>
+        </rule>
+        <rule id="location-R1-rule-1" boolean-op="and" score="INFINITY">
+          <expression id="location-R1-rule-1-expr" attribute="#uname" operation="eq" value="node2"/>
+          <date_expression id="location-R1-rule-1-expr-1" operation="gt" start="2023-01-01T12:00"/>
+        </rule>
+        <rule id="location-R1-rule-2" boolean-op="and" score="INFINITY">
+          <expression id="location-R1-rule-2-expr" attribute="#uname" operation="eq" value="node3"/>
+          <date_expression id="location-R1-rule-2-expr-1" operation="gt" start="2023-01-01T12:00"/>
         </rule>
       </rsc_location>
     </constraints>

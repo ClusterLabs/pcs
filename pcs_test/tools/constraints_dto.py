@@ -204,11 +204,25 @@ def get_all_constraints(
                         ],
                         as_string="#uname eq node1 and date gt 2000-01-01",
                     ),
+                ],
+                lifetime=[],
+                resource_discovery=None,
+            ),
+        ),
+        CibConstraintLocationDto(
+            resource_id="R6-clone",
+            resource_pattern=None,
+            role=None,
+            attributes=CibConstraintLocationAttributesDto(
+                constraint_id="loc_constr_with_not_expired_rule-1",
+                score=None,
+                node=None,
+                rules=[
                     CibRuleExpressionDto(
-                        id="loc_constr_with_not_expired_rule-rule-1",
+                        id="loc_constr_with_not_expired_rule-1-rule",
                         type=CibRuleExpressionType.RULE,
                         in_effect=rule_eval.get_rule_status(
-                            "loc_constr_with_not_expired_rule-rule-1"
+                            "loc_constr_with_not_expired_rule-1-rule"
                         ),
                         options={
                             "boolean-op": "and",
@@ -219,10 +233,10 @@ def get_all_constraints(
                         duration=None,
                         expressions=[
                             CibRuleExpressionDto(
-                                id="loc_constr_with_not_expired_rule-rule-1-expr",
+                                id="loc_constr_with_not_expired_rule-1-rule-expr",
                                 type=CibRuleExpressionType.DATE_EXPRESSION,
                                 in_effect=rule_eval.get_rule_status(
-                                    "loc_constr_with_not_expired_rule-rule-1-expr"
+                                    "loc_constr_with_not_expired_rule-1-rule-expr"
                                 ),
                                 options={
                                     "operation": "gt",
@@ -234,10 +248,10 @@ def get_all_constraints(
                                 as_string="date gt 2010-12-31",
                             ),
                             CibRuleExpressionDto(
-                                id="loc_constr_with_not_expired_rule-rule-1-expr-1",
+                                id="loc_constr_with_not_expired_rule-1-rule-expr-1",
                                 type=CibRuleExpressionType.EXPRESSION,
                                 in_effect=rule_eval.get_rule_status(
-                                    "loc_constr_with_not_expired_rule-rule-1-expr-1"
+                                    "loc_constr_with_not_expired_rule-1-rule-expr-1"
                                 ),
                                 options={
                                     "operation": "eq",

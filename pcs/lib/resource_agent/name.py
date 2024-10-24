@@ -47,12 +47,10 @@ def split_resource_agent_name(full_agent_name: str) -> ResourceAgentName:
     allowed_standards = {
         "heartbeat",
         "lsb",
-        "nagios",
         "ocf",
         "service",
         "stonith",
         "systemd",
-        "upstart",
     }
     if standard not in allowed_standards:
         raise InvalidResourceAgentName(full_agent_name)

@@ -173,7 +173,7 @@ def _get_current_cib_schema_version():
     return sorted(all_versions)[-1]
 
 
-def _is_minimum_cib_schema_version(cmajor, cminor, crev):
+def is_minimum_cib_schema_version(cmajor, cminor, crev):
     major, minor = _get_current_cib_schema_version()
     return compare_version((major, minor, 0), (cmajor, cminor, crev)) > -1
 
@@ -247,7 +247,7 @@ def skip_unless_pacemaker_features(version_tuple, feature):
 def skip_unless_cib_schema_version(version_tuple, feature):
     current_version = _get_current_cib_schema_version()
     return skipUnless(
-        _is_minimum_cib_schema_version(*version_tuple),
+        is_minimum_cib_schema_version(*version_tuple),
         (
             "Pacemaker supported CIB schema version is too low (current: "
             "{current_version}, must be >= {minimal_version}) to test {feature}"

@@ -49,6 +49,11 @@ def _msg_command_replaced(
     return f"This command has been replaced with {commands}. {changes}"
 
 
+def _msg_command_removed(pcs_version: str) -> str:
+    changes = SEE_MAN_CHANGES.format(pcs_version)
+    return f"This command has been removed. {changes}"
+
+
 def command_replaced(
     new_commands: StringSequence, pcs_version: str
 ) -> CmdLineInputError:
@@ -57,7 +62,17 @@ def command_replaced(
     )
 
 
+def command_removed(pcs_version: str) -> CmdLineInputError:
+    return CmdLineInputError(
+        message=_msg_command_removed(pcs_version=pcs_version)
+    )
+
+
 def raise_command_replaced(
     new_commands: StringSequence, pcs_version: str
 ) -> None:
     raise command_replaced(new_commands, pcs_version)
+
+
+def raise_command_removed(pcs_version: str) -> None:
+    raise command_removed(pcs_version)

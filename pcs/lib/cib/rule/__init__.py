@@ -11,8 +11,4 @@ from .parser import (
     RuleParseError,
     parse_rule,
 )
-from .tools import (
-    has_node_attr_expr_with_type_integer,
-    has_rsc_or_op_expression,
-)
 from .validator import Validator as RuleValidator

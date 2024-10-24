@@ -407,7 +407,7 @@ class SimpleRsc(Base):
 
 
 class Complex(Base):
-    def test_expr_1(self):
+    def assert_complex_rule_1(self, schema_version, score_present):
         expression = BoolExpr(
             BOOL_AND,
             [
@@ -430,30 +430,34 @@ class Complex(Base):
                 ),
             ],
         )
-        xml = """
-                <rule id="{id}" boolean-op="and">
-                  <rule id="{id}-rule" boolean-op="or" score="0">
-                    <rsc_expression id="{id}-rule-rsc-ocf-pacemaker-Dummy"
+        xml = f"""
+                <rule id="{{id}}" boolean-op="and">
+                  <rule id="{{id}}-rule" boolean-op="or"
+                      {'score="0"' if score_present else ''}
+                  >
+                    <rsc_expression id="{{id}}-rule-rsc-ocf-pacemaker-Dummy"
                         class="ocf" provider="pacemaker" type="Dummy"
                     />
-                    <op_expression id="{id}-rule-op-start" name="start" />
-                    <rsc_expression id="{id}-rule-rsc-systemd-pcsd"
+                    <op_expression id="{{id}}-rule-op-start" name="start" />
+                    <rsc_expression id="{{id}}-rule-rsc-systemd-pcsd"
                         class="systemd" type="pcsd"
                     />
-                    <rsc_expression id="{id}-rule-rsc-ocf-heartbeat-Dummy"
+                    <rsc_expression id="{{id}}-rule-rsc-ocf-heartbeat-Dummy"
                         class="ocf" provider="heartbeat" type="Dummy"
                     />
                   </rule>
-                  <rule id="{id}-rule-1" boolean-op="or" score="0">
-                    <expression id="{id}-rule-1-expr"
+                  <rule id="{{id}}-rule-1" boolean-op="or"
+                      {'score="0"' if score_present else ''}
+                  >
+                    <expression id="{{id}}-rule-1-expr"
                         attribute="#uname" operation="eq" value="node1"
                     />
-                    <date_expression id="{id}-rule-1-expr-1"
+                    <date_expression id="{{id}}-rule-1-expr-1"
                         operation="date_spec"
                     >
-                      <date_spec id="{id}-rule-1-expr-1-datespec" hours="1" />
+                      <date_spec id="{{id}}-rule-1-expr-1-datespec" hours="1" />
                     </date_expression>
-                    <date_expression id="{id}-rule-1-expr-2"
+                    <date_expression id="{{id}}-rule-1-expr-2"
                         operation="in_range" start="2014-06-26" end="2014-07-26"
                     />
                   </rule>
@@ -466,5 +470,14 @@ class Complex(Base):
         for rule_id, xml_id in id_map:
             with self.subTest(rule_id=rule_id, xml_id=xml_id):
                 self.assert_cib(
-                    expression, xml.format(id=xml_id), rule_id=rule_id
+                    expression,
+                    xml.format(id=xml_id),
+                    schema_version=schema_version,
+                    rule_id=rule_id,
                 )
+
+    def test_complex_rule_1_cib_3_5(self):
+        self.assert_complex_rule_1(Version(3, 5, 0), score_present=True)
+
+    def test_complex_rule_1_cib_3_9(self):
+        self.assert_complex_rule_1(Version(3, 9, 0), score_present=False)

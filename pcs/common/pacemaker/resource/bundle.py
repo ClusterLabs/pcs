@@ -12,7 +12,6 @@ ContainerType = NewType("ContainerType", str)
 
 CONTAINER_TYPE_DOCKER = ContainerType("docker")
 CONTAINER_TYPE_PODMAN = ContainerType("podman")
-CONTAINER_TYPE_RKT = ContainerType("rkt")
 
 
 @dataclass(frozen=True)

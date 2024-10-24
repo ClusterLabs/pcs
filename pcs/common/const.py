@@ -71,8 +71,10 @@ PCMK_ACTIONS = (
     PCMK_ACTION_DEMOTE,
 )
 PCMK_NEW_ROLES_CIB_VERSION = Version(3, 7, 0)
-PCMK_RULES_NODE_ATTR_EXPR_WITH_INT_TYPE_CIB_VERSION = Version(3, 5, 0)
-PCMK_RULES_WITH_RSC_OR_OP_EXPR_CIB_VERSION = Version(3, 4, 0)
+# CIB schema which supports new rules syntax and options defined in Pacemaker 3.
+# Lower schema is not supported for rules by pcs, as we support Pacemaker 3+
+# only in pcs-0.12.
+PCMK_RULES_PCMK3_SYNTAX_CIB_VERSION = Version(3, 9, 0)
 PCMK_ON_FAIL_DEMOTE_CIB_VERSION = Version(3, 4, 0)
 
 RESOURCE_ID_TYPE_PLAIN = ResourceIdType("resource_id_plain")

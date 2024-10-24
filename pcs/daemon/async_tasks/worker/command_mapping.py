@@ -164,10 +164,6 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
         cmd=constraint.colocation.create_with_set,
         required_permission=p.WRITE,
     ),
-    "constraint.location.add_rule_to_constraint": _Cmd(
-        cmd=constraint.location.add_rule_to_constraint,
-        required_permission=p.WRITE,
-    ),
     "constraint.location.create_with_rule": _Cmd(
         cmd=constraint.location.create_plain_with_rule,
         required_permission=p.WRITE,

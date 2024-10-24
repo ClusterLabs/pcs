@@ -43,6 +43,7 @@ from pcs.lib import (
 )
 from pcs.lib.booth import sync as booth_sync
 from pcs.lib.cib import fencing_topology
+from pcs.lib.cib.resource.bundle import verify as verify_bundles
 from pcs.lib.cib.resource.guest_node import find_node_list as get_guest_nodes
 from pcs.lib.cib.resource.remote_node import find_node_list as get_remote_nodes
 from pcs.lib.cib.tools import (
@@ -184,6 +185,7 @@ def verify(env: LibraryEnvironment, verbose=False):
             ClusterState(env.get_cluster_state()).node_section.nodes,
         )
     )
+    env.report_processor.report_list(verify_bundles(get_resources(cib)))
     if env.report_processor.has_errors:
         raise LibraryError()
 

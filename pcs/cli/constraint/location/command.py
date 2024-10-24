@@ -139,34 +139,3 @@ def create_with_rule(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
         constraint_options,
         force_flags,
     )
-
-
-def rule_add(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
-    """
-    Options:
-      * -f - CIB file
-      * --force - allow duplicate constraints
-    """
-    modifiers.ensure_only_supported("-f", "--force")
-    if not argv:
-        raise CmdLineInputError()
-
-    force_flags = set()
-    if modifiers.get("--force"):
-        force_flags.add(reports.codes.FORCE)
-
-    argv = argv[:]  # eliminate side-effect - do not modify the original argv
-    constraint_id = argv.pop(0)
-    rule_options, _ = _extract_rule_options(
-        argv, extract_constraint_options=False
-    )
-
-    lib.env.report_processor.set_report_item_preprocessor(
-        get_duplicate_constraint_exists_preprocessor(lib)
-    )
-    lib.constraint_location.add_rule_to_constraint(
-        constraint_id,
-        get_rule_str(argv) or "",
-        rule_options,
-        force_flags,
-    )

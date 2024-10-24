@@ -8,8 +8,8 @@ pcs -- constraint location add location-R-localhost-INFINITY 'regexp%R*' localho
 pcs -- constraint location resource%R6-clone rule \
   id=loc_constr_with_not_expired_rule-rule constraint-id=loc_constr_with_not_expired_rule role=Unpromoted score=500 \
   '#uname' eq node1 and date gt 2000-01-01;
-pcs -- constraint rule add loc_constr_with_not_expired_rule \
-  id=loc_constr_with_not_expired_rule-rule-1 role=Promoted score-attribute=test-attr \
+pcs -- constraint location resource%R6-clone rule  \
+  id=loc_constr_with_not_expired_rule-1-rule constraint-id=loc_constr_with_not_expired_rule-1 role=Promoted score-attribute=test-attr \
   date gt 2010-12-31 and '#uname' eq node1;
 pcs -- constraint colocation add Promoted G1-clone with Stopped R6-clone -100 \
   id=colocation-G1-clone-R6-clone--100;
