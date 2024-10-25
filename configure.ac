@@ -65,7 +65,7 @@ AC_PROG_MKDIR_P
 PKG_PROG_PKG_CONFIG
 
 # check for python
-AM_PATH_PYTHON([3.9])
+AM_PATH_PYTHON([3.12])
 eval PYTHON_SITELIB="`eval echo ${pythondir}`"
 AC_SUBST([PYTHON_SITELIB])
 # required to detect / install python modules
@@ -112,7 +112,7 @@ fi
 # so we need to detect it
 rubymod=`pkg-config --list-all | awk '{print $1}' | grep ^ruby | sort -n | tail -n 1`
 
-PKG_CHECK_MODULES([ruby], [$rubymod >= 2.5])
+PKG_CHECK_MODULES([ruby], [$rubymod >= 3.1])
 PCS_PKG_CHECK_VAR([RUBY_VER], [$rubymod], [ruby_version])
 AC_CHECK_PROGS([GEM], [gem])
 if test "x$GEM" = "x"; then

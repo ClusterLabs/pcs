@@ -1,7 +1,7 @@
 [project]
 name = "pcs"
 version = "@VERSION@"
-requires-python = ">=3.9"
+requires-python = ">=3.12"
 description = "Pacemaker/Corosync Configuration System"
 authors = [
   {name = "Chris Feist", email = "cfeist@redhat.com"},
@@ -43,7 +43,7 @@ pcs = ["py.typed"]
 ################################################################################
 [tool.black]
 line-length = 80
-target-version = ['py39']
+target-version = ['py312']
 
 [tool.isort]
 profile = "black"
@@ -51,7 +51,7 @@ line_length = 80
 multi_line_output = 3
 force_grid_wrap = 2
 atomic = true
-py_version = 39
+py_version = 312
 skip_gitignore = true
 sections = ['FUTURE', 'STDLIB', 'THIRDPARTY', 'FIRSTPARTY', 'TESTS', 'LOCALFOLDER']
 known_first_party = ["pcs"]

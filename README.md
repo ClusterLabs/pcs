@@ -36,12 +36,10 @@ These are the runtime dependencies of pcs and pcsd:
 * python3-dateutil 2.7.0+
 * python3-lxml
 * python3-pycurl
-* python3-setuptools
-* python3-setuptools\_scm
 * python3-pyparsing 3.0.0+
 * python3-tornado 6.1.0+
 * [dacite](https://github.com/konradhalas/dacite)
-* ruby 3.3.0+
+* ruby 3.1.0+
 * killall (package psmisc)
 * corosync 3.x
 * pacemaker 3.x
@@ -53,8 +51,8 @@ These are the runtime dependencies of pcs and pcsd:
 Apart from the dependencies listed above, these are also required for
 installation:
 
-* python development files (packages python3-devel, python3-setuptools,
-  python3-setuptools\_scm, python3-wheel)
+* python development files (packages python3-devel, python3-setuptools 66.1+,
+  python3-wheel)
 * ruby development files (package ruby-devel)
 * rubygems
 * rubygem bundler (package rubygem-bundler or ruby-bundler or bundler)

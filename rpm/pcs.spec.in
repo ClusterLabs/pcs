@@ -88,7 +88,7 @@ BuildRequires: gcc
 BuildRequires: gcc-c++
 BuildRequires: libffi-devel
 # ruby and gems for pcsd
-BuildRequires: ruby >= 2.5
+BuildRequires: ruby >= 3.1
 BuildRequires: ruby-devel
 BuildRequires: rubygems
 # cluster stack packages for pkg-config
@@ -128,7 +128,7 @@ Requires: python3-pycurl
 %endif
 Requires: python3-pyparsing >= 3.0.0
 # ruby and gems for pcsd
-Requires: ruby >= 2.5
+Requires: ruby >= 3.1
 Requires: rubygems
 # for killall
 Requires: psmisc
@@ -172,7 +172,7 @@ License: GPL-2.0-only AND BSD-2-Clause
 URL: https://github.com/ClusterLabs/pcs
 
 Requires: pcs = %{version}-%{release}
-Requires: pacemaker
+Requires: pacemaker >= %{required_pacemaker_version}
 Requires: net-snmp
 
 Provides: bundled(pyagentx) = %{pyagentx_version}

@@ -20,6 +20,9 @@
   ([RHEL-61747])
 
 ### Changed
+- Minimal supported version of pacemaker is 3.0
+- Minimal required version of python has been changed to 3.12
+- Minimal required version of ruby has been changed to 3.1
 - Commands `pcs resource delete | remove` and `pcs stonith delete | remove`
   now allow ([RHEL-61889]):
     - deletion of multiple resources or stonith resources with one command
