@@ -58,6 +58,10 @@ DEPRECATED_LOCATION_CONSTRAINT_REMOVE = (
     "Deprecation Warning: This command is deprecated and will be removed. "
     "Please use 'pcs constraint delete' or 'pcs constraint remove' instead.\n"
 )
+DEPRECATED_MULTIPLE_RULES = (
+    "Deprecation Warning: The possibility of defining multiple rules "
+    "in a single location constraint is deprecated and will be removed.\n"
+)
 
 empty_cib = rc("cib-empty-3.7.xml")
 large_cib = rc("cib-large.xml")
@@ -1901,7 +1905,7 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
             "constraint rule add location-D1-rh7-1-INFINITY #uname eq rh7-1".split(),
         )
         self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
+        self.assertEqual(stderr, DEPRECATED_MULTIPLE_RULES)
         self.assertEqual(retval, 0)
 
         stdout, stderr, retval = pcs(
@@ -1909,7 +1913,7 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
             "constraint rule add location-D1-rh7-1-INFINITY #uname eq rh7-1".split(),
         )
         self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
+        self.assertEqual(stderr, DEPRECATED_MULTIPLE_RULES)
         self.assertEqual(retval, 0)
 
         stdout, stderr, retval = pcs(
@@ -1917,7 +1921,7 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
             "constraint rule add location-D1-rh7-1-INFINITY #uname eq rh7-1".split(),
         )
         self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
+        self.assertEqual(stderr, DEPRECATED_MULTIPLE_RULES)
         self.assertEqual(retval, 0)
 
         stdout, stderr, retval = pcs(
@@ -1925,7 +1929,7 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
             "constraint rule add location-D2-rh7-2-INFINITY date-spec hours=9-16 weekdays=1-5".split(),
         )
         self.assertEqual(stdout, "")
-        self.assertEqual(stderr, "")
+        self.assertEqual(stderr, DEPRECATED_MULTIPLE_RULES)
         self.assertEqual(retval, 0)
 
         self.assert_pcs_success(
@@ -1958,7 +1962,7 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
         self.assertEqual(
             stderr,
             (
-                "Removing references:\n"
+                DEPRECATED_MULTIPLE_RULES + "Removing references:\n"
                 "  Rule 'location-D1-rh7-1-INFINITY-rule-1' from:\n"
                 "    Location constraint: 'location-D1-rh7-1-INFINITY'\n"
             ),
@@ -1973,7 +1977,7 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
         self.assertEqual(
             stderr,
             (
-                "Removing references:\n"
+                DEPRECATED_MULTIPLE_RULES + "Removing references:\n"
                 "  Rule 'location-D1-rh7-1-INFINITY-rule-2' from:\n"
                 "    Location constraint: 'location-D1-rh7-1-INFINITY'\n"
             ),
@@ -2006,7 +2010,7 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
         self.assertEqual(
             stderr,
             (
-                "Removing dependant element:\n"
+                DEPRECATED_MULTIPLE_RULES + "Removing dependant element:\n"
                 "  Location constraint: 'location-D1-rh7-1-INFINITY'\n"
             ),
         )
@@ -2050,7 +2054,8 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
         )
         ac(
             stderr,
-            "Error: Unable to find constraint: location-D1-rh7-1-INFINITY\n",
+            DEPRECATED_MULTIPLE_RULES
+            + "Error: Unable to find constraint: location-D1-rh7-1-INFINITY\n",
         )
         self.assertEqual(stdout, "")
         self.assertEqual(retval, 1)
@@ -2061,7 +2066,8 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
         )
         ac(
             stderr,
-            "Error: invalid rule id '123', '1' is not a valid first character for a rule id\n",
+            DEPRECATED_MULTIPLE_RULES
+            + "Error: invalid rule id '123', '1' is not a valid first character for a rule id\n",
         )
         self.assertEqual(stdout, "")
         self.assertEqual(retval, 1)
@@ -5306,7 +5312,8 @@ class ExpiredConstraints(ConstraintBaseTest):
             (
                 "constraint rule add location-D2 id=test-duration score=INFINITY "
                 "date in_range 2019-03-01 to duration weeks=2"
-            ).split()
+            ).split(),
+            stderr_full=DEPRECATED_MULTIPLE_RULES,
         )
         self.assert_pcs_success(
             (
@@ -5318,7 +5325,8 @@ class ExpiredConstraints(ConstraintBaseTest):
             (
                 "constraint rule add location-D3 id=test-defined score=INFINITY "
                 "not_defined pingd"
-            ).split()
+            ).split(),
+            stderr_full=DEPRECATED_MULTIPLE_RULES,
         )
 
     def test_complex_primitive_plain(self):

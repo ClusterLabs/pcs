@@ -11,6 +11,7 @@ from pcs_test.tools.custom_mock import RuleInEffectEvalMock
 from pcs_test.tools.misc import dict_to_modifiers
 
 
+@mock.patch("pcs.cli.constraint.rule.command.deprecation_warning")
 class TestRemoveColocationConstraint(TestCase):
     def setUp(self):
         self.lib = mock.Mock(spec_set=["constraint", "cib"])
@@ -21,18 +22,23 @@ class TestRemoveColocationConstraint(TestCase):
         )
         self.lib.cib = self.cib
         self.lib.constraint = self.constraint
+        self.deprecation_msg = (
+            "The possibility of defining multiple rules in a single location "
+            "constraint is deprecated and will be removed."
+        )
 
     def _call_cmd(self, argv, modifiers=None):
         rule_command.remove(self.lib, argv, dict_to_modifiers(modifiers or {}))
 
-    def test_no_args(self):
+    def test_no_args(self, mock_deprecation_warning):
         with self.assertRaises(CmdLineInputError) as cm:
             self._call_cmd([])
         self.assertIsNone(cm.exception.message)
         self.constraint.get_config.assert_not_called()
         self.cib.remove_elements.assert_not_called()
+        mock_deprecation_warning.assert_called_once_with(self.deprecation_msg)
 
-    def test_duplicate_args(self):
+    def test_duplicate_args(self, mock_deprecation_warning):
         with self.assertRaises(CmdLineInputError) as cm:
             self._call_cmd(["id1", "id2", "id3", "id1", "id2"])
         self.assertEqual(
@@ -40,8 +46,9 @@ class TestRemoveColocationConstraint(TestCase):
         )
         self.constraint.get_config.assert_not_called()
         self.cib.remove_elements.assert_not_called()
+        mock_deprecation_warning.assert_called_once_with(self.deprecation_msg)
 
-    def test_unsupported_modifier(self):
+    def test_unsupported_modifier(self, mock_deprecation_warning):
         with self.assertRaises(CmdLineInputError) as cm:
             self._call_cmd(["id1", "id2"], {"force": True})
         self.assertEqual(
@@ -50,8 +57,9 @@ class TestRemoveColocationConstraint(TestCase):
         )
         self.constraint.get_config.assert_not_called()
         self.cib.remove_elements.assert_not_called()
+        mock_deprecation_warning.assert_called_once_with(self.deprecation_msg)
 
-    def test_rule_ids_not_found(self):
+    def test_rule_ids_not_found(self, mock_deprecation_warning):
         with self.assertRaises(CmdLineInputError) as cm:
             self._call_cmd(["id1", "id2"])
         self.assertEqual(
@@ -60,8 +68,9 @@ class TestRemoveColocationConstraint(TestCase):
         )
         self.constraint.get_config.assert_called_once_with(evaluate_rules=False)
         self.cib.remove_elements.assert_not_called()
+        mock_deprecation_warning.assert_called_once_with(self.deprecation_msg)
 
-    def test_rule_ids_found(self):
+    def test_rule_ids_found(self, mock_deprecation_warning):
         location_rule_ids = [
             "loc_constr_with_expired_rule-rule",
             "loc_constr_with_not_expired_rule-rule",
@@ -70,3 +79,4 @@ class TestRemoveColocationConstraint(TestCase):
         self._call_cmd(location_rule_ids)
         self.constraint.get_config.assert_called_once_with(evaluate_rules=False)
         self.cib.remove_elements.assert_called_once_with(location_rule_ids)
+        mock_deprecation_warning.assert_called_once_with(self.deprecation_msg)

@@ -1521,6 +1521,13 @@ def constraint_rule_add(lib, argv, modifiers):
       * -f - CIB file
       * --force - allow duplicate constraints
     """
+    # deprecated in pacemaker 2, removed in pacemaker 3
+    # added to pcs after 0.11.8
+    # the whole command removed in pcs-0.12
+    deprecation_warning(
+        "The possibility of defining multiple rules in a single location "
+        "constraint is deprecated and will be removed."
+    )
     del lib
     modifiers.ensure_only_supported("-f", "--force")
     if not argv:

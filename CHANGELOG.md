@@ -13,7 +13,7 @@
 - Lib command `cib.remove_elements` can now remove resources
 
 ### Changed
-- Commands `pcs resource delete | remove` and `pcs stonith delete | remove` 
+- Commands `pcs resource delete | remove` and `pcs stonith delete | remove`
   now allow ([RHEL-61901]):
     - deletion of multiple resources or stonith resources with one command
     - deletion of resources or stonith resources included in tags
@@ -32,6 +32,9 @@
 - Using `pcs resource delete | remove` to delete resources representing remote
   and guest nodes. Use `pcs cluster node remove-remote` and `pcs cluster node
   remove-guest` instead.
+- Commands `pcs constraint rule add | delete | remove`, as support for multiple
+  rules in a location constraint is among the [features planned to be removed
+  in pacemaker 3]
 
 [RHEL-46284]: https://issues.redhat.com/browse/RHEL-46284
 [RHEL-46286]: https://issues.redhat.com/browse/RHEL-46286
@@ -39,6 +42,7 @@
 [RHEL-55441]: https://issues.redhat.com/browse/RHEL-55441
 [RHEL-61738]: https://issues.redhat.com/browse/RHEL-61738
 [RHEL-61901]: https://issues.redhat.com/browse/RHEL-61901
+[features planned to be removed in pacemaker 3]: https://projects.clusterlabs.org/w/projects/pacemaker/pacemaker_3.0_changes/pacemaker_3.0_configuration_changes/
 
 
 ## [0.11.8] - 2024-07-09
@@ -70,7 +74,7 @@
 - Validate SBD\_DELAY\_START and SBD\_STARTMODE options ([RHEL-17962])
 
 ### Deprecated
-- Pcs produces warnings about [features planned to be removed in pacemaker 3](https://projects.clusterlabs.org/w/projects/pacemaker/pacemaker_3.0_changes/pacemaker_3.0_configuration_changes/):
+- Pcs produces warnings about [features planned to be removed in pacemaker 3]:
   - score in order constraints
   - using rkt in bundles
   - upstart and nagios resources
@@ -88,6 +92,7 @@
 [RHEL-27492]: https://issues.redhat.com/browse/RHEL-27492
 [RHEL-28749]: https://issues.redhat.com/browse/RHEL-28749
 [RHEL-36514]: https://issues.redhat.com/browse/RHEL-36514
+[features planned to be removed in pacemaker 3]: https://projects.clusterlabs.org/w/projects/pacemaker/pacemaker_3.0_changes/pacemaker_3.0_configuration_changes/
 
 
 ## [0.11.7] - 2024-01-11
