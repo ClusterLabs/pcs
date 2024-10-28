@@ -42,6 +42,7 @@ URL: https://github.com/ClusterLabs/pcs
 Summary: Pacemaker/Corosync Configuration System
 
 %global pcs_snmp_pkg_name  pcs-snmp
+%global pcs_standalone_webui_provider_pkg_name  pcs-standalone-webui-provider
 
 %global pyagentx_version   @pyagentx_version@
 
@@ -180,6 +181,19 @@ Provides: bundled(pyagentx) = %{pyagentx_version}
 %description -n %{pcs_snmp_pkg_name}
 SNMP agent that provides information about pacemaker cluster to the master agent (snmpd)
 
+%package -n %{pcs_standalone_webui_provider_pkg_name}
+Summary: Standalone webui provider for Pacemaker/Corosync Configuration System
+# https://docs.fedoraproject.org/en-US/packaging-guidelines/LicensingGuidelines/
+# https://fedoraproject.org/wiki/Licensing:Main?rd=Licensing#Good_Licenses
+# GPL-2.0-only: pcs
+License: GPL-2.0-only
+URL: https://github.com/ClusterLabs/pcs
+
+Requires: pcs = %{version}-%{release}
+
+%description -n %{pcs_standalone_webui_provider_pkg_name}
+Module for pcsd that provides support for standalone webui.
+
 %prep
 %autosetup -n %{name}-%{version}%{?numcomm:+%{numcomm}}%{?alphatag:-%{alphatag}}%{?dirty:-%{dirty}}
 
@@ -196,7 +210,7 @@ rubyver=`pkg-config --variable=ruby_version $rubymod`
 %build
 %define debug_package %{nil}
 ./autogen.sh
-%{configure} --enable-local-build --enable-use-local-cache-only --enable-individual-bundling @spec_config_enable_webui@
+%{configure} --enable-local-build --enable-use-local-cache-only --enable-individual-bundling --enable-webui
 make all
 
 %install
@@ -343,6 +357,7 @@ rm -fv %{buildroot}/%{_libdir}/pcsd/vendor/bundle/gems/tilt-*/bin/tilt
 %{_libdir}/pkgconfig/pcs.pc
 %exclude %{_libdir}/pcs/pcs_snmp_agent
 %exclude %{_libdir}/pcs/%{pcs_bundled_dir}/packages/pyagentx*
+%exclude %{python3_sitelib}/pcs/daemon/app/webui
 
 # bash completion
 %{_datadir}/bash-completion/completions/pcs
@@ -386,6 +401,11 @@ rm -fv %{buildroot}/%{_libdir}/pcsd/vendor/bundle/gems/tilt-*/bin/tilt
 %{_datadir}/snmp/mibs/PCMK-PCS*-MIB.txt
 %{_mandir}/man8/pcs_snmp_agent.*
 %config(noreplace) %{_sysconfdir}/sysconfig/pcs_snmp_agent
+%doc CHANGELOG.md
+%license COPYING
+
+%files -n %{pcs_standalone_webui_provider_pkg_name}
+%{python3_sitelib}/pcs/daemon/app/webui
 %doc CHANGELOG.md
 %license COPYING
 
