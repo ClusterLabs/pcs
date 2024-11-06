@@ -3,10 +3,7 @@ from collections import (
     Counter,
     OrderedDict,
 )
-from typing import (
-    Optional,
-    cast,
-)
+from typing import Optional
 
 from dateutil import parser as dateutil_parser
 
@@ -122,17 +119,19 @@ class Validator:
                     )
                 )
         if (
-            start_date is not None
+            # start and end dates have been specified
+            expr.date_start is not None
+            and expr.date_end is not None
+            # start and end dates are valid dates
+            and start_date is not None
             and end_date is not None
+            # start happens later than end
             and start_date >= end_date
         ):
             report_list.append(
                 reports.item.ReportItem.error(
                     message=reports.messages.RuleExpressionSinceGreaterThanUntil(
-                        expr.date_start,
-                        # If end_date is not None, then expr.date_end is not
-                        # None, but mypy does not see it.
-                        cast(str, expr.date_end),
+                        expr.date_start, expr.date_end
                     ),
                 )
             )

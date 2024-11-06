@@ -7,7 +7,6 @@ from typing import (
     NewType,
     Optional,
     Sequence,
-    Tuple,
 )
 
 BoolOperator = NewType("BoolOperator", str)
@@ -65,9 +64,9 @@ class DateInRangeExpr(RuleExprPart):
     Represents a 'date in range' expression
     """
 
-    date_start: str
+    date_start: Optional[str]
     date_end: Optional[str]
-    duration_parts: Optional[Sequence[Tuple[str, str]]]
+    duration_parts: Optional[Sequence[tuple[str, str]]]
 
 
 @dataclass(frozen=True)
@@ -76,7 +75,7 @@ class DatespecExpr(RuleExprPart):
     Represents a date-spec expression
     """
 
-    date_parts: Sequence[Tuple[str, str]]
+    date_parts: Sequence[tuple[str, str]]
 
 
 @dataclass(frozen=True)

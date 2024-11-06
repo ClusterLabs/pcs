@@ -187,7 +187,7 @@ def __build_date_inrange_expr(
 def __build_datespec_expr(parse_result: pyparsing.ParseResults) -> RuleExprPart:
     # Those attrs are defined by setResultsName in datespec_expr grammar rule
     return DatespecExpr(
-        parse_result.datespec.as_list() if parse_result.datespec else None
+        parse_result.datespec.as_list() if parse_result.datespec else ()
     )
 
 
