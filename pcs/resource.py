@@ -20,10 +20,7 @@ from pcs import (
     utils,
 )
 from pcs.cli.cluster_property.output import PropertyConfigurationFacade
-from pcs.cli.common.errors import (
-    SEE_MAN_CHANGES,
-    CmdLineInputError,
-)
+from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.output import smart_wrap_text
 from pcs.cli.common.parse_args import (
     FUTURE_OPTION,
@@ -48,7 +45,6 @@ from pcs.cli.nvset import (
 )
 from pcs.cli.reports import process_library_reports
 from pcs.cli.reports.output import (
-    deprecation_warning,
     error,
     warn,
 )
@@ -855,12 +851,6 @@ def resource_move(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     node = None
     if argv:
         node = argv.pop(0)
-        if node.startswith("lifetime="):
-            deprecation_warning(
-                "Option 'lifetime' has been removed. {}".format(
-                    SEE_MAN_CHANGES.format("0.11")
-                )
-            )
     if argv:
         raise CmdLineInputError()
 

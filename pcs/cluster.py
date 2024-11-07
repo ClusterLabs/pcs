@@ -27,7 +27,6 @@ from pcs.cli.common import parse_args
 from pcs.cli.common.errors import (
     ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE,
     CmdLineInputError,
-    raise_command_replaced,
 )
 from pcs.cli.common.parse_args import (
     OUTPUT_FORMAT_VALUE_CMD,
@@ -1230,15 +1229,6 @@ def cluster_uidgid(
                 utils.err(
                     "no uidgid files with uid=%s and gid=%s found" % (uid, gid)
                 )
-    elif command == "rm":
-        # To be removed in the next significant version
-        raise_command_replaced(
-            [
-                "pcs cluster uidgid delete",
-                "pcs cluster uidgid remove",
-            ],
-            pcs_version="0.11",
-        )
     else:
         raise CmdLineInputError()
 

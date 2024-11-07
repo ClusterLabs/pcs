@@ -57,16 +57,6 @@ class UidGidTest(TestCase):
         self.assertTrue(stderr.startswith("\nUsage:"))
         self.assertEqual(retval, 1)
 
-        stdout, stderr, retval = self._pcs("cluster uidgid rm".split())
-        self.assertEqual(stdout, "")
-        self.assertTrue(
-            stderr.startswith(
-                "Error: This command has been replaced with 'pcs cluster uidgid "
-                "delete', 'pcs cluster uidgid remove'."
-            )
-        )
-        self.assertEqual(retval, 1)
-
         stdout, stderr, retval = self._pcs("cluster uidgid xx".split())
         self.assertEqual(stdout, "")
         self.assertTrue(stderr.startswith("\nUsage:"))
@@ -118,18 +108,6 @@ class UidGidTest(TestCase):
         self.assertEqual(
             stderr,
             "Error: no uidgid files with uid=testuid and gid=testgid2 found\n",
-        )
-        self.assertEqual(retval, 1)
-
-        stdout, stderr, retval = self._pcs(
-            "cluster uidgid rm uid=testuid2 gid=testgid".split()
-        )
-        self.assertEqual(stdout, "")
-        self.assertTrue(
-            stderr.startswith(
-                "Error: This command has been replaced with 'pcs cluster uidgid "
-                "delete', 'pcs cluster uidgid remove'."
-            )
         )
         self.assertEqual(retval, 1)
 

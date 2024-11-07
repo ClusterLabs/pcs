@@ -3353,7 +3353,7 @@ Usage: pcs tag <command>
 Manage pacemaker tags.
 
 Commands:
-    [config|list [<tag id>...]] [{output_format_syntax}]
+    [config [<tag id>...]] [{output_format_syntax}]
         Display configured tags.
         {output_format_desc}
 
