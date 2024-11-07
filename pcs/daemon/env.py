@@ -27,7 +27,6 @@ PCSD_SSL_OPTIONS = "PCSD_SSL_OPTIONS"
 PCSD_BIND_ADDR = "PCSD_BIND_ADDR"
 NOTIFY_SOCKET = "NOTIFY_SOCKET"
 PCSD_DEBUG = "PCSD_DEBUG"
-PCSD_DISABLE_GUI = "PCSD_DISABLE_GUI"
 PCSD_SESSION_LIFETIME = "PCSD_SESSION_LIFETIME"
 PCSD_DEV = "PCSD_DEV"
 WEBUI_DIR = "WEBUI_DIR"
@@ -50,7 +49,6 @@ Env = namedtuple(
         PCSD_BIND_ADDR,
         NOTIFY_SOCKET,
         PCSD_DEBUG,
-        PCSD_DISABLE_GUI,
         PCSD_SESSION_LIFETIME,
         WEBUI_DIR,
         WEBUI_FALLBACK,
@@ -78,7 +76,6 @@ def prepare_env(environ, logger=None):
         loader.bind_addresses(),
         loader.notify_socket(),
         loader.pcsd_debug(),
-        loader.pcsd_disable_gui(),
         loader.session_lifetime(),
         loader.webui_dir(),
         loader.webui_fallback(),
@@ -177,9 +174,6 @@ class EnvLoader:
     def notify_socket(self):
         return self.environ.get(NOTIFY_SOCKET, None)
 
-    def pcsd_disable_gui(self):
-        return self.__has_true_in_environ(PCSD_DISABLE_GUI)
-
     def session_lifetime(self):
         session_lifetime = self.environ.get(
             PCSD_SESSION_LIFETIME, settings.gui_session_lifetime_seconds
@@ -197,13 +191,9 @@ class EnvLoader:
         return self.__has_true_in_environ(PCSD_DEBUG)
 
     def check_webui(self):
-        if (
-            webui
-            and not self.pcsd_disable_gui()
-            and not (
-                os.path.exists(self.webui_dir())
-                or os.path.exists(self.webui_fallback())
-            )
+        if webui and not (
+            os.path.exists(self.webui_dir())
+            or os.path.exists(self.webui_fallback())
         ):
             self.errors.append(
                 f"Webui assets directory '{self.webui_dir()}'"

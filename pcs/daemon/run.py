@@ -96,7 +96,6 @@ def configure_app(
     webui_dir: str,
     webui_fallback: str,
     pcsd_capabilities: Iterable[capabilities.Capability],
-    enable_webui: bool = False,
     debug: bool = False,
 ):
     # pylint: disable=too-many-arguments
@@ -123,7 +122,7 @@ def configure_app(
             )
         )
 
-        if webui and enable_webui:
+        if webui:
             session_storage = webui.session.Storage(session_lifetime)
             routes.extend(
                 [(r"/(ui)?", RedirectHandler, dict(url="/ui/"))]
@@ -232,7 +231,6 @@ def main(argv=None) -> None:
         env.WEBUI_DIR,
         env.WEBUI_FALLBACK,
         pcsd_capabilities,
-        enable_webui=not env.PCSD_DISABLE_GUI,
         debug=env.PCSD_DEV,
     )
     pcsd_ssl = ssl.PcsdSSL(

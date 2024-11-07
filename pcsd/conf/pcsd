@@ -2,8 +2,6 @@
 
 # Set PCSD_DEBUG to true for advanced pcsd debugging information
 PCSD_DEBUG=false
-# Set DISABLE_GUI to true to disable GUI frontend in pcsd
-PCSD_DISABLE_GUI=false
 # Set web UI sesions lifetime in seconds
 PCSD_SESSION_LIFETIME=3600
 # List of IP addresses pcsd should bind to delimited by ',' character

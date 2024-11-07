@@ -32,9 +32,6 @@ SSL/TLS ciphers accepted by pcsd.
 
 .SS Web UI Settings
 .TP
-.B PCSD_DISABLE_GUI=<boolean>
-Set to \fBtrue\fR to disable web UI frontend in pcsd.
-.TP
 .B PCSD_SESSION_LIFETIME=<integer>
 Web UI session lifetime in seconds.
 

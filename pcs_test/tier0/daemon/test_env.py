@@ -49,7 +49,6 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
             env.PCSD_BIND_ADDR: {None},
             env.NOTIFY_SOCKET: None,
             env.PCSD_DEBUG: False,
-            env.PCSD_DISABLE_GUI: False,
             env.PCSD_SESSION_LIFETIME: settings.gui_session_lifetime_seconds,
             env.WEBUI_DIR: settings.pcsd_webui_dir,
             env.WEBUI_FALLBACK: webui_fallback(settings.pcsd_public_dir),
@@ -88,7 +87,6 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
             env.PCSD_BIND_ADDR: "abc",
             env.NOTIFY_SOCKET: "xyz",
             env.PCSD_DEBUG: "true",
-            env.PCSD_DISABLE_GUI: "true",
             env.PCSD_SESSION_LIFETIME: str(session_lifetime),
             env.PCSD_DEV: "true",
             env.PCSD_WORKER_COUNT: "1",
@@ -109,7 +107,6 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
                 env.PCSD_BIND_ADDR: {environ[env.PCSD_BIND_ADDR]},
                 env.NOTIFY_SOCKET: environ[env.NOTIFY_SOCKET],
                 env.PCSD_DEBUG: True,
-                env.PCSD_DISABLE_GUI: True,
                 env.PCSD_SESSION_LIFETIME: session_lifetime,
                 env.WEBUI_DIR: env.LOCAL_WEBUI_DIR,
                 env.WEBUI_FALLBACK: webui_fallback(env.LOCAL_PUBLIC_DIR),
@@ -164,11 +161,6 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
             specific_env_values={env.PCSD_BIND_ADDR: {""}},
         )
 
-    def test_no_disable_gui_explicitly(self):
-        self.assert_environ_produces_modified_pcsd_env(
-            environ={env.PCSD_DISABLE_GUI: "false"},
-        )
-
     def test_debug_explicitly(self):
         self.assert_environ_produces_modified_pcsd_env(
             environ={env.PCSD_DEBUG: "true"},
@@ -190,17 +182,6 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
                 + f" falback html '{webui_fallback(settings.pcsd_public_dir)}'"
                 + " does not exist",
             ],
-        )
-
-    def test_no_errors_on_missing_paths_disabled_gui(self):
-        self.path_exists.return_value = False
-        self.assert_environ_produces_modified_pcsd_env(
-            environ={env.PCSD_DISABLE_GUI: "true"},
-            specific_env_values={
-                env.PCSD_DISABLE_GUI: True,
-                "has_errors": False,
-            },
-            errors=[],
         )
 
     def test_invalid_worker_count(self):
