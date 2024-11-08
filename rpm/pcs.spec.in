@@ -363,12 +363,21 @@ rm -fv %{buildroot}/%{_libdir}/pcsd/vendor/bundle/gems/tilt-*/bin/tilt
 %{_bindir}/systemctl daemon-reload
 %{_bindir}/systemctl try-restart pcsd.service
 
+%posttrans -n %{pcs_standalone_webui_provider_pkg_name}
+%{_bindir}/systemctl daemon-reload
+%{_bindir}/systemctl try-restart pcsd.service
+
 %post
 %systemd_post pcsd.service
 %systemd_post pcsd-ruby.service
 
 %post -n %{pcs_snmp_pkg_name}
 %systemd_post pcs_snmp_agent.service
+
+%post -n %{pcs_standalone_webui_provider_pkg_name}
+%systemd_post pcsd.service
+%systemd_post pcsd-ruby.service
+
 
 %preun
 %systemd_preun pcsd.service
@@ -383,6 +392,10 @@ rm -fv %{buildroot}/%{_libdir}/pcsd/vendor/bundle/gems/tilt-*/bin/tilt
 
 %postun -n %{pcs_snmp_pkg_name}
 %systemd_postun_with_restart pcs_snmp_agent.service
+
+%postun -n %{pcs_standalone_webui_provider_pkg_name}
+%{_bindir}/systemctl daemon-reload
+%{_bindir}/systemctl try-restart pcsd.service
 
 %files -f dynamic_files/pcs
 %doc CHANGELOG.md
