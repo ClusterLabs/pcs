@@ -9,7 +9,7 @@
   been removed ([RHEL-49521])
 - Following pacemaker 3, support for multiple rules in a single location
   constraint has been removed ([RHEL-62719])
-- Removed pcsd configuration option PCSD_DISABLE_GUI. It is possible not to
+- Removed pcsd configuration option `PCSD_DISABLE_GUI`. It is possible not to
   install webui support by running `./configure` without flag `--enable-webui`.
 
 ### Added
