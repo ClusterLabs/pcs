@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.12.0b1] - 2024-11-12
 
 ### Removed
 - Following pacemaker 3, support for nagios and upstart resource classes has
