@@ -9,6 +9,7 @@ EXTRA_DIST		= \
 			  make/release.mk \
 			  MANIFEST.in \
 			  mypy.ini \
+			  pcs.pc.in \
 			  pylintrc \
 			  pyproject.toml \
 			  rpm/pcs.spec.in \
@@ -179,6 +180,9 @@ uninstall-local:
 	rmdir ${DESTDIR}/$(LIB_DIR)/pcs
 
 dist_doc_DATA	= README.md CHANGELOG.md
+
+pkgconfigdir = $(LIB_DIR)/pkgconfig
+pkgconfig_DATA = pcs.pc
 
 # testing
 

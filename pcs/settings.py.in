@@ -20,11 +20,13 @@ pcs_data_dir = "@LIB_DIR@/pcs/data/"
 
 # pcsd
 pcsd_exec_location = "@LIB_DIR@/pcsd"
+pcsd_public_dir = "@PCSD_PUBLIC_DIR@"
+pcsd_webui_dir = "@PCSD_WEBUI_DIR@"
 pcs_capabilities = os.path.join(pcsd_exec_location, "capabilities.xml")
 # Set pcsd_gem_path to None if there are no bundled ruby gems and the path does
 # not exists.
 pcsd_gem_path = "@GEM_HOME@" or None
-pcsd_unix_socket = "@LOCALSTATEDIR@/run/pcsd.socket"
+pcsd_unix_socket = "@PCSD_UNIX_SOCKET@"
 pcsd_ruby_socket = "@LOCALSTATEDIR@/run/pcsd-ruby.socket"
 pcsd_log_location = "@LOCALSTATEDIR@/log/pcsd/pcsd.log"
 pcsd_default_port = 2224
