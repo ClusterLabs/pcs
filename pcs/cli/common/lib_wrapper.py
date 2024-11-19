@@ -144,23 +144,26 @@ def load_module(env, middleware_factory, name):
 
     if name == "booth":
         bindings = {
-            "config_setup": booth.config_setup,
             "config_destroy": booth.config_destroy,
+            "config_setup": booth.config_setup,
+            "config_sync": booth.config_sync,
             "config_text": booth.config_text,
             "config_ticket_add": booth.config_ticket_add,
             "config_ticket_remove": booth.config_ticket_remove,
             "create_in_cluster": booth.create_in_cluster,
+            "disable_booth": booth.disable_booth,
+            "enable_booth": booth.enable_booth,
+            "get_status": booth.get_status,
+            "pull_config": booth.pull_config,
             "remove_from_cluster": booth.remove_from_cluster,
             "restart": booth.restart,
-            "config_sync": booth.config_sync,
-            "enable_booth": booth.enable_booth,
-            "disable_booth": booth.disable_booth,
             "start_booth": booth.start_booth,
             "stop_booth": booth.stop_booth,
-            "pull_config": booth.pull_config,
-            "get_status": booth.get_status,
+            "ticket_cleanup": booth.ticket_cleanup,
             "ticket_grant": booth.ticket_grant,
             "ticket_revoke": booth.ticket_revoke,
+            "ticket_standby": booth.ticket_standby,
+            "ticket_unstandby": booth.ticket_unstandby,
         }
         if settings.booth_enable_authfile_set_enabled:
             bindings["config_set_enable_authfile"] = (

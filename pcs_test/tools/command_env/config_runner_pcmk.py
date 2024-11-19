@@ -1154,3 +1154,67 @@ class PcmkShortcuts:
             RunnerCall(cmd, stdout=stdout, returncode=returncode, env=env),
             instead=instead,
         )
+
+    def ticket_unstandby(
+        self,
+        ticket_name: str,
+        stderr="",
+        returncode=0,
+        name="runner.pcmk.ticket_unstandby",
+    ) -> None:
+        self.__calls.place(
+            name,
+            RunnerCall(
+                [
+                    settings.crm_ticket_exec,
+                    "--activate",
+                    "--ticket",
+                    ticket_name,
+                ],
+                stderr=stderr,
+                returncode=returncode,
+            ),
+        )
+
+    def ticket_standby(
+        self,
+        ticket_name: str,
+        stderr="",
+        returncode=0,
+        name="runner.pcmk.ticket_standby",
+    ) -> None:
+        self.__calls.place(
+            name,
+            RunnerCall(
+                [
+                    settings.crm_ticket_exec,
+                    "--standby",
+                    "--ticket",
+                    ticket_name,
+                ],
+                stderr=stderr,
+                returncode=returncode,
+            ),
+        )
+
+    def ticket_cleanup(
+        self,
+        ticket_name: str,
+        stderr="",
+        returncode=0,
+        name="runner.pcmk.ticket_cleanup",
+    ) -> None:
+        self.__calls.place(
+            name,
+            RunnerCall(
+                [
+                    settings.crm_ticket_exec,
+                    "--cleanup",
+                    "--force",
+                    "--ticket",
+                    ticket_name,
+                ],
+                stderr=stderr,
+                returncode=returncode,
+            ),
+        )

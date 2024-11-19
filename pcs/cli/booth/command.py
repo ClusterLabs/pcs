@@ -192,6 +192,38 @@ def ticket_grant(lib: Any, arg_list: Argv, modifiers: InputModifiers) -> None:
     )
 
 
+def ticket_cleanup(lib: Any, arg_list: Argv, modifiers: InputModifiers) -> None:
+    """
+    Options: None
+    """
+    modifiers.ensure_only_supported()
+    if len(arg_list) != 1:
+        raise CmdLineInputError()
+    lib.booth.ticket_cleanup(arg_list[0])
+
+
+def ticket_unstandby(
+    lib: Any, arg_list: Argv, modifiers: InputModifiers
+) -> None:
+    """
+    Options: None
+    """
+    modifiers.ensure_only_supported()
+    if len(arg_list) != 1:
+        raise CmdLineInputError()
+    lib.booth.ticket_unstandby(arg_list[0])
+
+
+def ticket_standby(lib: Any, arg_list: Argv, modifiers: InputModifiers) -> None:
+    """
+    Options: None
+    """
+    modifiers.ensure_only_supported()
+    if len(arg_list) != 1:
+        raise CmdLineInputError()
+    lib.booth.ticket_standby(arg_list[0])
+
+
 def create_in_cluster(
     lib: Any, arg_list: Argv, modifiers: InputModifiers
 ) -> None:

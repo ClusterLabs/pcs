@@ -14,6 +14,9 @@
 - Support for exporting stonith levels in `json` and `cmd` formats in commands
   `pcs stonith config` and `pcs stonith level config` commands ([RHEL-16232])
 - Pkg-config with info for webui is now provided.
+- Commands `pcs booth ticket standby`, `pcs booth ticket unstandby`, and
+  `pcs booth ticket cleanup` which allow for managing the state of the ticket
+  ([RHEL-69040])
 
 ### Changed
 - Commands `pcs resource delete | remove` and `pcs stonith delete | remove`
@@ -48,6 +51,7 @@
 [RHEL-55441]: https://issues.redhat.com/browse/RHEL-55441
 [RHEL-61738]: https://issues.redhat.com/browse/RHEL-61738
 [RHEL-61901]: https://issues.redhat.com/browse/RHEL-61901
+[RHEL-69040]: https://issues.redhat.com/browse/RHEL-69040
 [features planned to be removed in pacemaker 3]: https://projects.clusterlabs.org/w/projects/pacemaker/pacemaker_3.0_changes/pacemaker_3.0_configuration_changes/
 
 

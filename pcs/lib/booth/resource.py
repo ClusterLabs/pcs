@@ -71,9 +71,9 @@ def find_for_config(
 
 def find_bound_ip(
     resources_section: _Element, booth_config_file_path: str
-) -> list[_Element]:
+) -> list[str]:
     return cast(
-        list[_Element],
+        list[str],
         resources_section.xpath(
             """
             .//group[

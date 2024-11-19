@@ -699,3 +699,37 @@ class CleanEnableAuthfile(BoothMixin, TestCase):
                 ),
                 config_file.read(),
             )
+
+
+class BoothTicketOperationBase(BoothMixinNoFiles):
+    command = ""
+
+    def test_not_enough_args(self):
+        self.assert_pcs_fail(
+            ["booth", "ticket", self.command],
+            stderr_start=(
+                "\nUsage: pcs booth <command>\n"
+                f"    ticket {self.command} <ticket>\n"
+            ),
+        )
+
+    def test_too_many_args(self):
+        self.assert_pcs_fail(
+            ["booth", "ticket", self.command, "a", "b"],
+            stderr_start=(
+                "\nUsage: pcs booth <command>\n"
+                f"    ticket {self.command} <ticket>\n"
+            ),
+        )
+
+
+class TicketCleanup(BoothTicketOperationBase, TestCase):
+    command = "cleanup"
+
+
+class TicketUnstandby(BoothTicketOperationBase, TestCase):
+    command = "unstandby"
+
+
+class TicketStandby(BoothTicketOperationBase, TestCase):
+    command = "standby"

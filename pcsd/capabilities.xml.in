@@ -65,6 +65,24 @@
         pcs commands: booth clean-enable-authfile
       </description>
     </capability>
+    <capability id="booth.ticket.cleanup" in-pcs="1" in-pcsd="1">
+      <description>
+        Remove specified booth ticket from CIB.
+
+        pcs commands: booth ticket cleanup
+        API v2: booth.ticket_cleanup
+      </description>
+    </capability>
+    <capability id="booth.ticket.standby" in-pcs="1" in-pcsd="1">
+      <description>
+        Change the state of the booth ticket to standby and back to active.
+
+        pcs commands: booth ticket ( standby | unstandby )
+        API v2:
+          booth.ticket_standby
+          booth.ticket_unstandby
+      </description>
+    </capability>
 
 
 

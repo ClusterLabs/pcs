@@ -5057,6 +5057,14 @@ class BoothTicketDoesNotExist(NameBuildTest):
         )
 
 
+class BoothTicketNotInCib(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "Unable to find ticket 'name' in CIB",
+            reports.BoothTicketNotInCib("name"),
+        )
+
+
 class BoothAlreadyInCib(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
@@ -5307,6 +5315,30 @@ class BoothTicketOperationFailed(NameBuildTest):
             reports.BoothTicketOperationFailed(
                 "operation", "reason", "site_ip", "ticket_name"
             ),
+        )
+
+    def test_no_site_ip(self):
+        self.assert_message_from_report(
+            ("unable to operation booth ticket 'ticket_name', reason: reason"),
+            reports.BoothTicketOperationFailed(
+                "operation", "reason", None, "ticket_name"
+            ),
+        )
+
+
+class BoothTicketChangingState(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "Changing state of ticket 'name' to standby",
+            reports.BoothTicketChangingState("name", "standby"),
+        )
+
+
+class BoothTicketCleanup(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "Cleaning up ticket 'name' from CIB",
+            reports.BoothTicketCleanup("name"),
         )
 
 

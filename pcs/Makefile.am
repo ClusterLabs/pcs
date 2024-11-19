@@ -243,6 +243,7 @@ EXTRA_DIST		= \
 			  lib/auth/provider.py \
 			  lib/auth/tools.py \
 			  lib/auth/types.py \
+			  lib/booth/cib.py \
 			  lib/booth/config_facade.py \
 			  lib/booth/config_files.py \
 			  lib/booth/config_parser.py \
