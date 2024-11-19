@@ -192,6 +192,21 @@ def ticket_grant(lib: Any, arg_list: Argv, modifiers: InputModifiers) -> None:
     )
 
 
+def ticket_cleanup(lib: Any, arg_list: Argv, modifiers: InputModifiers) -> None:
+    """
+    Options:
+      * --name - name of a booth instance
+    """
+    modifiers.ensure_only_supported("--name")
+    if not arg_list:
+        lib.booth.ticket_cleanup_auto(instance_name=modifiers.get("--name"))
+        return
+
+    if len(arg_list) != 1:
+        raise CmdLineInputError()
+    lib.booth.ticket_cleanup(arg_list[0], instance_name=modifiers.get("--name"))
+
+
 def create_in_cluster(
     lib: Any, arg_list: Argv, modifiers: InputModifiers
 ) -> None:

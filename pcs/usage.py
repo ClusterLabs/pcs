@@ -3214,10 +3214,20 @@ Commands:
         specified in booth manpage.
 
     ticket delete <ticket>
-        Remove the specified ticket from the current configuration.
+        Remove the specified ticket from the current configuration. The ticket
+        remains loaded in the current CIB and should be cleaned up using the
+        "pcs ticket cleanup" command.
 
     ticket remove <ticket>
-        Remove the specified ticket from the current configuration.
+        Remove the specified ticket from the current configuration. The ticket
+        remains loaded in the current CIB and should be cleaned up using the
+        "pcs ticket cleanup" command.
+
+    ticket cleanup [ticket]
+        Remove tickets from CIB at the current site. If no ticket name is
+        provided, remove all the tickets present in the CIB but not in the booth
+        configuration. If the ticket name is specified, then remove the
+        specified ticket from CIB.
 
     config [<node>]
         Show booth configuration from the specified node or from the current
@@ -3259,7 +3269,10 @@ Commands:
         Print current status of booth on the local node.
 
     pull <node>
-        Pull booth configuration from the specified node.
+        Pull booth configuration from the specified node. After pulling the
+        configuration, the booth should be restarted. In case any tickets were
+        removed, the "pcs ticket cleanup" command should be used to remove any
+        leftover tickets still loaded in the CIB at the current site.
 
     sync [--skip-offline]
         Send booth configuration from the local node to all nodes

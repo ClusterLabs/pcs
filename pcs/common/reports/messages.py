@@ -9,6 +9,7 @@ from typing import (
     Any,
     Dict,
     List,
+    Literal,
     Mapping,
     Optional,
     Tuple,
@@ -6983,6 +6984,26 @@ class BoothTicketDoesNotExist(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class BoothTicketNotInCib(ReportItemMessage):
+    """
+    Expected ticket is not in CIB for the given booth instance.
+
+    ticket_name -- name of the ticket
+    """
+
+    ticket_name: str
+    instance_name: str
+    _code = codes.BOOTH_TICKET_NOT_IN_CIB
+
+    @property
+    def message(self) -> str:
+        return (
+            f"Unable to find ticket '{self.ticket_name}' for booth instance "
+            f"'{self.instance_name}' in CIB"
+        )
+
+
+@dataclass(frozen=True)
 class BoothAlreadyInCib(ReportItemMessage):
     """
     Each booth instance should be in a cib once maximally. Existence of booth
@@ -7245,8 +7266,9 @@ class BoothCannotDetermineLocalSiteIp(ReportItemMessage):
 @dataclass(frozen=True)
 class BoothTicketOperationFailed(ReportItemMessage):
     """
-    Pcs uses external booth tools for some ticket_name operations. For example
-    grand and revoke. But the external command failed.
+    Pcs uses external tools for some ticket_name operations. For example
+    booth tools are used for grant and revoke, or pacemaker tools are used for
+    standby and cleanup. But the external command failed.
 
     operation  -- determine what was intended perform with ticket_name
     reason -- error description from external booth command
@@ -7256,16 +7278,55 @@ class BoothTicketOperationFailed(ReportItemMessage):
 
     operation: str
     reason: str
-    site_ip: str
+    site_ip: Optional[str]
     ticket_name: str
     _code = codes.BOOTH_TICKET_OPERATION_FAILED
 
     @property
     def message(self) -> str:
         return (
-            f"unable to {self.operation} booth ticket '{self.ticket_name}'"
-            f" for site '{self.site_ip}', reason: {self.reason}"
+            "unable to {operation} booth ticket '{ticket_name}'{site}, "
+            "reason: {reason}"
+        ).format(
+            operation=self.operation,
+            ticket_name=self.ticket_name,
+            reason=self.reason,
+            site=format_optional(self.site_ip, template=" for site '{}'"),
         )
+
+
+@dataclass(frozen=True)
+class BoothTicketChangingState(ReportItemMessage):
+    """
+    The state of the ticket is changing
+
+    ticket_name -- name of the ticket
+    state -- new state of the ticket
+    """
+
+    ticket_name: str
+    state: Literal["active", "standby"]
+    _code = codes.TICKET_CHANGING_STATE
+
+    @property
+    def message(self) -> str:
+        return f"Changing state of ticket '{self.ticket_name}' to {self.state}"
+
+
+@dataclass(frozen=True)
+class BoothTicketCleanup(ReportItemMessage):
+    """
+    The booth ticket is going to be removed from CIB
+
+    ticket_name -- name of the ticket
+    """
+
+    ticket_name: str
+    _code = codes.TICKET_CLEANUP
+
+    @property
+    def message(self) -> str:
+        return f"Cleaning up ticket '{self.ticket_name}' from CIB"
 
 
 # TODO: remove, use ADD_REMOVE reports

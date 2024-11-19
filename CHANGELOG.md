@@ -2,9 +2,14 @@
 
 ## [Unreleased]
 
+### Added
+- Command `pcs booth ticket cleanup` that enables removal of booth tickets
+  still loaded in CIB after their removal from booth configuration ([RHEL-7602])
+
 ### Fixed
 - Specify the meaning of zero value timeout in `pcs status wait` ([RHEL-44719])
 
+[RHEL-7602]: https://issues.redhat.com/browse/RHEL-7602
 [RHEL-44719]: https://issues.redhat.com/browse/RHEL-44719
 
 

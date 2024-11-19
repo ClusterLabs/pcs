@@ -795,6 +795,41 @@ def _run_fence_history_command(
     return stdout.strip()
 
 
+### tickets
+
+
+def ticket_standby(
+    cmd_runner: CommandRunner, ticket_name: str
+) -> tuple[str, str, int]:
+    """
+    Change state of the ticket to standby
+
+    ticket_name -- name of the ticket
+    """
+    return cmd_runner.run(
+        [settings.crm_ticket_exec, "--standby", "--ticket", ticket_name]
+    )
+
+
+def ticket_cleanup(
+    cmd_runner: CommandRunner, ticket_name: str
+) -> tuple[str, str, int]:
+    """
+    Delete all state of the ticket from the CIB.
+
+    ticket_name -- name of the ticket
+    """
+    return cmd_runner.run(
+        [
+            settings.crm_ticket_exec,
+            "--cleanup",
+            "--force",
+            "--ticket",
+            ticket_name,
+        ]
+    )
+
+
 ### tools
 
 

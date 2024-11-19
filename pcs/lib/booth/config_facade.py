@@ -71,6 +71,12 @@ class ConfigFacade(FacadeInterface):
             if config_item.key != "ticket" or config_item.value != ticket_name
         ]
 
+    def get_ticket_names(self) -> list[str]:
+        """
+        Return list of ticket names
+        """
+        return [value for key, value, _ in self._config if key == "ticket"]
+
     ### authfile
 
     def set_authfile(self, auth_file):

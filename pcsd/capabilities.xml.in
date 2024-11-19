@@ -65,6 +65,23 @@
         pcs commands: booth clean-enable-authfile
       </description>
     </capability>
+    <capability id="booth.ticket.cleanup" in-pcs="1" in-pcsd="1">
+      <description>
+        Remove specified booth ticket from CIB.
+
+        pcs commands: booth ticket cleanup
+        API v2: booth.ticket_cleanup
+      </description>
+    </capability>
+    <capability id="booth.ticket.cleanup.auto" in-pcs="1" in-pcsd="1">
+      <description>
+        Remove all booth tickes that are still loaded in the CIB, but were
+        removed from the booth configuration.
+
+        pcs commands: booth ticket cleanup
+        API v2: booth.ticket_cleanup_auto
+      </description>
+    </capability>
 
 
 

@@ -3,6 +3,7 @@ import os.path
 from functools import partial
 from typing import (
     Collection,
+    Mapping,
     Optional,
     cast,
 )
@@ -26,6 +27,7 @@ from pcs.common.reports.item import (
 )
 from pcs.common.services.errors import ManageServiceError
 from pcs.common.str_tools import join_multilines
+from pcs.common.types import StringSequence
 from pcs.lib import (
     tools,
     validate,
@@ -37,6 +39,8 @@ from pcs.lib.booth import (
     resource,
     status,
 )
+from pcs.lib.booth.cib import get_ticket_names as get_cib_ticket_names
+from pcs.lib.booth.constants import DEFAULT_INSTANCE_NAME
 from pcs.lib.booth.env import BoothEnv
 from pcs.lib.cib.remove_elements import (
     ElementsToRemove,
@@ -59,6 +63,7 @@ from pcs.lib.communication.booth import (
 from pcs.lib.communication.tools import run_and_raise
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
+from pcs.lib.external import CommandRunner
 from pcs.lib.file.instance import FileInstance
 from pcs.lib.file.raw_file import (
     GhostFile,
@@ -71,6 +76,8 @@ from pcs.lib.pacemaker.live import (
     has_cib_xml,
     resource_restart,
 )
+from pcs.lib.pacemaker.live import ticket_cleanup as live_ticket_cleanup
+from pcs.lib.pacemaker.live import ticket_standby as live_ticket_standby
 from pcs.lib.resource_agent import (
     ResourceAgentError,
     ResourceAgentFacade,
@@ -88,19 +95,19 @@ from pcs.lib.services import (
 
 def config_setup(
     env: LibraryEnvironment,
-    site_list,
-    arbitrator_list,
-    instance_name=None,
-    overwrite_existing=False,
-):
+    site_list: StringSequence,
+    arbitrator_list: StringSequence,
+    instance_name: Optional[str] = None,
+    overwrite_existing: bool = False,
+) -> None:
     """
     create booth configuration
 
     env
-    list site_list -- site addresses of multisite
-    list arbitrator_list -- arbitrator addresses of multisite
-    string instance_name -- booth instance name
-    bool overwrite_existing -- allow overwriting existing files
+    site_list -- site addresses of multisite
+    arbitrator_list -- arbitrator addresses of multisite
+    instance_name -- booth instance name
+    overwrite_existing -- allow overwriting existing files
     """
     instance_name = instance_name or constants.DEFAULT_INSTANCE_NAME
     report_processor = env.report_processor
@@ -294,7 +301,7 @@ def config_destroy(
 
 # TODO: remove once settings booth_enable_autfile_(set|unset)_enabled are removed
 def _config_set_enable_authfile(
-    env: LibraryEnvironment, value: bool, instance_name=None
+    env: LibraryEnvironment, value: bool, instance_name: Optional[str] = None
 ) -> None:
     report_processor = env.report_processor
     booth_env = env.get_booth_env(instance_name)
@@ -319,24 +326,28 @@ def _config_set_enable_authfile(
 
 
 def config_set_enable_authfile(
-    env: LibraryEnvironment, instance_name=None
+    env: LibraryEnvironment, instance_name: Optional[str] = None
 ) -> None:
     _config_set_enable_authfile(env, True, instance_name=instance_name)
 
 
 def config_unset_enable_authfile(
-    env: LibraryEnvironment, instance_name=None
+    env: LibraryEnvironment, instance_name: Optional[str] = None
 ) -> None:
     _config_set_enable_authfile(env, False, instance_name=instance_name)
 
 
-def config_text(env: LibraryEnvironment, instance_name=None, node_name=None):
+def config_text(
+    env: LibraryEnvironment,
+    instance_name: Optional[str] = None,
+    node_name: Optional[str] = None,
+) -> str:
     """
     get configuration in raw format
 
     env
-    string instance_name -- booth instance name
-    string node_name -- get the config from specified node or local host if None
+    instance_name -- booth instance name
+    node_name -- get the config from specified node or local host if None
     """
     report_processor = env.report_processor
     booth_env = env.get_booth_env(instance_name)
@@ -357,7 +368,7 @@ def config_text(env: LibraryEnvironment, instance_name=None, node_name=None):
 
     com_cmd = BoothGetConfig(env.report_processor, instance_name)
     com_cmd.set_targets(
-        [env.get_node_target_factory().get_target_from_hostname(node_name)]
+        [env.get_node_target_factory().get_target_from_hostname(str(node_name))]
     )
     remote_data = run_and_raise(env.get_node_communicator(), com_cmd)[0][1]
     try:
@@ -366,25 +377,27 @@ def config_text(env: LibraryEnvironment, instance_name=None, node_name=None):
         return remote_data["config"]["data"].encode("utf-8")
     except KeyError as e:
         raise LibraryError(
-            ReportItem.error(reports.messages.InvalidResponseFormat(node_name))
+            ReportItem.error(
+                reports.messages.InvalidResponseFormat(str(node_name))
+            )
         ) from e
 
 
 def config_ticket_add(
     env: LibraryEnvironment,
-    ticket_name,
-    options,
-    instance_name=None,
-    allow_unknown_options=False,
-):
+    ticket_name: str,
+    options: validate.TypeOptionMap,
+    instance_name: Optional[str] = None,
+    allow_unknown_options: bool = False,
+) -> None:
     """
     add a ticket to booth configuration
 
     env
-    string ticket_name -- the name of the ticket to be created
-    dict options -- options for the ticket
-    string instance_name -- booth instance name
-    bool allow_unknown_options -- allow using options unknown to pcs
+    ticket_name -- the name of the ticket to be created
+    options -- options for the ticket
+    instance_name -- booth instance name
+    allow_unknown_options -- allow using options unknown to pcs
     """
     report_processor = env.report_processor
     booth_env = env.get_booth_env(instance_name)
@@ -419,15 +432,15 @@ def config_ticket_add(
 
 def config_ticket_remove(
     env: LibraryEnvironment,
-    ticket_name,
-    instance_name=None,
-):
+    ticket_name: str,
+    instance_name: Optional[str] = None,
+) -> None:
     """
     remove a ticket from booth configuration
 
     env
-    string ticket_name -- the name of the ticket to be removed
-    string instance_name -- booth instance name
+    ticket_name -- the name of the ticket to be removed
+    instance_name -- booth instance name
     """
     report_processor = env.report_processor
     booth_env = env.get_booth_env(instance_name)
@@ -455,7 +468,7 @@ def create_in_cluster(
     ip: str,
     instance_name: Optional[str] = None,
     allow_absent_resource_agent: bool = False,
-):
+) -> None:
     """
     Create group with ip resource and booth resource
 
@@ -541,7 +554,7 @@ def remove_from_cluster(
     env: LibraryEnvironment,
     instance_name: Optional[str] = None,
     force_flags: Collection[reports.types.ForceCode] = (),
-):
+) -> None:
     """
     Remove group with ip resource and booth resource
 
@@ -614,17 +627,17 @@ def restart(
 
 def ticket_grant(
     env: LibraryEnvironment,
-    ticket_name,
-    site_ip=None,
-    instance_name=None,
-):
+    ticket_name: str,
+    site_ip: Optional[str] = None,
+    instance_name: Optional[str] = None,
+) -> None:
     """
     Grant a ticket to the site specified by site_ip
 
     env
-    string ticket_name -- the name of the ticket to be granted
-    string site_ip -- IP of the site to grant the ticket to, None for local
-    string instance_name -- booth instance name
+    ticket_name -- the name of the ticket to be granted
+    site_ip -- IP of the site to grant the ticket to, None for local
+    instance_name -- booth instance name
     """
     return _ticket_operation(
         "grant",
@@ -637,17 +650,17 @@ def ticket_grant(
 
 def ticket_revoke(
     env: LibraryEnvironment,
-    ticket_name,
-    site_ip=None,
-    instance_name=None,
-):
+    ticket_name: str,
+    site_ip: Optional[str] = None,
+    instance_name: Optional[str] = None,
+) -> None:
     """
     Revoke a ticket from the site specified by site_ip
 
     env
-    string ticket_name -- the name of the ticket to be revoked
-    string site_ip -- IP of the site to revoke the ticket from, None for local
-    string instance_name -- booth instance name
+    ticket_name -- the name of the ticket to be revoked
+    site_ip -- IP of the site to revoke the ticket from, None for local
+    instance_name -- booth instance name
     """
     return _ticket_operation(
         "revoke",
@@ -659,8 +672,12 @@ def ticket_revoke(
 
 
 def _ticket_operation(
-    operation, env: LibraryEnvironment, ticket_name, site_ip, instance_name
-):
+    operation: str,
+    env: LibraryEnvironment,
+    ticket_name: str,
+    site_ip: Optional[str],
+    instance_name: Optional[str],
+) -> None:
     booth_env = env.get_booth_env(instance_name)
     _ensure_live_env(env, booth_env)
 
@@ -699,16 +716,134 @@ def _ticket_operation(
         )
 
 
+def ticket_cleanup(
+    env: LibraryEnvironment,
+    ticket_name: str,
+    instance_name: Optional[str] = None,
+) -> None:
+    """
+    Remove specified booth ticket from CIB on local site
+
+    ticket_name -- name of the ticket to remove
+    instance_name -- booth instance name
+    """
+    booth_env = env.get_booth_env(instance_name)
+    _ensure_live_env(env, booth_env)
+
+    report_processor = env.report_processor
+
+    if ticket_name not in set(
+        get_cib_ticket_names(env.get_cib(), instance_name)
+    ):
+        report_processor.report(
+            reports.ReportItem.error(
+                reports.messages.BoothTicketNotInCib(
+                    ticket_name, instance_name or DEFAULT_INSTANCE_NAME
+                )
+            )
+        )
+    if report_processor.has_errors:
+        raise LibraryError()
+
+    _cleanup_tickets(env.cmd_runner(), report_processor, [ticket_name])
+
+
+def ticket_cleanup_auto(
+    env: LibraryEnvironment, instance_name: Optional[str] = None
+) -> None:
+    """
+    Cleanup (remove from CIB on local site) all booth tickets that are in CIB
+    but not in booth configuration
+
+    instance_name -- booth instance name
+    """
+    booth_env = env.get_booth_env(instance_name)
+    report_processor = env.report_processor
+    _ensure_live_env(env, booth_env)
+
+    try:
+        booth_conf = booth_env.config.read_to_facade()
+    except RawFileError as e:
+        report_processor.report(raw_file_error_report(e))
+    except ParserErrorException as e:
+        report_processor.report_list(
+            booth_env.config.parser_exception_to_report_list(e)
+        )
+    if report_processor.has_errors:
+        raise LibraryError()
+
+    conf_tickets = set(booth_conf.get_ticket_names())
+    cib_tickets = set(get_cib_ticket_names(env.get_cib(), instance_name))
+
+    _cleanup_tickets(
+        env.cmd_runner(), report_processor, sorted(cib_tickets - conf_tickets)
+    )
+
+
+def _cleanup_tickets(
+    cmd_runner: CommandRunner,
+    report_processor: ReportProcessor,
+    ticket_names: StringSequence,
+) -> None:
+    for ticket in ticket_names:
+        # standby the ticket first, so the node is not fenced if ticket-loss
+        # policy is set to 'fence' in the ticket constraint
+        report_processor.report_list(_ticket_standby(cmd_runner, ticket))
+        if report_processor.has_errors:
+            raise LibraryError()
+
+        report_processor.report(
+            reports.ReportItem.info(reports.messages.BoothTicketCleanup(ticket))
+        )
+        stdout, stderr, retval = live_ticket_cleanup(cmd_runner, ticket)
+        if retval != 0:
+            report_processor.report(
+                reports.ReportItem.error(
+                    reports.messages.BoothTicketOperationFailed(
+                        "cleanup",
+                        join_multilines([stderr, stdout]),
+                        None,
+                        ticket,
+                    )
+                )
+            )
+
+        if report_processor.has_errors:
+            raise LibraryError()
+
+
+def _ticket_standby(
+    cmd_runner: CommandRunner, ticket: str
+) -> reports.ReportItemList:
+    report_list = [
+        reports.ReportItem.info(
+            reports.messages.BoothTicketChangingState(ticket, "standby")
+        )
+    ]
+
+    stdout, stderr, retval = live_ticket_standby(cmd_runner, ticket)
+    if retval != 0:
+        report_list.append(
+            reports.ReportItem.error(
+                reports.messages.BoothTicketOperationFailed(
+                    "standby", join_multilines([stderr, stdout]), None, ticket
+                )
+            )
+        )
+
+    return report_list
+
+
 def config_sync(
     env: LibraryEnvironment,
-    instance_name=None,
-    skip_offline_nodes=False,
-):
+    instance_name: Optional[str] = None,
+    skip_offline_nodes: bool = False,
+) -> None:
     """
     Send specified local booth configuration to all nodes in the local cluster.
 
     env
-    string instance_name -- booth instance name
+    instance_name -- booth instance name
     skip_offline_nodes -- if True offline nodes will be skipped
     """
     report_processor = env.report_processor
@@ -771,12 +906,14 @@ def config_sync(
     run_and_raise(env.get_node_communicator(), com_cmd)
 
 
-def enable_booth(env: LibraryEnvironment, instance_name=None):
+def enable_booth(
+    env: LibraryEnvironment, instance_name: Optional[str] = None
+) -> None:
     """
     Enable specified instance of booth service, systemd systems supported only.
 
     env
-    string instance_name -- booth instance name
+    instance_name -- booth instance name
     """
     ensure_is_systemd(env.service_manager)
     booth_env = env.get_booth_env(instance_name)
@@ -798,12 +935,14 @@ def enable_booth(env: LibraryEnvironment, instance_name=None):
     )
 
 
-def disable_booth(env: LibraryEnvironment, instance_name=None):
+def disable_booth(
+    env: LibraryEnvironment, instance_name: Optional[str] = None
+) -> None:
     """
     Disable specified instance of booth service, systemd systems supported only.
 
     env
-    string instance_name -- booth instance name
+    instance_name -- booth instance name
     """
     ensure_is_systemd(env.service_manager)
     booth_env = env.get_booth_env(instance_name)
@@ -825,14 +964,16 @@ def disable_booth(env: LibraryEnvironment, instance_name=None):
     )
 
 
-def start_booth(env: LibraryEnvironment, instance_name=None):
+def start_booth(
+    env: LibraryEnvironment, instance_name: Optional[str] = None
+) -> None:
     """
     Start specified instance of booth service, systemd systems supported only.
         On non-systemd systems it can be run like this:
         BOOTH_CONF_FILE=<booth-file-path> /etc/initd/booth-arbitrator
 
     env
-    string instance_name -- booth instance name
+    instance_name -- booth instance name
     """
     ensure_is_systemd(env.service_manager)
     booth_env = env.get_booth_env(instance_name)
@@ -854,12 +995,14 @@ def start_booth(env: LibraryEnvironment, instance_name=None):
     )
 
 
-def stop_booth(env: LibraryEnvironment, instance_name=None):
+def stop_booth(
+    env: LibraryEnvironment, instance_name: Optional[str] = None
+) -> None:
     """
     Stop specified instance of booth service, systemd systems supported only.
 
     env
-    string instance_name -- booth instance name
+    instance_name -- booth instance name
     """
     ensure_is_systemd(env.service_manager)
     booth_env = env.get_booth_env(instance_name)
@@ -881,14 +1024,16 @@ def stop_booth(env: LibraryEnvironment, instance_name=None):
     )
 
 
-def pull_config(env: LibraryEnvironment, node_name, instance_name=None):
+def pull_config(
+    env: LibraryEnvironment, node_name: str, instance_name: Optional[str] = None
+) -> None:
     """
     Get config from specified node and save it on local system. It will
     rewrite existing files.
 
     env
-    string node_name -- name of the node from which the config should be fetched
-    string instance_name -- booth instance name
+    node_name -- name of the node from which the config should be fetched
+    instance_name -- booth instance name
     """
     report_processor = env.report_processor
     booth_env = env.get_booth_env(instance_name)
@@ -949,12 +1094,14 @@ def pull_config(env: LibraryEnvironment, node_name, instance_name=None):
         raise LibraryError()
 
 
-def get_status(env: LibraryEnvironment, instance_name=None):
+def get_status(
+    env: LibraryEnvironment, instance_name: Optional[str] = None
+) -> Mapping[str, str]:
     """
     get booth status info
 
     env
-    string instance_name -- booth instance name
+    instance_name -- booth instance name
     """
     booth_env = env.get_booth_env(instance_name)
     _ensure_live_env(env, booth_env)
@@ -1006,7 +1153,7 @@ def _find_resource_elements_for_operation(
     return booth_element_list
 
 
-def _ensure_live_booth_env(booth_env):
+def _ensure_live_booth_env(booth_env: BoothEnv) -> None:
     if booth_env.ghost_file_codes:
         raise LibraryError(
             ReportItem.error(
@@ -1017,7 +1164,7 @@ def _ensure_live_booth_env(booth_env):
         )
 
 
-def _ensure_live_env(env: LibraryEnvironment, booth_env: BoothEnv):
+def _ensure_live_env(env: LibraryEnvironment, booth_env: BoothEnv) -> None:
     not_live = (
         booth_env.ghost_file_codes
         +

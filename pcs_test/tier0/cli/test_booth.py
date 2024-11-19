@@ -451,3 +451,49 @@ class Status(TestCase):
         self.lib.booth.get_status.assert_called_once_with(
             instance_name="my_booth",
         )
+
+
+class TicketCleanup(TestCase):
+    def setUp(self):
+        self.lib = mock.Mock(spec_set=["booth"])
+        self.lib.booth = mock.Mock(
+            spec_set=["ticket_cleanup", "ticket_cleanup_auto"]
+        )
+
+    def test_auto_minimal(self):
+        booth_cmd.ticket_cleanup(self.lib, [], dict_to_modifiers({}))
+        self.lib.booth.ticket_cleanup_auto.assert_called_once_with(
+            instance_name=None
+        )
+        self.lib.booth.ticket_cleanup.assert_not_called()
+
+    def test_auto_full(self):
+        booth_cmd.ticket_cleanup(
+            self.lib, [], dict_to_modifiers(dict(name="my_booth"))
+        )
+        self.lib.booth.ticket_cleanup_auto.assert_called_once_with(
+            instance_name="my_booth"
+        )
+        self.lib.booth.ticket_cleanup.assert_not_called()
+
+    def test_with_ticket_minimal(self):
+        booth_cmd.ticket_cleanup(
+            self.lib,
+            ["ticketA"],
+            dict_to_modifiers({}),
+        )
+        self.lib.booth.ticket_cleanup.assert_called_once_with(
+            "ticketA", instance_name=None
+        )
+        self.lib.booth.ticket_cleanup_auto.assert_not_called()
+
+    def test_with_ticket_full(self):
+        booth_cmd.ticket_cleanup(
+            self.lib,
+            ["ticketA"],
+            dict_to_modifiers(dict(name="my_booth")),
+        )
+        self.lib.booth.ticket_cleanup.assert_called_once_with(
+            "ticketA", instance_name="my_booth"
+        )
+        self.lib.booth.ticket_cleanup_auto.assert_not_called()

@@ -699,3 +699,13 @@ class CleanEnableAuthfile(BoothMixin, TestCase):
                 ),
                 config_file.read(),
             )
+
+
+class TicketCleanup(BoothMixinNoFiles, TestCase):
+    def test_too_many_args(self):
+        self.assert_pcs_fail(
+            ["booth", "ticket", "cleanup", "a", "b"],
+            stderr_start=(
+                "\nUsage: pcs booth <command>\n    ticket cleanup [ticket]\n"
+            ),
+        )

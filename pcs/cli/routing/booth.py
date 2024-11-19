@@ -14,9 +14,10 @@ mapping = {
         {
             "help": lambda lib, argv, modifiers: print(usage.booth(["ticket"])),
             "add": command.config_ticket_add,
+            "cleanup": command.ticket_cleanup,
             "delete": command.config_ticket_remove,
-            "remove": command.config_ticket_remove,
             "grant": command.ticket_grant,
+            "remove": command.config_ticket_remove,
             "revoke": command.ticket_revoke,
         },
         ["booth", "ticket"],
