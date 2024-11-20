@@ -384,6 +384,7 @@ class UpdateScsiDevicesMixin:
 
     def config_cib(
         self,
+        *,
         devices_before=DEVICES_1,
         devices_updated=DEVICES_2,
         resource_ops=DEFAULT_OPS,
@@ -465,6 +466,7 @@ class UpdateScsiDevicesMixin:
 
     def assert_command_success(
         self,
+        *,
         devices_before=DEVICES_1,
         devices_updated=DEVICES_2,
         devices_add=None,

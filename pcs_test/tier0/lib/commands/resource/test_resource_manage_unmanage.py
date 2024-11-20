@@ -382,6 +382,7 @@ fixture_master_cib_unmanaged_primitive_op_disabled = """
 
 
 def get_fixture_clone_group_cib(
+    *,
     clone_unmanaged=False,
     clone_meta=False,
     group_unmanaged=False,

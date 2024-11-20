@@ -2231,6 +2231,7 @@ def tar_add_file_data(
     tarball,
     data,
     name,
+    *,
     mode=None,
     uid=None,
     gid=None,

@@ -96,6 +96,7 @@ def configure_app(
     webui_dir: str,
     webui_fallback: str,
     pcsd_capabilities: Iterable[capabilities.Capability],
+    *,
     debug: bool = False,
 ):
     # pylint: disable=too-many-arguments

@@ -251,6 +251,7 @@ def append_new(
     meta_attributes,
 ):
     # pylint: disable=too-many-arguments
+    # pylint: disable=too-many-positional-arguments
     """
     Create new bundle and add it to the CIB
 
@@ -376,6 +377,7 @@ def validate_update(
     force_options=False,
 ):
     # pylint: disable=too-many-arguments
+    # pylint: disable=too-many-positional-arguments
     """
     Validate modifying an existing bundle, return list of report items
 
@@ -420,6 +422,7 @@ def update(
     meta_attributes,
 ):
     # pylint: disable=too-many-arguments
+    # pylint: disable=too-many-positional-arguments
     """
     Modify an existing bundle (does not touch encapsulated resources)
 

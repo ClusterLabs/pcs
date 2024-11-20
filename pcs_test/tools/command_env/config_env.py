@@ -82,6 +82,7 @@ class EnvConfig:
 
     def push_cib(
         self,
+        *,
         modifiers=None,
         name="env.push_cib",
         load_key="runner.cib.load",
@@ -120,6 +121,7 @@ class EnvConfig:
 
     def push_cib_custom(
         self,
+        *,
         name="env.push_cib_custom",
         custom_cib=None,
         wait=-1,
@@ -139,6 +141,7 @@ class EnvConfig:
 
     def push_corosync_conf(
         self,
+        *,
         name="env.push_corosync_conf",
         corosync_conf_text="",
         skip_offline_targets=False,

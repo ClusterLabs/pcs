@@ -123,6 +123,7 @@ def _communication_to_response(
     raw_data,
 ):
     # pylint: disable=too-many-arguments
+    # pylint: disable=too-many-positional-arguments
     return Response(
         MockCurlSimple(
             info={pycurl.RESPONSE_CODE: response_code},
@@ -148,6 +149,7 @@ def _communication_to_response(
 
 def create_communication(
     communication_list,
+    *,
     action="",
     param_list=None,
     response_code=200,

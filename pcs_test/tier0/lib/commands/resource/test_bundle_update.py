@@ -24,7 +24,9 @@ get_env_tools = partial(get_env_tools, base_cib_filename="cib-empty.xml")
 
 
 def simple_bundle_update(env, wait=TIMEOUT):
-    return resource.bundle_update(env, "B1", {"image": "new:image"}, wait=wait)
+    return resource.bundle_update(
+        env, "B1", container_options={"image": "new:image"}, wait=wait
+    )
 
 
 def fixture_resources_minimal(container_type="docker"):

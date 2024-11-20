@@ -159,6 +159,7 @@ class PcmkShortcuts:
 
     def load_state(
         self,
+        *,
         name="runner.pcmk.load_state",
         filename="crm_mon.minimal.xml",
         resources=None,
@@ -217,6 +218,7 @@ class PcmkShortcuts:
 
     def load_state_plaintext(
         self,
+        *,
         name="runner.pcmk.load_state_plaintext",
         inactive=True,
         verbose=False,
@@ -355,6 +357,7 @@ class PcmkShortcuts:
 
     def load_agent(
         self,
+        *,
         name="runner.pcmk.load_agent",
         agent_name="ocf:heartbeat:Dummy",
         agent_filename=None,
@@ -376,23 +379,12 @@ class PcmkShortcuts:
             placed
         dict env -- CommandRunner environment variables
         """
-        if env:
-            env = dict(env)
-        else:
-            env = {}
-        env["PATH"] = ":".join(
-            [
-                settings.fence_agent_execs,
-                "/bin",
-                "/usr/bin",
-            ]
-        )
-
-        if agent_filename:
-            agent_metadata_filename = agent_filename
-        elif agent_name in AGENT_FILENAME_MAP:
-            agent_metadata_filename = AGENT_FILENAME_MAP[agent_name]
-        elif not stdout and not agent_is_missing:
+        if (
+            not agent_is_missing
+            and not stdout
+            and not agent_filename
+            and agent_name not in AGENT_FILENAME_MAP
+        ):
             raise AssertionError(
                 (
                     "Filename with metadata of agent '{0}' not specified.\n"
@@ -406,6 +398,18 @@ class PcmkShortcuts:
                     "Or define metadata directly in 'stdout' argument."
                 ).format(agent_name, os.path.realpath(__file__), rc(""))
             )
+
+        if env:
+            env = dict(env)
+        else:
+            env = {}
+        env["PATH"] = ":".join(
+            [
+                settings.fence_agent_execs,
+                "/bin",
+                "/usr/bin",
+            ]
+        )
 
         if agent_is_missing:
             if stderr is None:
@@ -429,6 +433,10 @@ class PcmkShortcuts:
             return
 
         if not stdout:
+            if agent_filename:
+                agent_metadata_filename = agent_filename
+            else:
+                agent_metadata_filename = AGENT_FILENAME_MAP[agent_name]
             with open(rc(agent_metadata_filename)) as a_file:
                 stdout = a_file.read()
         self.__calls.place(
@@ -642,6 +650,7 @@ class PcmkShortcuts:
 
     def resource_cleanup(
         self,
+        *,
         name="runner.pcmk.cleanup",
         instead=None,
         before=None,
@@ -688,6 +697,7 @@ class PcmkShortcuts:
 
     def resource_refresh(
         self,
+        *,
         name="runner.pcmk.refresh",
         instead=None,
         before=None,
@@ -734,6 +744,7 @@ class PcmkShortcuts:
 
     def resource_move(
         self,
+        *,
         name="runner.pcmk.resource_move",
         instead=None,
         before=None,
@@ -772,6 +783,7 @@ class PcmkShortcuts:
 
     def resource_ban(
         self,
+        *,
         name="runner.pcmk.resource_ban",
         instead=None,
         before=None,
@@ -808,6 +820,7 @@ class PcmkShortcuts:
 
     def resource_clear(
         self,
+        *,
         name="runner.pcmk.resource_clear",
         instead=None,
         before=None,
@@ -848,6 +861,7 @@ class PcmkShortcuts:
         self,
         name,
         action,
+        *,
         instead=None,
         before=None,
         resource=None,
@@ -1046,6 +1060,7 @@ class PcmkShortcuts:
         self,
         new_cib_filepath,
         transitions_filepath,
+        *,
         cib_xml=None,
         cib_modifiers=None,
         cib_load_name="runner.cib.load",
@@ -1138,6 +1153,7 @@ class PcmkShortcuts:
         standard="ocf",
         provider="heartbeat",
         agent_type="Dummy",
+        *,
         returncode=0,
         output=None,
         stdout="",
@@ -1203,6 +1219,7 @@ class PcmkShortcuts:
         self,
         attributes,
         agent,
+        *,
         returncode=0,
         output=None,
         stdout="",

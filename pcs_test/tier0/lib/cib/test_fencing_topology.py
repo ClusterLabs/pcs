@@ -181,6 +181,7 @@ class AddLevel(TestCase):
         mock_val_dupl,
         mock_append,
         mock_id_provider,
+        *,
         dupl_called=True,
         report_list=None,
     ):
