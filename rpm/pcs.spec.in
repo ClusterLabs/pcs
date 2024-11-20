@@ -36,8 +36,7 @@ Release: 99+git%{?numcomm:.%{numcomm}}%{?alphatag:.%{alphatag}}%{?dirty:.%{dirty
 #   rack-session
 #   tilt
 # rack:
-#   rackup (for Rack::Handler):
-#     webrick (not used, just a dependency)
+#   rackup (for Rack::Handler)
 # rack-protection:
 #   base64
 # rexml:
