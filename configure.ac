@@ -196,6 +196,13 @@ AC_ARG_WITH([pcsd-default-cipherlist],
 	[PCSD_DEFAULT_CIPHERLIST="DEFAULT:!RC4:!3DES:@STRENGTH"])
 AC_SUBST([PCSD_DEFAULT_CIPHERLIST])
 
+AC_ARG_WITH([python-version],
+	[AS_HELP_STRING([--with-python-version=X.Y], [Set an alternative Python interpreter version for generated rpm.])],
+	[PYVERSION="$withval"],
+	[PYVERSION=""])
+AC_SUBST([PYVERSION])
+
+
 if test "x$cache_only" != "xyes"; then
 	AC_CHECK_PROGS([WGET], [wget])
 	if test "x$WGET" = "x"; then
