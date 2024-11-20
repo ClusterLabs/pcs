@@ -40,6 +40,7 @@ from pcs.common.types import StringSequence
 def fixture_primitive_dto(
     resource_id: str,
     instance_id: Optional[str],
+    *,
     resource_agent: str = "ocf:pacemaker:Dummy",
     role: PcmkStatusRoleType = PCMK_STATUS_ROLE_STARTED,
     target_role: Optional[PcmkRoleType] = None,
@@ -96,6 +97,7 @@ def fixture_group_dto(
 
 def fixture_clone_dto(
     resource_id: str,
+    *,
     multi_state: bool = False,
     unique: bool = False,
     maintenance: bool = False,
@@ -302,7 +304,9 @@ class TestFacadeFromDto(TestCase):
 
 
 def fixture_facade() -> ResourcesStatusFacade:
-    stonith = fixture_primitive_dto("stonith", None, "stonith:fence_xvm")
+    stonith = fixture_primitive_dto(
+        "stonith", None, resource_agent="stonith:fence_xvm"
+    )
     primitive = fixture_primitive_dto("primitive", None)
     primitive_stopped = fixture_primitive_dto(
         "primitive_stopped",

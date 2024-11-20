@@ -61,6 +61,7 @@ good-names = [
 [tool.pylint.design]
 max-args = 8
 max-parents = 10
+max-positional-arguments = 8
 min-public-methods = 0
 
 [tool.pylint.format]

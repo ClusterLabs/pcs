@@ -7,7 +7,6 @@ WORKER_LOGGER = "pcs_worker"
 
 
 class Logger(logging.Logger):
-    # pylint: disable=too-many-arguments
     def makeRecord(  # type: ignore
         self,
         name,
@@ -21,6 +20,8 @@ class Logger(logging.Logger):
         extra=None,
         sinfo=None,
     ) -> logging.LogRecord:
+        # pylint: disable=too-many-arguments
+        # pylint: disable=too-many-positional-arguments
         pid = os.getpid()
         return super().makeRecord(
             name,

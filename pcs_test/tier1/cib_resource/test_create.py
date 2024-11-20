@@ -923,6 +923,7 @@ class Promotable(TestCase, AssertPcsMixin):
 
     @staticmethod
     def fixture_options(
+        *,
         allow_absent_agent=False,
         allow_invalid_instance_attributes=False,
         allow_invalid_operation=False,

@@ -16,6 +16,7 @@ class CibShortcuts:
 
     def load(
         self,
+        *,
         modifiers=None,
         name="runner.cib.load",
         filename=None,

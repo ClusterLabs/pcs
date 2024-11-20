@@ -92,6 +92,7 @@ def configure_app(
     webui_dir: str,
     webui_fallback: str,
     pcsd_capabilities: Iterable[capabilities.Capability],
+    *,
     disable_gui: bool = False,
     debug: bool = False,
 ):

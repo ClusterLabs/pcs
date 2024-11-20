@@ -240,6 +240,7 @@ class TestValidateSetClusterProperties(TestCase):
         configured_properties,
         new_properties,
         expected_report_list,
+        *,
         sbd_enabled=False,
         sbd_devices=False,
         force=False,

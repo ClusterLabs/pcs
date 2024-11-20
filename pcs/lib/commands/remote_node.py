@@ -261,6 +261,7 @@ def node_add_remote(
     operations: Iterable[Mapping[str, str]],
     meta_attributes: Mapping[str, str],
     instance_attributes: Mapping[str, str],
+    *,
     skip_offline_nodes: bool = False,
     allow_incomplete_distribution: bool = False,
     allow_pacemaker_remote_service_fail: bool = False,

@@ -144,6 +144,7 @@ class FullClusterStatusPlaintextBase(TestCase):
 
     def _fixture_config_local_daemons(
         self,
+        *,
         corosync_enabled=True,
         corosync_active=True,
         pacemaker_enabled=True,

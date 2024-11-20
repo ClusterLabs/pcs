@@ -68,6 +68,7 @@ class AssertPcsMixin:
         despace=False,
     ):
         # pylint: disable=too-many-arguments
+        # pylint: disable=too-many-positional-arguments
         # It is common that successful commands don't print anything, so we
         # default stdout and stderr to an empty string if not specified
         # otherwise.
@@ -144,6 +145,7 @@ class AssertPcsMixin:
     def assert_pcs_result(
         self,
         command,
+        *,
         stdout_full=None,
         stdout_start=None,
         stdout_regexp=None,

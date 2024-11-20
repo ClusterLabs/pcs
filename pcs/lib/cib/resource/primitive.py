@@ -141,6 +141,7 @@ def create(
 ):
     # pylint: disable=too-many-arguments
     # pylint: disable=too-many-locals
+    # pylint: disable=too-many-positional-arguments
     """
     Prepare all parts of primitive resource and append it into cib.
 
@@ -250,11 +251,13 @@ def append_new(
     standard,
     provider,
     agent_type,
+    *,
     instance_attributes=None,
     meta_attributes=None,
     operation_list=None,
 ):
     # pylint:disable=too-many-arguments
+    # pylint: disable=too-many-positional-arguments
     """
     Append a new primitive element to the resources_section.
 

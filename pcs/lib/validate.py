@@ -1162,6 +1162,7 @@ class _ValidateAddRemoveBase:
         container_type: reports.types.AddRemoveContainerType,
         item_type: reports.types.AddRemoveItemType,
         container_id: str,
+        *,
         adjacent_item_id: Optional[str] = None,
         container_can_be_empty: bool = False,
         severity: Optional[ReportItemSeverity] = None,
