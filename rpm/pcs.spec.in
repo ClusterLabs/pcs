@@ -53,7 +53,7 @@ Summary: Pacemaker/Corosync Configuration System
 
 %global pcs_bundled_dir @pcs_bundled_dir@
 
-%global required_pacemaker_version 2.1.0
+%global required_pacemaker_version 3.0.0
 
 
 Source0: %{name}-%{clean_version}%{?numcomm:+%{numcomm}}%{?alphatag:-%{alphatag}}%{?dirty:-%{dirty}}.tar.gz
