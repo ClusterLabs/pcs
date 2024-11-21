@@ -2,9 +2,14 @@
 %global alphatag @alphatag@
 %global dirty @dirty@
 %global cibranch @cibranch@
+%global clean_version @version@
+# We need to add a tilde before any non-numeric part of version for rpm to sort
+# alpha and beta correctly
+# The backslashes had to be doubled due to the way this is expanded
+%global rpm_version %(echo %{clean_version} | sed -e 's/\\([[:alpha:]]\\)/~\\1/')
 
 Name: pcs
-Version: @version@
+Version: %{rpm_version}
 Release: 99+git%{?numcomm:.%{numcomm}}%{?alphatag:.%{alphatag}}%{?dirty:.%{dirty}}%{?cibranch:.%{cibranch}}%{?dist}
 # https://docs.fedoraproject.org/en-US/packaging-guidelines/LicensingGuidelines/
 # https://fedoraproject.org/wiki/Licensing:Main?rd=Licensing#Good_Licenses
@@ -31,8 +36,7 @@ Release: 99+git%{?numcomm:.%{numcomm}}%{?alphatag:.%{alphatag}}%{?dirty:.%{dirty
 #   rack-session
 #   tilt
 # rack:
-#   rackup (for Rack::Handler):
-#     webrick (not used, just a dependency)
+#   rackup (for Rack::Handler)
 # rack-protection:
 #   base64
 # rexml:
@@ -48,10 +52,10 @@ Summary: Pacemaker/Corosync Configuration System
 
 %global pcs_bundled_dir @pcs_bundled_dir@
 
-%global required_pacemaker_version 2.1.0
+%global required_pacemaker_version 3.0.0
 
 
-Source0: %{name}-%{version}%{?numcomm:+%{numcomm}}%{?alphatag:-%{alphatag}}%{?dirty:-%{dirty}}.tar.gz
+Source0: %{name}-%{clean_version}%{?numcomm:+%{numcomm}}%{?alphatag:-%{alphatag}}%{?dirty:-%{dirty}}.tar.gz
 
 Source41: pyagentx-%{pyagentx_version}.tar.gz
 @pysrc@
@@ -195,7 +199,7 @@ Requires: pcs = %{version}-%{release}
 Module for pcsd that provides support for standalone webui.
 
 %prep
-%autosetup -n %{name}-%{version}%{?numcomm:+%{numcomm}}%{?alphatag:-%{alphatag}}%{?dirty:-%{dirty}}
+%autosetup -n %{name}-%{clean_version}%{?numcomm:+%{numcomm}}%{?alphatag:-%{alphatag}}%{?dirty:-%{dirty}}
 
 # prepare dirs/files necessary for building all bundles
 # -----------------------------------------------------
