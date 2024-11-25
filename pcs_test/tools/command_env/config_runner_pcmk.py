@@ -1253,6 +1253,27 @@ class PcmkShortcuts:
             instead=instead,
         )
 
+    def ticket_unstandby(
+        self,
+        ticket_name: str,
+        stderr="",
+        returncode=0,
+        name="runner.pcmk.ticket_unstandby",
+    ) -> None:
+        self.__calls.place(
+            name,
+            RunnerCall(
+                [
+                    settings.crm_ticket_exec,
+                    "--activate",
+                    "--ticket",
+                    ticket_name,
+                ],
+                stderr=stderr,
+                returncode=returncode,
+            ),
+        )
+
     def ticket_standby(
         self,
         ticket_name: str,

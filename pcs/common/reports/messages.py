@@ -6986,21 +6986,17 @@ class BoothTicketDoesNotExist(ReportItemMessage):
 @dataclass(frozen=True)
 class BoothTicketNotInCib(ReportItemMessage):
     """
-    Expected ticket is not in CIB for the given booth instance.
+    Expected ticket is not in CIB
 
     ticket_name -- name of the ticket
     """
 
     ticket_name: str
-    instance_name: str
     _code = codes.BOOTH_TICKET_NOT_IN_CIB
 
     @property
     def message(self) -> str:
-        return (
-            f"Unable to find ticket '{self.ticket_name}' for booth instance "
-            f"'{self.instance_name}' in CIB"
-        )
+        return f"Unable to find ticket '{self.ticket_name}' in CIB"
 
 
 @dataclass(frozen=True)
@@ -7306,7 +7302,7 @@ class BoothTicketChangingState(ReportItemMessage):
 
     ticket_name: str
     state: Literal["active", "standby"]
-    _code = codes.TICKET_CHANGING_STATE
+    _code = codes.BOOTH_TICKET_CHANGING_STATE
 
     @property
     def message(self) -> str:
@@ -7322,7 +7318,7 @@ class BoothTicketCleanup(ReportItemMessage):
     """
 
     ticket_name: str
-    _code = codes.TICKET_CLEANUP
+    _code = codes.BOOTH_TICKET_CLEANUP
 
     @property
     def message(self) -> str:

@@ -3210,24 +3210,33 @@ Commands:
         Remove booth configuration files.
 
     ticket add <ticket> [<name>=<value> ...]
-        Add new ticket to the current configuration. Ticket options are
+        Add new ticket to the local site configuration. Ticket options are
         specified in booth manpage.
 
     ticket delete <ticket>
-        Remove the specified ticket from the current configuration. The ticket
-        remains loaded in the current CIB and should be cleaned up using the
-        "pcs ticket cleanup" command.
+        Remove the specified ticket from the local site configuration. The
+        ticket remains loaded in the current CIB and should be cleaned up
+        using the "pcs ticket cleanup" command.
 
     ticket remove <ticket>
-        Remove the specified ticket from the current configuration. The ticket
-        remains loaded in the current CIB and should be cleaned up using the
-        "pcs ticket cleanup" command.
+        Remove the specified ticket from the local site configuration. The
+        ticket remains loaded in the current CIB and should be cleaned up using
+        the "pcs ticket cleanup" command.
 
     ticket cleanup [ticket]
-        Remove tickets from CIB at the current site. If no ticket name is
+        Remove tickets from CIB at the local site. If no ticket name is
         provided, remove all the tickets present in the CIB but not in the booth
         configuration. If the ticket name is specified, then remove the
         specified ticket from CIB.
+
+    ticket standby <ticket>
+        Tell the cluster on the local site that this ticket is standby. The
+        dependent resources will be stopped or demoted gracefully without
+        triggering loss-policies.
+
+    ticket unstandby <ticket>
+        Tell the cluster on the local site that this ticket is no longer
+        standby.
 
     config [<node>]
         Show booth configuration from the specified node or from the current

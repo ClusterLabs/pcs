@@ -482,18 +482,55 @@ class TicketCleanup(TestCase):
             ["ticketA"],
             dict_to_modifiers({}),
         )
-        self.lib.booth.ticket_cleanup.assert_called_once_with(
-            "ticketA", instance_name=None
-        )
+        self.lib.booth.ticket_cleanup.assert_called_once_with("ticketA")
         self.lib.booth.ticket_cleanup_auto.assert_not_called()
 
-    def test_with_ticket_full(self):
-        booth_cmd.ticket_cleanup(
-            self.lib,
-            ["ticketA"],
-            dict_to_modifiers(dict(name="my_booth")),
+
+class TicketUnstandby(TestCase):
+    def setUp(self):
+        self.lib = mock.Mock(spec_set=["booth"])
+        self.lib.booth = mock.Mock(spec_set=["ticket_unstandby"])
+
+    def test_no_args(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            booth_cmd.ticket_unstandby(self.lib, [], dict_to_modifiers({}))
+        self.assertIsNone(cm.exception.message)
+        self.lib.booth.ticket_unstandby.assert_not_called()
+
+    def test_too_many_args(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            booth_cmd.ticket_unstandby(
+                self.lib, ["a", "b"], dict_to_modifiers({})
+            )
+        self.assertIsNone(cm.exception.message)
+        self.lib.booth.ticket_unstandby.assert_not_called()
+
+    def test_call_minimal(self):
+        booth_cmd.ticket_unstandby(
+            self.lib, ["my_ticket"], dict_to_modifiers({})
         )
-        self.lib.booth.ticket_cleanup.assert_called_once_with(
-            "ticketA", instance_name="my_booth"
-        )
-        self.lib.booth.ticket_cleanup_auto.assert_not_called()
+        self.lib.booth.ticket_unstandby.assert_called_once_with("my_ticket")
+
+
+class TicketStandby(TestCase):
+    def setUp(self):
+        self.lib = mock.Mock(spec_set=["booth"])
+        self.lib.booth = mock.Mock(spec_set=["ticket_standby"])
+
+    def test_no_args(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            booth_cmd.ticket_standby(self.lib, [], dict_to_modifiers({}))
+        self.assertIsNone(cm.exception.message)
+        self.lib.booth.ticket_standby.assert_not_called()
+
+    def test_too_many_args(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            booth_cmd.ticket_standby(
+                self.lib, ["a", "b"], dict_to_modifiers({})
+            )
+        self.assertIsNone(cm.exception.message)
+        self.lib.booth.ticket_standby.assert_not_called()
+
+    def test_call_minimal(self):
+        booth_cmd.ticket_standby(self.lib, ["my_ticket"], dict_to_modifiers({}))
+        self.lib.booth.ticket_standby.assert_called_once_with("my_ticket")

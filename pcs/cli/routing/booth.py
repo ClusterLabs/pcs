@@ -19,6 +19,8 @@ mapping = {
             "grant": command.ticket_grant,
             "remove": command.config_ticket_remove,
             "revoke": command.ticket_revoke,
+            "standby": command.ticket_standby,
+            "unstandby": command.ticket_unstandby,
         },
         ["booth", "ticket"],
     ),

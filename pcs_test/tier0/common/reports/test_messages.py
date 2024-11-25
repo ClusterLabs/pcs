@@ -5073,8 +5073,8 @@ class BoothTicketDoesNotExist(NameBuildTest):
 class BoothTicketNotInCib(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
-            "Unable to find ticket 'name' for booth instance 'booth' in CIB",
-            reports.BoothTicketNotInCib("name", "booth"),
+            "Unable to find ticket 'name' in CIB",
+            reports.BoothTicketNotInCib("name"),
         )
 
 

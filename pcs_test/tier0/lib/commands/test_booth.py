@@ -3837,94 +3837,81 @@ class GetStatusWarnings(TestCase, FixtureMixin):
         )
 
 
-class TicketCleanup(TestCase):
+class CrmTicketOperationTest:
+    CIB_STATUS = """
+        <status>
+            <tickets>
+                <ticket_state id="T1" granted="false" booth-cfg-name="booth"/>
+                <ticket_state id="T2" granted="false" booth-cfg-name="booth"/>
+                <ticket_state id="T3" granted="false" booth-cfg-name="custom_booth"/>
+                <ticket_state id="T-self-managed" granted="false"/>
+            </tickets>
+        </status>
+    """
+
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
-        self.config.runner.cib.load(
-            status="""
-            <status>
-                <tickets>
-                    <ticket_state id="T1" granted="false" booth-cfg-name="booth"/>
-                    <ticket_state id="T2" granted="false" booth-cfg-name="booth"/>
-                    <ticket_state id="T3" granted="false" booth-cfg-name="custom_booth"/>
-                    <ticket_state id="T-self-managed" granted="false"/>
-                </tickets>
-            </status>
-        """
-        )
+        self.config.runner.cib.load(status=self.CIB_STATUS)
+
+    def _call_cmd(self, ticket_name):
+        raise NotImplementedError()
+
+    def fixture_crm_call(self, ticket_name):
+        raise NotImplementedError()
+
+    def fixture_reports(self, ticket_name):
+        raise NotImplementedError()
 
     def test_default_instance(self):
-        ticket_to_cleanup = "T2"
-        self.config.runner.pcmk.ticket_standby(ticket_to_cleanup)
-        self.config.runner.pcmk.ticket_cleanup(ticket_to_cleanup)
-
-        commands.ticket_cleanup(
-            self.env_assist.get_env(), ticket_to_cleanup, None
-        )
-
-        self.env_assist.assert_reports(
-            [
-                fixture.info(
-                    reports.codes.TICKET_CHANGING_STATE,
-                    ticket_name=ticket_to_cleanup,
-                    state="standby",
-                ),
-                fixture.info(
-                    reports.codes.TICKET_CLEANUP, ticket_name=ticket_to_cleanup
-                ),
-            ]
-        )
+        ticket = "T2"
+        self.fixture_crm_call(ticket)
+        self._call_cmd(ticket)
+        self.env_assist.assert_reports(self.fixture_reports(ticket))
 
     def test_custom_instance(self):
-        ticket_to_cleanup = "T3"
-        self.config.runner.pcmk.ticket_standby(ticket_to_cleanup)
-        self.config.runner.pcmk.ticket_cleanup(ticket_to_cleanup)
+        ticket = "T3"
+        self.fixture_crm_call(ticket)
 
-        commands.ticket_cleanup(
-            self.env_assist.get_env(), ticket_to_cleanup, "custom_booth"
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.info(
-                    reports.codes.TICKET_CHANGING_STATE,
-                    ticket_name=ticket_to_cleanup,
-                    state="standby",
-                ),
-                fixture.info(
-                    reports.codes.TICKET_CLEANUP, ticket_name=ticket_to_cleanup
-                ),
-            ]
-        )
+        self._call_cmd(ticket)
+        self.env_assist.assert_reports(self.fixture_reports(ticket))
 
     def test_missing_ticket(self):
+        ticket = "T4"
         self.env_assist.assert_raise_library_error(
-            lambda: commands.ticket_cleanup(self.env_assist.get_env(), "T4")
+            lambda: self._call_cmd(ticket)
         )
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    reports.codes.BOOTH_TICKET_NOT_IN_CIB,
-                    ticket_name="T4",
-                    instance_name="booth",
+                    reports.codes.BOOTH_TICKET_NOT_IN_CIB, ticket_name=ticket
                 )
             ]
         )
 
-    def test_missing_in_given_instance(self):
-        self.env_assist.assert_raise_library_error(
-            lambda: commands.ticket_cleanup(
-                self.env_assist.get_env(), "T1", "custom_booth"
-            )
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.error(
-                    reports.codes.BOOTH_TICKET_NOT_IN_CIB,
-                    ticket_name="T1",
-                    instance_name="custom_booth",
-                )
-            ]
-        )
+
+class TicketCleanup(CrmTicketOperationTest, TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+        self.config.runner.cib.load(status=self.CIB_STATUS)
+
+    def fixture_crm_call(self, ticket_name):
+        self.config.runner.pcmk.ticket_standby(ticket_name)
+        self.config.runner.pcmk.ticket_cleanup(ticket_name)
+
+    def fixture_reports(self, ticket_name):
+        return [
+            fixture.info(
+                reports.codes.BOOTH_TICKET_CHANGING_STATE,
+                ticket_name=ticket_name,
+                state="standby",
+            ),
+            fixture.info(
+                reports.codes.BOOTH_TICKET_CLEANUP, ticket_name=ticket_name
+            ),
+        ]
+
+    def _call_cmd(self, ticket_name):
+        commands.ticket_cleanup(self.env_assist.get_env(), ticket_name)
 
     def test_standby_fails(self):
         self.config.runner.pcmk.ticket_standby(
@@ -3937,7 +3924,7 @@ class TicketCleanup(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.info(
-                    reports.codes.TICKET_CHANGING_STATE,
+                    reports.codes.BOOTH_TICKET_CHANGING_STATE,
                     ticket_name="T2",
                     state="standby",
                 ),
@@ -3963,17 +3950,113 @@ class TicketCleanup(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.info(
-                    reports.codes.TICKET_CHANGING_STATE,
+                    reports.codes.BOOTH_TICKET_CHANGING_STATE,
                     ticket_name="T2",
                     state="standby",
                 ),
-                fixture.info(reports.codes.TICKET_CLEANUP, ticket_name="T2"),
+                fixture.info(
+                    reports.codes.BOOTH_TICKET_CLEANUP, ticket_name="T2"
+                ),
                 fixture.error(
                     reports.codes.BOOTH_TICKET_OPERATION_FAILED,
                     operation="cleanup",
                     reason="some error",
                     site_ip=None,
                     ticket_name="T2",
+                ),
+            ]
+        )
+
+
+class TicketUnstandby(CrmTicketOperationTest, TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+        self.config.runner.cib.load(status=self.CIB_STATUS)
+
+    def fixture_crm_call(self, ticket_name):
+        self.config.runner.pcmk.ticket_unstandby(ticket_name)
+
+    def fixture_reports(self, ticket_name):
+        return [
+            fixture.info(
+                reports.codes.BOOTH_TICKET_CHANGING_STATE,
+                ticket_name=ticket_name,
+                state="active",
+            )
+        ]
+
+    def _call_cmd(self, ticket_name):
+        commands.ticket_unstandby(self.env_assist.get_env(), ticket_name)
+
+    def test_unstandby_fails(self):
+        ticket = "T2"
+        self.config.runner.pcmk.ticket_unstandby(
+            ticket, returncode=1, stderr="some error"
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.ticket_unstandby(self.env_assist.get_env(), ticket)
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    reports.codes.BOOTH_TICKET_CHANGING_STATE,
+                    ticket_name=ticket,
+                    state="active",
+                ),
+                fixture.error(
+                    reports.codes.BOOTH_TICKET_OPERATION_FAILED,
+                    operation="unstandby",
+                    reason="some error",
+                    site_ip=None,
+                    ticket_name=ticket,
+                ),
+            ]
+        )
+
+
+class TicketStandby(CrmTicketOperationTest, TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+        self.config.runner.cib.load(status=self.CIB_STATUS)
+
+    def fixture_crm_call(self, ticket_name):
+        self.config.runner.pcmk.ticket_standby(ticket_name)
+
+    def fixture_reports(self, ticket_name):
+        return [
+            fixture.info(
+                reports.codes.BOOTH_TICKET_CHANGING_STATE,
+                ticket_name=ticket_name,
+                state="standby",
+            )
+        ]
+
+    def _call_cmd(self, ticket_name):
+        commands.ticket_standby(self.env_assist.get_env(), ticket_name)
+
+    def test_standby_fails(self):
+        ticket = "T2"
+        self.config.runner.pcmk.ticket_standby(
+            ticket, returncode=1, stderr="some error"
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.ticket_standby(self.env_assist.get_env(), ticket)
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    reports.codes.BOOTH_TICKET_CHANGING_STATE,
+                    ticket_name=ticket,
+                    state="standby",
+                ),
+                fixture.error(
+                    reports.codes.BOOTH_TICKET_OPERATION_FAILED,
+                    operation="standby",
+                    reason="some error",
+                    site_ip=None,
+                    ticket_name=ticket,
                 ),
             ]
         )
@@ -4017,11 +4100,13 @@ class TicketCleanupAuto(TestCase, FixtureMixin):
         self.env_assist.assert_reports(
             [
                 fixture.info(
-                    reports.codes.TICKET_CHANGING_STATE,
+                    reports.codes.BOOTH_TICKET_CHANGING_STATE,
                     ticket_name="T2",
                     state="standby",
                 ),
-                fixture.info(reports.codes.TICKET_CLEANUP, ticket_name="T2"),
+                fixture.info(
+                    reports.codes.BOOTH_TICKET_CLEANUP, ticket_name="T2"
+                ),
             ]
         )
 
@@ -4041,17 +4126,21 @@ class TicketCleanupAuto(TestCase, FixtureMixin):
         self.env_assist.assert_reports(
             [
                 fixture.info(
-                    reports.codes.TICKET_CHANGING_STATE,
+                    reports.codes.BOOTH_TICKET_CHANGING_STATE,
                     ticket_name="T1",
                     state="standby",
                 ),
-                fixture.info(reports.codes.TICKET_CLEANUP, ticket_name="T1"),
                 fixture.info(
-                    reports.codes.TICKET_CHANGING_STATE,
+                    reports.codes.BOOTH_TICKET_CLEANUP, ticket_name="T1"
+                ),
+                fixture.info(
+                    reports.codes.BOOTH_TICKET_CHANGING_STATE,
                     ticket_name="T2",
                     state="standby",
                 ),
-                fixture.info(reports.codes.TICKET_CLEANUP, ticket_name="T2"),
+                fixture.info(
+                    reports.codes.BOOTH_TICKET_CLEANUP, ticket_name="T2"
+                ),
             ]
         )
 
@@ -4071,12 +4160,12 @@ class TicketCleanupAuto(TestCase, FixtureMixin):
         self.env_assist.assert_reports(
             [
                 fixture.info(
-                    reports.codes.TICKET_CHANGING_STATE,
+                    reports.codes.BOOTH_TICKET_CHANGING_STATE,
                     ticket_name="T-non-default-booth",
                     state="standby",
                 ),
                 fixture.info(
-                    reports.codes.TICKET_CLEANUP,
+                    reports.codes.BOOTH_TICKET_CLEANUP,
                     ticket_name="T-non-default-booth",
                 ),
             ]

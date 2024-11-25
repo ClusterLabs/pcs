@@ -39,8 +39,10 @@ from pcs.lib.booth import (
     resource,
     status,
 )
+from pcs.lib.booth.cib import (
+    get_booth_ticket_names as get_cib_booth_ticket_names,
+)
 from pcs.lib.booth.cib import get_ticket_names as get_cib_ticket_names
-from pcs.lib.booth.constants import DEFAULT_INSTANCE_NAME
 from pcs.lib.booth.env import BoothEnv
 from pcs.lib.cib.remove_elements import (
     ElementsToRemove,
@@ -78,6 +80,7 @@ from pcs.lib.pacemaker.live import (
 )
 from pcs.lib.pacemaker.live import ticket_cleanup as live_ticket_cleanup
 from pcs.lib.pacemaker.live import ticket_standby as live_ticket_standby
+from pcs.lib.pacemaker.live import ticket_unstandby as live_ticket_unstandby
 from pcs.lib.resource_agent import (
     ResourceAgentError,
     ResourceAgentFacade,
@@ -716,36 +719,20 @@ def _ticket_operation(
         )
 
 
-def ticket_cleanup(
-    env: LibraryEnvironment,
-    ticket_name: str,
-    instance_name: Optional[str] = None,
-) -> None:
+def ticket_cleanup(env: LibraryEnvironment, ticket_name: str) -> None:
     """
     Remove specified booth ticket from CIB on local site
 
     ticket_name -- name of the ticket to remove
-    instance_name -- booth instance name
     """
-    booth_env = env.get_booth_env(instance_name)
-    _ensure_live_env(env, booth_env)
+    _ensure_live_cib(env)
 
-    report_processor = env.report_processor
-
-    if ticket_name not in set(
-        get_cib_ticket_names(env.get_cib(), instance_name)
-    ):
-        report_processor.report(
-            reports.ReportItem.error(
-                reports.messages.BoothTicketNotInCib(
-                    ticket_name, instance_name or DEFAULT_INSTANCE_NAME
-                )
-            )
-        )
-    if report_processor.has_errors:
+    if env.report_processor.report_list(
+        _validate_ticket_in_cib(env.get_cib(), ticket_name)
+    ).has_errors:
         raise LibraryError()
 
-    _cleanup_tickets(env.cmd_runner(), report_processor, [ticket_name])
+    _cleanup_tickets(env.cmd_runner(), env.report_processor, [ticket_name])
 
 
 def ticket_cleanup_auto(
@@ -773,7 +760,7 @@ def ticket_cleanup_auto(
         raise LibraryError()
 
     conf_tickets = set(booth_conf.get_ticket_names())
-    cib_tickets = set(get_cib_ticket_names(env.get_cib(), instance_name))
+    cib_tickets = set(get_cib_booth_ticket_names(env.get_cib(), instance_name))
 
     _cleanup_tickets(
         env.cmd_runner(), report_processor, sorted(cib_tickets - conf_tickets)
@@ -812,6 +799,24 @@ def _cleanup_tickets(
             raise LibraryError()
 
 
+def ticket_standby(env: LibraryEnvironment, ticket_name: str) -> None:
+    """
+    Change state of the ticket to standby
+
+    ticket_name -- name of the ticket
+    """
+    _ensure_live_cib(env)
+    if env.report_processor.report_list(
+        _validate_ticket_in_cib(env.get_cib(), ticket_name)
+    ).has_errors:
+        raise LibraryError()
+
+    if env.report_processor.report_list(
+        _ticket_standby(env.cmd_runner(), ticket_name)
+    ).has_errors:
+        raise LibraryError()
+
+
 def _ticket_standby(
     cmd_runner: CommandRunner, ticket: str
 ) -> reports.ReportItemList:
@@ -832,6 +837,54 @@ def _ticket_standby(
         )
 
     return report_list
+
+
+def ticket_unstandby(env: LibraryEnvironment, ticket_name: str) -> None:
+    """
+    Change state of the ticket to active
+
+    ticket_name -- name of the ticket
+    """
+    _ensure_live_cib(env)
+    if env.report_processor.report_list(
+        _validate_ticket_in_cib(env.get_cib(), ticket_name)
+    ).has_errors:
+        raise LibraryError()
+
+    env.report_processor.report(
+        reports.ReportItem.info(
+            reports.messages.BoothTicketChangingState(ticket_name, "active")
+        )
+    )
+    stdout, stderr, retval = live_ticket_unstandby(
+        env.cmd_runner(), ticket_name
+    )
+    if retval != 0:
+        env.report_processor.report(
+            reports.ReportItem.error(
+                reports.messages.BoothTicketOperationFailed(
+                    "unstandby",
+                    join_multilines([stderr, stdout]),
+                    None,
+                    ticket_name,
+                )
+            )
+        )
+    if env.report_processor.has_errors:
+        raise LibraryError()
+
+
+def _validate_ticket_in_cib(
+    cib: _Element, ticket_name: str
+) -> reports.ReportItemList:
+    if ticket_name not in set(get_cib_ticket_names(cib)):
+        return [
+            reports.ReportItem.error(
+                reports.messages.BoothTicketNotInCib(ticket_name)
+            )
+        ]
+
+    return []
 
 
 def config_sync(
@@ -1162,6 +1215,17 @@ def _ensure_live_booth_env(booth_env: BoothEnv) -> None:
                 )
             )
         )
+
+
+def _ensure_live_cib(env: LibraryEnvironment) -> None:
+    if not env.is_cib_live:
+        env.report_processor.report(
+            ReportItem.error(
+                reports.messages.LiveEnvironmentRequired([file_type_codes.CIB])
+            )
+        )
+    if env.report_processor.has_errors:
+        raise LibraryError()
 
 
 def _ensure_live_env(env: LibraryEnvironment, booth_env: BoothEnv) -> None:

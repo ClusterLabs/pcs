@@ -830,6 +830,20 @@ def ticket_cleanup(
     )
 
 
+def ticket_unstandby(
+    cmd_runner: CommandRunner, ticket_name: str
+) -> tuple[str, str, int]:
+    """
+    Change state of the ticket to active
+
+    ticket_name -- name of the ticket
+    """
+
+    return cmd_runner.run(
+        [settings.crm_ticket_exec, "--activate", "--ticket", ticket_name]
+    )
+
+
 ### tools
 
 

@@ -160,10 +160,12 @@ def load_module(env, middleware_factory, name):
             "restart": booth.restart,
             "start_booth": booth.start_booth,
             "stop_booth": booth.stop_booth,
-            "ticket_cleanup": booth.ticket_cleanup,
             "ticket_cleanup_auto": booth.ticket_cleanup_auto,
+            "ticket_cleanup": booth.ticket_cleanup,
             "ticket_grant": booth.ticket_grant,
             "ticket_revoke": booth.ticket_revoke,
+            "ticket_standby": booth.ticket_standby,
+            "ticket_unstandby": booth.ticket_unstandby,
         }
         if settings.booth_enable_authfile_set_enabled:
             bindings["config_set_enable_authfile"] = (

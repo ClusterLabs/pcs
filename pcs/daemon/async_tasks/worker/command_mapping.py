@@ -8,6 +8,7 @@ from typing import (
 from pcs.lib.commands import (  # services,
     acl,
     alert,
+    booth,
     cib,
     cib_options,
     cluster,
@@ -106,6 +107,22 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
     ),
     "alert.update_recipient": _Cmd(
         cmd=alert.update_recipient,
+        required_permission=p.WRITE,
+    ),
+    "booth.ticket_cleanup": _Cmd(
+        cmd=booth.ticket_cleanup,
+        required_permission=p.WRITE,
+    ),
+    "booth.ticket_cleanup_auto": _Cmd(
+        cmd=booth.ticket_cleanup_auto,
+        required_permission=p.WRITE,
+    ),
+    "booth.ticket_standby": _Cmd(
+        cmd=booth.ticket_standby,
+        required_permission=p.WRITE,
+    ),
+    "booth.ticket_unstandby": _Cmd(
+        cmd=booth.ticket_unstandby,
         required_permission=p.WRITE,
     ),
     "cluster.add_nodes": _Cmd(
