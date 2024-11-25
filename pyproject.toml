@@ -70,3 +70,44 @@ max-line-length = 80
 
 [tool.pylint.variables]
 dummy-variables-rgx = "_$|dummy"
+
+[tool.ruff]
+# ruff settings docs: https://docs.astral.sh/ruff/settings/
+line-length = 80
+target-version = "py39"
+
+[tool.ruff.lint]
+# ruff rules docs: https://docs.astral.sh/ruff/rules/
+# pylint rules in ruff: # https://github.com/astral-sh/ruff/issues/970
+select = [
+  "PL", # pylint convention, error, refactoring, warning
+]
+# ruff does not respect pylint ignore directives
+# https://github.com/astral-sh/ruff/issues/1203
+ignore = [
+  "PLR2004", # magic-value-comparison (99)
+  "PLR0913", # too-many-arguments (54)
+  "PLR0912", # too-many-branches (49)
+  "PLR0915", # too-many-statements (31)
+  "PLW2901", # redefined-loop-name (22)
+  "PLR5501", # collapsible-else-if (14)
+  "PLW0603", # global-statement (9)
+  "PLR0911", # too-many-return-statements (6)
+  "PLW1509", # subprocess-popen-preexec-fn (3)
+  "PLW0602", # global-variable-not-assigned (1)
+]
+
+[tool.ruff.lint.isort]
+# known deviations from isort:
+#  https://docs.astral.sh/ruff/faq/#how-does-ruffs-import-sorting-compare-to-isort
+#  https://github.com/astral-sh/ruff/issues/1381
+#  https://github.com/astral-sh/ruff/issues/2104
+known-first-party = ["pcs"]
+section-order = ["future", "standard-library", "third-party", "first-party", "tests", "local-folder"]
+
+[tool.ruff.lint.isort.sections]
+"tests" = ["pcs_test"]
+
+[tool.ruff.lint.pylint]
+max-args = 8
+max-positional-args = 8

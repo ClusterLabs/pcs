@@ -202,6 +202,32 @@ endif
 		$(TIME) $(PYTHON) -m pylint --rcfile pyproject.toml ${pylint_options} ${PCS_PYTHON_PACKAGES}
 endif
 
+ruff_format_check: pyproject.toml
+if DEV_TESTS
+	$(TIME) ruff --config pyproject.toml format --check ${PCS_PYTHON_PACKAGES}
+endif
+
+ruff_format: pyproject.toml
+if DEV_TESTS
+	$(TIME) ruff --config pyproject.toml check --select I --fix ${PCS_PYTHON_PACKAGES}
+	$(TIME) ruff --config pyproject.toml format ${PCS_PYTHON_PACKAGES}
+endif
+
+ruff_isort_check: pyproject.toml
+if DEV_TESTS
+	$(TIME) ruff --config pyproject.toml check --select I ${PCS_PYTHON_PACKAGES}
+endif
+
+ruff_isort: pyproject.toml
+if DEV_TESTS
+	$(TIME) ruff --config pyproject.toml check --select I --fix ${PCS_PYTHON_PACKAGES}
+endif
+
+ruff_lint: pyproject.toml
+if DEV_TESTS
+	$(TIME) ruff --config pyproject.toml check ${PCS_PYTHON_PACKAGES}
+endif
+
 isort_check: pyproject.toml
 if DEV_TESTS
 	export PYTHONPATH=${abs_top_builddir}/${PCS_BUNDLED_DIR_LOCAL}/packages && \
