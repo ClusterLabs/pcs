@@ -1633,9 +1633,7 @@ class ParseErrorCorosyncConfMissingSectionNameBeforeOpeningBrace(
     Corosync config cannot be parsed due to a section name missing before {
     """
 
-    _code = (
-        codes.PARSE_ERROR_COROSYNC_CONF_MISSING_SECTION_NAME_BEFORE_OPENING_BRACE
-    )
+    _code = codes.PARSE_ERROR_COROSYNC_CONF_MISSING_SECTION_NAME_BEFORE_OPENING_BRACE
 
     @property
     def message(self) -> str:
@@ -1665,9 +1663,7 @@ class ParseErrorCorosyncConfExtraCharactersBeforeOrAfterClosingBrace(
     Corosync config cannot be parsed due to extra characters before or after }
     """
 
-    _code = (
-        codes.PARSE_ERROR_COROSYNC_CONF_EXTRA_CHARACTERS_BEFORE_OR_AFTER_CLOSING_BRACE
-    )
+    _code = codes.PARSE_ERROR_COROSYNC_CONF_EXTRA_CHARACTERS_BEFORE_OR_AFTER_CLOSING_BRACE
 
     @property
     def message(self) -> str:
