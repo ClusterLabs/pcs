@@ -287,7 +287,9 @@ class ResourcesConfigurationFacade:
     def get_group_dto(self, obj_id: str) -> Optional[CibResourceGroupDto]:
         return self._groups_map.get(obj_id)
 
-    def _get_any_resource_dto(self, obj_id: str) -> Optional[
+    def _get_any_resource_dto(
+        self, obj_id: str
+    ) -> Optional[
         Union[
             CibResourcePrimitiveDto,
             CibResourceGroupDto,
