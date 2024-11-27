@@ -1208,9 +1208,9 @@ class UpdateLinkAddressesUdp(UpdateLinkAddressesMixin, TestCase):
     def test_new_address_already_used(self):
         pcmk_nodes = [PacemakerNode("node-remote", "addr-remote")]
         new_addrs = {
-            self.coro_nodes[1]
-            .name: self.coro_nodes[0]
-            .addr_plain_for_link("0"),
+            self.coro_nodes[1].name: self.coro_nodes[0].addr_plain_for_link(
+                "0"
+            ),
             self.coro_nodes[2].name: pcmk_nodes[0].addr,
             self.coro_nodes[3].name: "new-addr",
         }
@@ -1322,12 +1322,12 @@ class UpdateLinkAddressesKnet(UpdateLinkAddressesMixin, TestCase):
     def test_new_address_already_used(self):
         pcmk_nodes = [PacemakerNode("node-remote", "addr-remote")]
         new_addrs = {
-            self.coro_nodes[0]
-            .name: self.coro_nodes[3]
-            .addr_plain_for_link("1"),
-            self.coro_nodes[1]
-            .name: self.coro_nodes[1]
-            .addr_plain_for_link("0"),
+            self.coro_nodes[0].name: self.coro_nodes[3].addr_plain_for_link(
+                "1"
+            ),
+            self.coro_nodes[1].name: self.coro_nodes[1].addr_plain_for_link(
+                "0"
+            ),
             self.coro_nodes[2].name: pcmk_nodes[0].addr,
         }
         patch_getaddrinfo(self, list(new_addrs.values()) + self.existing_addrs)
