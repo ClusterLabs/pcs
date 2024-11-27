@@ -99,7 +99,7 @@ def format_name_value_list(item_list: Sequence[tuple[str, str]]) -> list[str]:
 # For now, tuple[str, str, str] is sufficient. Feel free to change it if
 # needed, e.g. when values can be integers.
 def format_name_value_id_list(
-    item_list: Sequence[tuple[str, str, str]]
+    item_list: Sequence[tuple[str, str, str]],
 ) -> list[str]:
     """
     Turn 3-tuples to 'name=value (id: id))' strings with standard quoting
@@ -119,7 +119,7 @@ def pairs_to_text(pairs: Sequence[tuple[str, str]]) -> list[str]:
 
 
 def format_name_value_default_list(
-    item_list: Sequence[tuple[str, str, bool]]
+    item_list: Sequence[tuple[str, str, bool]],
 ) -> list[str]:
     """
     Turn 3-tuples to 'name=value' or 'name=value (default)' strings with

@@ -1088,7 +1088,7 @@ def _is_orphaned(resource: Union[PrimitiveStatusDto, GroupStatusDto]) -> bool:
 
 
 def _filter_clone_orphans(
-    instance_list: Sequence[Union[PrimitiveStatusDto, GroupStatusDto]]
+    instance_list: Sequence[Union[PrimitiveStatusDto, GroupStatusDto]],
 ) -> list[Union[PrimitiveStatusDto, GroupStatusDto]]:
     return [
         instance for instance in instance_list if not _is_orphaned(instance)

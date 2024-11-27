@@ -2120,7 +2120,7 @@ def ban(env, resource_id, node=None, master=False, lifetime=None, wait=False):
 
 
 def _resource_running_on_nodes(
-    resource_state: Dict[str, List[str]]
+    resource_state: Dict[str, List[str]],
 ) -> FrozenSet[str]:
     if resource_state:
         return frozenset(
@@ -2572,7 +2572,7 @@ def _find_resources_expand_tags(
 
 
 def get_required_cib_version_for_primitive(
-    op_list: Iterable[Mapping[str, str]]
+    op_list: Iterable[Mapping[str, str]],
 ) -> Optional[Version]:
     for op in op_list:
         if op.get("on-fail", "") == "demote":

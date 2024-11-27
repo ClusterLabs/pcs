@@ -122,7 +122,7 @@ def values_to_pairs(
 
 
 def pairs_to_values(
-    option_dict: Mapping[TypeOptionName, Union[TypeOptionValue, ValuePair]]
+    option_dict: Mapping[TypeOptionName, Union[TypeOptionValue, ValuePair]],
 ) -> TypeOptionRawMap:
     """
     Take a dict which has OptionValuePairs as its values and return dict with
@@ -142,7 +142,7 @@ def pairs_to_values(
 def option_value_normalization(
     normalization_map: Mapping[
         TypeOptionName, Callable[[TypeOptionValue], TypeOptionValue]
-    ]
+    ],
 ) -> TypeNormalizeFunc:
     """
     Return function that takes key and value and return the normalized form.
