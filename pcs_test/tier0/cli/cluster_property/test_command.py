@@ -563,9 +563,7 @@ class TestPrintClusterPropertiesDefinitionLegacy(TestCase):
         self.cluster_property = mock.MagicMock(
             spec_set=["get_cluster_properties_definition_legacy"]
         )
-        self.cluster_property.get_cluster_properties_definition_legacy.return_value = (
-            {}
-        )
+        self.cluster_property.get_cluster_properties_definition_legacy.return_value = {}
         self.lib.cluster_property = self.cluster_property
 
     def _call_cmd(self, argv, modifiers=None):
