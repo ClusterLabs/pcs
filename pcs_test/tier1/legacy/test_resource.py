@@ -117,9 +117,7 @@ class ResourceDescribe(TestCase, AssertPcsMixin):
                 interval=0s timeout=20s
               migrate_from:
                 interval=0s timeout=20s
-            """.format(
-                advanced_params if advanced else ""
-            )
+            """.format(advanced_params if advanced else "")
         )
 
     def test_success(self):

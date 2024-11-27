@@ -59,9 +59,7 @@ FIXTURE_RESOURCES = """
             provider="heartbeat" type="VirtualDomain"
         />
     </resources>
-""".format(
-    VIRTUAL_MACHINE_ID
-)
+""".format(VIRTUAL_MACHINE_ID)
 
 FIXTURE_META_ATTRIBUTES = """
     <meta_attributes id="virtual_machine_id-meta_attributes">
@@ -606,9 +604,7 @@ class NotLive(TestCase):
                 <primitive class="ocf" id="{0}"
                     provider="heartbeat" type="VirtualDomain"
                 />
-            """.format(
-                VIRTUAL_MACHINE_ID
-            ),
+            """.format(VIRTUAL_MACHINE_ID),
         )
         self.config.env.set_cib_data(
             str(cib_xml_man), cib_tempfile=self.tmp_file
