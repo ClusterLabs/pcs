@@ -40,7 +40,7 @@ def prepare_test_name(test_name):
 
 
 def tests_from_suite(
-    test_candidate: Union[unittest.TestCase, unittest.TestSuite]
+    test_candidate: Union[unittest.TestCase, unittest.TestSuite],
 ) -> list[str]:
     if isinstance(test_candidate, unittest.TestCase):
         return [test_candidate.id()]
