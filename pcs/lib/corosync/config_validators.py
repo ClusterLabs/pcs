@@ -912,9 +912,7 @@ def _update_link_options_knet(
         )
     ).validate(new_options) + validate.ValidatorAll(
         _get_link_options_validators_knet_relations()
-    ).validate(
-        after_update
-    )
+    ).validate(after_update)
 
 
 def add_link(

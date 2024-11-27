@@ -18,9 +18,7 @@ def fixture_resources_xml(resources_xml_list):
         <resources>
             {0}
         </resources>
-    """.format(
-        "\n".join(resources_xml_list)
-    )
+    """.format("\n".join(resources_xml_list))
 
 
 def fixture_primitive_xml(primitive_id):

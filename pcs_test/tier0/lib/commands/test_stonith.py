@@ -667,9 +667,7 @@ class Create(TestCase):
                     <node name="node1" id="1" cached="false"/>
                 </resource>
             </resources>
-            """.format(
-            id=instance_name, agent=agent_name
-        )
+            """.format(id=instance_name, agent=agent_name)
 
         self.config.runner.pcmk.load_agent(
             agent_name=f"stonith:{agent_name}",

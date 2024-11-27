@@ -93,9 +93,7 @@ class SetupTest(BoothMixin, TestCase):
                     site = 1.1.1.1
                     site = 2.2.2.2
                     arbitrator = 3.3.3.3
-                    """.format(
-                        self.booth_key_path
-                    )
+                    """.format(self.booth_key_path)
                 ),
                 config_file.read(),
             )
@@ -223,9 +221,7 @@ class AddTicketTest(BoothTest):
                     arbitrator = 3.3.3.3
                     ticket = "TicketA"
                       expire = 10
-                    """.format(
-                        self.booth_key_path
-                    )
+                    """.format(self.booth_key_path)
                 ),
                 config_file.read(),
             )
@@ -327,9 +323,7 @@ class DeleteRemoveTicketMixin:
                     site = 2.2.2.2
                     arbitrator = 3.3.3.3
                     ticket = "TicketA"
-                    """.format(
-                        self.booth_key_path
-                    )
+                    """.format(self.booth_key_path)
                 ),
                 config_file.read(),
             )
@@ -342,9 +336,7 @@ class DeleteRemoveTicketMixin:
                     site = 1.1.1.1
                     site = 2.2.2.2
                     arbitrator = 3.3.3.3
-                    """.format(
-                        self.booth_key_path
-                    )
+                    """.format(self.booth_key_path)
                 ),
                 config_file.read(),
             )
