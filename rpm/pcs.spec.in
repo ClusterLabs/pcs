@@ -87,12 +87,15 @@ BuildRequires: python%{python3_version}-setuptools >= 66.1
 BuildRequires: python%{python3_version}-wheel
 
 # for bundling dateutil
+%if "@cirpmworkarounds@" != "yes"
 BuildRequires: python%{python3_version}-setuptools_scm
-
+%endif
 
 # for tier0 tests
 BuildRequires: python%{python3_version}-cryptography
+%if "@cirpmworkarounds@" != "yes"
 BuildRequires: python%{python3_version}-pyparsing >= 3.0.0
+%endif
 # required to pass ./configure
 BuildRequires: python%{python3_version}-wheel
 BuildRequires: python%{python3_version}-lxml
@@ -102,7 +105,9 @@ BuildRequires: python%{python3_version}-lxml
 BuildRequires: libcurl-devel
 BuildRequires: openssl-devel
 %else
+%if "@cirpmworkarounds@" != "yes"
 BuildRequires: python%{python3_version}-pycurl
+%endif
 %endif
 
 # gcc for compiling custom rubygems
@@ -146,9 +151,13 @@ Requires: python%{python3_version}-lxml
 # pycurl is not distributed in rhel 10
 %if 0%{?rhel} >= 10
 %else
+%if "@cirpmworkarounds@" != "yes"
 Requires: python%{python3_version}-pycurl
 %endif
+%endif
+%if "@cirpmworkarounds@" != "yes"
 Requires: python%{python3_version}-pyparsing >= 3.0.0
+%endif
 
 # ruby and gems for pcsd
 Requires: ruby >= 3.1

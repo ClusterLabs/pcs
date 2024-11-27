@@ -432,6 +432,7 @@ $(SPEC): $(SPEC).in .version config.status stamps/download_python_deps stamps/do
 			-e "s#@date@#$$date#g" \
 			-e "s#@pcs_bundled_dir@#${PCS_BUNDLED_DIR_LOCAL}#g" \
 			-e "s#@pyversion@#${PYVERSION}#g" \
+			-e "s#@cirpmworkarounds@#${CIRPMWORKAROUNDS}#g" \
 		$(abs_srcdir)/$@.in > $@-t; \
 	else \
 		sed \
@@ -442,6 +443,7 @@ $(SPEC): $(SPEC).in .version config.status stamps/download_python_deps stamps/do
 			-e "s#@date@#$$date#g" \
 			-e "s#@pcs_bundled_dir@#${PCS_BUNDLED_DIR_LOCAL}#g" \
 			-e "s#@pyversion@#${PYVERSION}#g" \
+			-e "s#@cirpmworkarounds@#${CIRPMWORKAROUNDS}#g" \
 		$(abs_srcdir)/$@.in > $@-t; \
 	fi; \
 	if [ -z "$(CI_BRANCH)" ]; then \
