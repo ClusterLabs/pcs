@@ -6,7 +6,7 @@ default:
 .parallel:
   parallel:
     matrix:
-      - BASE_IMAGE_NAME: ["PcsRhel9CurrentRelease", "PcsRhel9Next", "PcsFedoraCurrentRelease"]
+      - BASE_IMAGE_NAME: ["PcsRhel9CurrentRelease", "PcsRhel9Next"]
 
 stages:
   - stage1
