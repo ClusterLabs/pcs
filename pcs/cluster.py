@@ -70,9 +70,8 @@ from pcs.common.types import (
 from pcs.lib import sbd as lib_sbd
 from pcs.lib.commands.remote_node import _destroy_pcmk_remote_env
 from pcs.lib.communication.nodes import CheckAuth
-from pcs.lib.communication.tools import RunRemotelyBase
+from pcs.lib.communication.tools import RunRemotelyBase, run_and_raise
 from pcs.lib.communication.tools import run as run_com_cmd
-from pcs.lib.communication.tools import run_and_raise
 from pcs.lib.corosync import qdevice_net
 from pcs.lib.corosync.live import (
     QuorumStatusException,
