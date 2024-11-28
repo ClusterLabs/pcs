@@ -55,23 +55,33 @@ typos:
     - make
     - make typos_check
 
-black:
+ruff_isort:
   extends: .parallel
   stage: stage1
   script:
     - python3 -m pip install --upgrade -r dev_requirements.txt
     - ./autogen.sh
-    - ./configure --enable-local-build --enable-dev-tests --enable-tests-only
-    - make black_check
+    - ./configure --enable-local-build --enable-dev-tests --enable-tests-only --enable-individual-bundling
+    - make ruff_isort_check
 
-isort:
+ruff_format:
   extends: .parallel
   stage: stage1
   script:
     - python3 -m pip install --upgrade -r dev_requirements.txt
     - ./autogen.sh
-    - ./configure --enable-local-build --enable-dev-tests --enable-tests-only
-    - make isort_check
+    - ./configure --enable-local-build --enable-dev-tests --enable-tests-only --enable-individual-bundling
+    - make ruff_format_check
+
+ruff_lint:
+  extends: .parallel
+  stage: stage1
+  script:
+    - python3 -m pip install --upgrade -r dev_requirements.txt
+    - ./autogen.sh
+    - ./configure --enable-local-build --enable-dev-tests --enable-tests-only --enable-individual-bundling
+    - make
+    - make ruff_lint
 
 pylint:
   extends: .parallel
