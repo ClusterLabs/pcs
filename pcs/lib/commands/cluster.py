@@ -71,16 +71,15 @@ from pcs.lib.communication.sbd import (
     EnableSbdService,
     SetSbdConfig,
 )
-from pcs.lib.communication.tools import AllSameDataMixin
+from pcs.lib.communication.tools import AllSameDataMixin, run_and_raise
 from pcs.lib.communication.tools import run as run_com
-from pcs.lib.communication.tools import run_and_raise
 from pcs.lib.corosync import (
     config_facade,
     config_parser,
     config_validators,
+    qdevice_net,
 )
 from pcs.lib.corosync import constants as corosync_constants
-from pcs.lib.corosync import qdevice_net
 from pcs.lib.env import (
     LibraryEnvironment,
     WaitType,

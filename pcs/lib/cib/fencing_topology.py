@@ -32,9 +32,9 @@ from pcs.common.reports import (
     ReportItemList,
     ReportItemSeverity,
     ReportProcessor,
+    has_errors,
 )
 from pcs.common.reports import codes as report_codes
-from pcs.common.reports import has_errors
 from pcs.common.reports.item import ReportItem
 from pcs.common.types import StringSequence
 from pcs.common.validate import is_integer

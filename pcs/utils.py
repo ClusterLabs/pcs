@@ -44,12 +44,10 @@ from pcs.cli.common.tools import (
     timeout_to_seconds_legacy,
 )
 from pcs.cli.file import metadata as cli_file_metadata
-from pcs.cli.reports import ReportProcessorToConsole
+from pcs.cli.reports import ReportProcessorToConsole, process_library_reports
 from pcs.cli.reports import output as reports_output
-from pcs.cli.reports import process_library_reports
-from pcs.common import const
+from pcs.common import const, file_type_codes
 from pcs.common import file as pcs_file
-from pcs.common import file_type_codes
 from pcs.common import pacemaker as common_pacemaker
 from pcs.common import pcs_pycurl as pycurl
 from pcs.common.host import PcsKnownHost
