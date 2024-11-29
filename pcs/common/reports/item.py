@@ -98,7 +98,7 @@ class ReportItemMessage(ImplementsToDto):
                 annotations = self.__class__.__annotations__
             except AttributeError as e:
                 raise AssertionError() from e
-            for attr_name in annotations.keys():
+            for attr_name in annotations:
                 if attr_name.startswith("_") or attr_name in ("message",):
                     continue
                 attr_val = getattr(self, attr_name)

@@ -696,13 +696,16 @@ def resource_create(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
             )
         )
 
-    if parts.group:
-        if parts.group.after_resource and parts.group.before_resource:
-            raise CmdLineInputError(
-                "you cannot specify both 'before' and 'after'"
-                if modifiers.get(FUTURE_OPTION)
-                else "you cannot specify both --before and --after"
-            )
+    if (
+        parts.group
+        and parts.group.after_resource
+        and parts.group.before_resource
+    ):
+        raise CmdLineInputError(
+            "you cannot specify both 'before' and 'after'"
+            if modifiers.get(FUTURE_OPTION)
+            else "you cannot specify both --before and --after"
+        )
 
     if parts.promotable and "promotable" in parts.promotable.meta_attrs:
         raise CmdLineInputError(
@@ -1301,15 +1304,14 @@ def resource_operation_add(
                     "%s is not a valid op option (use --force to override)"
                     % key
                 )
-            if key == "role":
-                if value not in const.PCMK_ROLES:
-                    utils.err(
-                        "role must be: {} (use --force to override)".format(
-                            format_list_custom_last_separator(
-                                const.PCMK_ROLES, " or "
-                            )
+            if key == "role" and value not in const.PCMK_ROLES:
+                utils.err(
+                    "role must be: {} (use --force to override)".format(
+                        format_list_custom_last_separator(
+                            const.PCMK_ROLES, " or "
                         )
                     )
+                )
 
     interval = None
     for key, val in op_properties:
@@ -1463,7 +1465,7 @@ def resource_operation_remove(res_id: str, argv: Argv) -> None:
     found_match = False
     for op in resource_el.getElementsByTagName("op"):
         temp_properties = []
-        for attr_name in op.attributes.keys():
+        for attr_name in op.attributes.keys():  # noqa: SIM118, attributes is not a dict
             if attr_name == "id":
                 continue
             temp_properties.append(
@@ -1890,22 +1892,21 @@ def _check_clone_incompatible_options_primitive(
                     e, reports.get_severity(reports.codes.FORCE, force)
                 )
             ]
-        if resource_agent_facade.metadata.ocf_version == "1.1":
-            if (
-                is_true(clone_meta_attrs.get("promotable", "0"))
-                and not resource_agent_facade.metadata.provides_promotability
-            ):
-                return [
-                    reports.ReportItem(
-                        reports.get_severity(reports.codes.FORCE, force),
-                        reports.messages.ResourceCloneIncompatibleMetaAttributes(
-                            "promotable",
-                            resource_agent_name.to_dto(),
-                            resource_id=primitive_id,
-                            group_id=group_id,
-                        ),
-                    )
-                ]
+        if resource_agent_facade.metadata.ocf_version == "1.1" and (
+            is_true(clone_meta_attrs.get("promotable", "0"))
+            and not resource_agent_facade.metadata.provides_promotability
+        ):
+            return [
+                reports.ReportItem(
+                    reports.get_severity(reports.codes.FORCE, force),
+                    reports.messages.ResourceCloneIncompatibleMetaAttributes(
+                        "promotable",
+                        resource_agent_name.to_dto(),
+                        resource_id=primitive_id,
+                        group_id=group_id,
+                    ),
+                )
+            ]
     return []
 
 
@@ -2281,10 +2282,12 @@ def resource_status(
                 has_resources = True
                 print(line)
                 continue
-            if not preg.match(line) and not stonith:
-                has_resources = True
-                print(line)
-            elif preg.match(line) and stonith:
+            if (
+                not preg.match(line)
+                and not stonith
+                or preg.match(line)
+                and stonith
+            ):
                 has_resources = True
                 print(line)
 

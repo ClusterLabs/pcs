@@ -125,8 +125,9 @@ def node_clear(
     if env.report_processor.report_list(report_list).has_errors:
         raise LibraryError()
 
-    if node_name in current_nodes:
-        if env.report_processor.report(
+    if (
+        node_name in current_nodes
+        and env.report_processor.report(
             ReportItem(
                 severity=reports.item.get_severity(
                     report_codes.FORCE,
@@ -134,8 +135,9 @@ def node_clear(
                 ),
                 message=reports.messages.NodeToClearIsStillInCluster(node_name),
             )
-        ).has_errors:
-            raise LibraryError()
+        ).has_errors
+    ):
+        raise LibraryError()
 
     remove_node(env.cmd_runner(), node_name)
 
@@ -1081,27 +1083,26 @@ def add_nodes(
     atb_has_to_be_enabled = sbd.atb_has_to_be_enabled(
         env.service_manager, corosync_conf, len(new_nodes)
     )
-    if atb_has_to_be_enabled:
-        if online_cluster_target_list:
-            com_cmd = CheckCorosyncOffline(
-                report_processor, allow_skip_offline=False
-            )
-            com_cmd.set_targets(online_cluster_target_list)
-            cluster_running_target_list = run_com(
-                env.get_node_communicator(), com_cmd
-            )
-            if cluster_running_target_list:
-                report_processor.report(
-                    ReportItem.error(
-                        reports.messages.CorosyncQuorumAtbWillBeEnabledDueToSbdClusterIsRunning()
-                    )
+    if atb_has_to_be_enabled and online_cluster_target_list:
+        com_cmd = CheckCorosyncOffline(
+            report_processor, allow_skip_offline=False
+        )
+        com_cmd.set_targets(online_cluster_target_list)
+        cluster_running_target_list = run_com(
+            env.get_node_communicator(), com_cmd
+        )
+        if cluster_running_target_list:
+            report_processor.report(
+                ReportItem.error(
+                    reports.messages.CorosyncQuorumAtbWillBeEnabledDueToSbdClusterIsRunning()
                 )
-            else:
-                report_processor.report(
-                    ReportItem.warning(
-                        reports.messages.CorosyncQuorumAtbWillBeEnabledDueToSbd()
-                    )
+            )
+        else:
+            report_processor.report(
+                ReportItem.warning(
+                    reports.messages.CorosyncQuorumAtbWillBeEnabledDueToSbd()
                 )
+            )
 
     # Validate new nodes. All new nodes have to be online.
     com_cmd = GetHostInfo(report_processor)
@@ -1440,8 +1441,9 @@ def _start_cluster(
     run_and_raise(
         communicator_factory.get_communicator(request_timeout=timeout), com_cmd
     )
-    if wait_timeout is not False:
-        if report_processor.report_list(
+    if (
+        wait_timeout is not False
+        and report_processor.report_list(
             _wait_for_pacemaker_to_start(
                 communicator_factory.get_communicator(),
                 report_processor,
@@ -1449,8 +1451,9 @@ def _start_cluster(
                 # wait_timeout is either None or a timeout
                 timeout=wait_timeout,
             )
-        ).has_errors:
-            raise LibraryError()
+        ).has_errors
+    ):
+        raise LibraryError()
 
 
 def _wait_for_pacemaker_to_start(
@@ -2209,13 +2212,15 @@ def corosync_authkey_change(
         env.get_node_communicator(), com_cmd
     )
 
-    if not online_cluster_target_list:
-        if report_processor.report(
+    if (
+        not online_cluster_target_list
+        and report_processor.report(
             ReportItem.error(
                 reports.messages.UnableToPerformOperationOnAnyNode()
             )
-        ).has_errors:
-            raise LibraryError()
+        ).has_errors
+    ):
+        raise LibraryError()
 
     com_cmd = DistributeFilesWithoutForces(
         env.report_processor,

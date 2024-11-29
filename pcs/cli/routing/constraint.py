@@ -24,10 +24,7 @@ from pcs.utils import exit_on_cmdline_input_error
 def constraint_location_cmd(
     lib: Any, argv: Argv, modifiers: InputModifiers
 ) -> None:
-    if not argv:
-        sub_cmd = "config"
-    else:
-        sub_cmd = argv.pop(0)
+    sub_cmd = "config" if not argv else argv.pop(0)
 
     try:
         if sub_cmd == "add":

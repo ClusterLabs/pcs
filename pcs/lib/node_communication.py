@@ -205,9 +205,11 @@ class NodeTargetLibFactory(NodeTargetFactory):
         report_list, target_list = self.get_target_list_with_reports(
             host_name_list, skip_non_existing, allow_skip
         )
-        if report_list:
-            if self._report_processor.report_list(report_list).has_errors:
-                raise LibraryError()
+        if (
+            report_list
+            and self._report_processor.report_list(report_list).has_errors
+        ):
+            raise LibraryError()
         return target_list
 
 

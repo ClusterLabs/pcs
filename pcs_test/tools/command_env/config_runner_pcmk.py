@@ -399,10 +399,7 @@ class PcmkShortcuts:
                 ).format(agent_name, os.path.realpath(__file__), rc(""))
             )
 
-        if env:
-            env = dict(env)
-        else:
-            env = {}
+        env = dict(env) if env else {}
         env["PATH"] = ":".join(
             [
                 settings.fence_agent_execs,
@@ -554,11 +551,7 @@ class PcmkShortcuts:
                 [
                     settings.crm_attribute_exec,
                     "--list-options",
-                    (
-                        name_to_list_options_type[agent_name]
-                        if agent_name in name_to_list_options_type
-                        else agent_name
-                    ),
+                    (name_to_list_options_type.get(agent_name, agent_name)),
                     "--output-as",
                     "xml",
                 ],

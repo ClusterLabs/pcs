@@ -98,10 +98,7 @@ class CrmRuleReturnCode(Enum):
 
 
 def constraint_order_cmd(lib, argv, modifiers):
-    if not argv:
-        sub_cmd = "config"
-    else:
-        sub_cmd = argv.pop(0)
+    sub_cmd = "config" if not argv else argv.pop(0)
 
     try:
         if sub_cmd == "set":
@@ -896,18 +893,12 @@ def location_prefer(
         if not skip_node_check:
             report_list += _verify_node_name(node, existing_nodes)
         if len(nodeconf_a) == 1:
-            if prefer:
-                score = "INFINITY"
-            else:
-                score = "-INFINITY"
+            score = "INFINITY" if prefer else "-INFINITY"
         else:
             score = nodeconf_a[1]
             _verify_score(score)
             if not prefer:
-                if score[0] == "-":
-                    score = score[1:]
-                else:
-                    score = "-" + score
+                score = score[1:] if score[0] == "-" else "-" + score
 
         parameters_list.append(
             [
@@ -1029,11 +1020,11 @@ def location_add(
             rsc_loc.getAttribute("node") == node
             and (
                 (
-                    RESOURCE_TYPE_RESOURCE == rsc_type
+                    rsc_type == RESOURCE_TYPE_RESOURCE
                     and rsc_loc.getAttribute("rsc") == rsc_value
                 )
                 or (
-                    RESOURCE_TYPE_REGEXP == rsc_type
+                    rsc_type == RESOURCE_TYPE_REGEXP
                     and rsc_loc.getAttribute("rsc-pattern") == rsc_value
                 )
             )

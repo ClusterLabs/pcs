@@ -785,21 +785,23 @@ def create_link_list_knet(
     for options in link_list:
         if "linknumber" in options:
             used_link_number[options["linknumber"]] += 1
-            if validate.is_integer(
-                options["linknumber"], 0, constants.LINKS_KNET_MAX - 1
+            if (
+                validate.is_integer(
+                    options["linknumber"], 0, constants.LINKS_KNET_MAX - 1
+                )
+                and int(options["linknumber"]) >= max_allowed_link_count
             ):
-                if int(options["linknumber"]) >= max_allowed_link_count:
-                    # first link is link0, hence >=
-                    report_items.append(
-                        # Links are defined by node addresses. Therefore we
-                        # update link options here, we do not create links.
-                        ReportItem.error(
-                            reports.messages.CorosyncLinkDoesNotExistCannotUpdate(
-                                options["linknumber"],
-                                [str(x) for x in range(max_allowed_link_count)],
-                            )
+                # first link is link0, hence >=
+                report_items.append(
+                    # Links are defined by node addresses. Therefore we
+                    # update link options here, we do not create links.
+                    ReportItem.error(
+                        reports.messages.CorosyncLinkDoesNotExistCannotUpdate(
+                            options["linknumber"],
+                            [str(x) for x in range(max_allowed_link_count)],
                         )
                     )
+                )
         report_items += _add_link_options_knet(options)
     non_unique_linknumbers = [
         number for number, count in used_link_number.items() if count > 1
@@ -1046,15 +1048,17 @@ def add_link(
 
     # Check link options
     report_items += _add_link_options_knet(link_options)
-    if "linknumber" in link_options:
-        if link_options["linknumber"] in linknumbers_existing:
-            report_items.append(
-                ReportItem.error(
-                    reports.messages.CorosyncLinkAlreadyExistsCannotAdd(
-                        link_options["linknumber"],
-                    )
+    if (
+        "linknumber" in link_options
+        and link_options["linknumber"] in linknumbers_existing
+    ):
+        report_items.append(
+            ReportItem.error(
+                reports.messages.CorosyncLinkAlreadyExistsCannotAdd(
+                    link_options["linknumber"],
                 )
             )
+        )
 
     return report_items
 

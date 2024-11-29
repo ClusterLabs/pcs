@@ -116,14 +116,12 @@ def strip_extras(text: str) -> str:
 
     ret += group_name.title() + ":\n"
     for line in lines:
-        if not in_commands:
-            if line == "Commands:":
-                in_commands = True
-                continue
-        if not in_examples:
-            if line == "Examples:":
-                in_examples = True
-                continue
+        if not in_commands and line == "Commands:":
+            in_commands = True
+            continue
+        if not in_examples and line == "Examples:":
+            in_examples = True
+            continue
         if not in_examples and not in_commands:
             continue
         if len(line) >= 4:
