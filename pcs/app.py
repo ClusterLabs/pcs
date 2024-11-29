@@ -186,7 +186,7 @@ def main(argv=None):
             break
 
     for opt, val in pcs_options:
-        if not opt in utils.pcs_options:
+        if opt not in utils.pcs_options:
             utils.pcs_options[opt] = val
         else:
             # If any options are a list then they've been entered twice which

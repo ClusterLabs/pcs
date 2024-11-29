@@ -18,7 +18,7 @@ from pcs.common.file import (
     RawFileError,
     RawFileInterface,
 )
-from pcs.common.file import RawFile as RealFile
+from pcs.common.file import RawFile as RealFile  # noqa: F401
 
 # TODO add logging (logger / debug reports ?)
 

@@ -1652,13 +1652,12 @@ def get_cib_dom(cib_xml=None):
     Commandline options:
       * -f - CIB file
     """
-    # pylint: disable=bare-except
     if cib_xml is None:
         cib_xml = get_cib()
     try:
         dom = parseString(cib_xml)
         return dom
-    except:
+    except xml.parsers.expat.ExpatError:
         return err("unable to get cib")
 
 
@@ -1667,13 +1666,12 @@ def get_cib_etree(cib_xml=None):
     Commandline options:
       * -f - CIB file
     """
-    # pylint: disable=bare-except
     if cib_xml is None:
         cib_xml = get_cib()
     try:
         root = ET.fromstring(cib_xml)
         return root
-    except:
+    except xml.etree.ElementTree.ParseError:
         return err("unable to get cib")
 
 
@@ -1941,7 +1939,6 @@ def getTerminalSize(fd=1):
 
     Commandline options: no options
     """
-    # pylint: disable=bare-except
     try:
         # pylint: disable=import-outside-toplevel
         import fcntl
@@ -1951,10 +1948,10 @@ def getTerminalSize(fd=1):
         hw = struct.unpack(
             str("hh"), fcntl.ioctl(fd, termios.TIOCGWINSZ, "1234")
         )
-    except:
+    except OSError:
         try:
             hw = (os.environ["LINES"], os.environ["COLUMNS"])
-        except:
+        except KeyError:
             hw = (25, 80)
     return hw
 

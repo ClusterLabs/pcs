@@ -660,7 +660,7 @@ class MissingNodeNamesInCorosync(TestCase):
         for index, node in enumerate(node_list):
             node_option_list = []
             node_option_list.append(("ring0_addr", node))
-            if not index in skip_name_idx_list:
+            if index not in skip_name_idx_list:
                 node_option_list.append(("name", node))
             node_option_list.append(("nodeid", str(index + 1)))
             result.append(node_option_list)
