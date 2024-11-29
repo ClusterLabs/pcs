@@ -222,7 +222,7 @@ def reset_element(
     keep_attrs = keep_attrs or []
     for child in list(element):
         element.remove(child)
-    for key in element.attrib.keys():
+    for key in element.attrib:
         if key not in keep_attrs:
             del element.attrib[key]
 

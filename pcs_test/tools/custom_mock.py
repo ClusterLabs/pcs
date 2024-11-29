@@ -1,3 +1,4 @@
+import contextlib
 import io
 import socket
 from dataclasses import dataclass
@@ -229,10 +230,8 @@ class MockCurl:
             self._opts[opt] = val
 
     def unsetopt(self, opt):
-        try:
+        with contextlib.suppress(KeyError):
             del self._opts[opt]
-        except KeyError:
-            pass
 
     def getinfo(self, opt):
         try:

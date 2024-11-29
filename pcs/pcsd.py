@@ -1,3 +1,4 @@
+import contextlib
 import json
 import os
 import sys
@@ -68,15 +69,13 @@ def pcsd_certkey_cmd(lib: Any, argv: Argv, modifiers: InputModifiers):
         )
 
     try:
-        try:
+        # If the file doesn't exist, we don't care
+        with contextlib.suppress(OSError):
             os.chmod(settings.pcsd_cert_location, 0o600)
-        except OSError:  # If the file doesn't exist, we don't care
-            pass
 
-        try:
+        # If the file doesn't exist, we don't care
+        with contextlib.suppress(OSError):
             os.chmod(settings.pcsd_key_location, 0o600)
-        except OSError:  # If the file doesn't exist, we don't care
-            pass
 
         with os.fdopen(
             os.open(

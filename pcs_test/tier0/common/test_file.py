@@ -486,7 +486,7 @@ class RawFileUpdate(TestCase):
             with raw_file.update() as io_buffer:
                 try:
                     # pylint: disable=consider-using-with
-                    file_obj = open(file_path)
+                    file_obj = open(file_path)  # noqa: SIM115
                 except OSError:
                     self.fail("Unable to open file")
                 with self.assertRaises(OSError):
@@ -503,10 +503,12 @@ class RawFileUpdate(TestCase):
     def test_open_error(self, mock_chown, mock_chmod):
         mock_open = mock.MagicMock()
         mock_open.side_effect = OSError()
-        with patch_file("open", mock_open):
-            with self.assertRaises(RawFileError):
-                with self.raw_file.update():
-                    self.fail("should not get here")
+        with (
+            patch_file("open", mock_open),
+            self.assertRaises(RawFileError),
+            self.raw_file.update(),
+        ):
+            self.fail("should not get here")
         mock_chmod.assert_not_called()
         mock_chown.assert_not_called()
 
@@ -516,10 +518,12 @@ class RawFileUpdate(TestCase):
         file_mock = mock_open.return_value.__enter__.return_value
         file_mock.fileno.return_value = self.fileno
         file_mock.read.side_effect = OSError()
-        with patch_file("open", mock_open):
-            with self.assertRaises(RawFileError):
-                with self.raw_file.update():
-                    self.fail("should not get here")
+        with (
+            patch_file("open", mock_open),
+            self.assertRaises(RawFileError),
+            self.raw_file.update(),
+        ):
+            self.fail("should not get here")
         mock_open.return_value.__enter__.return_value.read.assert_called_once_with()
         mock_flock.assert_called_once_with(self.fileno, fcntl.LOCK_EX)
         mock_chmod.assert_not_called()
@@ -534,16 +538,15 @@ class RawFileUpdate(TestCase):
         file_mock.fileno.return_value = self.fileno
         file_mock.read.return_value = orig_data
         file_mock.write.side_effect = OSError()
-        with patch_file("open", mock_open):
-            with self.assertRaises(RawFileError):
-                with self.raw_file.update() as io_buffer:
-                    self.assertEqual(
-                        orig_data.encode("utf-8"), io_buffer.getvalue()
-                    )
-                    io_buffer.seek(0)
-                    io_buffer.truncate()
-                    io_buffer.write(new_data.encode("utf-8"))
-                self.fail("should not get here")
+        with patch_file("open", mock_open), self.assertRaises(RawFileError):
+            with self.raw_file.update() as io_buffer:
+                self.assertEqual(
+                    orig_data.encode("utf-8"), io_buffer.getvalue()
+                )
+                io_buffer.seek(0)
+                io_buffer.truncate()
+                io_buffer.write(new_data.encode("utf-8"))
+            self.fail("should not get here")
         file_mock.read.assert_called_once_with()
         file_mock.write.assert_called_once_with(new_data)
         mock_flock.assert_called_once_with(self.fileno, fcntl.LOCK_EX)

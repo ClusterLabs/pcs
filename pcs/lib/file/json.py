@@ -38,25 +38,26 @@ class JsonParser(ParserInterface):
         force_code: Optional[reports.types.ForceCode],
         is_forced_or_warning: bool,
     ) -> reports.ReportItemList:
-        if isinstance(exception, JsonParserException):
-            if isinstance(exception.json_exception, json.JSONDecodeError):
-                return [
-                    reports.ReportItem(
-                        severity=reports.item.get_severity(
-                            force_code,
-                            is_forced_or_warning,
-                        ),
-                        message=reports.messages.ParseErrorJsonFile(
-                            file_type_code,
-                            exception.json_exception.lineno,
-                            exception.json_exception.colno,
-                            exception.json_exception.pos,
-                            exception.json_exception.msg,
-                            str(exception.json_exception),
-                            file_path=file_path,
-                        ),
-                    )
-                ]
+        if isinstance(exception, JsonParserException) and isinstance(
+            exception.json_exception, json.JSONDecodeError
+        ):
+            return [
+                reports.ReportItem(
+                    severity=reports.item.get_severity(
+                        force_code,
+                        is_forced_or_warning,
+                    ),
+                    message=reports.messages.ParseErrorJsonFile(
+                        file_type_code,
+                        exception.json_exception.lineno,
+                        exception.json_exception.colno,
+                        exception.json_exception.pos,
+                        exception.json_exception.msg,
+                        str(exception.json_exception),
+                        file_path=file_path,
+                    ),
+                )
+            ]
         raise exception
 
 

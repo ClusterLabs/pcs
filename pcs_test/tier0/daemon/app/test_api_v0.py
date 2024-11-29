@@ -117,7 +117,7 @@ class ApiV0Test(AsyncHTTPTestCase):
         response = super().fetch(
             path,
             raise_error,
-            method=("GET" if kwargs.get("body", None) is None else "POST"),
+            method=("GET" if kwargs.get("body") is None else "POST"),
             **kwargs,
         )
         self.assert_headers(response.headers)

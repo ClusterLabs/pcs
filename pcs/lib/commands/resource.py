@@ -548,23 +548,22 @@ def create_as_clone(
                         )
                     )
                 )
-    elif resource_agent.metadata.ocf_version == "1.1":
-        if (
-            is_true(clone_meta_options.get("promotable", "0"))
-            and not resource_agent.metadata.provides_promotability
-        ):
-            env.report_processor.report(
-                reports.ReportItem(
-                    reports.get_severity(
-                        reports.codes.FORCE,
-                        allow_incompatible_clone_meta_attributes,
-                    ),
-                    reports.messages.ResourceCloneIncompatibleMetaAttributes(
-                        "promotable",
-                        resource_agent.metadata.name.to_dto(),
-                    ),
-                )
+    elif resource_agent.metadata.ocf_version == "1.1" and (
+        is_true(clone_meta_options.get("promotable", "0"))
+        and not resource_agent.metadata.provides_promotability
+    ):
+        env.report_processor.report(
+            reports.ReportItem(
+                reports.get_severity(
+                    reports.codes.FORCE,
+                    allow_incompatible_clone_meta_attributes,
+                ),
+                reports.messages.ResourceCloneIncompatibleMetaAttributes(
+                    "promotable",
+                    resource_agent.metadata.name.to_dto(),
+                ),
             )
+        )
     if env.report_processor.has_errors:
         raise LibraryError()
 
@@ -1706,14 +1705,17 @@ def group_add(
         env.push_cib(wait_timeout=wait_timeout)
     except LibraryError as e:
         try:
-            if e.args and any(
-                isinstance(report.message, reports.messages.CibPushError)
-                for report in e.args
-            ):
-                if env.report_processor.report_list(
+            if (
+                e.args
+                and any(
+                    isinstance(report.message, reports.messages.CibPushError)
+                    for report in e.args
+                )
+                and env.report_processor.report_list(
                     empty_group_report_list
-                ).has_errors:
-                    raise LibraryError() from None
+                ).has_errors
+            ):
+                raise LibraryError() from None
         except AttributeError:
             # For accessing message inside something that's not a report
             pass

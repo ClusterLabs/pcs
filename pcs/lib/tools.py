@@ -140,7 +140,7 @@ def create_tmp_cib(
 ) -> IO[str]:
     try:
         # pylint: disable=consider-using-with
-        tmp_file = tempfile.NamedTemporaryFile(mode="w+", suffix=".pcs")
+        tmp_file = tempfile.NamedTemporaryFile(mode="w+", suffix=".pcs")  # noqa: SIM115
         if data is not None:
             tmp_file.write(data)
             tmp_file.flush()

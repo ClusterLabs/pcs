@@ -205,10 +205,7 @@ def main():
     if sys.argv[0] == "--sync":
         sys.argv.pop(0)
         run_fn = run_command_synchronously
-    if len(sys.argv) == 2:
-        payload = sys.argv[1]
-    else:
-        payload = sys.stdin.read()
+    payload = sys.argv[1] if len(sys.argv) == 2 else sys.stdin.read()
     token = os.environ.get("PCS_TOKEN", None)
     if token is None:
         token = get_token_for_localhost()

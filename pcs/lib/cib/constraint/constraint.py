@@ -22,9 +22,7 @@ from .common import validate_constrainable_elements
 
 
 def _validate_attrib_names(attrib_names, options):
-    invalid_names = [
-        name for name in options.keys() if name not in attrib_names
-    ]
+    invalid_names = [name for name in options if name not in attrib_names]
     if invalid_names:
         raise LibraryError(
             reports.ReportItem.error(
