@@ -140,7 +140,7 @@ class RawFileWrite(TestCase):
     def assert_success(self, mock_flock, raw_file, mode, can_overwrite):
         file_data = "some file data".encode("utf-8")
         written_data = file_data
-        if not "b" in mode:
+        if "b" not in mode:
             written_data = written_data.decode("utf-8")
         mock_open = mock.mock_open()
         with patch_file("open", mock_open):

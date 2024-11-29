@@ -1702,7 +1702,7 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
         self.env_assist.assert_reports(expected_reports)
 
     def test_get_ca_cert_error_communication(self):
-        dummy_tmp_file_mock_calls = self.fixture_config_success()
+        self.fixture_config_success()
         self.config.trim_before(
             "http.corosync.qdevice_net_get_ca_cert_requests"
         )
@@ -1744,7 +1744,7 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
         )
 
     def test_get_ca_cert_error_decode_certificate(self):
-        dummy_tmp_file_mock_calls = self.fixture_config_success()
+        self.fixture_config_success()
         self.config.trim_before(
             "http.corosync.qdevice_net_get_ca_cert_requests"
         )
@@ -1776,7 +1776,7 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
         )
 
     def test_error_client_setup(self):
-        dummy_tmp_file_mock_calls = self.fixture_config_success()
+        self.fixture_config_success()
         self.config.trim_before(
             "http.corosync.qdevice_net_client_setup_requests"
         )
@@ -1818,7 +1818,7 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
         )
 
     def test_generate_cert_request_error(self):
-        dummy_tmp_file_mock_calls = self.fixture_config_success()
+        self.fixture_config_success()
         self.config.trim_before("runner.corosync.qdevice_generate_cert")
         self.config.runner.corosync.qdevice_generate_cert(
             self.cluster_name,
@@ -1853,7 +1853,7 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
         )
 
     def test_sign_certificate_error_communication(self):
-        dummy_tmp_file_mock_calls = self.fixture_config_success()
+        self.fixture_config_success()
         self.config.trim_before(
             "http.corosync.qdevice_net_sign_certificate_requests"
         )
@@ -1894,7 +1894,7 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
         )
 
     def test_sign_certificate_error_decode_certificate(self):
-        dummy_tmp_file_mock_calls = self.fixture_config_success()
+        self.fixture_config_success()
         self.config.trim_before(
             "http.corosync.qdevice_net_sign_certificate_requests"
         )

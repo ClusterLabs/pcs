@@ -222,13 +222,13 @@ def generate_tree(usage_txt: str) -> CompletionTree:
         if re.match(r"^    \w", line):
             args = line.split()
             arg = args.pop(0)
-            if not arg in ret_hash:
+            if arg not in ret_hash:
                 ret_hash[arg] = {}
             cur_hash = ret_hash[arg]
             for arg in args:
                 if arg.startswith("[") or arg.startswith("<"):
                     break
-                if not arg in cur_hash:
+                if arg not in cur_hash:
                     cur_hash[arg] = {}
                 cur_hash = cur_hash[arg]
     return ret_hash

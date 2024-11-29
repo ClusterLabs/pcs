@@ -215,7 +215,7 @@ def _parse_quorum_status(quorum_status: str) -> QuorumStatus:
                 if line == "Membership information":
                     in_node_list = True
                     continue
-                if not ":" in line:
+                if ":" not in line:
                     continue
                 parts = [x.strip() for x in line.split(":", 1)]
                 if parts[0] == "Quorate":
