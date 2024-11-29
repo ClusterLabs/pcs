@@ -1361,7 +1361,7 @@ def cluster_destroy(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
         try:
             utils.disableServices()
         # pylint: disable=bare-except
-        except:
+        except:  # noqa: E722
             # previously errors were suppressed in here, let's keep it that way
             # for now
             pass
@@ -1371,7 +1371,7 @@ def cluster_destroy(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
                 lib_sbd.get_sbd_service_name(service_manager)
             )
         # pylint: disable=bare-except
-        except:
+        except:  # noqa: E722
             # it's not a big deal if sbd disable fails
             pass
 
@@ -1412,7 +1412,7 @@ def cluster_destroy(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
         try:
             qdevice_net.client_destroy()
         # pylint: disable=bare-except
-        except:
+        except:  # noqa: E722
             # errors from deleting other files are suppressed as well
             # we do not want to fail if qdevice was not set up
             pass
@@ -1533,7 +1533,7 @@ def send_local_configs(
                         "Unable to set pcsd configs on {0}".format(node_name)
                     )
         # pylint: disable=bare-except
-        except:
+        except:  # noqa: E722
             err_msgs.append("Unable to communicate with pcsd")
     else:
         err_msgs.append("Unable to set pcsd configs")

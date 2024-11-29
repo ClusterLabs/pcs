@@ -2,7 +2,7 @@
 # pylint: disable=wildcard-import
 # Wildcard import of deprecated report codes will prevent creation of a new
 # report with the code of deprecated report
-from .deprecated_codes import *
+from .deprecated_codes import *  # noqa: F403
 from .types import ForceCode as F
 from .types import MessageCode as M
 

@@ -647,7 +647,7 @@ class InputModifiers:
         checked -- option incompatible with any of incompatible options
         incompatible -- set of options incompatible with checked
         """
-        if not checked in self._defined_options:
+        if checked not in self._defined_options:
             return
         disallowed = self._defined_options & set(incompatible)
         if disallowed:

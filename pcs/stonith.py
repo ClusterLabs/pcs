@@ -443,7 +443,7 @@ def stonith_level_remove_cmd(
                 "use 'pcs stonith level delete | remove <level> "
                 "[target <target>] [stonith <stonith id>...]'."
             )
-            if not parse_args.ARG_TYPE_DELIMITER in argv[1] and "," in argv[1]:
+            if parse_args.ARG_TYPE_DELIMITER not in argv[1] and "," in argv[1]:
                 deprecation_warning(
                     "Delimiting stonith devices with ',' is deprecated and "
                     "will be removed. Please use a space to delimit stonith "

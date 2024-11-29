@@ -197,9 +197,11 @@ def _get_primitives(resource):
 
 
 def _get_resource_id_list(resource_list, predicate=None):
-    # pylint: disable=unnecessary-lambda-assignment
     if predicate is None:
-        predicate = lambda _: True
+
+        def predicate(_):
+            return True
+
     return [resource["id"] for resource in resource_list if predicate(resource)]
 
 

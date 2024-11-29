@@ -80,6 +80,10 @@ target-version = "py39"
 # ruff rules docs: https://docs.astral.sh/ruff/rules/
 # pylint rules in ruff: # https://github.com/astral-sh/ruff/issues/970
 select = [
+  "E4",
+  "E7",
+  "E9",
+  "F",
   "I",
   "PL", # pylint convention, error, refactoring, warning
 ]
@@ -108,6 +112,12 @@ section-order = ["future", "standard-library", "third-party", "first-party", "te
 
 [tool.ruff.lint.isort.sections]
 "tests" = ["pcs_test"]
+
+[tool.ruff.lint.per-file-ignores]
+# Ignore `F401` https://docs.astral.sh/ruff/rules/unused-import/
+"__init__.py" = ["F401"]
+"pcs/entry_points/*.py" = ["F401"]
+"pcs/lib/cib/rule/compat_pyparsing.py" = ["F401"]
 
 [tool.ruff.lint.pylint]
 max-args = 8

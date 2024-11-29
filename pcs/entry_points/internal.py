@@ -5,4 +5,4 @@ from .common import add_bundled_packages_to_path
 
 add_bundled_packages_to_path()
 
-from pcs.pcs_internal import main
+from pcs.pcs_internal import main  # noqa: E402
