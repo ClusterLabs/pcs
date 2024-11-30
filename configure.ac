@@ -196,6 +196,17 @@ AC_ARG_WITH([pcsd-default-cipherlist],
 	[PCSD_DEFAULT_CIPHERLIST="DEFAULT:!RC4:!3DES:@STRENGTH"])
 AC_SUBST([PCSD_DEFAULT_CIPHERLIST])
 
+AC_ARG_WITH([python-version],
+	[AS_HELP_STRING([--with-python-version=X.Y], [Set an alternative Python interpreter version for generated rpm.])],
+	[PYVERSION="$withval"],
+	[PYVERSION=""])
+AC_SUBST([PYVERSION])
+
+AC_ARG_ENABLE([ci-rpm-workarounds],
+	      [AS_HELP_STRING([--enable-ci-rpm-workarounds], [NOT TO BE USED UNLESS YOUR NAME IS JENKINS])],
+	      [CIRPMWORKAROUNDS="yes"], [CIRPMWORKAROUNDS=""])
+AC_SUBST([CIRPMWORKAROUNDS])
+
 if test "x$cache_only" != "xyes"; then
 	AC_CHECK_PROGS([WGET], [wget])
 	if test "x$WGET" = "x"; then
@@ -302,6 +313,9 @@ mkdir -p $ac_pwd/stamps
 mkdir -p $ac_pwd/rpm/
 rm -rf $ac_pwd/rpm/requirements.txt
 touch $ac_pwd/rpm/requirements.txt
+if test "x$CIRPMWORKAROUNDS" = "xyes"; then
+	echo "pyparsing>=3.0.0" >> $ac_pwd/rpm/requirements.txt
+fi
 
 # PCS_BUNDLE_PYMOD([module], [version])
 AC_DEFUN([PCS_BUNDLE_PYMOD], [
