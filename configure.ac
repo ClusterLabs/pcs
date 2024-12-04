@@ -396,12 +396,15 @@ AC_SUBST([PCSD_BUNDLED_DIR_ROOT_LOCAL])
 AC_SUBST([PCSD_BUNDLED_DIR_LOCAL])
 AC_SUBST([PCSD_BUNDLED_CACHE_DIR])
 
-rm -rf Gemfile Gemfile.lock
-echo "source 'https://rubygems.org'" > Gemfile
-echo "" >> Gemfile
+rm -rf Gemfile.lock
+if ! test -e Gemfile; then
+	echo "source 'https://rubygems.org'" > Gemfile
+	echo "" >> Gemfile
+fi
 
 # PCS_BUNDLE_GEM([module])
 AC_DEFUN([PCS_BUNDLE_GEM], [
+	grep "$1" Gemfile || echo "gem '$1'" >> Gemfile
 	echo "gem '$1'" >> Gemfile
 	if test "x$cache_only" = "xyes"; then
 		src=`ls $PCSD_BUNDLED_CACHE_DIR/$1-*`
