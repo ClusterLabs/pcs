@@ -1322,10 +1322,24 @@ class CorosyncAddressIpVersionWrongForLink(NameBuildTest):
 
 
 class CorosyncLinkNumberDuplication(NameBuildTest):
+    _template = "Link numbers must be unique, duplicate link numbers: {values}"
+
     def test_message(self):
         self.assert_message_from_report(
-            "Link numbers must be unique, duplicate link numbers: '1', '3'",
+            self._template.format(values="'1', '3'"),
             reports.CorosyncLinkNumberDuplication(["1", "3"]),
+        )
+
+    def test_sort(self):
+        self.assert_message_from_report(
+            self._template.format(values="'1', '3'"),
+            reports.CorosyncLinkNumberDuplication(["3", "1"]),
+        )
+
+    def test_sort_not_int(self):
+        self.assert_message_from_report(
+            self._template.format(values="'-5', 'x3', '1', '3'"),
+            reports.CorosyncLinkNumberDuplication(["3", "1", "x3", "-5"]),
         )
 
 

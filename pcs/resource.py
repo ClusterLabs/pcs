@@ -801,7 +801,7 @@ def _parse_resource_move_ban(
             if lifetime:
                 raise CmdLineInputError()
             lifetime = arg.split("=")[1]
-            if lifetime and lifetime[0].isdigit():
+            if lifetime and lifetime[0] in list("0123456789"):
                 lifetime = "P" + lifetime
         elif not node:
             node = arg

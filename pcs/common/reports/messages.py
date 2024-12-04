@@ -111,7 +111,10 @@ def _format_booth_default(value: Optional[str], template: str) -> str:
 
 
 def _key_numeric(item: str) -> Tuple[int, str]:
-    return (int(item), item) if item.isdigit() else (-1, item)
+    try:
+        return int(item), item
+    except ValueError:
+        return -1, item
 
 
 _add_remove_container_translation = {
@@ -1958,7 +1961,9 @@ class CorosyncLinkNumberDuplication(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        nums = format_list(sorted(self.link_number_list, key=_key_numeric))
+        nums = format_list_dont_sort(
+            sorted(self.link_number_list, key=_key_numeric)
+        )
         return f"Link numbers must be unique, duplicate link numbers: {nums}"
 
 
