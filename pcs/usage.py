@@ -1670,6 +1670,10 @@ Commands:
     status
         View current cluster status (an alias of 'pcs status cluster').
 
+    rename <new cluster name>
+        Rename configured cluster. The cluster has to be stopped to complete
+        this operation.
+
     sync
         Sync cluster configuration (files which are supported by all
         subcommands of this command) to all cluster nodes.

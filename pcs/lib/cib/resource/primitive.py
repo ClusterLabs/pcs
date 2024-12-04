@@ -96,7 +96,7 @@ def primitive_element_to_dto(
     )
 
 
-def _find_primitives_by_agent(
+def find_primitives_by_agent(
     resources_section: _Element, agent_name: ResourceAgentName
 ) -> List[_Element]:
     """
@@ -308,7 +308,7 @@ def _validate_unique_instance_attributes(
         return []
 
     report_list = []
-    same_agent_resources = _find_primitives_by_agent(
+    same_agent_resources = find_primitives_by_agent(
         resources_section, resource_agent.name
     )
 

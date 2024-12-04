@@ -105,6 +105,19 @@ class ConfigFacade(FacadeInterface):
     def get_cluster_name(self) -> str:
         return self._get_option_value("totem", "cluster_name", "")
 
+    def set_cluster_name(self, new_name: str) -> None:
+        """
+        Updates or adds cluster name
+
+        new_name - new name for the cluster
+        """
+        self._need_stopped_cluster = True
+        totem_section_list = self.__ensure_section(self.config, "totem")
+        self.__set_section_options(
+            totem_section_list, {"cluster_name": new_name}
+        )
+        self.__remove_empty_sections(self.config)
+
     def get_cluster_uuid(self) -> Optional[str]:
         return self._get_option_value("totem", "cluster_uuid")
 

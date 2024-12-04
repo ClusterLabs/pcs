@@ -249,6 +249,14 @@
         Check cluster configuration for errors.
       </description>
     </capability>
+    <capability id="cluster.rename" in-pcs="1" in-pcsd="1">
+      <description>
+        Rename configured cluster. The cluster has to be stopped
+
+        pcs commands: cluster rename
+        API v2: cluster.rename
+      </description>
+    </capability>
 
 
 

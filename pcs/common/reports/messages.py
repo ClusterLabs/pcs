@@ -8160,3 +8160,37 @@ class CannotCreateDefaultClusterPropertySet(ReportItemMessage):
             f"'{self.nvset_id}' already exists. Find elements with the ID and "
             "remove them from cluster configuration."
         )
+
+
+@dataclass(frozen=True)
+class DlmClusterRenameNeeded(ReportItemMessage):
+    """
+    Dlm cluster name in volume group metadata must be updated
+    """
+
+    _code = codes.DLM_CLUSTER_RENAME_NEEDED
+
+    @property
+    def message(self) -> str:
+        return (
+            "The DLM cluster name in the shared volume groups metadata must be "
+            "updated to reflect the name of the cluster so that the volume "
+            "groups can start"
+        )
+
+
+@dataclass(frozen=True)
+class Gfs2LockTableRenameNeeded(ReportItemMessage):
+    """
+    Lock table name on each GFS2 filesystem must be updated
+    """
+
+    _code = codes.GFS2_LOCK_TABLE_RENAME_NEEDED
+
+    @property
+    def message(self) -> str:
+        return (
+            "The lock table name on each GFS2 filesystem must be updated to "
+            "reflect the name of the cluster so that the filesystems can be "
+            "mounted"
+        )

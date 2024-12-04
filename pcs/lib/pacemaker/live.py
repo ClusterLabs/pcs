@@ -150,17 +150,42 @@ def has_cib_xml() -> bool:
 
 
 def get_cib_xml_cmd_results(
-    runner: CommandRunner, scope: Optional[str] = None
+    runner: CommandRunner,
+    scope: Optional[str] = None,
+    env_extend: Optional[Mapping[str, str]] = None,
 ) -> tuple[str, str, int]:
     command = [settings.cibadmin_exec, "--local", "--query"]
     if scope:
         command.append(f"--scope={scope}")
-    stdout, stderr, returncode = runner.run(command)
+    stdout, stderr, returncode = runner.run(command, env_extend=env_extend)
     return stdout, stderr, returncode
 
 
 def get_cib_xml(runner: CommandRunner, scope: Optional[str] = None) -> str:
-    stdout, stderr, retval = get_cib_xml_cmd_results(runner, scope)
+    return _get_cib_xml_common(*get_cib_xml_cmd_results(runner, scope), scope)
+
+
+def get_cib_direct_xml(
+    runner: CommandRunner, scope: Optional[str] = None
+) -> str:
+    """
+    Return cib directly from filesystem. Useful when working with cib on
+    stopped cluster
+    """
+
+    return _get_cib_xml_common(
+        *get_cib_xml_cmd_results(
+            runner,
+            scope,
+            {"CIB_file": os.path.join(settings.cib_dir, "cib.xml")},
+        ),
+        scope,
+    )
+
+
+def _get_cib_xml_common(
+    stdout: str, stderr: str, retval: int, scope: Optional[str] = None
+) -> str:
     if retval != 0:
         if retval == __EXITCODE_CIB_SCOPE_VALID_BUT_NOT_PRESENT and scope:
             raise LibraryError(

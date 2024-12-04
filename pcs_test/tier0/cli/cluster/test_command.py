@@ -71,3 +71,51 @@ class NodeRemoveRemote(TestCase):
         self.remote_node.node_remove_remote.assert_called_once_with(
             "A", [report_codes.FORCE, report_codes.SKIP_OFFLINE_NODES]
         )
+
+
+class ClusterRename(TestCase):
+    def setUp(self):
+        self.lib = mock.Mock(spec_set=["cluster"])
+        self.lib.cluster = mock.Mock(spec_set=["rename"])
+
+    def test_no_args(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            command.cluster_rename(self.lib, [], dict_to_modifiers({}))
+        self.assertIsNone(cm.exception.message)
+        self.lib.cluster.rename.assert_not_called()
+
+    def test_too_many_args(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            command.cluster_rename(self.lib, ["A", "B"], dict_to_modifiers({}))
+        self.assertIsNone(cm.exception.message)
+        self.lib.cluster.rename.assert_not_called()
+
+    def test_success(self):
+        command.cluster_rename(self.lib, ["A"], dict_to_modifiers({}))
+        self.lib.cluster.rename.assert_called_once_with("A", [])
+
+    def test_force(self):
+        command.cluster_rename(
+            self.lib, ["A"], dict_to_modifiers({"force": True})
+        )
+        self.lib.cluster.rename.assert_called_once_with(
+            "A", [report_codes.FORCE]
+        )
+
+    def test_skip_offline(self):
+        command.cluster_rename(
+            self.lib, ["A"], dict_to_modifiers({"skip-offline": True})
+        )
+        self.lib.cluster.rename.assert_called_once_with(
+            "A", [report_codes.SKIP_OFFLINE_NODES]
+        )
+
+    def test_all_flags(self):
+        command.cluster_rename(
+            self.lib,
+            ["A"],
+            dict_to_modifiers({"force": True, "skip-offline": True}),
+        )
+        self.lib.cluster.rename.assert_called_once_with(
+            "A", [report_codes.FORCE, report_codes.SKIP_OFFLINE_NODES]
+        )
