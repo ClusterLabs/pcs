@@ -21,6 +21,7 @@ class RunnerConfig:
     def place(
         self,
         command,
+        *,
         name="",
         stdout="",
         stderr="",

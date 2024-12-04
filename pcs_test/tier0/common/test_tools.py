@@ -1,27 +1,6 @@
-import time
 from unittest import TestCase
 
 from pcs.common import tools
-
-
-class RunParallelTestCase(TestCase):
-    def test_run_all(self):
-        data_list = [([i], {}) for i in range(5)]
-        out_list = []
-        tools.run_parallel(out_list.append, data_list)
-        self.assertEqual(sorted(out_list), list(range(5)))
-
-    def test_parallelism(self):
-        timeout = 5
-        data_list = [[[i + 1], {}] for i in range(timeout)]
-        start_time = time.time()
-        # this should last for least timeout seconds, but less than sum of all
-        # times
-        tools.run_parallel(time.sleep, data_list)
-        finish_time = time.time()
-        elapsed_time = finish_time - start_time
-        self.assertTrue(elapsed_time > timeout)
-        self.assertTrue(elapsed_time < sum(i + 1 for i in range(timeout)))
 
 
 class VersionTest(TestCase):

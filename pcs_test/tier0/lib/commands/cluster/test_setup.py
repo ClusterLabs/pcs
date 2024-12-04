@@ -123,6 +123,7 @@ def options_fixture(options, template=OPTION_TEMPLATE):
 
 def corosync_conf_fixture(
     node_addrs,
+    *,
     transport_type="knet",
     link_list=None,
     links_numbers=None,
@@ -751,7 +752,7 @@ class Setup2NodeSuccessMinimal(TestCase):
             )
             .http.files.remove_files(self.node_list, pcsd_settings=True)
             .http.files.put_files(
-                self.node_list,
+                node_labels=self.node_list,
                 pcmk_authkey=RANDOM_KEY,
                 corosync_authkey=RANDOM_KEY,
             )
@@ -763,7 +764,7 @@ class Setup2NodeSuccessMinimal(TestCase):
             quorum_options=dict(two_node="1"),
         )
         self.config.http.files.put_files(
-            self.node_list,
+            node_labels=self.node_list,
             corosync_conf=corosync_conf,
             name="distribute_corosync_conf",
         )
@@ -782,7 +783,7 @@ class Setup2NodeSuccessMinimal(TestCase):
             quorum_options=dict(auto_tie_breaker="1"),
         )
         self.config.http.files.put_files(
-            self.node_list,
+            node_labels=self.node_list,
             corosync_conf=corosync_conf,
             name="distribute_corosync_conf",
         )
@@ -2281,12 +2282,12 @@ class SetupWithWait(TestCase):
             .http.host.update_known_hosts(NODE_LIST, to_add_hosts=NODE_LIST)
             .http.files.remove_files(NODE_LIST, pcsd_settings=True)
             .http.files.put_files(
-                NODE_LIST,
+                node_labels=NODE_LIST,
                 pcmk_authkey=RANDOM_KEY,
                 corosync_authkey=RANDOM_KEY,
             )
             .http.files.put_files(
-                NODE_LIST,
+                node_labels=NODE_LIST,
                 corosync_conf=corosync_conf_fixture(
                     {node: [node] for node in NODE_LIST}
                 ),

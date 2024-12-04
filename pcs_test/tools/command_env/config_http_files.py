@@ -12,6 +12,7 @@ class FilesShortcuts:
 
     def put_files(
         self,
+        *,
         node_labels=None,
         pcmk_authkey=None,
         corosync_authkey=None,

@@ -755,6 +755,7 @@ def location_config_cmd(
     """
     modifiers.ensure_only_supported("-f", "--output-format", "--full", "--all")
     filter_type: Optional[str] = None
+    filter_items: parse_args.Argv = []
     if argv:
         filter_type, *filter_items = argv
         allowed_types = ("resources", "nodes")
@@ -874,6 +875,7 @@ def location_prefer(
         raise CmdLineInputError()
 
     skip_node_check = False
+    existing_nodes: list[str] = []
     if modifiers.is_specified("-f") or modifiers.get("--force"):
         skip_node_check = True
         warn(LOCATION_NODE_VALIDATION_SKIP_MSG)
@@ -1107,12 +1109,11 @@ def constraint_rm(
 
     c_id = argv.pop(0)
     elementFound = False
-
+    dom = None
+    use_cibadmin = False
     if not constraintsElement:
         (dom, constraintsElement) = getCurrentConstraints(passed_dom)
         use_cibadmin = True
-    else:
-        use_cibadmin = False
 
     for co in constraintsElement.childNodes[:]:
         if co.nodeType != xml.dom.Node.ELEMENT_NODE:

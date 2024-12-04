@@ -488,6 +488,7 @@ class PcsConfigTagsTest(TestTagMixin, TestCase):
 
     def fixture_expected_config(
         self,
+        *,
         constraints=empty_constraints,
         pacemaker_nodes=empty_pacemaker_nodes,
         resources=empty_resources,

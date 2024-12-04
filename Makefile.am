@@ -10,7 +10,6 @@ EXTRA_DIST		= \
 			  MANIFEST.in \
 			  mypy.ini \
 			  pcs.pc.in \
-			  pylintrc \
 			  rpm/pcs.spec.in \
 			  scripts/pcsd.sh.in \
 			  .version
@@ -234,7 +233,7 @@ else
 pylint_options =
 endif
 	export PYTHONPATH=${abs_top_builddir}/${PCS_BUNDLED_DIR_LOCAL}/packages && \
-		$(TIME) $(PYTHON) -m pylint --rcfile pylintrc --persistent=n --reports=n --score=n --disable similarities ${pylint_options} ${PCS_PYTHON_PACKAGES}
+		$(TIME) $(PYTHON) -m pylint --rcfile pyproject.toml ${pylint_options} ${PCS_PYTHON_PACKAGES}
 endif
 
 isort_check: pyproject.toml

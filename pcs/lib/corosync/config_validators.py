@@ -1155,6 +1155,7 @@ def update_link(
     # pylint: disable=too-many-arguments
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-locals
+    # pylint: disable=too-many-positional-arguments
     """
     Validate changing an existing link
 

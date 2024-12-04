@@ -149,6 +149,7 @@ def enable_sbd(
     sbd_options,
     default_device_list=None,
     node_device_dict=None,
+    *,
     allow_unknown_opts=False,
     ignore_offline_nodes=False,
     no_watchdog_validation=False,
