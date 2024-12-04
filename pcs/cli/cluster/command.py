@@ -201,3 +201,21 @@ def node_clear(lib: Any, arg_list: Argv, modifiers: InputModifiers) -> None:
     lib.cluster.node_clear(
         arg_list[0], allow_clear_cluster_node=modifiers.get("--force")
     )
+
+
+def cluster_rename(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
+    """
+    Options:
+      * --force - allow using cluster name that does not work with gfs2
+      * --skip-offline - skip offline nodes
+    """
+    modifiers.ensure_only_supported("--force", "--skip-offline")
+    if len(argv) != 1:
+        raise CmdLineInputError()
+    force_flags = []
+    if modifiers.get("--force"):
+        force_flags.append(report_codes.FORCE)
+    if modifiers.get("--skip-offline"):
+        force_flags.append(report_codes.SKIP_OFFLINE_NODES)
+
+    lib.cluster.rename(argv[0], force_flags)

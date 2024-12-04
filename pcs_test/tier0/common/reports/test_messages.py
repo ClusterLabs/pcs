@@ -6064,13 +6064,13 @@ class ClusterOptionsMetadataNotSupported(NameBuildTest):
 
 
 class StoppingResourcesBeforeDeleting(NameBuildTest):
-    def test_one_resource(self) -> str:
+    def test_one_resource(self):
         self.assert_message_from_report(
             "Stopping resource 'resourceId' before deleting",
             reports.StoppingResourcesBeforeDeleting(["resourceId"]),
         )
 
-    def test_multiple_resources(self) -> str:
+    def test_multiple_resources(self):
         self.assert_message_from_report(
             "Stopping resources 'resourceId1', 'resourceId2' before deleting",
             reports.StoppingResourcesBeforeDeleting(
@@ -6080,7 +6080,7 @@ class StoppingResourcesBeforeDeleting(NameBuildTest):
 
 
 class StoppingResourcesBeforeDeletingSkipped(NameBuildTest):
-    def test_success(self) -> str:
+    def test_success(self):
         self.assert_message_from_report(
             (
                 "Resources are not going to be stopped before deletion, this "
@@ -6091,16 +6091,40 @@ class StoppingResourcesBeforeDeletingSkipped(NameBuildTest):
 
 
 class CannotStopResourcesBeforeDeleting(NameBuildTest):
-    def test_one_resource(self) -> str:
+    def test_one_resource(self):
         self.assert_message_from_report(
             "Cannot stop resource 'resourceId' before deleting",
             reports.CannotStopResourcesBeforeDeleting(["resourceId"]),
         )
 
-    def test_multiple_resources(self) -> str:
+    def test_multiple_resources(self):
         self.assert_message_from_report(
             "Cannot stop resources 'resourceId1', 'resourceId2' before deleting",
             reports.CannotStopResourcesBeforeDeleting(
                 ["resourceId1", "resourceId2"]
             ),
+        )
+
+
+class DlmClusterRenameNeeded(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "The DLM cluster name in the shared volume groups metadata "
+                "must be updated to reflect the name of the cluster so that "
+                "the volume groups can start"
+            ),
+            reports.DlmClusterRenameNeeded(),
+        )
+
+
+class Gfs2LockTableRenameNeeded(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "The lock table name on each GFS2 filesystem must be updated "
+                "to reflect the name of the cluster so that the filesystems "
+                "can be mounted"
+            ),
+            reports.Gfs2LockTableRenameNeeded(),
         )

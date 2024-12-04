@@ -145,6 +145,10 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
         cmd=cluster.remove_nodes,
         required_permission=p.FULL,
     ),
+    "cluster.rename": _Cmd(
+        cmd=cluster.rename,
+        required_permission=p.WRITE,
+    ),
     "cluster.setup": _Cmd(
         cmd=cluster.setup,
         required_permission=p.SUPERUSER,

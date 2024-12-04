@@ -12,6 +12,8 @@ from typing import (
     cast,
 )
 
+from lxml.etree import _Element
+
 from pcs import settings
 from pcs.common import (
     file_type_codes,
@@ -43,8 +45,13 @@ from pcs.lib import (
 )
 from pcs.lib.booth import sync as booth_sync
 from pcs.lib.cib import fencing_topology
+from pcs.lib.cib.nvpair_multi import (
+    NVSET_INSTANCE,
+    find_nvsets,
+)
 from pcs.lib.cib.resource.bundle import verify as verify_bundles
 from pcs.lib.cib.resource.guest_node import find_node_list as get_guest_nodes
+from pcs.lib.cib.resource.primitive import find_primitives_by_agent
 from pcs.lib.cib.resource.remote_node import find_node_list as get_remote_nodes
 from pcs.lib.cib.tools import get_resources
 from pcs.lib.communication import cluster
@@ -90,13 +97,16 @@ from pcs.lib.interface.config import ParserErrorException
 from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.pacemaker.live import (
     get_cib,
+    get_cib_direct_xml,
     get_cib_xml,
     get_cib_xml_cmd_results,
+    has_cib_xml,
     remove_node,
 )
 from pcs.lib.pacemaker.live import verify as verify_cmd
 from pcs.lib.pacemaker.state import ClusterState
 from pcs.lib.pacemaker.values import get_valid_timeout_seconds
+from pcs.lib.resource_agent.types import ResourceAgentName
 from pcs.lib.tools import (
     environment_file_to_dict,
     generate_binary_key,
@@ -2320,3 +2330,68 @@ def wait_for_pcmk_idle(env: LibraryEnvironment, wait_value: WaitType) -> None:
     """
     timeout = env.ensure_wait_satisfiable(wait_value)
     env.wait_for_idle(timeout)
+
+
+def _warn_dlm_resources(resources: _Element) -> reports.ReportItemList:
+    if find_primitives_by_agent(
+        resources, ResourceAgentName("ocf", "pacemaker", "controld")
+    ):
+        return [
+            reports.ReportItem.warning(
+                reports.messages.DlmClusterRenameNeeded()
+            )
+        ]
+    return []
+
+
+def _warn_gfs2_resources(resources: _Element) -> reports.ReportItemList:
+    for resource in find_primitives_by_agent(
+        resources, ResourceAgentName("ocf", "heartbeat", "Filesystem")
+    ):
+        for nvset in find_nvsets(resource, NVSET_INSTANCE):
+            if any(
+                (
+                    nvpair.get("name") == "fstype"
+                    and nvpair.get("value") == "gfs2"
+                )
+                for nvpair in nvset
+            ):
+                return [
+                    reports.ReportItem.warning(
+                        reports.messages.Gfs2LockTableRenameNeeded()
+                    )
+                ]
+    return []
+
+
+def rename(
+    env: LibraryEnvironment,
+    new_name: str,
+    force_flags: Collection[reports.types.ForceCode] = (),
+) -> None:
+    """
+    Change the name of the local cluster
+
+    new_name -- new name for the cluster
+    """
+    _ensure_live_env(env)
+
+    if env.report_processor.report_list(
+        config_validators.rename_cluster(
+            new_name, force_cluster_name=reports.codes.FORCE in force_flags
+        )
+    ).has_errors:
+        raise LibraryError()
+
+    if has_cib_xml():
+        cib = get_cib(get_cib_direct_xml(env.cmd_runner()))
+        resources = get_resources(cib)
+        env.report_processor.report_list(_warn_dlm_resources(resources))
+        env.report_processor.report_list(_warn_gfs2_resources(resources))
+
+    corosync_conf = env.get_corosync_conf()
+    corosync_conf.set_cluster_name(new_name)
+    env.push_corosync_conf(
+        corosync_conf,
+        skip_offline_nodes=reports.codes.SKIP_OFFLINE_NODES in force_flags,
+    )

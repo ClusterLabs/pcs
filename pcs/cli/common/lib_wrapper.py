@@ -207,6 +207,7 @@ def load_module(env, middleware_factory, name):  # noqa: PLR0911, PLR0912
                 "remove_links": cluster.remove_links,
                 "remove_nodes": cluster.remove_nodes,
                 "remove_nodes_from_cib": cluster.remove_nodes_from_cib,
+                "rename": cluster.rename,
                 "setup": cluster.setup,
                 "setup_local": cluster.setup_local,
                 "update_link": cluster.update_link,
