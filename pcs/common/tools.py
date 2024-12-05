@@ -1,15 +1,10 @@
-import threading
 import uuid
 from dataclasses import (
     astuple,
     dataclass,
 )
 from typing import (
-    Any,
-    Callable,
     Generator,
-    Iterable,
-    Mapping,
     MutableSet,
     Optional,
     TypeVar,
@@ -41,21 +36,6 @@ def get_unique_uuid(already_used: StringCollection) -> str:
         candidate = str(uuid.uuid4())
         is_duplicate = candidate in already_used
     return candidate
-
-
-def run_parallel(
-    worker: Callable[..., Any],
-    data_list: tuple[Iterable[Any], Mapping[str, Any]],
-) -> None:
-    thread_list = []
-    for args, kwargs in data_list:
-        thread = threading.Thread(target=worker, args=args, kwargs=kwargs)
-        thread.daemon = True
-        thread_list.append(thread)
-        thread.start()
-
-    for thread in thread_list:
-        thread.join()
 
 
 def format_os_error(e: OSError) -> str:

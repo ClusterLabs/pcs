@@ -8,6 +8,7 @@ from pcs_test.tools.command_env.config_runner_pcmk import (
 
 def get_env_tools(
     test_case,
+    *,
     base_cib_filename=CIB_FILENAME,
     default_wait_timeout=DEFAULT_WAIT_TIMEOUT,
     default_wait_error_returncode=WAIT_TIMEOUT_EXPIRED_RETURNCODE,

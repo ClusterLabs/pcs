@@ -202,6 +202,7 @@ def setup(
     force_flags: Collection[reports.types.ForceCode] = (),
 ):
     # pylint: disable=too-many-arguments
+    # pylint: disable=too-many-positional-arguments
     # pylint: disable=too-many-locals
     # pylint: disable=too-many-statements
     """
@@ -493,6 +494,7 @@ def setup_local(
     """
     # pylint: disable=too-many-arguments
     # pylint: disable=too-many-locals
+    # pylint: disable=too-many-positional-arguments
     force = report_codes.FORCE in force_flags
 
     transport_type = transport_type or "knet"
@@ -582,6 +584,7 @@ def _validate_create_corosync_conf(
     force: bool,
 ) -> reports.ReportItemList:
     # pylint: disable=too-many-arguments
+    # pylint: disable=too-many-positional-arguments
 
     # Get IP version for node addresses validation. Defaults taken from man
     # corosync.conf
@@ -642,6 +645,7 @@ def _create_corosync_conf(
     no_cluster_uuid: bool,
 ) -> config_facade.ConfigFacade:
     # pylint: disable=too-many-arguments
+    # pylint: disable=too-many-positional-arguments
     corosync_conf = config_facade.ConfigFacade.create(
         cluster_name, nodes, transport_type
     )
@@ -1611,6 +1615,7 @@ def _get_addrs_defaulter(
         if "name" not in node:
             return []
         address_for_use = None
+        address_source = None
         target = targets_dict.get(node["name"])
         if target:
             address_for_use = target.first_addr

@@ -377,6 +377,7 @@ fixture_master_status_unmanaged = fixture_master_status_template.format(
 
 
 def get_fixture_clone_group_cib(
+    *,
     clone_disabled=False,
     clone_meta=False,
     group_disabled=False,

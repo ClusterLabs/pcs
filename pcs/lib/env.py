@@ -105,6 +105,7 @@ class LibraryEnvironment:
         request_timeout: Optional[int] = None,
     ):
         # pylint: disable=too-many-arguments
+        # pylint: disable=too-many-positional-arguments
         self._logger = logger
         self._report_processor = report_processor
         self._user_login = user_login

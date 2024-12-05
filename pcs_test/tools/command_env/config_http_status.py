@@ -11,6 +11,7 @@ class StatusShortcuts:
 
     def get_full_cluster_status_plaintext(
         self,
+        *,
         node_labels=None,
         communication_list=None,
         name="http.status.get_full_cluster_status_plaintext",

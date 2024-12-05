@@ -14,3 +14,59 @@ sections = ['FUTURE', 'STDLIB', 'THIRDPARTY', 'FIRSTPARTY', 'TESTS', 'LOCALFOLDE
 known_first_party = ["pcs"]
 known_tests = ["pcs_test"]
 supported_extensions = ["py", "py.in"]
+
+[tool.pylint.main]
+disable = [
+  # not critical, plus we use str.format() for readability
+  "consider-using-f-string",
+  # TODO is used to mark e.g. deprecations which are to be resolved in next pcs
+  # major version
+  "fixme",
+  # handled by black
+  "line-too-long",
+  # we dont require pointless docstring to be present
+  "missing-docstring",
+  "similarities",
+  "unspecified-encoding",
+  # lot of dict() in code to be replaced, not worth the effort now
+  "use-dict-literal",
+  # handled by isort
+  "wrong-import-order",
+]
+extension-pkg-allow-list = ["lxml.etree", "pycurl"]
+load-plugins = ["pylint.extensions.no_self_use"]
+persistent = false
+reports = false
+score = false
+
+[tool.pylint.basic]
+# Everything in module context is a constant, but our naming convention allows
+# constants to have the same name format as variables
+const-rgx = "(([A-Z_][A-Z0-9_]*)|(__.*__))|([a-z_][a-z0-9_]*)$"
+good-names = [
+  "e",
+  "i",
+  "op",
+  "ip",
+  "el",
+  "maxDiff",
+  "cm",
+  "ok",
+  "T",
+  "dr",
+  "setUp",
+  "tearDown",
+]
+
+[tool.pylint.design]
+max-args = 8
+max-parents = 10
+max-positional-arguments = 8
+min-public-methods = 0
+
+[tool.pylint.format]
+max-module-lines = 1500
+max-line-length = 80
+
+[tool.pylint.variables]
+dummy-variables-rgx = "_$|dummy"

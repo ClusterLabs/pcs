@@ -125,6 +125,7 @@ class ColorTextTestResult(VanillaTextTestResult):
 
 
 def get_text_test_result_class(
+    *,
     slash_last_fail_in_overview=False,
     traditional_verbose=False,
     traceback_highlight=False,

@@ -23,6 +23,7 @@ TIMEOUT = 10
 
 def create(
     env,
+    *,
     wait=False,
     disabled=False,
     meta_attributes=None,
@@ -75,6 +76,7 @@ def create_group(
 
 def create_clone(
     env,
+    *,
     wait=TIMEOUT,
     disabled=False,
     meta_attributes=None,

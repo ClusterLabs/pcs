@@ -10,7 +10,6 @@ from typing import (
     Dict,
     Iterable,
     NewType,
-    Type,
     TypeVar,
     Union,
 )
@@ -58,7 +57,10 @@ def meta(name: str) -> Dict[str, str]:
     return metadata
 
 
-def _is_compatible_type(_type: Type, arg_index: int) -> bool:
+# _type is Any, since based on static code analysis it can be either of
+# type[Any], str, None - depending on the step in dataclass instance
+# initialization
+def _is_compatible_type(_type: Any, arg_index: int) -> bool:
     return (
         hasattr(_type, "__args__")
         and len(_type.__args__) >= arg_index
@@ -67,7 +69,7 @@ def _is_compatible_type(_type: Type, arg_index: int) -> bool:
 
 
 def _convert_dict(
-    klass: Type[DataTransferObject], obj_dict: DtoPayload
+    klass: type[DataTransferObject], obj_dict: DtoPayload
 ) -> DtoPayload:
     new_dict = {}
     for _field in fields(klass):
@@ -76,7 +78,10 @@ def _convert_dict(
             value = _convert_dict(_field.type, value)  # type: ignore
         elif isinstance(value, list) and _is_compatible_type(_field.type, 0):
             value = [
-                _convert_dict(_field.type.__args__[0], item) for item in value
+                # ignore _field.type may not have __args__
+                # this is prevented by _is_compatible_type
+                _convert_dict(_field.type.__args__[0], item)  # type: ignore
+                for item in value
             ]
         elif isinstance(value, dict) and _is_compatible_type(_field.type, 1):
             value = {
@@ -98,7 +103,7 @@ def to_dict(obj: DataTransferObject) -> DtoPayload:
 DTOTYPE = TypeVar("DTOTYPE", bound=DataTransferObject)
 
 
-def _convert_payload(klass: Type[DTOTYPE], data: DtoPayload) -> DtoPayload:
+def _convert_payload(klass: type[DTOTYPE], data: DtoPayload) -> DtoPayload:
     try:
         new_dict = dict(data)
     except ValueError as e:
@@ -112,7 +117,9 @@ def _convert_payload(klass: Type[DTOTYPE], data: DtoPayload) -> DtoPayload:
             value = _convert_payload(_field.type, value)  # type: ignore
         elif isinstance(value, list) and _is_compatible_type(_field.type, 0):
             value = [
-                _convert_payload(_field.type.__args__[0], item)
+                # ignore _field.type may not have __args__
+                # this is prevented by _is_compatible_type
+                _convert_payload(_field.type.__args__[0], item)  # type: ignore
                 for item in value
             ]
         elif isinstance(value, dict) and _is_compatible_type(_field.type, 1):
@@ -128,7 +135,7 @@ def _convert_payload(klass: Type[DTOTYPE], data: DtoPayload) -> DtoPayload:
 
 
 def from_dict(
-    cls: Type[DTOTYPE], data: DtoPayload, strict: bool = False
+    cls: type[DTOTYPE], data: DtoPayload, strict: bool = False
 ) -> DTOTYPE:
     return dacite.from_dict(
         data_class=cls,
@@ -161,5 +168,5 @@ class ImplementsToDto:
 
 class ImplementsFromDto:
     @classmethod
-    def from_dto(cls: Type[T], dto_obj: Any) -> T:
+    def from_dto(cls: type[T], dto_obj: Any) -> T:
         raise NotImplementedError()

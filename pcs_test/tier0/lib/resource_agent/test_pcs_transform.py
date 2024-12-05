@@ -95,6 +95,7 @@ ra_pkg = "pcs.lib.resource_agent.pcs_transform"
 @mock.patch(f"{ra_pkg}._metadata_action_translate_role")
 class OcfUnifiedToPcs(TestCase):
     # pylint: disable=too-many-arguments
+    # pylint: disable=too-many-positional-arguments
     @staticmethod
     def _fixture_metadata(name):
         return ra.ResourceAgentMetadata(

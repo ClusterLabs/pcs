@@ -77,6 +77,7 @@ class BoothShortcuts:
     def save_files(
         self,
         files_data,
+        *,
         saved=(),
         existing=(),
         failed=(),
