@@ -1,13 +1,16 @@
 from functools import partial
+from typing import Optional
 
 from lxml import etree
+from lxml.etree import _Element
 
 from pcs.common import reports
+from pcs.lib import validate
 from pcs.lib.cib.tools import (
+    IdProvider,
     check_new_id_applicable,
     does_id_exist,
     find_element_by_tag_and_id,
-    find_unique_id,
 )
 from pcs.lib.errors import LibraryError
 
@@ -16,11 +19,14 @@ TAG_ROLE = "acl_role"
 TAG_TARGET = "acl_target"
 TAG_PERMISSION = "acl_permission"
 
+PermissionInfoList = list[tuple[str, str, str]]
 
-def validate_permissions(tree, permission_info_list):
+
+def validate_permissions(
+    tree: _Element, permission_info_list: PermissionInfoList
+) -> reports.ReportItemList:
     """
-    Validate given permission list.
-    Raise LibraryError if any of permission is not valid.
+    Validate given permission list
 
     tree -- cib tree
     permission_info_list -- list of tuples like this:
@@ -55,8 +61,7 @@ def validate_permissions(tree, permission_info_list):
                 )
             )
 
-    if report_items:
-        raise LibraryError(*report_items)
+    return report_items
 
 
 def _find(tag, acl_section, element_id, none_if_id_unused=False, id_types=None):
@@ -102,15 +107,33 @@ def find_target_or_group(acl_section, target_or_group_id):
     )
 
 
-def create_role(acl_section, role_id, description=None):
+def validate_create_role(
+    id_provider: IdProvider, role_id: str, description: Optional[str] = None
+) -> reports.ReportItemList:
     """
-    Create new role element and add it to cib.
-    Returns newly created role element.
+    Validate creating a new role
 
-    role_id id of desired role
-    description role description
+    id_provider -- id provider
+    role_id -- id of desired role
+    description -- role description
     """
-    check_new_id_applicable(acl_section, "ACL role", role_id)
+    del description
+    validators = [
+        validate.ValueId("role id", "ACL role", id_provider),
+    ]
+    return validate.ValidatorAll(validators).validate({"role id": role_id})
+
+
+def create_role(
+    acl_section: _Element, role_id: str, description: Optional[str] = None
+) -> _Element:
+    """
+    Create new role element, add it to cib and return it
+
+    acl_section -- parent element for the new role
+    role_id -- id of desired role
+    description -- role description
+    """
     role = etree.SubElement(acl_section, TAG_ROLE, id=role_id)
     if description:
         role.set("description", description)
@@ -210,15 +233,6 @@ def unassign_role(target_el, role_id, autodelete_target=False):
         target_el.getparent().remove(target_el)
 
 
-def provide_role(acl_section, role_id):
-    """
-    Returns role with id role_id. If doesn't exist, it will be created.
-    role_id id of desired role
-    """
-    role = find_role(acl_section, role_id, none_if_id_unused=True)
-    return role if role is not None else create_role(acl_section, role_id)
-
-
 def create_target(acl_section, target_id):
     """
     Creates new acl_target element with id target_id.
@@ -276,13 +290,18 @@ def remove_group(acl_section, group_id):
     group.getparent().remove(group)
 
 
-def add_permissions_to_role(role_el, permission_info_list):
+def add_permissions_to_role(
+    role_el: _Element,
+    permission_info_list: PermissionInfoList,
+    id_provider: IdProvider,
+) -> None:
     """
     Add permissions from permission_info_list to role_el.
 
     role_el -- acl_role element to which permissions should be added
     permission_info_list -- list of tuples,
         each contains (permission, scope_type, scope)
+    id_provider -- id provider
     """
     area_type_attribute_map = {
         "xpath": "xpath",
@@ -292,8 +311,8 @@ def add_permissions_to_role(role_el, permission_info_list):
         perm = etree.SubElement(role_el, "acl_permission")
         perm.set(
             "id",
-            find_unique_id(
-                role_el, "{0}-{1}".format(role_el.get("id", "role"), permission)
+            id_provider.allocate_id(
+                "{0}-{1}".format(role_el.get("id", "role"), permission)
             ),
         )
         perm.set("kind", permission)

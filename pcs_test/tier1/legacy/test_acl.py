@@ -16,6 +16,9 @@ AMBIGUOUS_ASSIGN_DEPRECATED = (
     "without specifying 'user' or 'group' keyword is deprecated and might be "
     "removed in a future release.\n"
 )
+ERRORS_HAVE_OCCURRED = (
+    "Error: Errors have occurred, therefore pcs is unable to continue\n"
+)
 
 
 class ACLTest(TestCase, AssertPcsMixin):
@@ -115,11 +118,11 @@ class ACLTest(TestCase, AssertPcsMixin):
         )
         self.assert_pcs_fail(
             "acl role create group1".split(),
-            "Error: 'group1' already exists\n",
+            "Error: 'group1' already exists\n" + ERRORS_HAVE_OCCURRED,
         )
         self.assert_pcs_fail(
             "acl role create role1".split(),
-            "Error: 'role1' already exists\n",
+            "Error: 'role1' already exists\n" + ERRORS_HAVE_OCCURRED,
         )
         self.assert_pcs_fail(
             "acl user create user1".split(),
@@ -583,7 +586,8 @@ class ACLTest(TestCase, AssertPcsMixin):
         )
         self.assert_pcs_success("acl role create role0".split())
         self.assert_pcs_fail(
-            "acl role create role0".split(), "Error: 'role0' already exists\n"
+            "acl role create role0".split(),
+            "Error: 'role0' already exists\n" + ERRORS_HAVE_OCCURRED,
         )
         self.assert_pcs_success(
             ["acl", "role", "create", "role0d", "description=empty role"]
@@ -863,7 +867,8 @@ class ACLTest(TestCase, AssertPcsMixin):
         self.assert_pcs_success("acl role create role1".split())
         self.assert_pcs_fail(
             "acl permission add role1 read id non-existent-id".split(),
-            "Error: id 'non-existent-id' does not exist\n",
+            "Error: id 'non-existent-id' does not exist\n"
+            + ERRORS_HAVE_OCCURRED,
         )
 
     def test_can_not_add_permission_for_nonexisting_id_in_later_part(self):
@@ -871,7 +876,8 @@ class ACLTest(TestCase, AssertPcsMixin):
         self.assert_pcs_success("acl role create role2".split())
         self.assert_pcs_fail(
             "acl permission add role1 read id role2 read id non-existent-id".split(),
-            "Error: id 'non-existent-id' does not exist\n",
+            "Error: id 'non-existent-id' does not exist\n"
+            + ERRORS_HAVE_OCCURRED,
         )
 
     def test_can_not_add_permission_for_nonexisting_role_with_bad_id(self):
@@ -879,7 +885,8 @@ class ACLTest(TestCase, AssertPcsMixin):
         self.assert_pcs_fail(
             "acl permission add #bad-name read id role1".split(),
             "Error: invalid ACL role '#bad-name'"
-            + ", '#' is not a valid first character for a ACL role\n",
+            ", '#' is not a valid first character for a ACL role\n"
+            + ERRORS_HAVE_OCCURRED,
         )
 
     def test_can_create_role_with_permission_for_existing_id(self):
@@ -889,14 +896,16 @@ class ACLTest(TestCase, AssertPcsMixin):
     def test_can_not_crate_role_with_permission_for_nonexisting_id(self):
         self.assert_pcs_fail(
             "acl role create role1 read id non-existent-id".split(),
-            "Error: id 'non-existent-id' does not exist\n",
+            "Error: id 'non-existent-id' does not exist\n"
+            + ERRORS_HAVE_OCCURRED,
         )
 
     def test_can_not_create_role_with_bad_name(self):
         self.assert_pcs_fail(
             "acl role create #bad-name".split(),
             "Error: invalid ACL role '#bad-name'"
-            + ", '#' is not a valid first character for a ACL role\n",
+            ", '#' is not a valid first character for a ACL role\n"
+            + ERRORS_HAVE_OCCURRED,
         )
 
     def test_fail_on_unknown_role_method(self):

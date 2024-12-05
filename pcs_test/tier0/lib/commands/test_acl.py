@@ -4,9 +4,12 @@ from unittest import (
 )
 
 import pcs.lib.commands.acl as cmd_acl
+from pcs.common import reports
 from pcs.lib.env import LibraryEnvironment
 
+from pcs_test.tools import fixture
 from pcs_test.tools.assertions import ExtendedAssertionsMixin
+from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 
 
@@ -51,31 +54,103 @@ class CibAclSection(TestCase):
         env.push_cib.assert_not_called()
 
 
-@mock.patch("pcs.lib.commands.acl.get_acls", mock.Mock(side_effect=lambda x: x))
-@mock.patch("pcs.lib.cib.acl.validate_permissions")
-@mock.patch("pcs.lib.cib.acl.create_role")
-@mock.patch("pcs.lib.cib.acl.add_permissions_to_role")
-class CreateRoleTest(AclCommandsTest):
-    def test_success(self, mock_add_perm, mock_create_role, mock_validate):
-        perm_list = ["my", "list"]
-        mock_create_role.return_value = "role el"
-        cmd_acl.create_role(self.mock_env, "role_id", perm_list, "desc")
-        self.assert_get_cib_called()
-        mock_validate.assert_called_once_with(self.cib, perm_list)
-        mock_create_role.assert_called_once_with(self.cib, "role_id", "desc")
-        mock_add_perm.assert_called_once_with("role el", perm_list)
-        self.assert_same_cib_pushed()
+class CreateRoleTest(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+        self.config.runner.cib.load(
+            resources="""
+            <resources>
+                <primitive id="R1" class="ocf" provider="pacemaker" type="Dummy"/>
+                <primitive id="R2" class="ocf" provider="pacemaker" type="Dummy"/>
+            </resources>
+            """
+        )
 
-    def test_no_permission(
-        self, mock_add_perm, mock_create_role, mock_validate
-    ):
-        mock_create_role.return_value = "role el"
-        cmd_acl.create_role(self.mock_env, "role_id", [], "desc")
-        self.assert_get_cib_called()
-        self.assertEqual(0, mock_validate.call_count)
-        mock_create_role.assert_called_once_with(self.cib, "role_id", "desc")
-        self.assertEqual(0, mock_add_perm.call_count)
-        self.assert_same_cib_pushed()
+    def test_success_just_role(self):
+        acl_xml = """
+            <acls>
+                <acl_role description="desc" id="role_id" />
+            </acls>
+        """
+        self.config.env.push_cib(optional_in_conf=acl_xml)
+
+        cmd_acl.create_role(self.env_assist.get_env(), "role_id", [], "desc")
+
+    def test_success_with_permissions(self):
+        acl_xml = """
+            <acls>
+                <acl_role id="role_id">
+                    <acl_permission id="role_id-write" kind="write" reference="R1" />
+                    <acl_permission id="role_id-read" kind="read" xpath="./" />
+                </acl_role>
+            </acls>
+        """
+        self.config.env.push_cib(optional_in_conf=acl_xml)
+
+        cmd_acl.create_role(
+            self.env_assist.get_env(),
+            "role_id",
+            [("write", "id", "R1"), ("read", "xpath", "./")],
+            "",
+        )
+
+    def test_id_already_used(self):
+        self.env_assist.assert_raise_library_error(
+            lambda: cmd_acl.create_role(self.env_assist.get_env(), "R1", [], "")
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(reports.codes.ID_ALREADY_EXISTS, id="R1"),
+            ]
+        )
+
+    def test_validation(self):
+        self.env_assist.assert_raise_library_error(
+            lambda: cmd_acl.create_role(
+                self.env_assist.get_env(),
+                "#role_id",
+                [
+                    ("change", "id", "R1"),
+                    ("read", "path", "./"),
+                    ("deny", "id", "R3"),
+                ],
+                "",
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.INVALID_ID_BAD_CHAR,
+                    id="#role_id",
+                    id_description="ACL role",
+                    invalid_character="#",
+                    is_first_char=True,
+                ),
+                fixture.error(
+                    reports.codes.INVALID_OPTION_VALUE,
+                    option_name="permission",
+                    option_value="change",
+                    allowed_values=["read", "write", "deny"],
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    reports.codes.INVALID_OPTION_VALUE,
+                    option_name="scope type",
+                    option_value="path",
+                    allowed_values=["xpath", "id"],
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    reports.codes.ID_NOT_FOUND,
+                    id="R3",
+                    expected_types=["id"],
+                    context_type="",
+                    context_id="",
+                ),
+            ]
+        )
 
 
 @mock.patch("pcs.lib.commands.acl.get_acls", mock.Mock(side_effect=lambda x: x))
@@ -220,19 +295,124 @@ class RemoveGroupTest(AclCommandsTest):
         self.assert_same_cib_pushed()
 
 
-@mock.patch("pcs.lib.commands.acl.get_acls", mock.Mock(side_effect=lambda x: x))
-@mock.patch("pcs.lib.cib.acl.validate_permissions")
-@mock.patch("pcs.lib.cib.acl.provide_role")
-@mock.patch("pcs.lib.cib.acl.add_permissions_to_role")
-class AddPermissionTest(AclCommandsTest):
-    def test_success(self, mock_add_perm, mock_provide_role, mock_validate):
-        mock_provide_role.return_value = "role_el"
-        cmd_acl.add_permission(self.mock_env, "role_id", "permission_list")
-        self.assert_get_cib_called()
-        mock_validate.assert_called_once_with(self.cib, "permission_list")
-        mock_provide_role.assert_called_once_with(self.cib, "role_id")
-        mock_add_perm.assert_called_once_with("role_el", "permission_list")
-        self.assert_same_cib_pushed()
+class AddPermissionTest(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+        self.config.runner.cib.load(
+            resources="""
+            <resources>
+                <primitive id="R1" class="ocf" provider="pacemaker" type="Dummy"/>
+                <primitive id="R2" class="ocf" provider="pacemaker" type="Dummy"/>
+            </resources>
+            """,
+            optional_in_conf=self.fixture_acls_xml(),
+        )
+
+    @staticmethod
+    def fixture_acls_xml(roles="", permissions=""):
+        return f"""
+            <acls>
+                <acl_role id="role1">
+                    <acl_permission id="role1-write" kind="write" reference="R1" />
+                    <acl_permission id="role1-read" kind="read" xpath="/" />
+                    {permissions}
+                </acl_role>
+                {roles}
+            </acls>
+            """
+
+    def test_existing_role(self):
+        self.config.env.push_cib(
+            optional_in_conf=self.fixture_acls_xml(
+                permissions="""
+                  <acl_permission id="role1-deny" kind="deny" reference="R2" />
+                  <acl_permission id="role1-write-1" kind="write" xpath="/" />
+                """
+            )
+        )
+        cmd_acl.add_permission(
+            self.env_assist.get_env(),
+            "role1",
+            [("deny", "id", "R2"), ("write", "xpath", "/")],
+        )
+
+    def test_nonexisting_role(self):
+        self.config.env.push_cib(
+            optional_in_conf=self.fixture_acls_xml(
+                roles="""
+                <acl_role id="role2">
+                  <acl_permission id="role2-deny" kind="deny" reference="R2" />
+                  <acl_permission id="role2-write" kind="write" xpath="/" />
+                </acl_role>
+                """
+            )
+        )
+        cmd_acl.add_permission(
+            self.env_assist.get_env(),
+            "role2",
+            [("deny", "id", "R2"), ("write", "xpath", "/")],
+        )
+
+    def test_not_role(self):
+        self.env_assist.assert_raise_library_error(
+            lambda: cmd_acl.add_permission(self.env_assist.get_env(), "R1", []),
+            [
+                fixture.error(
+                    reports.codes.ID_BELONGS_TO_UNEXPECTED_TYPE,
+                    id="R1",
+                    expected_types=["acl_role"],
+                    current_type="primitive",
+                ),
+            ],
+            expected_in_processor=False,
+        )
+
+    def test_validation(self):
+        self.env_assist.assert_raise_library_error(
+            lambda: cmd_acl.add_permission(
+                self.env_assist.get_env(),
+                "#role_id",
+                [
+                    ("change", "id", "R1"),
+                    ("read", "path", "./"),
+                    ("deny", "id", "R3"),
+                ],
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.INVALID_ID_BAD_CHAR,
+                    id="#role_id",
+                    id_description="ACL role",
+                    invalid_character="#",
+                    is_first_char=True,
+                ),
+                fixture.error(
+                    reports.codes.INVALID_OPTION_VALUE,
+                    option_name="permission",
+                    option_value="change",
+                    allowed_values=["read", "write", "deny"],
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    reports.codes.INVALID_OPTION_VALUE,
+                    option_name="scope type",
+                    option_value="path",
+                    allowed_values=["xpath", "id"],
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    reports.codes.ID_NOT_FOUND,
+                    id="R3",
+                    expected_types=["id"],
+                    context_type="",
+                    context_id="",
+                ),
+            ]
+        )
 
 
 @mock.patch("pcs.lib.commands.acl.get_acls", mock.Mock(side_effect=lambda x: x))
