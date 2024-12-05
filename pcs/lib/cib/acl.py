@@ -445,10 +445,3 @@ def remove_permissions_referencing(tree, reference):
         ".//acl_permission[@reference=$reference]", reference=reference
     ):
         permission.getparent().remove(permission)
-
-
-def dom_remove_permissions_referencing(dom, reference):
-    # TODO: remove once we go fully lxml
-    for permission in dom.getElementsByTagName("acl_permission"):
-        if permission.getAttribute("reference") == reference:
-            permission.parentNode.removeChild(permission)

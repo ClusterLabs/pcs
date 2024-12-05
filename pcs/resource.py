@@ -13,7 +13,6 @@ from typing import (
 )
 from xml.dom.minidom import parseString
 
-import pcs.lib.cib.acl as lib_acl
 import pcs.lib.pacemaker.live as lib_pacemaker
 import pcs.lib.resource_agent as lib_ra
 from pcs import (
@@ -2074,7 +2073,11 @@ def remove_resource_references(
         resource_id, output, constraints_element, dom
     )
     stonith_level_rm_device(dom, resource_id)
-    lib_acl.dom_remove_permissions_referencing(dom, resource_id)
+
+    for permission in dom.getElementsByTagName("acl_permission"):
+        if permission.getAttribute("reference") == resource_id:
+            permission.parentNode.removeChild(permission)
+
     return dom
 
 
