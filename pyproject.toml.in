@@ -135,6 +135,7 @@ select = [
   "E7",
   "E9",
   "F",
+  "I",
   "PL", # pylint convention, error, refactoring, warning
   "SIM",
 ]
