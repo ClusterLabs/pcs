@@ -1083,26 +1083,27 @@ def add_nodes(
     atb_has_to_be_enabled = sbd.atb_has_to_be_enabled(
         env.service_manager, corosync_conf, len(new_nodes)
     )
-    if atb_has_to_be_enabled and online_cluster_target_list:
-        com_cmd = CheckCorosyncOffline(
-            report_processor, allow_skip_offline=False
-        )
-        com_cmd.set_targets(online_cluster_target_list)
-        cluster_running_target_list = run_com(
-            env.get_node_communicator(), com_cmd
-        )
-        if cluster_running_target_list:
-            report_processor.report(
-                ReportItem.error(
-                    reports.messages.CorosyncQuorumAtbWillBeEnabledDueToSbdClusterIsRunning()
-                )
+    if atb_has_to_be_enabled:
+        if online_cluster_target_list:
+            com_cmd = CheckCorosyncOffline(
+                report_processor, allow_skip_offline=False
             )
-        else:
-            report_processor.report(
-                ReportItem.warning(
-                    reports.messages.CorosyncQuorumAtbWillBeEnabledDueToSbd()
-                )
+            com_cmd.set_targets(online_cluster_target_list)
+            cluster_running_target_list = run_com(
+                env.get_node_communicator(), com_cmd
             )
+            if cluster_running_target_list:
+                report_processor.report(
+                    ReportItem.error(
+                        reports.messages.CorosyncQuorumAtbWillBeEnabledDueToSbdClusterIsRunning()
+                    )
+                )
+            else:
+                report_processor.report(
+                    ReportItem.warning(
+                        reports.messages.CorosyncQuorumAtbWillBeEnabledDueToSbd()
+                    )
+                )
 
     # Validate new nodes. All new nodes have to be online.
     com_cmd = GetHostInfo(report_processor)

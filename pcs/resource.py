@@ -696,16 +696,13 @@ def resource_create(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
             )
         )
 
-    if (
-        parts.group
-        and parts.group.after_resource
-        and parts.group.before_resource
-    ):
-        raise CmdLineInputError(
-            "you cannot specify both 'before' and 'after'"
-            if modifiers.get(FUTURE_OPTION)
-            else "you cannot specify both --before and --after"
-        )
+    if parts.group:
+        if parts.group.after_resource and parts.group.before_resource:
+            raise CmdLineInputError(
+                "you cannot specify both 'before' and 'after'"
+                if modifiers.get(FUTURE_OPTION)
+                else "you cannot specify both --before and --after"
+            )
 
     if parts.promotable and "promotable" in parts.promotable.meta_attrs:
         raise CmdLineInputError(

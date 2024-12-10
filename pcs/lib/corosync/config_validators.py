@@ -1048,17 +1048,15 @@ def add_link(
 
     # Check link options
     report_items += _add_link_options_knet(link_options)
-    if (
-        "linknumber" in link_options
-        and link_options["linknumber"] in linknumbers_existing
-    ):
-        report_items.append(
-            ReportItem.error(
-                reports.messages.CorosyncLinkAlreadyExistsCannotAdd(
-                    link_options["linknumber"],
+    if "linknumber" in link_options:
+        if link_options["linknumber"] in linknumbers_existing:
+            report_items.append(
+                ReportItem.error(
+                    reports.messages.CorosyncLinkAlreadyExistsCannotAdd(
+                        link_options["linknumber"],
+                    )
                 )
             )
-        )
 
     return report_items
 
