@@ -1818,12 +1818,13 @@ def operation_exists_by_name(operations_el, op_el):
         ocf_check_level = get_operation_ocf_check_level(op_el)
 
     for op in operations_el.getElementsByTagName("op"):
-        if op.getAttribute("name") == op_name and (
-            op_name != "monitor"
-            or get_role(op, new_roles_supported) == op_role
-            and ocf_check_level == get_operation_ocf_check_level(op)
-        ):
-            existing.append(op)
+        if op.getAttribute("name") == op_name:
+            if (
+                op_name != "monitor"
+                or get_role(op, new_roles_supported) == op_role
+                and ocf_check_level == get_operation_ocf_check_level(op)
+            ):
+                existing.append(op)
     return existing
 
 

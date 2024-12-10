@@ -179,14 +179,13 @@ def validate_create(
         )
         addr_is_used = True
 
-    if (
-        not addr_is_used or new_node_addr != new_node_name
-    ) and new_node_name in existing_nodes_names:
-        report_list.append(
-            reports.ReportItem.error(
-                reports.messages.IdAlreadyExists(new_node_name)
+    if not addr_is_used or new_node_addr != new_node_name:
+        if new_node_name in existing_nodes_names:
+            report_list.append(
+                reports.ReportItem.error(
+                    reports.messages.IdAlreadyExists(new_node_name)
+                )
             )
-        )
 
     return report_list
 

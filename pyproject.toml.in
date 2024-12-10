@@ -151,6 +151,7 @@ ignore = [
   "PLR0911", # too-many-return-statements (6)
   "PLW1509", # subprocess-popen-preexec-fn (3)
   "PLW0602", # global-variable-not-assigned (1)
+  "SIM102", # https://docs.astral.sh/ruff/rules/collapsible-if/
 ]
 
 [tool.ruff.lint.isort]
