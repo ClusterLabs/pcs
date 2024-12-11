@@ -91,6 +91,7 @@ select = [
   "G",
   "I",
   "LOG",
+  "PIE",
   "PL", # pylint convention, error, refactoring, warning
   "SIM",
 ]

@@ -220,7 +220,7 @@ class TestSetStonithWatchdogTimeoutSBDIsDisabled(
 
 
 @mock.patch("pcs.lib.sbd._get_local_sbd_watchdog_timeout", lambda: 10)
-@mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
+@mock.patch("pcs.lib.sbd.get_local_sbd_device_list", list)
 class TestSetStonithWatchdogTimeoutSBDIsEnabledWatchdogOnly(
     StonithWatchdogTimeoutMixin, TestCase
 ):
