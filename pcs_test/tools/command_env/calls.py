@@ -8,7 +8,7 @@ def show_calls(name_list, call_list):
     return "\n".join(
         [
             "  {0}. '{1}': {2}".format(i, x[0], format_call(x[1]))
-            for i, x in enumerate(zip(name_list, call_list))
+            for i, x in enumerate(zip(name_list, call_list, strict=False))
         ]
     )
 

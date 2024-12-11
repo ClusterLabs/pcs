@@ -202,7 +202,9 @@ class ConfigFacade(FacadeInterface):
         link_ids: Sequence[int],
     ) -> Section:
         node_section = Section("node")
-        for link_id, link_addr in zip(link_ids, node_options["addrs"]):
+        for link_id, link_addr in zip(
+            link_ids, node_options["addrs"], strict=False
+        ):
             node_section.add_attribute(f"ring{link_id}_addr", link_addr)
         node_section.add_attribute("name", str(node_options["name"]))
         node_section.add_attribute("nodeid", str(node_id))

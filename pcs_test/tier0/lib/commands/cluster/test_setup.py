@@ -660,7 +660,7 @@ class SetupSuccessAddresses(TestCase):
         ]
         self.node_coros = ["node1-corosync", "node2-corosync", "node3-corosync"]
         self.config.env.set_known_hosts_dests(
-            dict(zip(self.node_names, self.node_dests))
+            dict(zip(self.node_names, self.node_dests, strict=False))
         )
         patch_getaddrinfo(self, self.node_coros)
         config_success_minimal_fixture(
@@ -668,12 +668,12 @@ class SetupSuccessAddresses(TestCase):
             corosync_conf=corosync_conf_fixture(
                 {
                     name: [addr]
-                    for name, addr in zip(self.node_names, self.node_coros)
+                    for name, addr in zip(self.node_names, self.node_coros, strict=False)
                 }
             ),
             communication_list=[
                 {"label": name, "dest_list": dest}
-                for name, dest in zip(self.node_names, self.node_dests)
+                for name, dest in zip(self.node_names, self.node_dests, strict=False)
             ],
             known_hosts={
                 name: {
@@ -682,7 +682,7 @@ class SetupSuccessAddresses(TestCase):
                         for dest in dest_list
                     ]
                 }
-                for name, dest_list in zip(self.node_names, self.node_dests)
+                for name, dest_list in zip(self.node_names, self.node_dests, strict=False)
             },
         )
 
@@ -697,7 +697,7 @@ class SetupSuccessAddresses(TestCase):
             CLUSTER_NAME,
             [
                 {"name": name, "addrs": [addr]}
-                for name, addr in zip(self.node_names, self.node_coros)
+                for name, addr in zip(self.node_names, self.node_coros, strict=False)
             ],
         )
         self.env_assist.assert_reports(

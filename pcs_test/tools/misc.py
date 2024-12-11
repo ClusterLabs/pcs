@@ -54,7 +54,7 @@ class ParametrizedTestMetaClass(type):
     def __init__(cls, classname, bases, class_dict):
         for attr_name in dir(cls):
             attr = getattr(cls, attr_name)
-            if attr_name.startswith("_test") and hasattr(attr, "__call__"):
+            if attr_name.startswith("_test") and callable(attr):
                 setattr(cls, attr_name[1:], attr)
 
         super().__init__(classname, bases, class_dict)

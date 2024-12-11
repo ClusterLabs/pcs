@@ -269,7 +269,7 @@ class NameValueSequence(Generic[T]):
             [
                 f" {index:3}. {item[0] if item[0] else '<unnamed>'}: {item[1]}"
                 for index, item in enumerate(
-                    zip(self.__names, self.__values), 1
+                    zip(self.__names, self.__values, strict=False), 1
                 )
             ]
         )

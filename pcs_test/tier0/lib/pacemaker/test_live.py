@@ -504,7 +504,7 @@ class Verify(TestCase):
             out_stderr.append(
                 [line for line in input_lines if "-V" not in line]
             )
-        return zip(in_stderr, out_stderr)
+        return zip(in_stderr, out_stderr, strict=False)
 
     @staticmethod
     def get_in_out_unfiltered_data():
@@ -516,7 +516,7 @@ class Verify(TestCase):
                 "because line missing 'more details'\n",
             ),
         )
-        return zip(in_out_data, in_out_data)
+        return zip(in_out_data, in_out_data, strict=False)
 
     def subtest_filter_stderr_and_can_be_more_verbose(
         self,
