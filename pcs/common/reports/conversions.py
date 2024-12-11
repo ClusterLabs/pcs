@@ -39,7 +39,7 @@ def report_dto_to_item(
 def _create_report_msg_map() -> Dict[str, type]:
     result: Dict[str, type] = {}
     for report_msg_cls in get_all_subclasses(messages.ReportItemMessage):
-        code = report_msg_cls._code  # pylint: disable=protected-access
+        code = report_msg_cls._code  # pylint: disable=protected-access # noqa: SLF001
         if code:
             if code in result:
                 raise AssertionError()
