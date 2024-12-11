@@ -93,7 +93,9 @@ class HostAuth(TestCase):
             addr_list = [self.host_names[name][addr_type] for name in name_list]
 
             with self.subTest(addr_type=addr_type):
-                assert_function(list(zip(name_list, addr_list, port_list)))
+                assert_function(
+                    list(zip(name_list, addr_list, port_list, strict=False))
+                )
 
     @mock.patch("pcs.utils.auth_hosts")
     def test_no_args(self, mock_auth_hosts):

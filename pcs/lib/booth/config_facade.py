@@ -54,7 +54,7 @@ class ConfigFacade(FacadeInterface):
 
         string ticket_name -- the name of the ticket
         """
-        for key, value, dummy_details in self._config:
+        for key, value, _ in self._config:
             if key == "ticket" and value == ticket_name:
                 return True
         return False
@@ -103,7 +103,7 @@ class ConfigFacade(FacadeInterface):
             self._config.insert(0, ConfigItem(key, value))
 
     def get_option(self, option: str) -> Optional[str]:
-        for key, value, dummy_details in reversed(self._config):
+        for key, value, _ in reversed(self._config):
             if key == option:
                 return value
         return None

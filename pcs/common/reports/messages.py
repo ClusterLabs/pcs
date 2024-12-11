@@ -6048,7 +6048,9 @@ class ResourceInstanceAttrGroupValueNotUnique(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        attr_names, attr_values = zip(*sorted(self.instance_attrs_map.items()))
+        attr_names, attr_values = zip(
+            *sorted(self.instance_attrs_map.items()), strict=False
+        )
         attr_names_str = format_list_dont_sort(list(attr_names))
         attr_values_str = format_list_dont_sort(list(attr_values))
         options = format_plural(self.instance_attrs_map, "option")

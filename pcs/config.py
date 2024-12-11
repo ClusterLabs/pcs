@@ -487,7 +487,7 @@ def config_restore_local(infile_name, infile_obj):
                 if not extract_info:
                     continue
                 path_full = None
-                if hasattr(extract_info.get("pre_store_call"), "__call__"):
+                if callable(extract_info.get("pre_store_call")):
                     extract_info["pre_store_call"]()
                 if "rename" in extract_info and extract_info["rename"]:
                     if tmp_dir is None:

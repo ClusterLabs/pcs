@@ -942,17 +942,17 @@ class SetTransportOptionsGeneralTest(TestCase):
 
     def test_do_not_remove_option(self):
         params = self._udp_do_not_modify_params_list
-        for transport, params in [("udp", params), ("udpu", params)]:
+        for transport, params_list in [("udp", params), ("udpu", params)]:
             with self.subTest(transport=transport, params=params):
                 self._assert_set_transport_options(
-                    params,
+                    params_list,
                     self._transport_option_tmplt.format(transport=transport),
                     self._transport_option_tmplt.format(transport=transport),
                 )
 
     def test_modify_option(self):
         params = self._add_option_params_list
-        for transport, params in [
+        for transport, params_list in [
             ("", params),
             ("knet", params),
             ("udp", params[0:1]),
@@ -960,7 +960,7 @@ class SetTransportOptionsGeneralTest(TestCase):
         ]:
             with self.subTest(transport=transport, params=params):
                 self._assert_set_transport_options(
-                    params,
+                    params_list,
                     dedent(
                         f"""\
                         totem {{{{
@@ -974,10 +974,10 @@ class SetTransportOptionsGeneralTest(TestCase):
 
     def test_do_not_modify_option(self):
         params = self._udp_do_not_modify_params_list
-        for transport, params in [("udp", params), ("udpu", params)]:
+        for transport, params_list in [("udp", params), ("udpu", params)]:
             with self.subTest(transport=transport, params=params):
                 self._assert_set_transport_options(
-                    params,
+                    params_list,
                     self._transport_option_tmplt.format(transport=transport),
                     self._transport_option_tmplt.format(transport=transport),
                 )

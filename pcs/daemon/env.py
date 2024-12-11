@@ -1,3 +1,4 @@
+# ruff: noqa: B019 https://docs.astral.sh/ruff/rules/cached-instance-method/
 import os.path
 import ssl
 from collections import namedtuple

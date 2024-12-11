@@ -130,7 +130,9 @@ def split_list(arg_list: Argv, separator: str) -> list[Argv]:
     """
     separator_indexes = [i for i, x in enumerate(arg_list) if x == separator]
     bounds = zip(
-        [0] + [i + 1 for i in separator_indexes], separator_indexes + [None]
+        [0] + [i + 1 for i in separator_indexes],
+        separator_indexes + [None],
+        strict=False,
     )
     return [arg_list[i:j] for i, j in bounds]
 
