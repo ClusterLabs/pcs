@@ -404,12 +404,12 @@ def fixture_logger_call_send(url, data):
 def fixture_logger_call_debug_data(url, data):
     send_msg = outdent(
         """\
-        Communication debug info for calling: {url}
+        Communication debug info for calling: %s
         --Debug Communication Info Start--
-        {data}
+        %s
         --Debug Communication Info End--"""
     )
-    return mock.call.debug(send_msg.format(url=url, data=data))
+    return mock.call.debug(send_msg, url, data)
 
 
 def fixture_logger_call_connected(url, response_code, response_data):
