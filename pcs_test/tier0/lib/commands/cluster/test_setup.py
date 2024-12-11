@@ -668,12 +668,16 @@ class SetupSuccessAddresses(TestCase):
             corosync_conf=corosync_conf_fixture(
                 {
                     name: [addr]
-                    for name, addr in zip(self.node_names, self.node_coros, strict=False)
+                    for name, addr in zip(
+                        self.node_names, self.node_coros, strict=False
+                    )
                 }
             ),
             communication_list=[
                 {"label": name, "dest_list": dest}
-                for name, dest in zip(self.node_names, self.node_dests, strict=False)
+                for name, dest in zip(
+                    self.node_names, self.node_dests, strict=False
+                )
             ],
             known_hosts={
                 name: {
@@ -682,7 +686,9 @@ class SetupSuccessAddresses(TestCase):
                         for dest in dest_list
                     ]
                 }
-                for name, dest_list in zip(self.node_names, self.node_dests, strict=False)
+                for name, dest_list in zip(
+                    self.node_names, self.node_dests, strict=False
+                )
             },
         )
 
@@ -697,7 +703,9 @@ class SetupSuccessAddresses(TestCase):
             CLUSTER_NAME,
             [
                 {"name": name, "addrs": [addr]}
-                for name, addr in zip(self.node_names, self.node_coros, strict=False)
+                for name, addr in zip(
+                    self.node_names, self.node_coros, strict=False
+                )
             ],
         )
         self.env_assist.assert_reports(
@@ -1449,9 +1457,9 @@ class Validation(TestCase):
                     min_count=1,
                     max_count=8,
                     node_name=name,
-                    node_index=id,
+                    node_index=id_,
                 )
-                for id, name in enumerate(NODE_LIST, 1)
+                for id_, name in enumerate(NODE_LIST, 1)
             ]
         )
 

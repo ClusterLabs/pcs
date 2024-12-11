@@ -24,7 +24,7 @@ from pcs_test.tools.assertions import assert_report_item_list_equal
 
 
 def get_getaddrinfo_mock(resolvable_addr_list):
-    def socket_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
+    def socket_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):  # noqa: A002
         # pylint: disable=redefined-builtin
         # pylint: disable=unused-argument
         if host not in resolvable_addr_list:
