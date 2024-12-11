@@ -193,11 +193,11 @@ class ProcessTasksTest(SchedulerBaseAsyncTestCase):
         self.assertEqual(
             0,
             len(
-                list(
+                [
                     task
                     for task in self.scheduler._task_register.values()
                     if task.state == TaskState.CREATED
-                )
+                ]
             ),
         )
 

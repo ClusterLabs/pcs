@@ -180,7 +180,7 @@ def _defaults_set_create_cmd(
     modifiers.ensure_only_supported("-f", "--force")
 
     groups = group_by_keywords(
-        argv, set(["meta", "rule"]), implicit_first_keyword="options"
+        argv, {"meta", "rule"}, implicit_first_keyword="options"
     )
     groups.ensure_unique_keywords()
     force_flags = set()
@@ -372,7 +372,7 @@ def _defaults_set_update_cmd(
         raise CmdLineInputError()
 
     set_id = argv[0]
-    groups = group_by_keywords(argv[1:], set(["meta"]))
+    groups = group_by_keywords(argv[1:], {"meta"})
     groups.ensure_unique_keywords()
     lib_command(
         set_id, KeyValueParser(groups.get_args_flat("meta")).get_unique()
@@ -1466,7 +1466,7 @@ def resource_operation_remove(res_id: str, argv: Argv) -> None:
             if attr_name == "id":
                 continue
             temp_properties.append(
-                tuple([attr_name, op.attributes.get(attr_name).nodeValue])
+                (attr_name, op.attributes.get(attr_name).nodeValue)
             )
 
         if remove_all and op.attributes["name"].value == op_name:

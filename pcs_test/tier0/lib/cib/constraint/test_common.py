@@ -86,12 +86,10 @@ class FindConstraintsOfSameType(TestCase):
             with self.subTest(constraint_type=type_id):
                 element = cib.xpath(".//*[@id=$id]", id=f"{type_id}1")[0]
                 self.assertEqual(
-                    list(
-                        map(
-                            lambda el: el.attrib["id"],
-                            find_constraints_of_same_type(cib, element),
-                        )
-                    ),
+                    [
+                        el.attrib["id"]
+                        for el in find_constraints_of_same_type(cib, element)
+                    ],
                     [f"{type_id}2", f"{type_id}3"],
                 )
 
@@ -104,12 +102,10 @@ class FindConstraintsOfSameType(TestCase):
             with self.subTest(constraint_type=type_id):
                 element = cib.xpath(".//*[@id=$id]", id=f"{type_id}1")[0]
                 self.assertEqual(
-                    list(
-                        map(
-                            lambda el: el.attrib["id"],
-                            find_constraints_of_same_type(cib, element),
-                        )
-                    ),
+                    [
+                        el.attrib["id"]
+                        for el in find_constraints_of_same_type(cib, element)
+                    ],
                     [],
                 )
 

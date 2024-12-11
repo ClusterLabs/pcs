@@ -372,7 +372,7 @@ class DefaultsSetCreateMixin(DefaultsBaseMixin):
     def test_force(self):
         self._call_cmd([], {"force": True})
         self.lib_command.assert_called_once_with(
-            {}, {}, nvset_rule=None, force_flags=set([report_codes.FORCE])
+            {}, {}, nvset_rule=None, force_flags={report_codes.FORCE}
         )
 
     def test_all(self):
@@ -392,7 +392,7 @@ class DefaultsSetCreateMixin(DefaultsBaseMixin):
             {"name1": "value1", "name2": "value2"},
             {"id": "custom-id", "score": "10"},
             nvset_rule="resource dummy or op monitor",
-            force_flags=set([report_codes.FORCE]),
+            force_flags={report_codes.FORCE},
         )
 
 

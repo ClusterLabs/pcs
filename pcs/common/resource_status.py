@@ -743,20 +743,20 @@ class ResourcesStatusFacade:
 
         if isinstance(resource, CloneStatusDto):
             return list(
-                set(
+                {
                     instance.resource_id
                     for instance in resource.instances
                     if not _is_orphaned(instance)
-                )
+                }
             )
 
         if isinstance(resource, BundleStatusDto):
             return list(
-                set(
+                {
                     replica.member.resource_id
                     for replica in resource.replicas
                     if replica.member is not None
-                )
+                }
             )
 
         raise ResourceUnexpectedTypeException(

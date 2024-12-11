@@ -280,7 +280,7 @@ def _move_constraints_warnings(
 
     location_constraints, _ = get_all_as_dtos(constraint_el, rule_evaluator)
 
-    resource_ids = set(
+    resource_ids = {
         constraint_dto.resource_id
         for constraint_dto in location_constraints
         if constraint_dto.resource_id
@@ -292,7 +292,7 @@ def _move_constraints_warnings(
                 for rule in constraint_dto.attributes.rules
             )
         )
-    )
+    }
 
     if resource_ids:
         warning_list.append(

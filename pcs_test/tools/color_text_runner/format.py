@@ -91,10 +91,8 @@ class Format:
         return self._output.lightgrey("_").join(parts)
 
     def error_overview(self, errors, failures, slash_last):
-        error_names = sorted(set(self.test_name(test) for test, _ in errors))
-        failure_names = sorted(
-            set(self.test_name(test) for test, _ in failures)
-        )
+        error_names = sorted({self.test_name(test) for test, _ in errors})
+        failure_names = sorted({self.test_name(test) for test, _ in failures})
 
         overview = []
         overview.append(
