@@ -27,6 +27,9 @@ from pyparsing import (
     nums,
 )
 
+SUPPRESS_LEFT_PARENTHESIS = Suppress("(")
+SUPPRESS_RIGHT_PARENTHESIS = Suppress(")")
+
 if pyparsing.__version__.startswith("3."):
     from pyparsing import (  # pylint: disable=no-name-in-module
         OpAssoc,
@@ -73,8 +76,8 @@ else:
     def infix_notation(  # type: ignore
         base_expr: pyparsing.ParserElement,
         op_list: list[Any],
-        lpar: Union[str, pyparsing.ParserElement] = Suppress("("),
-        rpar: Union[str, pyparsing.ParserElement] = Suppress(")"),
+        lpar: Union[str, pyparsing.ParserElement] = SUPPRESS_LEFT_PARENTHESIS,
+        rpar: Union[str, pyparsing.ParserElement] = SUPPRESS_RIGHT_PARENTHESIS,
     ) -> pyparsing.ParserElement:
         # pylint: disable=too-many-function-args
         return pyparsing.infixNotation(base_expr, op_list, lpar, rpar)  # type: ignore

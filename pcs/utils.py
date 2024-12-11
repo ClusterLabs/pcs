@@ -2439,7 +2439,7 @@ def dom_update_nvset(dom_element, nvpair_tuples, tag_name, id_candidate):
         return
 
     only_removing = True
-    for name, value in nvpair_tuples:
+    for _, value in nvpair_tuples:
         if value != "":
             only_removing = False
             break

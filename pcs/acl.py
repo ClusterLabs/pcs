@@ -138,7 +138,7 @@ def argv_to_permission_info_list(argv):
         )
     )
 
-    for permission, scope_type, dummy_scope in permission_info_list:
+    for permission, scope_type, _ in permission_info_list:
         if permission not in ["read", "write", "deny"] or scope_type not in [
             "xpath",
             "id",

@@ -181,7 +181,7 @@ def main(argv=None):
         sys.exit(1)
 
     full = False
-    for option, dummy_value in pcs_options:
+    for option, _ in pcs_options:
         if option == "--full":
             full = True
             break

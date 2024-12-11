@@ -26,6 +26,7 @@ from pcs.common.status_dto import (
 from pcs.common.str_tools import format_list
 from pcs.lib.pacemaker.values import is_true
 
+_DEFAULT_SEVERITY = reports.ReportItemSeverity.error()
 _PRIMITIVE_TAG = "resource"
 _GROUP_TAG = "group"
 _CLONE_TAG = "clone"
@@ -104,7 +105,7 @@ class BundleSameIdAsImplicitResourceError(Exception):
 
 def cluster_status_parsing_error_to_report(
     e: ClusterStatusParsingError,
-    severity: reports.ReportItemSeverity = reports.ReportItemSeverity.error(),
+    severity: reports.ReportItemSeverity = _DEFAULT_SEVERITY,
 ) -> reports.ReportItem:
     reason = ""
     if isinstance(e, EmptyResourceIdError):

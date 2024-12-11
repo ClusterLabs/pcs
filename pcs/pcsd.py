@@ -218,7 +218,7 @@ def accept_token_cmd(lib, argv, modifiers):
     try:
         pcs_users_config.write_facade(facade, can_overwrite=True)
     except pcs_file.RawFileError as e:
-        raise output.error(raw_file_error_report(e).message.message)
+        raise output.error(raw_file_error_report(e).message.message) from e
 
 
 def _check_nodes(node_list, prefix=""):
