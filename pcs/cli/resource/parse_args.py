@@ -77,7 +77,7 @@ def parse_primitive(arg_list: Argv) -> PrimitiveOptions:
         arg_list, {"op", "meta"}, implicit_first_keyword="instance"
     )
 
-    parts = PrimitiveOptions(
+    return PrimitiveOptions(
         instance_attrs=KeyValueParser(
             groups.get_args_flat("instance")
         ).get_unique(),
@@ -87,8 +87,6 @@ def parse_primitive(arg_list: Argv) -> PrimitiveOptions:
             for op in build_operations(groups.get_args_groups("op"))
         ],
     )
-
-    return parts
 
 
 def parse_clone(arg_list: Argv, promotable: bool = False) -> CloneOptions:

@@ -178,9 +178,7 @@ def perform_command(command_dto: CommandDto, auth_token: str) -> TaskResultDto:
     task_ident_dto = from_dict(TaskIdentDto, json.loads(response))
     task_ident = task_ident_dto.task_ident
 
-    task_result_dto = fetch_task_result(task_ident_dto, auth_token)
-
-    return task_result_dto
+    return fetch_task_result(task_ident_dto, auth_token)
 
 
 def run_command_synchronously(

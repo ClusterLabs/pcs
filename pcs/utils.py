@@ -1681,8 +1681,7 @@ def get_cib_dom(cib_xml=None):
     if cib_xml is None:
         cib_xml = get_cib()
     try:
-        dom = parseString(cib_xml)
-        return dom
+        return parseString(cib_xml)
     except xml.parsers.expat.ExpatError:
         return err("unable to get cib")
 
@@ -1695,8 +1694,7 @@ def get_cib_etree(cib_xml=None):
     if cib_xml is None:
         cib_xml = get_cib()
     try:
-        root = ET.fromstring(cib_xml)
-        return root
+        return ET.fromstring(cib_xml)
     except xml.etree.ElementTree.ParseError:
         return err("unable to get cib")
 
@@ -2344,8 +2342,7 @@ def get_operations_from_transitions(transitions_dom):
                 )
             )
     operation_list.sort(key=lambda x: x[0])
-    op_list = [op[1] for op in operation_list]
-    return op_list
+    return [op[1] for op in operation_list]
 
 
 def get_resources_location_from_operations(cib_dom, resources_operations):
@@ -2380,12 +2377,11 @@ def get_resources_location_from_operations(cib_dom, resources_operations):
             locations[long_id]["start_on_node"] = res_op["on_node"]
         if operation == "promote":
             locations[long_id]["promote_on_node"] = res_op["on_node"]
-    locations_clean = {
+    return {
         key: val
         for key, val in locations.items()
         if "start_on_node" in val or "promote_on_node" in val
     }
-    return locations_clean
 
 
 def get_remote_quorumtool_output(node):
