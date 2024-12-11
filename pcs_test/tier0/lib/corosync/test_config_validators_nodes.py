@@ -220,9 +220,9 @@ class AddNodes(TestCase):
                     min_count=1,
                     max_count=1,
                     node_name=name,
-                    node_index=id,
+                    node_index=id_,
                 )
-                for id, name in enumerate(["node3", "node4", "node5"], 1)
+                for id_, name in enumerate(["node3", "node4", "node5"], 1)
             ],
         )
 

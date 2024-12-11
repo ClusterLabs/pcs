@@ -131,6 +131,7 @@ target-version = "py312"
 # ruff rules docs: https://docs.astral.sh/ruff/rules/
 # pylint rules in ruff: # https://github.com/astral-sh/ruff/issues/970
 select = [
+  "A",
   "ASYNC",
   "B",
   "E4",

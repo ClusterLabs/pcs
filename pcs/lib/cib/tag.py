@@ -86,7 +86,7 @@ def _validate_add_remove_duplicate_reference_ids(
     add_or_not_remove -- flag for add/remove action
     """
     duplicate_ids_list = [
-        id for id, count in Counter(idref_list).items() if count > 1
+        id_ for id_, count in Counter(idref_list).items() if count > 1
     ]
     if duplicate_ids_list:
         return [

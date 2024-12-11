@@ -413,8 +413,8 @@ def _replica_to_dto(
     ]
 
     duplicate_ids = [
-        id
-        for id, count in Counter(
+        id_
+        for id_, count in Counter(
             resource.resource_id for resource in resource_list
         ).items()
         if count > 1
