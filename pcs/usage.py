@@ -84,7 +84,7 @@ def full_usage() -> None:
     out += strip_extras(resource([]))
     out += strip_extras(cluster([]))
     out += strip_extras(stonith([]))
-    out += strip_extras(property([]))
+    out += strip_extras(property_usage([]))
     out += strip_extras(constraint([]))
     out += strip_extras(node([]))
     out += strip_extras(acl([]))
@@ -187,7 +187,7 @@ def generate_completion_tree_from_usage() -> CompletionTree:
     tree["resource"] = generate_tree(resource([]))
     tree["cluster"] = generate_tree(cluster([]))
     tree["stonith"] = generate_tree(stonith([]))
-    tree["property"] = generate_tree(property([]))
+    tree["property"] = generate_tree(property_usage([]))
     tree["acl"] = generate_tree(acl([]))
     tree["constraint"] = generate_tree(constraint([]))
     tree["qdevice"] = generate_tree(qdevice([]))
@@ -2339,7 +2339,7 @@ Commands:
     return sub_usage(args, output)
 
 
-def property(args: Argv) -> str:
+def property_usage(args: Argv) -> str:
     # 'property' is a built-in
     # pylint: disable=redefined-builtin
     output = """
@@ -3449,7 +3449,7 @@ def show(main_usage_name: str, rest_usage_names: Argv) -> None:
         "host": host,
         "node": node,
         "pcsd": pcsd,
-        "property": property,
+        "property": property_usage,
         "qdevice": qdevice,
         "quorum": quorum,
         "resource": resource,

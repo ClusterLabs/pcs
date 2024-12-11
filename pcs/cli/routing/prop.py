@@ -4,7 +4,9 @@ from pcs.cli.common.routing import create_router
 
 property_cmd = create_router(
     {
-        "help": lambda _lib, _argv, _modifiers: print(usage.property(_argv)),
+        "help": lambda _lib, _argv, _modifiers: print(
+            usage.property_usage(_argv)
+        ),
         "set": cluster_property.set_property,
         "unset": cluster_property.unset_property,
         # TODO remove, deprecated command

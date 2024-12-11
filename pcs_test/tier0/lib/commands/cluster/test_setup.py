@@ -1449,9 +1449,9 @@ class Validation(TestCase):
                     min_count=1,
                     max_count=8,
                     node_name=name,
-                    node_index=id,
+                    node_index=id_,
                 )
-                for id, name in enumerate(NODE_LIST, 1)
+                for id_, name in enumerate(NODE_LIST, 1)
             ]
         )
 

@@ -619,7 +619,7 @@ class UnexpectedEndOfInput(ParserException):
     pass
 
 
-class SyntaxError(ParserException):
+class SyntaxError(ParserException):  # noqa: A001
     # pylint: disable=redefined-builtin
     pass
 
