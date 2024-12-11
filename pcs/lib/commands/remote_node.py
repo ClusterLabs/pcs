@@ -1,4 +1,5 @@
 from typing import (
+    TYPE_CHECKING,
     Callable,
     Collection,
     Iterable,
@@ -44,7 +45,6 @@ from pcs.lib.communication.nodes import (
 )
 from pcs.lib.communication.tools import run as run_com
 from pcs.lib.communication.tools import run_and_raise
-from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
 from pcs.lib.env import (
     LibraryEnvironment,
     WaitType,
@@ -61,6 +61,11 @@ from pcs.lib.resource_agent import (
     resource_agent_error_to_report_item,
 )
 from pcs.lib.tools import generate_binary_key
+
+if TYPE_CHECKING:
+    from pcs.lib.corosync.config_facade import (
+        ConfigFacade as CorosyncConfigFacade,
+    )
 
 
 def _reports_skip_new_node(new_node_name, reason_type):
