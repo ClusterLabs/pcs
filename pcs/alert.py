@@ -21,7 +21,7 @@ def alert_add(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
         raise CmdLineInputError()
 
     sections = group_by_keywords(
-        argv, set(["options", "meta"]), implicit_first_keyword="main"
+        argv, {"options", "meta"}, implicit_first_keyword="main"
     )
     parser = KeyValueParser(sections.get_args_flat("main"))
     parser.check_allowed_keys(["id", "description", "path"])
@@ -48,7 +48,7 @@ def alert_update(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     alert_id = argv[0]
 
     sections = group_by_keywords(
-        argv[1:], set(["options", "meta"]), implicit_first_keyword="main"
+        argv[1:], {"options", "meta"}, implicit_first_keyword="main"
     )
     parser = KeyValueParser(sections.get_args_flat("main"))
     parser.check_allowed_keys(["description", "path"])
@@ -88,7 +88,7 @@ def recipient_add(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     alert_id = argv[0]
 
     sections = group_by_keywords(
-        argv[1:], set(["options", "meta"]), implicit_first_keyword="main"
+        argv[1:], {"options", "meta"}, implicit_first_keyword="main"
     )
     parser = KeyValueParser(sections.get_args_flat("main"))
     parser.check_allowed_keys(["description", "id", "value"])
@@ -118,7 +118,7 @@ def recipient_update(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     recipient_id = argv[0]
 
     sections = group_by_keywords(
-        argv[1:], set(["options", "meta"]), implicit_first_keyword="main"
+        argv[1:], {"options", "meta"}, implicit_first_keyword="main"
     )
     parser = KeyValueParser(sections.get_args_flat("main"))
     parser.check_allowed_keys(["description", "value"])

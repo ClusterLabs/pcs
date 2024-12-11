@@ -231,7 +231,7 @@ def _metadata_make_stonith_port_parameter_not_required(
     # parameter (defined in fenced metadata). Therefore, we must mark 'port'
     # and all parameters replacing it as not required.
     port_related_params = set()
-    next_iteration_params = set(["port"])
+    next_iteration_params = {"port"}
     while next_iteration_params:
         current_params = next_iteration_params
         next_iteration_params = set()

@@ -252,7 +252,7 @@ class GroupByKeywords(TestCase):
         self.assertEqual(
             group_by_keywords(
                 [0, "first", 1, 2, "second", 3],
-                set(["first", "second"]),
+                {"first", "second"},
                 implicit_first_keyword="zero",
             )._groups,
             {"zero": [[0]], "first": [[1, 2]], "second": [[3]]},
@@ -262,7 +262,7 @@ class GroupByKeywords(TestCase):
         self.assertEqual(
             group_by_keywords(
                 ["first", 1, 2, "second", 3],
-                set(["first", "second"]),
+                {"first", "second"},
             )._groups,
             {"first": [[1, 2]], "second": [[3]]},
         )
@@ -272,13 +272,13 @@ class GroupByKeywords(TestCase):
             CmdLineInputError,
             lambda: group_by_keywords(
                 [0, "first", 1, 2, "second", 3],
-                set(["first", "second"]),
+                {"first", "second"},
             ),
         )
 
     def test_no_args(self):
         self.assertEqual(
-            group_by_keywords([], set(["first", "second"]))._groups,
+            group_by_keywords([], {"first", "second"})._groups,
             {},
         )
 
@@ -286,7 +286,7 @@ class GroupByKeywords(TestCase):
         self.assertEqual(
             group_by_keywords(
                 [],
-                set(["first", "second"]),
+                {"first", "second"},
                 implicit_first_keyword="zero",
             )._groups,
             {},
@@ -296,7 +296,7 @@ class GroupByKeywords(TestCase):
         self.assertEqual(
             group_by_keywords(
                 ["first"],
-                set(["first", "second"]),
+                {"first", "second"},
             )._groups,
             {"first": [[]]},
         )
@@ -305,7 +305,7 @@ class GroupByKeywords(TestCase):
         self.assertEqual(
             group_by_keywords(
                 ["first", 1, 2, "second", 3, "first", 4],
-                set(["first", "second"]),
+                {"first", "second"},
             )._groups,
             {"first": [[1, 2], [4]], "second": [[3]]},
         )
@@ -314,7 +314,7 @@ class GroupByKeywords(TestCase):
         self.assertEqual(
             group_by_keywords(
                 ["second", 1, "second", "second", 2, 3],
-                set(["first", "second"]),
+                {"first", "second"},
             )._groups,
             {"second": [[1], [], [2, 3]]},
         )
@@ -323,7 +323,7 @@ class GroupByKeywords(TestCase):
         self.assertEqual(
             group_by_keywords(
                 [1, 2, "first", 3, "zero", 4],
-                set(["first"]),
+                {"first"},
                 implicit_first_keyword="zero",
             )._groups,
             {"zero": [[1, 2]], "first": [[3, "zero", 4]]},
@@ -335,7 +335,7 @@ class GroupByKeywords(TestCase):
         self.assertEqual(
             group_by_keywords(
                 [1, 2, "first", 3, "zero", 4],
-                set(["first", "zero"]),
+                {"first", "zero"},
                 implicit_first_keyword="zero",
             )._groups,
             {"zero": [[1, 2], [4]], "first": [[3]]},
@@ -347,7 +347,7 @@ class GroupByKeywords(TestCase):
         self.assertEqual(
             group_by_keywords(
                 ["first", "1", "2", "second", "3"],
-                set(["first", "second"]),
+                {"first", "second"},
                 implicit_first_keyword="zero",
             )._groups,
             {"first": [["1", "2"]], "second": [["3"]]},

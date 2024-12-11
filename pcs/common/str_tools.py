@@ -244,7 +244,7 @@ T = TypeVar("T")
 
 
 def transform(items: list[T], mapping: Mapping[T, str]) -> list[str]:
-    return list(map(lambda item: mapping.get(item, str(item)), items))
+    return [mapping.get(item, str(item)) for item in items]
 
 
 def is_iterable_not_str(value: Union[IterableAbc, str]) -> bool:
