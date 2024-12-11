@@ -233,7 +233,7 @@ def generate_tree(usage_txt: str) -> CompletionTree:
 
 
 def main() -> str:
-    output = """
+    return """
 Usage: pcs [-f file] [-h] [commands]...
 Control and configure pacemaker and corosync.
 
@@ -277,7 +277,6 @@ Commands:
 """
     # Advanced usage to possibly add later
     #  --corosync_conf=<corosync file> Specify alternative corosync.conf file
-    return output
 
 
 def _alias_of(cmd: str) -> str:
