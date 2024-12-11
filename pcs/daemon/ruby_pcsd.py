@@ -46,6 +46,8 @@ def get_request_id():
 
 
 class SinatraResult(namedtuple("SinatraResult", "headers, status, body")):
+    __slots__ = ()
+
     @classmethod
     def from_response(cls, response):
         return cls(response["headers"], response["status"], response["body"])
@@ -81,6 +83,8 @@ class RubyDaemonRequest(
         "RubyDaemonRequest", "request_type, path, query, headers, method, body"
     )
 ):
+    __slots__ = ()
+
     def __new__(
         cls,
         request_type,
