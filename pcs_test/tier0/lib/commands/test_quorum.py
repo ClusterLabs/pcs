@@ -2975,7 +2975,7 @@ class RemoveDeviceNetTest(TestCase):
         )
         return report_list
 
-    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
+    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", list)
     def test_not_live_success(self):
         dummy_cluster_nodes, original_conf, expected_conf = self.conf_2nodes(
             # cluster consists of two nodes, two_node must be set
@@ -2989,7 +2989,7 @@ class RemoveDeviceNetTest(TestCase):
 
         lib.remove_device(self.env_assist.get_env())
 
-    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
+    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", list)
     def test_not_live_error(self):
         (
             self.config.env.set_corosync_conf_data(
@@ -3021,7 +3021,7 @@ class RemoveDeviceNetTest(TestCase):
 
         lib.remove_device(self.env_assist.get_env())
 
-    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
+    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", list)
     def test_fail_if_device_not_set(self):
         self.config.corosync_conf.load_content(
             _read_file_rc("corosync-3nodes.conf")
@@ -3034,7 +3034,7 @@ class RemoveDeviceNetTest(TestCase):
             expected_in_processor=False,
         )
 
-    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
+    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", list)
     def test_success_2nodes_no_sbd(self):
         # cluster consists of two nodes, two_node must be set
         cluster_nodes, original_conf, expected_conf = self.conf_2nodes(
@@ -3047,7 +3047,7 @@ class RemoveDeviceNetTest(TestCase):
             self.fixture_reports_success(cluster_nodes)
         )
 
-    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
+    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", list)
     def test_success_2nodes_sbd_installed_disabled(self):
         # cluster consists of two nodes, two_node must be set
         cluster_nodes, original_conf, expected_conf = self.conf_2nodes(
@@ -3060,7 +3060,7 @@ class RemoveDeviceNetTest(TestCase):
             self.fixture_reports_success(cluster_nodes, atb_enabled=False)
         )
 
-    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
+    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", list)
     def test_success_2nodes_sbd_enabled(self):
         # cluster consists of two nodes and SBD is in use, so teo_nodes must be
         # disabled and auto_tie_breaker must be enabled
@@ -3093,7 +3093,7 @@ class RemoveDeviceNetTest(TestCase):
             self.fixture_reports_success(cluster_nodes, atb_enabled=False)
         )
 
-    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
+    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", list)
     def test_success_3nodes(self):
         # with odd number of nodes it doesn't matter if sbd is used
         cluster_nodes, original_conf, expected_conf = self.conf_3nodes()
@@ -3103,7 +3103,7 @@ class RemoveDeviceNetTest(TestCase):
             self.fixture_reports_success(cluster_nodes)
         )
 
-    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
+    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", list)
     def test_success_3nodes_file(self):
         # with odd number of nodes it doesn't matter if sbd is used
         dummy_cluster_nodes, original_conf, expected_conf = self.conf_3nodes()
@@ -3115,7 +3115,7 @@ class RemoveDeviceNetTest(TestCase):
         lib.remove_device(self.env_assist.get_env())
         self.env_assist.assert_reports([])
 
-    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
+    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", list)
     def test_success_3nodes_one_node_offline(self):
         # with odd number of nodes it doesn't matter if sbd is used
         cluster_nodes, original_conf, expected_conf = self.conf_3nodes()
@@ -3257,7 +3257,7 @@ class RemoveDeviceNetTest(TestCase):
             ]
         )
 
-    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
+    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", list)
     def test_error_disable_qdevice(self):
         cluster_nodes, original_conf, dummy_expected_conf = self.conf_3nodes()
 
@@ -3314,7 +3314,7 @@ class RemoveDeviceNetTest(TestCase):
             ]
         )
 
-    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
+    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", list)
     def test_error_stop_qdevice(self):
         cluster_nodes, original_conf, dummy_expected_conf = self.conf_3nodes()
 
@@ -3392,7 +3392,7 @@ class RemoveDeviceNetTest(TestCase):
             ]
         )
 
-    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
+    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", list)
     def test_error_destroy_qdevice_net(self):
         cluster_nodes, original_conf, dummy_expected_conf = self.conf_3nodes()
 

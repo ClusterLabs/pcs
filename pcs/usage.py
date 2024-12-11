@@ -224,7 +224,7 @@ def generate_tree(usage_txt: str) -> CompletionTree:
                 ret_hash[arg] = {}
             cur_hash = ret_hash[arg]
             for arg in args:
-                if arg.startswith("[") or arg.startswith("<"):
+                if arg.startswith(("[", "<")):
                     break
                 if arg not in cur_hash:
                     cur_hash[arg] = {}

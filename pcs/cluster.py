@@ -1477,11 +1477,7 @@ def cluster_report(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
         utils.err("cluster is not configured on this node")
     newoutput = ""
     for line in output.split("\n"):
-        if (
-            line.startswith("cat:")
-            or line.startswith("grep")
-            or line.startswith("tail")
-        ):
+        if line.startswith(("cat:", "grep", "tail")):
             continue
         if "We will attempt to remove" in line:
             continue
