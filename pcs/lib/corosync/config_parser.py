@@ -128,7 +128,7 @@ class Section:
             section.parent.del_section(section)
         # here we are editing obj's _parent attribute of the same class
         # pylint: disable=protected-access
-        section._parent = self
+        section._parent = self  # noqa: SLF001
         self._section_list.append(section)
         return self
 
@@ -138,7 +138,7 @@ class Section:
         # thanks to remove raising a ValueError in that case
         # here we are editing obj's _parent attribute of the same class
         # pylint: disable=protected-access
-        section._parent = None
+        section._parent = None  # noqa: SLF001
         return self
 
     def __str__(self) -> str:

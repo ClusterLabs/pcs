@@ -209,8 +209,8 @@ class Scheduler:
             group=None,
             target=mp_worker_init,
             args=(
-                self._proc_pool._inqueue,  # type: ignore
-                self._proc_pool._outqueue,  # type: ignore
+                self._proc_pool._inqueue,  # type: ignore # noqa: SLF001
+                self._proc_pool._outqueue,  # type: ignore # noqa: SLF001
                 worker_init,
                 (self._worker_message_q, self._logging_q),
                 1,
