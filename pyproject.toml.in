@@ -138,6 +138,7 @@ select = [
   "E7",
   "E9",
   "F",
+  "G",
   "I",
   "LOG",
   "PL", # pylint convention, error, refactoring, warning

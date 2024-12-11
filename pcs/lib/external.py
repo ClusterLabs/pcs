@@ -60,30 +60,28 @@ class CommandRunner:
         env_vars.update(dict(env_extend) if env_extend else {})
 
         log_args = " ".join([shell_quote(x) for x in args])
-        self._logger.debug(
-            "Running: {args}\nEnvironment:{env_vars}{stdin_string}".format(
-                args=log_args,
-                stdin_string=(
-                    ""
-                    if not stdin_string
-                    else (
-                        "\n--Debug Input Start--\n{0}\n--Debug Input End--"
-                    ).format(stdin_string)
-                ),
-                env_vars=(
-                    ""
-                    if not env_vars
-                    else (
-                        "\n"
-                        + "\n".join(
-                            [
-                                "  {0}={1}".format(key, val)
-                                for key, val in sorted(env_vars.items())
-                            ]
-                        )
-                    )
-                ),
+        env = (
+            ""
+            if not env_vars
+            else (
+                "\n"
+                + "\n".join(
+                    [
+                        "  {0}={1}".format(key, val)
+                        for key, val in sorted(env_vars.items())
+                    ]
+                )
             )
+        )
+        stdin = (
+            ""
+            if not stdin_string
+            else ("\n--Debug Input Start--\n{0}\n--Debug Input End--").format(
+                stdin_string
+            )
+        )
+        self._logger.debug(
+            "Running: %s\nEnvironment:%s%s", log_args, env, stdin
         )
         self._reporter.report(
             ReportItem.debug(
@@ -131,12 +129,14 @@ class CommandRunner:
 
         self._logger.debug(
             (
-                "Finished running: {args}\nReturn value: {retval}"
-                + "\n--Debug Stdout Start--\n{out_std}\n--Debug Stdout End--"
-                + "\n--Debug Stderr Start--\n{out_err}\n--Debug Stderr End--"
-            ).format(
-                args=log_args, retval=retval, out_std=out_std, out_err=out_err
-            )
+                "Finished running: %s\nReturn value: %s"
+                "\n--Debug Stdout Start--\n%s\n--Debug Stdout End--"
+                "\n--Debug Stderr Start--\n%s\n--Debug Stderr End--"
+            ),
+            log_args,
+            retval,
+            out_std,
+            out_err,
         )
         self._reporter.report(
             ReportItem.debug(
