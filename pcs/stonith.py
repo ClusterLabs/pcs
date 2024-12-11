@@ -99,7 +99,7 @@ def stonith_list_available(
                 "{0} - {1}".format(
                     name,
                     # pylint: disable=protected-access
-                    resource._format_desc(
+                    resource._format_desc(  # noqa: SLF001
                         len(name + " - "), shortdesc.replace("\n", " ")
                     ),
                 )
