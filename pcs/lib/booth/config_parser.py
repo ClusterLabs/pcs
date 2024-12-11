@@ -15,6 +15,8 @@ from pcs.lib.interface.config import (
 
 
 class ConfigItem(namedtuple("ConfigItem", "key value details")):
+    __slots__ = ()
+
     def __new__(cls, key, value, details=None):
         return super().__new__(cls, key, value, details or [])
 
