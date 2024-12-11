@@ -1,4 +1,5 @@
-from pcs.common.reports import ReportItemList
+from typing import TYPE_CHECKING
+
 from pcs.lib.cib import alert
 from pcs.lib.cib.nvpair import (
     arrange_first_instance_attributes,
@@ -10,6 +11,9 @@ from pcs.lib.cib.tools import (
 )
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
+
+if TYPE_CHECKING:
+    from pcs.common.reports import ReportItemList
 
 
 def create_alert(

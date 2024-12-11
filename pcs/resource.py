@@ -5,6 +5,7 @@ import sys
 import textwrap
 from functools import partial
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
     Mapping,
@@ -79,7 +80,6 @@ from pcs.common.pacemaker.resource.list import (
 from pcs.common.pacemaker.resource.operations import (
     OCF_CHECK_LEVEL_INSTANCE_ATTRIBUTE_NAME,
 )
-from pcs.common.resource_agent.dto import ResourceAgentNameDto
 from pcs.common.str_tools import (
     format_list,
     format_list_custom_last_separator,
@@ -103,6 +103,9 @@ from pcs.lib.pacemaker.values import (
 from pcs.settings import (
     pacemaker_wait_timeout_status as PACEMAKER_WAIT_TIMEOUT_STATUS,
 )
+
+if TYPE_CHECKING:
+    from pcs.common.resource_agent.dto import ResourceAgentNameDto
 
 RESOURCE_RELOCATE_CONSTRAINT_PREFIX = "pcs-relocate-"
 

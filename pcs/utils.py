@@ -18,6 +18,7 @@ from functools import lru_cache
 from io import BytesIO
 from textwrap import dedent
 from typing import (
+    TYPE_CHECKING,
     Any,
     Dict,
     Optional,
@@ -55,7 +56,6 @@ from pcs.common.pacemaker.resource.operations import (
     OCF_CHECK_LEVEL_INSTANCE_ATTRIBUTE_NAME,
 )
 from pcs.common.reports import ReportProcessor
-from pcs.common.reports.item import ReportItemList
 from pcs.common.reports.messages import CibUpgradeFailedToMinimalRequiredVersion
 from pcs.common.services.errors import ManageServiceError
 from pcs.common.services.interfaces import ServiceManagerInterface
@@ -80,6 +80,9 @@ from pcs.lib.pacemaker.values import is_score as is_score_value
 from pcs.lib.pacemaker.values import validate_id
 from pcs.lib.services import get_service_manager as _get_service_manager
 from pcs.lib.services import service_exception_to_report
+
+if TYPE_CHECKING:
+    from pcs.common.reports.item import ReportItemList
 
 # pylint: disable=invalid-name
 # pylint: disable=too-many-branches
