@@ -97,10 +97,12 @@ class LibCommunicatorLogger(CommunicatorLoggerInterface):
         url = response.request.url
         debug_data = response.debug
         self._logger.debug(
-            f"Communication debug info for calling: {url}\n"
+            "Communication debug info for calling: %s\n"
             "--Debug Communication Info Start--\n"
-            f"{debug_data}\n"
-            "--Debug Communication Info End--"
+            "%s\n"
+            "--Debug Communication Info End--",
+            url,
+            debug_data,
         )
         self._reporter.report(
             ReportItem.debug(
