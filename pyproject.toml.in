@@ -144,6 +144,7 @@ select = [
   "LOG",
   "PIE",
   "PL", # pylint convention, error, refactoring, warning
+  "RET",
   "SIM",
 ]
 # ruff does not respect pylint ignore directives

@@ -567,7 +567,7 @@ def config_backup_path_list(with_uid_gid=False):
 
     pcmk_authkey_attrs = dict(cib_attrs)
     pcmk_authkey_attrs["mode"] = 0o440
-    file_list = {
+    return {
         "cib.xml": {
             "path": os.path.join(settings.cib_dir, "cib.xml"),
             "required": True,
@@ -611,7 +611,6 @@ def config_backup_path_list(with_uid_gid=False):
             },
         },
     }
-    return file_list
 
 
 def _get_uid(user_name):
