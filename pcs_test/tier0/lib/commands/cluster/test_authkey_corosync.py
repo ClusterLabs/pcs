@@ -693,7 +693,7 @@ class MissingNodeNamesInCorosync(TestCase):
     def test_missing_name_of_all_nodes(self):
         self.assert_command(
             self._get_corosync_nodes_options(
-                self.existing_nodes, range(0, len(self.existing_nodes))
+                self.existing_nodes, range(len(self.existing_nodes))
             )
         )
 

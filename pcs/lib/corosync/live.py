@@ -189,7 +189,7 @@ def _parse_quorum_status(quorum_status: str) -> QuorumStatus:
             if not line:
                 continue
             if in_node_list:
-                if line.startswith("-") or line.startswith("Nodeid"):
+                if line.startswith(("-", "Nodeid")):
                     # skip headers
                     continue
                 parts = line.split()

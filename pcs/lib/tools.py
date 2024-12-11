@@ -56,7 +56,7 @@ def environment_file_to_dict(config: str) -> dict[str, str]:
 
     data = {}
     for line in [line.strip() for line in config.split("\n")]:
-        if line == "" or line.startswith("#") or line.startswith(";"):
+        if line == "" or line.startswith(("#", ";")):
             continue
         if "=" not in line:
             continue
