@@ -21,6 +21,8 @@ class PacemakerNode(namedtuple("PacemakerNode", "name addr")):
     communication and checking if node name / address is in use.
     """
 
+    __slots__ = ()
+
 
 def update_node_instance_attrs(
     cib, id_provider, node_name, attrs, state_nodes=None

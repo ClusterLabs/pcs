@@ -96,6 +96,7 @@ select = [
   "RET",
   "SIM",
   "SLF",
+  "SLOT",
 ]
 # ruff does not respect pylint ignore directives
 # https://github.com/astral-sh/ruff/issues/1203
