@@ -192,15 +192,11 @@ def verify(resources_el: _Element) -> reports.ReportItemList:
 
     resource_el -- element with bundles
     """
-    report_list = []
-    for bundle_el in resources_el.iterfind(TAG):
-        if not _is_supported_container(_get_container_element(bundle_el)):
-            report_list.append(
-                _get_report_unsupported_container(
-                    bundle_el, updating_options=False
-                )
-            )
-    return report_list
+    return [
+        _get_report_unsupported_container(bundle_el, updating_options=False)
+        for bundle_el in resources_el.iterfind(TAG)
+        if not _is_supported_container(_get_container_element(bundle_el))
+    ]
 
 
 def validate_new(

@@ -1784,17 +1784,17 @@ def operation_exists(operations_el, op_el):
     """
     Commandline options: no options
     """
-    existing = []
     op_name = op_el.getAttribute("name")
     op_interval = timeout_to_seconds_legacy(op_el.getAttribute("interval"))
-    for op in operations_el.getElementsByTagName("op"):
+    return [
+        op
+        for op in operations_el.getElementsByTagName("op")
         if (
             op.getAttribute("name") == op_name
             and timeout_to_seconds_legacy(op.getAttribute("interval"))
             == op_interval
-        ):
-            existing.append(op)
-    return existing
+        )
+    ]
 
 
 def operation_exists_by_name(operations_el, op_el):
@@ -2392,10 +2392,11 @@ def dom_prepare_child_element(dom_element, tag_name, id_candidate):
     """
     Commandline options: no options
     """
-    child_elements = []
-    for child in dom_element.childNodes:
-        if child.nodeType == child.ELEMENT_NODE and child.tagName == tag_name:
-            child_elements.append(child)
+    child_elements = [
+        child
+        for child in dom_element.childNodes
+        if child.nodeType == child.ELEMENT_NODE and child.tagName == tag_name
+    ]
 
     if not child_elements:
         dom = dom_element.ownerDocument

@@ -21,16 +21,15 @@ def _corosync_options_fixture(option_list, indent_level=2):
 
 
 def corosync_conf_fixture(node_list=(), quorum_options=(), qdevice_net=False):
-    nodes = []
-    for node in node_list:
-        nodes.append(
-            dedent(
-                """\
+    nodes = [
+        dedent(
+            """\
                 node {{
             {options}    }}
             """
-            ).format(options=_corosync_options_fixture(node))
-        )
+        ).format(options=_corosync_options_fixture(node))
+        for node in node_list
+    ]
     device = ""
     if qdevice_net:
         device = outdent(

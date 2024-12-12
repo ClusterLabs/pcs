@@ -116,30 +116,28 @@ def _ocf_1_0_parameter_list_to_ocf_unified(
         if parameter.obsoletes:
             deprecated_by_dict[parameter.obsoletes].add(parameter.name)
 
-    result = []
-    for parameter in parameter_list:
-        result.append(
-            ResourceAgentParameter(
-                name=parameter.name,
-                shortdesc=parameter.shortdesc,
-                longdesc=parameter.longdesc,
-                type=parameter.type,
-                default=parameter.default,
-                enum_values=parameter.enum_values,
-                required=_bool_value(parameter.required),
-                advanced=False,
-                deprecated=_bool_value(parameter.deprecated),
-                deprecated_by=sorted(deprecated_by_dict[parameter.name]),
-                deprecated_desc=None,
-                unique_group=(
-                    f"{const.DEFAULT_UNIQUE_GROUP_PREFIX}{parameter.name}"
-                    if _bool_value(parameter.unique)
-                    else None
-                ),
-                reloadable=_bool_value(parameter.unique),
-            )
+    return [
+        ResourceAgentParameter(
+            name=parameter.name,
+            shortdesc=parameter.shortdesc,
+            longdesc=parameter.longdesc,
+            type=parameter.type,
+            default=parameter.default,
+            enum_values=parameter.enum_values,
+            required=_bool_value(parameter.required),
+            advanced=False,
+            deprecated=_bool_value(parameter.deprecated),
+            deprecated_by=sorted(deprecated_by_dict[parameter.name]),
+            deprecated_desc=None,
+            unique_group=(
+                f"{const.DEFAULT_UNIQUE_GROUP_PREFIX}{parameter.name}"
+                if _bool_value(parameter.unique)
+                else None
+            ),
+            reloadable=_bool_value(parameter.unique),
         )
-    return result
+        for parameter in parameter_list
+    ]
 
 
 def _ocf_1_1_parameter_list_to_ocf_unified(
