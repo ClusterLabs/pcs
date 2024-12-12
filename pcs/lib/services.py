@@ -59,12 +59,15 @@ class _NoOpDriver(services.interfaces.ServiceManagerInterface):
         self._warn(service, instance, reports.const.SERVICE_ACTION_KILL)
 
     def is_enabled(self, service: str, instance: Optional[str] = None) -> bool:
+        del service, instance
         return False
 
     def is_running(self, service: str, instance: Optional[str] = None) -> bool:
+        del service, instance
         return False
 
     def is_installed(self, service: str) -> bool:
+        del service
         return True
 
     def get_available_services(self) -> List[str]:

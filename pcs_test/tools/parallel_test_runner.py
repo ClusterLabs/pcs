@@ -63,6 +63,7 @@ class VanillaTextTestResult(unittest.TextTestResult):
         return line_list
 
     def stopTest(self, test):
+        del test
         # super().stopTest(test)
         if self.stream.seekable():
             self.stream.seek(0)

@@ -1689,7 +1689,7 @@ class CreateTransportKnet(TransportKnetBase, TestCase):
         crypto_options,
         current_crypto_options=None,
     ):
-        # pylint: disable=unused-argument
+        del current_crypto_options
         return config_validators.create_transport_knet(
             generic_options, compression_options, crypto_options
         )

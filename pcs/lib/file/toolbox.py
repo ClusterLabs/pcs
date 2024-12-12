@@ -57,6 +57,13 @@ class NoopParser(ParserInterface):
         force_code: Optional[reports.types.ForceCode],
         is_forced_or_warning: bool,
     ) -> reports.ReportItemList:
+        del (
+            exception,
+            file_type_code,
+            file_path,
+            force_code,
+            is_forced_or_warning,
+        )
         return []
 
 

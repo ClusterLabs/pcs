@@ -26,6 +26,7 @@ class RubyPcsdWrapper(ruby_pcsd.Wrapper):
         http_request=None,
         payload=None,
     ):
+        del http_request, payload
         if request_type != self.request_type:
             raise AssertionError(
                 f"Wrong request type: expected '{self.request_type}'"

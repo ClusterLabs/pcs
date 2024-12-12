@@ -158,6 +158,7 @@ class Parser(ParserInterface):
         force_code: Optional[reports.types.ForceCode],
         is_forced_or_warning: bool,
     ) -> reports.ReportItemList:
+        del file_type_code, file_path, force_code, is_forced_or_warning
         # TODO switch to new exceptions / reports and do not ignore input
         # arguments of the function
         return [
