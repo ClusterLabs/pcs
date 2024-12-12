@@ -499,11 +499,10 @@ class Verify(TestCase):
                 "another output\n",
             ),
         )
-        out_stderr = []
-        for input_lines in in_stderr:
-            out_stderr.append(
-                [line for line in input_lines if "-V" not in line]
-            )
+        out_stderr = [
+            [line for line in input_lines if "-V" not in line]
+            for input_lines in in_stderr
+        ]
         return zip(in_stderr, out_stderr, strict=False)
 
     @staticmethod

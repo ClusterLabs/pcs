@@ -41,9 +41,7 @@ class Section:
         return not self._attr_list and not self._section_list
 
     def export(self, indent: str = "    ") -> str:
-        lines = []
-        for attr in self._attr_list:
-            lines.append("{0}: {1}".format(*attr))
+        lines = ["{0}: {1}".format(*attr) for attr in self._attr_list]
         if self._attr_list and self._section_list:
             lines.append("")
         section_count = len(self._section_list)

@@ -142,6 +142,7 @@ select = [
   "G",
   "I",
   "LOG",
+  "PERF",
   "PIE",
   "PL", # pylint convention, error, refactoring, warning
   "RET",

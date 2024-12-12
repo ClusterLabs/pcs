@@ -116,26 +116,21 @@ def _stop_resources_wait(
 def _validate_elements_to_remove(
     element_to_remove: ElementsToRemove,
 ) -> reports.ReportItemList:
-    report_list = []
-    for missing_id in sorted(element_to_remove.missing_ids):
-        report_list.append(
-            reports.ReportItem.error(
-                reports.messages.IdNotFound(missing_id, [])
-            )
-        )
-
+    report_list = [
+        reports.ReportItem.error(reports.messages.IdNotFound(missing_id, []))
+        for missing_id in sorted(element_to_remove.missing_ids)
+    ]
     unsupported_elements = element_to_remove.unsupported_elements
-    for unsupported_id in sorted(unsupported_elements.id_tag_map):
-        report_list.append(
-            reports.ReportItem.error(
-                reports.messages.IdBelongsToUnexpectedType(
-                    unsupported_id,
-                    list(unsupported_elements.supported_element_types),
-                    unsupported_elements.id_tag_map[unsupported_id],
-                )
+    report_list.extend(
+        reports.ReportItem.error(
+            reports.messages.IdBelongsToUnexpectedType(
+                unsupported_id,
+                list(unsupported_elements.supported_element_types),
+                unsupported_elements.id_tag_map[unsupported_id],
             )
         )
-
+        for unsupported_id in sorted(unsupported_elements.id_tag_map)
+    )
     return report_list
 
 

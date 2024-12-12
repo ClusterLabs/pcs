@@ -60,9 +60,11 @@ NODE_PREFIX = "{0}: "
 
 def _stdout_stderr_to_string(stdout: str, stderr: str, prefix: str = "") -> str:
     new_lines = [prefix] if prefix else []
-    for line in stdout.splitlines() + stderr.splitlines():
-        if line.strip():
-            new_lines.append(line)
+    new_lines.extend(
+        line
+        for line in stdout.splitlines() + stderr.splitlines()
+        if line.strip()
+    )
     return "\n".join(new_lines)
 
 

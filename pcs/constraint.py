@@ -1012,11 +1012,13 @@ def location_add(
     # Verify current constraint doesn't already exist
     # If it does we replace it with the new constraint
     dummy_dom, constraintsElement = getCurrentConstraints(dom)
-    elementsToRemove = []
     # If the id matches, or the rsc & node match, then we replace/remove
-    for rsc_loc in constraintsElement.getElementsByTagName("rsc_location"):
+    elementsToRemove = [
+        rsc_loc
+        for rsc_loc in constraintsElement.getElementsByTagName("rsc_location")
         # pylint: disable=too-many-boolean-expressions
-        if rsc_loc.getAttribute("id") == constraint_id or (
+        if rsc_loc.getAttribute("id") == constraint_id
+        or (
             rsc_loc.getAttribute("node") == node
             and (
                 (
@@ -1028,8 +1030,8 @@ def location_add(
                     and rsc_loc.getAttribute("rsc-pattern") == rsc_value
                 )
             )
-        ):
-            elementsToRemove.append(rsc_loc)
+        )
+    ]
     for etr in elementsToRemove:
         constraintsElement.removeChild(etr)
 

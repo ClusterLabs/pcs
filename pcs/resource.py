@@ -2094,8 +2094,9 @@ def resource_group_rm(cib_dom, group_name, resource_ids):
 
     resources_to_move = []
     if all_resources:
-        for resource in group_match.getElementsByTagName("primitive"):
-            resources_to_move.append(resource)
+        resources_to_move.extend(
+            list(group_match.getElementsByTagName("primitive"))
+        )
     else:
         for resource_id in resource_ids:
             resource = utils.dom_get_resource(group_match, resource_id)
@@ -2169,8 +2170,10 @@ def resource_group_list(
 
     for e in elements:
         line_parts = [e.getAttribute("id") + ":"]
-        for resource in e.getElementsByTagName("primitive"):
-            line_parts.append(resource.getAttribute("id"))
+        line_parts.extend(
+            resource.getAttribute("id")
+            for resource in e.getElementsByTagName("primitive")
+        )
         print(" ".join(line_parts))
 
 
@@ -2697,10 +2700,10 @@ def operation_to_string(op_el):
         if name in ["id", "name"]:
             continue
         parts.append(name + "=" + value)
-    for nvpair in op_el.getElementsByTagName("nvpair"):
-        parts.append(
-            nvpair.getAttribute("name") + "=" + nvpair.getAttribute("value")
-        )
+    parts.extend(
+        f'{nvpair.getAttribute("name")}={nvpair.getAttribute("value")}'
+        for nvpair in op_el.getElementsByTagName("nvpair")
+    )
     parts.append("(" + op_el.getAttribute("id") + ")")
     return " ".join(parts)
 

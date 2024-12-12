@@ -87,13 +87,10 @@ def stonith_level_config_to_cmd(
     fencing_topology: CibFencingTopologyDto,
 ) -> StringSequence:
     lines: list[str] = []
-    level = None
-    for level in fencing_topology.target_node:
-        lines.append(
-            _get_level_add_cmd(
-                level.index, level.target, level.devices, level.id
-            )
-        )
+    lines.extend(
+        _get_level_add_cmd(level.index, level.target, level.devices, level.id)
+        for level in fencing_topology.target_node
+    )
     for level_regex in fencing_topology.target_regex:
         target = f"regexp%{level_regex.target_pattern}"
         lines.append(

@@ -90,10 +90,7 @@ def nodes_status(lib, argv, modifiers):
         if report_list:
             process_library_reports(report_list)
         online_nodes = utils.getCorosyncActiveNodes()
-        offline_nodes = []
-        for node in all_nodes:
-            if node not in online_nodes:
-                offline_nodes.append(node)
+        offline_nodes = [node for node in all_nodes if node not in online_nodes]
 
         online_nodes.sort()
         offline_nodes.sort()
