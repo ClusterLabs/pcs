@@ -632,11 +632,11 @@ def _resource_bundle_storage_to_text(
 ) -> List[str]:
     if not storage_mappings:
         return []
-    output = []
-    for storage_mapping in storage_mappings:
-        output.append(
-            " ".join(_resource_bundle_storage_mapping_to_str(storage_mapping))
-        )
+    output = [
+        " ".join(_resource_bundle_storage_mapping_to_str(storage_mapping))
+        for storage_mapping in storage_mappings
+    ]
+
     return ["Storage Mapping:"] + indent(output, indent_step=INDENT_STEP)
 
 
@@ -723,14 +723,13 @@ def _resource_operation_to_cmd(
 ) -> List[str]:
     if not operations:
         return []
-    cmd = []
-    for op in operations:
-        cmd.append(
-            "{name} {options}".format(
-                name=op.name,
-                options=pairs_to_cmd(_resource_operation_to_pairs(op)),
-            )
+    cmd = [
+        "{name} {options}".format(
+            name=op.name,
+            options=pairs_to_cmd(_resource_operation_to_pairs(op)),
         )
+        for op in operations
+    ]
     return ["op"] + indent(cmd, indent_step=INDENT_STEP)
 
 

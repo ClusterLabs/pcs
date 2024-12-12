@@ -160,12 +160,11 @@ def _set_instance_attrs_node_list(
 ):
     with cib_runner_nodes(lib_env, wait) as (cib, dummy_runner, state_nodes):
         known_nodes = [node.attrs.name for node in state_nodes]
-        report_list = []
-        for node in node_names:
-            if node not in known_nodes:
-                report_list.append(
-                    ReportItem.error(reports.messages.NodeNotFound(node))
-                )
+        report_list = [
+            ReportItem.error(reports.messages.NodeNotFound(node))
+            for node in node_names
+            if node not in known_nodes
+        ]
         if report_list:
             raise LibraryError(*report_list)
 

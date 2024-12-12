@@ -101,165 +101,168 @@ def get_all_constraints(
             ),
         ),
     ]
-    for loc_const in [
-        CibConstraintLocationDto(
-            resource_id="B2",
-            resource_pattern=None,
-            role=None,
-            attributes=CibConstraintLocationAttributesDto(
-                constraint_id="loc_constr_with_expired_rule",
-                score=None,
-                node=None,
-                rules=[
-                    CibRuleExpressionDto(
-                        id="loc_constr_with_expired_rule-rule",
-                        type=CibRuleExpressionType.RULE,
-                        in_effect=rule_eval.get_rule_status(
-                            "loc_constr_with_expired_rule-rule"
-                        ),
-                        options={"score": "500"},
-                        date_spec=None,
-                        duration=None,
-                        expressions=[
-                            CibRuleExpressionDto(
-                                id="loc_constr_with_expired_rule-rule-expr",
-                                type=CibRuleExpressionType.DATE_EXPRESSION,
-                                in_effect=rule_eval.get_rule_status(
-                                    "loc_constr_with_expired_rule-rule-expr"
-                                ),
-                                options={
-                                    "operation": "lt",
-                                    "end": "2000-01-01",
-                                },
-                                date_spec=None,
-                                duration=None,
-                                expressions=[],
-                                as_string="date lt 2000-01-01",
-                            )
-                        ],
-                        as_string="date lt 2000-01-01",
-                    )
-                ],
-                lifetime=[],
-                resource_discovery=None,
+    location.extend(
+        loc_const
+        for loc_const in [
+            CibConstraintLocationDto(
+                resource_id="B2",
+                resource_pattern=None,
+                role=None,
+                attributes=CibConstraintLocationAttributesDto(
+                    constraint_id="loc_constr_with_expired_rule",
+                    score=None,
+                    node=None,
+                    rules=[
+                        CibRuleExpressionDto(
+                            id="loc_constr_with_expired_rule-rule",
+                            type=CibRuleExpressionType.RULE,
+                            in_effect=rule_eval.get_rule_status(
+                                "loc_constr_with_expired_rule-rule"
+                            ),
+                            options={"score": "500"},
+                            date_spec=None,
+                            duration=None,
+                            expressions=[
+                                CibRuleExpressionDto(
+                                    id="loc_constr_with_expired_rule-rule-expr",
+                                    type=CibRuleExpressionType.DATE_EXPRESSION,
+                                    in_effect=rule_eval.get_rule_status(
+                                        "loc_constr_with_expired_rule-rule-expr"
+                                    ),
+                                    options={
+                                        "operation": "lt",
+                                        "end": "2000-01-01",
+                                    },
+                                    date_spec=None,
+                                    duration=None,
+                                    expressions=[],
+                                    as_string="date lt 2000-01-01",
+                                )
+                            ],
+                            as_string="date lt 2000-01-01",
+                        )
+                    ],
+                    lifetime=[],
+                    resource_discovery=None,
+                ),
             ),
-        ),
-        CibConstraintLocationDto(
-            resource_id="R6-clone",
-            resource_pattern=None,
-            role=None,
-            attributes=CibConstraintLocationAttributesDto(
-                constraint_id="loc_constr_with_not_expired_rule",
-                score=None,
-                node=None,
-                rules=[
-                    CibRuleExpressionDto(
-                        id="loc_constr_with_not_expired_rule-rule",
-                        type=CibRuleExpressionType.RULE,
-                        in_effect=rule_eval.get_rule_status(
-                            "loc_constr_with_not_expired_rule-rule"
+            CibConstraintLocationDto(
+                resource_id="R6-clone",
+                resource_pattern=None,
+                role=None,
+                attributes=CibConstraintLocationAttributesDto(
+                    constraint_id="loc_constr_with_not_expired_rule",
+                    score=None,
+                    node=None,
+                    rules=[
+                        CibRuleExpressionDto(
+                            id="loc_constr_with_not_expired_rule-rule",
+                            type=CibRuleExpressionType.RULE,
+                            in_effect=rule_eval.get_rule_status(
+                                "loc_constr_with_not_expired_rule-rule"
+                            ),
+                            options={
+                                "boolean-op": "and",
+                                "role": "Unpromoted",
+                                "score": "500",
+                            },
+                            date_spec=None,
+                            duration=None,
+                            expressions=[
+                                CibRuleExpressionDto(
+                                    id="loc_constr_with_not_expired_rule-rule-expr",
+                                    type=CibRuleExpressionType.EXPRESSION,
+                                    in_effect=rule_eval.get_rule_status(
+                                        "loc_constr_with_not_expired_rule-rule-expr"
+                                    ),
+                                    options={
+                                        "operation": "eq",
+                                        "attribute": "#uname",
+                                        "value": "node1",
+                                    },
+                                    date_spec=None,
+                                    duration=None,
+                                    expressions=[],
+                                    as_string="#uname eq node1",
+                                ),
+                                CibRuleExpressionDto(
+                                    id="loc_constr_with_not_expired_rule-rule-expr-1",
+                                    type=CibRuleExpressionType.DATE_EXPRESSION,
+                                    in_effect=rule_eval.get_rule_status(
+                                        "loc_constr_with_not_expired_rule-rule-expr-1"
+                                    ),
+                                    options={
+                                        "operation": "gt",
+                                        "start": "2000-01-01",
+                                    },
+                                    date_spec=None,
+                                    duration=None,
+                                    expressions=[],
+                                    as_string="date gt 2000-01-01",
+                                ),
+                            ],
+                            as_string="#uname eq node1 and date gt 2000-01-01",
                         ),
-                        options={
-                            "boolean-op": "and",
-                            "role": "Unpromoted",
-                            "score": "500",
-                        },
-                        date_spec=None,
-                        duration=None,
-                        expressions=[
-                            CibRuleExpressionDto(
-                                id="loc_constr_with_not_expired_rule-rule-expr",
-                                type=CibRuleExpressionType.EXPRESSION,
-                                in_effect=rule_eval.get_rule_status(
-                                    "loc_constr_with_not_expired_rule-rule-expr"
-                                ),
-                                options={
-                                    "operation": "eq",
-                                    "attribute": "#uname",
-                                    "value": "node1",
-                                },
-                                date_spec=None,
-                                duration=None,
-                                expressions=[],
-                                as_string="#uname eq node1",
+                        CibRuleExpressionDto(
+                            id="loc_constr_with_not_expired_rule-rule-1",
+                            type=CibRuleExpressionType.RULE,
+                            in_effect=rule_eval.get_rule_status(
+                                "loc_constr_with_not_expired_rule-rule-1"
                             ),
-                            CibRuleExpressionDto(
-                                id="loc_constr_with_not_expired_rule-rule-expr-1",
-                                type=CibRuleExpressionType.DATE_EXPRESSION,
-                                in_effect=rule_eval.get_rule_status(
-                                    "loc_constr_with_not_expired_rule-rule-expr-1"
+                            options={
+                                "boolean-op": "and",
+                                "role": "Promoted",
+                                "score-attribute": "test-attr",
+                            },
+                            date_spec=None,
+                            duration=None,
+                            expressions=[
+                                CibRuleExpressionDto(
+                                    id="loc_constr_with_not_expired_rule-rule-1-expr",
+                                    type=CibRuleExpressionType.DATE_EXPRESSION,
+                                    in_effect=rule_eval.get_rule_status(
+                                        "loc_constr_with_not_expired_rule-rule-1-expr"
+                                    ),
+                                    options={
+                                        "operation": "gt",
+                                        "start": "2010-12-31",
+                                    },
+                                    date_spec=None,
+                                    duration=None,
+                                    expressions=[],
+                                    as_string="date gt 2010-12-31",
                                 ),
-                                options={
-                                    "operation": "gt",
-                                    "start": "2000-01-01",
-                                },
-                                date_spec=None,
-                                duration=None,
-                                expressions=[],
-                                as_string="date gt 2000-01-01",
-                            ),
-                        ],
-                        as_string="#uname eq node1 and date gt 2000-01-01",
-                    ),
-                    CibRuleExpressionDto(
-                        id="loc_constr_with_not_expired_rule-rule-1",
-                        type=CibRuleExpressionType.RULE,
-                        in_effect=rule_eval.get_rule_status(
-                            "loc_constr_with_not_expired_rule-rule-1"
+                                CibRuleExpressionDto(
+                                    id="loc_constr_with_not_expired_rule-rule-1-expr-1",
+                                    type=CibRuleExpressionType.EXPRESSION,
+                                    in_effect=rule_eval.get_rule_status(
+                                        "loc_constr_with_not_expired_rule-rule-1-expr-1"
+                                    ),
+                                    options={
+                                        "operation": "eq",
+                                        "attribute": "#uname",
+                                        "value": "node1",
+                                    },
+                                    date_spec=None,
+                                    duration=None,
+                                    expressions=[],
+                                    as_string="#uname eq node1",
+                                ),
+                            ],
+                            as_string="date gt 2010-12-31 and #uname eq node1",
                         ),
-                        options={
-                            "boolean-op": "and",
-                            "role": "Promoted",
-                            "score-attribute": "test-attr",
-                        },
-                        date_spec=None,
-                        duration=None,
-                        expressions=[
-                            CibRuleExpressionDto(
-                                id="loc_constr_with_not_expired_rule-rule-1-expr",
-                                type=CibRuleExpressionType.DATE_EXPRESSION,
-                                in_effect=rule_eval.get_rule_status(
-                                    "loc_constr_with_not_expired_rule-rule-1-expr"
-                                ),
-                                options={
-                                    "operation": "gt",
-                                    "start": "2010-12-31",
-                                },
-                                date_spec=None,
-                                duration=None,
-                                expressions=[],
-                                as_string="date gt 2010-12-31",
-                            ),
-                            CibRuleExpressionDto(
-                                id="loc_constr_with_not_expired_rule-rule-1-expr-1",
-                                type=CibRuleExpressionType.EXPRESSION,
-                                in_effect=rule_eval.get_rule_status(
-                                    "loc_constr_with_not_expired_rule-rule-1-expr-1"
-                                ),
-                                options={
-                                    "operation": "eq",
-                                    "attribute": "#uname",
-                                    "value": "node1",
-                                },
-                                date_spec=None,
-                                duration=None,
-                                expressions=[],
-                                as_string="#uname eq node1",
-                            ),
-                        ],
-                        as_string="date gt 2010-12-31 and #uname eq node1",
-                    ),
-                ],
-                lifetime=[],
-                resource_discovery=None,
+                    ],
+                    lifetime=[],
+                    resource_discovery=None,
+                ),
             ),
-        ),
-    ]:
-        if include_expired or not any(
+        ]
+        if include_expired
+        or not any(
             rule.in_effect == CibRuleInEffectStatus.EXPIRED
             for rule in loc_const.attributes.rules
-        ):
-            location.append(loc_const)
+        )
+    )
 
     return CibConstraintsDto(
         location=location,

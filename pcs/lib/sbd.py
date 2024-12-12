@@ -198,15 +198,13 @@ def validate_nodes_devices(
                     )
                 )
             )
-        for device in device_list:
-            if not device or not path.isabs(device):
-                report_item_list.append(
-                    reports.ReportItem.error(
-                        reports.messages.SbdDevicePathNotAbsolute(
-                            device, node_label
-                        )
-                    )
-                )
+        report_item_list.extend(
+            reports.ReportItem.error(
+                reports.messages.SbdDevicePathNotAbsolute(device, node_label)
+            )
+            for device in device_list
+            if not device or not path.isabs(device)
+        )
     return report_item_list
 
 

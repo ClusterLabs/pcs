@@ -622,11 +622,11 @@ def remove_nodes(
     quorum_device_settings -- model, generic and heuristic qdevice options
     """
     existing_node_names = [node.name for node in existing_nodes]
-    report_items = []
-    for not_found_node in set(nodes_names_to_remove) - set(existing_node_names):
-        report_items.append(
-            ReportItem.error(reports.messages.NodeNotFound(not_found_node))
-        )
+    report_items = [
+        ReportItem.error(reports.messages.NodeNotFound(not_found_node))
+        for not_found_node in set(nodes_names_to_remove)
+        - set(existing_node_names)
+    ]
 
     if not set(existing_node_names) - set(nodes_names_to_remove):
         report_items.append(
@@ -637,20 +637,20 @@ def remove_nodes(
         qdevice_model_options, _, _ = quorum_device_settings
         tie_breaker_nodeid = qdevice_model_options.get("tie_breaker")
         if tie_breaker_nodeid not in [None, "lowest", "highest"]:
-            for node in existing_nodes:
+            report_items.extend(
+                ReportItem.error(
+                    reports.messages.NodeUsedAsTieBreaker(
+                        node.name, node.nodeid
+                    )
+                )
+                for node in existing_nodes
                 if (
                     node.name in nodes_names_to_remove
                     and
                     # "4" != 4, convert ids to string to detect a match for sure
                     str(node.nodeid) == str(tie_breaker_nodeid)
-                ):
-                    report_items.append(
-                        ReportItem.error(
-                            reports.messages.NodeUsedAsTieBreaker(
-                                node.name, node.nodeid
-                            )
-                        )
-                    )
+                )
+            )
 
     return report_items
 

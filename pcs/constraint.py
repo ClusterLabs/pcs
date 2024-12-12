@@ -1031,11 +1031,13 @@ def location_add(lib, argv, modifiers, skip_score_and_node_check=False):
     # Verify current constraint doesn't already exist
     # If it does we replace it with the new constraint
     dummy_dom, constraintsElement = getCurrentConstraints(dom)
-    elementsToRemove = []
     # If the id matches, or the rsc & node match, then we replace/remove
-    for rsc_loc in constraintsElement.getElementsByTagName("rsc_location"):
+    elementsToRemove = [
+        rsc_loc
+        for rsc_loc in constraintsElement.getElementsByTagName("rsc_location")
         # pylint: disable=too-many-boolean-expressions
-        if rsc_loc.getAttribute("id") == constraint_id or (
+        if rsc_loc.getAttribute("id") == constraint_id
+        or (
             rsc_loc.getAttribute("node") == node
             and (
                 (
@@ -1047,8 +1049,8 @@ def location_add(lib, argv, modifiers, skip_score_and_node_check=False):
                     and rsc_loc.getAttribute("rsc-pattern") == rsc_value
                 )
             )
-        ):
-            elementsToRemove.append(rsc_loc)
+        )
+    ]
     for etr in elementsToRemove:
         constraintsElement.removeChild(etr)
 
@@ -1192,12 +1194,14 @@ def location_rule_check_duplicates(dom, constraint_el, force):
             lines = []
             for dup in duplicates:
                 lines.append("  Constraint: %s" % dup.getAttribute("id"))
-                for dup_rule in utils.dom_get_children_by_tag_name(dup, "rule"):
-                    lines.append(
-                        rule_utils.ExportDetailed().get_string(
-                            dup_rule, False, True, indent="    "
-                        )
+                lines.extend(
+                    rule_utils.ExportDetailed().get_string(
+                        dup_rule, False, True, indent="    "
                     )
+                    for dup_rule in utils.dom_get_children_by_tag_name(
+                        dup, "rule"
+                    )
+                )
             utils.err(
                 "duplicate constraint already exists, use --force to override\n"
                 + "\n".join(lines)
