@@ -26,7 +26,7 @@ from pcs_test.tools.assertions import assert_report_item_list_equal
 def get_getaddrinfo_mock(resolvable_addr_list):
     def socket_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):  # noqa: A002
         # pylint: disable=redefined-builtin
-        # pylint: disable=unused-argument
+        del port, family, type, proto, flags
         if host not in resolvable_addr_list:
             raise socket.gaierror(1, "")
 
@@ -308,7 +308,8 @@ class MockCurlMulti:
             )
 
     def select(self, timeout=1):
-        # pylint: disable=no-self-use, unused-argument
+        # pylint: disable=no-self-use
+        del timeout
         return 0
 
     def perform(self):

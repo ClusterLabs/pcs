@@ -132,6 +132,7 @@ target-version = "py312"
 # pylint rules in ruff: # https://github.com/astral-sh/ruff/issues/970
 select = [
   "A",
+  "ARG",
   "ASYNC",
   "B",
   "C4",
@@ -154,6 +155,7 @@ select = [
 # ruff does not respect pylint ignore directives
 # https://github.com/astral-sh/ruff/issues/1203
 ignore = [
+  "ARG005", # https://docs.astral.sh/ruff/rules/unused-lambda-argument/
   "C408", # https://docs.astral.sh/ruff/rules/unnecessary-collection-call/
   "PLR2004", # magic-value-comparison (99)
   "PLR0913", # too-many-arguments (54)

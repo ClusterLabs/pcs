@@ -29,21 +29,25 @@ class SysVInitRhelDriver(ServiceManagerInterface):
         self._available_services: List[str] = []
 
     def start(self, service: str, instance: Optional[str] = None) -> None:
+        del instance
         result = self._executor.run([self._service_bin, service, "start"])
         if result.retval != 0:
             raise errors.StartServiceError(service, result.joined_output)
 
     def stop(self, service: str, instance: Optional[str] = None) -> None:
+        del instance
         result = self._executor.run([self._service_bin, service, "stop"])
         if result.retval != 0:
             raise errors.StopServiceError(service, result.joined_output)
 
     def enable(self, service: str, instance: Optional[str] = None) -> None:
+        del instance
         result = self._executor.run([self._chkconfig_bin, service, "on"])
         if result.retval != 0:
             raise errors.EnableServiceError(service, result.joined_output)
 
     def disable(self, service: str, instance: Optional[str] = None) -> None:
+        del instance
         if not self.is_installed(service):
             return
         result = self._executor.run([self._chkconfig_bin, service, "off"])
@@ -51,9 +55,11 @@ class SysVInitRhelDriver(ServiceManagerInterface):
             raise errors.DisableServiceError(service, result.joined_output)
 
     def is_enabled(self, service: str, instance: Optional[str] = None) -> bool:
+        del instance
         return self._executor.run([self._chkconfig_bin, service]).retval == 0
 
     def is_running(self, service: str, instance: Optional[str] = None) -> bool:
+        del instance
         return (
             self._executor.run([self._service_bin, service, "status"]).retval
             == 0

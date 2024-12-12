@@ -85,6 +85,7 @@ class GhostFile(RawFileInterface):
         return self.__file_data
 
     def write(self, file_data: bytes, can_overwrite: bool = False) -> None:
+        del can_overwrite
         self.__file_data = file_data
 
     @contextmanager
