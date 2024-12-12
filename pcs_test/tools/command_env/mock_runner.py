@@ -10,6 +10,7 @@ class CheckStdinEqual:
         self.expected_stdin = expected_stdin
 
     def __call__(self, stdin, command, order_num):
+        del order_num
         if stdin != self.expected_stdin:
             raise AssertionError(
                 (
