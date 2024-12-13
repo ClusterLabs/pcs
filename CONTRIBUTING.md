@@ -41,7 +41,7 @@
 ### Pcs test suite
 * To run all the tests, type `make check`.
   * You may run specific tests like this:
-    * `make black_check`
+    * `make ruff_format_check`
     * `make isort_check`
     * `make mypy`
     * `make pylint`
@@ -58,7 +58,7 @@
     `make distcheck DISTCHECK_CONFIGURE_FLAGS='<flag>...'`.
   * The point of this test is to make sure all necessary files are present in
     the tarball.
-* To run black code formatter, type `make black`.
+* To run ruff code formatter, type `make ruff_format`.
 * To run isort code formatter, type `make isort`.
 
 ### Distribution tarball

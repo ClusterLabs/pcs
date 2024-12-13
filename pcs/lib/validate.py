@@ -115,12 +115,11 @@ def values_to_pairs(
     """
     option_dict_with_pairs = {}
     for key, value in option_dict.items():
-        new_value = value
-        if not isinstance(value, ValuePair):
-            new_value = ValuePair(
-                original=value, normalized=normalize(key, value)
-            )
-        option_dict_with_pairs[key] = new_value
+        option_dict_with_pairs[key] = (
+            ValuePair(original=value, normalized=normalize(key, value))
+            if not isinstance(value, ValuePair)
+            else value
+        )
     return option_dict_with_pairs
 
 
