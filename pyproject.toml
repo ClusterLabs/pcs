@@ -1,16 +1,3 @@
-[tool.isort]
-profile = "black"
-line_length = 80
-multi_line_output = 3
-force_grid_wrap = 2
-atomic = true
-py_version = 39
-skip_gitignore = true
-sections = ['FUTURE', 'STDLIB', 'THIRDPARTY', 'FIRSTPARTY', 'TESTS', 'LOCALFOLDER']
-known_first_party = ["pcs"]
-known_tests = ["pcs_test"]
-supported_extensions = ["py", "py.in"]
-
 [tool.pylint.main]
 disable = [
   # not critical, plus we use str.format() for readability
