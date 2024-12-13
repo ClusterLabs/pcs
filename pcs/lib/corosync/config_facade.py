@@ -264,8 +264,8 @@ class ConfigFacade(FacadeInterface):
             else:
                 linknumber_missing.append(link)
 
-        for link in linknumber_missing:
-            link = dict(link)
+        for link_missing_linknumber in linknumber_missing:
+            link = dict(link_missing_linknumber)
             try:
                 link["linknumber"] = str(available_link_numbers.pop(0))
             except IndexError as e:
@@ -957,13 +957,12 @@ class ConfigFacade(FacadeInterface):
                     result["broadcast"] = ""
                 else:
                     del result["broadcast"]
+            # When displaying config to users, do the opposite
+            # transformation: only "yes" is allowed.
+            elif result["broadcast"] == "yes":
+                result["broadcast"] = "1"
             else:
-                # When displaying config to users, do the opposite
-                # transformation: only "yes" is allowed.
-                if result["broadcast"] == "yes":
-                    result["broadcast"] = "1"
-                else:
-                    del result["broadcast"]
+                del result["broadcast"]
 
         return result
 

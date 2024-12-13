@@ -45,7 +45,7 @@ class UidGidTest(TestCase):
             False,
         )
 
-    def test_uidgid(self):
+    def test_uidgid(self):  # noqa: PLR0915
         # pylint: disable=too-many-statements
         stdout, stderr, retval = self._pcs("cluster uidgid".split())
         self.assertEqual(stdout, "")

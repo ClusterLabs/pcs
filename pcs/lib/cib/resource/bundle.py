@@ -235,7 +235,7 @@ def validate_new(
     )
 
 
-def append_new(
+def append_new(  # noqa: PLR0913
     parent_element,
     id_provider,
     bundle_id,
@@ -361,7 +361,7 @@ def _get_report_unsupported_container(
     )
 
 
-def validate_update(
+def validate_update(  # noqa: PLR0913
     id_provider,
     bundle_el,
     container_options,
@@ -406,7 +406,7 @@ def validate_update(
     )
 
 
-def update(
+def update(  # noqa: PLR0913
     id_provider,
     bundle_el,
     container_options,

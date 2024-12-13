@@ -114,7 +114,7 @@ def _resource_operation_to_str(
     ] + indent(lines, indent_step=INDENT_STEP)
 
 
-def resource_agent_parameter_metadata_to_text(
+def resource_agent_parameter_metadata_to_text(  # noqa: PLR0912
     parameter: resource_agent.dto.ResourceAgentParameterDto,
 ) -> list[str]:
     # pylint: disable=too-many-branches

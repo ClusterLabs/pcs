@@ -319,6 +319,7 @@ def uniquify_operations_intervals(
     new_operations = []
     for operation in operation_list:
         new_interval = get_unique_interval(operation.name, operation.interval)
+        new_operation = operation
         if new_interval != operation.interval:
             report_list.append(
                 ReportItem.warning(
@@ -329,8 +330,8 @@ def uniquify_operations_intervals(
                     )
                 )
             )
-            operation = dt_replace(operation, interval=new_interval)
-        new_operations.append(operation)
+            new_operation = dt_replace(operation, interval=new_interval)
+        new_operations.append(new_operation)
     return report_list, new_operations
 
 

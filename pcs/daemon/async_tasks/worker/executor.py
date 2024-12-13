@@ -69,7 +69,7 @@ def worker_init(message_q: mp.Queue, logging_q: mp.Queue) -> None:
     logger.info("Worker initialized.")
 
     # Let task_executor use worker_com for sending messages to the scheduler
-    global worker_com
+    global worker_com  # noqa: PLW0603
     worker_com = WorkerCommunicator(message_q)
 
     def ignore_signals(sig_num, frame):  # type: ignore

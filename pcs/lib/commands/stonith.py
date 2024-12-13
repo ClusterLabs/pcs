@@ -96,7 +96,7 @@ def _get_agent_facade(
         raise LibraryError() from e
 
 
-def create(
+def create(  # noqa: PLR0913
     env: LibraryEnvironment,
     stonith_id: str,
     stonith_agent_name: str,

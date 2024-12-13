@@ -7,7 +7,7 @@ WORKER_LOGGER = "pcs_worker"
 
 
 class Logger(logging.Logger):
-    def makeRecord(  # type: ignore
+    def makeRecord(  # type: ignore # noqa: PLR0913
         self,
         name,
         level,

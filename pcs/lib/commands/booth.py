@@ -169,7 +169,7 @@ def config_setup(
         raise LibraryError()
 
 
-def config_destroy(
+def config_destroy(  # noqa: PLR0912
     env: LibraryEnvironment,
     instance_name: Optional[str] = None,
     ignore_config_load_problems: bool = False,

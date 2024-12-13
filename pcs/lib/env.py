@@ -90,7 +90,7 @@ class LibraryEnvironment:
     # pylint: disable=too-many-instance-attributes
     # pylint: disable=too-many-public-methods
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         logger: Logger,
         report_processor: reports.ReportProcessor,

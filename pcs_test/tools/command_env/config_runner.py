@@ -18,7 +18,7 @@ class RunnerConfig:
         self.sbd = wrap_helper(SbdShortcuts(self.__calls))
         self.scsi = wrap_helper(ScsiShortcuts(self.__calls))
 
-    def place(
+    def place(  # noqa: PLR0913
         self,
         command,
         *,

@@ -22,7 +22,7 @@ from pcs_test.tools.misc import outdent
 TIMEOUT = 10
 
 
-def create(
+def create(  # noqa: PLR0913
     env,
     *,
     wait=False,
@@ -75,7 +75,7 @@ def create_group(
     )
 
 
-def create_clone(
+def create_clone(  # noqa: PLR0913
     env,
     *,
     wait=TIMEOUT,
