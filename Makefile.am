@@ -191,17 +191,6 @@ else
 python_test_options = -v --vanilla
 endif
 
-pylint:
-if DEV_TESTS
-if PARALLEL_PYLINT
-pylint_options = --jobs=0
-else
-pylint_options =
-endif
-	export PYTHONPATH=${abs_top_builddir}/${PCS_BUNDLED_DIR_LOCAL}/packages && \
-		$(TIME) $(PYTHON) -m pylint --rcfile pyproject.toml ${pylint_options} ${PCS_PYTHON_PACKAGES}
-endif
-
 ruff_format_check: pyproject.toml
 if DEV_TESTS
 	$(TIME) ruff --config pyproject.toml format --check ${PCS_PYTHON_PACKAGES}
@@ -326,7 +315,7 @@ test-tree-clean:
 	fi
 	find ${abs_top_builddir} -type d -name __pycache__ -exec rm -rf {} \; 2>/dev/null || :
 
-check-local: check-local-deps test-tree-prep typos_check pylint ruff_lint ruff_isort_check ruff_format_check mypy tests_tier0 tests_tier1 pcsd-tests test-tree-clean
+check-local: check-local-deps test-tree-prep typos_check ruff_lint ruff_isort_check ruff_format_check mypy tests_tier0 tests_tier1 pcsd-tests test-tree-clean
 
 clean-local: test-tree-clean
 	$(PYTHON) setup.py clean

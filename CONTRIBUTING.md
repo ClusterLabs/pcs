@@ -44,7 +44,7 @@
     * `make ruff_format_check`
     * `make ruff_isort_check`
     * `make mypy`
-    * `make pylint`
+    * `make ruff_lint`
     * `make tests_tier0`
     * `make tests_tier1`
     * `make pcsd-tests`
