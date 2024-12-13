@@ -352,7 +352,7 @@ _find_bundle = partial(
 )
 
 
-def create(
+def create(  # noqa: PLR0913
     env: LibraryEnvironment,
     resource_id: str,
     resource_agent_name: str,
@@ -467,7 +467,7 @@ def create(
             resource.common.disable(primitive_element, id_provider)
 
 
-def create_as_clone(
+def create_as_clone(  # noqa: PLR0913
     env: LibraryEnvironment,
     resource_id: str,
     resource_agent_name: str,
@@ -624,7 +624,7 @@ def create_as_clone(
             resource.common.disable(clone_element, id_provider)
 
 
-def create_in_group(
+def create_in_group(  # noqa: PLR0913
     env: LibraryEnvironment,
     resource_id: str,
     resource_agent_name: str,
@@ -779,7 +779,7 @@ def create_in_group(
         )
 
 
-def create_into_bundle(
+def create_into_bundle(  # noqa: PLR0913
     env: LibraryEnvironment,
     resource_id: str,
     resource_agent_name: str,
@@ -906,7 +906,7 @@ def create_into_bundle(
         resource.bundle.add_resource(bundle_el, primitive_element)
 
 
-def bundle_create(
+def bundle_create(  # noqa: PLR0913
     env,
     bundle_id,
     container_type,
@@ -994,7 +994,7 @@ def bundle_create(
             resource.common.disable(bundle_element, id_provider)
 
 
-def bundle_reset(
+def bundle_reset(  # noqa: PLR0913
     env,
     bundle_id,
     *,
@@ -1087,7 +1087,7 @@ def bundle_reset(
             resource.common.disable(bundle_element, id_provider)
 
 
-def bundle_update(
+def bundle_update(  # noqa: PLR0913
     env,
     bundle_id,
     *,
@@ -1581,7 +1581,7 @@ def manage(
     env.push_cib()
 
 
-def group_add(
+def group_add(  # noqa: PLR0912
     env: LibraryEnvironment,
     group_id: str,
     resource_id_list: List[str],
@@ -1816,7 +1816,7 @@ class ResourceMoveAutocleanSimulationFailure(Exception):
         return self._other_resources_affected
 
 
-def move_autoclean(
+def move_autoclean(  # noqa: PLR0912, PLR0915
     env: LibraryEnvironment,
     resource_id: str,
     node: Optional[str] = None,
@@ -2090,14 +2090,13 @@ def _ensure_resource_moved_and_not_moved_back(
     if strict:
         if clean_operations:
             raise ResourceMoveAutocleanSimulationFailure(True)
-    else:
-        if any(
-            rsc == resource_id
-            for rsc in simulate_tools.get_resources_from_operations(
-                clean_operations
-            )
-        ):
-            raise ResourceMoveAutocleanSimulationFailure(False)
+    elif any(
+        rsc == resource_id
+        for rsc in simulate_tools.get_resources_from_operations(
+            clean_operations
+        )
+    ):
+        raise ResourceMoveAutocleanSimulationFailure(False)
 
 
 def ban(env, resource_id, node=None, master=False, lifetime=None, wait=False):

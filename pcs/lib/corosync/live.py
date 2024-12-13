@@ -175,7 +175,7 @@ class QuorumStatusFacade:
         )
 
 
-def _parse_quorum_status(quorum_status: str) -> QuorumStatus:
+def _parse_quorum_status(quorum_status: str) -> QuorumStatus:  # noqa: PLR0912
     # pylint: disable=too-many-branches
     node_list: list[QuorumStatusNode] = []
     qdevice_list: list[QuorumStatusNode] = []
@@ -184,8 +184,8 @@ def _parse_quorum_status(quorum_status: str) -> QuorumStatus:
 
     in_node_list = False
     try:
-        for line in quorum_status.splitlines():
-            line = line.strip()
+        for quorum_status_line in quorum_status.splitlines():
+            line = quorum_status_line.strip()
             if not line:
                 continue
             if in_node_list:

@@ -121,7 +121,7 @@ def _find_primitives_by_agent(
     )
 
 
-def create(
+def create(  # noqa: PLR0913
     report_processor: reports.ReportProcessor,
     cmd_runner: CommandRunner,
     resources_section: _Element,
@@ -243,7 +243,7 @@ def create(
     )
 
 
-def append_new(
+def append_new(  # noqa: PLR0913
     resources_section,
     id_provider,
     resource_id,

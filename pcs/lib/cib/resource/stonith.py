@@ -345,6 +345,7 @@ def _get_transient_digest_value(
     """
     new_comma_values_list = []
     for comma_value in old_value.split(","):
+        new_comma_value = comma_value
         if comma_value:
             try:
                 _id, _type, _ = comma_value.split(":")
@@ -357,8 +358,8 @@ def _get_transient_digest_value(
                     )
                 ) from e
             if _id == stonith_id and _type == stonith_type:
-                comma_value = ":".join([stonith_id, stonith_type, digest])
-        new_comma_values_list.append(comma_value)
+                new_comma_value = ":".join([stonith_id, stonith_type, digest])
+        new_comma_values_list.append(new_comma_value)
     return ",".join(new_comma_values_list)
 
 

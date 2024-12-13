@@ -81,7 +81,7 @@ def _generate_level_id(
     return id_provider.allocate_id(sanitize_id(f"fl-{id_part}-{level}"))
 
 
-def add_level(
+def add_level(  # noqa: PLR0913
     reporter: ReportProcessor,
     cib: _Element,
     level: str,

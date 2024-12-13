@@ -486,7 +486,7 @@ def stop_cluster_all() -> None:
     stop_cluster_nodes(all_nodes)
 
 
-def stop_cluster_nodes(nodes: StringCollection) -> None:
+def stop_cluster_nodes(nodes: StringCollection) -> None:  # noqa: PLR0912
     """
     Commandline options:
       * --force - no error when possible quorum loss
@@ -794,7 +794,7 @@ def kill_local_cluster_services() -> tuple[str, int]:
     return utils.run([settings.killall_exec, "-9"] + all_cluster_daemons)
 
 
-def cluster_push(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
+def cluster_push(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  # noqa: PLR0912, PLR0915
     """
     Options:
       * --wait
@@ -915,7 +915,7 @@ def cluster_push(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
         utils.err("\n".join(msg).strip())
 
 
-def cluster_edit(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
+def cluster_edit(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  # noqa: PLR0912
     """
     Options:
       * --config - edit configuration section of CIB
@@ -973,7 +973,7 @@ def cluster_edit(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
         utils.err("$EDITOR environment variable is not set")
 
 
-def get_cib(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
+def get_cib(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  # noqa: PLR0912
     """
     Options:
       * --config show configuration section of CIB
@@ -1167,7 +1167,7 @@ def node_remove(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     lib.cluster.remove_nodes(argv, force_flags=force_flags)
 
 
-def cluster_uidgid(
+def cluster_uidgid(  # noqa: PLR0912
     lib: Any, argv: Argv, modifiers: InputModifiers, silent_list: bool = False
 ) -> None:
     """
@@ -1275,7 +1275,7 @@ def cluster_reload(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
 
 # Completely tear down the cluster & remove config files
 # Code taken from cluster-clean script in pacemaker
-def cluster_destroy(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
+def cluster_destroy(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  # noqa: PLR0912
     """
     Options:
       * --all - destroy cluster on all cluster nodes => destroy whole cluster
@@ -1420,7 +1420,7 @@ def cluster_verify(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     lib.cluster.verify(verbose=modifiers.get("--full"))
 
 
-def cluster_report(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
+def cluster_report(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  # noqa: PLR0912
     """
     Options:
       * --force - allow overwriting existing files - DEPRECATED
@@ -1487,9 +1487,10 @@ def cluster_report(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
             continue
         if "to diagnose" in line:
             continue
+        new_line = line
         if "--dest" in line:
-            line = line.replace("--dest", "<dest>")
-        newoutput = newoutput + line + "\n"
+            new_line = line.replace("--dest", "<dest>")
+        newoutput = newoutput + new_line + "\n"
     if retval != 0:
         utils.err(newoutput)
     print_to_stderr(newoutput)
@@ -1534,7 +1535,7 @@ def send_local_configs(
     return err_msgs
 
 
-def cluster_auth_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
+def cluster_auth_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  # noqa: PLR0912
     """
     Options:
       * --corosync_conf - corosync.conf file

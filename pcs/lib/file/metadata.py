@@ -112,7 +112,7 @@ def _for_pcs_settings_conf() -> FileMetadata:
     )
 
 
-def for_file_type(
+def for_file_type(  # noqa: PLR0911
     file_type_code: code.FileTypeCode, filename: Optional[str] = None
 ) -> FileMetadata:
     # pylint: disable=too-many-return-statements

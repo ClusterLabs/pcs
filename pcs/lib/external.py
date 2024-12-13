@@ -106,7 +106,7 @@ class CommandRunner:
                 ),
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                preexec_fn=(
+                preexec_fn=(  # noqa: PLW1509
                     lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL)
                 ),
                 close_fds=True,

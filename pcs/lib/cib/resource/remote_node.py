@@ -201,7 +201,7 @@ def _prepare_instance_attributes(
     return enriched_instance_attributes
 
 
-def create(
+def create(  # noqa: PLR0913
     report_processor: reports.ReportProcessor,
     cmd_runner: CommandRunner,
     resource_agent_facade: ResourceAgentFacade,

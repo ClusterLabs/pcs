@@ -142,7 +142,7 @@ class AssertPcsMixin:
             stderr_regexp=stderr_regexp,
         )
 
-    def assert_pcs_result(
+    def assert_pcs_result(  # noqa: PLR0913
         self,
         command,
         *,

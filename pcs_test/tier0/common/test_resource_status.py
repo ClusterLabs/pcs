@@ -37,7 +37,7 @@ from pcs.common.status_dto import (
 from pcs.common.types import StringSequence
 
 
-def fixture_primitive_dto(
+def fixture_primitive_dto(  # noqa: PLR0913
     resource_id: str,
     instance_id: Optional[str],
     *,
@@ -95,7 +95,7 @@ def fixture_group_dto(
     )
 
 
-def fixture_clone_dto(
+def fixture_clone_dto(  # noqa: PLR0913
     resource_id: str,
     *,
     multi_state: bool = False,

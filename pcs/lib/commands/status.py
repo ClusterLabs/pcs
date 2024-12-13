@@ -96,7 +96,7 @@ def resources_status(env: LibraryEnvironment) -> ResourcesStatusDto:
     return dto
 
 
-def full_cluster_status_plaintext(
+def full_cluster_status_plaintext(  # noqa: PLR0912, PLR0915
     env: LibraryEnvironment,
     hide_inactive_resources: bool = False,
     verbose: bool = False,

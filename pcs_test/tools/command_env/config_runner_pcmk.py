@@ -641,7 +641,7 @@ class PcmkShortcuts:
             ),
         )
 
-    def resource_cleanup(
+    def resource_cleanup(  # noqa: PLR0913
         self,
         *,
         name="runner.pcmk.cleanup",
@@ -688,7 +688,7 @@ class PcmkShortcuts:
             instead=instead,
         )
 
-    def resource_refresh(
+    def resource_refresh(  # noqa: PLR0913
         self,
         *,
         name="runner.pcmk.refresh",
@@ -735,7 +735,7 @@ class PcmkShortcuts:
             instead=instead,
         )
 
-    def resource_move(
+    def resource_move(  # noqa: PLR0913
         self,
         *,
         name="runner.pcmk.resource_move",
@@ -774,7 +774,7 @@ class PcmkShortcuts:
         all_args["action"] = "--move"
         self._resource_move_ban_clear(**all_args)
 
-    def resource_ban(
+    def resource_ban(  # noqa: PLR0913
         self,
         *,
         name="runner.pcmk.resource_ban",
@@ -811,7 +811,7 @@ class PcmkShortcuts:
         all_args["action"] = "--ban"
         self._resource_move_ban_clear(**all_args)
 
-    def resource_clear(
+    def resource_clear(  # noqa: PLR0913
         self,
         *,
         name="runner.pcmk.resource_clear",
@@ -850,7 +850,7 @@ class PcmkShortcuts:
         all_args["action"] = "--clear"
         self._resource_move_ban_clear(**all_args)
 
-    def _resource_move_ban_clear(
+    def _resource_move_ban_clear(  # noqa: PLR0913
         self,
         name,
         action,
@@ -1049,7 +1049,7 @@ class PcmkShortcuts:
             ),
         )
 
-    def simulate_cib(
+    def simulate_cib(  # noqa: PLR0913
         self,
         new_cib_filepath,
         transitions_filepath,
@@ -1140,7 +1140,7 @@ class PcmkShortcuts:
             ),
         )
 
-    def resource_agent_self_validation(
+    def resource_agent_self_validation(  # noqa: PLR0913
         self,
         attributes,
         standard="ocf",

@@ -102,7 +102,7 @@ def bind_all(env, run_with_middleware, dictionary):
     )
 
 
-def load_module(env, middleware_factory, name):
+def load_module(env, middleware_factory, name):  # noqa: PLR0911, PLR0912
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-return-statements
     if name == "acl":

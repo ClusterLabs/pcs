@@ -35,13 +35,8 @@ class HostAuth(TestCase):
     def _fixture_args(name_addr_port_tuple_list):
         arg_list = []
         for name, addr, port in name_addr_port_tuple_list:
-            port = ":{}".format(port) if port is not None else ""
-            arg_list.extend(
-                [
-                    name,
-                    "addr={}{}".format(addr, port),
-                ]
-            )
+            port_str = ":{}".format(port) if port is not None else ""
+            arg_list.extend([name, f"addr={addr}{port_str}"])
         return arg_list
 
     def _assert_invalid_port(self, name_addr_port_tuple_list):

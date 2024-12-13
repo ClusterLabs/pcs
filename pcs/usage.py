@@ -103,10 +103,10 @@ def full_usage() -> None:
     print("Examples:\n" + examples.replace(r" \ ", ""))
 
 
-def strip_extras(text: str) -> str:
+def strip_extras(text: str) -> str:  # noqa: PLR0912
     # pylint: disable=global-statement
     # pylint: disable=too-many-branches
-    global examples
+    global examples  # noqa: PLW0603
     ret = ""
     group_name = text.split(" ")[2]
     in_commands = False
@@ -133,9 +133,8 @@ def strip_extras(text: str) -> str:
                         minicmd = "    " + " " + line.lstrip() + "  "
                 else:
                     minicmd += line.lstrip() + " "
-            else:
-                if in_commands:
-                    break
+            elif in_commands:
+                break
         else:
             if in_examples:
                 examples += minicmd + "\n\n"

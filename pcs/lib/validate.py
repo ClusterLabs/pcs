@@ -115,9 +115,12 @@ def values_to_pairs(
     """
     option_dict_with_pairs = {}
     for key, value in option_dict.items():
+        new_value = value
         if not isinstance(value, ValuePair):
-            value = ValuePair(original=value, normalized=normalize(key, value))
-        option_dict_with_pairs[key] = value
+            new_value = ValuePair(
+                original=value, normalized=normalize(key, value)
+            )
+        option_dict_with_pairs[key] = new_value
     return option_dict_with_pairs
 
 
@@ -133,9 +136,10 @@ def pairs_to_values(
     """
     raw_option_dict = {}
     for key, value in option_dict.items():
+        new_value = value
         if isinstance(value, ValuePair):
-            value = value.normalized
-        raw_option_dict[key] = str(value)
+            new_value = value.normalized
+        raw_option_dict[key] = str(new_value)
     return raw_option_dict
 
 
@@ -1154,7 +1158,7 @@ def matches_regexp(value: TypeOptionValue, regexp: Union[str, Pattern]) -> bool:
 
 class _ValidateAddRemoveBase:
     # pylint: disable=too-many-instance-attributes
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         add_item_list: StringCollection,
         remove_item_list: StringCollection,
