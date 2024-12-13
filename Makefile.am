@@ -240,18 +240,6 @@ if DEV_TESTS
 		$(TIME) $(PYTHON) -m isort ${PCS_PYTHON_PACKAGES}
 endif
 
-black_check: pyproject.toml
-if DEV_TESTS
-	export PYTHONPATH=${abs_top_builddir}/${PCS_BUNDLED_DIR_LOCAL}/packages && \
-		$(TIME) $(PYTHON) -m black --config pyproject.toml --check ${PCS_PYTHON_PACKAGES}
-endif
-
-black: pyproject.toml
-if DEV_TESTS
-	export PYTHONPATH=${abs_top_builddir}/${PCS_BUNDLED_DIR_LOCAL}/packages && \
-		$(PYTHON) -m black --config pyproject.toml ${PCS_PYTHON_PACKAGES}
-endif
-
 mypy:
 if DEV_TESTS
 	export PYTHONPATH=${abs_top_builddir}/${PCS_BUNDLED_DIR_LOCAL}/packages && \

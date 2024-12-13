@@ -129,7 +129,7 @@ fi
 
 # configure options section
 AC_ARG_ENABLE([dev-tests],
-	      [AS_HELP_STRING([--enable-dev-tests], [Enable extra developers tests (black, isort, mypy, pylint, ruff) (default: no)])],
+	      [AS_HELP_STRING([--enable-dev-tests], [Enable extra developers tests (isort, mypy, pylint, ruff) (default: no)])],
 	      [dev_tests="yes"])
 AM_CONDITIONAL([DEV_TESTS], [test "x$dev_tests" = "xyes"])
 
