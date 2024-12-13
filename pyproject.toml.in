@@ -49,10 +49,6 @@ pcs = ["py.typed"]
 # this command to run linters on the whole project:
 # $ make check
 
-[tool.black]
-line-length = 80
-target-version = ['py312']
-
 [tool.isort]
 profile = "black"
 line_length = 80
@@ -73,7 +69,7 @@ disable = [
   # TODO is used to mark e.g. deprecations which are to be resolved in next pcs
   # major version
   "fixme",
-  # handled by black
+  # handled by formatter
   "line-too-long",
   # we dont require pointless docstring to be present
   "missing-docstring",
