@@ -87,16 +87,6 @@ ruff_lint:
     - ./configure --enable-local-build --enable-dev-tests --enable-tests-only --enable-individual-bundling
     - make ruff_lint
 
-pylint:
-  extends: .parallel
-  stage: stage1
-  script:
-    - python3 -m pip install --upgrade -r dev_requirements.txt
-    - ./autogen.sh
-    - ./configure --enable-local-build --enable-dev-tests --enable-parallel-pylint --enable-individual-bundling
-    - make
-    - make pylint
-
 mypy:
   extends: .parallel
   stage: stage1
