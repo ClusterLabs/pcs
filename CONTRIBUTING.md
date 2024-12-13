@@ -42,7 +42,7 @@
 * To run all the tests, type `make check`.
   * You may run specific tests like this:
     * `make ruff_format_check`
-    * `make isort_check`
+    * `make ruff_isort_check`
     * `make mypy`
     * `make pylint`
     * `make tests_tier0`
@@ -58,8 +58,8 @@
     `make distcheck DISTCHECK_CONFIGURE_FLAGS='<flag>...'`.
   * The point of this test is to make sure all necessary files are present in
     the tarball.
+* To run ruff isort code formatter, type `make ruff_isort`.
 * To run ruff code formatter, type `make ruff_format`.
-* To run isort code formatter, type `make isort`.
 
 ### Distribution tarball
 * To create a tarball for distribution, run `make dist`.
