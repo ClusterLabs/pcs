@@ -74,7 +74,7 @@ def _run(
         stdin=subprocess.DEVNULL,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        preexec_fn=(lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL)),
+        preexec_fn=(lambda: signal.signal(signal.SIGPIPE, signal.SIG_DFL)),  # noqa: PLW1509
         close_fds=True,
         shell=False,
         env=env_vars,

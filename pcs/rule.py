@@ -43,7 +43,7 @@ def parse_argv(argv, extra_options=None):
     return options, argv
 
 
-def dom_rule_add(dom_element, options, rule_argv, cib_schema_version):
+def dom_rule_add(dom_element, options, rule_argv, cib_schema_version):  # noqa: PLR0912
     # pylint: disable=too-many-branches
     """
     Commandline options: no options

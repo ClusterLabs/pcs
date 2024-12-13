@@ -81,7 +81,7 @@ def config_sync(sync_config_lock: Lock, ruby_pcsd_wrapper: ruby_pcsd.Wrapper):
     return config_synchronization
 
 
-def configure_app(
+def configure_app(  # noqa: PLR0913
     async_scheduler: Scheduler,
     auth_provider: AuthProvider,
     session_storage: session.Storage,

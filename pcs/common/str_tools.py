@@ -90,9 +90,9 @@ def format_name_value_list(item_list: Sequence[tuple[str, str]]) -> list[str]:
     Turn 2-tuples to 'name=value' strings with standard quoting
     """
     output = []
-    for name, value in item_list:
-        name = quote(name, "= ")
-        value = quote(value, "= ")
+    for raw_name, raw_value in item_list:
+        name = quote(raw_name, "= ")
+        value = quote(raw_value, "= ")
         output.append(f"{name}={value}")
     return output
 
@@ -106,9 +106,9 @@ def format_name_value_id_list(
     Turn 3-tuples to 'name=value (id: id))' strings with standard quoting
     """
     output = []
-    for name, value, an_id in item_list:
-        name = quote(name, "= ")
-        value = quote(value, "= ")
+    for raw_name, raw_value, an_id in item_list:
+        name = quote(raw_name, "= ")
+        value = quote(raw_value, "= ")
         output.append(f"{name}={value} (id: {an_id})")
     return output
 
@@ -127,9 +127,9 @@ def format_name_value_default_list(
     standard quoting
     """
     output = []
-    for name, value, is_default in item_list:
-        name = quote(name, "= ")
-        value = quote(value, "= ")
+    for raw_name, raw_value, is_default in item_list:
+        name = quote(raw_name, "= ")
+        value = quote(raw_value, "= ")
         default = " (default)" if is_default else ""
         output.append(f"{name}={value}{default}")
     return output

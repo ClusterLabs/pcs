@@ -140,7 +140,7 @@ class FullClusterStatusPlaintextBase(TestCase):
             )
         )
 
-    def _fixture_config_local_daemons(
+    def _fixture_config_local_daemons(  # noqa: PLR0913
         self,
         *,
         corosync_enabled=True,

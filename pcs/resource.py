@@ -1,4 +1,4 @@
-# pylint: disable=too-many-lines
+# pylint: disable=too-many-lines #noqa: PLR0915
 import json
 import re
 import sys
@@ -530,20 +530,19 @@ def parse_resource_options(
         elif arg == "meta":
             meta_args = True
             op_args = False
-        else:
-            if op_args:
-                if arg == "op":
-                    op_values.append([])
-                elif "=" not in arg and op_values[-1]:
-                    op_values.append([])
-                    op_values[-1].append(arg)
-                else:
-                    op_values[-1].append(arg)
-            elif meta_args:
-                if "=" in arg:
-                    meta_values.append(arg)
+        elif op_args:
+            if arg == "op":
+                op_values.append([])
+            elif "=" not in arg and op_values[-1]:
+                op_values.append([])
+                op_values[-1].append(arg)
             else:
-                ra_values.append(arg)
+                op_values[-1].append(arg)
+        elif meta_args:
+            if "=" in arg:
+                meta_values.append(arg)
+        else:
+            ra_values.append(arg)
     return ra_values, op_values, meta_values
 
 
@@ -654,7 +653,7 @@ def _format_desc(indentation: int, desc: str) -> str:
     return output.rstrip()
 
 
-def resource_create(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
+def resource_create(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  # noqa: PLR0912
     """
     Options:
       * --agent-validation - use agent self validation of instance attributes
@@ -1018,7 +1017,7 @@ def update_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
 
 # Update a resource, removing any args that are empty and adding/updating
 # args that are not empty
-def resource_update(args: Argv, modifiers: InputModifiers) -> None:
+def resource_update(args: Argv, modifiers: InputModifiers) -> None:  # noqa: PLR0912, PLR0915
     """
     Commandline options:
       * -f - CIB file
@@ -1282,7 +1281,7 @@ def transform_master_to_clone(master_element):
     return clone_element
 
 
-def resource_operation_add(
+def resource_operation_add(  # noqa: PLR0912, PLR0915
     dom, res_id, argv, validate_strict=True, before_op=None
 ):
     """
@@ -1438,7 +1437,7 @@ def resource_operation_add(
     return dom
 
 
-def resource_operation_remove(res_id: str, argv: Argv) -> None:
+def resource_operation_remove(res_id: str, argv: Argv) -> None:  # noqa: PLR0912
     """
     Commandline options:
       * -f - CIB file
@@ -1523,7 +1522,7 @@ def meta_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     resource_meta(argv, modifiers)
 
 
-def resource_meta(argv: Argv, modifiers: InputModifiers) -> None:
+def resource_meta(argv: Argv, modifiers: InputModifiers) -> None:  # noqa: PLR0912
     """
     Commandline options:
       * --force - allow not suitable command
@@ -1744,7 +1743,7 @@ def _get_resource_agent_facade(
     ).facade_from_parsed_name(resource_agent)
 
 
-def resource_clone_create(
+def resource_clone_create(  # noqa: PLR0912
     cib_dom, argv, update_existing=False, promotable=False, force_flags=()
 ):
     """
@@ -2187,7 +2186,7 @@ def resource_show(
     raise_command_replaced([f"pcs {keyword} status"], pcs_version="0.11")
 
 
-def resource_status(
+def resource_status(  # noqa: PLR0912, PLR0915
     lib: Any, argv: Argv, modifiers: InputModifiers, stonith: bool = False
 ) -> None:
     """
@@ -2455,7 +2454,7 @@ def resource_restart_cmd(
     print_to_stderr(f"{resource} successfully restarted")
 
 
-def resource_force_action(
+def resource_force_action(  # noqa: PLR0912
     lib: Any, argv: Argv, modifiers: InputModifiers, action: str
 ) -> None:
     """
@@ -2953,7 +2952,7 @@ def resource_relocate_location_to_str(location):
     return ""
 
 
-def resource_relocate_run(cib_dom, resources=None, dry=True):
+def resource_relocate_run(cib_dom, resources=None, dry=True):  # noqa: PLR0912
     """
     Commandline options:
       * -f - CIB file, explicitly forbids -f if dry is False

@@ -92,7 +92,7 @@ class _ClusterNameGfs2Validator(validate.ValueValidator):
         return []
 
 
-def create(
+def create(  # noqa: PLR0912, PLR0915
     cluster_name: str,
     # TODO change to DTO, needs new validator
     node_list: Iterable[Mapping[str, Any]],
@@ -402,7 +402,7 @@ def _report_unresolvable_addresses_if_any(
     ]
 
 
-def add_nodes(
+def add_nodes(  # noqa: PLR0912, PLR0915
     # TODO change to DTO, needs new validator
     node_list: Iterable[Mapping[str, Any]],
     coro_existing_nodes: Iterable[CorosyncNode],
@@ -1138,7 +1138,7 @@ def remove_links(
     return report_items
 
 
-def update_link(
+def update_link(  # noqa: PLR0912, PLR0913
     linknumber: str,
     node_addr_map: Mapping[str, str],
     link_options: Mapping[str, str],

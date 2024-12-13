@@ -154,9 +154,8 @@ def _nvset_to_str(nvset_obj):
     }
     output = []
     for name, value in sorted(key_val.items()):
-        if " " in value:
-            value = f'"{value}"'
-        output.append(f"{name}={value}")
+        safe_value = f'"{value}"' if " " in value else value
+        output.append(f"{name}={safe_value}")
     return " ".join(output)
 
 

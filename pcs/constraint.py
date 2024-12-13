@@ -184,7 +184,7 @@ def _validate_resources_not_in_same_group(cib_dom, resource1, resource2):
 #        <src> with <role> <tgt> [score] [options]
 # <role> <src> with        <tgt> [score] [options]
 # <role> <src> with <role> <tgt> [score] [options]
-def colocation_add(lib, argv, modifiers):
+def colocation_add(lib, argv, modifiers):  # noqa: PLR0912, PLR0915
     """
     Options:
       * -f - CIB file
@@ -256,14 +256,11 @@ def colocation_add(lib, argv, modifiers):
 
     if not argv:
         raise CmdLineInputError()
-    if len(argv) == 1:
+    if len(argv) == 1 or utils.is_score_or_opt(argv[1]):
         resource2 = argv.pop(0)
     else:
-        if utils.is_score_or_opt(argv[1]):
-            resource2 = argv.pop(0)
-        else:
-            role2 = _validate_and_prepare_role(argv.pop(0))
-            resource2 = argv.pop(0)
+        role2 = _validate_and_prepare_role(argv.pop(0))
+        resource2 = argv.pop(0)
 
     score, nv_pairs = _parse_score_options(argv)
 
@@ -477,7 +474,7 @@ def order_start(lib, argv, modifiers):
     _order_add(resource1, resource2, order_options, modifiers)
 
 
-def _order_add(resource1, resource2, options_list, modifiers):
+def _order_add(resource1, resource2, options_list, modifiers):  # noqa: PLR0912, PLR0915
     """
     Commandline options:
       * -f - CIB file
@@ -870,8 +867,8 @@ def _verify_score(score):
         )
 
 
-def location_prefer(
-    lib: Any, argv: list[str], modifiers: parse_args.InputModifiers
+def location_prefer(  # noqa: PLR0912
+    lib: Any, argv: parse_args.Argv, modifiers: parse_args.InputModifiers
 ) -> None:
     """
     Options:
@@ -942,7 +939,12 @@ def location_prefer(
         location_add(lib, parameters, modifiers, skip_score_and_node_check=True)
 
 
-def location_add(lib, argv, modifiers, skip_score_and_node_check=False):
+def location_add(  # noqa: PLR0912, PLR0915
+    lib: Any,
+    argv: parse_args.Argv,
+    modifiers: parse_args.InputModifiers,
+    skip_score_and_node_check: bool = False,
+) -> None:
     """
     Options:
       * --force - allow unknown options, allow constraint for any resource type
@@ -1069,7 +1071,7 @@ def location_add(lib, argv, modifiers, skip_score_and_node_check=False):
     utils.replace_cib_configuration(dom)
 
 
-def location_rule(lib, argv, modifiers):
+def location_rule(lib, argv, modifiers):  # noqa: PLR0912
     """
     Options:
       * -f - CIB file
@@ -1261,7 +1263,7 @@ def getCurrentConstraints(passed_dom=None):
 
 # If returnStatus is set, then we don't error out, we just print the error
 # and return false
-def constraint_rm(
+def constraint_rm(  # noqa: PLR0912
     lib,
     argv,
     modifiers,

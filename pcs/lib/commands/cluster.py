@@ -182,7 +182,7 @@ def verify(env: LibraryEnvironment, verbose=False):
         raise LibraryError()
 
 
-def setup(
+def setup(  # noqa:  PLR0913, PLR0915
     env: LibraryEnvironment,
     cluster_name: str,
     nodes: Sequence[Mapping[str, Any]],
@@ -444,7 +444,7 @@ def setup(
         )
 
 
-def setup_local(
+def setup_local(  # noqa: PLR0913
     env: LibraryEnvironment,
     cluster_name: str,
     nodes: Sequence[Mapping[str, Any]],
@@ -570,7 +570,7 @@ def setup_local(
     )
 
 
-def _validate_create_corosync_conf(
+def _validate_create_corosync_conf(  # noqa: PLR0913
     cluster_name: str,
     nodes: Sequence[Mapping[str, Any]],
     transport_type: str,
@@ -631,7 +631,7 @@ def _validate_create_corosync_conf(
     )
 
 
-def _create_corosync_conf(
+def _create_corosync_conf(  # noqa: PLR0913
     cluster_name: str,
     nodes: Sequence[Mapping[str, Any]],
     transport_type: str,
@@ -834,7 +834,7 @@ def get_corosync_conf_struct(env: LibraryEnvironment) -> CorosyncConfDto:
         ) from e
 
 
-def add_nodes(
+def add_nodes(  # noqa: PLR0912, PLR0915
     env: LibraryEnvironment,
     nodes,
     wait=False,
@@ -1713,7 +1713,7 @@ def _verify_corosync_conf(corosync_conf_facade):
         )
 
 
-def remove_nodes(
+def remove_nodes(  # noqa: PLR0912, PLR0915
     env: LibraryEnvironment,
     node_list,
     force_flags: Collection[reports.types.ForceCode] = (),

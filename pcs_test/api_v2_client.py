@@ -52,7 +52,7 @@ def get_signal_handler(token: str):
         # pylint: disable=global-statement
         del frame
         if sig == signal.SIGINT:
-            global kill_requested
+            global kill_requested  # noqa: PLW0603
             if not task_ident:
                 error("no task to kill")
                 raise SystemExit(1) from None
@@ -145,7 +145,7 @@ def fetch_task_result(
 ) -> TaskResultDto:
     # pylint: disable=global-statement
     # Using global report list to recall reports in signal handler
-    global report_list
+    global report_list  # noqa: PLW0603
     task_state = TaskState.CREATED
     while task_state != TaskState.FINISHED:
         response = make_api_request_get(
@@ -164,14 +164,14 @@ def fetch_task_result(
         report_list = task_result_dto.reports
         # Wait for updates and continue until the task is finished
         sleep(sleep_interval)  # 300ms
-    global task_ident
+    global task_ident  # noqa: PLW0603
     task_ident = ""
     return task_result_dto
 
 
 def perform_command(command_dto: CommandDto, auth_token: str) -> TaskResultDto:
     # pylint: disable=global-statement
-    global task_ident
+    global task_ident  # noqa: PLW0603
     response = make_api_request_post(
         "task/create", json.dumps(to_dict(command_dto)), auth_token
     )

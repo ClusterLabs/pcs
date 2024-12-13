@@ -118,7 +118,7 @@ usefile = False
 filename = ""
 
 
-def main(argv=None):
+def main(argv=None):  # noqa: PLR0912, PLR0915
     # pylint: disable=global-statement
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-locals
@@ -133,7 +133,7 @@ def main(argv=None):
 
     argv = argv if argv else sys.argv[1:]
     utils.subprocess_setup()
-    global filename, usefile
+    global filename, usefile  # noqa: PLW0603
     utils.pcs_options = {}
 
     # we want to support optional arguments for --wait, so if an argument
@@ -145,7 +145,8 @@ def main(argv=None):
             tempsecs = arg.replace("--wait=", "")
             if tempsecs:
                 waitsecs = tempsecs
-                arg = "--wait"
+                new_argv.append("--wait")
+                continue
         new_argv.append(arg)
     argv = new_argv
 

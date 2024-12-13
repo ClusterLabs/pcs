@@ -107,16 +107,6 @@ ignore = [
   "ARG005", # https://docs.astral.sh/ruff/rules/unused-lambda-argument/
   "C408", # https://docs.astral.sh/ruff/rules/unnecessary-collection-call/
   "PERF203", # http://docs.astral.sh/ruff/rules/try-except-in-loop/
-  "PLR2004", # magic-value-comparison (99)
-  "PLR0913", # too-many-arguments (54)
-  "PLR0912", # too-many-branches (49)
-  "PLR0915", # too-many-statements (31)
-  "PLW2901", # redefined-loop-name (22)
-  "PLR5501", # collapsible-else-if (14)
-  "PLW0603", # global-statement (9)
-  "PLR0911", # too-many-return-statements (6)
-  "PLW1509", # subprocess-popen-preexec-fn (3)
-  "PLW0602", # global-variable-not-assigned (1)
   "SIM102", # https://docs.astral.sh/ruff/rules/collapsible-if/
 ]
 
@@ -140,5 +130,6 @@ section-order = ["future", "standard-library", "third-party", "first-party", "te
 "pcs_test/**.py" = ["SLF001"]
 
 [tool.ruff.lint.pylint]
+allow-magic-value-types = ["str", "bytes", "int"]
 max-args = 8
 max-positional-args = 8

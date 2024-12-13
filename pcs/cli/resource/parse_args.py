@@ -126,7 +126,7 @@ def parse_clone(arg_list: Argv, promotable: bool = False) -> CloneOptions:
     return CloneOptions(clone_id=clone_id, meta_attrs=meta)
 
 
-def parse_create_new(arg_list: Argv) -> ComplexResourceOptions:
+def parse_create_new(arg_list: Argv) -> ComplexResourceOptions:  # noqa: PLR0912
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-locals
     try:
@@ -274,7 +274,7 @@ def parse_create_new(arg_list: Argv) -> ComplexResourceOptions:
 
 
 # deprecated since 0.11.6
-def parse_create_old(
+def parse_create_old(  # noqa: PLR0912, PLR0915
     arg_list: Argv, modifiers: InputModifiers
 ) -> ComplexResourceOptions:
     # pylint: disable=too-many-branches
@@ -442,9 +442,8 @@ def _parse_bundle_groups(arg_list: Argv) -> ArgsByKeywords:
             for repeated_section in groups.get_args_groups(keyword):
                 if not repeated_section:
                     raise CmdLineInputError(f"No {keyword} options specified")
-        else:
-            if not groups.get_args_flat(keyword):
-                raise CmdLineInputError(f"No {keyword} options specified")
+        elif not groups.get_args_flat(keyword):
+            raise CmdLineInputError(f"No {keyword} options specified")
     return groups
 
 

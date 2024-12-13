@@ -25,7 +25,7 @@ def get_duplicate_constraint_exists_preprocessor(
 ) -> ReportItemPreprocessor:
     constraints_dto: Optional[CibConstraintsDto] = None
 
-    def _report_item_preprocessor(
+    def _report_item_preprocessor(  # noqa: PLR0912
         report_item: reports.ReportItem,
     ) -> Optional[reports.ReportItem]:
         """

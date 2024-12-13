@@ -109,7 +109,7 @@ def config_show(lib, argv, modifiers):
             print("\n".join(indent(quorum_lines)))
 
 
-def _config_show_cib_lines(lib, properties_facade=None):
+def _config_show_cib_lines(lib, properties_facade=None):  # noqa: PLR0912, PLR0915
     """
     Commandline options:
       * -f - CIB file
@@ -330,7 +330,7 @@ def config_restore(lib, argv, modifiers):
         sys.exit(exitcode)
 
 
-def config_restore_remote(infile_name, infile_obj):
+def config_restore_remote(infile_name, infile_obj):  # noqa: PLR0912
     """
     Commandline options:
       * --request-timeout - timeout for HTTP requests
@@ -419,7 +419,7 @@ def config_restore_remote(infile_name, infile_obj):
         utils.err("unable to restore all nodes\n" + "\n".join(error_list))
 
 
-def config_restore_local(infile_name, infile_obj):
+def config_restore_local(infile_name, infile_obj):  # noqa: PLR0912, PLR0915
     """
     Commandline options: no options
     """

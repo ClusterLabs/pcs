@@ -39,7 +39,7 @@ def full_status(lib, argv, modifiers):
 
 
 # Parse crm_mon for status
-def nodes_status(lib, argv, modifiers):
+def nodes_status(lib, argv, modifiers):  # noqa: PLR0912, PLR0915
     """
     Options:
       * -f - CIB file - for config subcommand and not for both or corosync
@@ -130,11 +130,10 @@ def nodes_status(lib, argv, modifiers):
                         remote_standbynodes_with_resources.append(node_name)
                     else:
                         remote_standbynodes.append(node_name)
+                elif is_running_resources:
+                    standbynodes_with_resources.append(node_name)
                 else:
-                    if is_running_resources:
-                        standbynodes_with_resources.append(node_name)
-                    else:
-                        standbynodes.append(node_name)
+                    standbynodes.append(node_name)
             if node.getAttribute("maintenance") == "true":
                 if node_remote:
                     remote_maintenancenodes.append(node_name)
@@ -148,11 +147,10 @@ def nodes_status(lib, argv, modifiers):
                     remote_onlinenodes.append(node_name)
                 else:
                     onlinenodes.append(node_name)
+        elif node_remote:
+            remote_offlinenodes.append(node_name)
         else:
-            if node_remote:
-                remote_offlinenodes.append(node_name)
-            else:
-                offlinenodes.append(node_name)
+            offlinenodes.append(node_name)
 
     print("Pacemaker Nodes:")
     print(" ".join([" Online:"] + onlinenodes))

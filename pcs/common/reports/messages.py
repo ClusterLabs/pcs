@@ -80,10 +80,10 @@ def _resource_move_ban_clear_master_resource_not_promotable(
 
 def _resource_move_ban_pcmk_success(stdout: str, stderr: str) -> str:
     new_lines = []
-    for line in stdout.splitlines() + stderr.splitlines():
-        if not line.strip():
+    for output_line in stdout.splitlines() + stderr.splitlines():
+        if not output_line.strip():
             continue
-        line = line.replace(
+        line = output_line.replace(
             "WARNING: Creating rsc_location constraint",
             "Warning: Creating location constraint",
         )

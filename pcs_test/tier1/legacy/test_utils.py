@@ -87,7 +87,7 @@ class UtilsTest(TestCase):
         resources.parentNode.replaceChild(new_resources, resources)
         return cib_dom
 
-    def test_dom_get_resources(self):
+    def test_dom_get_resources(self):  # noqa: PLR0915
         # pylint: disable=too-many-statements
         def test_dom_get(method, dom, ok_ids, bad_ids):
             for element_id in ok_ids:

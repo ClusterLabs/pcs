@@ -79,8 +79,8 @@ class SysVInitRhelDriver(ServiceManagerInterface):
             return []
 
         service_list = []
-        for service in result.stdout.splitlines():
-            service = service.split(" ", 1)[0]
+        for service_line in result.stdout.splitlines():
+            service = service_line.split(" ", 1)[0]
             if service:
                 service_list.append(service)
         return service_list

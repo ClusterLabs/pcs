@@ -102,7 +102,7 @@ def _get_agent_facade(
         raise LibraryError() from e
 
 
-def create(
+def create(  # noqa: PLR0913
     env: LibraryEnvironment,
     stonith_id: str,
     stonith_agent_name: str,
@@ -185,7 +185,7 @@ def create(
 
 
 # DEPRECATED: this command is deprecated and will be removed in a future release
-def create_in_group(
+def create_in_group(  # noqa: PLR0913
     env: LibraryEnvironment,
     stonith_id: str,
     stonith_agent_name: str,

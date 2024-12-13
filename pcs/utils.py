@@ -206,8 +206,8 @@ def read_uid_gid_file(uidgid_filename):
     ) as myfile:
         data = myfile.read().split("\n")
     in_uidgid = False
-    for line in data:
-        line = re.sub(r"#.*", "", line)
+    for data_line in data:
+        line = re.sub(r"#.*", "", data_line)
         if not in_uidgid:
             if re.search(r"uidgid.*{", line):
                 in_uidgid = True
@@ -542,7 +542,7 @@ def resumeConfigSyncing(node):
 # 2 = No response,
 # 3 = Auth Error
 # 4 = Permission denied
-def sendHTTPRequest(
+def sendHTTPRequest(  # noqa: PLR0912, PLR0915
     host, request, data=None, printResult=True, printSuccess=True, timeout=None
 ):
     """
@@ -903,7 +903,7 @@ def run(
             stdin=stdin_pipe,
             stdout=subprocess.PIPE,
             stderr=(subprocess.PIPE if ignore_stderr else subprocess.STDOUT),
-            preexec_fn=subprocess_setup,
+            preexec_fn=subprocess_setup,  # noqa: PLW1509
             close_fds=True,
             env=env_var,
             # decodes newlines and in python3 also converts bytes to str
@@ -1055,7 +1055,7 @@ def auth_hosts(host_dict):
     err("Unable to communicate with pcsd")
 
 
-def call_local_pcsd(argv, options, std_in=None):
+def call_local_pcsd(argv, options, std_in=None):  # noqa: PLR0911
     """
     Commandline options:
       * --request-timeout - timeout of call to local pcsd
@@ -1377,7 +1377,7 @@ def dom_get_resource_masterslave(dom, resource_id):
 # returns tuple (is_valid, error_message, correct_resource_id_if_exists)
 # there is a duplicate code in pcs/lib/cib/constraint/constraint.py
 # please use function in pcs/lib/cib/constraint/constraint.py
-def validate_constraint_resource(dom, resource_id):
+def validate_constraint_resource(dom, resource_id):  # noqa: PLR0911
     """
     Commandline options:
       * --force - allow constraint on any resource
@@ -1752,7 +1752,7 @@ def is_valid_cib_scope(scope):
 
 # Checks to see if id exists in the xml dom passed
 # DEPRECATED use lxml version available in pcs.lib.cib.tools
-def does_id_exist(dom, check_id):
+def does_id_exist(dom, check_id):  # noqa: PLR0912
     """
     Commandline options: no options
     """
@@ -2234,7 +2234,7 @@ def write_file(path, data, permissions=0o644, binary=False):
     return True, ""
 
 
-def tar_add_file_data(
+def tar_add_file_data(  # noqa: PLR0913
     tarball,
     data,
     name,
