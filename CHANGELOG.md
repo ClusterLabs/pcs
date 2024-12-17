@@ -1,5 +1,17 @@
 # Change Log
 
+## [Unreleased]
+
+### Security
+- HTTP headers are no longer resent from Python daemon to the Ruby daemon. This
+  is security hardening against vulnerabilities in rubygems Puma, Rack and
+  Sinatra that have been recently reported.
+
+### Fixed
+- Failure to build pcs from upstream specfile from a tagged commit. The only
+  affected release is 0.10.18.
+
+
 ## [0.10.18] - 2024-01-11
 
 ### Security
