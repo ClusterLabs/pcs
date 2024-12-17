@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.10.19] - 2024-12-17
 
 ### Security
 - HTTP headers are no longer resent from Python daemon to the Ruby daemon. This
