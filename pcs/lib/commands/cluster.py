@@ -125,9 +125,8 @@ def node_clear(
     if env.report_processor.report_list(report_list).has_errors:
         raise LibraryError()
 
-    if (
-        node_name in current_nodes
-        and env.report_processor.report(
+    if node_name in current_nodes:
+        env.report_processor.report(
             ReportItem(
                 severity=reports.item.get_severity(
                     report_codes.FORCE,
@@ -135,9 +134,9 @@ def node_clear(
                 ),
                 message=reports.messages.NodeToClearIsStillInCluster(node_name),
             )
-        ).has_errors
-    ):
-        raise LibraryError()
+        )
+        if env.report_processor.has_errors:
+            raise LibraryError()
 
     remove_node(env.cmd_runner(), node_name)
 
@@ -1442,9 +1441,8 @@ def _start_cluster(
     run_and_raise(
         communicator_factory.get_communicator(request_timeout=timeout), com_cmd
     )
-    if (
-        wait_timeout is not False
-        and report_processor.report_list(
+    if wait_timeout is not False:
+        report_processor.report_list(
             _wait_for_pacemaker_to_start(
                 communicator_factory.get_communicator(),
                 report_processor,
@@ -1452,9 +1450,9 @@ def _start_cluster(
                 # wait_timeout is either None or a timeout
                 timeout=wait_timeout,
             )
-        ).has_errors
-    ):
-        raise LibraryError()
+        )
+        if report_processor.has_errors:
+            raise LibraryError()
 
 
 def _wait_for_pacemaker_to_start(
@@ -2213,15 +2211,14 @@ def corosync_authkey_change(
         env.get_node_communicator(), com_cmd
     )
 
-    if (
-        not online_cluster_target_list
-        and report_processor.report(
+    if not online_cluster_target_list:
+        report_processor.report(
             ReportItem.error(
                 reports.messages.UnableToPerformOperationOnAnyNode()
             )
-        ).has_errors
-    ):
-        raise LibraryError()
+        )
+        if report_processor.has_errors:
+            raise LibraryError()
 
     com_cmd = DistributeFilesWithoutForces(
         env.report_processor,

@@ -644,9 +644,8 @@ def _find_resources_to_remove(
             )
         )
 
-    if (
-        len(resource_element_list) > 1
-        and report_processor.report(
+    if len(resource_element_list) > 1:
+        report_processor.report(
             ReportItem(
                 severity=reports.item.get_severity(
                     reports.codes.FORCE,
@@ -661,9 +660,9 @@ def _find_resources_to_remove(
                     node_identifier,
                 ),
             )
-        ).has_errors
-    ):
-        raise LibraryError()
+        )
+        if report_processor.has_errors:
+            raise LibraryError()
 
     return resource_element_list
 
