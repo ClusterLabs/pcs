@@ -1641,9 +1641,8 @@ def group_add(  # noqa: PLR0912
                 isinstance(report.message, reports.messages.CibPushError)
                 for report in e.args
             ):
-                if env.report_processor.report_list(
-                    empty_group_report_list
-                ).has_errors:
+                env.report_processor.report_list(empty_group_report_list)
+                if env.report_processor.has_errors:
                     raise LibraryError() from None
         except AttributeError:
             # For accessing message inside something that's not a report

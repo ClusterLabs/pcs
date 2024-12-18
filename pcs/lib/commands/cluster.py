@@ -124,7 +124,7 @@ def node_clear(
         raise LibraryError()
 
     if node_name in current_nodes:
-        if env.report_processor.report(
+        env.report_processor.report(
             ReportItem(
                 severity=reports.item.get_severity(
                     report_codes.FORCE,
@@ -132,7 +132,8 @@ def node_clear(
                 ),
                 message=reports.messages.NodeToClearIsStillInCluster(node_name),
             )
-        ).has_errors:
+        )
+        if env.report_processor.has_errors:
             raise LibraryError()
 
     remove_node(env.cmd_runner(), node_name)
@@ -1438,7 +1439,7 @@ def _start_cluster(
         communicator_factory.get_communicator(request_timeout=timeout), com_cmd
     )
     if wait_timeout is not False:
-        if report_processor.report_list(
+        report_processor.report_list(
             _wait_for_pacemaker_to_start(
                 communicator_factory.get_communicator(),
                 report_processor,
@@ -1446,7 +1447,8 @@ def _start_cluster(
                 # wait_timeout is either None or a timeout
                 timeout=wait_timeout,
             )
-        ).has_errors:
+        )
+        if report_processor.has_errors:
             raise LibraryError()
 
 
@@ -2207,11 +2209,12 @@ def corosync_authkey_change(
     )
 
     if not online_cluster_target_list:
-        if report_processor.report(
+        report_processor.report(
             ReportItem.error(
                 reports.messages.UnableToPerformOperationOnAnyNode()
             )
-        ).has_errors:
+        )
+        if report_processor.has_errors:
             raise LibraryError()
 
     com_cmd = DistributeFilesWithoutForces(
