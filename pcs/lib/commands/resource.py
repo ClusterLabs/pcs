@@ -1705,17 +1705,13 @@ def group_add(  # noqa: PLR0912
         env.push_cib(wait_timeout=wait_timeout)
     except LibraryError as e:
         try:
-            if (
-                e.args
-                and any(
-                    isinstance(report.message, reports.messages.CibPushError)
-                    for report in e.args
-                )
-                and env.report_processor.report_list(
-                    empty_group_report_list
-                ).has_errors
+            if e.args and any(
+                isinstance(report.message, reports.messages.CibPushError)
+                for report in e.args
             ):
-                raise LibraryError() from None
+                env.report_processor.report_list(empty_group_report_list)
+                if env.report_processor.has_errors:
+                    raise LibraryError() from None
         except AttributeError:
             # For accessing message inside something that's not a report
             pass
