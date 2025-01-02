@@ -13,7 +13,7 @@ def prepare_resource_sets(
 ) -> list[dict[str, Union[list[str], dict[str, str]]]]:
     return [
         {
-            "ids": [id for id in args if "=" not in id],
+            "ids": [id_ for id_ in args if "=" not in id_],
             "options": KeyValueParser(
                 [opt for opt in args if "=" in opt]
             ).get_unique(),

@@ -63,24 +63,23 @@ class CommandRunnerTest(TestCase):
             },
         )
         logger_calls = [
-            mock.call("Running: {0}\nEnvironment:".format(command_str)),
+            mock.call("Running: %s\nEnvironment:%s%s", command_str, "", ""),
             mock.call(
                 outdent(
                     """\
-                    Finished running: {0}
-                    Return value: {1}
+                    Finished running: %s
+                    Return value: %s
                     --Debug Stdout Start--
-                    {2}
+                    %s
                     --Debug Stdout End--
                     --Debug Stderr Start--
-                    {3}
+                    %s
                     --Debug Stderr End--"""
-                ).format(
-                    command_str,
-                    expected_retval,
-                    expected_stdout,
-                    expected_stderr,
-                )
+                ),
+                command_str,
+                expected_retval,
+                expected_stdout,
+                expected_stderr,
             ),
         ]
         self.assertEqual(self.mock_logger.debug.call_count, len(logger_calls))
@@ -152,30 +151,29 @@ class CommandRunnerTest(TestCase):
             mock.call(
                 outdent(
                     """\
-                    Running: {0}
-                    Environment:
-                      a=a
-                      b=B
-                      c={1}"""
-                ).format(command_str, "{C}")
+                    Running: %s
+                    Environment:%s%s"""
+                ),
+                command_str,
+                "\n  a=a\n  b=B\n  c={C}",
+                "",
             ),
             mock.call(
                 outdent(
                     """\
-                    Finished running: {0}
-                    Return value: {1}
+                    Finished running: %s
+                    Return value: %s
                     --Debug Stdout Start--
-                    {2}
+                    %s
                     --Debug Stdout End--
                     --Debug Stderr Start--
-                    {3}
+                    %s
                     --Debug Stderr End--"""
-                ).format(
-                    command_str,
-                    expected_retval,
-                    expected_stdout,
-                    expected_stderr,
-                )
+                ),
+                command_str,
+                expected_retval,
+                expected_stdout,
+                expected_stderr,
             ),
         ]
         self.assertEqual(self.mock_logger.debug.call_count, len(logger_calls))
@@ -236,30 +234,34 @@ class CommandRunnerTest(TestCase):
             mock.call(
                 outdent(
                     """\
-                    Running: {0}
-                    Environment:
+                    Running: %s
+                    Environment:%s%s"""
+                ),
+                command_str,
+                "",
+                outdent(
+                    f"""
                     --Debug Input Start--
-                    {1}
+                    {stdin}
                     --Debug Input End--"""
-                ).format(command_str, stdin)
+                ),
             ),
             mock.call(
                 outdent(
                     """\
-                    Finished running: {0}
-                    Return value: {1}
+                    Finished running: %s
+                    Return value: %s
                     --Debug Stdout Start--
-                    {2}
+                    %s
                     --Debug Stdout End--
                     --Debug Stderr Start--
-                    {3}
+                    %s
                     --Debug Stderr End--"""
-                ).format(
-                    command_str,
-                    expected_retval,
-                    expected_stdout,
-                    expected_stderr,
-                )
+                ),
+                command_str,
+                expected_retval,
+                expected_stdout,
+                expected_stderr,
             ),
         ]
         self.assertEqual(self.mock_logger.debug.call_count, len(logger_calls))
@@ -321,7 +323,7 @@ class CommandRunnerTest(TestCase):
             },
         )
         logger_calls = [
-            mock.call("Running: {0}\nEnvironment:".format(command_str)),
+            mock.call("Running: %s\nEnvironment:%s%s", command_str, "", "")
         ]
         self.assertEqual(self.mock_logger.debug.call_count, len(logger_calls))
         self.mock_logger.debug.assert_has_calls(logger_calls)
@@ -373,7 +375,7 @@ class CommandRunnerTest(TestCase):
             },
         )
         logger_calls = [
-            mock.call("Running: {0}\nEnvironment:".format(command_str)),
+            mock.call("Running: %s\nEnvironment:%s%s", command_str, "", ""),
         ]
         self.assertEqual(self.mock_logger.debug.call_count, len(logger_calls))
         self.mock_logger.debug.assert_has_calls(logger_calls)

@@ -37,7 +37,7 @@ from pcs.common.status_dto import (
 from pcs.common.types import StringSequence
 
 
-def fixture_primitive_dto(
+def fixture_primitive_dto(  # noqa: PLR0913
     resource_id: str,
     instance_id: Optional[str],
     *,
@@ -95,7 +95,7 @@ def fixture_group_dto(
     )
 
 
-def fixture_clone_dto(
+def fixture_clone_dto(  # noqa: PLR0913
     resource_id: str,
     *,
     multi_state: bool = False,
@@ -2693,14 +2693,16 @@ class TestFacadeIsState(TestCase):
 
         resource_list = ["primitive", "clone", "cloned_primitive"]
         for resource_id in resource_list:
-            with self.subTest(value=resource_id):
-                with self.assertRaises(MembersQuantifierUnsupportedException):
-                    facade.is_state(
-                        resource_id,
-                        None,
-                        ResourceState.STARTED,
-                        members_quantifier=MoreChildrenQuantifierType.ALL,
-                    )
+            with (
+                self.subTest(value=resource_id),
+                self.assertRaises(MembersQuantifierUnsupportedException),
+            ):
+                facade.is_state(
+                    resource_id,
+                    None,
+                    ResourceState.STARTED,
+                    members_quantifier=MoreChildrenQuantifierType.ALL,
+                )
 
     def test_bad_members_quantifier_bundle(self):
         facade = fixture_bundle_facade()
@@ -2717,14 +2719,16 @@ class TestFacadeIsState(TestCase):
 
         resource_list = ["primitive", "group"]
         for resource_id in resource_list:
-            with self.subTest(value=resource_id):
-                with self.assertRaises(InstancesQuantifierUnsupportedException):
-                    facade.is_state(
-                        resource_id,
-                        None,
-                        ResourceState.STARTED,
-                        instances_quantifier=MoreChildrenQuantifierType.ALL,
-                    )
+            with (
+                self.subTest(value=resource_id),
+                self.assertRaises(InstancesQuantifierUnsupportedException),
+            ):
+                facade.is_state(
+                    resource_id,
+                    None,
+                    ResourceState.STARTED,
+                    instances_quantifier=MoreChildrenQuantifierType.ALL,
+                )
 
 
 class TestStateExactValue(TestCase):

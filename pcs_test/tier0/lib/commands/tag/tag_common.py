@@ -12,7 +12,7 @@ def fixture_tags_xml(tag_with_ids):
         "<tags>"
         + "".join(
             '<tag id="{tag_id}">'.format(tag_id=tag_id)
-            + "".join('<obj_ref id="{id}"/>'.format(id=id) for id in id_list)
+            + "".join(f'<obj_ref id="{id_}"/>' for id_ in id_list)
             + "</tag>"
             for tag_id, id_list in tag_with_ids
         )

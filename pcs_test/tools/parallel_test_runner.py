@@ -63,6 +63,7 @@ class VanillaTextTestResult(unittest.TextTestResult):
         return line_list
 
     def stopTest(self, test):
+        del test
         # super().stopTest(test)
         if self.stream.seekable():
             self.stream.seek(0)
@@ -97,9 +98,7 @@ class ParallelTestResult:
     ) -> None:
         # pylint: disable=import-outside-toplevel too-many-branches
         summary_lines = []
-        if self.error_count or self.failure_count or self.skip_count:
-            summary_lines.append("")
-        elif vanilla:
+        if self.error_count or self.failure_count or self.skip_count or vanilla:
             summary_lines.append("")
 
         summary_lines.extend(self.error_reports)

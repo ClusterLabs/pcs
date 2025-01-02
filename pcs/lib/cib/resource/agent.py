@@ -80,13 +80,11 @@ def get_default_operations(
 
     # add necessary actions if they are missing
     defined_operation_names = frozenset(op.name for op in action_list)
-    for op_name in _NECESSARY_OPERATIONS:
-        if op_name not in defined_operation_names:
-            action_list.append(
-                ResourceAgentAction(
-                    op_name, None, None, None, None, None, False, False
-                )
-            )
+    action_list.extend(
+        ResourceAgentAction(op_name, None, None, None, None, None, False, False)
+        for op_name in _NECESSARY_OPERATIONS
+        if op_name not in defined_operation_names
+    )
 
     # transform actions to operation definitions
     return [action_to_operation_dto(action) for action in action_list]

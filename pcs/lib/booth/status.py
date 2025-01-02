@@ -1,15 +1,20 @@
-from typing import Optional
+from typing import (
+    TYPE_CHECKING,
+    Optional,
+)
 
 from pcs import settings
 from pcs.common import reports
 from pcs.common.file import RawFileError
 from pcs.common.str_tools import join_multilines
-from pcs.lib.booth.config_facade import ConfigFacade
 from pcs.lib.booth.constants import AUTHFILE_FIX_OPTION
 from pcs.lib.booth.env import BoothEnv
 from pcs.lib.errors import LibraryError
 from pcs.lib.file.raw_file import raw_file_error_report
 from pcs.lib.interface.config import ParserErrorException
+
+if TYPE_CHECKING:
+    from pcs.lib.booth.config_facade import ConfigFacade
 
 
 def get_daemon_status(runner, name=None):

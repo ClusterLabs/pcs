@@ -691,9 +691,7 @@ class XmlStatus(AssertPcsMixin, TestCase):
               <nodes/>
               <status code="0" message="OK"/>
             </pacemaker-result>
-        """.format(
-            crm_mon=settings.crm_mon_exec
-        )
+        """.format(crm_mon=settings.crm_mon_exec)
         self.assert_pcs_success(
             ["status", "xml"],
             stdout_regexp=re.compile(dedent(xml).strip(), re.MULTILINE),

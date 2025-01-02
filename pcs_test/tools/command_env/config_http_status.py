@@ -9,7 +9,7 @@ class StatusShortcuts:
     def __init__(self, calls):
         self.__calls = calls
 
-    def get_full_cluster_status_plaintext(
+    def get_full_cluster_status_plaintext(  # noqa: PLR0913
         self,
         *,
         node_labels=None,

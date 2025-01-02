@@ -143,13 +143,11 @@ class ResourceAgentFacadeFactory(TestCase):
         self.assertEqual(facade.metadata.name, fake_agent_name)
         self.assertTrue(facade.metadata.agent_exists)
         self.assertTrue(
-            set(
-                [
-                    "enable-acl",
-                    "stonith-watchdog-timeout",
-                    "maintenance-mode",
-                ]
-            ).issubset(set(param.name for param in facade.metadata.parameters))
+            {
+                "enable-acl",
+                "stonith-watchdog-timeout",
+                "maintenance-mode",
+            }.issubset({param.name for param in facade.metadata.parameters})
         )
 
     def test_facade_crm_attribute_unknown_agent(self):

@@ -51,48 +51,58 @@ class Writer:
 
 class DotWriter(Writer):
     def addSuccess(self, test):
+        del test
         self.stream.write(self.format.green("."))
         self.stream.flush()
 
     def addError(self, test, err, traceback):
+        del test, err
         self.stream.write(self.format.red("E"))
         self.stream.flush()
         self.show_fast_info(traceback)
 
     def addFailure(self, test, err, traceback):
+        del test, err
         self.stream.write(self.format.red("F"))
         self.stream.flush()
         self.show_fast_info(traceback)
 
     def addSkip(self, test, reason):
+        del test, reason
         self.stream.write(self.format.blue("s"))
         self.stream.flush()
 
     def addExpectedFailure(self, test, err):
+        del test, err
         self.stream.write(self.format.blue("x"))
         self.stream.flush()
 
     def addUnexpectedSuccess(self, test):
+        del test
         self.stream.write(self.format.red("u"))
         self.stream.flush()
 
 
 class StandardVerboseWriter(Writer):
     def addSuccess(self, test):
+        del test
         self.stream.writeln(self.format.green("OK"))
         self.stream.flush()
 
     def addError(self, test, err, traceback):
+        del test, err
         self.stream.writeln(self.format.red("ERROR"))
         self.stream.flush()
         self.show_fast_info(traceback)
 
     def addFailure(self, test, err, traceback):
+        del test, err
         self.stream.writeln(self.format.red("FAIL"))
         self.stream.flush()
         self.show_fast_info(traceback)
 
     def addSkip(self, test, reason):
+        del test
         self.stream.writeln(self.format.blue("skipped {0!r}".format(reason)))
         self.stream.flush()
 
@@ -102,10 +112,12 @@ class StandardVerboseWriter(Writer):
         self.stream.flush()
 
     def addExpectedFailure(self, test, err):
+        del test, err
         self.stream.writeln(self.format.blue("expected failure"))
         self.stream.flush()
 
     def addUnexpectedSuccess(self, test):
+        del test
         self.stream.writeln(self.format.red("unexpected success"))
         self.stream.flush()
 

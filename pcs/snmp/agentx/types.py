@@ -37,6 +37,8 @@ class Oid(
       is ignored.
     """
 
+    __slots__ = ()
+
     def __new__(cls, oid, str_oid, data_type=None, member_list=None):
         return super(Oid, cls).__new__(
             cls, oid, str_oid, data_type, member_list

@@ -108,7 +108,7 @@ class OcfUnifiedToPcs(TestCase):
             actions=[],
         )
 
-    def test_resource(
+    def test_resource(  # noqa: PLR0913
         self,
         mock_action_role,
         mock_parameter_enum,
@@ -148,7 +148,7 @@ class OcfUnifiedToPcs(TestCase):
         mock_stonith_action.assert_not_called()
         mock_stonith_port.assert_not_called()
 
-    def test_stonith(
+    def test_stonith(  # noqa: PLR0913
         self,
         mock_action_role,
         mock_parameter_enum,
@@ -188,7 +188,7 @@ class OcfUnifiedToPcs(TestCase):
         mock_stonith_action.assert_called_once_with("from stonith parameters")
         mock_stonith_port.assert_called_once_with("from stonith action")
 
-    def test_pcmk_fake(
+    def test_pcmk_fake(  # noqa: PLR0913
         self,
         mock_action_role,
         mock_parameter_enum,

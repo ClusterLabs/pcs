@@ -42,9 +42,7 @@ large_xml = """
                 />
             </storage>
         </bundle>
-        """.format(
-                i
-            )
+        """.format(i)
             for i in range(20000)
         ]
     ),
@@ -94,9 +92,7 @@ large_xml = """
                     op-digest="3b2ba04195253e454b50aa4a340af042"
                 />
             </lrm_resource>
-            """.format(
-                            "{0}-{1}".format(i, j)
-                        )
+            """.format("{0}-{1}".format(i, j))
                         for j in range(98)
                     ]
                 ),

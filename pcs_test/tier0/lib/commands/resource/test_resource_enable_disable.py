@@ -376,7 +376,7 @@ fixture_master_status_unmanaged = fixture_master_status_template.format(
 )
 
 
-def get_fixture_clone_group_cib(
+def get_fixture_clone_group_cib(  # noqa: PLR0913
     *,
     clone_disabled=False,
     clone_meta=False,

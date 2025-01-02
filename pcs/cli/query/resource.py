@@ -355,9 +355,7 @@ def is_state(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
 
     sections = group_by_keywords(
         argv,
-        set(
-            ["on-node", "members", "instances"],
-        ),
+        {"on-node", "members", "instances"},
         implicit_first_keyword="state",
     )
     sections.ensure_unique_keywords()

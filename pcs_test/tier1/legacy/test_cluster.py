@@ -4,9 +4,8 @@ from functools import partial
 from unittest import TestCase
 
 from pcs_test.tools.assertions import AssertPcsMixin
-from pcs_test.tools.misc import compare_version
-from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import (
+    compare_version,
     get_tmp_dir,
     get_tmp_file,
     outdent,
@@ -14,6 +13,7 @@ from pcs_test.tools.misc import (
     skip_unless_root,
     write_file_to_tmpfile,
 )
+from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.pcs_runner import (
     PcsRunner,
     pcs,
@@ -45,7 +45,7 @@ class UidGidTest(TestCase):
             False,
         )
 
-    def test_uidgid(self):
+    def test_uidgid(self):  # noqa: PLR0915
         # pylint: disable=too-many-statements
         stdout, stderr, retval = self._pcs("cluster uidgid".split())
         self.assertEqual(stdout, "")

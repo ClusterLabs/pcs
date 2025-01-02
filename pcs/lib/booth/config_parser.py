@@ -15,6 +15,8 @@ from pcs.lib.interface.config import (
 
 
 class ConfigItem(namedtuple("ConfigItem", "key value details")):
+    __slots__ = ()
+
     def __new__(cls, key, value, details=None):
         return super().__new__(cls, key, value, details or [])
 
@@ -111,8 +113,8 @@ def _parse_to_raw_lines(config_content):
 
     line_list = []
     invalid_line_list = []
-    for line in config_content.splitlines():
-        line = line.strip()
+    for config_line in config_content.splitlines():
+        line = config_line.strip()
         match = _search_with_multiple_re(expression_list, line)
         if match:
             line_list.append((match.group("key"), match.group("value")))

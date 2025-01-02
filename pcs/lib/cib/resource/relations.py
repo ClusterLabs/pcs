@@ -70,10 +70,11 @@ class ResourceRelationNode:
 
     def add_member(self, member: "ResourceRelationNode") -> None:
         # pylint: disable=protected-access
-        if member._parent is not None:
+        if member._parent is not None:  # noqa: SLF001
             raise AssertionError(
                 "object {} already has a parent set: {}".format(
-                    repr(member), repr(member._parent)
+                    repr(member),
+                    repr(member._parent),  # noqa: SLF001
                 )
             )
         # we don't want opposite relations (inner resource vs outer resource)
@@ -83,18 +84,18 @@ class ResourceRelationNode:
             self != member
             and member.obj.id not in parents
             and (
-                member._opposite_id not in parents
+                member._opposite_id not in parents  # noqa: SLF001
                 or len(member.obj.members) > 1
             )
         ):
-            member._parent = self
+            member._parent = self  # noqa: SLF001
             self._members.append(member)
 
     def _get_all_parents(self) -> List[str]:
         # pylint: disable=protected-access
         if self._parent is None:
             return []
-        return self._parent._get_all_parents() + [self._parent.obj.id]
+        return self._parent._get_all_parents() + [self._parent.obj.id]  # noqa: SLF001
 
 
 class ResourceRelationTreeBuilder:

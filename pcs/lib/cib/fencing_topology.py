@@ -32,9 +32,9 @@ from pcs.common.reports import (
     ReportItemList,
     ReportItemSeverity,
     ReportProcessor,
+    has_errors,
 )
 from pcs.common.reports import codes as report_codes
-from pcs.common.reports import has_errors
 from pcs.common.reports.item import ReportItem
 from pcs.common.types import StringSequence
 from pcs.common.validate import is_integer
@@ -81,7 +81,7 @@ def _generate_level_id(
     return id_provider.allocate_id(sanitize_id(f"fl-{id_part}-{level}"))
 
 
-def add_level(
+def add_level(  # noqa: PLR0913
     reporter: ReportProcessor,
     cib: _Element,
     level: str,

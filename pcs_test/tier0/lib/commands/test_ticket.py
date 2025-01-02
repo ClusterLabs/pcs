@@ -36,9 +36,7 @@ class CreateTest(TestCase):
                             loss-policy="fence"
                         />
                     </constraints>
-                """.format(
-                    role=const.PCMK_ROLE_PROMOTED
-                )
+                """.format(role=const.PCMK_ROLE_PROMOTED)
             )
         )
         role = str(const.PCMK_ROLE_PROMOTED).lower()

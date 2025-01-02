@@ -119,7 +119,7 @@ def get_all_inner_resources(resource_el: _Element) -> Set[_Element]:
     resource_el -- resource element to get its inner resources
     """
     all_inner: Set[_Element] = set()
-    to_process = set([resource_el])
+    to_process = {resource_el}
     while to_process:
         new_inner = get_inner_resources(to_process.pop())
         to_process.update(set(new_inner) - all_inner)

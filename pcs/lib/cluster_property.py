@@ -54,19 +54,18 @@ def _validate_stonith_watchdog_timeout_property(
                 validate.ValuePair(original_value, value), force
             )
         )
-    else:
-        if value not in ["", "0"]:
-            report_list.append(
-                reports.ReportItem.error(
-                    reports.messages.StonithWatchdogTimeoutCannotBeSet(
-                        reports.const.SBD_NOT_SET_UP
-                    ),
-                )
+    elif value not in ["", "0"]:
+        report_list.append(
+            reports.ReportItem.error(
+                reports.messages.StonithWatchdogTimeoutCannotBeSet(
+                    reports.const.SBD_NOT_SET_UP
+                ),
             )
+        )
     return report_list
 
 
-def validate_set_cluster_properties(
+def validate_set_cluster_properties(  # noqa: PLR0912
     runner: CommandRunner,
     cluster_property_facade_list: Iterable[ResourceAgentFacade],
     properties_set_id: str,

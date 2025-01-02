@@ -5841,7 +5841,7 @@ class NotAuthorized(NameBuildTest):
 
 class AgentSelfValidationResult(NameBuildTest):
     def test_message(self):
-        lines = list(f"line #{i}" for i in range(3))
+        lines = [f"line #{i}" for i in range(3)]
         self.assert_message_from_report(
             "Validation result from agent:\n  {}".format("\n  ".join(lines)),
             reports.AgentSelfValidationResult("\n".join(lines)),
@@ -5859,7 +5859,7 @@ class AgentSelfValidationInvalidData(NameBuildTest):
 
 class AgentSelfValidationSkippedUpdatedResourceMisconfigured(NameBuildTest):
     def test_message(self):
-        lines = list(f"line #{i}" for i in range(3))
+        lines = [f"line #{i}" for i in range(3)]
         self.assert_message_from_report(
             (
                 "The resource was misconfigured before the update, therefore "

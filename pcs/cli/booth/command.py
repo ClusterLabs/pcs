@@ -29,7 +29,7 @@ def config_setup(lib: Any, arg_list: Argv, modifiers: InputModifiers) -> None:
         "--booth-key",
         "--name",
     )
-    peers = group_by_keywords(arg_list, set(["sites", "arbitrators"]))
+    peers = group_by_keywords(arg_list, {"sites", "arbitrators"})
     peers.ensure_unique_keywords()
     if not peers.has_keyword("sites") or not peers.get_args_flat("sites"):
         raise CmdLineInputError()

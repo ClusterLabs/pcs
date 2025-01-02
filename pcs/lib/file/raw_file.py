@@ -13,12 +13,12 @@ from typing import (
 # places
 # pylint: disable=unused-import
 from pcs.common import reports
-from pcs.common.file import FileMetadata
-from pcs.common.file import RawFile as RealFile
 from pcs.common.file import (
+    FileMetadata,
     RawFileError,
     RawFileInterface,
 )
+from pcs.common.file import RawFile as RealFile  # noqa: F401
 
 # TODO add logging (logger / debug reports ?)
 
@@ -85,6 +85,7 @@ class GhostFile(RawFileInterface):
         return self.__file_data
 
     def write(self, file_data: bytes, can_overwrite: bool = False) -> None:
+        del can_overwrite
         self.__file_data = file_data
 
     @contextmanager

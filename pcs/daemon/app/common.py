@@ -8,9 +8,9 @@ from typing import (
 from tornado.web import (
     Finish,
     HTTPError,
+    RequestHandler,
 )
 from tornado.web import RedirectHandler as TornadoRedirectHandler
-from tornado.web import RequestHandler
 
 RoutesType = Iterable[
     tuple[str, Type[RequestHandler], Optional[dict[str, Any]]]

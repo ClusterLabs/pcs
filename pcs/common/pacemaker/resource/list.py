@@ -30,8 +30,8 @@ def get_all_resources_ids(resources_dto: CibResourcesDto) -> set[str]:
 
 
 def get_stonith_resources_ids(resources_dto: CibResourcesDto) -> set[str]:
-    return set(
+    return {
         primitive.id
         for primitive in resources_dto.primitives
         if primitive.agent_name.standard == "stonith"
-    )
+    }

@@ -65,7 +65,7 @@ class RawFileConfig:
         )
         self.__calls.place(name, call, before, instead)
 
-    def write(
+    def write(  # noqa: PLR0913
         self,
         file_type_code,
         path,

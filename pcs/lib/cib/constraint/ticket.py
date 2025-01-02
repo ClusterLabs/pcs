@@ -143,8 +143,7 @@ def prepare_options_plain(
         validate.NamesIn(
             # rsc and rsc-ticket are passed as parameters not as items in the
             # options dict
-            (set(ATTRIB) | set(ATTRIB_PLAIN) | {"id"})
-            - {"rsc", "ticket"}
+            (set(ATTRIB) | set(ATTRIB_PLAIN) | {"id"}) - {"rsc", "ticket"}
         ).validate(options)
     )
 

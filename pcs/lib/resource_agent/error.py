@@ -3,6 +3,8 @@ from pcs.common.types import StringCollection
 
 from . import const
 
+_DEFAULT_SEVERITY = reports.ReportItemSeverity.error()
+
 
 class ResourceAgentError(Exception):
     def __init__(self, agent_name: str):
@@ -44,7 +46,7 @@ class UnsupportedOcfVersion(ResourceAgentError):
 
 def resource_agent_error_to_report_item(
     e: ResourceAgentError,
-    severity: reports.ReportItemSeverity = reports.ReportItemSeverity.error(),
+    severity: reports.ReportItemSeverity = _DEFAULT_SEVERITY,
     is_stonith: bool = False,
 ) -> reports.ReportItem:
     """

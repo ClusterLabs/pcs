@@ -23,7 +23,7 @@ def _parse_host_options(
     host: str, options: Argv
 ) -> dict[str, Union[str, list[dict[str, Union[None, str, int]]]]]:
     ADDR_OPT_KEYWORD = "addr"  # pylint: disable=invalid-name
-    supported_options = set([ADDR_OPT_KEYWORD])
+    supported_options = {ADDR_OPT_KEYWORD}
     parsed_options = KeyValueParser(options).get_unique()
     unknown_options = set(parsed_options.keys()) - supported_options
     if unknown_options:

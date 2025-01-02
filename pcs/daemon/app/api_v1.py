@@ -170,6 +170,7 @@ class _BaseApiV1Handler(BaseHandler):
         self.finish(json.dumps(to_dict(response)))
 
     def write_error(self, status_code: int, **kwargs: Any) -> None:
+        del status_code
         response = communication.dto.InternalCommunicationResultDto(
             status=communication.const.COM_STATUS_EXCEPTION,
             status_msg=None,

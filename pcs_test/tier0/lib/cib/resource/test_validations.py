@@ -795,6 +795,4 @@ class ValidateBan(ValidateMoveBanClearMixin, TestCase):
 
 class ValidateUnmoveUnban(ValidateMoveBanClearMixin, TestCase):
     validate = staticmethod(validations.validate_unmove_unban)
-    report_code_bad_promoted = (
-        reports.codes.CANNOT_UNMOVE_UNBAN_RESOURCE_MASTER_RESOURCE_NOT_PROMOTABLE
-    )
+    report_code_bad_promoted = reports.codes.CANNOT_UNMOVE_UNBAN_RESOURCE_MASTER_RESOURCE_NOT_PROMOTABLE

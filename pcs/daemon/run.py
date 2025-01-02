@@ -30,12 +30,10 @@ from pcs.daemon.app import (
     api_v1,
     api_v2,
     auth,
-)
-from pcs.daemon.app import capabilities as capabilities_app
-from pcs.daemon.app import (
     sinatra_remote,
     sinatra_ui,
 )
+from pcs.daemon.app import capabilities as capabilities_app
 
 try:
     from pcs.daemon.app import webui
@@ -87,7 +85,7 @@ def config_sync(sync_config_lock: Lock, ruby_pcsd_wrapper: ruby_pcsd.Wrapper):
     return config_synchronization
 
 
-def configure_app(
+def configure_app(  # noqa: PLR0913
     async_scheduler: Scheduler,
     auth_provider: AuthProvider,
     session_lifetime: int,

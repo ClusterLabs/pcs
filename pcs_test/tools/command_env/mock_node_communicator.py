@@ -109,7 +109,7 @@ def bad_request_list_content(errors):
     )
 
 
-def _communication_to_response(
+def _communication_to_response(  # noqa: PLR0913
     label,
     dest_list,
     action,
@@ -147,7 +147,7 @@ def _communication_to_response(
     )
 
 
-def create_communication(
+def create_communication(  # noqa: PLR0913
     communication_list,
     *,
     action="",

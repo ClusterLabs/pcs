@@ -45,9 +45,9 @@ class SessionTest(TestCase, PatchSessionMixin):
         with self.refresh_test() as session1:
             session1.refresh()
         with self.refresh_test() as session1:
-            session1.username
+            _ = session1.username
         with self.refresh_test() as session1:
-            session1.sid
+            _ = session1.sid
 
 
 @skip_unless_webui_installed()

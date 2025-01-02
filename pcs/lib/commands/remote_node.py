@@ -1,4 +1,5 @@
 from typing import (
+    TYPE_CHECKING,
     Callable,
     Collection,
     Iterable,
@@ -44,7 +45,6 @@ from pcs.lib.communication.nodes import (
 )
 from pcs.lib.communication.tools import run as run_com
 from pcs.lib.communication.tools import run_and_raise
-from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
 from pcs.lib.env import (
     LibraryEnvironment,
     WaitType,
@@ -61,6 +61,11 @@ from pcs.lib.resource_agent import (
     resource_agent_error_to_report_item,
 )
 from pcs.lib.tools import generate_binary_key
+
+if TYPE_CHECKING:
+    from pcs.lib.corosync.config_facade import (
+        ConfigFacade as CorosyncConfigFacade,
+    )
 
 
 def _reports_skip_new_node(new_node_name, reason_type):
@@ -254,7 +259,7 @@ def _ensure_resource_running(env: LibraryEnvironment, resource_id):
         raise LibraryError()
 
 
-def node_add_remote(
+def node_add_remote(  # noqa: PLR0912, PLR0913, PLR0915
     env: LibraryEnvironment,
     node_name: str,
     node_addr: Optional[str],
@@ -372,27 +377,22 @@ def node_add_remote(
                     )
                 )
             )
-    else:
-        # default node_addr to an address from known-hosts
-        if node_addr is None:
-            known_hosts = env.get_known_hosts([node_name])
-            if known_hosts:
-                node_addr = known_hosts[0].dest.addr
-                node_addr_source = (
-                    reports.const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS
-                )
-            else:
-                node_addr = node_name
-                node_addr_source = (
-                    reports.const.DEFAULT_ADDRESS_SOURCE_HOST_NAME
-                )
-            report_processor.report(
-                ReportItem.info(
-                    reports.messages.UsingDefaultAddressForHost(
-                        node_name, node_addr, node_addr_source
-                    )
+    # default node_addr to an address from known-hosts
+    elif node_addr is None:
+        known_hosts = env.get_known_hosts([node_name])
+        if known_hosts:
+            node_addr = known_hosts[0].dest.addr
+            node_addr_source = reports.const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS
+        else:
+            node_addr = node_name
+            node_addr_source = reports.const.DEFAULT_ADDRESS_SOURCE_HOST_NAME
+        report_processor.report(
+            ReportItem.info(
+                reports.messages.UsingDefaultAddressForHost(
+                    node_name, node_addr, node_addr_source
                 )
             )
+        )
 
     # validate inputs
     report_list = remote_node.validate_create(
@@ -470,7 +470,7 @@ def node_add_remote(
         _ensure_resource_running(env, remote_resource_element.attrib["id"])
 
 
-def node_add_guest(
+def node_add_guest(  # noqa: PLR0912, PLR0915
     env: LibraryEnvironment,
     node_name,
     resource_id,
@@ -563,26 +563,23 @@ def node_add_guest(
                     )
                 )
             )
-    else:
-        # default remote-addr to an address from known-hosts
-        if "remote-addr" not in options or options["remote-addr"] is None:
-            known_hosts = env.get_known_hosts([node_name])
-            if known_hosts:
-                new_addr = known_hosts[0].dest.addr
-                new_addr_source = (
-                    reports.const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS
-                )
-            else:
-                new_addr = node_name
-                new_addr_source = reports.const.DEFAULT_ADDRESS_SOURCE_HOST_NAME
-            options["remote-addr"] = new_addr
-            report_processor.report(
-                ReportItem.info(
-                    reports.messages.UsingDefaultAddressForHost(
-                        node_name, new_addr, new_addr_source
-                    )
+    # default remote-addr to an address from known-hosts
+    elif "remote-addr" not in options or options["remote-addr"] is None:
+        known_hosts = env.get_known_hosts([node_name])
+        if known_hosts:
+            new_addr = known_hosts[0].dest.addr
+            new_addr_source = reports.const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS
+        else:
+            new_addr = node_name
+            new_addr_source = reports.const.DEFAULT_ADDRESS_SOURCE_HOST_NAME
+        options["remote-addr"] = new_addr
+        report_processor.report(
+            ReportItem.info(
+                reports.messages.UsingDefaultAddressForHost(
+                    node_name, new_addr, new_addr_source
                 )
             )
+        )
 
     # validate inputs
     report_list = guest_node.validate_set_as_guest(
@@ -648,7 +645,7 @@ def _find_resources_to_remove(
         )
 
     if len(resource_element_list) > 1:
-        if report_processor.report(
+        report_processor.report(
             ReportItem(
                 severity=reports.item.get_severity(
                     reports.codes.FORCE,
@@ -663,7 +660,8 @@ def _find_resources_to_remove(
                     node_identifier,
                 ),
             )
-        ).has_errors:
+        )
+        if report_processor.has_errors:
             raise LibraryError()
 
     return resource_element_list

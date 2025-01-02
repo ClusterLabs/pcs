@@ -120,4 +120,4 @@ def _get_subcommands(
         if subcommand not in subcommand_tree:
             return []
         subcommand_tree = subcommand_tree[subcommand]
-    return sorted(list(subcommand_tree.keys()))
+    return sorted(subcommand_tree.keys())

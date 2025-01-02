@@ -1,3 +1,4 @@
+import contextlib
 import io
 import socket
 from dataclasses import dataclass
@@ -23,9 +24,9 @@ from pcs_test.tools.assertions import assert_report_item_list_equal
 
 
 def get_getaddrinfo_mock(resolvable_addr_list):
-    def socket_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
+    def socket_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):  # noqa: A002
         # pylint: disable=redefined-builtin
-        # pylint: disable=unused-argument
+        del port, family, type, proto, flags
         if host not in resolvable_addr_list:
             raise socket.gaierror(1, "")
 
@@ -78,8 +79,10 @@ class TmpFileMock:
     def _assert_file_content_equal(self, name, expected, real):
         if expected is None and real is None:
             return
-        # pylint: disable=unnecessary-lambda-assignment
-        eq_callback = lambda file1, file2: file1 != file2
+
+        def eq_callback(file1, file2):
+            return file1 != file2
+
         if self._file_content_checker is not None:
             eq_callback = self._file_content_checker
         try:
@@ -227,10 +230,8 @@ class MockCurl:
             self._opts[opt] = val
 
     def unsetopt(self, opt):
-        try:
+        with contextlib.suppress(KeyError):
             del self._opts[opt]
-        except KeyError:
-            pass
 
     def getinfo(self, opt):
         try:
@@ -307,7 +308,8 @@ class MockCurlMulti:
             )
 
     def select(self, timeout=1):
-        # pylint: disable=no-self-use, unused-argument
+        # pylint: disable=no-self-use
+        del timeout
         return 0
 
     def perform(self):

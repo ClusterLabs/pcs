@@ -165,7 +165,7 @@ class SetQuorumOptionsTest(TestCase):
     def get_two_node(facade):
         two_node = None
         for quorum in facade.config.get_sections("quorum"):
-            for dummy_name, value in quorum.get_attributes("two_node"):
+            for _, value in quorum.get_attributes("two_node"):
                 two_node = value
         return two_node
 

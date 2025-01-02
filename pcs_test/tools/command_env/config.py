@@ -91,6 +91,6 @@ class Config:
         object helper -- helper for creatig call configuration
         """
         for name, attr in inspect.getmembers(helper.__class__):
-            if not name.startswith("_") and hasattr(attr, "__call__"):
+            if not name.startswith("_") and callable(attr):
                 self.__wrap_method(helper, name, attr)
         return helper

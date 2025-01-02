@@ -236,7 +236,7 @@ class ParametrizedContainerMixin(SetUpMixin):
                             "extra",
                         ],
                         "option_type": "container",
-                        "allowed": sorted(list(GENERIC_CONTAINER_OPTIONS)),
+                        "allowed": sorted(GENERIC_CONTAINER_OPTIONS),
                         "allowed_patterns": [],
                     },
                     report_codes.FORCE,
@@ -275,7 +275,7 @@ class ParametrizedContainerMixin(SetUpMixin):
                             "extra",
                         ],
                         "option_type": "container",
-                        "allowed": sorted(list(GENERIC_CONTAINER_OPTIONS)),
+                        "allowed": sorted(GENERIC_CONTAINER_OPTIONS),
                         "allowed_patterns": [],
                     },
                     None,
@@ -399,7 +399,7 @@ class NetworkMixin(SetUpMixin):
                             "extra",
                         ],
                         "option_type": "network",
-                        "allowed": sorted(list(NETWORK_OPTIONS)),
+                        "allowed": sorted(NETWORK_OPTIONS),
                         "allowed_patterns": [],
                     },
                     None,
@@ -590,7 +590,7 @@ class PortMapMixin(SetUpMixin):
                     {
                         "option_names": ["extra"],
                         "option_type": "port-map",
-                        "allowed": sorted(list(PORT_MAP_OPTIONS)),
+                        "allowed": sorted(PORT_MAP_OPTIONS),
                         "allowed_patterns": [],
                     },
                     report_codes.FORCE,
@@ -647,7 +647,7 @@ class PortMapMixin(SetUpMixin):
                     {
                         "option_names": ["extra"],
                         "option_type": "port-map",
-                        "allowed": sorted(list(PORT_MAP_OPTIONS)),
+                        "allowed": sorted(PORT_MAP_OPTIONS),
                         "allowed_patterns": [],
                     },
                     None,
@@ -822,7 +822,7 @@ class StorageMapMixin(SetUpMixin):
                             "extra",
                         ],
                         "option_type": "storage-map",
-                        "allowed": sorted(list(STORAGE_MAP_OPTIONS)),
+                        "allowed": sorted(STORAGE_MAP_OPTIONS),
                         "allowed_patterns": [],
                     },
                     report_codes.FORCE,
@@ -874,7 +874,7 @@ class StorageMapMixin(SetUpMixin):
                             "extra",
                         ],
                         "option_type": "storage-map",
-                        "allowed": sorted(list(STORAGE_MAP_OPTIONS)),
+                        "allowed": sorted(STORAGE_MAP_OPTIONS),
                         "allowed_patterns": [],
                     },
                     None,
@@ -1100,9 +1100,7 @@ class WaitMixin(FixturesMixin, SetUpMixin):
                     </replica>
                 </bundle>
             </resources>
-        """.format(
-            bundle_id=self.bundle_id
-        )
+        """.format(bundle_id=self.bundle_id)
 
     @property
     def fixture_status_not_running(self):
@@ -1125,9 +1123,7 @@ class WaitMixin(FixturesMixin, SetUpMixin):
                     </replica>
                 </bundle>
             </resources>
-        """.format(
-            bundle_id=self.bundle_id
-        )
+        """.format(bundle_id=self.bundle_id)
 
     @property
     def fixture_resources_bundle_simple_disabled(self):
@@ -1141,9 +1137,7 @@ class WaitMixin(FixturesMixin, SetUpMixin):
                     <docker image="{image}" />
                 </bundle>
             </resources>
-        """.format(
-            bundle_id=self.bundle_id, image=self.image
-        )
+        """.format(bundle_id=self.bundle_id, image=self.image)
 
     def test_wait_fail(self):
         wait_error_message = dedent(
@@ -1151,9 +1145,7 @@ class WaitMixin(FixturesMixin, SetUpMixin):
             Pending actions:
                     Action 12: {bundle_id}-node2-stop on node2
             Error performing operation: Timer expired
-            """.format(
-                bundle_id=self.bundle_id
-            )
+            """.format(bundle_id=self.bundle_id)
         ).strip()
         self.config.env.push_cib(
             resources=self.fixture_resources_bundle_simple,

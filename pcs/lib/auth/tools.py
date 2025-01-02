@@ -1,12 +1,14 @@
 import grp
 import pwd
-
-from pcs.common.tools import StringCollection
+from typing import TYPE_CHECKING
 
 from .types import (
     AuthUser,
     DesiredUser,
 )
+
+if TYPE_CHECKING:
+    from pcs.common.tools import StringCollection
 
 
 class UserGroupsError(Exception):

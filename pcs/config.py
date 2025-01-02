@@ -109,7 +109,7 @@ def config_show(lib, argv, modifiers):
             print("\n".join(indent(quorum_lines)))
 
 
-def _config_show_cib_lines(lib, properties_facade=None):
+def _config_show_cib_lines(lib, properties_facade=None):  # noqa: PLR0912, PLR0915
     """
     Commandline options:
       * -f - CIB file
@@ -330,7 +330,7 @@ def config_restore(lib, argv, modifiers):
         sys.exit(exitcode)
 
 
-def config_restore_remote(infile_name, infile_obj):
+def config_restore_remote(infile_name, infile_obj):  # noqa: PLR0912
     """
     Commandline options:
       * --request-timeout - timeout for HTTP requests
@@ -419,7 +419,7 @@ def config_restore_remote(infile_name, infile_obj):
         utils.err("unable to restore all nodes\n" + "\n".join(error_list))
 
 
-def config_restore_local(infile_name, infile_obj):
+def config_restore_local(infile_name, infile_obj):  # noqa: PLR0912, PLR0915
     """
     Commandline options: no options
     """
@@ -487,7 +487,7 @@ def config_restore_local(infile_name, infile_obj):
                 if not extract_info:
                     continue
                 path_full = None
-                if hasattr(extract_info.get("pre_store_call"), "__call__"):
+                if callable(extract_info.get("pre_store_call")):
                     extract_info["pre_store_call"]()
                 if "rename" in extract_info and extract_info["rename"]:
                     if tmp_dir is None:
@@ -567,7 +567,7 @@ def config_backup_path_list(with_uid_gid=False):
 
     pcmk_authkey_attrs = dict(cib_attrs)
     pcmk_authkey_attrs["mode"] = 0o440
-    file_list = {
+    return {
         "cib.xml": {
             "path": os.path.join(settings.cib_dir, "cib.xml"),
             "required": True,
@@ -611,7 +611,6 @@ def config_backup_path_list(with_uid_gid=False):
             },
         },
     }
-    return file_list
 
 
 def _get_uid(user_name):

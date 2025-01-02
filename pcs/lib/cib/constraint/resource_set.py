@@ -37,7 +37,7 @@ def prepare_set(
     ).has_errors:
         raise LibraryError()
     return {
-        "ids": [find_valid_id(id) for id in resource_set["ids"]],
+        "ids": [find_valid_id(id_) for id_ in resource_set["ids"]],
         "options": resource_set["options"],
     }
 

@@ -13,9 +13,9 @@ import sys
 PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, PACKAGE_DIR)
 
-from pcs import utils
-from pcs.common.host import Destination
-from pcs.common.node_communicator import (
+from pcs import utils  # noqa: E402
+from pcs.common.host import Destination  # noqa: E402
+from pcs.common.node_communicator import (  # noqa: E402
     Request,
     RequestData,
     RequestTarget,

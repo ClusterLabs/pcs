@@ -17,9 +17,9 @@ class AppTest(fixtures_app.AppTest):
         if "sid" in kwargs:
             if "headers" not in kwargs:
                 kwargs["headers"] = {}
-            kwargs["headers"][
-                "Cookie"
-            ] = f"{webui.auth.PCSD_SESSION}={kwargs['sid']}"
+            kwargs["headers"]["Cookie"] = (
+                f"{webui.auth.PCSD_SESSION}={kwargs['sid']}"
+            )
             del kwargs["sid"]
 
         return super().fetch(path, raise_error=raise_error, **kwargs)

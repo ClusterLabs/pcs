@@ -121,7 +121,7 @@ def validate_id(
     # see NCName definition
     # http://www.w3.org/TR/REC-xml-names/#NT-NCName
     # http://www.w3.org/TR/REC-xml/#NT-Name
-    description = "id" if not description else description  # for mypy
+    description = description if description else "id"  # for mypy
     if not id_candidate:
         report_item = ReportItem.error(
             reports.messages.InvalidIdIsEmpty(description)

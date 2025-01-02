@@ -78,9 +78,7 @@ FIXTURE_RESOURCES_STATE_BEFORE_MODIFIERS = {
         <resources>
             <resource id="{0}" managed="true" role="Started"/>
         </resources>
-    """.format(
-        NODE_NAME
-    )
+    """.format(NODE_NAME)
 }
 
 FIXTURE_RESOURCES_STATE_AFTER_MODIFIERS = {
@@ -88,9 +86,7 @@ FIXTURE_RESOURCES_STATE_AFTER_MODIFIERS = {
         <resources>
             <resource id="{0}" managed="true" role="Stopped"/>
         </resources>
-    """.format(
-        NODE_NAME
-    )
+    """.format(NODE_NAME)
 }
 
 
@@ -242,9 +238,7 @@ class MultipleResults(TestCase):
                 </instance_attributes>
             </primitive>
         </resources>
-    """.format(
-        NODE_NAME, REMOTE_HOST, "OTHER-REMOTE"
-    )
+    """.format(NODE_NAME, REMOTE_HOST, "OTHER-REMOTE")
 
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)

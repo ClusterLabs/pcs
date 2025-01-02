@@ -175,7 +175,7 @@ class QuorumStatusFacade:
         )
 
 
-def _parse_quorum_status(quorum_status: str) -> QuorumStatus:
+def _parse_quorum_status(quorum_status: str) -> QuorumStatus:  # noqa: PLR0912
     # pylint: disable=too-many-branches
     node_list: list[QuorumStatusNode] = []
     qdevice_list: list[QuorumStatusNode] = []
@@ -184,12 +184,12 @@ def _parse_quorum_status(quorum_status: str) -> QuorumStatus:
 
     in_node_list = False
     try:
-        for line in quorum_status.splitlines():
-            line = line.strip()
+        for quorum_status_line in quorum_status.splitlines():
+            line = quorum_status_line.strip()
             if not line:
                 continue
             if in_node_list:
-                if line.startswith("-") or line.startswith("Nodeid"):
+                if line.startswith(("-", "Nodeid")):
                     # skip headers
                     continue
                 parts = line.split()
@@ -215,7 +215,7 @@ def _parse_quorum_status(quorum_status: str) -> QuorumStatus:
                 if line == "Membership information":
                     in_node_list = True
                     continue
-                if not ":" in line:
+                if ":" not in line:
                     continue
                 parts = [x.strip() for x in line.split(":", 1)]
                 if parts[0] == "Quorate":
