@@ -85,6 +85,7 @@ ruff_lint:
     - python3 -m pip install --upgrade -r dev_requirements.txt
     - ./autogen.sh
     - ./configure --enable-local-build --enable-dev-tests --enable-tests-only --enable-individual-bundling
+    - make
     - make ruff_lint
 
 mypy:
