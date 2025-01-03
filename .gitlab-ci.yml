@@ -113,7 +113,6 @@ python_tier0_tests:
   script:
     # make sure that tier0 tests run without cluster packages installed
     - dnf remove -y corosync* pacemaker* fence-agents* resource-agents* booth* sbd
-    - python3 -m pip install concurrencytest
     - ./autogen.sh
     - ./configure --enable-local-build --enable-individual-bundling
     - make
@@ -126,7 +125,6 @@ python_tier1_tests:
     - rpm_build
   script:
     - "dnf install -y rpms/pcs-*${BASE_IMAGE_NAME}*$(rpm -E %{dist}).*.rpm"
-    - python3 -m pip install concurrencytest
     - ./autogen.sh
     - ./configure --enable-local-build --enable-destructive-tests --enable-tests-only --enable-individual-bundling --enable-webui
     - rm -rf pcs pcsd pcs_bundled # make sure we are testing installed package

@@ -201,11 +201,6 @@ class EnvAssistant:
             self.__unpatch()
 
         if test_failed(current_test):
-            # NOTE: This detection of failed test does not work when tests are
-            # running in parallel by python concurrencytest module with Python
-            # version 3.11. This cause that the reports for failed tests will
-            # be a little more confusing
-            #
             # We have already got the message that main test failed. There is
             # a high probability that something remains in reports or in the
             # queue etc. But it is only consequence of the main test fail. And
