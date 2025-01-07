@@ -169,7 +169,7 @@ endif
 # files are moved manually. Some of the folders do not exist in DESTDIR or
 # prefix locations, so they need to be created first, otherwise mv fails
 install-exec-local: install_python_embedded_mods stamps/install_ruby_deps_local
-	if $$(python -c "import sys; exit(sys.base_prefix == sys.prefix)"); then \
+	if $$(${PYTHON} -c "import sys; exit(sys.base_prefix == sys.prefix)"); then \
 		echo "WARNING: Virtual environment is activated, shebangs in Python " \
 		"entry points will point to this virtual environment. Fix shebangs " \
 		"manually to use the system interpreter. Entry points in rpm will be " \
