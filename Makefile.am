@@ -209,15 +209,20 @@ install-exec-local: install_python_embedded_mods stamps/install_ruby_deps_local
 # which are untouched by make install.
 uninstall-local:
 	rm -rf ${DESTDIR}/$(PCS_BUNDLED_DIR)
-	recordfile=$$(echo ${DESTDIR}/$(PYTHON_SITELIB)/pcs*.dist-info/RECORD); \
 	find ${DESTDIR}/$(prefix)/local/sbin -name pcs -type f -delete || \
 		rm -fv ${DESTDIR}/$(SBINDIR)/pcs
 	find ${DESTDIR}/$(prefix)/local/sbin -name pcsd -type f -delete || \
 		rm -fv ${DESTDIR}/$(SBINDIR)/pcsd
 	rm -fv ${DESTDIR}/$(LIB_DIR)/pcs/pcs_internal
 	rm -fv ${DESTDIR}/$(LIB_DIR)/pcs/pcs_snmp_agent
+	sitelib=${DESTDIR}/${prefix}/local/lib/python*/dist-packages; \
+	recordfile=$$(echo $${sitelib}/pcs*.dist-info/RECORD); \
+	if test -n "$$recordfile"; then \
+		sitelib=${DESTDIR}/$(PYTHON_SITELIB); \
+		recordfile=$$(echo $${sitelib}/pcs*.dist-info/RECORD); \
+	fi; \
 	while read fname; do \
-	  rm -rf $$(echo "${DESTDIR}/$(PYTHON_SITELIB)/$$fname" | cut -d',' -f1); \
+	  rm -rf $$(echo "$$sitelib/$$fname" | cut -d',' -f1); \
 	done < $$recordfile
 	if test -n "${DESTDIR}" || test "${prefix}" != "/usr"; then \
 		rmdir ${DESTDIR}/$(SBINDIR); \
