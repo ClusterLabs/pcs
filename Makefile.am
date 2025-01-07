@@ -229,8 +229,10 @@ uninstall-local:
 	fi
 	find ${DESTDIR}/$(LIB_DIR)/pcs -empty -type d -delete
 	find ${DESTDIR}/$(LIB_DIR)/pcsd -empty -type d -delete
-	find ${DESTDIR}/${PYTHON_SITELIB}/pcs -empty -type d -delete
-	rmdir ${DESTDIR}/$(PYTHON_SITELIB)/pcs*.dist-info
+	find ${DESTDIR}/${PYTHON_SITELIB}/pcs -empty -type d -delete || :
+	find ${DESTDIR}/${prefix}/local/lib/python*/dist-packages/pcs -empty -type d -delete || :
+	rmdir ${DESTDIR}/$(PYTHON_SITELIB)/pcs*.dist-info || :
+	rmdir ${DESTDIR}/${prefix}/local/lib/python*/dist-packages/pcs*.dist-info || :
 
 dist_doc_DATA	= README.md CHANGELOG.md
 
