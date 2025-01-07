@@ -182,25 +182,38 @@ install-exec-local: install_python_embedded_mods stamps/install_ruby_deps_local
 	${PIP} ${pipopts} install ${pipinstallopts} \
 		--root=$(or ${DESTDIR}, /) \
 		--prefix=${prefix} ${EXTRA_SETUP_OPTS} .
-	mv ${DESTDIR}/$(prefix)/bin/pcs ${DESTDIR}/$(SBINDIR)/
-	mv ${DESTDIR}/$(prefix)/bin/pcsd ${DESTDIR}/$(SBINDIR)/
 	mv ${DESTDIR}/$(prefix)/bin/pcs_internal ${DESTDIR}/$(LIB_DIR)/pcs/
 	mv ${DESTDIR}/$(prefix)/bin/pcs_snmp_agent ${DESTDIR}/$(LIB_DIR)/pcs/
+	mv ${DESTDIR}/$(prefix)/bin/pcs ${DESTDIR}/$(SBINDIR)/ || \
+		mv ${DESTDIR}/$(prefix)/local/bin/pcs ${DESTDIR}/${prefix}/local/sbin/
+	mv ${DESTDIR}/$(prefix)/bin/pcsd ${DESTDIR}/$(SBINDIR)/ || \
+		mv ${DESTDIR}/$(prefix)/local/bin/pcsd ${DESTDIR}/${prefix}/local/sbin/
 
-# * Uses PEP627 RECORD file - CSV, first column is a path relative to dist-info
-# * Before uninstallation, the manually moved scripts need to go back where pip
-# installed them - that's what's written in the RECORD file
+# * Uses PEP627 RECORD file - CSV, first column is a path relative to dist-info,
+# the path differs on Debian-like distros because packages that use system
+# Python are placed in dist-packages
+# * Before uninstallation, the manually moved scripts are deleted and not moved
+# to the original paths in the RECORD file. This is done because pcs installs
+# into different directories under different distros and the original location
+# cannot be determined easily.
 # * RECORD file only contains files not directories - deleting empty directory
 # tree by find is needed afterwards
 # * dist-info folder needs to be deleted for the same reason, pip uses it to
 # detect installed packages and if it's empty, pip reports error on every run
+# * On Debian-like distros, pcs is installed into /usr/local and the
+# uninstall also needs to handle that case. First we try to uninstall the
+# ${prefix}/local and only if nothing is there, try to uninstall from the
+# system. This is to prevent messing up system installation in these ditros
+# which are untouched by make install.
 uninstall-local:
 	rm -rf ${DESTDIR}/$(PCS_BUNDLED_DIR)
-	mv ${DESTDIR}/$(SBINDIR)/pcs ${DESTDIR}/$(prefix)/bin || :
-	mv ${DESTDIR}/$(SBINDIR)/pcsd ${DESTDIR}/$(prefix)/bin || :
 	mv ${DESTDIR}/$(LIB_DIR)/pcs/pcs_internal ${DESTDIR}/$(prefix)/bin || :
 	mv ${DESTDIR}/$(LIB_DIR)/pcs/pcs_snmp_agent ${DESTDIR}/$(prefix)/bin || :
 	recordfile=$$(echo ${DESTDIR}/$(PYTHON_SITELIB)/pcs*.dist-info/RECORD); \
+	find ${DESTDIR}/$(prefix)/local/sbin -name pcs -type f -delete || \
+		rm -fv ${DESTDIR}/$(SBINDIR)/pcs
+	find ${DESTDIR}/$(prefix)/local/sbin -name pcsd -type f -delete || \
+		rm -fv ${DESTDIR}/$(SBINDIR)/pcsd
 	while read fname; do \
 	  rm -rf $$(echo "${DESTDIR}/$(PYTHON_SITELIB)/$$fname" | cut -d',' -f1); \
 	done < $$recordfile
