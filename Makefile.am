@@ -182,12 +182,14 @@ install-exec-local: install_python_embedded_mods stamps/install_ruby_deps_local
 	${PIP} ${pipopts} install ${pipinstallopts} \
 		--root=$(or ${DESTDIR}, /) \
 		--prefix=${prefix} ${EXTRA_SETUP_OPTS} .
-	mv ${DESTDIR}/$(prefix)/bin/pcs_internal ${DESTDIR}/$(LIB_DIR)/pcs/
-	mv ${DESTDIR}/$(prefix)/bin/pcs_snmp_agent ${DESTDIR}/$(LIB_DIR)/pcs/
 	mv ${DESTDIR}/$(prefix)/bin/pcs ${DESTDIR}/$(SBINDIR)/ || \
 		mv ${DESTDIR}/$(prefix)/local/bin/pcs ${DESTDIR}/${prefix}/local/sbin/
 	mv ${DESTDIR}/$(prefix)/bin/pcsd ${DESTDIR}/$(SBINDIR)/ || \
 		mv ${DESTDIR}/$(prefix)/local/bin/pcsd ${DESTDIR}/${prefix}/local/sbin/
+	mv ${DESTDIR}/$(prefix)/bin/pcs_internal ${DESTDIR}/$(LIB_DIR)/pcs/ || \
+		mv ${DESTDIR}/$(prefix)/local/bin/pcs_internal ${DESTDIR}/${LIB_DIR}/pcs/
+	mv ${DESTDIR}/$(prefix)/bin/pcs_snmp_agent ${DESTDIR}/$(LIB_DIR)/pcs/ || \
+		mv ${DESTDIR}/$(prefix)/local/bin/pcs_snmp_agent ${DESTDIR}/${LIB_DIR}/pcs/
 
 # * Uses PEP627 RECORD file - CSV, first column is a path relative to dist-info,
 # the path differs on Debian-like distros because packages that use system
@@ -207,13 +209,13 @@ install-exec-local: install_python_embedded_mods stamps/install_ruby_deps_local
 # which are untouched by make install.
 uninstall-local:
 	rm -rf ${DESTDIR}/$(PCS_BUNDLED_DIR)
-	mv ${DESTDIR}/$(LIB_DIR)/pcs/pcs_internal ${DESTDIR}/$(prefix)/bin || :
-	mv ${DESTDIR}/$(LIB_DIR)/pcs/pcs_snmp_agent ${DESTDIR}/$(prefix)/bin || :
 	recordfile=$$(echo ${DESTDIR}/$(PYTHON_SITELIB)/pcs*.dist-info/RECORD); \
 	find ${DESTDIR}/$(prefix)/local/sbin -name pcs -type f -delete || \
 		rm -fv ${DESTDIR}/$(SBINDIR)/pcs
 	find ${DESTDIR}/$(prefix)/local/sbin -name pcsd -type f -delete || \
 		rm -fv ${DESTDIR}/$(SBINDIR)/pcsd
+	rm -fv ${DESTDIR}/$(LIB_DIR)/pcs/pcs_internal
+	rm -fv ${DESTDIR}/$(LIB_DIR)/pcs/pcs_snmp_agent
 	while read fname; do \
 	  rm -rf $$(echo "${DESTDIR}/$(PYTHON_SITELIB)/$$fname" | cut -d',' -f1); \
 	done < $$recordfile
