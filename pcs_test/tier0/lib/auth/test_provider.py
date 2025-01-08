@@ -118,9 +118,7 @@ class AuthProviderUpdateFacadeTest(TestCase):
         data = b""
         new_data = b"new data"
         io_buffer = BytesIO(data)
-        self.file_instance_mock.raw_file.update.return_value.__enter__.return_value = (
-            io_buffer
-        )
+        self.file_instance_mock.raw_file.update.return_value.__enter__.return_value = io_buffer
         self.file_instance_mock.facade_to_raw.return_value = new_data
         with self.provider._update_facade() as empty_facade:
             self.assertEqual(tuple(), empty_facade.config)
@@ -152,9 +150,7 @@ class AuthProviderUpdateFacadeTest(TestCase):
             _FILE_METADATA, RawFileError.ACTION_UPDATE, reason
         )
         io_buffer = BytesIO(data)
-        self.file_instance_mock.raw_file.update.return_value.__enter__.return_value = (
-            io_buffer
-        )
+        self.file_instance_mock.raw_file.update.return_value.__enter__.return_value = io_buffer
         self.file_instance_mock.raw_to_facade.return_value = mock_facade
         self.file_instance_mock.facade_to_raw.return_value = new_data
         with self.assertRaises(_UpdateFacadeError):
@@ -172,9 +168,7 @@ class AuthProviderUpdateFacadeTest(TestCase):
         data = b"original data"
         new_data = b"new data"
         io_buffer = BytesIO(data)
-        self.file_instance_mock.raw_file.update.return_value.__enter__.return_value = (
-            io_buffer
-        )
+        self.file_instance_mock.raw_file.update.return_value.__enter__.return_value = io_buffer
         self.file_instance_mock.raw_to_facade.side_effect = (
             ParserErrorException()
         )
@@ -195,9 +189,7 @@ class AuthProviderUpdateFacadeTest(TestCase):
         new_data = b"new data"
         mock_facade = "facade"
         io_buffer = BytesIO(data)
-        self.file_instance_mock.raw_file.update.return_value.__enter__.return_value = (
-            io_buffer
-        )
+        self.file_instance_mock.raw_file.update.return_value.__enter__.return_value = io_buffer
         self.file_instance_mock.raw_to_facade.return_value = mock_facade
         self.file_instance_mock.facade_to_raw.return_value = new_data
         with self.provider._update_facade() as facade:

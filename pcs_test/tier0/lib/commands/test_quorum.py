@@ -1253,7 +1253,7 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
         report_list_success = self.fixture_reports_success()
         expected_reports = fixture.ReportSequenceBuilder(
             report_list_success[
-                :f"enable_qdevice_done_on_{self.cluster_nodes[0]}"
+                : f"enable_qdevice_done_on_{self.cluster_nodes[0]}"
             ]
         )
         for node in self.cluster_nodes:
@@ -1299,9 +1299,7 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
                             mode: %mode%
                         }
                     }
-                """.replace(
-                    "%mode%", mode
-                )
+                """.replace("%mode%", mode)
             ),
         )
 
@@ -1734,7 +1732,7 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
         self.env_assist.assert_reports(
             fixture.ReportSequenceBuilder(
                 self.fixture_reports_success()[
-                    :f"cert_accepted_by_{self.cluster_nodes[0]}"
+                    : f"cert_accepted_by_{self.cluster_nodes[0]}"
                 ]
             ).error(
                 reports.codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
@@ -1768,7 +1766,7 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
         self.env_assist.assert_reports(
             fixture.ReportSequenceBuilder(
                 self.fixture_reports_success()[
-                    :f"cert_accepted_by_{self.cluster_nodes[0]}"
+                    : f"cert_accepted_by_{self.cluster_nodes[0]}"
                 ]
             ).error(
                 reports.codes.INVALID_RESPONSE_FORMAT,
@@ -1808,7 +1806,7 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
         self.env_assist.assert_reports(
             fixture.ReportSequenceBuilder(
                 self.fixture_reports_success()[
-                    :f"cert_accepted_by_{self.cluster_nodes[0]}"
+                    : f"cert_accepted_by_{self.cluster_nodes[0]}"
                 ]
             ).error(
                 reports.codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
@@ -1850,7 +1848,7 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
 
         self.env_assist.assert_reports(
             self.fixture_reports_success()[
-                :f"cert_accepted_by_{self.cluster_nodes[0]}"
+                : f"cert_accepted_by_{self.cluster_nodes[0]}"
             ]
         )
 
@@ -1884,7 +1882,7 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
         self.env_assist.assert_reports(
             fixture.ReportSequenceBuilder(
                 self.fixture_reports_success()[
-                    :f"cert_accepted_by_{self.cluster_nodes[0]}"
+                    : f"cert_accepted_by_{self.cluster_nodes[0]}"
                 ]
             ).error(
                 reports.codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
@@ -1917,7 +1915,7 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
         self.env_assist.assert_reports(
             fixture.ReportSequenceBuilder(
                 self.fixture_reports_success()[
-                    :f"cert_accepted_by_{self.cluster_nodes[0]}"
+                    : f"cert_accepted_by_{self.cluster_nodes[0]}"
                 ]
             ).error(
                 reports.codes.INVALID_RESPONSE_FORMAT,
@@ -1958,7 +1956,7 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
 
         self.env_assist.assert_reports(
             self.fixture_reports_success()[
-                :f"cert_accepted_by_{self.cluster_nodes[0]}"
+                : f"cert_accepted_by_{self.cluster_nodes[0]}"
             ]
         )
 
@@ -1993,7 +1991,7 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
 
         success_reports = self.fixture_reports_success()
         expected_reports = success_reports[
-            :f"cert_accepted_by_{self.cluster_nodes[1]}"
+            : f"cert_accepted_by_{self.cluster_nodes[1]}"
         ]
         expected_reports.append(
             fixture.error(
@@ -3510,9 +3508,7 @@ class UpdateDeviceTest(TestCase):
 
                             heuristics {
                                 mode: %mode%
-                    """.replace(
-                        "%mode%", mode
-                    )
+                    """.replace("%mode%", mode)
                 ),
             ),
         )

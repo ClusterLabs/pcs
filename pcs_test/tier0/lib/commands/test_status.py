@@ -100,9 +100,7 @@ class FullClusterStatusPlaintextBase(TestCase):
                     />
                 </cluster_property_set>
             </crm_config>
-            """.format(
-            name=name
-        )
+            """.format(name=name)
 
     def _fixture_config_live_minimal(self):
         (

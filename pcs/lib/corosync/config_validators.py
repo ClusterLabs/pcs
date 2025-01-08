@@ -912,9 +912,7 @@ def _update_link_options_knet(
         )
     ).validate(new_options) + validate.ValidatorAll(
         _get_link_options_validators_knet_relations()
-    ).validate(
-        after_update
-    )
+    ).validate(after_update)
 
 
 def add_link(
@@ -2039,7 +2037,7 @@ def _get_qdevice_generic_options_validators(
 
 
 def _split_heuristics_exec_options(
-    options: Mapping[str, str]
+    options: Mapping[str, str],
 ) -> tuple[dict[str, str], dict[str, str]]:
     options_exec = {}
     options_nonexec = {}

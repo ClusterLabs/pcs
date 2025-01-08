@@ -82,11 +82,9 @@ class SchedulerTestWrapper:
             self.logging_queue,
             # mp.Queue(),
         ]
-        self.mp_pool_mock = (
-            mock.patch("multiprocessing.Pool", spec=mp.Pool)
-            .start()
-            .return_value
-        ) = mock.Mock()
+        self.mp_pool_mock = mock.patch(
+            "multiprocessing.Pool", spec=mp.Pool
+        ).start().return_value = mock.Mock()
         # This might be needed when logger is called by get_logger, but is it?
         self.scheduler = scheduler.Scheduler(
             scheduler.SchedulerConfig(

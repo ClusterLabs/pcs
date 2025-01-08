@@ -266,9 +266,7 @@ def is_resource_managed(cluster_state, resource_id):
         .//resource[{predicate_id}]
         |
         .//group[{predicate_id}]/resource
-        """.format(
-            predicate_id=_id_xpath_predicate
-        ),
+        """.format(predicate_id=_id_xpath_predicate),
         id=resource_id,
     )
     if primitive_list:

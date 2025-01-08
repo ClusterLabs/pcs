@@ -244,9 +244,7 @@ def _get_lrm_rsc_op_elements(
             ./status/node_state[@uname=$node_name]
             /lrm/lrm_resources/lrm_resource[@id=$resource_id]
             /lrm_rsc_op[@operation=$op_name{interval}]
-            """.format(
-                interval=" and @interval=$interval" if interval else ""
-            ),
+            """.format(interval=" and @interval=$interval" if interval else ""),
             node_name=node_name,
             resource_id=resource_id,
             op_name=op_name,

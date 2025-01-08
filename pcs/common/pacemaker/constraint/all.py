@@ -50,7 +50,7 @@ def _get_constraint_ids(
             CibConstraintTicketDto,
             CibConstraintTicketSetDto,
         ]
-    ]
+    ],
 ) -> list[str]:
     return [
         constraint_dto.attributes.constraint_id
@@ -64,7 +64,7 @@ def _get_location_rule_ids(
             CibConstraintLocationDto,
             CibConstraintLocationSetDto,
         ]
-    ]
+    ],
 ) -> list[str]:
     return [
         rule_dto.id

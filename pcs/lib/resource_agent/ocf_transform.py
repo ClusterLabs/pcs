@@ -23,7 +23,7 @@ from .types import (
 
 
 def ocf_version_to_ocf_unified(
-    metadata: Union[ResourceAgentMetadataOcf1_0, ResourceAgentMetadataOcf1_1]
+    metadata: Union[ResourceAgentMetadataOcf1_0, ResourceAgentMetadataOcf1_1],
 ) -> ResourceAgentMetadata:
     """
     Transform specific version OCF metadata to a universal format
