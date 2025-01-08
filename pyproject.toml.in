@@ -30,6 +30,7 @@ include-package-data = false
 [tool.setuptools.packages.find]
 exclude = [
   "pcs_*",
+  "build*",
   "@PACKAGE_WEBUI_BACKEND@",
 ]
 
