@@ -25,14 +25,14 @@ from pcs_test.tools.fixture_cib import (
     wrap_element_by_master,
     wrap_element_by_master_file,
 )
-from pcs_test.tools.misc import ParametrizedTestMetaClass
-from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import (
+    ParametrizedTestMetaClass,
     get_tmp_file,
     outdent,
     skip_unless_crm_rule,
     write_file_to_tmpfile,
 )
+from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.pcs_runner import (
     PcsRunner,
     pcs,

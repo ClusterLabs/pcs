@@ -80,6 +80,7 @@ target-version = "py39"
 # ruff rules docs: https://docs.astral.sh/ruff/rules/
 # pylint rules in ruff: # https://github.com/astral-sh/ruff/issues/970
 select = [
+  "I",
   "PL", # pylint convention, error, refactoring, warning
 ]
 # ruff does not respect pylint ignore directives
