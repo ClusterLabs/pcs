@@ -99,7 +99,6 @@ BuildRequires: python%{python3_version}-cryptography
 BuildRequires: python%{python3_version}-pyparsing >= 3.0.0
 %endif
 # required to pass ./configure
-BuildRequires: python%{python3_version}-wheel
 BuildRequires: python%{python3_version}-lxml
 
 # pycurl is not distributed in rhel 10
@@ -112,6 +111,14 @@ BuildRequires: python%{python3_version}-pycurl
 %endif
 %endif
 
+# for building pcs tarballs
+BuildRequires: autoconf
+BuildRequires: automake
+BuildRequires: make
+# printf from coreutils is used in makefile, head is used in spec
+BuildRequires: coreutils
+# find is used in Makefile and also somewhere else
+BuildRequires: findutils
 # gcc for compiling custom rubygems
 BuildRequires: gcc
 BuildRequires: gcc-c++
@@ -120,14 +127,11 @@ BuildRequires: libffi-devel
 BuildRequires: ruby >= 3.1
 BuildRequires: ruby-devel
 BuildRequires: rubygems
+BuildRequires: rubygem-bundler
 # cluster stack packages for pkg-config
-BuildRequires: booth
-# not distributed in rhel 9
-%if 0%{?rhel} < 9
-BuildRequires: corosync-qdevice-devel
-%endif
-BuildRequires: corosynclib-devel >= 3.0
-BuildRequires: fence-agents-common
+BuildRequires: pkgconfig(booth)
+BuildRequires: pkgconfig(sbd)
+BuildRequires: corosync-devel >= 3.0
 %if 0%{?suse_version}
 %if 0%{?suse_version} > 1500
 BuildRequires: libpacemaker3-devel >= %{required_pacemaker_version}
@@ -137,8 +141,6 @@ BuildRequires: libpacemaker-devel >= %{required_pacemaker_version}
 %else
 BuildRequires: pacemaker-libs-devel >= %{required_pacemaker_version}
 %endif
-BuildRequires: resource-agents
-BuildRequires: sbd
 # for post, preun and postun macros
 BuildRequires: systemd
 # for working with qdevice certificates (certutil) - used in configure.ac
@@ -147,6 +149,7 @@ BuildRequires: mozilla-nss-tools
 %else
 BuildRequires: nss-tools
 %endif
+BuildRequires: pkgconf
 
 Requires: python%{python3_version}-cryptography
 Requires: python%{python3_version}-lxml
