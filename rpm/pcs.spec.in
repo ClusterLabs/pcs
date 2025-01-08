@@ -160,9 +160,7 @@ Requires: python%{python3_version}-lxml
 Requires: python%{python3_version}-pycurl
 %endif
 %endif
-%if "@cirpmworkarounds@" != "yes"
 Requires: python%{python3_version}-pyparsing >= 3.0.0
-%endif
 
 # ruby and gems for pcsd
 Requires: ruby >= 3.1
