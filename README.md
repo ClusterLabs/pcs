@@ -52,11 +52,13 @@ Apart from the dependencies listed above, these are also required for
 installation:
 
 * python development files (packages python3-devel, python3-setuptools 66.1+,
-  python3-wheel)
+  python3-pip, python3-wheel)
 * ruby development files (package ruby-devel)
 * rubygems
 * rubygem bundler (package rubygem-bundler or ruby-bundler or bundler)
 * autoconf, automake
+* pkgconf, pkgconfig(booth), pkgconfig(sbd)
+* pacemaker-libs-devel (or libpacemaker-devel and libpacemaker3-devel)
 * gcc
 * gcc-c++
 * FFI development files (package libffi-devel or libffi-dev)
