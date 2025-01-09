@@ -876,7 +876,9 @@ def _verify_score(score):
         )
 
 
-def location_prefer(lib, argv, modifiers):
+def location_prefer(
+    lib: Any, argv: list[str], modifiers: parse_args.InputModifiers
+) -> None:
     """
     Options:
       * --force - allow unknown options, allow constraint for any resource type
