@@ -83,6 +83,7 @@ select = [
   "A",
   "ASYNC",
   "B",
+  "C4",
   "E4",
   "E7",
   "E9",
@@ -96,6 +97,7 @@ select = [
 # ruff does not respect pylint ignore directives
 # https://github.com/astral-sh/ruff/issues/1203
 ignore = [
+  "C408", # https://docs.astral.sh/ruff/rules/unnecessary-collection-call/
   "PLR2004", # magic-value-comparison (99)
   "PLR0913", # too-many-arguments (54)
   "PLR0912", # too-many-branches (49)

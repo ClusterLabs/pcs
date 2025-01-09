@@ -145,9 +145,9 @@ class ElementsToRemove:
         self._ids_to_remove = element_ids_to_remove
         self._dependant_element_ids = self._ids_to_remove - initial_ids
         self._missing_ids = set(missing_ids)
-        self._unsupported_ids = set(
+        self._unsupported_ids = {
             str(el.attrib["id"]) for el in unsupported_elements
-        )
+        }
 
         all_ids = set(
             chain(

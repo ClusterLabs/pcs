@@ -1608,10 +1608,10 @@ def group_add(
             and resource.group.is_group(old_parent)
             and str(old_parent.attrib["id"]) not in all_resources
         ):
-            all_resources[str(old_parent.attrib["id"])] = set(
+            all_resources[str(old_parent.attrib["id"])] = {
                 str(res.attrib["id"])
                 for res in resource.common.get_inner_resources(old_parent)
-            )
+            }
     affected_resources = set(resource_id_list)
 
     # Set comparison step to determine if groups will be emptied by move

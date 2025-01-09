@@ -94,10 +94,10 @@ def bind(cli_env, run_with_middleware, run_library_command):
 
 def bind_all(env, run_with_middleware, dictionary):
     return wrapper(
-        dict(
-            (exposed_fn, bind(env, run_with_middleware, library_fn))
+        {
+            exposed_fn: bind(env, run_with_middleware, library_fn)
             for exposed_fn, library_fn in dictionary.items()
-        )
+        }
     )
 
 

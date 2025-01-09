@@ -252,14 +252,14 @@ def _clone_to_dto(
         raise MixedMembersError(clone_id)
 
     if primitive_list:
-        if len(set(res.resource_id for res in primitive_list)) > 1:
+        if len({res.resource_id for res in primitive_list}) > 1:
             raise DifferentMemberIdsError(clone_id)
     if group_list:
-        group_ids = set(group.resource_id for group in group_list)
-        children_ids = set(
+        group_ids = {group.resource_id for group in group_list}
+        children_ids = {
             tuple(child.resource_id for child in group.members)
             for group in group_list
-        )
+        }
         if len(group_ids) > 1 or len(children_ids) > 1:
             raise DifferentMemberIdsError(clone_id)
 

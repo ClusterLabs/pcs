@@ -406,11 +406,11 @@ def append_new_operation(operations_element, id_provider, options):
     IdProvider id_provider -- elements' ids generator
     dict options are attributes of operation
     """
-    attribute_map = dict(
-        (key, value)
+    attribute_map = {
+        key: value
         for key, value in options.items()
         if key not in OPERATION_NVPAIR_ATTRIBUTES
-    )
+    }
     if "id" in attribute_map:
         if does_id_exist(operations_element, attribute_map["id"]):
             raise LibraryError(
@@ -434,11 +434,11 @@ def append_new_operation(operations_element, id_provider, options):
         "op",
         attribute_map,
     )
-    nvpair_attribute_map = dict(
-        (key, value)
+    nvpair_attribute_map = {
+        key: value
         for key, value in options.items()
         if key in OPERATION_NVPAIR_ATTRIBUTES
-    )
+    }
 
     if nvpair_attribute_map:
         append_new_instance_attributes(
