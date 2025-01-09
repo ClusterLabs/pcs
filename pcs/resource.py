@@ -1484,7 +1484,7 @@ def resource_operation_remove(res_id: str, argv: Argv) -> None:
     found_match = False
     for op in resource_el.getElementsByTagName("op"):
         temp_properties = []
-        for attr_name in op.attributes.keys():
+        for attr_name in op.attributes.keys():  # noqa: SIM118, attributes is not a dict
             if attr_name == "id":
                 continue
             temp_properties.append(
@@ -2289,10 +2289,12 @@ def resource_status(
                 has_resources = True
                 print(line)
                 continue
-            if not preg.match(line) and not stonith:
-                has_resources = True
-                print(line)
-            elif preg.match(line) and stonith:
+            if (
+                not preg.match(line)
+                and not stonith
+                or preg.match(line)
+                and stonith
+            ):
                 has_resources = True
                 print(line)
 

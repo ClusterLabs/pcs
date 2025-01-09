@@ -1,4 +1,5 @@
 # pylint: disable=too-many-lines
+import contextlib
 import datetime
 import json
 import math
@@ -1350,30 +1351,23 @@ def cluster_destroy(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     else:
         print_to_stderr("Shutting down pacemaker/corosync services...")
         for service in ["pacemaker", "corosync-qdevice", "corosync"]:
-            try:
+            # It is safe to ignore error since we want it not to be running
+            # anyways.
+            with contextlib.suppress(LibraryError):
                 utils.stop_service(service)
-            except LibraryError:
-                # It is safe to ignore error since we want it not to be running
-                # anyways.
-                pass
         print_to_stderr("Killing any remaining services...")
         kill_local_cluster_services()
-        try:
+        # previously errors were suppressed in here, let's keep it that way
+        # for now
+        with contextlib.suppress(Exception):
             utils.disableServices()
-        # pylint: disable=bare-except
-        except:  # noqa: E722
-            # previously errors were suppressed in here, let's keep it that way
-            # for now
-            pass
-        try:
+
+        # it's not a big deal if sbd disable fails
+        with contextlib.suppress(Exception):
             service_manager = utils.get_service_manager()
             service_manager.disable(
                 lib_sbd.get_sbd_service_name(service_manager)
             )
-        # pylint: disable=bare-except
-        except:  # noqa: E722
-            # it's not a big deal if sbd disable fails
-            pass
 
         print_to_stderr("Removing all cluster configuration files...")
         dummy_output, dummy_retval = utils.run(
@@ -1409,13 +1403,10 @@ def cluster_destroy(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
                     ";",
                 ]
             )
-        try:
+        # errors from deleting other files are suppressed as well we do not
+        # want to fail if qdevice was not set up
+        with contextlib.suppress(Exception):
             qdevice_net.client_destroy()
-        # pylint: disable=bare-except
-        except:  # noqa: E722
-            # errors from deleting other files are suppressed as well
-            # we do not want to fail if qdevice was not set up
-            pass
 
 
 def cluster_verify(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:

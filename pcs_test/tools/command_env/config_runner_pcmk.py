@@ -399,10 +399,7 @@ class PcmkShortcuts:
                 ).format(agent_name, os.path.realpath(__file__), rc(""))
             )
 
-        if env:
-            env = dict(env)
-        else:
-            env = {}
+        env = dict(env) if env else {}
         env["PATH"] = ":".join(
             [
                 settings.fence_agent_execs,

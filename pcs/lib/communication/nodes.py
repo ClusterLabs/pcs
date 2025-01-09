@@ -234,7 +234,7 @@ class RunActionBase(
             self._start_report(
                 [
                     self._action_key_to_report(key)
-                    for key in self._action_definition.keys()
+                    for key in self._action_definition
                 ],
                 [target.label for target in self._target_list],
             )

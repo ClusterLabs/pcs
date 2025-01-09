@@ -150,7 +150,7 @@ class ExportDetailed:
         return rule_parts
 
     def list_expression(self, expression):
-        if "value" in expression.attributes.keys():
+        if "value" in expression.attributes:
             exp_parts = [
                 expression.getAttribute("attribute"),
                 expression.getAttribute("operation"),
@@ -245,7 +245,7 @@ class ExportAsExpression:
         return (" %s " % boolean_op).join(rule_parts)
 
     def string_expression(self, expression):
-        if "value" in expression.attributes.keys():
+        if "value" in expression.attributes:
             exp_parts = [
                 expression.getAttribute("attribute"),
                 expression.getAttribute("operation"),
@@ -318,9 +318,9 @@ def has_node_attr_expr_with_type_integer(rule_tree):
         if isinstance(rule_tree, SymbolPrefix):
             return False
         child = rule_tree.children[1]
-        if isinstance(child, SymbolType) and child.symbol_id == "integer":
-            return True
-        return False
+        return bool(
+            isinstance(child, SymbolType) and child.symbol_id == "integer"
+        )
     return False
 
 

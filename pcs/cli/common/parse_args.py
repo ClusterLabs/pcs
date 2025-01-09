@@ -682,10 +682,7 @@ class InputModifiers:
         return option in self._defined_options
 
     def is_specified_any(self, option_list: StringIterable) -> bool:
-        for option in option_list:
-            if self.is_specified(option):
-                return True
-        return False
+        return any(self.is_specified(option) for option in option_list)
 
     def get(
         self, option: str, default: ModifierValueType = None

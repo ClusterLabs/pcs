@@ -1845,12 +1845,10 @@ def operation_exists_by_name(operations_el, op_el):
 
     for op in operations_el.getElementsByTagName("op"):
         if op.getAttribute("name") == op_name:
-            if op_name != "monitor":
-                existing.append(op)
-            elif get_role(
-                op, new_roles_supported
-            ) == op_role and ocf_check_level == get_operation_ocf_check_level(
-                op
+            if (
+                op_name != "monitor"
+                or get_role(op, new_roles_supported) == op_role
+                and ocf_check_level == get_operation_ocf_check_level(op)
             ):
                 existing.append(op)
     return existing
@@ -2106,9 +2104,7 @@ def is_score_or_opt(var):
     """
     if is_score(var):
         return True
-    if var.find("=") != -1:
-        return True
-    return False
+    return var.find("=") != -1
 
 
 def is_score(var):
@@ -2680,11 +2676,11 @@ def get_middleware_factory():
     return middleware.create_middleware_factory(
         cib=middleware.cib(filename if usefile else None, touch_cib_file),
         corosync_conf_existing=middleware.corosync_conf_existing(
-            pcs_options.get("--corosync_conf", None)
+            pcs_options.get("--corosync_conf")
         ),
         booth_conf=pcs.cli.booth.env.middleware_config(
-            pcs_options.get("--booth-conf", None),
-            pcs_options.get("--booth-key", None),
+            pcs_options.get("--booth-conf"),
+            pcs_options.get("--booth-key"),
         ),
     )
 

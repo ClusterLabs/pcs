@@ -32,10 +32,7 @@ class ReportProcessor(abc.ABC):
 
 
 def has_errors(report_list: ReportItemList) -> bool:
-    for report_item in report_list:
-        if _is_error(report_item):
-            return True
-    return False
+    return any(_is_error(report_item) for report_item in report_list)
 
 
 def _is_error(report_item: ReportItem) -> bool:

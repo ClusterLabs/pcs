@@ -1,3 +1,4 @@
+import contextlib
 from collections.abc import Iterable as IterableAbc
 from collections.abc import Sized
 from typing import (
@@ -185,10 +186,8 @@ def _is_multiple(what: Union[int, Sized]) -> bool:
     if isinstance(what, int):
         retval = abs(what) != 1
     elif not isinstance(what, str):
-        try:
+        with contextlib.suppress(TypeError):
             retval = len(what) != 1
-        except TypeError:
-            pass
     return retval
 
 
