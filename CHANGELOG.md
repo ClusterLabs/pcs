@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.12.0] - 2025-01-09
 
 ### Added
 - Command `pcs booth ticket cleanup` that enables removal of booth tickets
