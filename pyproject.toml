@@ -104,6 +104,7 @@ select = [
 # https://github.com/astral-sh/ruff/issues/1203
 ignore = [
   "C408", # https://docs.astral.sh/ruff/rules/unnecessary-collection-call/
+  "PERF203", # http://docs.astral.sh/ruff/rules/try-except-in-loop/
   "PLR2004", # magic-value-comparison (99)
   "PLR0913", # too-many-arguments (54)
   "PLR0912", # too-many-branches (49)
