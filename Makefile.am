@@ -479,6 +479,8 @@ $(SPEC): $(SPEC).in .version config.status stamps/download_python_deps stamps/do
 	$(AWK) -i inplace -v r="$$pysrc" '{gsub(/@pysrc@/,r)}1' $@-t; \
 	pybundle="`for i in $$pylist; do echo $$i | grep -v ^dataclasses- | sed 's/\(.*\)-\(.*\)/Provides: bundled(\1) = \2/'; done`" && \
 	$(AWK) -i inplace -v r="$$pybundle" '{gsub(/@pybundle@/,r)}1' $@-t; \
+	require_pycurl="`echo $$pylist | tr ' ' '\n' | grep pycurl | sed 's/.*-\(.*\)/Requires: libcurl%{?_isa} >= \1/'`" && \
+	$(AWK) -i inplace -v r="$$require_pycurl" '{gsub(/@require_pycurl@/,r)}1' $@-t; \
 	pycache="`echo $(MKDIR_P) $(PCS_BUNDLED_DIR_LOCAL)/src; base=41; for i in $$pylist pyagentx; do echo 'cp -f %SOURCE'$$base' rpm/' && let "base=base+1"; done`" && \
 	$(AWK) -i inplace -v r="$$pycache" '{gsub(/@pycache@/,r)}1' $@-t; \
 	gemlist="`for i in $$($(FIND) rpm/ -type f -name '*.gem'); do echo $$i | sed -e 's#rpm/##g' -e 's#.gem##g'; done`" && \
