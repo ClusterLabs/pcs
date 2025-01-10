@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.11.9] - 2025-01-10
 
 ### Added
 - Support for output formats `json` and `cmd` to `pcs tag config` command
