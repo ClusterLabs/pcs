@@ -699,10 +699,7 @@ class ParserTest(TestCase):
             ),
         )
         self.assertEqual(
-            "(and "
-            "(defined (literal pingd)) "
-            "(lte (literal pingd) (literal 1))"
-            ")",
+            "(and (defined (literal pingd)) (lte (literal pingd) (literal 1)))",
             str(
                 self.parser.parse(
                     ["defined", "pingd", "and", "pingd", "lte", "1"]

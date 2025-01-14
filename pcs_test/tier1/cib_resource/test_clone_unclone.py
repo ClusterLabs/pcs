@@ -191,7 +191,7 @@ def fixture_clone_stonith_msg(forced=False, group=False):
     ).format(
         severity="Warning" if forced else "Error",
         group="Group 'Group' contains stonith resource. " if group else "",
-        use_force="\n" if forced else ", use " "--force to override\n",
+        use_force="\n" if forced else ", use --force to override\n",
     )
 
 

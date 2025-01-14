@@ -328,7 +328,7 @@ class ValidateMoveBanClearMixin:
             <clone id="R-clone">
                 <primitive id="R" />
                 <meta_attributes>
-                    <nvpair name="promotable" value="{'true' if promotable else 'false'}" />
+                    <nvpair name="promotable" value="{"true" if promotable else "false"}" />
                 </meta_attributes>
             </clone>
             """
@@ -343,7 +343,7 @@ class ValidateMoveBanClearMixin:
                     <primitive id="R" />
                 </group>
                 <meta_attributes>
-                    <nvpair name="promotable" value="{'true' if promotable else 'false'}" />
+                    <nvpair name="promotable" value="{"true" if promotable else "false"}" />
                 </meta_attributes>
             </clone>
             """

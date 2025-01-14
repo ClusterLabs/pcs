@@ -36,6 +36,16 @@ ignore = [
   "PERF203", # http://docs.astral.sh/ruff/rules/try-except-in-loop/
   "SIM102", # https://docs.astral.sh/ruff/rules/collapsible-if/
 ]
+[tool.ruff.lint.flake8-builtins]
+builtins-allowed-modules = [
+  "json",
+  "logging",
+  "parser",
+  "resource",
+  "ssl",
+  "types",
+  "xml",
+]
 
 [tool.ruff.lint.isort]
 # known deviations from isort:

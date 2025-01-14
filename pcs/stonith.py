@@ -87,8 +87,7 @@ def stonith_list_available(
         if search:
             utils.err("No stonith agents matching the filter.")
         utils.err(
-            "No stonith agents available. "
-            "Do you have fence agents installed?"
+            "No stonith agents available. Do you have fence agents installed?"
         )
 
     for agent_info in agent_list:

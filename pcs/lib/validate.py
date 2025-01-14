@@ -897,7 +897,7 @@ class ValuePcmkDatespecPart(ValuePredicateBase):
             return "an integer or integer-integer"
         return (
             f"{self._at_least}..{self._at_most} or "
-            f"{self._at_least}..{self._at_most-1}-{self._at_least+1}..{self._at_most}"
+            f"{self._at_least}..{self._at_most - 1}-{self._at_least + 1}..{self._at_most}"
         )
 
 
