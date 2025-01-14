@@ -194,8 +194,7 @@ FIXTURE_ERROR_REPORTS = [
         option_name="percentage_param",
         option_value="20",
         allowed_values=(
-            "a non-negative integer followed by '%' (e.g. 0%, 50%, "
-            "200%, ...)"
+            "a non-negative integer followed by '%' (e.g. 0%, 50%, 200%, ...)"
         ),
         cannot_be_empty=False,
         forbidden_characters=None,

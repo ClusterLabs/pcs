@@ -115,23 +115,23 @@ def _simulation_synapses_fixture(resource_id, start_id=0):
     return f"""
   <synapse id="{start_id}">
     <action_set>
-      <rsc_op id="{start_id*10}" operation="stop" operation_key="{resource_id}_stop_0" on_node="node1" on_node_uuid="1">
+      <rsc_op id="{start_id * 10}" operation="stop" operation_key="{resource_id}_stop_0" on_node="node1" on_node_uuid="1">
         <primitive id="{resource_id}" class="ocf" provider="heartbeat" type="Dummy"/>
         <attributes CRM_meta_name="stop" CRM_meta_timeout="20000" crm_feature_set="3.0.9"/>
       </rsc_op>
     </action_set>
     <inputs/>
   </synapse>
-  <synapse id="{start_id+1}">
+  <synapse id="{start_id + 1}">
     <action_set>
-      <rsc_op id="{start_id*10+1}" operation="start" operation_key="{resource_id}_start_0" on_node="node2" on_node_uuid="2">
+      <rsc_op id="{start_id * 10 + 1}" operation="start" operation_key="{resource_id}_start_0" on_node="node2" on_node_uuid="2">
         <primitive id="{resource_id}" class="ocf" provider="heartbeat" type="Dummy"/>
         <attributes CRM_meta_name="start" CRM_meta_timeout="20000" crm_feature_set="3.0.9"/>
       </rsc_op>
     </action_set>
     <inputs>
       <trigger>
-        <rsc_op id="{start_id*10}" operation="stop" operation_key="{resource_id}_stop_0" on_node="node1" on_node_uuid="1"/>
+        <rsc_op id="{start_id * 10}" operation="stop" operation_key="{resource_id}_stop_0" on_node="node1" on_node_uuid="1"/>
       </trigger>
     </inputs>
   </synapse>

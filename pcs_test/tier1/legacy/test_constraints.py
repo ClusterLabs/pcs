@@ -4361,10 +4361,10 @@ class ExpiredConstraints(ConstraintBaseTest):
             outdent(
                 f"""\
                 Location Constraints:
-                  resource 'dummy'{' (id: location-dummy)' if flag_full else ''}
+                  resource 'dummy'{" (id: location-dummy)" if flag_full else ""}
                     Rules:
-                      Rule: boolean-op=and score=INFINITY{' (id: test-rule)' if flag_full else ''}
-                        Expression: date gt 2019-01-01{' (id: test-rule-expr)' if flag_full else ''}
+                      Rule: boolean-op=and score=INFINITY{" (id: test-rule)" if flag_full else ""}
+                        Expression: date gt 2019-01-01{" (id: test-rule-expr)" if flag_full else ""}
                 """
             ),
         )
@@ -4468,11 +4468,11 @@ class ExpiredConstraints(ConstraintBaseTest):
             outdent(
                 f"""\
                 Location Constraints:
-                  resource 'dummy'{' (id: location-dummy)' if flag_full else ''}
+                  resource 'dummy'{" (id: location-dummy)" if flag_full else ""}
                     Rules:
-                      Rule: boolean-op=or score=INFINITY{' (id: test-rule)' if flag_full else ''}
-                        Expression: date eq 2019-01-01{' (id: test-rule-expr)' if flag_full else ''}
-                        Expression: date eq 2019-03-01{' (id: test-rule-expr-1)' if flag_full else ''}
+                      Rule: boolean-op=or score=INFINITY{" (id: test-rule)" if flag_full else ""}
+                        Expression: date eq 2019-01-01{" (id: test-rule-expr)" if flag_full else ""}
+                        Expression: date eq 2019-03-01{" (id: test-rule-expr-1)" if flag_full else ""}
                 """
             ),
         )
@@ -4524,10 +4524,10 @@ class ExpiredConstraints(ConstraintBaseTest):
             outdent(
                 f"""\
                 Location Constraints:
-                  resource 'dummy'{' (id: location-dummy)' if flag_full else ''}
+                  resource 'dummy'{" (id: location-dummy)" if flag_full else ""}
                     Rules:
-                      Rule (not yet in effect): boolean-op=and score=INFINITY{' (id: test-rule)' if flag_full else ''}
-                        Expression: date gt {self._tomorrow}{' (id: test-rule-expr)' if flag_full else ''}
+                      Rule (not yet in effect): boolean-op=and score=INFINITY{" (id: test-rule)" if flag_full else ""}
+                        Expression: date gt {self._tomorrow}{" (id: test-rule-expr)" if flag_full else ""}
                 """
             ),
         )

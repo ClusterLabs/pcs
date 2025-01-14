@@ -254,7 +254,7 @@ endif
 
 ruff_format: pyproject.toml
 if DEV_TESTS
-	$(TIME) ruff --config pyproject.toml check --select I --check --fix ${PCS_PYTHON_PACKAGES}
+	$(TIME) ruff --config pyproject.toml check --select I --fix ${PCS_PYTHON_PACKAGES}
 	$(TIME) ruff --config pyproject.toml format ${PCS_PYTHON_PACKAGES}
 endif
 

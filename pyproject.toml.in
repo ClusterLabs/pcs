@@ -87,6 +87,16 @@ ignore = [
   "SIM102", # https://docs.astral.sh/ruff/rules/collapsible-if/
 ]
 
+[tool.ruff.lint.flake8-builtins]
+builtins-allowed-modules = [
+  "json",
+  "logging",
+  "resource",
+  "ssl",
+  "types",
+  "xml",
+]
+
 [tool.ruff.lint.isort]
 # known deviations from isort:
 #  https://docs.astral.sh/ruff/faq/#how-does-ruffs-import-sorting-compare-to-isort

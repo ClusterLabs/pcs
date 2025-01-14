@@ -2700,7 +2700,7 @@ def operation_to_string(op_el):
             continue
         parts.append(name + "=" + value)
     parts.extend(
-        f'{nvpair.getAttribute("name")}={nvpair.getAttribute("value")}'
+        f"{nvpair.getAttribute('name')}={nvpair.getAttribute('value')}"
         for nvpair in op_el.getElementsByTagName("nvpair")
     )
     parts.append("(" + op_el.getAttribute("id") + ")")

@@ -25,7 +25,7 @@ class PrepareSetTest(TestCase):
 
     def test_return_corrected_resource_set(self):
         find_valid_id = mock.Mock()
-        find_valid_id.side_effect = lambda id: {"A": "AA", "B": "BB"}[id]
+        find_valid_id.side_effect = lambda id_: {"A": "AA", "B": "BB"}[id_]
         self.assertEqual(
             {"ids": ["AA", "BB"], "options": {"sequential": "true"}},
             resource_set.prepare_set(

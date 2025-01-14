@@ -651,7 +651,7 @@ class NvsetAppendNew(TestCase):
                     <meta_attributes id="a-meta_attributes">
                         <rule id="a-meta_attributes-rule"
                             boolean-op="and"
-                            {'score="INFINITY"' if score_present else ''}
+                            {'score="INFINITY"' if score_present else ""}
                         >
                             <rsc_expression
                                 id="a-meta_attributes-rule-rsc-ocf-pacemaker-Dummy"
@@ -662,7 +662,7 @@ class NvsetAppendNew(TestCase):
                             />
                             <rule id="a-meta_attributes-rule-rule"
                                 boolean-op="or"
-                                {'score="0"' if score_present else ''}
+                                {'score="0"' if score_present else ""}
                             >
                                 <expression id="a-meta_attributes-rule-rule-expr"
                                     operation="defined" attribute="attr1"

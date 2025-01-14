@@ -929,8 +929,7 @@ class UtilsTest(TestCase):
         self.assertEqual(
             utils.resource_running_on("myGroup", status),
             {
-                "message": "Resource 'myGroup' is running on node "
-                "rh70-node2.",
+                "message": "Resource 'myGroup' is running on node rh70-node2.",
                 "is_running": True,
             },
         )

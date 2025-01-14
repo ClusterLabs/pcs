@@ -1,6 +1,6 @@
 lxml-stubs
 mypy==1.13.0
-ruff==0.8.3
+ruff==0.9.1
 types-cryptography
 types-dataclasses
 # later versions remove type annotations from a few functions causing

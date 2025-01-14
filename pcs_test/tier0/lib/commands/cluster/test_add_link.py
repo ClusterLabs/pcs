@@ -253,7 +253,7 @@ class AddLink(TestCase):
                     <meta_attributes>
                         <nvpair name="remote-node" value="node-remote" />
                         <nvpair name="remote-addr"
-                            value="{self.node_addr_map['node1']}"
+                            value="{self.node_addr_map["node1"]}"
                         />
                     </meta_attributes>
                 </primitive>
@@ -289,7 +289,7 @@ class AddLink(TestCase):
                 >
                     <instance_attributes>
                         <nvpair name="server"
-                            value="{self.node_addr_map['node1']}"
+                            value="{self.node_addr_map["node1"]}"
                         />
                     </instance_attributes>
                 </primitive>

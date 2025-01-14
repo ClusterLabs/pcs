@@ -119,8 +119,7 @@ def cluster_status_parsing_error_to_report(
         )
     elif isinstance(e, UnknownPcmkRoleError):
         reason = (
-            f"Resource '{e.resource_id}' contains an unknown "
-            f"role '{e.role}'"
+            f"Resource '{e.resource_id}' contains an unknown role '{e.role}'"
         )
     elif isinstance(e, UnexpectedMemberError):
         reason = (
