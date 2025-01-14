@@ -5,6 +5,14 @@ require 'pcsd_test_utils.rb'
 require 'config.rb'
 require 'permissions.rb'
 
+def assert_equal_json(json1, json2)
+  # https://bugzilla.redhat.com/show_bug.cgi?id=2331005
+  assert_equal(
+    JSON.pretty_generate(JSON.parse(json1)),
+    JSON.pretty_generate(JSON.parse(json2))
+  )
+end
+
 class TestConfig < Test::Unit::TestCase
   def setup
     $logger = MockLogger.new
@@ -56,7 +64,7 @@ class TestConfig < Test::Unit::TestCase
     cfg = PCSConfig.new(text)
     assert_equal(0, cfg.clusters.length)
     assert_equal([], $logger.log)
-    assert_equal(fixture_nil_config, cfg.text)
+    assert_equal_json(fixture_nil_config, cfg.text)
   end
 
   def test_parse_empty()
@@ -64,7 +72,7 @@ class TestConfig < Test::Unit::TestCase
     cfg = PCSConfig.new(text)
     assert_equal(0, cfg.clusters.length)
     assert_equal([], $logger.log)
-    assert_equal(fixture_empty_config, cfg.text)
+    assert_equal_json(fixture_empty_config, cfg.text)
   end
 
   def test_parse_whitespace()
@@ -72,7 +80,7 @@ class TestConfig < Test::Unit::TestCase
     cfg = PCSConfig.new(text)
     assert_equal(0, cfg.clusters.length)
     assert_equal([], $logger.log)
-    assert_equal(fixture_empty_config, cfg.text)
+    assert_equal_json(fixture_empty_config, cfg.text)
   end
 
   def test_parse_hash_empty()
@@ -82,7 +90,7 @@ class TestConfig < Test::Unit::TestCase
       [['error', 'Unable to parse pcs_settings file: invalid file format']],
       $logger.log
     )
-    assert_equal(fixture_empty_config, cfg.text)
+    assert_equal_json(fixture_empty_config, cfg.text)
   end
 
   def test_parse_hash_no_version()
@@ -104,7 +112,7 @@ class TestConfig < Test::Unit::TestCase
       [['error', 'Unable to parse pcs_settings file: invalid file format']],
       $logger.log
     )
-    assert_equal(fixture_empty_config, cfg.text)
+    assert_equal_json(fixture_empty_config, cfg.text)
   end
 
   def test_parse_malformed()
@@ -129,14 +137,14 @@ class TestConfig < Test::Unit::TestCase
       /Unable to parse pcs_settings file: (\d+: )?unexpected token/,
       $logger.log[0][1]
     )
-    assert_equal(fixture_empty_config, cfg.text)
+    assert_equal_json(fixture_empty_config, cfg.text)
   end
 
   def test_parse_format1_empty()
     text = '[]'
     cfg = PCSConfig.new(text)
     assert_equal(0, cfg.clusters.length)
-    assert_equal(
+    assert_equal_json(
 '{
   "format_version": 2,
   "data_version": 0,
@@ -177,7 +185,7 @@ class TestConfig < Test::Unit::TestCase
     assert_equal(1, cfg.clusters.length)
     assert_equal("cluster71", cfg.clusters[0].name)
     assert_equal(["rh71-node1", "rh71-node2"], cfg.clusters[0].nodes)
-    assert_equal(
+    assert_equal_json(
 '{
   "format_version": 2,
   "data_version": 0,
@@ -218,7 +226,7 @@ class TestConfig < Test::Unit::TestCase
     assert_equal(2, cfg.format_version)
     assert_equal(0, cfg.data_version)
     assert_equal(0, cfg.clusters.length)
-    assert_equal(fixture_empty_config, cfg.text)
+    assert_equal_json(fixture_empty_config, cfg.text)
   end
 
   def test_parse_format2_one_cluster()
@@ -247,7 +255,7 @@ class TestConfig < Test::Unit::TestCase
     assert_equal(1, cfg.clusters.length)
     assert_equal("cluster71", cfg.clusters[0].name)
     assert_equal(["rh71-node1", "rh71-node2"], cfg.clusters[0].nodes)
-    assert_equal(text, cfg.text)
+    assert_equal_json(text, cfg.text)
   end
 
   def test_parse_format2_two_clusters()
@@ -318,7 +326,7 @@ class TestConfig < Test::Unit::TestCase
     ]
   }
 }'
-    assert_equal(out_text, cfg.text)
+    assert_equal_json(out_text, cfg.text)
   end
 
   def test_parse_format2_bad_cluster()
@@ -347,7 +355,7 @@ class TestConfig < Test::Unit::TestCase
     assert_equal(1, cfg.clusters.length)
     assert_equal("cluster71", cfg.clusters[0].name)
     assert_equal(["rh71-node1", "rh71-node2"], cfg.clusters[0].nodes)
-    assert_equal(
+    assert_equal_json(
 '{
   "format_version": 2,
   "data_version": 9,
@@ -475,7 +483,7 @@ class TestConfig < Test::Unit::TestCase
   }
 }'
     cfg = PCSConfig.new(text)
-    assert_equal(out_text, cfg.text)
+    assert_equal_json(out_text, cfg.text)
 
     perms = cfg.permissions_local
     assert_equal(false, perms.allows?('user1', [], Permissions::FULL))
@@ -684,7 +692,7 @@ class TestCfgKnownHosts < Test::Unit::TestCase
     assert_equal(1, cfg.format_version)
     assert_equal(0, cfg.data_version)
     assert_equal(0, cfg.known_hosts.length)
-    assert_equal(fixture_empty_config(), cfg.text)
+    assert_equal_json(fixture_empty_config(), cfg.text)
   end
 
   def assert_known_host(host, name, token, dest_list)
@@ -765,7 +773,7 @@ class TestCfgKnownHosts < Test::Unit::TestCase
       ],
       cfg.known_hosts['node1'].dest_list
     )
-    assert_equal(text, cfg.text)
+    assert_equal_json(text, cfg.text)
   end
 
   def test_parse_format1_complex()
@@ -825,7 +833,7 @@ class TestCfgKnownHosts < Test::Unit::TestCase
         {'addr' => '10.0.2.2', 'port' => 2235}
       ]
     )
-    assert_equal(text, cfg.text)
+    assert_equal_json(text, cfg.text)
   end
 
   def test_parse_format1_error()
@@ -888,7 +896,7 @@ class TestCfgKnownHosts < Test::Unit::TestCase
         {'addr' => '10.0.1.3', 'port' => 2224}
       ]
     )
-    assert_equal(
+    assert_equal_json(
       cfg.text,
 '{
   "format_version": 1,
