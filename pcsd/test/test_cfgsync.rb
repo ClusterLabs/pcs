@@ -153,9 +153,22 @@ class TestPcsdSettings < Test::Unit::TestCase
     assert_equal(3, cfg.version)
     assert_equal('b35f951a228ac0734d4c1e45fe73c03b18bca380', cfg.hash)
 
+    # rubygem-json shipped with ruby 3.4 changed the way JSON.pretty_generate
+    # works a bit. This results in different strings produced by the gem in
+    # ruby older that 3.4 compared to ruby 3.4+. By examining the output of
+    # JSON.pretty_generate, we can figure out which version of the gem we run
+    # against and use the correct hash for the produced string.
+    # https://bugzilla.redhat.com/show_bug.cgi?id=2331005
+    old_rubygem = JSON.pretty_generate([]) == "[\n\n]"
+    if old_rubygem
+      expected_hash = '26579b79a27f9f56e1acd398eb761d2eb1872c6d'
+    else
+      expected_hash = 'db2b44331c63c25874ec30398fa82decd740fef4'
+    end
+
     cfg.version = 4
     assert_equal(4, cfg.version)
-    assert_equal('26579b79a27f9f56e1acd398eb761d2eb1872c6d', cfg.hash)
+    assert_equal(expected_hash, cfg.hash)
 
     cfg.text = '{
   "format_version": 2,
@@ -1174,4 +1187,3 @@ class TestGetFailedNodesFromSyncResponses < Test::Unit::TestCase
     )
   end
 end
-
