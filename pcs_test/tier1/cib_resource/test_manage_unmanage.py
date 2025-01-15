@@ -48,9 +48,7 @@ class ManageUnmanage(
                     </operations>
                 </primitive>
             </resources>
-        """.format(
-            empty_meta_b=(empty_meta_b if add_empty_meta_b else "")
-        )
+        """.format(empty_meta_b=(empty_meta_b if add_empty_meta_b else ""))
 
     def setUp(self):
         self.temp_cib = get_tmp_file("tier1_cib_resource_manage_unmanage")

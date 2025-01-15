@@ -45,7 +45,7 @@ def main():
                 {output}
                 </command>
               </validate>
-              <status code="{1 if is_invalid else 0}" message="{'Error' if is_invalid else 'OK'}"/>
+              <status code="{1 if is_invalid else 0}" message="{"Error" if is_invalid else "OK"}"/>
             </pacemaker-result>
             """
         )

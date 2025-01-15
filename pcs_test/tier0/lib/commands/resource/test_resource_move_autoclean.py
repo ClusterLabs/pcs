@@ -111,23 +111,23 @@ def _simulation_synapses_fixture(resource_id, start_id=0):
     return f"""
   <synapse id="{start_id}">
     <action_set>
-      <rsc_op id="{start_id*10}" operation="stop" operation_key="{resource_id}_stop_0" on_node="node1" on_node_uuid="1">
+      <rsc_op id="{start_id * 10}" operation="stop" operation_key="{resource_id}_stop_0" on_node="node1" on_node_uuid="1">
         <primitive id="{resource_id}" class="ocf" provider="heartbeat" type="Dummy"/>
         <attributes CRM_meta_name="stop" CRM_meta_timeout="20000" crm_feature_set="3.0.9"/>
       </rsc_op>
     </action_set>
     <inputs/>
   </synapse>
-  <synapse id="{start_id+1}">
+  <synapse id="{start_id + 1}">
     <action_set>
-      <rsc_op id="{start_id*10+1}" operation="start" operation_key="{resource_id}_start_0" on_node="node2" on_node_uuid="2">
+      <rsc_op id="{start_id * 10 + 1}" operation="start" operation_key="{resource_id}_start_0" on_node="node2" on_node_uuid="2">
         <primitive id="{resource_id}" class="ocf" provider="heartbeat" type="Dummy"/>
         <attributes CRM_meta_name="start" CRM_meta_timeout="20000" crm_feature_set="3.0.9"/>
       </rsc_op>
     </action_set>
     <inputs>
       <trigger>
-        <rsc_op id="{start_id*10}" operation="stop" operation_key="{resource_id}_stop_0" on_node="node1" on_node_uuid="1"/>
+        <rsc_op id="{start_id * 10}" operation="stop" operation_key="{resource_id}_stop_0" on_node="node1" on_node_uuid="1"/>
       </trigger>
     </inputs>
   </synapse>
@@ -203,9 +203,7 @@ class MoveAutocleanSuccess(MoveAutocleanCommonSetup):
         self.simulated_transitions_add_constraint_tmp_file_name = (
             "pcmk_simulate_move_transitions"
         )
-        self.cib_apply_diff_remove_constraint_from_simulated_cib_tmp_file_name = (
-            "simulated_cib_remove_constraint"
-        )
+        self.cib_apply_diff_remove_constraint_from_simulated_cib_tmp_file_name = "simulated_cib_remove_constraint"
         self.cib_simulated_apply_diff_removing_constraint = (
             '<cib simulate="True" with_constraint="False" diff_applied="True"/>'
         )
@@ -224,15 +222,11 @@ class MoveAutocleanSuccess(MoveAutocleanCommonSetup):
         self.cib_remove_constraint_diff_applied = (
             '<cib with_constraint="False" diff_applied="True"/>'
         )
-        self.pcmk_simulate_remove_constraint_after_push_orig_cib_tmp_file_name = (
-            "pcmk_simulate_after_push_input_unmove_cib_after"
-        )
+        self.pcmk_simulate_remove_constraint_after_push_orig_cib_tmp_file_name = "pcmk_simulate_after_push_input_unmove_cib_after"
         self.simulated_cib_remove_constraint_after_push_tmp_file_name = (
             "pcmk_simulate_after_push_unmove_new_cib"
         )
-        self.simulated_transitions_remove_constraint_after_push_tmp_file_name = (
-            "pcmk_simulate_after_push_unmove_transitions"
-        )
+        self.simulated_transitions_remove_constraint_after_push_tmp_file_name = "pcmk_simulate_after_push_unmove_transitions"
         self.cib_diff_add_constraint = "diff_add_constraint"
         self.cib_diff_remove_constraint = "diff_remove_constraint"
 
@@ -969,9 +963,7 @@ class MoveAutocleanFailures(MoveAutocleanCommonSetup):
         self.cib_simulate_constraint = (
             '<cib simulate="True" with_constraint="True"/>'
         )
-        self.cib_apply_diff_remove_constraint_from_simulated_cib_tmp_file_name = (
-            "simulated_cib_remove_constraint"
-        )
+        self.cib_apply_diff_remove_constraint_from_simulated_cib_tmp_file_name = "simulated_cib_remove_constraint"
         self.cib_simulated_apply_diff_removing_constraint = (
             '<cib simulate="True" with_constraint="False" diff_applied="True"/>'
         )
@@ -990,15 +982,11 @@ class MoveAutocleanFailures(MoveAutocleanCommonSetup):
         self.cib_remove_constraint_diff_applied = (
             '<cib with_constraint="False" diff_applied="True"/>'
         )
-        self.pcmk_simulate_remove_constraint_after_push_orig_cib_tmp_file_name = (
-            "pcmk_simulate_after_push_input_unmove_cib_after"
-        )
+        self.pcmk_simulate_remove_constraint_after_push_orig_cib_tmp_file_name = "pcmk_simulate_after_push_input_unmove_cib_after"
         self.simulated_cib_remove_constraint_after_push_tmp_file_name = (
             "pcmk_simulate_after_push_unmove_new_cib"
         )
-        self.simulated_transitions_remove_constraint_after_push_tmp_file_name = (
-            "pcmk_simulate_after_push_unmove_transitions"
-        )
+        self.simulated_transitions_remove_constraint_after_push_tmp_file_name = "pcmk_simulate_after_push_unmove_transitions"
 
         self.config.runner.cib.load(
             resources=_resources_tag(_rsc_primitive_fixture(self.resource_id)),

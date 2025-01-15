@@ -129,9 +129,7 @@ def patch_env(call_queue, config, init_env, is_systemd=True):
         )
 
     raw_file_mock = get_raw_file_mock(call_queue)
-    for method_name, dummy_method in inspect.getmembers(
-        RawFile, inspect.isfunction
-    ):
+    for method_name, _ in inspect.getmembers(RawFile, inspect.isfunction):
         # patch all public methods
         # inspect.isfunction must be used instead of ismethod because we are
         # working with a class and not an instance - no method is bound yet so

@@ -1,10 +1,11 @@
-# pylint: disable=too-many-lines
+# pylint: disable=too-many-lines #noqa: PLR0915
 import json
 import re
 import sys
 import textwrap
 from functools import partial
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
     Mapping,
@@ -79,7 +80,6 @@ from pcs.common.pacemaker.resource.list import (
 from pcs.common.pacemaker.resource.operations import (
     OCF_CHECK_LEVEL_INSTANCE_ATTRIBUTE_NAME,
 )
-from pcs.common.resource_agent.dto import ResourceAgentNameDto
 from pcs.common.str_tools import (
     format_list,
     format_list_custom_last_separator,
@@ -103,6 +103,9 @@ from pcs.lib.pacemaker.values import (
 from pcs.settings import (
     pacemaker_wait_timeout_status as PACEMAKER_WAIT_TIMEOUT_STATUS,
 )
+
+if TYPE_CHECKING:
+    from pcs.common.resource_agent.dto import ResourceAgentNameDto
 
 RESOURCE_RELOCATE_CONSTRAINT_PREFIX = "pcs-relocate-"
 
@@ -181,7 +184,7 @@ def _defaults_set_create_cmd(
     modifiers.ensure_only_supported("-f", "--force")
 
     groups = group_by_keywords(
-        argv, set(["meta", "rule"]), implicit_first_keyword="options"
+        argv, {"meta", "rule"}, implicit_first_keyword="options"
     )
     groups.ensure_unique_keywords()
     force_flags = set()
@@ -377,7 +380,7 @@ def _defaults_set_update_cmd(
         raise CmdLineInputError()
 
     set_id = argv[0]
-    groups = group_by_keywords(argv[1:], set(["meta"]))
+    groups = group_by_keywords(argv[1:], {"meta"})
     groups.ensure_unique_keywords()
     lib_command(
         set_id, KeyValueParser(groups.get_args_flat("meta")).get_unique()
@@ -527,20 +530,19 @@ def parse_resource_options(
         elif arg == "meta":
             meta_args = True
             op_args = False
-        else:
-            if op_args:
-                if arg == "op":
-                    op_values.append([])
-                elif "=" not in arg and op_values[-1]:
-                    op_values.append([])
-                    op_values[-1].append(arg)
-                else:
-                    op_values[-1].append(arg)
-            elif meta_args:
-                if "=" in arg:
-                    meta_values.append(arg)
+        elif op_args:
+            if arg == "op":
+                op_values.append([])
+            elif "=" not in arg and op_values[-1]:
+                op_values.append([])
+                op_values[-1].append(arg)
             else:
-                ra_values.append(arg)
+                op_values[-1].append(arg)
+        elif meta_args:
+            if "=" in arg:
+                meta_values.append(arg)
+        else:
+            ra_values.append(arg)
     return ra_values, op_values, meta_values
 
 
@@ -651,7 +653,7 @@ def _format_desc(indentation: int, desc: str) -> str:
     return output.rstrip()
 
 
-def resource_create(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
+def resource_create(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  # noqa: PLR0912
     """
     Options:
       * --agent-validation - use agent self validation of instance attributes
@@ -1015,7 +1017,7 @@ def update_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
 
 # Update a resource, removing any args that are empty and adding/updating
 # args that are not empty
-def resource_update(args: Argv, modifiers: InputModifiers) -> None:
+def resource_update(args: Argv, modifiers: InputModifiers) -> None:  # noqa: PLR0912, PLR0915
     """
     Commandline options:
       * -f - CIB file
@@ -1279,7 +1281,7 @@ def transform_master_to_clone(master_element):
     return clone_element
 
 
-def resource_operation_add(
+def resource_operation_add(  # noqa: PLR0912, PLR0915
     dom, res_id, argv, validate_strict=True, before_op=None
 ):
     """
@@ -1435,7 +1437,7 @@ def resource_operation_add(
     return dom
 
 
-def resource_operation_remove(res_id: str, argv: Argv) -> None:
+def resource_operation_remove(res_id: str, argv: Argv) -> None:  # noqa: PLR0912
     """
     Commandline options:
       * -f - CIB file
@@ -1484,11 +1486,11 @@ def resource_operation_remove(res_id: str, argv: Argv) -> None:
     found_match = False
     for op in resource_el.getElementsByTagName("op"):
         temp_properties = []
-        for attr_name in op.attributes.keys():
+        for attr_name in op.attributes.keys():  # noqa: SIM118, attributes is not a dict
             if attr_name == "id":
                 continue
             temp_properties.append(
-                tuple([attr_name, op.attributes.get(attr_name).nodeValue])
+                (attr_name, op.attributes.get(attr_name).nodeValue)
             )
 
         if remove_all and op.attributes["name"].value == op_name:
@@ -1520,7 +1522,7 @@ def meta_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     resource_meta(argv, modifiers)
 
 
-def resource_meta(argv: Argv, modifiers: InputModifiers) -> None:
+def resource_meta(argv: Argv, modifiers: InputModifiers) -> None:  # noqa: PLR0912
     """
     Commandline options:
       * --force - allow not suitable command
@@ -1741,7 +1743,7 @@ def _get_resource_agent_facade(
     ).facade_from_parsed_name(resource_agent)
 
 
-def resource_clone_create(
+def resource_clone_create(  # noqa: PLR0912
     cib_dom, argv, update_existing=False, promotable=False, force_flags=()
 ):
     """
@@ -2075,8 +2077,9 @@ def resource_group_rm(cib_dom, group_name, resource_ids):
 
     resources_to_move = []
     if all_resources:
-        for resource in group_match.getElementsByTagName("primitive"):
-            resources_to_move.append(resource)
+        resources_to_move.extend(
+            list(group_match.getElementsByTagName("primitive"))
+        )
     else:
         for resource_id in resource_ids:
             resource = utils.dom_get_resource(group_match, resource_id)
@@ -2150,8 +2153,10 @@ def resource_group_list(
 
     for e in elements:
         line_parts = [e.getAttribute("id") + ":"]
-        for resource in e.getElementsByTagName("primitive"):
-            line_parts.append(resource.getAttribute("id"))
+        line_parts.extend(
+            resource.getAttribute("id")
+            for resource in e.getElementsByTagName("primitive")
+        )
         print(" ".join(line_parts))
 
 
@@ -2181,7 +2186,7 @@ def resource_show(
     raise_command_replaced([f"pcs {keyword} status"], pcs_version="0.11")
 
 
-def resource_status(
+def resource_status(  # noqa: PLR0912, PLR0915
     lib: Any, argv: Argv, modifiers: InputModifiers, stonith: bool = False
 ) -> None:
     """
@@ -2289,10 +2294,12 @@ def resource_status(
                 has_resources = True
                 print(line)
                 continue
-            if not preg.match(line) and not stonith:
-                has_resources = True
-                print(line)
-            elif preg.match(line) and stonith:
+            if (
+                not preg.match(line)
+                and not stonith
+                or preg.match(line)
+                and stonith
+            ):
                 has_resources = True
                 print(line)
 
@@ -2447,7 +2454,7 @@ def resource_restart_cmd(
     print_to_stderr(f"{resource} successfully restarted")
 
 
-def resource_force_action(
+def resource_force_action(  # noqa: PLR0912
     lib: Any, argv: Argv, modifiers: InputModifiers, action: str
 ) -> None:
     """
@@ -2702,10 +2709,10 @@ def operation_to_string(op_el):
         if name in ["id", "name"]:
             continue
         parts.append(name + "=" + value)
-    for nvpair in op_el.getElementsByTagName("nvpair"):
-        parts.append(
-            nvpair.getAttribute("name") + "=" + nvpair.getAttribute("value")
-        )
+    parts.extend(
+        f"{nvpair.getAttribute('name')}={nvpair.getAttribute('value')}"
+        for nvpair in op_el.getElementsByTagName("nvpair")
+    )
     parts.append("(" + op_el.getAttribute("id") + ")")
     return " ".join(parts)
 
@@ -2945,7 +2952,7 @@ def resource_relocate_location_to_str(location):
     return ""
 
 
-def resource_relocate_run(cib_dom, resources=None, dry=True):
+def resource_relocate_run(cib_dom, resources=None, dry=True):  # noqa: PLR0912
     """
     Commandline options:
       * -f - CIB file, explicitly forbids -f if dry is False

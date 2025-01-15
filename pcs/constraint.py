@@ -93,10 +93,7 @@ class CrmRuleReturnCode(Enum):
 
 
 def constraint_location_cmd(lib, argv, modifiers):
-    if not argv:
-        sub_cmd = "config"
-    else:
-        sub_cmd = argv.pop(0)
+    sub_cmd = "config" if not argv else argv.pop(0)
 
     try:
         if sub_cmd == "add":
@@ -121,10 +118,7 @@ def constraint_location_cmd(lib, argv, modifiers):
 
 
 def constraint_order_cmd(lib, argv, modifiers):
-    if not argv:
-        sub_cmd = "config"
-    else:
-        sub_cmd = argv.pop(0)
+    sub_cmd = "config" if not argv else argv.pop(0)
 
     try:
         if sub_cmd == "set":
@@ -190,7 +184,7 @@ def _validate_resources_not_in_same_group(cib_dom, resource1, resource2):
 #        <src> with <role> <tgt> [score] [options]
 # <role> <src> with        <tgt> [score] [options]
 # <role> <src> with <role> <tgt> [score] [options]
-def colocation_add(lib, argv, modifiers):
+def colocation_add(lib, argv, modifiers):  # noqa: PLR0912, PLR0915
     """
     Options:
       * -f - CIB file
@@ -262,14 +256,11 @@ def colocation_add(lib, argv, modifiers):
 
     if not argv:
         raise CmdLineInputError()
-    if len(argv) == 1:
+    if len(argv) == 1 or utils.is_score_or_opt(argv[1]):
         resource2 = argv.pop(0)
     else:
-        if utils.is_score_or_opt(argv[1]):
-            resource2 = argv.pop(0)
-        else:
-            role2 = _validate_and_prepare_role(argv.pop(0))
-            resource2 = argv.pop(0)
+        role2 = _validate_and_prepare_role(argv.pop(0))
+        resource2 = argv.pop(0)
 
     score, nv_pairs = _parse_score_options(argv)
 
@@ -483,7 +474,7 @@ def order_start(lib, argv, modifiers):
     _order_add(resource1, resource2, order_options, modifiers)
 
 
-def _order_add(resource1, resource2, options_list, modifiers):
+def _order_add(resource1, resource2, options_list, modifiers):  # noqa: PLR0912, PLR0915
     """
     Commandline options:
       * -f - CIB file
@@ -876,7 +867,9 @@ def _verify_score(score):
         )
 
 
-def location_prefer(lib, argv, modifiers):
+def location_prefer(  # noqa: PLR0912
+    lib: Any, argv: parse_args.Argv, modifiers: parse_args.InputModifiers
+) -> None:
     """
     Options:
       * --force - allow unknown options, allow constraint for any resource type
@@ -921,18 +914,12 @@ def location_prefer(lib, argv, modifiers):
         if not skip_node_check:
             report_list += _verify_node_name(node, existing_nodes)
         if len(nodeconf_a) == 1:
-            if prefer:
-                score = "INFINITY"
-            else:
-                score = "-INFINITY"
+            score = "INFINITY" if prefer else "-INFINITY"
         else:
             score = nodeconf_a[1]
             _verify_score(score)
             if not prefer:
-                if score[0] == "-":
-                    score = score[1:]
-                else:
-                    score = "-" + score
+                score = score[1:] if score[0] == "-" else "-" + score
 
         parameters_list.append(
             [
@@ -952,7 +939,12 @@ def location_prefer(lib, argv, modifiers):
         location_add(lib, parameters, modifiers, skip_score_and_node_check=True)
 
 
-def location_add(lib, argv, modifiers, skip_score_and_node_check=False):
+def location_add(  # noqa: PLR0912, PLR0915
+    lib: Any,
+    argv: parse_args.Argv,
+    modifiers: parse_args.InputModifiers,
+    skip_score_and_node_check: bool = False,
+) -> None:
     """
     Options:
       * --force - allow unknown options, allow constraint for any resource type
@@ -1041,24 +1033,26 @@ def location_add(lib, argv, modifiers, skip_score_and_node_check=False):
     # Verify current constraint doesn't already exist
     # If it does we replace it with the new constraint
     dummy_dom, constraintsElement = getCurrentConstraints(dom)
-    elementsToRemove = []
     # If the id matches, or the rsc & node match, then we replace/remove
-    for rsc_loc in constraintsElement.getElementsByTagName("rsc_location"):
+    elementsToRemove = [
+        rsc_loc
+        for rsc_loc in constraintsElement.getElementsByTagName("rsc_location")
         # pylint: disable=too-many-boolean-expressions
-        if rsc_loc.getAttribute("id") == constraint_id or (
+        if rsc_loc.getAttribute("id") == constraint_id
+        or (
             rsc_loc.getAttribute("node") == node
             and (
                 (
-                    RESOURCE_TYPE_RESOURCE == rsc_type
+                    rsc_type == RESOURCE_TYPE_RESOURCE
                     and rsc_loc.getAttribute("rsc") == rsc_value
                 )
                 or (
-                    RESOURCE_TYPE_REGEXP == rsc_type
+                    rsc_type == RESOURCE_TYPE_REGEXP
                     and rsc_loc.getAttribute("rsc-pattern") == rsc_value
                 )
             )
-        ):
-            elementsToRemove.append(rsc_loc)
+        )
+    ]
     for etr in elementsToRemove:
         constraintsElement.removeChild(etr)
 
@@ -1077,7 +1071,7 @@ def location_add(lib, argv, modifiers, skip_score_and_node_check=False):
     utils.replace_cib_configuration(dom)
 
 
-def location_rule(lib, argv, modifiers):
+def location_rule(lib, argv, modifiers):  # noqa: PLR0912
     """
     Options:
       * -f - CIB file
@@ -1202,12 +1196,14 @@ def location_rule_check_duplicates(dom, constraint_el, force):
             lines = []
             for dup in duplicates:
                 lines.append("  Constraint: %s" % dup.getAttribute("id"))
-                for dup_rule in utils.dom_get_children_by_tag_name(dup, "rule"):
-                    lines.append(
-                        rule_utils.ExportDetailed().get_string(
-                            dup_rule, False, True, indent="    "
-                        )
+                lines.extend(
+                    rule_utils.ExportDetailed().get_string(
+                        dup_rule, False, True, indent="    "
                     )
+                    for dup_rule in utils.dom_get_children_by_tag_name(
+                        dup, "rule"
+                    )
+                )
             utils.err(
                 "duplicate constraint already exists, use --force to override\n"
                 + "\n".join(lines)
@@ -1267,7 +1263,7 @@ def getCurrentConstraints(passed_dom=None):
 
 # If returnStatus is set, then we don't error out, we just print the error
 # and return false
-def constraint_rm(
+def constraint_rm(  # noqa: PLR0912
     lib,
     argv,
     modifiers,

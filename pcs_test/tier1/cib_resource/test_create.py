@@ -964,8 +964,7 @@ class Promotable(TestCase, AssertPcsMixin):
     def test_fail_on_promotable(self):
         self.assert_pcs_fail(
             (
-                "resource create R ocf:pcsmock:stateful promotable "
-                "promotable=a"
+                "resource create R ocf:pcsmock:stateful promotable promotable=a"
             ).split(),
             (
                 self.msg_promotable_without_meta

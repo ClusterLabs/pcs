@@ -51,10 +51,9 @@ class RuleToStr:
         # remove spaces around separators
         result = re.sub(RuleToStr._date_separators_re, r"\1", date)
         # if there are any spaces left, replace the first one with T
-        result = re.sub(r"\s+", "T", result, count=1)
         # keep all other spaces in place
         # the date wouldn't be valid, but there is nothing more we can do
-        return result
+        return re.sub(r"\s+", "T", result, count=1)
 
     def _rule_to_str(self, rule_el: _Element) -> str:
         # "and" is a documented pacemaker default

@@ -18,6 +18,7 @@ from functools import lru_cache
 from io import BytesIO
 from textwrap import dedent
 from typing import (
+    TYPE_CHECKING,
     Any,
     Dict,
     Optional,
@@ -44,12 +45,10 @@ from pcs.cli.common.tools import (
     timeout_to_seconds_legacy,
 )
 from pcs.cli.file import metadata as cli_file_metadata
-from pcs.cli.reports import ReportProcessorToConsole
+from pcs.cli.reports import ReportProcessorToConsole, process_library_reports
 from pcs.cli.reports import output as reports_output
-from pcs.cli.reports import process_library_reports
-from pcs.common import const
+from pcs.common import const, file_type_codes
 from pcs.common import file as pcs_file
-from pcs.common import file_type_codes
 from pcs.common import pacemaker as common_pacemaker
 from pcs.common import pcs_pycurl as pycurl
 from pcs.common.host import PcsKnownHost
@@ -57,7 +56,6 @@ from pcs.common.pacemaker.resource.operations import (
     OCF_CHECK_LEVEL_INSTANCE_ATTRIBUTE_NAME,
 )
 from pcs.common.reports import ReportProcessor
-from pcs.common.reports.item import ReportItemList
 from pcs.common.reports.messages import CibUpgradeFailedToMinimalRequiredVersion
 from pcs.common.services.errors import ManageServiceError
 from pcs.common.services.interfaces import ServiceManagerInterface
@@ -82,6 +80,9 @@ from pcs.lib.pacemaker.values import is_score as is_score_value
 from pcs.lib.pacemaker.values import validate_id
 from pcs.lib.services import get_service_manager as _get_service_manager
 from pcs.lib.services import service_exception_to_report
+
+if TYPE_CHECKING:
+    from pcs.common.reports.item import ReportItemList
 
 # pylint: disable=invalid-name
 # pylint: disable=too-many-branches
@@ -205,8 +206,8 @@ def read_uid_gid_file(uidgid_filename):
     ) as myfile:
         data = myfile.read().split("\n")
     in_uidgid = False
-    for line in data:
-        line = re.sub(r"#.*", "", line)
+    for data_line in data:
+        line = re.sub(r"#.*", "", data_line)
         if not in_uidgid:
             if re.search(r"uidgid.*{", line):
                 in_uidgid = True
@@ -541,7 +542,7 @@ def resumeConfigSyncing(node):
 # 2 = No response,
 # 3 = Auth Error
 # 4 = Permission denied
-def sendHTTPRequest(
+def sendHTTPRequest(  # noqa: PLR0912, PLR0915
     host, request, data=None, printResult=True, printSuccess=True, timeout=None
 ):
     """
@@ -902,7 +903,7 @@ def run(
             stdin=stdin_pipe,
             stdout=subprocess.PIPE,
             stderr=(subprocess.PIPE if ignore_stderr else subprocess.STDOUT),
-            preexec_fn=subprocess_setup,
+            preexec_fn=subprocess_setup,  # noqa: PLW1509
             close_fds=True,
             env=env_var,
             # decodes newlines and in python3 also converts bytes to str
@@ -1054,7 +1055,7 @@ def auth_hosts(host_dict):
     err("Unable to communicate with pcsd")
 
 
-def call_local_pcsd(argv, options, std_in=None):
+def call_local_pcsd(argv, options, std_in=None):  # noqa: PLR0911
     """
     Commandline options:
       * --request-timeout - timeout of call to local pcsd
@@ -1376,7 +1377,7 @@ def dom_get_resource_masterslave(dom, resource_id):
 # returns tuple (is_valid, error_message, correct_resource_id_if_exists)
 # there is a duplicate code in pcs/lib/cib/constraint/constraint.py
 # please use function in pcs/lib/cib/constraint/constraint.py
-def validate_constraint_resource(dom, resource_id):
+def validate_constraint_resource(dom, resource_id):  # noqa: PLR0911
     """
     Commandline options:
       * --force - allow constraint on any resource
@@ -1680,13 +1681,11 @@ def get_cib_dom(cib_xml=None):
     Commandline options:
       * -f - CIB file
     """
-    # pylint: disable=bare-except
     if cib_xml is None:
         cib_xml = get_cib()
     try:
-        dom = parseString(cib_xml)
-        return dom
-    except:
+        return parseString(cib_xml)
+    except xml.parsers.expat.ExpatError:
         return err("unable to get cib")
 
 
@@ -1695,13 +1694,11 @@ def get_cib_etree(cib_xml=None):
     Commandline options:
       * -f - CIB file
     """
-    # pylint: disable=bare-except
     if cib_xml is None:
         cib_xml = get_cib()
     try:
-        root = ET.fromstring(cib_xml)
-        return root
-    except:
+        return ET.fromstring(cib_xml)
+    except xml.etree.ElementTree.ParseError:
         return err("unable to get cib")
 
 
@@ -1755,7 +1752,7 @@ def is_valid_cib_scope(scope):
 
 # Checks to see if id exists in the xml dom passed
 # DEPRECATED use lxml version available in pcs.lib.cib.tools
-def does_id_exist(dom, check_id):
+def does_id_exist(dom, check_id):  # noqa: PLR0912
     """
     Commandline options: no options
     """
@@ -1813,17 +1810,17 @@ def operation_exists(operations_el, op_el):
     """
     Commandline options: no options
     """
-    existing = []
     op_name = op_el.getAttribute("name")
     op_interval = timeout_to_seconds_legacy(op_el.getAttribute("interval"))
-    for op in operations_el.getElementsByTagName("op"):
+    return [
+        op
+        for op in operations_el.getElementsByTagName("op")
         if (
             op.getAttribute("name") == op_name
             and timeout_to_seconds_legacy(op.getAttribute("interval"))
             == op_interval
-        ):
-            existing.append(op)
-    return existing
+        )
+    ]
 
 
 def operation_exists_by_name(operations_el, op_el):
@@ -1849,12 +1846,10 @@ def operation_exists_by_name(operations_el, op_el):
 
     for op in operations_el.getElementsByTagName("op"):
         if op.getAttribute("name") == op_name:
-            if op_name != "monitor":
-                existing.append(op)
-            elif get_role(
-                op, new_roles_supported
-            ) == op_role and ocf_check_level == get_operation_ocf_check_level(
-                op
+            if (
+                op_name != "monitor"
+                or get_role(op, new_roles_supported) == op_role
+                and ocf_check_level == get_operation_ocf_check_level(op)
             ):
                 existing.append(op)
     return existing
@@ -1969,7 +1964,6 @@ def getTerminalSize(fd=1):
 
     Commandline options: no options
     """
-    # pylint: disable=bare-except
     try:
         # pylint: disable=import-outside-toplevel
         import fcntl
@@ -1979,10 +1973,10 @@ def getTerminalSize(fd=1):
         hw = struct.unpack(
             str("hh"), fcntl.ioctl(fd, termios.TIOCGWINSZ, "1234")
         )
-    except:
+    except OSError:
         try:
             hw = (os.environ["LINES"], os.environ["COLUMNS"])
-        except:
+        except KeyError:
             hw = (25, 80)
     return hw
 
@@ -2111,9 +2105,7 @@ def is_score_or_opt(var):
     """
     if is_score(var):
         return True
-    if var.find("=") != -1:
-        return True
-    return False
+    return var.find("=") != -1
 
 
 def is_score(var):
@@ -2242,7 +2234,7 @@ def write_file(path, data, permissions=0o644, binary=False):
     return True, ""
 
 
-def tar_add_file_data(
+def tar_add_file_data(  # noqa: PLR0913
     tarball,
     data,
     name,
@@ -2353,8 +2345,7 @@ def get_operations_from_transitions(transitions_dom):
                 )
             )
     operation_list.sort(key=lambda x: x[0])
-    op_list = [op[1] for op in operation_list]
-    return op_list
+    return [op[1] for op in operation_list]
 
 
 def get_resources_location_from_operations(cib_dom, resources_operations):
@@ -2389,12 +2380,11 @@ def get_resources_location_from_operations(cib_dom, resources_operations):
             locations[long_id]["start_on_node"] = res_op["on_node"]
         if operation == "promote":
             locations[long_id]["promote_on_node"] = res_op["on_node"]
-    locations_clean = {
+    return {
         key: val
         for key, val in locations.items()
         if "start_on_node" in val or "promote_on_node" in val
     }
-    return locations_clean
 
 
 def get_remote_quorumtool_output(node):
@@ -2417,10 +2407,11 @@ def dom_prepare_child_element(dom_element, tag_name, id_candidate):
     """
     Commandline options: no options
     """
-    child_elements = []
-    for child in dom_element.childNodes:
-        if child.nodeType == child.ELEMENT_NODE and child.tagName == tag_name:
-            child_elements.append(child)
+    child_elements = [
+        child
+        for child in dom_element.childNodes
+        if child.nodeType == child.ELEMENT_NODE and child.tagName == tag_name
+    ]
 
     if not child_elements:
         dom = dom_element.ownerDocument
@@ -2448,7 +2439,7 @@ def dom_update_nvset(dom_element, nvpair_tuples, tag_name, id_candidate):
         return
 
     only_removing = True
-    for name, value in nvpair_tuples:
+    for _, value in nvpair_tuples:
         if value != "":
             only_removing = False
             break
@@ -2685,11 +2676,11 @@ def get_middleware_factory():
     return middleware.create_middleware_factory(
         cib=middleware.cib(filename if usefile else None, touch_cib_file),
         corosync_conf_existing=middleware.corosync_conf_existing(
-            pcs_options.get("--corosync_conf", None)
+            pcs_options.get("--corosync_conf")
         ),
         booth_conf=pcs.cli.booth.env.middleware_config(
-            pcs_options.get("--booth-conf", None),
-            pcs_options.get("--booth-key", None),
+            pcs_options.get("--booth-conf"),
+            pcs_options.get("--booth-key"),
         ),
     )
 

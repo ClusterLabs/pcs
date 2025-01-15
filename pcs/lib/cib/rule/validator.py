@@ -56,7 +56,7 @@ class Validator:
             )
         return report_list
 
-    def _call_validate(self, expr: RuleExprPart) -> reports.ReportItemList:
+    def _call_validate(self, expr: RuleExprPart) -> reports.ReportItemList:  # noqa: PLR0911
         # pylint: disable=too-many-return-statements
         if isinstance(expr, BoolExpr):
             return self._validate_bool_expr(expr)

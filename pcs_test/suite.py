@@ -40,7 +40,7 @@ def prepare_test_name(test_name):
 
 
 def tests_from_suite(
-    test_candidate: Union[unittest.TestCase, unittest.TestSuite]
+    test_candidate: Union[unittest.TestCase, unittest.TestSuite],
 ) -> list[str]:
     if isinstance(test_candidate, unittest.TestCase):
         return [test_candidate.id()]
@@ -88,13 +88,11 @@ def discover_tests(
 
 
 def tier1_fixtures_needed(test_list: list[str]) -> set[str]:
-    fixture_modules = set(
-        [
-            "pcs_test.tier1.legacy.test_constraints",
-            "pcs_test.tier1.legacy.test_resource",
-            "pcs_test.tier1.legacy.test_stonith",
-        ]
-    )
+    fixture_modules = {
+        "pcs_test.tier1.legacy.test_constraints",
+        "pcs_test.tier1.legacy.test_resource",
+        "pcs_test.tier1.legacy.test_stonith",
+    }
     fixtures_needed = set()
     for test_name in test_list:
         for module in fixture_modules:

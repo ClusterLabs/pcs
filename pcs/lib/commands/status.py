@@ -1,3 +1,4 @@
+import contextlib
 import os.path
 from typing import (
     Iterable,
@@ -94,7 +95,7 @@ def resources_status(env: LibraryEnvironment) -> ResourcesStatusDto:
     return dto
 
 
-def full_cluster_status_plaintext(
+def full_cluster_status_plaintext(  # noqa: PLR0912, PLR0915
     env: LibraryEnvironment,
     hide_inactive_resources: bool = False,
     verbose: bool = False,
@@ -155,12 +156,10 @@ def full_cluster_status_plaintext(
     # get extra info if live
     if live:
         service_manager = env.service_manager
-        try:
+        with contextlib.suppress(LibraryError):
             is_sbd_running = service_manager.is_running(
                 get_sbd_service_name(service_manager)
             )
-        except LibraryError:
-            pass
         local_services_status = _get_local_services_status(service_manager)
         if verbose and corosync_conf:
             node_name_list, node_names_report_list = get_existing_nodes_names(
@@ -279,7 +278,7 @@ def _move_constraints_warnings(
 
     location_constraints, _ = get_all_as_dtos(constraint_el, rule_evaluator)
 
-    resource_ids = set(
+    resource_ids = {
         constraint_dto.resource_id
         for constraint_dto in location_constraints
         if constraint_dto.resource_id
@@ -291,7 +290,7 @@ def _move_constraints_warnings(
                 for rule in constraint_dto.attributes.rules
             )
         )
-    )
+    }
 
     if resource_ids:
         warning_list.append(
@@ -343,7 +342,7 @@ def _get_local_services_status(
     ]
     service_status_list = []
     for service, display_always in service_def:
-        try:
+        with contextlib.suppress(LibraryError):
             service_status_list.append(
                 _ServiceStatus(
                     service,
@@ -352,8 +351,6 @@ def _get_local_services_status(
                     service_manager.is_running(service),
                 )
             )
-        except LibraryError:
-            pass
     return service_status_list
 
 

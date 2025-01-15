@@ -328,7 +328,7 @@ class ValidateMoveBanClearMixin:
             <clone id="R-clone">
                 <primitive id="R" />
                 <meta_attributes>
-                    <nvpair name="promotable" value="{'true' if promotable else 'false'}" />
+                    <nvpair name="promotable" value="{"true" if promotable else "false"}" />
                 </meta_attributes>
             </clone>
             """
@@ -343,7 +343,7 @@ class ValidateMoveBanClearMixin:
                     <primitive id="R" />
                 </group>
                 <meta_attributes>
-                    <nvpair name="promotable" value="{'true' if promotable else 'false'}" />
+                    <nvpair name="promotable" value="{"true" if promotable else "false"}" />
                 </meta_attributes>
             </clone>
             """
@@ -772,6 +772,4 @@ class ValidateBan(ValidateMoveBanClearMixin, TestCase):
 
 class ValidateUnmoveUnban(ValidateMoveBanClearMixin, TestCase):
     validate = staticmethod(validations.validate_unmove_unban)
-    report_code_bad_master = (
-        reports.codes.CANNOT_UNMOVE_UNBAN_RESOURCE_MASTER_RESOURCE_NOT_PROMOTABLE
-    )
+    report_code_bad_master = reports.codes.CANNOT_UNMOVE_UNBAN_RESOURCE_MASTER_RESOURCE_NOT_PROMOTABLE

@@ -642,7 +642,7 @@ def _create_report_msg_map() -> Dict[str, type]:
     for report_msg_cls in get_all_subclasses(CliReportMessageCustom):
         # pylint: disable=protected-access
         code = (
-            get_type_hints(report_msg_cls)
+            get_type_hints(report_msg_cls)  # noqa: SLF001
             .get("_obj", item.ReportItemMessage)
             ._code
         )

@@ -133,9 +133,7 @@ FIXTURE_BUNDLE_RESOURCE = """
         <docker image="pcs:test" />
         {}
     </bundle>
-""".format(
-    FIXTURE_DUMMY
-)
+""".format(FIXTURE_DUMMY)
 
 
 def fixture_resources_xml(*resources_xml_list):
@@ -143,9 +141,7 @@ def fixture_resources_xml(*resources_xml_list):
         <resources>
             {0}
         </resources>
-    """.format(
-        "\n".join(resources_xml_list)
-    )
+    """.format("\n".join(resources_xml_list))
 
 
 def fixture_clone(clone_id, primitive_id, promotable=False):
@@ -195,7 +191,7 @@ def fixture_clone_stonith_msg(forced=False, group=False):
     ).format(
         severity="Warning" if forced else "Error",
         group="Group 'Group' contains stonith resource. " if group else "",
-        use_force="\n" if forced else ", use " "--force to override\n",
+        use_force="\n" if forced else ", use --force to override\n",
     )
 
 

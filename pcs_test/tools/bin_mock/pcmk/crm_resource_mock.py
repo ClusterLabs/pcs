@@ -25,7 +25,8 @@ def get_arg_values(argv, name):
     return values
 
 
-def main():
+def main():  # noqa: PLR0912
+    # pylint: disable=too-many-branches
     argv = sys.argv[1:]
     if not argv:
         raise AssertionError()

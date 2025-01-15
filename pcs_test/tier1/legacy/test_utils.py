@@ -87,7 +87,7 @@ class UtilsTest(TestCase):
         resources.parentNode.replaceChild(new_resources, resources)
         return cib_dom
 
-    def test_dom_get_resources(self):
+    def test_dom_get_resources(self):  # noqa: PLR0915
         # pylint: disable=too-many-statements
         def test_dom_get(method, dom, ok_ids, bad_ids):
             for element_id in ok_ids:
@@ -127,42 +127,38 @@ class UtilsTest(TestCase):
         )
 
         cib_dom = self.get_cib_resources()
-        all_ids = set(
-            [
-                "none",
-                "myResource",
-                "myClone",
-                "myClonedResource",
-                "myUniqueClone",
-                "myUniqueClonedResource",
-                "myMaster",
-                "myMasteredResource",
-                "myGroup",
-                "myGroupedResource",
-                "myGroupClone",
-                "myClonedGroup",
-                "myClonedGroupedResource",
-                "myGroupMaster",
-                "myMasteredGroup",
-                "myMasteredGroupedResource",
-                "myBundledResource",
-                "myBundle",
-                "myEmptyBundle",
-            ]
-        )
+        all_ids = {
+            "none",
+            "myResource",
+            "myClone",
+            "myClonedResource",
+            "myUniqueClone",
+            "myUniqueClonedResource",
+            "myMaster",
+            "myMasteredResource",
+            "myGroup",
+            "myGroupedResource",
+            "myGroupClone",
+            "myClonedGroup",
+            "myClonedGroupedResource",
+            "myGroupMaster",
+            "myMasteredGroup",
+            "myMasteredGroupedResource",
+            "myBundledResource",
+            "myBundle",
+            "myEmptyBundle",
+        }
 
-        resource_ids = set(
-            [
-                "myResource",
-                "myClonedResource",
-                "myUniqueClonedResource",
-                "myGroupedResource",
-                "myMasteredResource",
-                "myClonedGroupedResource",
-                "myMasteredGroupedResource",
-                "myBundledResource",
-            ]
-        )
+        resource_ids = {
+            "myResource",
+            "myClonedResource",
+            "myUniqueClonedResource",
+            "myGroupedResource",
+            "myMasteredResource",
+            "myClonedGroupedResource",
+            "myMasteredGroupedResource",
+            "myBundledResource",
+        }
         test_dom_get(
             utils.dom_get_resource,
             cib_dom,
@@ -170,13 +166,11 @@ class UtilsTest(TestCase):
             all_ids - resource_ids,
         )
 
-        cloned_ids = set(
-            [
-                "myClonedResource",
-                "myUniqueClonedResource",
-                "myClonedGroupedResource",
-            ]
-        )
+        cloned_ids = {
+            "myClonedResource",
+            "myUniqueClonedResource",
+            "myClonedGroupedResource",
+        }
         test_dom_get(
             utils.dom_get_resource_clone,
             cib_dom,
@@ -184,7 +178,7 @@ class UtilsTest(TestCase):
             all_ids - cloned_ids,
         )
 
-        mastered_ids = set(["myMasteredResource", "myMasteredGroupedResource"])
+        mastered_ids = {"myMasteredResource", "myMasteredGroupedResource"}
         test_dom_get(
             utils.dom_get_resource_masterslave,
             cib_dom,
@@ -192,12 +186,12 @@ class UtilsTest(TestCase):
             all_ids - mastered_ids,
         )
 
-        group_ids = set(["myGroup", "myClonedGroup", "myMasteredGroup"])
+        group_ids = {"myGroup", "myClonedGroup", "myMasteredGroup"}
         test_dom_get(
             utils.dom_get_group, cib_dom, group_ids, all_ids - group_ids
         )
 
-        cloned_group_ids = set(["myClonedGroup"])
+        cloned_group_ids = {"myClonedGroup"}
         test_dom_get(
             utils.dom_get_group_clone,
             cib_dom,
@@ -205,12 +199,12 @@ class UtilsTest(TestCase):
             all_ids - cloned_group_ids,
         )
 
-        clone_ids = set(["myClone", "myUniqueClone", "myGroupClone"])
+        clone_ids = {"myClone", "myUniqueClone", "myGroupClone"}
         test_dom_get(
             utils.dom_get_clone, cib_dom, clone_ids, all_ids - clone_ids
         )
 
-        mastered_group_ids = set(["myMasteredGroup"])
+        mastered_group_ids = {"myMasteredGroup"}
         test_dom_get(
             utils.dom_get_group_masterslave,
             cib_dom,
@@ -218,12 +212,12 @@ class UtilsTest(TestCase):
             all_ids - mastered_group_ids,
         )
 
-        master_ids = set(["myMaster", "myGroupMaster"])
+        master_ids = {"myMaster", "myGroupMaster"}
         test_dom_get(
             utils.dom_get_master, cib_dom, master_ids, all_ids - master_ids
         )
 
-        bundle_ids = set(["myBundle", "myEmptyBundle"])
+        bundle_ids = {"myBundle", "myEmptyBundle"}
         test_dom_get(
             utils.dom_get_bundle, cib_dom, bundle_ids, all_ids - bundle_ids
         )
@@ -967,8 +961,7 @@ class UtilsTest(TestCase):
         self.assertEqual(
             utils.resource_running_on("myGroup", status),
             {
-                "message": "Resource 'myGroup' is running on node "
-                "rh70-node2.",
+                "message": "Resource 'myGroup' is running on node rh70-node2.",
                 "is_running": True,
             },
         )

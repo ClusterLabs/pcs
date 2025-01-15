@@ -100,9 +100,7 @@ class FullClusterStatusPlaintextBase(TestCase):
                     />
                 </cluster_property_set>
             </crm_config>
-            """.format(
-            name=name
-        )
+            """.format(name=name)
 
     def _fixture_config_live_minimal(self):
         (
@@ -142,7 +140,7 @@ class FullClusterStatusPlaintextBase(TestCase):
             )
         )
 
-    def _fixture_config_local_daemons(
+    def _fixture_config_local_daemons(  # noqa: PLR0913
         self,
         *,
         corosync_enabled=True,

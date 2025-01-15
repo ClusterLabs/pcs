@@ -121,7 +121,7 @@ def _find_primitives_by_agent(
     )
 
 
-def create(
+def create(  # noqa: PLR0913
     report_processor: reports.ReportProcessor,
     cmd_runner: CommandRunner,
     resources_section: _Element,
@@ -171,11 +171,10 @@ def create(
     if instance_attributes is None:
         instance_attributes = {}
 
-    filtered_raw_operation_list = []
-    for op in raw_operation_list:
-        filtered_raw_operation_list.append(
-            {name: "" if value is None else value for name, value in op.items()}
-        )
+    filtered_raw_operation_list = [
+        {name: "" if value is None else value for name, value in op.items()}
+        for op in raw_operation_list
+    ]
 
     if does_id_exist(resources_section, resource_id):
         raise LibraryError(
@@ -244,7 +243,7 @@ def create(
     )
 
 
-def append_new(
+def append_new(  # noqa: PLR0913
     resources_section,
     id_provider,
     resource_id,

@@ -262,8 +262,8 @@ class ConfigFacade(FacadeInterface):
             else:
                 linknumber_missing.append(link)
 
-        for link in linknumber_missing:
-            link = dict(link)
+        for link_missing_linknumber in linknumber_missing:
+            link = dict(link_missing_linknumber)
             try:
                 link["linknumber"] = str(available_link_numbers.pop(0))
             except IndexError as e:
@@ -398,18 +398,17 @@ class ConfigFacade(FacadeInterface):
             del options_without_linknumber["linknumber"]
         # change options
         if options_without_linknumber:
-            target_interface_section_list = []
-            for totem_section in self.config.get_sections("totem"):
-                for interface_section in totem_section.get_sections(
-                    "interface"
-                ):
-                    if (
-                        linknumber
-                        ==
-                        # if no linknumber is set, corosync treats it as 0
-                        interface_section.get_attribute_value("linknumber", "0")
-                    ):
-                        target_interface_section_list.append(interface_section)
+            target_interface_section_list = [
+                interface_section
+                for totem_section in self.config.get_sections("totem")
+                for interface_section in totem_section.get_sections("interface")
+                if (
+                    linknumber
+                    ==
+                    # if no linknumber is set, corosync treats it as 0
+                    interface_section.get_attribute_value("linknumber", "0")
+                )
+            ]
             self._set_link_options(
                 options_without_linknumber,
                 interface_section_list=target_interface_section_list,
@@ -680,9 +679,13 @@ class ConfigFacade(FacadeInterface):
         heuristics_options: dict[str, str] = {}
         for quorum in self.config.get_sections("quorum"):
             for device in quorum.get_sections("device"):
-                for name, value in device.get_attributes():
-                    if name != "model":
-                        generic_options[name] = value
+                generic_options.update(
+                    {
+                        name: value
+                        for name, value in device.get_attributes()
+                        if name != "model"
+                    }
+                )
                 for subsection in device.get_sections():
                     if subsection.name == "heuristics":
                         heuristics_options.update(subsection.get_attributes())
@@ -952,13 +955,12 @@ class ConfigFacade(FacadeInterface):
                     result["broadcast"] = ""
                 else:
                     del result["broadcast"]
+            # When displaying config to users, do the opposite
+            # transformation: only "yes" is allowed.
+            elif result["broadcast"] == "yes":
+                result["broadcast"] = "1"
             else:
-                # When displaying config to users, do the opposite
-                # transformation: only "yes" is allowed.
-                if result["broadcast"] == "yes":
-                    result["broadcast"] = "1"
-                else:
-                    del result["broadcast"]
+                del result["broadcast"]
 
         return result
 

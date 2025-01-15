@@ -162,16 +162,14 @@ def get_nvset(nvset):
 
     nvset -- nvset element
     """
-    nvpair_list = []
-    for nvpair in nvset.findall("./nvpair"):
-        nvpair_list.append(
-            {
-                "id": nvpair.get("id"),
-                "name": nvpair.get("name"),
-                "value": nvpair.get("value", ""),
-            }
-        )
-    return nvpair_list
+    return [
+        {
+            "id": nvpair.get("id"),
+            "name": nvpair.get("name"),
+            "value": nvpair.get("value", ""),
+        }
+        for nvpair in nvset.findall("./nvpair")
+    ]
 
 
 @overload

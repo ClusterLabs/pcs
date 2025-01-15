@@ -25,9 +25,7 @@ AGENT_NAME = ResourceAgentName("ocf", "pacemaker", "remote")
 
 _IS_REMOTE_AGENT_XPATH_SNIPPET = """
     @class="{0}" and @provider="{1}" and @type="{2}"
-""".format(
-    AGENT_NAME.standard, AGENT_NAME.provider, AGENT_NAME.type
-)
+""".format(AGENT_NAME.standard, AGENT_NAME.provider, AGENT_NAME.type)
 
 _HAS_SERVER_XPATH_SNIPPET = """
     instance_attributes/nvpair[
@@ -203,7 +201,7 @@ def _prepare_instance_attributes(
     return enriched_instance_attributes
 
 
-def create(
+def create(  # noqa: PLR0913
     report_processor: reports.ReportProcessor,
     cmd_runner: CommandRunner,
     resource_agent_facade: ResourceAgentFacade,

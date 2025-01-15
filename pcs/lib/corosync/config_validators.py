@@ -92,7 +92,7 @@ class _ClusterNameGfs2Validator(validate.ValueValidator):
         return []
 
 
-def create(
+def create(  # noqa: PLR0912, PLR0915
     cluster_name: str,
     # TODO change to DTO, needs new validator
     node_list: Iterable[Mapping[str, Any]],
@@ -402,7 +402,7 @@ def _report_unresolvable_addresses_if_any(
     ]
 
 
-def add_nodes(
+def add_nodes(  # noqa: PLR0912, PLR0915
     # TODO change to DTO, needs new validator
     node_list: Iterable[Mapping[str, Any]],
     coro_existing_nodes: Iterable[CorosyncNode],
@@ -622,11 +622,11 @@ def remove_nodes(
     quorum_device_settings -- model, generic and heuristic qdevice options
     """
     existing_node_names = [node.name for node in existing_nodes]
-    report_items = []
-    for not_found_node in set(nodes_names_to_remove) - set(existing_node_names):
-        report_items.append(
-            ReportItem.error(reports.messages.NodeNotFound(not_found_node))
-        )
+    report_items = [
+        ReportItem.error(reports.messages.NodeNotFound(not_found_node))
+        for not_found_node in set(nodes_names_to_remove)
+        - set(existing_node_names)
+    ]
 
     if not set(existing_node_names) - set(nodes_names_to_remove):
         report_items.append(
@@ -637,20 +637,20 @@ def remove_nodes(
         qdevice_model_options, _, _ = quorum_device_settings
         tie_breaker_nodeid = qdevice_model_options.get("tie_breaker")
         if tie_breaker_nodeid not in [None, "lowest", "highest"]:
-            for node in existing_nodes:
+            report_items.extend(
+                ReportItem.error(
+                    reports.messages.NodeUsedAsTieBreaker(
+                        node.name, node.nodeid
+                    )
+                )
+                for node in existing_nodes
                 if (
                     node.name in nodes_names_to_remove
                     and
                     # "4" != 4, convert ids to string to detect a match for sure
                     str(node.nodeid) == str(tie_breaker_nodeid)
-                ):
-                    report_items.append(
-                        ReportItem.error(
-                            reports.messages.NodeUsedAsTieBreaker(
-                                node.name, node.nodeid
-                            )
-                        )
-                    )
+                )
+            )
 
     return report_items
 
@@ -861,9 +861,9 @@ def _get_link_options_validators_knet(
     )
 
 
-def _get_link_options_validators_knet_relations() -> (
-    list[validate.ValidatorInterface]
-):
+def _get_link_options_validators_knet_relations() -> list[
+    validate.ValidatorInterface
+]:
     return [
         validate.DependsOnOption(
             ["ping_interval"],
@@ -912,9 +912,7 @@ def _update_link_options_knet(
         )
     ).validate(new_options) + validate.ValidatorAll(
         _get_link_options_validators_knet_relations()
-    ).validate(
-        after_update
-    )
+    ).validate(after_update)
 
 
 def add_link(
@@ -1140,7 +1138,7 @@ def remove_links(
     return report_items
 
 
-def update_link(
+def update_link(  # noqa: PLR0912, PLR0913
     linknumber: str,
     node_addr_map: Mapping[str, str],
     link_options: Mapping[str, str],
@@ -2039,7 +2037,7 @@ def _get_qdevice_generic_options_validators(
 
 
 def _split_heuristics_exec_options(
-    options: Mapping[str, str]
+    options: Mapping[str, str],
 ) -> tuple[dict[str, str], dict[str, str]]:
     options_exec = {}
     options_nonexec = {}

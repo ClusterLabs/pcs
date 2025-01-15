@@ -327,6 +327,7 @@ def uniquify_operations_intervals(
     new_operations = []
     for operation in operation_list:
         new_interval = get_unique_interval(operation.name, operation.interval)
+        new_operation = operation
         if new_interval != operation.interval:
             report_list.append(
                 ReportItem.warning(
@@ -337,8 +338,8 @@ def uniquify_operations_intervals(
                     )
                 )
             )
-            operation = dt_replace(operation, interval=new_interval)
-        new_operations.append(operation)
+            new_operation = dt_replace(operation, interval=new_interval)
+        new_operations.append(new_operation)
     return report_list, new_operations
 
 
@@ -406,11 +407,11 @@ def append_new_operation(operations_element, id_provider, options):
     IdProvider id_provider -- elements' ids generator
     dict options are attributes of operation
     """
-    attribute_map = dict(
-        (key, value)
+    attribute_map = {
+        key: value
         for key, value in options.items()
         if key not in OPERATION_NVPAIR_ATTRIBUTES
-    )
+    }
     if "id" in attribute_map:
         if does_id_exist(operations_element, attribute_map["id"]):
             raise LibraryError(
@@ -434,11 +435,11 @@ def append_new_operation(operations_element, id_provider, options):
         "op",
         attribute_map,
     )
-    nvpair_attribute_map = dict(
-        (key, value)
+    nvpair_attribute_map = {
+        key: value
         for key, value in options.items()
         if key in OPERATION_NVPAIR_ATTRIBUTES
-    )
+    }
 
     if nvpair_attribute_map:
         append_new_instance_attributes(

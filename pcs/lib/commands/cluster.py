@@ -69,16 +69,15 @@ from pcs.lib.communication.sbd import (
     EnableSbdService,
     SetSbdConfig,
 )
-from pcs.lib.communication.tools import AllSameDataMixin
+from pcs.lib.communication.tools import AllSameDataMixin, run_and_raise
 from pcs.lib.communication.tools import run as run_com
-from pcs.lib.communication.tools import run_and_raise
 from pcs.lib.corosync import (
     config_facade,
     config_parser,
     config_validators,
+    qdevice_net,
 )
 from pcs.lib.corosync import constants as corosync_constants
-from pcs.lib.corosync import qdevice_net
 from pcs.lib.env import (
     LibraryEnvironment,
     WaitType,
@@ -125,7 +124,7 @@ def node_clear(
         raise LibraryError()
 
     if node_name in current_nodes:
-        if env.report_processor.report(
+        env.report_processor.report(
             ReportItem(
                 severity=reports.item.get_severity(
                     report_codes.FORCE,
@@ -133,7 +132,8 @@ def node_clear(
                 ),
                 message=reports.messages.NodeToClearIsStillInCluster(node_name),
             )
-        ).has_errors:
+        )
+        if env.report_processor.has_errors:
             raise LibraryError()
 
     remove_node(env.cmd_runner(), node_name)
@@ -183,7 +183,7 @@ def verify(env: LibraryEnvironment, verbose=False):
         raise LibraryError()
 
 
-def setup(
+def setup(  # noqa:  PLR0913, PLR0915
     env: LibraryEnvironment,
     cluster_name: str,
     nodes: Sequence[Mapping[str, Any]],
@@ -445,7 +445,7 @@ def setup(
         )
 
 
-def setup_local(
+def setup_local(  # noqa: PLR0913
     env: LibraryEnvironment,
     cluster_name: str,
     nodes: Sequence[Mapping[str, Any]],
@@ -571,7 +571,7 @@ def setup_local(
     )
 
 
-def _validate_create_corosync_conf(
+def _validate_create_corosync_conf(  # noqa: PLR0913
     cluster_name: str,
     nodes: Sequence[Mapping[str, Any]],
     transport_type: str,
@@ -632,7 +632,7 @@ def _validate_create_corosync_conf(
     )
 
 
-def _create_corosync_conf(
+def _create_corosync_conf(  # noqa: PLR0913
     cluster_name: str,
     nodes: Sequence[Mapping[str, Any]],
     transport_type: str,
@@ -835,7 +835,7 @@ def get_corosync_conf_struct(env: LibraryEnvironment) -> CorosyncConfDto:
         ) from e
 
 
-def add_nodes(
+def add_nodes(  # noqa: PLR0912, PLR0915
     env: LibraryEnvironment,
     nodes,
     wait=False,
@@ -1439,7 +1439,7 @@ def _start_cluster(
         communicator_factory.get_communicator(request_timeout=timeout), com_cmd
     )
     if wait_timeout is not False:
-        if report_processor.report_list(
+        report_processor.report_list(
             _wait_for_pacemaker_to_start(
                 communicator_factory.get_communicator(),
                 report_processor,
@@ -1447,7 +1447,8 @@ def _start_cluster(
                 # wait_timeout is either None or a timeout
                 timeout=wait_timeout,
             )
-        ).has_errors:
+        )
+        if report_processor.has_errors:
             raise LibraryError()
 
 
@@ -1714,7 +1715,7 @@ def _verify_corosync_conf(corosync_conf_facade):
         )
 
 
-def remove_nodes(
+def remove_nodes(  # noqa: PLR0912, PLR0915
     env: LibraryEnvironment,
     node_list,
     force_flags: Collection[reports.types.ForceCode] = (),
@@ -2208,11 +2209,12 @@ def corosync_authkey_change(
     )
 
     if not online_cluster_target_list:
-        if report_processor.report(
+        report_processor.report(
             ReportItem.error(
                 reports.messages.UnableToPerformOperationOnAnyNode()
             )
-        ).has_errors:
+        )
+        if report_processor.has_errors:
             raise LibraryError()
 
     com_cmd = DistributeFilesWithoutForces(

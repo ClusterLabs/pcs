@@ -2,9 +2,8 @@ from textwrap import dedent
 
 from pcs_test.tier1.cib_resource.common import ResourceTest
 from pcs_test.tools.bin_mock import get_mock_settings
-from pcs_test.tools.misc import ParametrizedTestMetaClass
+from pcs_test.tools.misc import ParametrizedTestMetaClass, write_data_to_tmpfile
 from pcs_test.tools.misc import get_test_resource as rc
-from pcs_test.tools.misc import write_data_to_tmpfile
 
 ERRORS_HAVE_OCCURRED = (
     "Error: Errors have occurred, therefore pcs is unable to continue\n"

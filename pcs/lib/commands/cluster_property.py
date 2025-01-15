@@ -24,9 +24,9 @@ from pcs.lib.resource_agent import (
     ResourceAgentError,
     ResourceAgentFacade,
     ResourceAgentMetadata,
+    resource_agent_error_to_report_item,
 )
 from pcs.lib.resource_agent import const as ra_const
-from pcs.lib.resource_agent import resource_agent_error_to_report_item
 from pcs.lib.resource_agent.facade import ResourceAgentFacadeFactory
 
 

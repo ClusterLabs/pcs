@@ -41,9 +41,7 @@ class Section:
         return not self._attr_list and not self._section_list
 
     def export(self, indent: str = "    ") -> str:
-        lines = []
-        for attr in self._attr_list:
-            lines.append("{0}: {1}".format(*attr))
+        lines = ["{0}: {1}".format(*attr) for attr in self._attr_list]
         if self._attr_list and self._section_list:
             lines.append("")
         section_count = len(self._section_list)
@@ -128,7 +126,7 @@ class Section:
             section.parent.del_section(section)
         # here we are editing obj's _parent attribute of the same class
         # pylint: disable=protected-access
-        section._parent = self
+        section._parent = self  # noqa: SLF001
         self._section_list.append(section)
         return self
 
@@ -138,7 +136,7 @@ class Section:
         # thanks to remove raising a ValueError in that case
         # here we are editing obj's _parent attribute of the same class
         # pylint: disable=protected-access
-        section._parent = None
+        section._parent = None  # noqa: SLF001
         return self
 
     def __str__(self) -> str:
@@ -160,6 +158,7 @@ class Parser(ParserInterface):
         force_code: Optional[reports.types.ForceCode],
         is_forced_or_warning: bool,
     ) -> reports.ReportItemList:
+        del file_type_code, file_path, force_code, is_forced_or_warning
         # TODO switch to new exceptions / reports and do not ignore input
         # arguments of the function
         return [

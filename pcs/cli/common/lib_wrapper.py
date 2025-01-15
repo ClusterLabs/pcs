@@ -94,14 +94,14 @@ def bind(cli_env, run_with_middleware, run_library_command):
 
 def bind_all(env, run_with_middleware, dictionary):
     return wrapper(
-        dict(
-            (exposed_fn, bind(env, run_with_middleware, library_fn))
+        {
+            exposed_fn: bind(env, run_with_middleware, library_fn)
             for exposed_fn, library_fn in dictionary.items()
-        )
+        }
     )
 
 
-def load_module(env, middleware_factory, name):
+def load_module(env, middleware_factory, name):  # noqa: PLR0911, PLR0912
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-return-statements
     if name == "acl":

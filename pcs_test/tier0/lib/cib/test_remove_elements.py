@@ -22,6 +22,14 @@ from pcs_test.tools.fixture_crm_mon import complete_state
 from pcs_test.tools.misc import read_test_resource
 from pcs_test.tools.xml import etree_to_str
 
+EXPECTED_TYPES_FOR_REMOVE = ["constraint", "location rule", "resource"]
+
+_DEFAULT_DEPENDANT_ELEMENTS = lib.DependantElements({})
+_DEFAULT_ELEMENT_REFERENCES = lib.ElementReferences({}, {})
+_DEFAULT_UNSUPPORTED_ELEMENTS = lib.UnsupportedElements(
+    {}, EXPECTED_TYPES_FOR_REMOVE
+)
+
 
 def _constraints(*argv):
     return f"<constraints>{''.join(argv)}</constraints>"
@@ -55,8 +63,6 @@ FIXTURE_TWO_LOC_CONSTRAINTS_WITH_RULES = _constraints(
     FIXTURE_LOC_CONSTRAINT_WITH_1_RULE,
     FIXTURE_LOC_CONSTRAINT_WITH_2_RULES,
 )
-
-EXPECTED_TYPES_FOR_REMOVE = ["constraint", "location rule", "resource"]
 
 
 def fixture_primitive_to_disable(cib: _Element) -> list[_Element]:
@@ -108,14 +114,10 @@ class ElementsToRemoveFindElements(TestCase, GetCibMixin):
         elements_to_remove: lib.ElementsToRemove,
         ids_to_remove: set[str],
         resources_to_remove: Optional[list[etree._Element]] = None,
-        dependant_elements: lib.DependantElements = lib.DependantElements({}),
-        element_references: lib.ElementReferences = lib.ElementReferences(
-            {}, {}
-        ),
+        dependant_elements: lib.DependantElements = _DEFAULT_DEPENDANT_ELEMENTS,
+        element_references: lib.ElementReferences = _DEFAULT_ELEMENT_REFERENCES,
         missing_ids: Optional[set[str]] = None,
-        unsupported_elements: lib.UnsupportedElements = lib.UnsupportedElements(
-            {}, EXPECTED_TYPES_FOR_REMOVE
-        ),
+        unsupported_elements: lib.UnsupportedElements = _DEFAULT_UNSUPPORTED_ELEMENTS,
     ):
         self.assertEqual(elements_to_remove.ids_to_remove, ids_to_remove)
         self.assertEqual(

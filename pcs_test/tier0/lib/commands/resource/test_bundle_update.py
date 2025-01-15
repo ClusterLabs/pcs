@@ -36,9 +36,7 @@ def fixture_resources_minimal(container_type="docker"):
                 <{container_type} image="pcs:test" />
             </bundle>
         </resources>
-    """.format(
-        container_type=container_type
-    )
+    """.format(container_type=container_type)
 
 
 class Basics(TestCase):
@@ -126,9 +124,7 @@ class ContainerParametrized(TestCase):
                     <{container_type} image="pcs:test" extra="option" />
                 </bundle>
             </resources>
-        """.format(
-            container_type=self.container_type
-        )
+        """.format(container_type=self.container_type)
 
     @property
     def fixture_cib_masters(self):
@@ -138,9 +134,7 @@ class ContainerParametrized(TestCase):
                     <{container_type} image="pcs:test" masters="2" />
                 </bundle>
             </resources>
-        """.format(
-            container_type=self.container_type
-        )
+        """.format(container_type=self.container_type)
 
     @property
     def fixture_cib_promoted_max(self):
@@ -150,9 +144,7 @@ class ContainerParametrized(TestCase):
                     <{container_type} image="pcs:test" promoted-max="3" />
                 </bundle>
             </resources>
-        """.format(
-            container_type=self.container_type
-        )
+        """.format(container_type=self.container_type)
 
     fixture_report_deprecated_masters = (
         severities.DEPRECATION,
@@ -179,9 +171,7 @@ class ContainerParametrized(TestCase):
                             />
                         </bundle>
                     </resources>
-                """.format(
-                    container_type=self.container_type
-                )
+                """.format(container_type=self.container_type)
             ).env.push_cib(
                 resources="""
                     <resources>
@@ -190,9 +180,7 @@ class ContainerParametrized(TestCase):
                             />
                         </bundle>
                     </resources>
-                """.format(
-                    container_type=self.container_type
-                )
+                """.format(container_type=self.container_type)
             )
         )
         resource.bundle_update(

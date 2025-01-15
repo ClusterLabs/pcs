@@ -121,7 +121,7 @@ def options_fixture(options, template=OPTION_TEMPLATE):
     )
 
 
-def corosync_conf_fixture(
+def corosync_conf_fixture(  # noqa: PLR0913
     node_addrs,
     *,
     transport_type="knet",
@@ -166,9 +166,10 @@ def corosync_conf_fixture(
             link["linknumber"] = links_numbers[i]
             link_translated = {}
             for name, value in link.items():
+                knet_name = name
                 if name in knet_options:
-                    name = f"knet_{name}"
-                link_translated[name] = value
+                    knet_name = f"knet_{name}"
+                link_translated[knet_name] = value
             link_list[i] = link_translated
 
         interface_list = "".join(
@@ -1449,9 +1450,9 @@ class Validation(TestCase):
                     min_count=1,
                     max_count=8,
                     node_name=name,
-                    node_index=id,
+                    node_index=id_,
                 )
-                for id, name in enumerate(NODE_LIST, 1)
+                for id_, name in enumerate(NODE_LIST, 1)
             ]
         )
 

@@ -74,16 +74,14 @@ class ColorTextTestResult(VanillaTextTestResult):
         return [self._format.test_name(test) for test, _ in self.errors]
 
     def get_errors(self) -> list[str]:
-        line_list = self._format.error_list(
+        return self._format.error_list(
             "ERROR", self.errors, self.descriptions, self.traceback_highlight
         )
-        return line_list
 
     def get_failures(self) -> list[str]:
-        line_list = self._format.error_list(
+        return self._format.error_list(
             "FAIL", self.failures, self.descriptions, self.traceback_highlight
         )
-        return line_list
 
     def get_skips(self) -> dict[str, int]:
         return {

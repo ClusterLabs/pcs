@@ -1253,7 +1253,7 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
         report_list_success = self.fixture_reports_success()
         expected_reports = fixture.ReportSequenceBuilder(
             report_list_success[
-                :f"enable_qdevice_done_on_{self.cluster_nodes[0]}"
+                : f"enable_qdevice_done_on_{self.cluster_nodes[0]}"
             ]
         )
         for node in self.cluster_nodes:
@@ -1299,9 +1299,7 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
                             mode: %mode%
                         }
                     }
-                """.replace(
-                    "%mode%", mode
-                )
+                """.replace("%mode%", mode)
             ),
         )
 
@@ -1704,7 +1702,7 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
         self.env_assist.assert_reports(expected_reports)
 
     def test_get_ca_cert_error_communication(self):
-        dummy_tmp_file_mock_calls = self.fixture_config_success()
+        self.fixture_config_success()
         self.config.trim_before(
             "http.corosync.qdevice_net_get_ca_cert_requests"
         )
@@ -1734,7 +1732,7 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
         self.env_assist.assert_reports(
             fixture.ReportSequenceBuilder(
                 self.fixture_reports_success()[
-                    :f"cert_accepted_by_{self.cluster_nodes[0]}"
+                    : f"cert_accepted_by_{self.cluster_nodes[0]}"
                 ]
             ).error(
                 reports.codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
@@ -1746,7 +1744,7 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
         )
 
     def test_get_ca_cert_error_decode_certificate(self):
-        dummy_tmp_file_mock_calls = self.fixture_config_success()
+        self.fixture_config_success()
         self.config.trim_before(
             "http.corosync.qdevice_net_get_ca_cert_requests"
         )
@@ -1768,7 +1766,7 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
         self.env_assist.assert_reports(
             fixture.ReportSequenceBuilder(
                 self.fixture_reports_success()[
-                    :f"cert_accepted_by_{self.cluster_nodes[0]}"
+                    : f"cert_accepted_by_{self.cluster_nodes[0]}"
                 ]
             ).error(
                 reports.codes.INVALID_RESPONSE_FORMAT,
@@ -1778,7 +1776,7 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
         )
 
     def test_error_client_setup(self):
-        dummy_tmp_file_mock_calls = self.fixture_config_success()
+        self.fixture_config_success()
         self.config.trim_before(
             "http.corosync.qdevice_net_client_setup_requests"
         )
@@ -1808,7 +1806,7 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
         self.env_assist.assert_reports(
             fixture.ReportSequenceBuilder(
                 self.fixture_reports_success()[
-                    :f"cert_accepted_by_{self.cluster_nodes[0]}"
+                    : f"cert_accepted_by_{self.cluster_nodes[0]}"
                 ]
             ).error(
                 reports.codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
@@ -1820,7 +1818,7 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
         )
 
     def test_generate_cert_request_error(self):
-        dummy_tmp_file_mock_calls = self.fixture_config_success()
+        self.fixture_config_success()
         self.config.trim_before("runner.corosync.qdevice_generate_cert")
         self.config.runner.corosync.qdevice_generate_cert(
             self.cluster_name,
@@ -1850,12 +1848,12 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
 
         self.env_assist.assert_reports(
             self.fixture_reports_success()[
-                :f"cert_accepted_by_{self.cluster_nodes[0]}"
+                : f"cert_accepted_by_{self.cluster_nodes[0]}"
             ]
         )
 
     def test_sign_certificate_error_communication(self):
-        dummy_tmp_file_mock_calls = self.fixture_config_success()
+        self.fixture_config_success()
         self.config.trim_before(
             "http.corosync.qdevice_net_sign_certificate_requests"
         )
@@ -1884,7 +1882,7 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
         self.env_assist.assert_reports(
             fixture.ReportSequenceBuilder(
                 self.fixture_reports_success()[
-                    :f"cert_accepted_by_{self.cluster_nodes[0]}"
+                    : f"cert_accepted_by_{self.cluster_nodes[0]}"
                 ]
             ).error(
                 reports.codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
@@ -1896,7 +1894,7 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
         )
 
     def test_sign_certificate_error_decode_certificate(self):
-        dummy_tmp_file_mock_calls = self.fixture_config_success()
+        self.fixture_config_success()
         self.config.trim_before(
             "http.corosync.qdevice_net_sign_certificate_requests"
         )
@@ -1917,7 +1915,7 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
         self.env_assist.assert_reports(
             fixture.ReportSequenceBuilder(
                 self.fixture_reports_success()[
-                    :f"cert_accepted_by_{self.cluster_nodes[0]}"
+                    : f"cert_accepted_by_{self.cluster_nodes[0]}"
                 ]
             ).error(
                 reports.codes.INVALID_RESPONSE_FORMAT,
@@ -1958,7 +1956,7 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
 
         self.env_assist.assert_reports(
             self.fixture_reports_success()[
-                :f"cert_accepted_by_{self.cluster_nodes[0]}"
+                : f"cert_accepted_by_{self.cluster_nodes[0]}"
             ]
         )
 
@@ -1993,7 +1991,7 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
 
         success_reports = self.fixture_reports_success()
         expected_reports = success_reports[
-            :f"cert_accepted_by_{self.cluster_nodes[1]}"
+            : f"cert_accepted_by_{self.cluster_nodes[1]}"
         ]
         expected_reports.append(
             fixture.error(
@@ -2977,7 +2975,7 @@ class RemoveDeviceNetTest(TestCase):
         )
         return report_list
 
-    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
+    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", list)
     def test_not_live_success(self):
         dummy_cluster_nodes, original_conf, expected_conf = self.conf_2nodes(
             # cluster consists of two nodes, two_node must be set
@@ -2991,7 +2989,7 @@ class RemoveDeviceNetTest(TestCase):
 
         lib.remove_device(self.env_assist.get_env())
 
-    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
+    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", list)
     def test_not_live_error(self):
         (
             self.config.env.set_corosync_conf_data(
@@ -3023,7 +3021,7 @@ class RemoveDeviceNetTest(TestCase):
 
         lib.remove_device(self.env_assist.get_env())
 
-    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
+    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", list)
     def test_fail_if_device_not_set(self):
         self.config.corosync_conf.load_content(
             _read_file_rc("corosync-3nodes.conf")
@@ -3036,7 +3034,7 @@ class RemoveDeviceNetTest(TestCase):
             expected_in_processor=False,
         )
 
-    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
+    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", list)
     def test_success_2nodes_no_sbd(self):
         # cluster consists of two nodes, two_node must be set
         cluster_nodes, original_conf, expected_conf = self.conf_2nodes(
@@ -3049,7 +3047,7 @@ class RemoveDeviceNetTest(TestCase):
             self.fixture_reports_success(cluster_nodes)
         )
 
-    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
+    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", list)
     def test_success_2nodes_sbd_installed_disabled(self):
         # cluster consists of two nodes, two_node must be set
         cluster_nodes, original_conf, expected_conf = self.conf_2nodes(
@@ -3062,7 +3060,7 @@ class RemoveDeviceNetTest(TestCase):
             self.fixture_reports_success(cluster_nodes, atb_enabled=False)
         )
 
-    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
+    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", list)
     def test_success_2nodes_sbd_enabled(self):
         # cluster consists of two nodes and SBD is in use, so teo_nodes must be
         # disabled and auto_tie_breaker must be enabled
@@ -3095,7 +3093,7 @@ class RemoveDeviceNetTest(TestCase):
             self.fixture_reports_success(cluster_nodes, atb_enabled=False)
         )
 
-    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
+    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", list)
     def test_success_3nodes(self):
         # with odd number of nodes it doesn't matter if sbd is used
         cluster_nodes, original_conf, expected_conf = self.conf_3nodes()
@@ -3105,7 +3103,7 @@ class RemoveDeviceNetTest(TestCase):
             self.fixture_reports_success(cluster_nodes)
         )
 
-    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
+    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", list)
     def test_success_3nodes_file(self):
         # with odd number of nodes it doesn't matter if sbd is used
         dummy_cluster_nodes, original_conf, expected_conf = self.conf_3nodes()
@@ -3117,7 +3115,7 @@ class RemoveDeviceNetTest(TestCase):
         lib.remove_device(self.env_assist.get_env())
         self.env_assist.assert_reports([])
 
-    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
+    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", list)
     def test_success_3nodes_one_node_offline(self):
         # with odd number of nodes it doesn't matter if sbd is used
         cluster_nodes, original_conf, expected_conf = self.conf_3nodes()
@@ -3259,7 +3257,7 @@ class RemoveDeviceNetTest(TestCase):
             ]
         )
 
-    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
+    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", list)
     def test_error_disable_qdevice(self):
         cluster_nodes, original_conf, dummy_expected_conf = self.conf_3nodes()
 
@@ -3316,7 +3314,7 @@ class RemoveDeviceNetTest(TestCase):
             ]
         )
 
-    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
+    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", list)
     def test_error_stop_qdevice(self):
         cluster_nodes, original_conf, dummy_expected_conf = self.conf_3nodes()
 
@@ -3394,7 +3392,7 @@ class RemoveDeviceNetTest(TestCase):
             ]
         )
 
-    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: [])
+    @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", list)
     def test_error_destroy_qdevice_net(self):
         cluster_nodes, original_conf, dummy_expected_conf = self.conf_3nodes()
 
@@ -3510,9 +3508,7 @@ class UpdateDeviceTest(TestCase):
 
                             heuristics {
                                 mode: %mode%
-                    """.replace(
-                        "%mode%", mode
-                    )
+                    """.replace("%mode%", mode)
                 ),
             ),
         )

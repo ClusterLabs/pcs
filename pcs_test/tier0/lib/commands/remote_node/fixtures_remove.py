@@ -33,7 +33,7 @@ class EnvConfigMixin:
             )
 
         if label or dest_list:
-            if kwargs.get("communication_list", None):
+            if kwargs.get("communication_list"):
                 raise AssertionError(
                     "Keywords 'label' and 'dest_list' makes no sense with"
                     " 'communication_list != None'"

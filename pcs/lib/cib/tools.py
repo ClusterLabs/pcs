@@ -1,3 +1,4 @@
+import contextlib
 import re
 from typing import (
     List,
@@ -627,10 +628,8 @@ def remove_element_by_id(cib: _Element, element_id: str) -> None:
     """
     Remove element with specified id from cib element.
     """
-    try:
+    with contextlib.suppress(ElementNotFound):
         remove_one_element(get_element_by_id(cib, element_id))
-    except ElementNotFound:
-        pass
 
 
 def multivalue_attr_contains_value(

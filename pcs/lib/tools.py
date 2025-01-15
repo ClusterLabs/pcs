@@ -53,8 +53,8 @@ def environment_file_to_dict(config: str) -> dict[str, str]:
     config = config.replace("\\\n", "")
 
     data = {}
-    for line in [l.strip() for l in config.split("\n")]:
-        if line == "" or line.startswith("#") or line.startswith(";"):
+    for line in [line.strip() for line in config.split("\n")]:
+        if line == "" or line.startswith(("#", ";")):
             continue
         if "=" not in line:
             continue
@@ -138,7 +138,7 @@ def create_tmp_cib(
 ) -> IO[str]:
     try:
         # pylint: disable=consider-using-with
-        tmp_file = tempfile.NamedTemporaryFile(mode="w+", suffix=".pcs")
+        tmp_file = tempfile.NamedTemporaryFile(mode="w+", suffix=".pcs")  # noqa: SIM115
         if data is not None:
             tmp_file.write(data)
             tmp_file.flush()

@@ -137,7 +137,7 @@ class TestSetProperty(TestCase):
     def test_multiple_args_with_force(self):
         self._call_cmd(["a=1", "b=2", "c="], {"force": True})
         self.cluster_property.set_properties.assert_called_once_with(
-            {"a": "1", "b": "2", "c": ""}, set([report_codes.FORCE])
+            {"a": "1", "b": "2", "c": ""}, {report_codes.FORCE}
         )
 
     def test_unsupported_modifier(self):
@@ -176,7 +176,7 @@ class TestUnsetProperty(TestCase):
     def test_args_with_force(self):
         self._call_cmd(["a=1", "=b", ""], {"force": True})
         self.cluster_property.set_properties.assert_called_once_with(
-            {"a=1": "", "=b": "", "": ""}, set([report_codes.FORCE])
+            {"a=1": "", "=b": "", "": ""}, {report_codes.FORCE}
         )
 
     def test_unsupported_modifier(self):
@@ -582,9 +582,7 @@ class TestPrintClusterPropertiesDefinitionLegacy(TestCase):
         self.cluster_property = mock.MagicMock(
             spec_set=["get_cluster_properties_definition_legacy"]
         )
-        self.cluster_property.get_cluster_properties_definition_legacy.return_value = (
-            {}
-        )
+        self.cluster_property.get_cluster_properties_definition_legacy.return_value = {}
         self.lib.cluster_property = self.cluster_property
 
     def _call_cmd(self, argv, modifiers=None):

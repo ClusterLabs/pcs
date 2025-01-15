@@ -318,22 +318,20 @@ def get_all_recipients(alert):
 
     alert -- parent element of recipients to return
     """
-    recipient_list = []
-    for recipient in alert.findall("./recipient"):
-        recipient_list.append(
-            {
-                "id": recipient.get("id"),
-                "value": recipient.get("value"),
-                "description": recipient.get("description", ""),
-                "instance_attributes": get_nvset(
-                    get_sub_element(recipient, "instance_attributes")
-                ),
-                "meta_attributes": get_nvset(
-                    get_sub_element(recipient, "meta_attributes")
-                ),
-            }
-        )
-    return recipient_list
+    return [
+        {
+            "id": recipient.get("id"),
+            "value": recipient.get("value"),
+            "description": recipient.get("description", ""),
+            "instance_attributes": get_nvset(
+                get_sub_element(recipient, "instance_attributes")
+            ),
+            "meta_attributes": get_nvset(
+                get_sub_element(recipient, "meta_attributes")
+            ),
+        }
+        for recipient in alert.findall("./recipient")
+    ]
 
 
 def get_all_alerts(tree):
@@ -352,20 +350,18 @@ def get_all_alerts(tree):
 
     tree -- cib etree node
     """
-    alert_list = []
-    for alert in get_alerts(tree).findall("./alert"):
-        alert_list.append(
-            {
-                "id": alert.get("id"),
-                "path": alert.get("path"),
-                "description": alert.get("description", ""),
-                "instance_attributes": get_nvset(
-                    get_sub_element(alert, "instance_attributes")
-                ),
-                "meta_attributes": get_nvset(
-                    get_sub_element(alert, "meta_attributes")
-                ),
-                "recipient_list": get_all_recipients(alert),
-            }
-        )
-    return alert_list
+    return [
+        {
+            "id": alert.get("id"),
+            "path": alert.get("path"),
+            "description": alert.get("description", ""),
+            "instance_attributes": get_nvset(
+                get_sub_element(alert, "instance_attributes")
+            ),
+            "meta_attributes": get_nvset(
+                get_sub_element(alert, "meta_attributes")
+            ),
+            "recipient_list": get_all_recipients(alert),
+        }
+        for alert in get_alerts(tree).findall("./alert")
+    ]

@@ -50,9 +50,7 @@ FIXTURE_RESOURCES = """
              </meta_attributes>
         </primitive>
     </resources>
-""".format(
-    VIRTUAL_MACHINE_ID, REMOTE_HOST, NODE_NAME
-)
+""".format(VIRTUAL_MACHINE_ID, REMOTE_HOST, NODE_NAME)
 
 GUEST_NVPAIR_XPATHS = [
     ".//primitive/meta_attributes/nvpair[@name='remote-addr']",
@@ -205,9 +203,7 @@ class MultipleResults(TestCase):
                  </meta_attributes>
             </primitive>
         </resources>
-    """.format(
-        VIRTUAL_MACHINE_ID, REMOTE_HOST, NODE_NAME, "B-HOST", "B-NAME"
-    )
+    """.format(VIRTUAL_MACHINE_ID, REMOTE_HOST, NODE_NAME, "B-HOST", "B-NAME")
 
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)

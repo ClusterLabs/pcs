@@ -60,9 +60,11 @@ NODE_PREFIX = "{0}: "
 
 def _stdout_stderr_to_string(stdout: str, stderr: str, prefix: str = "") -> str:
     new_lines = [prefix] if prefix else []
-    for line in stdout.splitlines() + stderr.splitlines():
-        if line.strip():
-            new_lines.append(line)
+    new_lines.extend(
+        line
+        for line in stdout.splitlines() + stderr.splitlines()
+        if line.strip()
+    )
     return "\n".join(new_lines)
 
 
@@ -78,10 +80,10 @@ def _resource_move_ban_clear_master_resource_not_promotable(
 
 def _resource_move_ban_pcmk_success(stdout: str, stderr: str) -> str:
     new_lines = []
-    for line in stdout.splitlines() + stderr.splitlines():
-        if not line.strip():
+    for output_line in stdout.splitlines() + stderr.splitlines():
+        if not output_line.strip():
             continue
-        line = line.replace(
+        line = output_line.replace(
             "WARNING: Creating rsc_location constraint",
             "Warning: Creating location constraint",
         )
@@ -1611,9 +1613,7 @@ class ParseErrorCorosyncConfMissingSectionNameBeforeOpeningBrace(
     Corosync config cannot be parsed due to a section name missing before {
     """
 
-    _code = (
-        codes.PARSE_ERROR_COROSYNC_CONF_MISSING_SECTION_NAME_BEFORE_OPENING_BRACE
-    )
+    _code = codes.PARSE_ERROR_COROSYNC_CONF_MISSING_SECTION_NAME_BEFORE_OPENING_BRACE
 
     @property
     def message(self) -> str:
@@ -1643,9 +1643,7 @@ class ParseErrorCorosyncConfExtraCharactersBeforeOrAfterClosingBrace(
     Corosync config cannot be parsed due to extra characters before or after }
     """
 
-    _code = (
-        codes.PARSE_ERROR_COROSYNC_CONF_EXTRA_CHARACTERS_BEFORE_OR_AFTER_CLOSING_BRACE
-    )
+    _code = codes.PARSE_ERROR_COROSYNC_CONF_EXTRA_CHARACTERS_BEFORE_OR_AFTER_CLOSING_BRACE
 
     @property
     def message(self) -> str:

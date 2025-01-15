@@ -39,8 +39,7 @@ def tree_to_lines(
     _indent = "|  "
     if not node.members:
         _indent = "   "
-    for line in node.detail:
-        result.append(f"{indent}{_indent}{line}")
+    result.extend(f"{indent}{_indent}{line}" for line in node.detail)
     _indent = "|  "
     _title_prefix = "|- "
     for member in node.members:

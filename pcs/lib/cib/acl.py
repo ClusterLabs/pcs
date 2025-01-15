@@ -30,7 +30,7 @@ def validate_permissions(tree, permission_info_list):
     allowed_permissions = ["read", "write", "deny"]
     allowed_scopes = ["xpath", "id"]
     for permission, scope_type, scope in permission_info_list:
-        if not permission in allowed_permissions:
+        if permission not in allowed_permissions:
             report_items.append(
                 reports.ReportItem.error(
                     reports.messages.InvalidOptionValue(
@@ -39,7 +39,7 @@ def validate_permissions(tree, permission_info_list):
                 )
             )
 
-        if not scope_type in allowed_scopes:
+        if scope_type not in allowed_scopes:
             report_items.append(
                 reports.ReportItem.error(
                     reports.messages.InvalidOptionValue(
@@ -350,23 +350,21 @@ def _get_permission_list(role_el):
 
     role_el -- acl_role etree element of which permissions would be returned
     """
-    output_list = []
-    for permission in role_el.findall("./acl_permission"):
-        output_list.append(
-            {
-                key: permission.get(key)
-                for key in [
-                    "id",
-                    "description",
-                    "kind",
-                    "xpath",
-                    "reference",
-                    "object-type",
-                    "attribute",
-                ]
-            }
-        )
-    return output_list
+    return [
+        {
+            key: permission.get(key)
+            for key in [
+                "id",
+                "description",
+                "kind",
+                "xpath",
+                "reference",
+                "object-type",
+                "attribute",
+            ]
+        }
+        for permission in role_el.findall("./acl_permission")
+    ]
 
 
 def get_target_list(acl_section):
@@ -396,17 +394,15 @@ def get_group_list(acl_section):
 
 
 def get_target_like_list(acl_section, tag):
-    output_list = []
-    for target_el in acl_section.xpath(
-        "./*[local-name()=$tag_name]", tag_name=tag
-    ):
-        output_list.append(
-            {
-                "id": target_el.get("id"),
-                "role_list": _get_role_list_of_target(target_el),
-            }
+    return [
+        {
+            "id": target_el.get("id"),
+            "role_list": _get_role_list_of_target(target_el),
+        }
+        for target_el in acl_section.xpath(
+            "./*[local-name()=$tag_name]", tag_name=tag
         )
-    return output_list
+    ]
 
 
 def _get_role_list_of_target(target):

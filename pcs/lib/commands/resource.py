@@ -360,7 +360,7 @@ _find_bundle = partial(
 )
 
 
-def create(
+def create(  # noqa: PLR0913
     env: LibraryEnvironment,
     resource_id: str,
     resource_agent_name: str,
@@ -467,7 +467,7 @@ def create(
             resource.common.disable(primitive_element, id_provider)
 
 
-def create_as_clone(
+def create_as_clone(  # noqa: PLR0913
     env: LibraryEnvironment,
     resource_id: str,
     resource_agent_name: str,
@@ -617,7 +617,7 @@ def create_as_clone(
             resource.common.disable(clone_element, id_provider)
 
 
-def create_in_group(
+def create_in_group(  # noqa: PLR0913
     env: LibraryEnvironment,
     resource_id: str,
     resource_agent_name: str,
@@ -764,7 +764,7 @@ def create_in_group(
         )
 
 
-def create_into_bundle(
+def create_into_bundle(  # noqa: PLR0913
     env: LibraryEnvironment,
     resource_id: str,
     resource_agent_name: str,
@@ -883,7 +883,7 @@ def create_into_bundle(
         resource.bundle.add_resource(bundle_el, primitive_element)
 
 
-def bundle_create(
+def bundle_create(  # noqa: PLR0913
     env,
     bundle_id,
     container_type,
@@ -963,7 +963,7 @@ def bundle_create(
             resource.common.disable(bundle_element, id_provider)
 
 
-def bundle_reset(
+def bundle_reset(  # noqa: PLR0913
     env,
     bundle_id,
     *,
@@ -1048,7 +1048,7 @@ def bundle_reset(
             resource.common.disable(bundle_element, id_provider)
 
 
-def bundle_update(
+def bundle_update(  # noqa: PLR0913
     env,
     bundle_id,
     *,
@@ -1510,7 +1510,7 @@ def manage(
     env.push_cib()
 
 
-def group_add(
+def group_add(  # noqa: PLR0912
     env: LibraryEnvironment,
     group_id: str,
     resource_id_list: List[str],
@@ -1608,10 +1608,10 @@ def group_add(
             and resource.group.is_group(old_parent)
             and str(old_parent.attrib["id"]) not in all_resources
         ):
-            all_resources[str(old_parent.attrib["id"])] = set(
+            all_resources[str(old_parent.attrib["id"])] = {
                 str(res.attrib["id"])
                 for res in resource.common.get_inner_resources(old_parent)
-            )
+            }
     affected_resources = set(resource_id_list)
 
     # Set comparison step to determine if groups will be emptied by move
@@ -1641,9 +1641,8 @@ def group_add(
                 isinstance(report.message, reports.messages.CibPushError)
                 for report in e.args
             ):
-                if env.report_processor.report_list(
-                    empty_group_report_list
-                ).has_errors:
+                env.report_processor.report_list(empty_group_report_list)
+                if env.report_processor.has_errors:
                     raise LibraryError() from None
         except AttributeError:
             # For accessing message inside something that's not a report
@@ -1740,7 +1739,7 @@ class ResourceMoveAutocleanSimulationFailure(Exception):
         return self._other_resources_affected
 
 
-def move_autoclean(
+def move_autoclean(  # noqa: PLR0912, PLR0915
     env: LibraryEnvironment,
     resource_id: str,
     node: Optional[str] = None,
@@ -2014,14 +2013,13 @@ def _ensure_resource_moved_and_not_moved_back(
     if strict:
         if clean_operations:
             raise ResourceMoveAutocleanSimulationFailure(True)
-    else:
-        if any(
-            rsc == resource_id
-            for rsc in simulate_tools.get_resources_from_operations(
-                clean_operations
-            )
-        ):
-            raise ResourceMoveAutocleanSimulationFailure(False)
+    elif any(
+        rsc == resource_id
+        for rsc in simulate_tools.get_resources_from_operations(
+            clean_operations
+        )
+    ):
+        raise ResourceMoveAutocleanSimulationFailure(False)
 
 
 def ban(env, resource_id, node=None, master=False, lifetime=None, wait=False):
@@ -2041,7 +2039,7 @@ def ban(env, resource_id, node=None, master=False, lifetime=None, wait=False):
 
 
 def _resource_running_on_nodes(
-    resource_state: Dict[str, List[str]]
+    resource_state: Dict[str, List[str]],
 ) -> FrozenSet[str]:
     if resource_state:
         return frozenset(
@@ -2473,7 +2471,7 @@ def _find_resources_expand_tags(
 
 
 def get_required_cib_version_for_primitive(
-    op_list: Iterable[Mapping[str, str]]
+    op_list: Iterable[Mapping[str, str]],
 ) -> Optional[Version]:
     for op in op_list:
         if op.get("on-fail", "") == "demote":
