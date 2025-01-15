@@ -111,7 +111,7 @@ module CorosyncConf
 
 
   def CorosyncConf::parse_string(conf_text)
-    conf_text = conf_text.force_encoding("utf-8")
+    conf_text = String.new(conf_text, encoding: Encoding::UTF_8)
     root = Section.new('')
     self.parse_section(conf_text.split("\n"), root)
     return root
