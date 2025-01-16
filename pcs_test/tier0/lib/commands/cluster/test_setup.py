@@ -121,7 +121,7 @@ def options_fixture(options, template=OPTION_TEMPLATE):
     )
 
 
-def corosync_conf_fixture(
+def corosync_conf_fixture(  # noqa: PLR0913
     node_addrs,
     *,
     transport_type="knet",
@@ -166,9 +166,10 @@ def corosync_conf_fixture(
             link["linknumber"] = links_numbers[i]
             link_translated = {}
             for name, value in link.items():
+                knet_name = name
                 if name in knet_options:
-                    name = f"knet_{name}"
-                link_translated[name] = value
+                    knet_name = f"knet_{name}"
+                link_translated[knet_name] = value
             link_list[i] = link_translated
 
         interface_list = "".join(
@@ -660,7 +661,7 @@ class SetupSuccessAddresses(TestCase):
         ]
         self.node_coros = ["node1-corosync", "node2-corosync", "node3-corosync"]
         self.config.env.set_known_hosts_dests(
-            dict(zip(self.node_names, self.node_dests))
+            dict(zip(self.node_names, self.node_dests, strict=False))
         )
         patch_getaddrinfo(self, self.node_coros)
         config_success_minimal_fixture(
@@ -668,12 +669,16 @@ class SetupSuccessAddresses(TestCase):
             corosync_conf=corosync_conf_fixture(
                 {
                     name: [addr]
-                    for name, addr in zip(self.node_names, self.node_coros)
+                    for name, addr in zip(
+                        self.node_names, self.node_coros, strict=False
+                    )
                 }
             ),
             communication_list=[
                 {"label": name, "dest_list": dest}
-                for name, dest in zip(self.node_names, self.node_dests)
+                for name, dest in zip(
+                    self.node_names, self.node_dests, strict=False
+                )
             ],
             known_hosts={
                 name: {
@@ -682,7 +687,9 @@ class SetupSuccessAddresses(TestCase):
                         for dest in dest_list
                     ]
                 }
-                for name, dest_list in zip(self.node_names, self.node_dests)
+                for name, dest_list in zip(
+                    self.node_names, self.node_dests, strict=False
+                )
             },
         )
 
@@ -697,7 +704,9 @@ class SetupSuccessAddresses(TestCase):
             CLUSTER_NAME,
             [
                 {"name": name, "addrs": [addr]}
-                for name, addr in zip(self.node_names, self.node_coros)
+                for name, addr in zip(
+                    self.node_names, self.node_coros, strict=False
+                )
             ],
         )
         self.env_assist.assert_reports(
@@ -1449,9 +1458,9 @@ class Validation(TestCase):
                     min_count=1,
                     max_count=8,
                     node_name=name,
-                    node_index=id,
+                    node_index=id_,
                 )
-                for id, name in enumerate(NODE_LIST, 1)
+                for id_, name in enumerate(NODE_LIST, 1)
             ]
         )
 

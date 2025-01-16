@@ -9,12 +9,11 @@ from pcs_test.tools.misc import outdent
 
 
 def _watchdog_fixture(identity, driver, caution=None):
-    info = dict(
+    return dict(
         identity=identity,
         driver="<unknown>" if driver is None else driver,
         caution=caution,
     )
-    return info
 
 
 class GetLocalAvailableWatchdogs(TestCase):

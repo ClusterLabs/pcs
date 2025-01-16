@@ -84,7 +84,7 @@ def full_usage() -> None:
     out += strip_extras(resource([]))
     out += strip_extras(cluster([]))
     out += strip_extras(stonith([]))
-    out += strip_extras(property([]))
+    out += strip_extras(property_usage([]))
     out += strip_extras(constraint([]))
     out += strip_extras(node([]))
     out += strip_extras(acl([]))
@@ -103,10 +103,10 @@ def full_usage() -> None:
     print("Examples:\n" + examples.replace(r" \ ", ""))
 
 
-def strip_extras(text: str) -> str:
+def strip_extras(text: str) -> str:  # noqa: PLR0912
     # pylint: disable=global-statement
     # pylint: disable=too-many-branches
-    global examples
+    global examples  # noqa: PLW0603
     ret = ""
     group_name = text.split(" ")[2]
     in_commands = False
@@ -116,14 +116,12 @@ def strip_extras(text: str) -> str:
 
     ret += group_name.title() + ":\n"
     for line in lines:
-        if not in_commands:
-            if line == "Commands:":
-                in_commands = True
-                continue
-        if not in_examples:
-            if line == "Examples:":
-                in_examples = True
-                continue
+        if not in_commands and line == "Commands:":
+            in_commands = True
+            continue
+        if not in_examples and line == "Examples:":
+            in_examples = True
+            continue
         if not in_examples and not in_commands:
             continue
         if len(line) >= 4:
@@ -135,9 +133,8 @@ def strip_extras(text: str) -> str:
                         minicmd = "    " + " " + line.lstrip() + "  "
                 else:
                     minicmd += line.lstrip() + " "
-            else:
-                if in_commands:
-                    break
+            elif in_commands:
+                break
         else:
             if in_examples:
                 examples += minicmd + "\n\n"
@@ -187,7 +184,7 @@ def generate_completion_tree_from_usage() -> CompletionTree:
     tree["resource"] = generate_tree(resource([]))
     tree["cluster"] = generate_tree(cluster([]))
     tree["stonith"] = generate_tree(stonith([]))
-    tree["property"] = generate_tree(property([]))
+    tree["property"] = generate_tree(property_usage([]))
     tree["acl"] = generate_tree(acl([]))
     tree["constraint"] = generate_tree(constraint([]))
     tree["qdevice"] = generate_tree(qdevice([]))
@@ -222,20 +219,20 @@ def generate_tree(usage_txt: str) -> CompletionTree:
         if re.match(r"^    \w", line):
             args = line.split()
             arg = args.pop(0)
-            if not arg in ret_hash:
+            if arg not in ret_hash:
                 ret_hash[arg] = {}
             cur_hash = ret_hash[arg]
             for arg in args:
-                if arg.startswith("[") or arg.startswith("<"):
+                if arg.startswith(("[", "<")):
                     break
-                if not arg in cur_hash:
+                if arg not in cur_hash:
                     cur_hash[arg] = {}
                 cur_hash = cur_hash[arg]
     return ret_hash
 
 
 def main() -> str:
-    output = """
+    return """
 Usage: pcs [-f file] [-h] [commands]...
 Control and configure pacemaker and corosync.
 
@@ -279,7 +276,6 @@ Commands:
 """
     # Advanced usage to possibly add later
     #  --corosync_conf=<corosync file> Specify alternative corosync.conf file
-    return output
 
 
 def _alias_of(cmd: str) -> str:
@@ -2350,7 +2346,7 @@ Commands:
     return sub_usage(args, output)
 
 
-def property(args: Argv) -> str:
+def property_usage(args: Argv) -> str:
     # 'property' is a built-in
     # pylint: disable=redefined-builtin
     output = """
@@ -3439,7 +3435,7 @@ def show(main_usage_name: str, rest_usage_names: Argv) -> None:
         "host": host,
         "node": node,
         "pcsd": pcsd,
-        "property": property,
+        "property": property_usage,
         "qdevice": qdevice,
         "quorum": quorum,
         "resource": resource,

@@ -10,9 +10,8 @@ from pcs_test.tier1.cib_resource.common import ResourceTest
 from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.bin_mock import get_mock_settings
 from pcs_test.tools.fixture_cib import CachedCibFixture
-from pcs_test.tools.misc import ParametrizedTestMetaClass
-from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import (
+    ParametrizedTestMetaClass,
     get_tmp_file,
     is_minimum_pacemaker_version,
     outdent,
@@ -20,6 +19,7 @@ from pcs_test.tools.misc import (
     write_data_to_tmpfile,
     write_file_to_tmpfile,
 )
+from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.pcs_runner import PcsRunner
 
 PCMK_2_0_3_PLUS = is_minimum_pacemaker_version(2, 0, 3)
@@ -1459,8 +1459,8 @@ class LevelTestsBase(TestCase, AssertPcsMixin):
         write_data_to_tmpfile(cib, self.temp_cib)
 
     def fixture_cib_config_cache(self):
-        # pylint: disable=global-variable-not-assigned
-        global _fixture_stonith_level_cache, _fixture_stonith_level_cache_lock
+        # pylint: disable=global-statement
+        global _fixture_stonith_level_cache  # noqa: PLW0603
         with _fixture_stonith_level_cache_lock:
             if _fixture_stonith_level_cache is None:
                 _fixture_stonith_level_cache = self.fixture_cib_config()

@@ -25,14 +25,14 @@ from pcs_test.tools.fixture_cib import (
     wrap_element_by_master,
     wrap_element_by_master_file,
 )
-from pcs_test.tools.misc import ParametrizedTestMetaClass
-from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import (
+    ParametrizedTestMetaClass,
     get_tmp_file,
     outdent,
     skip_unless_crm_rule,
     write_file_to_tmpfile,
 )
+from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.pcs_runner import (
     PcsRunner,
     pcs,
@@ -476,7 +476,7 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
         self.assert_pcs_success("constraint location config --full".split())
 
     # see also BundleColocation
-    def test_colocation_constraints(self):
+    def test_colocation_constraints(self):  # noqa: PLR0915
         # pylint: disable=too-many-statements
         self.fixture_resources()
         # pcs no longer allows creating masters but supports existing ones. In
@@ -843,7 +843,7 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
         self.assertEqual(retval, 1)
 
     # see also BundleColocation
-    def test_colocation_sets(self):
+    def test_colocation_sets(self):  # noqa: PLR0915
         # pylint: disable=too-many-statements
         self.fixture_resources()
         self.assert_pcs_success(
@@ -1331,7 +1331,7 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
         self.assert_pcs_success("constraint order".split())
 
     # see also BundleOrder
-    def test_order_sets(self):
+    def test_order_sets(self):  # noqa: PLR0915
         # pylint: disable=too-many-statements
         self.fixture_resources()
         self.assert_pcs_success(
@@ -1669,7 +1669,7 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
             ),
         )
 
-    def test_master_slave_constraint(self):
+    def test_master_slave_constraint(self):  # noqa: PLR0915
         # pylint: disable=too-many-statements
         os.system(
             "CIB_file="
@@ -1886,7 +1886,7 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
             ),
         )
 
-    def test_clone_constraint(self):
+    def test_clone_constraint(self):  # noqa: PLR0915
         # pylint: disable=too-many-statements
         os.system(
             "CIB_file="
@@ -2658,7 +2658,7 @@ Error: duplicate constraint already exists, use --force to override
             ),
         )
 
-    def test_duplicate_set_constraints(self):
+    def test_duplicate_set_constraints(self):  # noqa: PLR0915
         # pylint: disable=too-many-statements
         self.fixture_resources()
         stdout, stderr, retval = pcs(
@@ -2908,7 +2908,7 @@ Error: duplicate constraint already exists, use --force to override
             ),
         )
 
-    def test_constraints_custom_id(self):
+    def test_constraints_custom_id(self):  # noqa: PLR0915
         # pylint: disable=too-many-statements
         self.fixture_resources()
         stdout, stderr, retval = pcs(
@@ -4361,10 +4361,10 @@ class ExpiredConstraints(ConstraintBaseTest):
             outdent(
                 f"""\
                 Location Constraints:
-                  resource 'dummy'{' (id: location-dummy)' if flag_full else ''}
+                  resource 'dummy'{" (id: location-dummy)" if flag_full else ""}
                     Rules:
-                      Rule: boolean-op=and score=INFINITY{' (id: test-rule)' if flag_full else ''}
-                        Expression: date gt 2019-01-01{' (id: test-rule-expr)' if flag_full else ''}
+                      Rule: boolean-op=and score=INFINITY{" (id: test-rule)" if flag_full else ""}
+                        Expression: date gt 2019-01-01{" (id: test-rule-expr)" if flag_full else ""}
                 """
             ),
         )
@@ -4468,11 +4468,11 @@ class ExpiredConstraints(ConstraintBaseTest):
             outdent(
                 f"""\
                 Location Constraints:
-                  resource 'dummy'{' (id: location-dummy)' if flag_full else ''}
+                  resource 'dummy'{" (id: location-dummy)" if flag_full else ""}
                     Rules:
-                      Rule: boolean-op=or score=INFINITY{' (id: test-rule)' if flag_full else ''}
-                        Expression: date eq 2019-01-01{' (id: test-rule-expr)' if flag_full else ''}
-                        Expression: date eq 2019-03-01{' (id: test-rule-expr-1)' if flag_full else ''}
+                      Rule: boolean-op=or score=INFINITY{" (id: test-rule)" if flag_full else ""}
+                        Expression: date eq 2019-01-01{" (id: test-rule-expr)" if flag_full else ""}
+                        Expression: date eq 2019-03-01{" (id: test-rule-expr-1)" if flag_full else ""}
                 """
             ),
         )
@@ -4524,10 +4524,10 @@ class ExpiredConstraints(ConstraintBaseTest):
             outdent(
                 f"""\
                 Location Constraints:
-                  resource 'dummy'{' (id: location-dummy)' if flag_full else ''}
+                  resource 'dummy'{" (id: location-dummy)" if flag_full else ""}
                     Rules:
-                      Rule (not yet in effect): boolean-op=and score=INFINITY{' (id: test-rule)' if flag_full else ''}
-                        Expression: date gt {self._tomorrow}{' (id: test-rule-expr)' if flag_full else ''}
+                      Rule (not yet in effect): boolean-op=and score=INFINITY{" (id: test-rule)" if flag_full else ""}
+                        Expression: date gt {self._tomorrow}{" (id: test-rule-expr)" if flag_full else ""}
                 """
             ),
         )

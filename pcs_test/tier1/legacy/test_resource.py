@@ -117,9 +117,7 @@ class ResourceDescribe(TestCase, AssertPcsMixin):
                 interval=0s timeout=20s
               migrate_from:
                 interval=0s timeout=20s
-            """.format(
-                advanced_params if advanced else ""
-            )
+            """.format(advanced_params if advanced else "")
         )
 
     def test_success(self):
@@ -3249,20 +3247,18 @@ class Resource(TestCase, AssertPcsMixin):
         self.assertEqual(stderr, "")
         self.assertEqual(returncode, 0)
 
-        resources = set(
-            [
-                "D1",
-                "DG1",
-                "DG2",
-                "GR",
-                "DC",
-                "DC-clone",
-                "DGC1",
-                "DGC2",
-                "GRC",
-                "GRC-clone",
-            ]
-        )
+        resources = {
+            "D1",
+            "DG1",
+            "DG2",
+            "GR",
+            "DC",
+            "DC-clone",
+            "DGC1",
+            "DGC2",
+            "GRC",
+            "GRC-clone",
+        }
         self.assert_pcs_success("resource config".split(), status)
         cib_in = utils.parseString(cib_original)
         cib_out, updated_resources = resource.resource_relocate_set_stickiness(
@@ -3329,7 +3325,7 @@ class Resource(TestCase, AssertPcsMixin):
             ),
         )
 
-        resources = set(["D1", "DG1", "DC", "DGC1"])
+        resources = {"D1", "DG1", "DC", "DGC1"}
         write_data_to_tmpfile(cib_original, self.temp_cib)
         self.assert_pcs_success("resource config".split(), status)
         cib_in = utils.parseString(cib_original)
@@ -3384,7 +3380,7 @@ class Resource(TestCase, AssertPcsMixin):
             ),
         )
 
-        resources = set(["GRC-clone", "GRC", "DGC1", "DGC2"])
+        resources = {"GRC-clone", "GRC", "DGC1", "DGC2"}
         write_data_to_tmpfile(cib_original, self.temp_cib)
         self.assert_pcs_success("resource config".split(), status)
         cib_in = utils.parseString(cib_original)
@@ -3439,7 +3435,7 @@ class Resource(TestCase, AssertPcsMixin):
             ),
         )
 
-        resources = set(["GR", "DG1", "DG2", "DC-clone", "DC"])
+        resources = {"GR", "DG1", "DG2", "DC-clone", "DC"}
         write_data_to_tmpfile(cib_original, self.temp_cib)
         self.assert_pcs_success("resource config".split(), status)
         cib_in = utils.parseString(cib_original)

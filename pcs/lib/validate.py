@@ -115,14 +115,16 @@ def values_to_pairs(
     """
     option_dict_with_pairs = {}
     for key, value in option_dict.items():
-        if not isinstance(value, ValuePair):
-            value = ValuePair(original=value, normalized=normalize(key, value))
-        option_dict_with_pairs[key] = value
+        option_dict_with_pairs[key] = (
+            ValuePair(original=value, normalized=normalize(key, value))
+            if not isinstance(value, ValuePair)
+            else value
+        )
     return option_dict_with_pairs
 
 
 def pairs_to_values(
-    option_dict: Mapping[TypeOptionName, Union[TypeOptionValue, ValuePair]]
+    option_dict: Mapping[TypeOptionName, Union[TypeOptionValue, ValuePair]],
 ) -> TypeOptionRawMap:
     """
     Take a dict which has OptionValuePairs as its values and return dict with
@@ -133,16 +135,17 @@ def pairs_to_values(
     """
     raw_option_dict = {}
     for key, value in option_dict.items():
+        new_value = value
         if isinstance(value, ValuePair):
-            value = value.normalized
-        raw_option_dict[key] = str(value)
+            new_value = value.normalized
+        raw_option_dict[key] = str(new_value)
     return raw_option_dict
 
 
 def option_value_normalization(
     normalization_map: Mapping[
         TypeOptionName, Callable[[TypeOptionValue], TypeOptionValue]
-    ]
+    ],
 ) -> TypeNormalizeFunc:
     """
     Return function that takes key and value and return the normalized form.
@@ -894,7 +897,7 @@ class ValuePcmkDatespecPart(ValuePredicateBase):
             return "an integer or integer-integer"
         return (
             f"{self._at_least}..{self._at_most} or "
-            f"{self._at_least}..{self._at_most-1}-{self._at_least+1}..{self._at_most}"
+            f"{self._at_least}..{self._at_most - 1}-{self._at_least + 1}..{self._at_most}"
         )
 
 
@@ -1154,7 +1157,7 @@ def matches_regexp(value: TypeOptionValue, regexp: Union[str, Pattern]) -> bool:
 
 class _ValidateAddRemoveBase:
     # pylint: disable=too-many-instance-attributes
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         add_item_list: StringCollection,
         remove_item_list: StringCollection,

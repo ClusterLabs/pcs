@@ -142,7 +142,7 @@ def _get_full_target_dict(target_list, node_value_dict, default_value):
     }
 
 
-def enable_sbd(
+def enable_sbd(  # noqa: PLR0913
     lib_env,
     default_watchdog,
     watchdog_dict,

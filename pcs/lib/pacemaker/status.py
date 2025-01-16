@@ -29,6 +29,7 @@ from pcs.common.status_dto import (
 from pcs.common.str_tools import format_list
 from pcs.lib.pacemaker.values import is_true
 
+_DEFAULT_SEVERITY = reports.ReportItemSeverity.error()
 _PRIMITIVE_TAG = "resource"
 _GROUP_TAG = "group"
 _CLONE_TAG = "clone"
@@ -107,7 +108,7 @@ class BundleSameIdAsImplicitResourceError(Exception):
 
 def cluster_status_parsing_error_to_report(
     e: ClusterStatusParsingError,
-    severity: reports.ReportItemSeverity = reports.ReportItemSeverity.error(),
+    severity: reports.ReportItemSeverity = _DEFAULT_SEVERITY,
 ) -> reports.ReportItem:
     reason = ""
     if isinstance(e, EmptyResourceIdError):
@@ -118,8 +119,7 @@ def cluster_status_parsing_error_to_report(
         )
     elif isinstance(e, UnknownPcmkRoleError):
         reason = (
-            f"Resource '{e.resource_id}' contains an unknown "
-            f"role '{e.role}'"
+            f"Resource '{e.resource_id}' contains an unknown role '{e.role}'"
         )
     elif isinstance(e, UnexpectedMemberError):
         reason = (
@@ -254,14 +254,14 @@ def _clone_to_dto(
         raise MixedMembersError(clone_id)
 
     if primitive_list:
-        if len(set(res.resource_id for res in primitive_list)) > 1:
+        if len({res.resource_id for res in primitive_list}) > 1:
             raise DifferentMemberIdsError(clone_id)
     if group_list:
-        group_ids = set(group.resource_id for group in group_list)
-        children_ids = set(
+        group_ids = {group.resource_id for group in group_list}
+        children_ids = {
             tuple(child.resource_id for child in group.members)
             for group in group_list
-        )
+        }
         if len(group_ids) > 1 or len(children_ids) > 1:
             raise DifferentMemberIdsError(clone_id)
 
@@ -412,8 +412,8 @@ def _replica_to_dto(
     ]
 
     duplicate_ids = [
-        id
-        for id, count in Counter(
+        id_
+        for id_, count in Counter(
             resource.resource_id for resource in resource_list
         ).items()
         if count > 1

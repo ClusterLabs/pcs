@@ -35,13 +35,8 @@ class HostAuth(TestCase):
     def _fixture_args(name_addr_port_tuple_list):
         arg_list = []
         for name, addr, port in name_addr_port_tuple_list:
-            port = ":{}".format(port) if port is not None else ""
-            arg_list.extend(
-                [
-                    name,
-                    "addr={}{}".format(addr, port),
-                ]
-            )
+            port_str = ":{}".format(port) if port is not None else ""
+            arg_list.extend([name, f"addr={addr}{port_str}"])
         return arg_list
 
     def _assert_invalid_port(self, name_addr_port_tuple_list):
@@ -93,7 +88,9 @@ class HostAuth(TestCase):
             addr_list = [self.host_names[name][addr_type] for name in name_list]
 
             with self.subTest(addr_type=addr_type):
-                assert_function(list(zip(name_list, addr_list, port_list)))
+                assert_function(
+                    list(zip(name_list, addr_list, port_list, strict=False))
+                )
 
     @mock.patch("pcs.utils.auth_hosts")
     def test_no_args(self, mock_auth_hosts):

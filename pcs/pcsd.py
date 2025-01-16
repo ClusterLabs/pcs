@@ -1,3 +1,4 @@
+import contextlib
 import json
 import os
 import sys
@@ -68,15 +69,13 @@ def pcsd_certkey_cmd(lib: Any, argv: Argv, modifiers: InputModifiers):
         )
 
     try:
-        try:
+        # If the file doesn't exist, we don't care
+        with contextlib.suppress(OSError):
             os.chmod(settings.pcsd_cert_location, 0o600)
-        except OSError:  # If the file doesn't exist, we don't care
-            pass
 
-        try:
+        # If the file doesn't exist, we don't care
+        with contextlib.suppress(OSError):
             os.chmod(settings.pcsd_key_location, 0o600)
-        except OSError:  # If the file doesn't exist, we don't care
-            pass
 
         with os.fdopen(
             os.open(
@@ -219,7 +218,7 @@ def accept_token_cmd(lib, argv, modifiers):
     try:
         pcs_users_config.write_facade(facade, can_overwrite=True)
     except pcs_file.RawFileError as e:
-        raise output.error(raw_file_error_report(e).message.message)
+        raise output.error(raw_file_error_report(e).message.message) from e
 
 
 def _check_nodes(node_list, prefix=""):

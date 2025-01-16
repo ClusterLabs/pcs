@@ -44,7 +44,7 @@ class _Attrs:
         self.required_attrs = required_attrs
 
     def __getattr__(self, name):
-        if name in self.required_attrs.keys():
+        if name in self.required_attrs:
             try:
                 attr_specification = self.required_attrs[name]
                 if isinstance(attr_specification, tuple):
@@ -70,7 +70,7 @@ class _Children:
         self.sections = sections
 
     def __getattr__(self, name):
-        if name in self.children.keys():
+        if name in self.children:
             element_name, wrapper = self.children[name]
             return [
                 wrapper(element)
@@ -79,7 +79,7 @@ class _Children:
                 )
             ]
 
-        if name in self.sections.keys():
+        if name in self.sections:
             element_name, wrapper = self.sections[name]
             return wrapper(
                 self.dom_part.xpath(
@@ -274,9 +274,7 @@ def is_resource_managed(cluster_state, resource_id):
         .//resource[{predicate_id}]
         |
         .//group[{predicate_id}]/resource
-        """.format(
-            predicate_id=_id_xpath_predicate
-        ),
+        """.format(predicate_id=_id_xpath_predicate),
         id=resource_id,
     )
     if primitive_list:

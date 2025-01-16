@@ -288,7 +288,7 @@ class ResourceAgentMetadata:
 
     @property
     def provides_promotability(self) -> bool:
-        return set(action.name for action in self.actions) >= {
+        return {action.name for action in self.actions} >= {
             "promote",
             "demote",
         }

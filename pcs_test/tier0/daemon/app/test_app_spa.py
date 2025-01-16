@@ -48,7 +48,7 @@ class AppTest(fixtures_app_webui.AppTest):
             app_dir=self.spa_dir_path,
             fallback_page_path=self.fallback_path,
             session_storage=self.session_storage,
-            auth_provider=AuthProvider(logging.Logger("test logger")),
+            auth_provider=AuthProvider(logging.getLogger("test logger")),
         )
 
     def assert_success_response(self, response, expected_body):

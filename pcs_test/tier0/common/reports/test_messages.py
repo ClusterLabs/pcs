@@ -1368,10 +1368,7 @@ class NodeAddressesAlreadyExist(NameBuildTest):
 class NodeAddressesCannotBeEmpty(NameBuildTest):
     def test_one_node(self):
         self.assert_message_from_report(
-            (
-                "Empty address set for node 'node2', "
-                "an address cannot be empty"
-            ),
+            ("Empty address set for node 'node2', an address cannot be empty"),
             reports.NodeAddressesCannotBeEmpty(["node2"]),
         )
 
@@ -3820,11 +3817,7 @@ class CibRemoveDependantElements(NameBuildTest):
 class CibRemoveReferences(NameBuildTest):
     def test_one_element_single_reference(self):
         self.assert_message_from_report(
-            (
-                "Removing references:\n"
-                "  Resource 'id1' from:\n"
-                "    Tag: 'id2'"
-            ),
+            ("Removing references:\n  Resource 'id1' from:\n    Tag: 'id2'"),
             reports.CibRemoveReferences(
                 {"id1": "primitive", "id2": "tag"}, {"id1": ["id2"]}
             ),
@@ -3832,11 +3825,7 @@ class CibRemoveReferences(NameBuildTest):
 
     def test_missing_tag_mapping(self):
         self.assert_message_from_report(
-            (
-                "Removing references:\n"
-                "  Element 'id1' from:\n"
-                "    Element: 'id2'"
-            ),
+            ("Removing references:\n  Element 'id1' from:\n    Element: 'id2'"),
             reports.CibRemoveReferences({}, {"id1": ["id2"]}),
         )
 
@@ -5841,7 +5830,7 @@ class NotAuthorized(NameBuildTest):
 
 class AgentSelfValidationResult(NameBuildTest):
     def test_message(self):
-        lines = list(f"line #{i}" for i in range(3))
+        lines = [f"line #{i}" for i in range(3)]
         self.assert_message_from_report(
             "Validation result from agent:\n  {}".format("\n  ".join(lines)),
             reports.AgentSelfValidationResult("\n".join(lines)),
@@ -5859,7 +5848,7 @@ class AgentSelfValidationInvalidData(NameBuildTest):
 
 class AgentSelfValidationSkippedUpdatedResourceMisconfigured(NameBuildTest):
     def test_message(self):
-        lines = list(f"line #{i}" for i in range(3))
+        lines = [f"line #{i}" for i in range(3)]
         self.assert_message_from_report(
             (
                 "The resource was misconfigured before the update, therefore "

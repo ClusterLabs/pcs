@@ -247,39 +247,30 @@ else
 python_test_options = -v --vanilla
 endif
 
-pylint:
+ruff_format_check: pyproject.toml
 if DEV_TESTS
-if PARALLEL_PYLINT
-pylint_options = --jobs=0
-else
-pylint_options =
-endif
-	export PYTHONPATH=${abs_top_builddir}/${PCS_BUNDLED_DIR_LOCAL}/packages && \
-		$(TIME) $(PYTHON) -m pylint --rcfile pyproject.toml ${pylint_options} ${PCS_PYTHON_PACKAGES}
+	$(TIME) ruff --config pyproject.toml format --check ${PCS_PYTHON_PACKAGES}
 endif
 
-isort_check: pyproject.toml
+ruff_format: pyproject.toml
 if DEV_TESTS
-	export PYTHONPATH=${abs_top_builddir}/${PCS_BUNDLED_DIR_LOCAL}/packages && \
-		$(TIME) $(PYTHON) -m isort --check-only ${PCS_PYTHON_PACKAGES}
+	$(TIME) ruff --config pyproject.toml check --select I --fix ${PCS_PYTHON_PACKAGES}
+	$(TIME) ruff --config pyproject.toml format ${PCS_PYTHON_PACKAGES}
 endif
 
-isort: pyproject.toml
+ruff_isort_check: pyproject.toml
 if DEV_TESTS
-	export PYTHONPATH=${abs_top_builddir}/${PCS_BUNDLED_DIR_LOCAL}/packages && \
-		$(TIME) $(PYTHON) -m isort ${PCS_PYTHON_PACKAGES}
+	$(TIME) ruff --config pyproject.toml check --select I ${PCS_PYTHON_PACKAGES}
 endif
 
-black_check: pyproject.toml
+ruff_isort: pyproject.toml
 if DEV_TESTS
-	export PYTHONPATH=${abs_top_builddir}/${PCS_BUNDLED_DIR_LOCAL}/packages && \
-		$(TIME) $(PYTHON) -m black --config pyproject.toml --check ${PCS_PYTHON_PACKAGES}
+	$(TIME) ruff --config pyproject.toml check --select I --fix ${PCS_PYTHON_PACKAGES}
 endif
 
-black: pyproject.toml
+ruff_lint: pyproject.toml
 if DEV_TESTS
-	export PYTHONPATH=${abs_top_builddir}/${PCS_BUNDLED_DIR_LOCAL}/packages && \
-		$(PYTHON) -m black --config pyproject.toml ${PCS_PYTHON_PACKAGES}
+	$(TIME) ruff --config pyproject.toml check ${PCS_PYTHON_PACKAGES}
 endif
 
 mypy:
@@ -380,7 +371,7 @@ test-tree-clean:
 	fi
 	find ${abs_top_builddir} -type d -name __pycache__ -exec rm -rf {} \; 2>/dev/null || :
 
-check-local: check-local-deps test-tree-prep typos_check pylint isort_check black_check mypy tests_tier0 tests_tier1 pcsd-tests test-tree-clean
+check-local: check-local-deps test-tree-prep typos_check ruff_lint ruff_isort_check ruff_format_check mypy tests_tier0 tests_tier1 pcsd-tests test-tree-clean
 
 # New setuptools use the build directory to build wheels
 clean-local: test-tree-clean

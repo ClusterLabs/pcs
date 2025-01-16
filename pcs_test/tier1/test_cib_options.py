@@ -715,7 +715,7 @@ class RscDefaultsSetCreate(
             <{self.cib_tag}>
                 <meta_attributes id="X">
                     <rule id="X-rule" boolean-op="and"
-                        {'score="INFINITY"' if score_present else ''}
+                        {'score="INFINITY"' if score_present else ""}
                     >
                         <rsc_expression id="X-rule-rsc-Dummy" type="Dummy"/>
                     </rule>
@@ -785,11 +785,11 @@ class OpDefaultsSetCreate(
             <{self.cib_tag}>
                 <meta_attributes id="X">
                     <rule id="X-rule" boolean-op="and"
-                        {'score="INFINITY"' if score_present else ''}
+                        {'score="INFINITY"' if score_present else ""}
                     >
                         <rsc_expression id="X-rule-rsc-Dummy" type="Dummy"/>
                         <rule id="X-rule-rule" boolean-op="or"
-                            {'score="0"' if score_present else ''}
+                            {'score="0"' if score_present else ""}
                         >
                             <op_expression id="X-rule-rule-op-start"
                                 name="start"
@@ -799,7 +799,7 @@ class OpDefaultsSetCreate(
                             />
                         </rule>
                         <rule id="X-rule-rule-1" boolean-op="or"
-                            {'score="0"' if score_present else ''}
+                            {'score="0"' if score_present else ""}
                         >
                             <expression id="X-rule-rule-1-expr"
                                 operation="defined" attribute="attr1"

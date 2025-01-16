@@ -218,7 +218,7 @@ class CreateWithRule(TestCase):
             "something=anything #uname eq node1",
             {"id": "id1", "score": "7", "score-attribute": "attr", "role": "r"},
             {"resource-discovery": "rd", "id": "id2"},
-            set([reports.codes.FORCE]),
+            {reports.codes.FORCE},
         )
         self.report_processor.set_report_item_preprocessor.assert_called_once()
         mock_dw.assert_called_once_with(RULE_ARGV_DEPRECATED)

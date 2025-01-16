@@ -255,9 +255,9 @@ class NameValueSequence(Generic[T]):
     def __add__(self, other: "NameValueSequence") -> "NameValueSequence":
         my_name = type(self).__name__
         other_name = type(other).__name__
-        assert isinstance(
-            other, type(self)
-        ), f"Can only concatenate {my_name} with {my_name}, not {other_name}"
+        assert isinstance(other, type(self)), (
+            f"Can only concatenate {my_name} with {my_name}, not {other_name}"
+        )
 
         return type(self)(
             self.names + other.names,
@@ -269,7 +269,7 @@ class NameValueSequence(Generic[T]):
             [
                 f" {index:3}. {item[0] if item[0] else '<unnamed>'}: {item[1]}"
                 for index, item in enumerate(
-                    zip(self.__names, self.__values), 1
+                    zip(self.__names, self.__values, strict=False), 1
                 )
             ]
         )

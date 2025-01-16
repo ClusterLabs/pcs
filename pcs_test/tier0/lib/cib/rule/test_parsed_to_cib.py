@@ -433,7 +433,7 @@ class Complex(Base):
         xml = f"""
                 <rule id="{{id}}" boolean-op="and">
                   <rule id="{{id}}-rule" boolean-op="or"
-                      {'score="0"' if score_present else ''}
+                      {'score="0"' if score_present else ""}
                   >
                     <rsc_expression id="{{id}}-rule-rsc-ocf-pacemaker-Dummy"
                         class="ocf" provider="pacemaker" type="Dummy"
@@ -447,7 +447,7 @@ class Complex(Base):
                     />
                   </rule>
                   <rule id="{{id}}-rule-1" boolean-op="or"
-                      {'score="0"' if score_present else ''}
+                      {'score="0"' if score_present else ""}
                   >
                     <expression id="{{id}}-rule-1-expr"
                         attribute="#uname" operation="eq" value="node1"

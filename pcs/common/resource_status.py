@@ -743,20 +743,20 @@ class ResourcesStatusFacade:
 
         if isinstance(resource, CloneStatusDto):
             return list(
-                set(
+                {
                     instance.resource_id
                     for instance in resource.instances
                     if not _is_orphaned(instance)
-                )
+                }
             )
 
         if isinstance(resource, BundleStatusDto):
             return list(
-                set(
+                {
                     replica.member.resource_id
                     for replica in resource.replicas
                     if replica.member is not None
-                )
+                }
             )
 
         raise ResourceUnexpectedTypeException(
@@ -1088,7 +1088,7 @@ def _is_orphaned(resource: Union[PrimitiveStatusDto, GroupStatusDto]) -> bool:
 
 
 def _filter_clone_orphans(
-    instance_list: Sequence[Union[PrimitiveStatusDto, GroupStatusDto]]
+    instance_list: Sequence[Union[PrimitiveStatusDto, GroupStatusDto]],
 ) -> list[Union[PrimitiveStatusDto, GroupStatusDto]]:
     return [
         instance for instance in instance_list if not _is_orphaned(instance)

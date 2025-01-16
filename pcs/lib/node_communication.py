@@ -97,10 +97,12 @@ class LibCommunicatorLogger(CommunicatorLoggerInterface):
         url = response.request.url
         debug_data = response.debug
         self._logger.debug(
-            f"Communication debug info for calling: {url}\n"
+            "Communication debug info for calling: %s\n"
             "--Debug Communication Info Start--\n"
-            f"{debug_data}\n"
-            "--Debug Communication Info End--"
+            "%s\n"
+            "--Debug Communication Info End--",
+            url,
+            debug_data,
         )
         self._reporter.report(
             ReportItem.debug(
@@ -260,16 +262,15 @@ def response_to_report_item(
         elif response_code >= 400:
             report_item = reports.messages.NodeCommunicationError
             reason = f"HTTP error: {response_code}"
+    elif response.errno in [
+        pycurl.E_OPERATION_TIMEDOUT,
+        pycurl.E_OPERATION_TIMEOUTED,
+    ]:
+        report_item = reports.messages.NodeCommunicationErrorTimedOut
+        reason = response.error_msg
     else:
-        if response.errno in [
-            pycurl.E_OPERATION_TIMEDOUT,
-            pycurl.E_OPERATION_TIMEOUTED,
-        ]:
-            report_item = reports.messages.NodeCommunicationErrorTimedOut
-            reason = response.error_msg
-        else:
-            report_item = reports.messages.NodeCommunicationErrorUnableToConnect
-            reason = response.error_msg
+        report_item = reports.messages.NodeCommunicationErrorUnableToConnect
+        reason = response.error_msg
     if not report_item:
         return None
     return ReportItem(

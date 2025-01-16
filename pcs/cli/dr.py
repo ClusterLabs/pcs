@@ -41,8 +41,7 @@ def config(
         dto.PayloadConversionError,
     ) as e:
         raise error(
-            "Unable to communicate with pcsd, received response:\n"
-            f"{config_raw}"
+            f"Unable to communicate with pcsd, received response:\n{config_raw}"
         ) from e
 
     lines = ["Local site:"]

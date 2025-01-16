@@ -141,15 +141,13 @@ def _find_all_resource_agents_by_type(
     type_ -- last part of an agent name
     """
     type_lower = type_.lower()
-    possible_names = []
-    for std_provider in list_resource_agents_standards_and_providers(runner):
-        for existing_type in list_resource_agents(runner, std_provider):
-            if type_lower == existing_type.lower():
-                possible_names.append(
-                    ResourceAgentName(
-                        std_provider.standard,
-                        std_provider.provider,
-                        existing_type,
-                    )
-                )
-    return possible_names
+    return [
+        ResourceAgentName(
+            std_provider.standard,
+            std_provider.provider,
+            existing_type,
+        )
+        for std_provider in list_resource_agents_standards_and_providers(runner)
+        for existing_type in list_resource_agents(runner, std_provider)
+        if type_lower == existing_type.lower()
+    ]

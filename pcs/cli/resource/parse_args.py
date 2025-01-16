@@ -71,10 +71,10 @@ class AddRemoveOptions:
 
 def parse_primitive(arg_list: Argv) -> PrimitiveOptions:
     groups = group_by_keywords(
-        arg_list, set(["op", "meta"]), implicit_first_keyword="instance"
+        arg_list, {"op", "meta"}, implicit_first_keyword="instance"
     )
 
-    parts = PrimitiveOptions(
+    return PrimitiveOptions(
         instance_attrs=KeyValueParser(
             groups.get_args_flat("instance")
         ).get_unique(),
@@ -85,12 +85,10 @@ def parse_primitive(arg_list: Argv) -> PrimitiveOptions:
         ],
     )
 
-    return parts
-
 
 def parse_clone(arg_list: Argv, promotable: bool = False) -> CloneOptions:
     clone_id = None
-    allowed_keywords = set(["op", "meta"])
+    allowed_keywords = {"op", "meta"}
     if (
         arg_list
         and arg_list[0] not in allowed_keywords
@@ -125,19 +123,19 @@ def parse_clone(arg_list: Argv, promotable: bool = False) -> CloneOptions:
     return CloneOptions(clone_id=clone_id, meta_attrs=meta)
 
 
-def parse_create_new(arg_list: Argv) -> ComplexResourceOptions:
+def parse_create_new(arg_list: Argv) -> ComplexResourceOptions:  # noqa: PLR0912
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-locals
     top_groups = group_by_keywords(
         arg_list,
-        set(["clone", "promotable", "bundle", "group"]),
+        {"clone", "promotable", "bundle", "group"},
         implicit_first_keyword="primitive",
     )
     top_groups.ensure_unique_keywords()
 
     primitive_groups = group_by_keywords(
         top_groups.get_args_flat("primitive"),
-        set(["op", "meta"]),
+        {"op", "meta"},
         implicit_first_keyword="instance",
     )
     primitive_options = PrimitiveOptions(
@@ -157,7 +155,7 @@ def parse_create_new(arg_list: Argv) -> ComplexResourceOptions:
     if top_groups.has_keyword("group"):
         group_groups = group_by_keywords(
             top_groups.get_args_flat("group"),
-            set(["before", "after", "op", "meta"]),
+            {"before", "after", "op", "meta"},
             implicit_first_keyword="group_id",
         )
         if group_groups.has_keyword("meta"):
@@ -197,7 +195,7 @@ def parse_create_new(arg_list: Argv) -> ComplexResourceOptions:
             continue
         clone_groups = group_by_keywords(
             top_groups.get_args_flat(clone_type),
-            set(["op", "meta"]),
+            {"op", "meta"},
             implicit_first_keyword="options",
         )
         clone_id = None
@@ -226,7 +224,7 @@ def parse_create_new(arg_list: Argv) -> ComplexResourceOptions:
     if top_groups.has_keyword("bundle"):
         bundle_groups = group_by_keywords(
             top_groups.get_args_flat("bundle"),
-            set(["op", "meta"]),
+            {"op", "meta"},
             implicit_first_keyword="options",
         )
         if bundle_groups.has_keyword("meta"):
@@ -253,7 +251,7 @@ def parse_create_new(arg_list: Argv) -> ComplexResourceOptions:
 
 
 # deprecated since 0.11.6
-def parse_create_old(
+def parse_create_old(  # noqa: PLR0912
     arg_list: Argv, modifiers: InputModifiers
 ) -> ComplexResourceOptions:
     # pylint: disable=too-many-branches
@@ -261,13 +259,13 @@ def parse_create_old(
     # pylint: disable=too-many-statements
     top_groups = group_by_keywords(
         arg_list,
-        set(["clone", "promotable", "bundle"]),
+        {"clone", "promotable", "bundle"},
         implicit_first_keyword="primitive",
     )
 
     primitive_groups = group_by_keywords(
         top_groups.get_args_flat("primitive"),
-        set(["op", "meta"]),
+        {"op", "meta"},
         implicit_first_keyword="instance",
     )
     primitive_instance_attrs = primitive_groups.get_args_flat("instance")
@@ -311,7 +309,7 @@ def parse_create_old(
             continue
         clone_groups = group_by_keywords(
             top_groups.get_args_flat(clone_type),
-            set(["op", "meta"]),
+            {"op", "meta"},
             implicit_first_keyword="options",
         )
         clone_id = None
@@ -351,7 +349,7 @@ def parse_create_old(
     if top_groups.has_keyword("bundle"):
         bundle_groups = group_by_keywords(
             top_groups.get_args_flat("bundle"),
-            set(["op", "meta"]),
+            {"op", "meta"},
             implicit_first_keyword="options",
         )
         if bundle_groups.has_keyword("meta"):
@@ -404,9 +402,8 @@ def _parse_bundle_groups(arg_list: Argv) -> ArgsByKeywords:
             for repeated_section in groups.get_args_groups(keyword):
                 if not repeated_section:
                     raise CmdLineInputError(f"No {keyword} options specified")
-        else:
-            if not groups.get_args_flat(keyword):
-                raise CmdLineInputError(f"No {keyword} options specified")
+        elif not groups.get_args_flat(keyword):
+            raise CmdLineInputError(f"No {keyword} options specified")
     return groups
 
 

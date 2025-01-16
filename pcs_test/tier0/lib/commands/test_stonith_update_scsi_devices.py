@@ -382,7 +382,7 @@ class UpdateScsiDevicesMixin:
         ]
         self.config.env.set_known_nodes(self.existing_nodes)
 
-    def config_cib(
+    def config_cib(  # noqa: PLR0913
         self,
         *,
         devices_before=DEVICES_1,
@@ -464,7 +464,7 @@ class UpdateScsiDevicesMixin:
                     args=args,
                 )
 
-    def assert_command_success(
+    def assert_command_success(  # noqa: PLR0913
         self,
         *,
         devices_before=DEVICES_1,

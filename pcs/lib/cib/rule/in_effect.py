@@ -32,6 +32,7 @@ class RuleInEffectEvalDummy(RuleInEffectEval):
     """
 
     def get_rule_status(self, rule_id: str) -> CibRuleInEffectStatus:
+        del rule_id
         return CibRuleInEffectStatus.UNKNOWN
 
 

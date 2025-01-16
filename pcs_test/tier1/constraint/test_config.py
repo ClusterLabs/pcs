@@ -171,14 +171,13 @@ class ConstraintConfigCmdSpaceInDate(ConstraintConfigCmdMixin, TestCase):
 
     def _get_as_json(self, runner, use_all):
         data = super()._get_as_json(runner, use_all)
-        data = self._replace(
+        return self._replace(
             data,
             [
                 ("2023-01-01 12:00", "2023-01-01T12:00"),
                 ("2023-12-31 12:00", "2023-12-31T12:00"),
             ],
         )
-        return data
 
     def test_commands(self):
         stdout, stderr, retval = self.pcs_runner_orig.run(

@@ -76,7 +76,7 @@ class BoothEnv(TestCase):
         self.assertTrue(isinstance(my_env.config.raw_file, GhostFile))
         self.assertTrue(isinstance(my_env.key.raw_file, GhostFile))
         with self.assertRaises(AssertionError) as cm:
-            dummy_path = my_env.config_path
+            _ = my_env.config_path
         self.assertEqual(
             "Reading config path is supported only in live environment",
             str(cm.exception),

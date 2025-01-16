@@ -200,14 +200,13 @@ def _order_metadata_to_str(metadata: Mapping[str, Any]) -> list[str]:
 
 
 def _order_set_metadata_to_str(metadata: Mapping[str, Any]) -> list[str]:
-    result = []
-    for res_set in metadata["sets"]:
-        result.append(
-            "   set {resources}{options}".format(
-                resources=" ".join(res_set["members"]),
-                options=_resource_set_options_to_str(res_set["metadata"]),
-            )
+    result = [
+        "   set {resources}{options}".format(
+            resources=" ".join(res_set["members"]),
+            options=_resource_set_options_to_str(res_set["metadata"]),
         )
+        for res_set in metadata["sets"]
+    ]
     return _order_common_metadata_to_str(metadata) + result
 
 

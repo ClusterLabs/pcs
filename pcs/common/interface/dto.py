@@ -80,14 +80,12 @@ def _convert_dict(
             value = [
                 # ignore _field.type may not have __args__
                 # this is prevented by _is_compatible_type
-                _convert_dict(_field.type.__args__[0], item)  # type: ignore
+                _convert_dict(_field.type.__args__[0], item)  # type: ignore[union-attr]
                 for item in value
             ]
         elif isinstance(value, dict) and _is_compatible_type(_field.type, 1):
             value = {
-                item_key: _convert_dict(
-                    _field.type.__args__[1], item_val  # type: ignore
-                )
+                item_key: _convert_dict(_field.type.__args__[1], item_val)  # type: ignore[union-attr,arg-type]
                 for item_key, item_val in value.items()
             }
         elif isinstance(value, Enum):
@@ -124,9 +122,7 @@ def _convert_payload(klass: type[DTOTYPE], data: DtoPayload) -> DtoPayload:
             ]
         elif isinstance(value, dict) and _is_compatible_type(_field.type, 1):
             value = {
-                item_key: _convert_payload(
-                    _field.type.__args__[1], item_val  # type: ignore
-                )
+                item_key: _convert_payload(_field.type.__args__[1], item_val)  # type: ignore[union-attr,arg-type]
                 for item_key, item_val in value.items()
             }
         del new_dict[new_name]

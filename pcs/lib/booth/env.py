@@ -68,7 +68,7 @@ class BoothEnv:
     @staticmethod
     def _init_file_data(booth_files_data, file_key):
         # ghost file not specified
-        if not file_key in booth_files_data:
+        if file_key not in booth_files_data:
             return dict(
                 ghost_file=False,
                 ghost_data=None,

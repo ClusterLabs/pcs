@@ -114,7 +114,7 @@ def _resource_operation_to_str(
     ] + indent(lines, indent_step=INDENT_STEP)
 
 
-def resource_agent_parameter_metadata_to_text(
+def resource_agent_parameter_metadata_to_text(  # noqa: PLR0912
     parameter: resource_agent.dto.ResourceAgentParameterDto,
 ) -> list[str]:
     # pylint: disable=too-many-branches
@@ -287,7 +287,9 @@ class ResourcesConfigurationFacade:
     def get_group_dto(self, obj_id: str) -> Optional[CibResourceGroupDto]:
         return self._groups_map.get(obj_id)
 
-    def _get_any_resource_dto(self, obj_id: str) -> Optional[
+    def _get_any_resource_dto(
+        self, obj_id: str
+    ) -> Optional[
         Union[
             CibResourcePrimitiveDto,
             CibResourceGroupDto,
@@ -631,11 +633,11 @@ def _resource_bundle_storage_to_text(
 ) -> List[str]:
     if not storage_mappings:
         return []
-    output = []
-    for storage_mapping in storage_mappings:
-        output.append(
-            " ".join(_resource_bundle_storage_mapping_to_str(storage_mapping))
-        )
+    output = [
+        " ".join(_resource_bundle_storage_mapping_to_str(storage_mapping))
+        for storage_mapping in storage_mappings
+    ]
+
     return ["Storage Mapping:"] + indent(output, indent_step=INDENT_STEP)
 
 
@@ -722,14 +724,13 @@ def _resource_operation_to_cmd(
 ) -> List[str]:
     if not operations:
         return []
-    cmd = []
-    for op in operations:
-        cmd.append(
-            "{name} {options}".format(
-                name=op.name,
-                options=pairs_to_cmd(_resource_operation_to_pairs(op)),
-            )
+    cmd = [
+        "{name} {options}".format(
+            name=op.name,
+            options=pairs_to_cmd(_resource_operation_to_pairs(op)),
         )
+        for op in operations
+    ]
     return ["op"] + indent(cmd, indent_step=INDENT_STEP)
 
 

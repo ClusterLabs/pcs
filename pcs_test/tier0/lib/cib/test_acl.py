@@ -519,9 +519,7 @@ class AddPermissionsToRoleTest(LibraryAclTest):
                   <acl_permission id="{0}-read" kind="read" xpath="/whatever"/>
                 </acl_role>
               </acls>
-            """.format(
-                    role_id
-                ),
+            """.format(role_id),
             )
         )
 
@@ -538,9 +536,7 @@ class ProvideRoleTest(LibraryAclTest):
               <acls>
                 <acl_role id="{0}"/>
               </acls>
-            """.format(
-                    role_id
-                ),
+            """.format(role_id),
             )
         )
 
@@ -557,9 +553,7 @@ class ProvideRoleTest(LibraryAclTest):
               <acls>
                 <acl_role id="{0}"/>
               </acls>
-            """.format(
-                    role_id
-                ),
+            """.format(role_id),
             )
         )
 

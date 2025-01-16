@@ -40,16 +40,15 @@ def _get_two_node(nodes_num):
 def corosync_conf_fixture(
     node_list=(), quorum_options=(), qdevice_net=False, qdevice_tie_breaker=None
 ):
-    nodes = []
-    for node in node_list:
-        nodes.append(
-            dedent(
-                """\
+    nodes = [
+        dedent(
+            """\
                 node {{
             {options}    }}
             """
-            ).format(options=_corosync_options_fixture(node))
-        )
+        ).format(options=_corosync_options_fixture(node))
+        for node in node_list
+    ]
     device = ""
     if qdevice_net:
         if qdevice_tie_breaker:

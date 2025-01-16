@@ -76,8 +76,7 @@ def stonith_list_available(
         if search:
             utils.err("No stonith agents matching the filter.")
         utils.err(
-            "No stonith agents available. "
-            "Do you have fence agents installed?"
+            "No stonith agents available. Do you have fence agents installed?"
         )
 
     for agent_info in agent_list:
@@ -88,7 +87,7 @@ def stonith_list_available(
                 "{0} - {1}".format(
                     name,
                     # pylint: disable=protected-access
-                    resource._format_desc(
+                    resource._format_desc(  # noqa: SLF001
                         len(name + " - "), shortdesc.replace("\n", " ")
                     ),
                 )

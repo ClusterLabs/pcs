@@ -18,9 +18,7 @@ def fixture_resources_with_booth(booth_config_file_path):
                 </instance_attributes>
             </primitive>
         </resources>
-    """.format(
-            booth_config_file_path
-        )
+    """.format(booth_config_file_path)
     )
 
 
@@ -32,9 +30,7 @@ def fixture_booth_element(_id, booth_config_file_path):
                 <nvpair name="config" value="{1}"/>
             </instance_attributes>
         </primitive>
-    """.format(
-            _id, booth_config_file_path
-        )
+    """.format(_id, booth_config_file_path)
     )
 
 
@@ -50,9 +46,7 @@ def fixture_ip_element(_id, ip=""):
             />
           </instance_attributes>
         </primitive>
-    """.format(
-            _id, ip
-        )
+    """.format(_id, ip)
     )
 
 

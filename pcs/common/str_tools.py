@@ -1,3 +1,4 @@
+import contextlib
 from collections.abc import Iterable as IterableAbc
 from collections.abc import Sized
 from typing import (
@@ -89,9 +90,9 @@ def format_name_value_list(item_list: Sequence[tuple[str, str]]) -> list[str]:
     Turn 2-tuples to 'name=value' strings with standard quoting
     """
     output = []
-    for name, value in item_list:
-        name = quote(name, "= ")
-        value = quote(value, "= ")
+    for raw_name, raw_value in item_list:
+        name = quote(raw_name, "= ")
+        value = quote(raw_value, "= ")
         output.append(f"{name}={value}")
     return output
 
@@ -99,15 +100,15 @@ def format_name_value_list(item_list: Sequence[tuple[str, str]]) -> list[str]:
 # For now, tuple[str, str, str] is sufficient. Feel free to change it if
 # needed, e.g. when values can be integers.
 def format_name_value_id_list(
-    item_list: Sequence[tuple[str, str, str]]
+    item_list: Sequence[tuple[str, str, str]],
 ) -> list[str]:
     """
     Turn 3-tuples to 'name=value (id: id))' strings with standard quoting
     """
     output = []
-    for name, value, an_id in item_list:
-        name = quote(name, "= ")
-        value = quote(value, "= ")
+    for raw_name, raw_value, an_id in item_list:
+        name = quote(raw_name, "= ")
+        value = quote(raw_value, "= ")
         output.append(f"{name}={value} (id: {an_id})")
     return output
 
@@ -119,16 +120,16 @@ def pairs_to_text(pairs: Sequence[tuple[str, str]]) -> list[str]:
 
 
 def format_name_value_default_list(
-    item_list: Sequence[tuple[str, str, bool]]
+    item_list: Sequence[tuple[str, str, bool]],
 ) -> list[str]:
     """
     Turn 3-tuples to 'name=value' or 'name=value (default)' strings with
     standard quoting
     """
     output = []
-    for name, value, is_default in item_list:
-        name = quote(name, "= ")
-        value = quote(value, "= ")
+    for raw_name, raw_value, is_default in item_list:
+        name = quote(raw_name, "= ")
+        value = quote(raw_value, "= ")
         default = " (default)" if is_default else ""
         output.append(f"{name}={value}{default}")
     return output
@@ -185,10 +186,8 @@ def _is_multiple(what: Union[int, Sized]) -> bool:
     if isinstance(what, int):
         retval = abs(what) != 1
     elif not isinstance(what, str):
-        try:
+        with contextlib.suppress(TypeError):
             retval = len(what) != 1
-        except TypeError:
-            pass
     return retval
 
 
@@ -245,7 +244,7 @@ T = TypeVar("T")
 
 
 def transform(items: list[T], mapping: Mapping[T, str]) -> list[str]:
-    return list(map(lambda item: mapping.get(item, str(item)), items))
+    return [mapping.get(item, str(item)) for item in items]
 
 
 def is_iterable_not_str(value: Union[IterableAbc, str]) -> bool:

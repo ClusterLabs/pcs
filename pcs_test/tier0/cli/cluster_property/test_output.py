@@ -53,7 +53,7 @@ def fixture_property_metadata(
     name="property-name",
     shortdesc=None,
     longdesc=None,
-    type="string",
+    type="string",  # noqa: A002
     default=None,
     enum_values=None,
     advanced=False,
