@@ -1542,6 +1542,10 @@ def get_resource_for_running_check(cluster_state, resource_id, stopped=False):
     """
     Commandline options: no options
     """
+
+    def _isnum(value):
+        return all(char in list("0123456789") for char in value)
+
     # pylint: disable=too-many-nested-blocks
     for clone in cluster_state.getElementsByTagName("clone"):
         if clone.getAttribute("id") == resource_id:
@@ -1551,10 +1555,10 @@ def get_resource_for_running_check(cluster_state, resource_id, stopped=False):
                     "group",
                 ]:
                     resource_id = child.getAttribute("id")
-                    # in a clone a resource can have an id of '<name>:N'
+                    # in a clone, a resource can have an id of '<name>:N'
                     if ":" in resource_id:
                         parts = resource_id.rsplit(":", 1)
-                        if parts[1].isdigit():
+                        if _isnum(parts[1]):
                             resource_id = parts[0]
                     break
     for group in cluster_state.getElementsByTagName("group"):

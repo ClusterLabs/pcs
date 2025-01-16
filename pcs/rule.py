@@ -752,9 +752,13 @@ class DateDurationValue(DateCommonValue):
     def __init__(self, parts_string):
         super().__init__(parts_string, self.KEYWORD)
 
+    @staticmethod
+    def __isnum(value):
+        return all(char in list("0123456789") for char in value)
+
     def validate(self):
         for name, value in self.parts.items():
-            if not value.isdigit():
+            if not self.__isnum(value):
                 raise SyntaxError(
                     "invalid %s '%s' in '%s'"
                     % (name, value, DateDurationValue.KEYWORD)

@@ -126,9 +126,18 @@ class TimeoutToSecondsTest(TestCase):
         self.assertEqual(36000, tools.timeout_to_seconds("10h"))
         self.assertEqual(36000, tools.timeout_to_seconds("10hr"))
 
+        # not 100% sure if these should be considered valid, but it looks like
+        # pacemaker accepts them and they have always been considered valid by
+        # pcs
+        self.assertEqual(10, tools.timeout_to_seconds("+10"))
+        self.assertEqual(600, tools.timeout_to_seconds("+10min"))
+
     def test_invalid(self):
         self.assertEqual(None, tools.timeout_to_seconds(-10))
+        self.assertEqual(None, tools.timeout_to_seconds("-10"))
+        self.assertEqual(None, tools.timeout_to_seconds("-10min"))
         self.assertEqual(None, tools.timeout_to_seconds("1a1s"))
+        self.assertEqual(None, tools.timeout_to_seconds("1min10s"))
         self.assertEqual(None, tools.timeout_to_seconds("10mm"))
         self.assertEqual(None, tools.timeout_to_seconds("10mim"))
         self.assertEqual(None, tools.timeout_to_seconds("aaa"))

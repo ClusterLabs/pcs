@@ -34,8 +34,8 @@ def are_meta_disabled(meta_attributes: Mapping[str, str]) -> bool:
 
 def _can_be_evaluated_as_positive_num(value: str) -> bool:
     string_wo_leading_zeros = str(value).lstrip("0")
-    return (
-        bool(string_wo_leading_zeros) and string_wo_leading_zeros[0].isdigit()
+    return bool(string_wo_leading_zeros) and (
+        string_wo_leading_zeros[0] in list("123456789")
     )
 
 

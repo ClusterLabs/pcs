@@ -19,6 +19,11 @@ def is_integer(
     at_least -- minimal allowed value
     at_most -- maximal allowed value
     """
+    # Using str.isnumeric(), str.isdigit() or str.isdecimal() is not good
+    # enough, as they return True for unicode characters which cannot be
+    # processed by int() and turned to an integer.
+    # Using int() to check a string is not enough, because it allows whitespace
+    # in the value.
     try:
         if value is None or isinstance(value, float):
             return False

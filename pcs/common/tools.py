@@ -15,6 +15,7 @@ from lxml import etree
 from lxml.etree import _Element
 
 from pcs.common.types import StringCollection
+from pcs.common.validate import is_integer
 
 T = TypeVar("T", bound=type)
 
@@ -83,8 +84,10 @@ def timeout_to_seconds(timeout: Union[int, str]) -> Optional[int]:
         "hr": 3600,
     }
     for suffix, multiplier in suffix_multiplier.items():
-        if timeout.endswith(suffix) and timeout[: -len(suffix)].isdigit():
-            return int(timeout[: -len(suffix)]) * multiplier
+        if timeout.endswith(suffix):
+            candidate2 = timeout[: -len(suffix)]
+            if is_integer(candidate2, at_least=0):
+                return int(candidate2) * multiplier
     return None
 
 

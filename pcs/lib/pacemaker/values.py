@@ -12,6 +12,7 @@ from pcs.common.reports.item import (
     ReportItemList,
 )
 from pcs.common.tools import timeout_to_seconds
+from pcs.common.validate import is_integer
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
 
@@ -60,7 +61,7 @@ def is_score(value: str) -> bool:
     if not value:
         return False
     unsigned_value = value[1:] if value[0] in ("+", "-") else value
-    return unsigned_value == SCORE_INFINITY or unsigned_value.isdigit()
+    return unsigned_value == SCORE_INFINITY or is_integer(value)
 
 
 def is_duration(runner: CommandRunner, value: str) -> bool:
