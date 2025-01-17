@@ -524,15 +524,6 @@ def pauseConfigSyncing(node, delay_seconds=300):
     return sendHTTPRequest(node, "remote/set_sync_options", data, False, False)
 
 
-def resumeConfigSyncing(node):
-    """
-    Commandline options:
-      * --request-timeout - timeout for HTTP requests
-    """
-    data = urlencode({"sync_thread_resume": 1})
-    return sendHTTPRequest(node, "remote/set_sync_options", data, False, False)
-
-
 # Send an HTTP request to a node return a tuple with status, data
 # If status is 0 then data contains server response
 # Otherwise if non-zero then data contains error message
@@ -1668,19 +1659,6 @@ def get_cib_dom(cib_xml=None):
         return err("unable to get cib")
 
 
-def get_cib_etree(cib_xml=None):
-    """
-    Commandline options:
-      * -f - CIB file
-    """
-    if cib_xml is None:
-        cib_xml = get_cib()
-    try:
-        return ET.fromstring(cib_xml)
-    except xml.etree.ElementTree.ParseError:
-        return err("unable to get cib")
-
-
 def is_etree(var):
     """
     Commandline options: no options
@@ -2114,16 +2092,6 @@ def validate_xml_id(var: str, description: str = "id") -> Tuple[bool, str]:
     if report_list:
         return False, report_list[0].message.message
     return True, ""
-
-
-# deprecated, moved to pcs.lib.pacemaker.live
-def is_iso8601_date(var):
-    """
-    Commandline options: no options
-    """
-    # using pacemaker tool to check if a value is a valid pacemaker iso8601 date
-    dummy_output, retVal = run(["iso8601", "-d", var])
-    return retVal == 0
 
 
 def err(errorText: str, exit_after_error: bool = True) -> None:

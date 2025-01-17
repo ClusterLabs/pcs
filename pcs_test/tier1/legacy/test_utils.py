@@ -700,20 +700,6 @@ class UtilsTest(TestCase):
             utils.validate_xml_id("dummy?", "test id"),
         )
 
-    def test_is_iso8601_date(self):
-        self.assertTrue(utils.is_iso8601_date("2014-07-03"))
-        self.assertTrue(utils.is_iso8601_date("2014-07-03T11:35:14"))
-        self.assertTrue(utils.is_iso8601_date("20140703"))
-        self.assertTrue(utils.is_iso8601_date("2014-W27-4"))
-        self.assertTrue(utils.is_iso8601_date("2014-184"))
-
-        self.assertFalse(utils.is_iso8601_date(""))
-        self.assertFalse(utils.is_iso8601_date("foo"))
-        self.assertFalse(utils.is_iso8601_date("2014-07-32"))
-        self.assertFalse(utils.is_iso8601_date("2014-13-03"))
-        self.assertFalse(utils.is_iso8601_date("2014-W27-8"))
-        self.assertFalse(utils.is_iso8601_date("2014-367"))
-
     def test_is_score(self):
         self.assertTrue(utils.is_score("INFINITY"))
         self.assertTrue(utils.is_score("+INFINITY"))
