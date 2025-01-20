@@ -7,6 +7,7 @@
   since pcs-0.12.0b1) ([RHEL-79033])
 - Do not end with traceback when using `pcs resource delete` to remove bundle
   resources when the bundle has no IP address specified ([RHEL-79090])
+- Make install no longer fails on systems with merged /usr/sbin and /usr/bin
 
 [RHEL-79033]: https://issues.redhat.com/browse/RHEL-79033
 [RHEL-79090]: https://issues.redhat.com/browse/RHEL-79090
