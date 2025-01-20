@@ -168,6 +168,10 @@ endif
 # * Pip installs scripts into bin directory and that cannot be changed, so the
 # files are moved manually. Some of the folders do not exist in DESTDIR or
 # prefix locations, so they need to be created first, otherwise mv fails
+# * For systems where sbin and bin is merged, autotools should have correctly
+# defined the bindir and SBINDIR macros. If this isn't true, configure can be
+# run with --sbindir equal to bindir. It is assumed that setuptools also use
+# bindir location to output entry point script.
 install-exec-local: install_python_embedded_mods stamps/install_ruby_deps_local
 	if $$(${PYTHON} -c "import sys; exit(sys.base_prefix == sys.prefix)"); then \
 		echo "WARNING: Virtual environment is activated, shebangs in Python " \
@@ -182,10 +186,12 @@ install-exec-local: install_python_embedded_mods stamps/install_ruby_deps_local
 	${PIP} ${pipopts} install ${pipinstallopts} \
 		--root=$(or ${DESTDIR}, /) \
 		--prefix=${prefix} ${EXTRA_SETUP_OPTS} .
-	mv ${DESTDIR}/$(prefix)/bin/pcs ${DESTDIR}/$(SBINDIR)/ || \
-		mv ${DESTDIR}/$(prefix)/local/bin/pcs ${DESTDIR}/${prefix}/local/sbin/
-	mv ${DESTDIR}/$(prefix)/bin/pcsd ${DESTDIR}/$(SBINDIR)/ || \
-		mv ${DESTDIR}/$(prefix)/local/bin/pcsd ${DESTDIR}/${prefix}/local/sbin/
+	if test "${DESTDIR}/$(prefix)/bin/" != "${DESTDIR}/$(SBINDIR)/"; then \
+		mv ${DESTDIR}/$(prefix)/bin/pcs ${DESTDIR}/$(SBINDIR)/ || \
+			mv ${DESTDIR}/$(prefix)/local/bin/pcs ${DESTDIR}/${prefix}/local/sbin/; \
+		mv ${DESTDIR}/$(prefix)/bin/pcsd ${DESTDIR}/$(SBINDIR)/ || \
+			mv ${DESTDIR}/$(prefix)/local/bin/pcsd ${DESTDIR}/${prefix}/local/sbin/; \
+	fi
 	mv ${DESTDIR}/$(prefix)/bin/pcs_internal ${DESTDIR}/$(LIB_DIR)/pcs/ || \
 		mv ${DESTDIR}/$(prefix)/local/bin/pcs_internal ${DESTDIR}/${LIB_DIR}/pcs/
 	mv ${DESTDIR}/$(prefix)/bin/pcs_snmp_agent ${DESTDIR}/$(LIB_DIR)/pcs/ || \
@@ -209,10 +215,12 @@ install-exec-local: install_python_embedded_mods stamps/install_ruby_deps_local
 # which are untouched by make install.
 uninstall-local:
 	rm -rf ${DESTDIR}/$(PCS_BUNDLED_DIR)
-	find ${DESTDIR}/$(prefix)/local/sbin -name pcs -type f -delete || \
-		rm -fv ${DESTDIR}/$(SBINDIR)/pcs
-	find ${DESTDIR}/$(prefix)/local/sbin -name pcsd -type f -delete || \
-		rm -fv ${DESTDIR}/$(SBINDIR)/pcsd
+	if test "${DESTDIR}/$(prefix)/bin/" != "${DESTDIR}/$(SBINDIR)/"; then \
+		find ${DESTDIR}/$(prefix)/local/sbin -name pcs -type f -delete || \
+			rm -fv ${DESTDIR}/$(SBINDIR)/pcs; \
+		find ${DESTDIR}/$(prefix)/local/sbin -name pcsd -type f -delete || \
+			rm -fv ${DESTDIR}/$(SBINDIR)/pcsd; \
+	fi
 	rm -fv ${DESTDIR}/$(LIB_DIR)/pcs/pcs_internal
 	rm -fv ${DESTDIR}/$(LIB_DIR)/pcs/pcs_snmp_agent
 	sitelib=${DESTDIR}/${prefix}/local/lib/python*/dist-packages; \
