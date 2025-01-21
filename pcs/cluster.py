@@ -60,6 +60,7 @@ from pcs.common.node_communicator import (
 from pcs.common.str_tools import (
     format_list,
     indent,
+    join_multilines,
 )
 from pcs.common.tools import format_os_error
 from pcs.common.types import (
@@ -802,6 +803,25 @@ def cluster_push(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  # no
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-locals
     # pylint: disable=too-many-statements
+
+    def get_details_from_crm_verify():
+        # get a new runner to run crm_verify command and pass the CIB filename
+        # into it so that the verify is run on the file instead on the live
+        # cluster CIB
+        verify_runner = utils.cmd_runner(cib_file_override=filename)
+        # Request verbose output, otherwise we may only get an unhelpful
+        # message:
+        # Configuration invalid (with errors) (-V may provide more detail)
+        # verify_returncode is always expected to be non-zero to indicate
+        # invalid CIB - ve run the verify because the CIB is invalid
+        (
+            verify_stdout,
+            verify_stderr,
+            verify_returncode,
+            verify_can_be_more_verbose,
+        ) = lib_pacemaker.verify(verify_runner, verbose=True)
+        return join_multilines([verify_stdout, verify_stderr])
+
     del lib
     modifiers.ensure_only_supported("--wait", "--config", "-f")
     if len(argv) > 2:
@@ -846,6 +866,8 @@ def cluster_push(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  # no
     except (EnvironmentError, xml.parsers.expat.ExpatError) as e:
         utils.err("unable to parse new cib: %s" % e)
 
+    EXITCODE_INVALID_CIB = 78
+
     if diff_against:
         runner = utils.cmd_runner()
         command = [
@@ -876,7 +898,18 @@ def cluster_push(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  # no
         ]
         output, stderr, retval = runner.run(command, patch)
         if retval != 0:
-            utils.err("unable to push cib\n" + stderr + output)
+            push_output = stderr + output
+            verify_output = (
+                get_details_from_crm_verify()
+                if retval == EXITCODE_INVALID_CIB
+                else ""
+            )
+            error_text = (
+                f"{push_output}\n\n{verify_output}"
+                if verify_output.strip()
+                else push_output
+            )
+            utils.err("unable to push cib\n" + error_text)
 
     else:
         command = ["cibadmin", "--replace", "--xml-file", filename]
@@ -894,7 +927,17 @@ def cluster_push(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  # no
                 " that."
             )
         elif retval != 0:
-            utils.err("unable to push cib\n" + output)
+            verify_output = (
+                get_details_from_crm_verify()
+                if retval == EXITCODE_INVALID_CIB
+                else ""
+            )
+            error_text = (
+                f"{output}\n\n{verify_output}"
+                if verify_output.strip()
+                else output
+            )
+            utils.err("unable to push cib\n" + error_text)
 
     print_to_stderr("CIB updated")
 
