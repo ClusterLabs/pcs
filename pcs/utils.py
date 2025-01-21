@@ -928,8 +928,7 @@ def run(
     return output, retval
 
 
-@lru_cache()
-def cmd_runner():
+def cmd_runner(cib_file_override=None):
     """
     Commandline options:
       * -f - CIB file
@@ -937,6 +936,8 @@ def cmd_runner():
     env_vars = {}
     if usefile:
         env_vars["CIB_file"] = filename
+    if cib_file_override:
+        env_vars["CIB_file"] = cib_file_override
     env_vars.update(os.environ)
     env_vars["LC_ALL"] = "C"
     return CommandRunner(

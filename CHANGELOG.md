@@ -1,5 +1,14 @@
 # Change Log
 
+## [Unreleased]
+
+### Added
+- Commands `pcs cluster cib-push` and `pcs cluster edit` now print more info
+  when new CIB does not conform to the CIB schema [RHEL-63186]
+
+[RHEL-63186]: https://issues.redhat.com/browse/RHEL-63186
+
+
 ## [0.12.0] - 2025-01-09
 
 ### Added
