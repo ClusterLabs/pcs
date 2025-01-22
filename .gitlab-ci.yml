@@ -8,8 +8,6 @@ default:
     matrix:
       - BASE_IMAGE_NAME: ["PcsRhel10Next"]
         OS_TAG: "centos10"
-      - BASE_IMAGE_NAME: ["PcsFedoraCurrentRelease"]
-        OS_TAG: "generic"
   tags:
     - ${OS_TAG}
 
