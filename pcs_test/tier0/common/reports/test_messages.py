@@ -6064,13 +6064,13 @@ class ClusterOptionsMetadataNotSupported(NameBuildTest):
 
 
 class StoppingResourcesBeforeDeleting(NameBuildTest):
-    def test_one_resource(self):
+    def test_one_resource(self) -> str:
         self.assert_message_from_report(
             "Stopping resource 'resourceId' before deleting",
             reports.StoppingResourcesBeforeDeleting(["resourceId"]),
         )
 
-    def test_multiple_resources(self):
+    def test_multiple_resources(self) -> str:
         self.assert_message_from_report(
             "Stopping resources 'resourceId1', 'resourceId2' before deleting",
             reports.StoppingResourcesBeforeDeleting(
@@ -6080,7 +6080,7 @@ class StoppingResourcesBeforeDeleting(NameBuildTest):
 
 
 class StoppingResourcesBeforeDeletingSkipped(NameBuildTest):
-    def test_success(self):
+    def test_success(self) -> str:
         self.assert_message_from_report(
             (
                 "Resources are not going to be stopped before deletion, this "
@@ -6091,13 +6091,13 @@ class StoppingResourcesBeforeDeletingSkipped(NameBuildTest):
 
 
 class CannotStopResourcesBeforeDeleting(NameBuildTest):
-    def test_one_resource(self):
+    def test_one_resource(self) -> str:
         self.assert_message_from_report(
             "Cannot stop resource 'resourceId' before deleting",
             reports.CannotStopResourcesBeforeDeleting(["resourceId"]),
         )
 
-    def test_multiple_resources(self):
+    def test_multiple_resources(self) -> str:
         self.assert_message_from_report(
             "Cannot stop resources 'resourceId1', 'resourceId2' before deleting",
             reports.CannotStopResourcesBeforeDeleting(
@@ -6127,4 +6127,41 @@ class Gfs2LockTableRenameNeeded(NameBuildTest):
                 "can be mounted"
             ),
             reports.Gfs2LockTableRenameNeeded(),
+        )
+
+
+class CibClusterNameRemovalStarted(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "Removing CIB cluster name property on nodes...",
+            reports.CibClusterNameRemovalStarted(),
+        )
+
+
+class CibClusterNameRemoved(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "node: Succeeded", reports.CibClusterNameRemoved("node")
+        )
+
+
+class CibClusterNameRemovalFailed(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "CIB cluster name property removal failed: reason",
+            reports.CibClusterNameRemovalFailed("reason"),
+        )
+
+
+class PacemakerRunning(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "Pacemaker is running", reports.PacemakerRunning()
+        )
+
+
+class CibXmlMissing(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "CIB XML file cannot be found", reports.CibXmlMissing()
         )

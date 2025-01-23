@@ -8243,3 +8243,74 @@ class Gfs2LockTableRenameNeeded(ReportItemMessage):
             "reflect the name of the cluster so that the filesystems can be "
             "mounted"
         )
+
+
+@dataclass(frozen=True)
+class CibClusterNameRemovalStarted(ReportItemMessage):
+    """
+    Cluster name property is about to be deleted on nodes
+    """
+
+    _code = codes.CIB_CLUSTER_NAME_REMOVAL_STARTED
+
+    @property
+    def message(self) -> str:
+        return "Removing CIB cluster name property on nodes..."
+
+
+@dataclass(frozen=True)
+class CibClusterNameRemoved(ReportItemMessage):
+    """
+    Cluster name property has been deleted from CIB on node.
+
+    node -- node address / name
+    """
+
+    node: str
+    _code = codes.CIB_CLUSTER_NAME_REMOVED
+
+    @property
+    def message(self) -> str:
+        return f"{self.node}: Succeeded"
+
+
+@dataclass(frozen=True)
+class CibClusterNameRemovalFailed(ReportItemMessage):
+    """
+    Cluster name property removal has failed
+
+    reason -- description of the error
+    """
+
+    reason: str
+    _code = codes.CIB_CLUSTER_NAME_REMOVAL_FAILED
+
+    @property
+    def message(self) -> str:
+        return f"CIB cluster name property removal failed: {self.reason}"
+
+
+@dataclass(frozen=True)
+class PacemakerRunning(ReportItemMessage):
+    """
+    Pacemaker is running on a node.
+    """
+
+    _code = codes.PACEMAKER_RUNNING
+
+    @property
+    def message(self) -> str:
+        return "Pacemaker is running"
+
+
+@dataclass(frozen=True)
+class CibXmlMissing(ReportItemMessage):
+    """
+    CIB XML file cannot be found
+    """
+
+    _code = codes.CIB_XML_MISSING
+
+    @property
+    def message(self) -> str:
+        return "CIB XML file cannot be found"
