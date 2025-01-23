@@ -1,6 +1,11 @@
+import json
 from typing import Optional
 
+from dacite import DaciteError
+
 from pcs.common import reports
+from pcs.common.communication.dto import InternalCommunicationResultDto
+from pcs.common.interface.dto import from_dict
 from pcs.common.node_communicator import RequestData
 from pcs.common.reports.item import ReportItem
 from pcs.lib.communication.tools import (
@@ -129,3 +134,62 @@ class GetQuorumStatus(AllSameDataMixin, OneByOneStrategyMixin, RunRemotelyBase):
         self,
     ) -> tuple[Optional[bool], Optional[QuorumStatusFacade]]:
         return self._has_failure, self._quorum_status_facade
+
+
+class RemoveCibClusterName(
+    SkipOfflineMixin,
+    AllSameDataMixin,
+    AllAtOnceStrategyMixin,
+    RunRemotelyBase,
+):
+    def __init__(self, report_processor, skip_offline_targets=False):
+        super().__init__(report_processor)
+        self._set_skip_offline(skip_offline_targets)
+
+    def before(self):
+        self._report(
+            reports.ReportItem.info(
+                reports.messages.CibClusterNameRemovalStarted()
+            )
+        )
+
+    def _get_request_data(self):
+        return RequestData(
+            "api/v1/cluster-property-remove-name/v1", data=json.dumps({})
+        )
+
+    def _process_response(self, response):
+        report_item = self._get_response_report(response)
+        if report_item:
+            self._report(report_item)
+            return
+        node_label = response.request.target.label
+
+        report_list = []
+        try:
+            result = from_dict(
+                InternalCommunicationResultDto, json.loads(response.data)
+            )
+            context = reports.ReportItemContext(node_label)
+
+            report_list.extend(
+                reports.report_dto_to_item(report, context)
+                for report in result.report_list
+            )
+        except (json.JSONDecodeError, DaciteError):
+            report_list.append(
+                reports.ReportItem.error(
+                    reports.messages.InvalidResponseFormat(node_label)
+                )
+            )
+
+        self._report_list(report_list)
+        if not any(
+            report.severity.level == reports.ReportItemSeverity.ERROR
+            for report in report_list
+        ):
+            self._report(
+                reports.ReportItem.info(
+                    reports.messages.CibClusterNameRemoved(node_label)
+                )
+            )

@@ -1,5 +1,4 @@
 # pylint: disable=too-many-lines
-import os
 from unittest import (
     TestCase,
     mock,
@@ -353,10 +352,7 @@ class GetClusterStatusText(TestCase):
         )
 
 
-class GetCibXmlTestMixin:
-    def _call_command(self, runner, scope=None):
-        raise NotImplementedError()
-
+class GetCibXmlTest(TestCase):
     def test_success(self):
         expected_stdout = "<xml />"
         expected_stderr = ""
@@ -365,11 +361,10 @@ class GetCibXmlTestMixin:
             expected_stdout, expected_stderr, expected_retval
         )
 
-        real_xml = self._call_command(mock_runner)
+        real_xml = lib.get_cib_xml(mock_runner)
 
         mock_runner.run.assert_called_once_with(
-            [settings.cibadmin_exec, "--local", "--query"],
-            env_extend=self.env_extend,
+            [settings.cibadmin_exec, "--local", "--query"]
         )
         self.assertEqual(expected_stdout, real_xml)
 
@@ -383,7 +378,7 @@ class GetCibXmlTestMixin:
         )
 
         assert_raise_library_error(
-            lambda: self._call_command(mock_runner),
+            lambda: lib.get_cib_xml(mock_runner),
             (
                 Severity.ERROR,
                 report_codes.CIB_LOAD_ERROR,
@@ -394,8 +389,7 @@ class GetCibXmlTestMixin:
         )
 
         mock_runner.run.assert_called_once_with(
-            [settings.cibadmin_exec, "--local", "--query"],
-            env_extend=self.env_extend,
+            [settings.cibadmin_exec, "--local", "--query"]
         )
 
     def test_success_scope(self):
@@ -407,7 +401,7 @@ class GetCibXmlTestMixin:
             expected_stdout, expected_stderr, expected_retval
         )
 
-        real_xml = self._call_command(mock_runner, scope)
+        real_xml = lib.get_cib_xml(mock_runner, scope)
 
         mock_runner.run.assert_called_once_with(
             [
@@ -415,8 +409,7 @@ class GetCibXmlTestMixin:
                 "--local",
                 "--query",
                 "--scope={0}".format(scope),
-            ],
-            env_extend=self.env_extend,
+            ]
         )
         self.assertEqual(expected_stdout, real_xml)
 
@@ -435,7 +428,7 @@ class GetCibXmlTestMixin:
         )
 
         assert_raise_library_error(
-            lambda: self._call_command(mock_runner, scope=scope),
+            lambda: lib.get_cib_xml(mock_runner, scope=scope),
             (
                 Severity.ERROR,
                 report_codes.CIB_LOAD_ERROR_SCOPE_MISSING,
@@ -452,23 +445,8 @@ class GetCibXmlTestMixin:
                 "--local",
                 "--query",
                 "--scope={0}".format(scope),
-            ],
-            env_extend=self.env_extend,
+            ]
         )
-
-
-class GetCibXmlTest(GetCibXmlTestMixin, TestCase):
-    env_extend = None
-
-    def _call_command(self, runner, scope=None):
-        return lib.get_cib_xml(runner, scope)
-
-
-class GetCibDirectXmlTest(GetCibXmlTestMixin, TestCase):
-    env_extend = {"CIB_file": os.path.join(settings.cib_dir, "cib.xml")}
-
-    def _call_command(self, runner, scope=None):
-        return lib.get_cib_direct_xml(runner, scope)
 
 
 class GetCibTest(TestCase):

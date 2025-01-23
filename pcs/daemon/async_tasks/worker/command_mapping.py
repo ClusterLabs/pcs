@@ -161,6 +161,10 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
         cmd=cluster_property.set_properties,
         required_permission=p.WRITE,
     ),
+    "cluster_property.remove_cluster_name": _Cmd(
+        cmd=cluster_property.remove_cluster_name,
+        required_permission=p.WRITE,  # ?? maybe superuser
+    ),
     "cluster.wait_for_pcmk_idle": _Cmd(
         cmd=cluster.wait_for_pcmk_idle,
         required_permission=p.READ,

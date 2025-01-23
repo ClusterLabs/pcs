@@ -77,7 +77,12 @@ from pcs.lib.communication.sbd import (
     EnableSbdService,
     SetSbdConfig,
 )
-from pcs.lib.communication.tools import AllSameDataMixin, run_and_raise
+from pcs.lib.communication.tools import (
+    AllSameDataMixin,
+    CommunicationCommandInterface,
+    run,
+    run_and_raise,
+)
 from pcs.lib.communication.tools import run as run_com
 from pcs.lib.corosync import (
     config_facade,
@@ -96,7 +101,7 @@ from pcs.lib.interface.config import ParserErrorException
 from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.pacemaker.live import (
     get_cib,
-    get_cib_direct_xml,
+    get_cib_file_runner_env,
     get_cib_xml,
     get_cib_xml_cmd_results,
     has_cib_xml,
@@ -1388,6 +1393,7 @@ def add_nodes(  # noqa: PLR0912, PLR0915
     if atb_has_to_be_enabled:
         corosync_conf.set_quorum_options(dict(auto_tie_breaker="1"))
 
+    # TODO why this does not use push_corosync_conf?
     _verify_corosync_conf(corosync_conf)  # raises if corosync not valid
     com_cmd = DistributeCorosyncConf(
         env.report_processor,
@@ -1971,7 +1977,7 @@ def remove_nodes_from_cib(env: LibraryEnvironment, node_list):
                 "--force",
                 f"--xpath=/cib/configuration/nodes/node[@uname='{node}']",
             ],
-            env_extend={"CIB_file": os.path.join(settings.cib_dir, "cib.xml")},
+            env_extend=get_cib_file_runner_env(),
         )
         if retval != 0:
             raise LibraryError(
@@ -2381,15 +2387,47 @@ def rename(
     ).has_errors:
         raise LibraryError()
 
+    cib = None
     if has_cib_xml():
-        cib = get_cib(get_cib_direct_xml(env.cmd_runner()))
+        cib = get_cib(get_cib_xml(env.cmd_runner(get_cib_file_runner_env())))
         resources = get_resources(cib)
         env.report_processor.report_list(_warn_dlm_resources(resources))
         env.report_processor.report_list(_warn_gfs2_resources(resources))
 
     corosync_conf = env.get_corosync_conf()
-    corosync_conf.set_cluster_name(new_name)
-    env.push_corosync_conf(
-        corosync_conf,
-        skip_offline_nodes=reports.codes.SKIP_OFFLINE_NODES in force_flags,
+    skip_offline = report_codes.SKIP_OFFLINE_NODES in force_flags
+
+    corosync_nodes, report_list = get_existing_nodes_names(corosync_conf, None)
+    if env.report_processor.report_list(report_list).has_errors:
+        raise LibraryError()
+    target_list = env.get_node_target_factory().get_target_list(
+        corosync_nodes,
+        allow_skip=skip_offline,
     )
+
+    node_communicator = env.get_node_communicator()
+    com_cmd: CommunicationCommandInterface
+
+    com_cmd = CheckCorosyncOffline(env.report_processor, skip_offline)
+    com_cmd.set_targets(target_list)
+    running_targets = run(node_communicator, com_cmd)
+    if running_targets:
+        env.report_processor.report(
+            reports.ReportItem.error(
+                reports.messages.CorosyncNotRunningCheckFinishedRunning(
+                    [target.label for target in running_targets]
+                )
+            )
+        )
+    if env.report_processor.has_errors:
+        raise LibraryError()
+
+    # The 'cluster-name' property has to be removed from CIB on all nodes, so
+    # that it is initialized with the new cluster name from corosync after the
+    # cluster is started
+    com_cmd = cluster.RemoveCibClusterName(env.report_processor, skip_offline)
+    com_cmd.set_targets(target_list)
+    run_and_raise(node_communicator, com_cmd)
+
+    corosync_conf.set_cluster_name(new_name)
+    env.push_corosync_conf(corosync_conf, skip_offline)

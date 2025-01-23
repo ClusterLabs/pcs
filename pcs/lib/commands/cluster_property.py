@@ -4,9 +4,11 @@ from typing import (
     Union,
 )
 
+from pcs import settings
 from pcs.common import reports
 from pcs.common.pacemaker.cluster_property import ClusterPropertyMetadataDto
 from pcs.common.pacemaker.nvset import ListCibNvsetDto
+from pcs.common.str_tools import join_multilines
 from pcs.common.types import StringSequence
 from pcs.lib import cluster_property
 from pcs.lib.cib import (
@@ -20,6 +22,7 @@ from pcs.lib.cib.tools import (
 )
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
+from pcs.lib.pacemaker.live import get_cib_file_runner_env, has_cib_xml
 from pcs.lib.resource_agent import (
     ResourceAgentError,
     ResourceAgentFacade,
@@ -228,3 +231,36 @@ def get_properties_metadata(
         ],
         readonly_properties=cluster_property.READONLY_CLUSTER_PROPERTY_LIST,
     )
+
+
+def remove_cluster_name(env: LibraryEnvironment) -> None:
+    """
+    Remove cluster-name property from CIB on local node. The cluster has to be
+    stopped and the property is removed directly from the CIB file.
+    """
+    if env.service_manager.is_running("pacemaker"):
+        env.report_processor.report(
+            reports.ReportItem.error(reports.messages.PacemakerRunning())
+        )
+        raise LibraryError()
+
+    if not has_cib_xml():
+        env.report_processor.report(
+            reports.ReportItem.error(reports.messages.CibXmlMissing())
+        )
+        raise LibraryError()
+
+    xpath = "/cib/configuration/crm_config/cluster_property_set/nvpair[@name='cluster-name']"
+    stdout, stderr, retval = env.cmd_runner().run(
+        [settings.cibadmin_exec, "--delete-all", "--force", f"--xpath={xpath}"],
+        env_extend=get_cib_file_runner_env(),
+    )
+    if retval != 0:
+        env.report_processor.report(
+            reports.ReportItem.error(
+                reports.messages.CibClusterNameRemovalFailed(
+                    reason=join_multilines([stderr, stdout])
+                )
+            )
+        )
+        raise LibraryError()
