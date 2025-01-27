@@ -6,23 +6,25 @@ daemon, which operates as a remote server for pcs and provides a web UI.
 
 ---
 
-### Pcs Versions
+### Pcs Branches
 
-There are three pcs branches:
 * main
-  * This is where pcs-0.11 lives.
-  * Clusters running Pacemaker 2.1+ on top of Corosync 3.x are supported.
+  * This is where pcs-0.12 lives.
+  * Clusters running Pacemaker 3.x on top of Corosync 3.x are supported.
   * The main development happens here.
+* pcs-0.11
+  * Clusters running Pacemaker 2.1 on top of Corosync 3.x are supported.
+  * This branch is in maintenance mode - bugs are being fixed but only a subset
+    of new features lands here.
 * pcs-0.10
   * Clusters running Pacemaker 2.0 on top of Corosync 3.x are supported.
   * Pacemaker 2.1 is supported, if it is compiled with `--enable-compat-2.0`
     option.
-  * This branch is in maintenance mode - bugs are being fixed but only a subset
-    of new features lands here.
+  * This branch is no longer maintained.
 * pcs-0.9
   * Clusters running Pacemaker 1.x on top of Corosync 2.x or Corosync 1.x with
     CMAN are supported.
-  * This branch is in no longer maintained.
+  * This branch is no longer maintained.
 
 ---
 
