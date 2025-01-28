@@ -13,7 +13,6 @@ import tempfile
 import threading
 import time
 import xml.dom.minidom
-import xml.etree.ElementTree as ET
 from functools import lru_cache
 from io import BytesIO
 from textwrap import dedent
@@ -1659,29 +1658,13 @@ def get_cib_dom(cib_xml=None):
         return err("unable to get cib")
 
 
-def is_etree(var):
-    """
-    Commandline options: no options
-    """
-    return var.__class__ == xml.etree.ElementTree.Element
-
-
 # Replace only configuration section of cib with dom passed
 def replace_cib_configuration(dom):
     """
     Commandline options:
       * -f - CIB file
     """
-    if is_etree(dom):
-        # etree returns string in bytes: b'xml'
-        # python 3 removed .encode() from byte strings
-        # run(...) calls subprocess.Popen.communicate which calls encode...
-        # so there is bytes to str conversion
-        new_dom = ET.tostring(dom).decode()
-    elif hasattr(dom, "toxml"):
-        new_dom = dom.toxml()
-    else:
-        new_dom = dom
+    new_dom = dom.toxml() if hasattr(dom, "toxml") else dom
     cmd = ["cibadmin", "--replace", "-V", "--xml-pipe", "-o", "configuration"]
     output, retval = run(cmd, False, new_dom)
     if retval != 0:
@@ -1715,33 +1698,24 @@ def does_id_exist(dom, check_id):  # noqa: PLR0912
     """
     # do not search in /cib/status, it may contain references to previously
     # existing and deleted resources and thus preventing creating them again
-    if is_etree(dom):
-        for elem in dom.findall(
-            str('(/cib/*[name()!="status"]|/*[name()!="cib"])/*')
-        ):
-            if elem.get("id") == check_id:
-                return True
-    else:
-        document = (
-            dom
-            if isinstance(dom, xml.dom.minidom.Document)
-            else dom.ownerDocument
-        )
-        cib_found = False
-        for cib in _dom_get_children_by_tag_name(document, "cib"):
-            cib_found = True
-            for section in cib.childNodes:
-                if section.nodeType != xml.dom.minidom.Node.ELEMENT_NODE:
-                    continue
-                if section.tagName == "status":
-                    continue
-                for elem in section.getElementsByTagName("*"):
-                    if elem.getAttribute("id") == check_id:
-                        return True
-        if not cib_found:
-            for elem in document.getElementsByTagName("*"):
+    document = (
+        dom if isinstance(dom, xml.dom.minidom.Document) else dom.ownerDocument
+    )
+    cib_found = False
+    for cib in _dom_get_children_by_tag_name(document, "cib"):
+        cib_found = True
+        for section in cib.childNodes:
+            if section.nodeType != xml.dom.minidom.Node.ELEMENT_NODE:
+                continue
+            if section.tagName == "status":
+                continue
+            for elem in section.getElementsByTagName("*"):
                 if elem.getAttribute("id") == check_id:
                     return True
+    if not cib_found:
+        for elem in document.getElementsByTagName("*"):
+            if elem.getAttribute("id") == check_id:
+                return True
     return False
 
 
