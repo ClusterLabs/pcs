@@ -384,6 +384,7 @@ def _format_report_item(report_item):
             report_item.message.code,
             report_item.message.to_dto().payload,
             report_item.severity.force_code,
+            report_item.context,
         )
     )
 
