@@ -1,3 +1,4 @@
+from textwrap import dedent
 from unittest import (
     TestCase,
     mock,
@@ -26,6 +27,64 @@ def _dict_to_modifiers(options):
             if val is not False
         }
     )
+
+
+@mock.patch("pcs.stonith.print_to_stderr")
+@mock.patch("pcs.stonith.print")
+class SbdWatchdogList(TestCase):
+    def setUp(self):
+        self.lib = mock.Mock(spec_set=["sbd"])
+        self.sbd = mock.Mock(spec_set=["get_local_available_watchdogs"])
+        self.lib.sbd = self.sbd
+
+    def call_cmd(self, argv, modifiers=None):
+        stonith.sbd_watchdog_list(
+            self.lib, argv, _dict_to_modifiers(modifiers or {})
+        )
+
+    def test_args(self, mock_print, mock_stderr):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self.call_cmd(["foo"])
+        self.assertEqual(cm.exception.message, None)
+        self.sbd.get_local_available_watchdogs.assert_not_called()
+        mock_print.assert_not_called()
+        mock_stderr.assert_not_called()
+
+    def test_no_watchdogs(self, mock_print, mock_stderr):
+        self.sbd.get_local_available_watchdogs.return_value = {}
+        self.call_cmd([])
+        mock_print.assert_not_called()
+        mock_stderr.assert_called_once_with("No available watchdog")
+
+    def test_watchdogs(self, mock_print, mock_stderr):
+        self.sbd.get_local_available_watchdogs.return_value = {
+            "/dev/watchdog1": {
+                "identity": "iTCO_wdt",
+                "driver": "iTCO_wdt",
+                "caution": "unused",
+            },
+            "/dev/watchdog0": {
+                "identity": "i6300ESB timer",
+            },
+            "/dev/watchdog2": {
+                "driver": "iTCO_wdt",
+            },
+            "/dev/watchdog": {},
+        }
+        self.call_cmd([])
+        mock_print.assert_called_once_with(
+            dedent("""\
+                Available watchdog(s):
+                  /dev/watchdog
+                  /dev/watchdog0
+                    Identity: i6300ESB timer
+                  /dev/watchdog1
+                    Identity: iTCO_wdt
+                    Driver: iTCO_wdt
+                  /dev/watchdog2
+                    Driver: iTCO_wdt""")
+        )
+        mock_stderr.assert_not_called()
 
 
 class SbdEnable(TestCase):

@@ -4,9 +4,12 @@
 
 ### Added
 - Commands `pcs cluster cib-push` and `pcs cluster edit` now print more info
-  when new CIB does not conform to the CIB schema [RHEL-76059]
+  when new CIB does not conform to the CIB schema ([RHEL-76059])
+- Command `pcs stonith sbd watchdog list` now prints watchdogs' identity and
+  driver ([RHEL-76177])
 
 [RHEL-76059]: https://issues.redhat.com/browse/RHEL-76059
+[RHEL-76177]: https://issues.redhat.com/browse/RHEL-76177
 
 
 ## [0.11.9] - 2025-01-10

@@ -558,9 +558,18 @@ def sbd_watchdog_list(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     available_watchdogs = lib.sbd.get_local_available_watchdogs()
 
     if available_watchdogs:
-        print("Available watchdog(s):")
+        key_label = {
+            "identity": "Identity",
+            "driver": "Driver",
+        }
+        lines = []
         for watchdog in sorted(available_watchdogs.keys()):
-            print(f"  {watchdog}")
+            lines += [watchdog]
+            for key, label in key_label.items():
+                value = available_watchdogs[watchdog].get(key)
+                if value:
+                    lines += indent([f"{label}: {value}"])
+        print("Available watchdog(s):\n" + "\n".join(indent(lines)))
     else:
         print_to_stderr("No available watchdog")
 
