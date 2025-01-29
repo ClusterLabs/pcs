@@ -6079,6 +6079,7 @@ class GuestNodeRemovalIncomplete(NameBuildTest):
             reports.GuestNodeRemovalIncomplete("guest-node"),
         )
 
+
 class DlmClusterRenameNeeded(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(

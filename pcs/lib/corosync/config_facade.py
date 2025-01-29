@@ -109,7 +109,7 @@ class ConfigFacade(FacadeInterface):
         """
         Updates or adds cluster name
 
-        new_name - new name for the cluster
+        new_name -- new name for the cluster
         """
         self._need_stopped_cluster = True
         totem_section_list = self.__ensure_section(self.config, "totem")

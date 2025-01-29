@@ -2336,38 +2336,6 @@ def wait_for_pcmk_idle(env: LibraryEnvironment, wait_value: WaitType) -> None:
     env.wait_for_idle(timeout)
 
 
-def _warn_dlm_resources(resources: _Element) -> reports.ReportItemList:
-    if find_primitives_by_agent(
-        resources, ResourceAgentName("ocf", "pacemaker", "controld")
-    ):
-        return [
-            reports.ReportItem.warning(
-                reports.messages.DlmClusterRenameNeeded()
-            )
-        ]
-    return []
-
-
-def _warn_gfs2_resources(resources: _Element) -> reports.ReportItemList:
-    for resource in find_primitives_by_agent(
-        resources, ResourceAgentName("ocf", "heartbeat", "Filesystem")
-    ):
-        for nvset in find_nvsets(resource, NVSET_INSTANCE):
-            if any(
-                (
-                    nvpair.get("name") == "fstype"
-                    and nvpair.get("value") == "gfs2"
-                )
-                for nvpair in nvset
-            ):
-                return [
-                    reports.ReportItem.warning(
-                        reports.messages.Gfs2LockTableRenameNeeded()
-                    )
-                ]
-    return []
-
-
 def rename(
     env: LibraryEnvironment,
     new_name: str,
@@ -2378,6 +2346,37 @@ def rename(
 
     new_name -- new name for the cluster
     """
+
+    def warn_dlm_resources(resources: _Element) -> reports.ReportItemList:
+        if find_primitives_by_agent(
+            resources, ResourceAgentName("ocf", "pacemaker", "controld")
+        ):
+            return [
+                reports.ReportItem.warning(
+                    reports.messages.DlmClusterRenameNeeded()
+                )
+            ]
+        return []
+
+    def warn_gfs2_resources(resources: _Element) -> reports.ReportItemList:
+        for resource in find_primitives_by_agent(
+            resources, ResourceAgentName("ocf", "heartbeat", "Filesystem")
+        ):
+            for nvset in find_nvsets(resource, NVSET_INSTANCE):
+                if any(
+                    (
+                        nvpair.get("name") == "fstype"
+                        and nvpair.get("value") == "gfs2"
+                    )
+                    for nvpair in nvset
+                ):
+                    return [
+                        reports.ReportItem.warning(
+                            reports.messages.Gfs2LockTableRenameNeeded()
+                        )
+                    ]
+        return []
+
     _ensure_live_env(env)
 
     if env.report_processor.report_list(
@@ -2391,8 +2390,8 @@ def rename(
     if has_cib_xml():
         cib = get_cib(get_cib_xml(env.cmd_runner(get_cib_file_runner_env())))
         resources = get_resources(cib)
-        env.report_processor.report_list(_warn_dlm_resources(resources))
-        env.report_processor.report_list(_warn_gfs2_resources(resources))
+        env.report_processor.report_list(warn_dlm_resources(resources))
+        env.report_processor.report_list(warn_gfs2_resources(resources))
 
     corosync_conf = env.get_corosync_conf()
     skip_offline = report_codes.SKIP_OFFLINE_NODES in force_flags
