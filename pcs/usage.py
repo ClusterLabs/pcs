@@ -1676,14 +1676,14 @@ Commands:
 
     rename <new cluster name>
         Rename configured cluster. The cluster has to be stopped to complete
-        this operation. 
+        this operation.
 
         Manual steps are needed in case the cluster uses GFS2 filesystem or DLM:
-        for GFS2: 
+        for GFS2:
             The lock table name on each GFS2 filesystem must be updated
             to reflect the new name of the cluster so that the filesystems
             can be mounted.
-        for DLM: 
+        for DLM:
             The DLM cluster name in the shared volume groups metadata must
             be updated so that the volume groups can start.
 

@@ -206,7 +206,7 @@ def node_clear(lib: Any, arg_list: Argv, modifiers: InputModifiers) -> None:
 def cluster_rename(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
-      * --force - allow using cluster name that does not work with gfs2
+      * --force
       * --skip-offline - skip offline nodes
     """
     modifiers.ensure_only_supported("--force", "--skip-offline")
