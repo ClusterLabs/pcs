@@ -181,6 +181,10 @@ def get_cib_xml(runner: CommandRunner, scope: Optional[str] = None) -> str:
     return stdout
 
 
+def get_cib_file_runner_env() -> dict[str, str]:
+    return {"CIB_file": os.path.join(settings.cib_dir, "cib.xml")}
+
+
 def parse_cib_xml(xml: str) -> _Element:
     return xml_fromstring(xml)
 

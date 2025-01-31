@@ -59,6 +59,7 @@ API_V1_MAP: Mapping[str, str] = {
     "cluster-remove-nodes/v1": "cluster.remove_nodes",
     "cluster-setup/v1": "cluster.setup",
     "cluster-generate-cluster-uuid/v1": "cluster.generate_cluster_uuid",
+    "cluster-property-remove-name/v1": "cluster_property.remove_cluster_name",
     "constraint-colocation-create-with-set/v1": "constraint.colocation.create_with_set",
     "constraint-order-create-with-set/v1": "constraint.order.create_with_set",
     "constraint-ticket-create-with-set/v1": "constraint.ticket.create_with_set",

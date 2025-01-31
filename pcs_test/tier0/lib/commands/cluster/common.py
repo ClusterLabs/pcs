@@ -20,7 +20,12 @@ def _corosync_options_fixture(option_list, indent_level=2):
     )
 
 
-def corosync_conf_fixture(node_list=(), quorum_options=(), qdevice_net=False):
+def corosync_conf_fixture(
+    node_list=(),
+    quorum_options=(),
+    qdevice_net=False,
+    cluster_name=CLUSTER_NAME,
+):
     nodes = [
         dedent(
             """\
@@ -65,7 +70,7 @@ def corosync_conf_fixture(node_list=(), quorum_options=(), qdevice_net=False):
         }}
         """
     ).format(
-        cluster_name=CLUSTER_NAME,
+        cluster_name=cluster_name,
         nodes="\n".join(nodes),
         quorum=_corosync_options_fixture(quorum_options, indent_level=1),
         device=device,

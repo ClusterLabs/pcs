@@ -145,6 +145,10 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
         cmd=cluster.remove_nodes,
         required_permission=p.FULL,
     ),
+    "cluster.rename": _Cmd(
+        cmd=cluster.rename,
+        required_permission=p.FULL,
+    ),
     "cluster.setup": _Cmd(
         cmd=cluster.setup,
         required_permission=p.SUPERUSER,
@@ -159,6 +163,10 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
     ),
     "cluster_property.set_properties": _Cmd(
         cmd=cluster_property.set_properties,
+        required_permission=p.WRITE,
+    ),
+    "cluster_property.remove_cluster_name": _Cmd(
+        cmd=cluster_property.remove_cluster_name,
         required_permission=p.WRITE,
     ),
     "cluster.wait_for_pcmk_idle": _Cmd(

@@ -85,6 +85,7 @@ cluster_cmd = create_router(
         "verify": cluster.cluster_verify,
         "report": cluster.cluster_report,
         "remove_nodes_from_cib": cluster.remove_nodes_from_cib,
+        "rename": cluster_command.cluster_rename,
     },
     ["cluster"],
 )

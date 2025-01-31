@@ -59,7 +59,7 @@ class FindPrimitivesByAgent(TestCase):
 
     def test_stonith(self):
         # pylint: disable=protected-access
-        results = primitive._find_primitives_by_agent(
+        results = primitive.find_primitives_by_agent(
             self.resources_section,
             ResourceAgentName(
                 "stonith",
@@ -77,7 +77,7 @@ class FindPrimitivesByAgent(TestCase):
 
     def test_with_provider(self):
         # pylint: disable=protected-access
-        results = primitive._find_primitives_by_agent(
+        results = primitive.find_primitives_by_agent(
             self.resources_section,
             ResourceAgentName(
                 "standard",

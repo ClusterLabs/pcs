@@ -117,20 +117,7 @@ def create(  # noqa: PLR0912, PLR0915
         warnings instead of errors
     """
     # cluster name and transport validation
-    validators = [
-        validate.ValueNotEmpty(
-            "name", None, option_name_for_report="cluster name"
-        ),
-        _ClusterNameGfs2Validator(
-            "name",
-            option_name_for_report="cluster name",
-            severity=reports.item.get_severity(
-                reports.codes.FORCE, force_cluster_name
-            ),
-        ),
-        validate.ValueCorosyncValue(
-            "name", option_name_for_report="cluster name"
-        ),
+    validators = _get_cluster_name_validators(force_cluster_name) + [
         validate.ValueIn("transport", constants.TRANSPORTS_ALL),
         validate.ValueCorosyncValue("transport"),
     ]
@@ -284,6 +271,26 @@ def create(  # noqa: PLR0912, PLR0915
         )
 
     return report_items
+
+
+def _get_cluster_name_validators(
+    force_cluster_name: bool,
+) -> list[validate.ValidatorInterface]:
+    return [
+        validate.ValueNotEmpty(
+            "name", None, option_name_for_report="cluster name"
+        ),
+        _ClusterNameGfs2Validator(
+            "name",
+            option_name_for_report="cluster name",
+            severity=reports.item.get_severity(
+                reports.codes.FORCE, force_cluster_name
+            ),
+        ),
+        validate.ValueCorosyncValue(
+            "name", option_name_for_report="cluster name"
+        ),
+    ]
 
 
 def _get_node_name_validators(
@@ -2163,3 +2170,11 @@ def _mixes_ipv4_ipv6(addr_types: Collection[CorosyncNodeAddressType]) -> bool:
     return {CorosyncNodeAddressType.IPV4, CorosyncNodeAddressType.IPV6} <= set(
         addr_types
     )
+
+
+def rename_cluster(
+    cluster_name: str, force_cluster_name: bool = False
+) -> ReportItemList:
+    return validate.ValidatorAll(
+        _get_cluster_name_validators(force_cluster_name)
+    ).validate({"name": cluster_name})
