@@ -141,8 +141,8 @@ BuildRequires: libpacemaker-devel >= %{required_pacemaker_version}
 %else
 BuildRequires: pacemaker-libs-devel >= %{required_pacemaker_version}
 %endif
-# for post, preun and postun macros
-BuildRequires: systemd
+# for systemd scriptlet macros
+BuildRequires: systemd-rpm-macros
 # for working with qdevice certificates (certutil) - used in configure.ac
 %if 0%{?suse_version}
 BuildRequires: mozilla-nss-tools
@@ -176,10 +176,6 @@ Requires: pacemaker >= %{required_pacemaker_version}
 Requires: corosync >= 3.0
 # pcs enables corosync encryption by default so we require libknet1-plugins-all
 Requires: libknet1-plugins-all
-# for post, preun and postun macros
-Requires(post): systemd
-Requires(preun): systemd
-Requires(postun): systemd
 # pam is used for authentication inside daemon (python ctypes)
 # more details: https://bugzilla.redhat.com/show_bug.cgi?id=1717113
 Requires: pam
@@ -356,46 +352,26 @@ rm -fv %{buildroot}/%{_libdir}/pcsd/vendor/bundle/gems/rackup-*/bin/rackup
 rm -fv %{buildroot}/%{_libdir}/pcsd/vendor/bundle/gems/tilt-*/bin/tilt
 
 
+# Mark pcsd and pcs_snmp_agent for restart after upgrade
 %posttrans
-# Make sure the new version of the daemon is running.
-# Also, make sure to start pcsd-ruby if it hasn't been started or even
-# installed before. This is done by restarting pcsd.service.
-%{_bindir}/systemctl daemon-reload
-%{_bindir}/systemctl try-restart pcsd.service
+%systemd_posttrans_with_restart pcsd.service
 
+%posttrans -n %{pcs_snmp_pkg_name}
+%systemd_posttrans_with_restart pcs_snmp_agent.service
+
+# Restart pcsd if it is running to reload the Tornado app so it detects
+# presence or absence of the webui backend handler on install/update
+# of pcs-web-ui that contains it
 %posttrans -n %{pcs_standalone_webui_provider_pkg_name}
-%{_bindir}/systemctl daemon-reload
-%{_bindir}/systemctl try-restart pcsd.service
+systemctl try-restart pcsd.service
 
-%post
-%systemd_post pcsd.service
-%systemd_post pcsd-ruby.service
-
-%post -n %{pcs_snmp_pkg_name}
-%systemd_post pcs_snmp_agent.service
-
-%post -n %{pcs_standalone_webui_provider_pkg_name}
-%systemd_post pcsd.service
-%systemd_post pcsd-ruby.service
-
-
-%preun
-%systemd_preun pcsd.service
-%systemd_preun pcsd-ruby.service
-
-%preun -n %{pcs_snmp_pkg_name}
-%systemd_preun pcs_snmp_agent.service
-
-%postun
-%systemd_postun_with_restart pcsd.service
-%systemd_postun_with_restart pcsd-ruby.service
-
-%postun -n %{pcs_snmp_pkg_name}
-%systemd_postun_with_restart pcs_snmp_agent.service
-
+# Runs only on pcs-web-ui uninstall
+# https://docs.fedoraproject.org/en-US/packaging-guidelines/Scriptlets/
 %postun -n %{pcs_standalone_webui_provider_pkg_name}
-%{_bindir}/systemctl daemon-reload
-%{_bindir}/systemctl try-restart pcsd.service
+if [ $1 -eq 0 ] ; then
+  systemctl try-restart pcsd.service
+fi
+
 
 %files -f dynamic_files/pcs
 %doc CHANGELOG.md
