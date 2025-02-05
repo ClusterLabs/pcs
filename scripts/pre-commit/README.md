@@ -1,6 +1,6 @@
 # Pre-commit hook
 
-It makes checks and warns the commiter when there is something suspicious.
+It makes checks and warns the committer when there is something suspicious.
 
 ## Install
 
