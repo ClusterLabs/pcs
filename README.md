@@ -1,12 +1,10 @@
-## PCS - Pacemaker/Corosync Configuration System
+# PCS - Pacemaker/Corosync Configuration System
 
 Pcs is a Corosync and Pacemaker configuration tool. It permits users to easily
 view, modify and create Pacemaker based clusters. Pcs contains pcsd, a pcs
 daemon, which operates as a remote server for pcs.
 
----
-
-### Pcs Branches
+## Pcs Branches
 
 * main
   * This is where pcs-0.12 lives.
@@ -26,9 +24,7 @@ daemon, which operates as a remote server for pcs.
     CMAN are supported.
   * This branch is no longer maintained.
 
----
-
-### Dependencies
+## Dependencies
 
 These are the runtime dependencies of pcs and pcsd:
 * python 3.12+
@@ -44,9 +40,7 @@ These are the runtime dependencies of pcs and pcsd:
 * corosync 3.x
 * pacemaker 3.x
 
----
-
-### Installation from Source
+## Installation from Source
 
 Apart from the dependencies listed above, these are also required for
 installation:
@@ -90,9 +84,7 @@ systemctl start pcsd
 systemctl enable pcsd
 ```
 
----
-
-### Packages
+## Packages
 
 Currently this is built into Fedora, RHEL, CentOS and Debian and its
 derivates. It is likely that other Linux distributions also contain pcs
@@ -101,9 +93,7 @@ packages.
 * [Current Fedora .spec](https://src.fedoraproject.org/rpms/pcs/blob/rawhide/f/pcs.spec)
 * [Debian-HA project home page](https://wiki.debian.org/Debian-HA)
 
----
-
-### Quick Start
+## Quick Start
 
 * **Authenticate cluster nodes**
 
@@ -149,9 +139,7 @@ packages.
    pcs resource create --help
    ```
 
----
-
-### Further Documentation
+## Further Documentation
 
 [ClusterLabs website](https://clusterlabs.org) is an excellent place to learn
 more about Pacemaker clusters.
@@ -159,9 +147,7 @@ more about Pacemaker clusters.
 * [Clusters from Scratch](https://clusterlabs.org/pacemaker/doc/2.1/Clusters_from_Scratch/html/)
 * [ClusterLabs documentation page](https://clusterlabs.org/pacemaker/doc/)
 
----
-
-### Inquiries
+## Inquiries
 If you have any bug reports or feature requests please feel free to open a
 github issue on the pcs project.
 
