@@ -4,10 +4,12 @@ from typing import Optional
 from dacite import DaciteError
 
 from pcs.common import reports
+from pcs.common.communication import const
 from pcs.common.communication.dto import InternalCommunicationResultDto
 from pcs.common.interface.dto import from_dict
 from pcs.common.node_communicator import RequestData
 from pcs.common.reports.item import ReportItem
+from pcs.common.reports.processor import has_errors
 from pcs.lib.communication.tools import (
     AllAtOnceStrategyMixin,
     AllSameDataMixin,
@@ -165,31 +167,44 @@ class RemoveCibClusterName(
             return
         node_label = response.request.target.label
 
-        report_list = []
         try:
             result = from_dict(
                 InternalCommunicationResultDto, json.loads(response.data)
             )
-            context = reports.ReportItemContext(node_label)
-
-            report_list.extend(
-                reports.report_dto_to_item(report, context)
-                for report in result.report_list
-            )
         except (json.JSONDecodeError, DaciteError):
-            report_list.append(
+            self._report(
                 reports.ReportItem.error(
                     reports.messages.InvalidResponseFormat(node_label)
                 )
             )
+            return
 
+        context = reports.ReportItemContext(node_label)
+        report_list = [
+            reports.report_dto_to_item(report, context)
+            for report in result.report_list
+        ]
         self._report_list(report_list)
-        if not any(
-            report.severity.level == reports.ReportItemSeverity.ERROR
-            for report in report_list
+
+        if (
+            not has_errors(report_list)
+            and result.status == const.COM_STATUS_SUCCESS
         ):
             self._report(
                 reports.ReportItem.info(
                     reports.messages.CibClusterNameRemoved(node_label)
+                )
+            )
+            return
+
+        # Make sure we report an error when the command was not successful
+        if result.status_msg or not has_errors(report_list):
+            self._report(
+                reports.ReportItem.error(
+                    reports.messages.NodeCommunicationCommandUnsuccessful(
+                        node_label,
+                        response.request.action,
+                        result.status_msg or "Unknown error",
+                    )
                 )
             )
