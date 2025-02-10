@@ -392,6 +392,128 @@ class RenameCluster(FixtureMixin, TestCase):
             ]
         )
 
+    def test_cluster_name_property_remove_error_status_msg(self):
+        self.config.fs.exists(self.cib_path, return_value=True)
+        self.config.runner.cib.load(env=self.runner_env)
+        self.config.corosync_conf.load_content(self.fixture_corosync_conf())
+        self.config.http.corosync.check_corosync_offline(self.node_labels)
+        self.fixture_remove_name_prop_call(
+            output=json.dumps(
+                {
+                    "status": "error",
+                    "status_msg": "very bad error",
+                    "report_list": [],
+                    "data": "",
+                }
+            )
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.rename(self.env_assist.get_env(), _FIXTURE_NEW_NAME)
+        )
+        self.env_assist.assert_reports(
+            self.fixture_corosync_offline_check_reports()
+            + [
+                fixture.info(report_codes.CIB_CLUSTER_NAME_REMOVAL_STARTED),
+            ]
+            + [
+                fixture.error(
+                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    node=n,
+                    command="api/v1/cluster-property-remove-name/v1",
+                    reason="very bad error",
+                )
+                for n in self.node_labels
+            ]
+        )
+
+    def test_cluster_name_property_remove_error_report_status_msg(self):
+        self.config.fs.exists(self.cib_path, return_value=True)
+        self.config.runner.cib.load(env=self.runner_env)
+        self.config.corosync_conf.load_content(self.fixture_corosync_conf())
+        self.config.http.corosync.check_corosync_offline(self.node_labels)
+        self.fixture_remove_name_prop_call(
+            output=json.dumps(
+                {
+                    "status": "error",
+                    "status_msg": "very bad error",
+                    "report_list": [
+                        {
+                            "severity": {"level": "ERROR", "force_code": None},
+                            "message": {
+                                "code": "CIB_XML_MISSING",
+                                "message": "CIB XML file cannot be found",
+                                "payload": {},
+                            },
+                            "context": None,
+                        }
+                    ],
+                    "data": "",
+                }
+            )
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.rename(self.env_assist.get_env(), _FIXTURE_NEW_NAME)
+        )
+        self.env_assist.assert_reports(
+            self.fixture_corosync_offline_check_reports()
+            + [
+                fixture.info(report_codes.CIB_CLUSTER_NAME_REMOVAL_STARTED),
+            ]
+            + [
+                fixture.error(
+                    report_codes.CIB_XML_MISSING,
+                    context=reports.dto.ReportItemContextDto(node=n),
+                )
+                for n in self.node_labels
+            ]
+            + [
+                fixture.error(
+                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    node=n,
+                    command="api/v1/cluster-property-remove-name/v1",
+                    reason="very bad error",
+                )
+                for n in self.node_labels
+            ]
+        )
+
+    def test_cluster_name_property_remove_error_no_report_no_message(self):
+        self.config.fs.exists(self.cib_path, return_value=True)
+        self.config.runner.cib.load(env=self.runner_env)
+        self.config.corosync_conf.load_content(self.fixture_corosync_conf())
+        self.config.http.corosync.check_corosync_offline(self.node_labels)
+        self.fixture_remove_name_prop_call(
+            output=json.dumps(
+                {
+                    "status": "error",
+                    "status_msg": None,
+                    "report_list": [],
+                    "data": "",
+                }
+            )
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.rename(self.env_assist.get_env(), _FIXTURE_NEW_NAME)
+        )
+        self.env_assist.assert_reports(
+            self.fixture_corosync_offline_check_reports()
+            + [
+                fixture.info(report_codes.CIB_CLUSTER_NAME_REMOVAL_STARTED),
+            ]
+            + [
+                fixture.error(
+                    report_codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    node=n,
+                    command="api/v1/cluster-property-remove-name/v1",
+                    reason="Unknown error",
+                )
+                for n in self.node_labels
+            ]
+        )
+
     def test_corosync_running_on_node(self):
         self.config.fs.exists(self.cib_path, return_value=True)
         self.config.runner.cib.load(env=self.runner_env)
