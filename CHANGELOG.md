@@ -7,7 +7,9 @@
   when new CIB does not conform to the CIB schema ([RHEL-76059])
 - Command `pcs stonith sbd watchdog list` now prints watchdogs' identity and
   driver ([RHEL-76177])
+- Command `pcs cluster rename` for changing cluster name ([RHEL-76055])
 
+[RHEL-76055]: https://issues.redhat.com/browse/RHEL-76055
 [RHEL-76059]: https://issues.redhat.com/browse/RHEL-76059
 [RHEL-76177]: https://issues.redhat.com/browse/RHEL-76177
 

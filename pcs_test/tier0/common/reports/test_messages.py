@@ -6078,3 +6078,64 @@ class GuestNodeRemovalIncomplete(NameBuildTest):
             ),
             reports.GuestNodeRemovalIncomplete("guest-node"),
         )
+
+
+class DlmClusterRenameNeeded(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "The DLM cluster name in the shared volume groups metadata "
+                "must be updated to reflect the name of the cluster so that "
+                "the volume groups can start"
+            ),
+            reports.DlmClusterRenameNeeded(),
+        )
+
+
+class Gfs2LockTableRenameNeeded(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "The lock table name on each GFS2 filesystem must be updated "
+                "to reflect the name of the cluster so that the filesystems "
+                "can be mounted"
+            ),
+            reports.Gfs2LockTableRenameNeeded(),
+        )
+
+
+class CibClusterNameRemovalStarted(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "Removing CIB cluster name property on nodes...",
+            reports.CibClusterNameRemovalStarted(),
+        )
+
+
+class CibClusterNameRemoved(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "node: Succeeded", reports.CibClusterNameRemoved("node")
+        )
+
+
+class CibClusterNameRemovalFailed(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "CIB cluster name property removal failed: reason",
+            reports.CibClusterNameRemovalFailed("reason"),
+        )
+
+
+class PacemakerRunning(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "Pacemaker is running", reports.PacemakerRunning()
+        )
+
+
+class CibXmlMissing(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "CIB XML file cannot be found", reports.CibXmlMissing()
+        )

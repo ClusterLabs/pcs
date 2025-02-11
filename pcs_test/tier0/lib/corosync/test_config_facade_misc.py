@@ -39,6 +39,30 @@ class GetClusterNameTest(GetSimpleValueMixin, TestCase):
         )
 
 
+class SetClusterName(TestCase):
+    @staticmethod
+    def _fixture_facade(config: str) -> lib.ConfigFacade:
+        return lib.ConfigFacade(Parser.parse(config.encode("utf-8")))
+
+    def test_replace_old_name(self):
+        facade = self._fixture_facade("totem {\n cluster_name: NAME\n}\n")
+        facade.set_cluster_name("a")
+        self.assertTrue(facade.need_stopped_cluster)
+        self.assertEqual(facade.get_cluster_name(), "a")
+
+    def test_missing_totem_section(self):
+        facade = self._fixture_facade("")
+        facade.set_cluster_name("a")
+        self.assertTrue(facade.need_stopped_cluster)
+        self.assertEqual(facade.get_cluster_name(), "a")
+
+    def test_missing_cluster_name_option(self):
+        facade = self._fixture_facade("totem {\n}\n")
+        facade.set_cluster_name("a")
+        self.assertTrue(facade.need_stopped_cluster)
+        self.assertEqual(facade.get_cluster_name(), "a")
+
+
 class GetTransport(GetSimpleValueMixin, TestCase):
     @staticmethod
     def getter(facade):
