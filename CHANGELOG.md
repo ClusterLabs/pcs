@@ -9,9 +9,14 @@
   driver ([RHEL-76177])
 - Command `pcs cluster rename` for changing cluster name ([RHEL-76055])
 
+### Fixed
+- Command `pcs resource restart` allows restarting bundle instances (broken
+  since pcs-0.11.9) ([RHEL-79055])
+
 [RHEL-76055]: https://issues.redhat.com/browse/RHEL-76055
 [RHEL-76059]: https://issues.redhat.com/browse/RHEL-76059
 [RHEL-76177]: https://issues.redhat.com/browse/RHEL-76177
+[RHEL-79055]: https://issues.redhat.com/browse/RHEL-79055
 
 
 ## [0.11.9] - 2025-01-10
