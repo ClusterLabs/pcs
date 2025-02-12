@@ -1,5 +1,14 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+- Command `pcs resource restart` allows restarting bundle instances (broken
+  since pcs-0.11.9) ([RHEL-79055])
+
+[RHEL-79055]: https://issues.redhat.com/browse/RHEL-79055
+
+
 ## [0.11.9] - 2025-01-10
 
 ### Added
