@@ -104,20 +104,8 @@ class ResourceRestart(TestCase):
         )
 
     def test_resource_not_found(self):
-        self.env_assist.assert_raise_library_error(
-            lambda: resource.restart(self.env_assist.get_env(), "RX")
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.error(
-                    reports.codes.ID_NOT_FOUND,
-                    id="RX",
-                    expected_types=["resource"],
-                    context_type="",
-                    context_id="",
-                )
-            ]
-        )
+        self.config.runner.pcmk.resource_restart("RX")
+        resource.restart(self.env_assist.get_env(), "RX")
 
     def test_not_a_resource(self):
         self.env_assist.assert_raise_library_error(

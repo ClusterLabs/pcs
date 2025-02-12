@@ -2662,63 +2662,69 @@ def restart(
     timeout -- abort if the command doesn't finish in this time (integer + unit)
     """
     cib = env.get_cib()
+
+    # To be able to restart bundle instances, which are not to be found in CIB,
+    # do not fail if specified ID is not found in CIB. Pacemaker provides
+    # reasonable messages when the ID to be restarted is not a resource or
+    # doesn't exist. We only search for the resource in order to provide hints
+    # when the user attempts to restart bundle's or clone's inner resources.
+    resource_found = False
     try:
         resource_el = get_element_by_id(cib, resource_id)
-    except ElementNotFound as e:
-        env.report_processor.report(
-            ReportItem.error(
-                reports.messages.IdNotFound(
-                    resource_id, expected_types=["resource"]
-                )
-            )
-        )
-        raise LibraryError() from e
-    if not resource.common.is_resource(resource_el):
-        env.report_processor.report(
-            ReportItem.error(
-                reports.messages.IdBelongsToUnexpectedType(
-                    resource_id,
-                    expected_types=["resource"],
-                    current_type=resource_el.tag,
-                )
-            )
-        )
-        raise LibraryError()
-    if resource.stonith.is_stonith(resource_el):
-        env.report_processor.report(
-            reports.ReportItem.error(
-                reports.messages.CommandArgumentTypeMismatch("stonith resource")
-            )
-        )
-        raise LibraryError()
+        resource_found = True
+    except ElementNotFound:
+        pass
 
-    parent_resource_el = resource.clone.get_parent_any_clone(resource_el)
-    if parent_resource_el is None:
-        parent_resource_el = resource.bundle.get_parent_bundle(resource_el)
-    if parent_resource_el is not None:
-        env.report_processor.report(
-            reports.ReportItem.warning(
-                reports.messages.ResourceRestartUsingParentRersource(
-                    str(resource_el.attrib["id"]),
-                    str(parent_resource_el.attrib["id"]),
+    if resource_found:
+        if not resource.common.is_resource(resource_el):
+            env.report_processor.report(
+                ReportItem.error(
+                    reports.messages.IdBelongsToUnexpectedType(
+                        resource_id,
+                        expected_types=["resource"],
+                        current_type=resource_el.tag,
+                    )
                 )
             )
-        )
-        resource_el = parent_resource_el
+            raise LibraryError()
 
-    if node and not (
-        resource.clone.is_any_clone(resource_el)
-        or resource.bundle.is_bundle(resource_el)
-    ):
-        env.report_processor.report(
-            reports.ReportItem.error(
-                reports.messages.ResourceRestartNodeIsForMultiinstanceOnly(
-                    str(resource_el.attrib["id"]),
-                    resource_el.tag,
-                    node,
+        if resource.stonith.is_stonith(resource_el):
+            env.report_processor.report(
+                reports.ReportItem.error(
+                    reports.messages.CommandArgumentTypeMismatch(
+                        "stonith resource"
+                    )
                 )
             )
-        )
+            raise LibraryError()
+
+        parent_resource_el = resource.clone.get_parent_any_clone(resource_el)
+        if parent_resource_el is None:
+            parent_resource_el = resource.bundle.get_parent_bundle(resource_el)
+        if parent_resource_el is not None:
+            env.report_processor.report(
+                reports.ReportItem.warning(
+                    reports.messages.ResourceRestartUsingParentRersource(
+                        str(resource_el.attrib["id"]),
+                        str(parent_resource_el.attrib["id"]),
+                    )
+                )
+            )
+            resource_el = parent_resource_el
+
+        if node and not (
+            resource.clone.is_any_clone(resource_el)
+            or resource.bundle.is_bundle(resource_el)
+        ):
+            env.report_processor.report(
+                reports.ReportItem.error(
+                    reports.messages.ResourceRestartNodeIsForMultiinstanceOnly(
+                        str(resource_el.attrib["id"]),
+                        resource_el.tag,
+                        node,
+                    )
+                )
+            )
 
     if timeout is not None:
         env.report_processor.report_list(
@@ -2730,7 +2736,7 @@ def restart(
 
     resource_restart(
         env.cmd_runner(),
-        str(resource_el.attrib["id"]),
+        str(resource_el.attrib["id"]) if resource_found else resource_id,
         node=node,
         timeout=timeout,
     )
