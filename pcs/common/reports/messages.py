@@ -31,6 +31,7 @@ from pcs.common.resource_agent.dto import (
     ResourceAgentNameDto,
     get_resource_agent_full_name,
 )
+from pcs.common.resource_status import ResourceState
 from pcs.common.str_tools import (
     format_list,
     format_list_custom_last_separator,
@@ -6432,6 +6433,35 @@ class CannotStopResourcesBeforeDeleting(ReportItemMessage):
         return "Cannot stop {resource} {resource_list} before deleting".format(
             resource=format_plural(self.resource_id_list, "resource"),
             resource_list=format_list(self.resource_id_list),
+        )
+
+
+@dataclass(frozen=True)
+class ConfiguredResourceMissingInStatus(ReportItemMessage):
+    """
+    Cannot check status of resource, because the resource is missing in cluster
+    status despite being configured in CIB. This happens for misconfigured
+    resources, e.g. bundle with primitive resource inside and no IP address
+    for the bundle specified.
+
+    resource_id -- id of the resource
+    checked_state -- expected state of the resource
+    """
+
+    resource_id: str
+    checked_state: Optional[ResourceState] = None
+    _code = codes.CONFIGURED_RESOURCE_MISSING_IN_STATUS
+
+    @property
+    def message(self) -> str:
+        return (
+            "Cannot check if the resource '{resource_id}' is in expected "
+            "state{state}, since the resource is missing in cluster status"
+        ).format(
+            resource_id=self.resource_id,
+            state=format_optional(
+                self.checked_state and self.checked_state.name.lower(), " ({})"
+            ),
         )
 
 

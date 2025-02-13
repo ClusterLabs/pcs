@@ -12,11 +12,14 @@
 ### Fixed
 - Command `pcs resource restart` allows restarting bundle instances (broken
   since pcs-0.12.0b1) ([RHEL-79033])
+- Do not end with traceback when using `pcs resource delete` to remove bundle
+  resources when the bundle has no IP address specified ([RHEL-79090])
 
 [RHEL-22423]: https://issues.redhat.com/browse/RHEL-22423
 [RHEL-63186]: https://issues.redhat.com/browse/RHEL-63186
 [RHEL-76176]: https://issues.redhat.com/browse/RHEL-76176
 [RHEL-79033]: https://issues.redhat.com/browse/RHEL-79033
+[RHEL-79090]: https://issues.redhat.com/browse/RHEL-79090
 
 
 ## [0.12.0] - 2025-01-09
