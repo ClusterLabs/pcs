@@ -259,17 +259,27 @@ def warn_resource_unmanaged(
         report_list.extend(parser.get_warnings())
 
         status = ResourcesStatusFacade.from_resources_status_dto(status_dto)
-        report_list.extend(
-            reports.ReportItem.warning(
-                reports.messages.ResourceIsUnmanaged(resource_id)
-            )
-            for resource_id in resource_ids
-            if status.is_state(
-                resource_id,
-                None,
-                ResourceState.UNMANAGED,
-            )
-        )
+        for r_id in resource_ids:
+            if not status.exists(r_id, None):
+                # Pacemaker does not put misconfigured resources into cluster
+                # status and we are unable to check state of such resources.
+                # This happens for e.g. undle with primitive resource inside and
+                # no IP address for the bundle specified. We expect the resource
+                # to be stopped since it is misconfigured. Stopping it again
+                # even when it is unmanaged should not break anything.
+                report_list.append(
+                    reports.ReportItem.debug(
+                        reports.messages.ConfiguredResourceMissingInStatus(
+                            r_id, ResourceState.UNMANAGED
+                        )
+                    )
+                )
+            elif status.is_state(r_id, None, ResourceState.UNMANAGED):
+                report_list.append(
+                    reports.ReportItem.warning(
+                        reports.messages.ResourceIsUnmanaged(r_id)
+                    )
+                )
     except NotImplementedError:
         # TODO remove when issue with bundles in status is fixed
         report_list.extend(
@@ -318,20 +328,31 @@ def ensure_resources_stopped(
         report_list.extend(parser.get_warnings())
 
         status = ResourcesStatusFacade.from_resources_status_dto(status_dto)
-        not_stopped_ids = [
-            resource_id
-            for resource_id in resource_ids
-            if not status.is_state(
-                resource_id,
+        for r_id in resource_ids:
+            if not status.exists(r_id, None):
+                # Pacemaker does not put misconfigured resources into cluster
+                # status and we are unable to check state of such resources.
+                # This happens for e.g. undle with primitive resource inside and
+                # no IP address for the bundle specified. We expect the resource
+                # to be stopped since it is misconfigured.
+                report_list.append(
+                    reports.ReportItem.debug(
+                        reports.messages.ConfiguredResourceMissingInStatus(
+                            r_id, ResourceState.STOPPED
+                        )
+                    )
+                )
+            elif not status.is_state(
+                r_id,
                 None,
                 ResourceState.STOPPED,
                 instances_quantifier=(
                     MoreChildrenQuantifierType.ALL
-                    if status.can_have_multiple_instances(resource_id)
+                    if status.can_have_multiple_instances(r_id)
                     else None
                 ),
-            )
-        ]
+            ):
+                not_stopped_ids.append(r_id)
     except NotImplementedError:
         # TODO remove when issue with bundles in status is fixed
         not_stopped_ids = [

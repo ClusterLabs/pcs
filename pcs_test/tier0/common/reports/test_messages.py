@@ -11,6 +11,7 @@ from pcs.common.file import RawFileError
 from pcs.common.reports import const
 from pcs.common.reports import messages as reports
 from pcs.common.resource_agent.dto import ResourceAgentNameDto
+from pcs.common.resource_status import ResourceState
 from pcs.common.types import CibRuleExpressionType
 
 # pylint: disable=too-many-lines
@@ -6074,4 +6075,26 @@ class GuestNodeRemovalIncomplete(NameBuildTest):
                 "manually."
             ),
             reports.GuestNodeRemovalIncomplete("guest-node"),
+        )
+
+
+class ConfiguredResourceMissingInStatus(NameBuildTest):
+    def test_only_resource_id(self):
+        self.assert_message_from_report(
+            (
+                "Cannot check if the resource 'id' is in expected state, "
+                "since the resource is missing in cluster status"
+            ),
+            reports.ConfiguredResourceMissingInStatus("id"),
+        )
+
+    def test_with_expected_state(self):
+        self.assert_message_from_report(
+            (
+                "Cannot check if the resource 'id' is in expected state "
+                "(stopped), since the resource is missing in cluster status"
+            ),
+            reports.ConfiguredResourceMissingInStatus(
+                "id", ResourceState.STOPPED
+            ),
         )
