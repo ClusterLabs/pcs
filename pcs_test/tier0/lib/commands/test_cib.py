@@ -5,6 +5,7 @@ from unittest import (
 )
 
 from pcs.common import reports
+from pcs.common.resource_status import ResourceState
 from pcs.lib.commands import cib as lib
 
 from pcs_test.tools import fixture
@@ -946,6 +947,71 @@ class RemoveElementsStopResources(TestCase, StopResourcesWaitMixin):
                     reports.codes.CIB_REMOVE_REFERENCES,
                     id_tag_map={"A": "primitive", "G": "group"},
                     removing_references_from={"A": {"G"}},
+                ),
+            ]
+        )
+
+    def test_skip_state_check_on_missing_from_status(self):
+        self.config.runner.cib.load(
+            resources="""
+                <resources>
+                    <bundle id="test-bundle">
+                        <podman image="localhost/pcmktest:test"/>
+                        <primitive id="apa" class="ocf" type="apache" provider="heartbeat"/>
+                    </bundle>
+                </resources>
+            """
+        )
+        self.fixture_stop_resources_wait_calls(
+            self.config.calls.get("runner.cib.load").stdout,
+            initial_state_modifiers={"resources": "<resources/>"},
+            after_disable_cib_modifiers={
+                "resources": """
+                    <resources>
+                        <bundle id="test-bundle">
+                            <podman image="localhost/pcmktest:test"/>
+                            <primitive id="apa" class="ocf" type="apache" provider="heartbeat">
+                                <meta_attributes id="apa-meta_attributes">
+                                    <nvpair id="apa-meta_attributes-target-role" name="target-role" value="Stopped"/>
+                                </meta_attributes>
+                            </primitive>
+                        </bundle>
+                    </resources>
+                """
+            },
+            after_disable_state_modifiers={"resources": "<resources/>"},
+        )
+        self.fixture_push_cib_after_stopping(
+            resources="""
+                <resources>
+                    <bundle id="test-bundle">
+                        <podman image="localhost/pcmktest:test"/>
+                    </bundle>
+                </resources>
+            """
+        )
+        lib.remove_elements(self.env_assist.get_env(), ["apa"])
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    reports.codes.STOPPING_RESOURCES_BEFORE_DELETING,
+                    resource_id_list=["apa"],
+                ),
+                fixture.debug(
+                    reports.codes.CONFIGURED_RESOURCE_MISSING_IN_STATUS,
+                    resource_id="apa",
+                    checked_state=ResourceState.UNMANAGED,
+                ),
+                fixture.info(reports.codes.WAIT_FOR_IDLE_STARTED, timeout=0),
+                fixture.debug(
+                    reports.codes.CONFIGURED_RESOURCE_MISSING_IN_STATUS,
+                    resource_id="apa",
+                    checked_state=ResourceState.STOPPED,
+                ),
+                fixture.info(
+                    reports.codes.CIB_REMOVE_REFERENCES,
+                    id_tag_map={"apa": "primitive", "test-bundle": "bundle"},
+                    removing_references_from={"apa": {"test-bundle"}},
                 ),
             ]
         )
