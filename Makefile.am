@@ -182,6 +182,7 @@ install-exec-local: install_python_embedded_mods stamps/install_ruby_deps_local
 	if test -n "${DESTDIR}" || test "${prefix}" != "/usr"; then \
 		$(MKDIR_P) ${DESTDIR}/$(LIB_DIR)/pcs/; \
 		$(MKDIR_P) ${DESTDIR}/$(SBINDIR); \
+		$(MKDIR_P) ${DESTDIR}/${prefix}/local/sbin/; \
 	fi
 	${PIP} ${pipopts} install ${pipinstallopts} \
 		--root=$(or ${DESTDIR}, /) \
@@ -233,6 +234,7 @@ uninstall-local:
 	  rm -rf $$(echo "$$sitelib/$$fname" | cut -d',' -f1); \
 	done < $$recordfile
 	if test -n "${DESTDIR}" || test "${prefix}" != "/usr"; then \
+		rmdir ${DESTDIR}/${prefix}/local/sbin; \
 		rmdir ${DESTDIR}/$(SBINDIR); \
 	fi
 	find ${DESTDIR}/$(LIB_DIR)/pcs -empty -type d -delete
