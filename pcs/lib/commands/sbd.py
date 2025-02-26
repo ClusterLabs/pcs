@@ -1,8 +1,9 @@
-from typing import Any
+from typing import Any, Iterable, Mapping, Optional, TypeVar
 
 from pcs import settings
 from pcs.common import reports
-from pcs.common.reports.item import ReportItem
+from pcs.common.node_communicator import RequestTarget
+from pcs.common.types import StringSequence
 from pcs.common.validate import is_integer
 from pcs.lib import (
     sbd,
@@ -21,9 +22,12 @@ from pcs.lib.communication.sbd import (
 )
 from pcs.lib.communication.tools import run as run_com
 from pcs.lib.communication.tools import run_and_raise
+from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.tools import environment_file_to_dict
+
+T = TypeVar("T")
 
 _UNSUPPORTED_SBD_OPTION_LIST = [
     "SBD_WATCHDOG_DEV",
@@ -44,7 +48,7 @@ _TIMEOUT_ACTION_ALLOWED_VALUES = (
 _STARTMODE_ALLOWED_VALUES = ["always", "clean"]
 
 
-def __tuple(set1, set2):
+def __tuple(set1: set[str], set2: set[str]) -> set[str]:
     return {f"{v1},{v2}" for v1 in set1 for v2 in set2}
 
 
@@ -70,11 +74,13 @@ class _ValueSbdDelayStart(validate.ValuePredicateBase):
 
 
 def _validate_sbd_options(
-    sbd_config, allow_unknown_opts=False, allow_invalid_option_values=False
-):
+    sbd_config: Mapping[str, str],
+    allow_unknown_opts: bool = False,
+    allow_invalid_option_values: bool = False,
+) -> reports.ReportItemList:
     """
     Validate user SBD configuration. Options 'SBD_WATCHDOG_DEV' and 'SBD_OPTS'
-    are restricted. Returns list of ReportItem
+    are restricted
 
     sbd_config -- dictionary in format: <SBD config option>: <value>
     allow_unknown_opts -- if True, accept also unknown options.
@@ -112,28 +118,33 @@ def _validate_sbd_options(
     return validate.ValidatorAll(validators).validate(sbd_config)
 
 
-def _validate_watchdog_dict(watchdog_dict):
+def _validate_watchdog_dict(
+    watchdog_dict: Mapping[str, str],
+) -> reports.ReportItemList:
     """
     Validates if all watchdogs are not empty strings.
-    Returns list of ReportItem.
 
     watchdog_dict -- dictionary with node names as keys and value as watchdog
     """
     return [
-        ReportItem.error(reports.messages.WatchdogInvalid(watchdog))
+        reports.ReportItem.error(reports.messages.WatchdogInvalid(watchdog))
         for watchdog in watchdog_dict.values()
         if not watchdog
     ]
 
 
-def _get_full_target_dict(target_list, node_value_dict, default_value):
+def _get_full_target_dict(
+    target_list: Iterable[RequestTarget],
+    node_value_dict: Mapping[str, T],
+    default_value: T,
+) -> dict[str, T]:
     """
     Returns dictionary where keys are labels of all nodes in cluster and value
     is obtained from node_value_dict for node name, or default value if node
     is not specified in node_value_dict.
 
-    list node_list -- list of cluster nodes (RequestTarget object)
-    node_value_dict -- dictionary, keys: node names, values: some velue
+    node_list -- cluster nodes
+    node_value_dict -- dictionary, keys: node names, values: some value
     default_value -- some default value
     """
     return {
@@ -143,24 +154,23 @@ def _get_full_target_dict(target_list, node_value_dict, default_value):
 
 
 def enable_sbd(  # noqa: PLR0913
-    lib_env,
-    default_watchdog,
-    watchdog_dict,
-    sbd_options,
-    default_device_list=None,
-    node_device_dict=None,
+    lib_env: LibraryEnvironment,
+    default_watchdog: Optional[str],
+    watchdog_dict: Mapping[str, str],
+    sbd_options: Mapping[str, str],
+    default_device_list: Optional[StringSequence] = None,
+    node_device_dict: Optional[Mapping[str, StringSequence]] = None,
     *,
-    allow_unknown_opts=False,
-    ignore_offline_nodes=False,
-    no_watchdog_validation=False,
-    allow_invalid_option_values=False,
-):
+    allow_unknown_opts: bool = False,
+    ignore_offline_nodes: bool = False,
+    no_watchdog_validation: bool = False,
+    allow_invalid_option_values: bool = False,
+) -> None:
     # pylint: disable=too-many-arguments
     # pylint: disable=too-many-locals
     """
     Enable SBD on all nodes in cluster.
 
-    lib_env -- LibraryEnvironment
     default_watchdog -- watchdog for nodes which are not specified in
         watchdog_dict. Uses default value from settings if None.
     watchdog_dict -- dictionary with node names as keys and watchdog path
@@ -192,7 +202,9 @@ def enable_sbd(  # noqa: PLR0913
     node_list, get_nodes_report_list = get_existing_nodes_names(corosync_conf)
     if not node_list:
         get_nodes_report_list.append(
-            ReportItem.error(reports.messages.CorosyncConfigNoNodesDefined())
+            reports.ReportItem.error(
+                reports.messages.CorosyncConfigNoNodesDefined()
+            )
         )
     target_list = lib_env.get_node_target_factory().get_target_list(
         node_list,
@@ -209,7 +221,7 @@ def enable_sbd(  # noqa: PLR0913
     if lib_env.report_processor.report_list(
         get_nodes_report_list
         + [
-            ReportItem.error(reports.messages.NodeNotFound(node))
+            reports.ReportItem.error(reports.messages.NodeNotFound(node))
             for node in (
                 set(list(watchdog_dict.keys()) + list(node_device_dict.keys()))
                 - set(node_list)
@@ -227,21 +239,23 @@ def enable_sbd(  # noqa: PLR0913
     ).has_errors:
         raise LibraryError()
 
-    com_cmd = GetOnlineTargets(
+    com_cmd_1 = GetOnlineTargets(
         lib_env.report_processor,
         ignore_offline_targets=ignore_offline_nodes,
     )
-    com_cmd.set_targets(target_list)
-    online_targets = run_and_raise(lib_env.get_node_communicator(), com_cmd)
+    com_cmd_1.set_targets(target_list)
+    online_targets = run_and_raise(lib_env.get_node_communicator(), com_cmd_1)
 
     # check if SBD can be enabled
     if no_watchdog_validation:
         lib_env.report_processor.report(
-            ReportItem.warning(reports.messages.SbdWatchdogValidationInactive())
+            reports.ReportItem.warning(
+                reports.messages.SbdWatchdogValidationInactive()
+            )
         )
-    com_cmd = CheckSbd(lib_env.report_processor)
+    com_cmd_2 = CheckSbd(lib_env.report_processor)
     for target in online_targets:
-        com_cmd.add_request(
+        com_cmd_2.add_request(
             target,
             (
                 # Do not send watchdog if validation is turned off. Listing of
@@ -253,13 +267,13 @@ def enable_sbd(  # noqa: PLR0913
             ),
             full_device_dict[target.label] if using_devices else [],
         )
-    run_and_raise(lib_env.get_node_communicator(), com_cmd)
+    run_and_raise(lib_env.get_node_communicator(), com_cmd_2)
 
     # enable ATB if needed
     if not using_devices:
         if sbd.atb_has_to_be_enabled_pre_enable_check(corosync_conf):
             lib_env.report_processor.report(
-                ReportItem.warning(
+                reports.ReportItem.warning(
                     reports.messages.CorosyncQuorumAtbWillBeEnabledDueToSbd()
                 )
             )
@@ -269,9 +283,9 @@ def enable_sbd(  # noqa: PLR0913
     # distribute SBD configuration
     config = sbd.get_default_sbd_config()
     config.update(sbd_options)
-    com_cmd = SetSbdConfig(lib_env.report_processor)
+    com_cmd_3 = SetSbdConfig(lib_env.report_processor)
     for target in online_targets:
-        com_cmd.add_request(
+        com_cmd_3.add_request(
             target,
             sbd.create_sbd_config(
                 config,
@@ -280,30 +294,31 @@ def enable_sbd(  # noqa: PLR0913
                 full_device_dict[target.label],
             ),
         )
-    run_and_raise(lib_env.get_node_communicator(), com_cmd)
+    run_and_raise(lib_env.get_node_communicator(), com_cmd_3)
 
     # remove cluster prop 'stonith_watchdog_timeout'
-    com_cmd = RemoveStonithWatchdogTimeout(lib_env.report_processor)
-    com_cmd.set_targets(online_targets)
-    run_and_raise(lib_env.get_node_communicator(), com_cmd)
+    com_cmd_4 = RemoveStonithWatchdogTimeout(lib_env.report_processor)
+    com_cmd_4.set_targets(online_targets)
+    run_and_raise(lib_env.get_node_communicator(), com_cmd_4)
 
     # enable SBD service an all nodes
-    com_cmd = EnableSbdService(lib_env.report_processor)
-    com_cmd.set_targets(online_targets)
-    run_and_raise(lib_env.get_node_communicator(), com_cmd)
+    com_cmd_5 = EnableSbdService(lib_env.report_processor)
+    com_cmd_5.set_targets(online_targets)
+    run_and_raise(lib_env.get_node_communicator(), com_cmd_5)
 
     lib_env.report_processor.report(
-        ReportItem.warning(
+        reports.ReportItem.warning(
             reports.messages.ClusterRestartRequiredToApplyChanges()
         )
     )
 
 
-def disable_sbd(lib_env, ignore_offline_nodes=False):
+def disable_sbd(
+    lib_env: LibraryEnvironment, ignore_offline_nodes: bool = False
+) -> None:
     """
     Disable SBD on all nodes in cluster.
 
-    lib_env -- LibraryEnvironment
     ignore_offline_nodes -- if True, omit offline nodes
     """
     node_list, get_nodes_report_list = get_existing_nodes_names(
@@ -311,39 +326,43 @@ def disable_sbd(lib_env, ignore_offline_nodes=False):
     )
     if not node_list:
         get_nodes_report_list.append(
-            ReportItem.error(reports.messages.CorosyncConfigNoNodesDefined())
+            reports.ReportItem.error(
+                reports.messages.CorosyncConfigNoNodesDefined()
+            )
         )
     if lib_env.report_processor.report_list(get_nodes_report_list).has_errors:
         raise LibraryError()
 
-    com_cmd = GetOnlineTargets(
+    com_cmd_1 = GetOnlineTargets(
         lib_env.report_processor,
         ignore_offline_targets=ignore_offline_nodes,
     )
-    com_cmd.set_targets(
+    com_cmd_1.set_targets(
         lib_env.get_node_target_factory().get_target_list(
             node_list,
             skip_non_existing=ignore_offline_nodes,
         )
     )
-    online_nodes = run_and_raise(lib_env.get_node_communicator(), com_cmd)
+    online_nodes = run_and_raise(lib_env.get_node_communicator(), com_cmd_1)
 
-    com_cmd = SetStonithWatchdogTimeoutToZero(lib_env.report_processor)
-    com_cmd.set_targets(online_nodes)
-    run_and_raise(lib_env.get_node_communicator(), com_cmd)
+    com_cmd_2 = SetStonithWatchdogTimeoutToZero(lib_env.report_processor)
+    com_cmd_2.set_targets(online_nodes)
+    run_and_raise(lib_env.get_node_communicator(), com_cmd_2)
 
-    com_cmd = DisableSbdService(lib_env.report_processor)
-    com_cmd.set_targets(online_nodes)
-    run_and_raise(lib_env.get_node_communicator(), com_cmd)
+    com_cmd_3 = DisableSbdService(lib_env.report_processor)
+    com_cmd_3.set_targets(online_nodes)
+    run_and_raise(lib_env.get_node_communicator(), com_cmd_3)
 
     lib_env.report_processor.report(
-        ReportItem.warning(
+        reports.ReportItem.warning(
             reports.messages.ClusterRestartRequiredToApplyChanges()
         )
     )
 
 
-def get_cluster_sbd_status(lib_env):
+def get_cluster_sbd_status(
+    lib_env: LibraryEnvironment,
+) -> dict[str, dict[str, bool]]:
     """
     Returns status of SBD service in cluster in dictionary with format:
     {
@@ -354,15 +373,15 @@ def get_cluster_sbd_status(lib_env):
         },
         ...
     }
-
-    lib_env -- LibraryEnvironment
     """
     node_list, get_nodes_report_list = get_existing_nodes_names(
         lib_env.get_corosync_conf()
     )
     if not node_list:
         get_nodes_report_list.append(
-            ReportItem.error(reports.messages.CorosyncConfigNoNodesDefined())
+            reports.ReportItem.error(
+                reports.messages.CorosyncConfigNoNodesDefined()
+            )
         )
     if lib_env.report_processor.report_list(get_nodes_report_list).has_errors:
         raise LibraryError()
@@ -376,7 +395,9 @@ def get_cluster_sbd_status(lib_env):
     return run_com(lib_env.get_node_communicator(), com_cmd)
 
 
-def get_cluster_sbd_config(lib_env):
+def get_cluster_sbd_config(
+    lib_env: LibraryEnvironment,
+) -> list[dict[str, Optional[str]]]:
     """
     Returns list of SBD config from all cluster nodes in cluster. Structure
     of data:
@@ -389,15 +410,15 @@ def get_cluster_sbd_config(lib_env):
     ]
     If error occurs while obtaining config from some node, it's config will be
     None. If obtaining config fail on all node returns empty dictionary.
-
-    lib_env -- LibraryEnvironment
     """
     node_list, get_nodes_report_list = get_existing_nodes_names(
         lib_env.get_corosync_conf()
     )
     if not node_list:
         get_nodes_report_list.append(
-            ReportItem.error(reports.messages.CorosyncConfigNoNodesDefined())
+            reports.ReportItem.error(
+                reports.messages.CorosyncConfigNoNodesDefined()
+            )
         )
     if lib_env.report_processor.report_list(get_nodes_report_list).has_errors:
         raise LibraryError()
@@ -411,28 +432,26 @@ def get_cluster_sbd_config(lib_env):
     return run_com(lib_env.get_node_communicator(), com_cmd)
 
 
-def get_local_sbd_config(lib_env):
+def get_local_sbd_config(lib_env: LibraryEnvironment) -> dict[str, str]:
     """
     Returns local SBD config as dictionary.
-
-    lib_env -- LibraryEnvironment
     """
     del lib_env
     return environment_file_to_dict(sbd.get_local_sbd_config())
 
 
-def initialize_block_devices(lib_env, device_list, option_dict):
+def initialize_block_devices(
+    lib_env: LibraryEnvironment,
+    device_list: StringSequence,
+    option_dict: Mapping[str, str],
+) -> None:
     """
     Initialize SBD devices in device_list with options_dict.
-
-    lib_env -- LibraryEnvironment
-    device_list -- list of strings
-    option_dict -- dictionary
     """
     report_item_list = []
     if not device_list:
         report_item_list.append(
-            ReportItem.error(
+            reports.ReportItem.error(
                 reports.messages.RequiredOptionsAreMissing(["device"])
             )
         )
@@ -454,7 +473,9 @@ def initialize_block_devices(lib_env, device_list, option_dict):
     )
 
 
-def get_local_devices_info(lib_env, dump=False):
+def get_local_devices_info(
+    lib_env: LibraryEnvironment, dump: bool = False
+) -> list[dict[str, Optional[str]]]:
     """
     Returns list of local devices info in format:
     {
@@ -464,13 +485,12 @@ def get_local_devices_info(lib_env, dump=False):
     }
     If sbd is not enabled, empty list will be returned.
 
-    lib_env -- LibraryEnvironment
     dump -- if True returns also output of command 'sbd dump'
     """
     if not sbd.is_sbd_enabled(lib_env.service_manager):
         return []
     device_list = sbd.get_local_sbd_device_list()
-    report_item_list = []
+    report_item_list: reports.ReportItemList = []
     output = []
     for device in device_list:
         obj = {
@@ -498,14 +518,15 @@ def get_local_devices_info(lib_env, dump=False):
     return output
 
 
-def set_message(lib_env, device, node_name, message):
+def set_message(
+    lib_env: LibraryEnvironment, device: str, node_name: str, message: str
+) -> None:
     """
     Set message on device for node_name.
 
-    lib_env -- LibraryEnvironment
-    device -- string, absolute path to device
-    node_name -- string
-    message -- string, message type, should be one of settings.sbd_message_types
+    device -- absolute path to device
+    node_name --
+    message -- message type, should be one of settings.sbd_message_types
     """
     report_item_list = []
     missing_options = []
@@ -515,14 +536,14 @@ def set_message(lib_env, device, node_name, message):
         missing_options.append("node")
     if missing_options:
         report_item_list.append(
-            ReportItem.error(
+            reports.ReportItem.error(
                 reports.messages.RequiredOptionsAreMissing(missing_options)
             )
         )
     supported_messages = settings.sbd_message_types
     if message not in supported_messages:
         report_item_list.append(
-            ReportItem.error(
+            reports.ReportItem.error(
                 reports.messages.InvalidOptionValue(
                     "message", message, supported_messages
                 )
@@ -533,25 +554,26 @@ def set_message(lib_env, device, node_name, message):
     sbd.set_message(lib_env.cmd_runner(), device, node_name, message)
 
 
-def get_local_available_watchdogs(lib_env):
+def get_local_available_watchdogs(
+    lib_env: LibraryEnvironment,
+) -> dict[str, dict[str, str]]:
     """
     Returns available local watchdog devices.
-
-    lib_env LibraryEnvironment
     """
     return sbd.get_available_watchdogs(lib_env.cmd_runner())
 
 
-def test_local_watchdog(lib_env, watchdog=None):
+def test_local_watchdog(
+    lib_env: LibraryEnvironment, watchdog: Optional[str] = None
+) -> None:
     """
     Test local watchdog device by triggering it. System reset is expected. If
     watchdog is not specified, available watchdog will be used if there is only
     one.
 
-    lib_env LibraryEnvironment
-    watchdog string -- watchdog to trigger
+    watchdog -- watchdog to trigger
     """
     lib_env.report_processor.report(
-        ReportItem.info(reports.messages.SystemWillReset())
+        reports.ReportItem.info(reports.messages.SystemWillReset())
     )
     sbd.test_watchdog(lib_env.cmd_runner(), watchdog)

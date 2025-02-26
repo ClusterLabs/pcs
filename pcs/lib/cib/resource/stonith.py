@@ -1,9 +1,7 @@
 import re
 from typing import (
-    Dict,
-    List,
+    Mapping,
     Optional,
-    Tuple,
     cast,
 )
 
@@ -36,7 +34,7 @@ from . import (
 )
 
 
-def is_stonith(resource_el: _Element):
+def is_stonith(resource_el: _Element) -> bool:
     return (
         resource_el.tag == TAG_RESOURCE_PRIMITIVE
         and resource_el.get("class") == "stonith"
@@ -59,12 +57,12 @@ def is_stonith_enabled(crm_config_el: _Element) -> bool:
 
 def get_misconfigured_resources(
     resources_el: _Element,
-) -> Tuple[List[_Element], List[_Element], List[_Element]]:
+) -> tuple[list[_Element], list[_Element], list[_Element]]:
     """
     Return stonith: all, 'action' option set, 'method' option set to 'cycle'
     """
     stonith_all = cast(
-        List[_Element], resources_el.xpath("//primitive[@class='stonith']")
+        list[_Element], resources_el.xpath("//primitive[@class='stonith']")
     )
     stonith_with_action = []
     stonith_with_method_cycle = []
@@ -87,7 +85,7 @@ SUPPORTED_RESOURCE_TYPES_FOR_RESTARTLESS_UPDATE = ["fence_scsi", "fence_mpath"]
 def validate_stonith_restartless_update(
     cib: _Element,
     stonith_id: str,
-) -> Tuple[Optional[_Element], ReportItemList]:
+) -> tuple[Optional[_Element], ReportItemList]:
     """
     Validate that stonith device exists and its type is supported for
     restartless update of scsi devices and has defined option 'devices'.
@@ -132,7 +130,7 @@ def validate_stonith_restartless_update(
 
 def get_node_key_map_for_mpath(
     stonith_el: _Element, node_labels: StringIterable
-) -> Dict[str, str]:
+) -> dict[str, str]:
     def library_error(
         host_map: Optional[str], missing_nodes: StringIterable
     ) -> LibraryError:
@@ -179,8 +177,8 @@ TRANSIENT_DIGEST_ATTRS = frozenset(
 
 def _get_digest(
     attr: str,
-    attr_to_type_map: Dict[str, str],
-    calculated_digests: Dict[str, Optional[str]],
+    attr_to_type_map: Mapping[str, str],
+    calculated_digests: Mapping[str, Optional[str]],
 ) -> str:
     """
     Return digest of right type for the specified attribute. If missing, raise
@@ -207,7 +205,7 @@ def _get_digest(
     return digest
 
 
-def _get_transient_instance_attributes(cib: _Element) -> List[_Element]:
+def _get_transient_instance_attributes(cib: _Element) -> list[_Element]:
     """
     Return list of instance_attributes elements which could contain digest
     attributes.
@@ -215,7 +213,7 @@ def _get_transient_instance_attributes(cib: _Element) -> List[_Element]:
     cib -- CIB root element
     """
     return cast(
-        List[_Element],
+        list[_Element],
         cib.xpath(
             "./status/node_state/transient_attributes/instance_attributes"
         ),
@@ -228,7 +226,7 @@ def _get_lrm_rsc_op_elements(
     node_name: str,
     op_name: str,
     interval: Optional[str] = None,
-) -> List[_Element]:
+) -> list[_Element]:
     """
     Get a lrm_rsc_op element from cib status.
 
@@ -238,7 +236,7 @@ def _get_lrm_rsc_op_elements(
     interval -- operation interval using for monitor operation selection
     """
     return cast(
-        List[_Element],
+        list[_Element],
         cib.xpath(
             """
             ./status/node_state[@uname=$node_name]
@@ -255,9 +253,9 @@ def _get_lrm_rsc_op_elements(
 
 def _get_monitor_attrs(
     resource_el: _Element,
-) -> List[Dict[str, Optional[str]]]:
+) -> list[dict[str, Optional[str]]]:
     """
-    Get list of interval/timeout attributes of all monitor oparations of
+    Get list of interval/timeout attributes of all monitor operations of
     the resource which is being updated.
 
     Only interval and timeout attributes are needed for digests
@@ -271,7 +269,7 @@ def _get_monitor_attrs(
     from the resource definition and lrm_rsc_op elements from the cluster
     status, it will be found later.
     """
-    monitor_attrs_list: List[Dict[str, Optional[str]]] = []
+    monitor_attrs_list: list[dict[str, Optional[str]]] = []
     for operation_el in operations.get_resource_operations(
         resource_el, names=["monitor"]
     ):
@@ -296,8 +294,8 @@ def _get_monitor_attrs(
 
 
 def _update_digest_attrs_in_lrm_rsc_op(
-    lrm_rsc_op: _Element, calculated_digests: Dict[str, Optional[str]]
-):
+    lrm_rsc_op: _Element, calculated_digests: Mapping[str, Optional[str]]
+) -> None:
     """
     Update digest attributes in lrm_rsc_op elements. If there are missing
     digests values from pacemaker or missing digests attributes in lrm_rsc_op
@@ -367,7 +365,7 @@ def _update_digest_attrs_in_transient_instance_attributes(
     nvset_el: _Element,
     stonith_id: str,
     stonith_type: str,
-    calculated_digests: Dict[str, Optional[str]],
+    calculated_digests: Mapping[str, Optional[str]],
 ) -> None:
     """
     Update digests attributes in transient instance attributes element.
@@ -380,7 +378,7 @@ def _update_digest_attrs_in_transient_instance_attributes(
     """
     for attr in TRANSIENT_DIGEST_ATTRS:
         nvpair_list = cast(
-            List[_Element],
+            list[_Element],
             nvset_el.xpath("./nvpair[@name=$name]", name=attr),
         )
         if not nvpair_list:
