@@ -55,15 +55,39 @@ def is_stonith_enabled(crm_config_el: _Element) -> bool:
     return stonith_enabled
 
 
+def get_all_resources(resources_el: _Element) -> list[_Element]:
+    """
+    Return all stonith resources
+    """
+    return cast(
+        list[_Element], resources_el.xpath("//primitive[@class='stonith']")
+    )
+
+
+def get_all_node_isolating_resources(resources_el: _Element) -> list[_Element]:
+    """
+    Return all stonith resources which actually do fencing on their own
+    """
+    return [
+        res_el
+        for res_el in get_all_resources(resources_el)
+        if res_el.get("type")
+        not in {
+            "fence_heuristics_ping",
+            "fence_kdump",
+            "fence_sbd",
+            "fence_watchdog",
+        }
+    ]
+
+
 def get_misconfigured_resources(
     resources_el: _Element,
 ) -> tuple[list[_Element], list[_Element], list[_Element]]:
     """
     Return stonith: all, 'action' option set, 'method' option set to 'cycle'
     """
-    stonith_all = cast(
-        list[_Element], resources_el.xpath("//primitive[@class='stonith']")
-    )
+    stonith_all = get_all_resources(resources_el)
     stonith_with_action = []
     stonith_with_method_cycle = []
     for stonith in stonith_all:

@@ -1,3 +1,4 @@
+import json
 from typing import Optional
 from unittest import (
     TestCase,
@@ -1013,5 +1014,346 @@ class RemoveElementsStopResources(TestCase, StopResourcesWaitMixin):
                     id_tag_map={"apa": "primitive", "test-bundle": "bundle"},
                     removing_references_from={"apa": {"test-bundle"}},
                 ),
+            ]
+        )
+
+
+class StonithAndSbdCheck(StopResourcesWaitMixin, TestCase):
+    """
+    Test that an error is produced when removing the last stonith resource and
+    sbd is disabled
+    """
+
+    resources = """
+        <resources>
+            <primitive id="S1" class="stonith" type="fence_any" />
+            <primitive id="S2" class="stonith" type="fence_any" />
+        </resources>
+    """
+
+    def fixture_config_sbd_calls(self, sbd_enabled):
+        node_name_list = ["node-1", "node-2"]
+        self.config.env.set_known_nodes(node_name_list)
+        self.config.corosync_conf.load(node_name_list=node_name_list)
+        self.config.http.sbd.check_sbd(
+            communication_list=[
+                dict(
+                    label=node,
+                    param_list=[("watchdog", ""), ("device_list", "[]")],
+                    output=json.dumps(
+                        dict(
+                            sbd=dict(
+                                installed=True,
+                                enabled=sbd_enabled,
+                                running=sbd_enabled,
+                            )
+                        )
+                    ),
+                )
+                for node in node_name_list
+            ]
+        )
+
+    def fixture_remove_s1_s2(self):
+        self.fixture_stop_resources_wait_calls(
+            self.config.calls.get("runner.cib.load").stdout,
+            initial_state_modifiers={
+                "resources": """
+                    <resources>
+                        <resource id="S1" managed="true" role="Started"/>
+                        <resource id="S2" managed="true" role="Started"/>
+                    </resources>
+                """
+            },
+            after_disable_cib_modifiers={
+                "resources": """
+                    <resources>
+                        <primitive id="S1" class="stonith" type="fence_any">
+                            <meta_attributes id="S1-meta_attributes">
+                                <nvpair id="S1-meta_attributes-target-role"
+                                    name="target-role" value="Stopped"
+                                />
+                            </meta_attributes>
+                        </primitive>
+                        <primitive id="S2" class="stonith" type="fence_any">
+                            <meta_attributes id="S2-meta_attributes">
+                                <nvpair id="S2-meta_attributes-target-role"
+                                    name="target-role" value="Stopped"
+                                />
+                            </meta_attributes>
+                        </primitive>
+                    </resources>
+                """
+            },
+            after_disable_state_modifiers={
+                "resources": """
+                    <resources>
+                        <resource id="S1" managed="true" role="Stopped"/>
+                        <resource id="S2" managed="true" role="Stopped"/>
+                    </resources>
+                """
+            },
+        )
+        self.fixture_push_cib_after_stopping(resources="<resources />")
+
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+
+    def test_some_stonith_left(self):
+        self.fixture_init_tmp_file_mocker()
+
+        # sbd calls do not happen if some stonith is left
+        self.config.runner.cib.load(resources=self.resources)
+        self.fixture_stop_resources_wait_calls(
+            self.config.calls.get("runner.cib.load").stdout,
+            initial_state_modifiers={
+                "resources": """
+                    <resources>
+                        <resource id="S1" managed="true" role="Started"/>
+                        <resource id="S2" managed="true" role="Started"/>
+                    </resources>
+                """
+            },
+            after_disable_cib_modifiers={
+                "resources": """
+                    <resources>
+                        <primitive id="S1" class="stonith" type="fence_any">
+                            <meta_attributes id="S1-meta_attributes">
+                                <nvpair id="S1-meta_attributes-target-role"
+                                    name="target-role" value="Stopped"
+                                />
+                            </meta_attributes>
+                        </primitive>
+                        <primitive id="S2" class="stonith" type="fence_any" />
+                    </resources>
+                """
+            },
+            after_disable_state_modifiers={
+                "resources": """
+                    <resources>
+                        <resource id="S1" managed="true" role="Stopped"/>
+                        <resource id="S2" managed="true" role="Started"/>
+                    </resources>
+                """
+            },
+        )
+        self.fixture_push_cib_after_stopping(
+            resources="""
+                <resources>
+                    <primitive id="S2" class="stonith" type="fence_any" />
+                </resources>
+            """
+        )
+
+        lib.remove_elements(self.env_assist.get_env(), ["S1"])
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    reports.codes.STOPPING_RESOURCES_BEFORE_DELETING,
+                    resource_id_list=["S1"],
+                ),
+                fixture.info(reports.codes.WAIT_FOR_IDLE_STARTED, timeout=0),
+            ]
+        )
+
+    def test_no_stonith_left_sbd_enabled(self):
+        self.fixture_init_tmp_file_mocker()
+
+        self.config.runner.cib.load(resources=self.resources)
+        self.fixture_config_sbd_calls(sbd_enabled=True)
+        self.fixture_remove_s1_s2()
+
+        lib.remove_elements(self.env_assist.get_env(), ["S1", "S2"])
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    reports.codes.STOPPING_RESOURCES_BEFORE_DELETING,
+                    resource_id_list=["S1", "S2"],
+                ),
+                fixture.info(reports.codes.WAIT_FOR_IDLE_STARTED, timeout=0),
+            ]
+        )
+
+    def test_fake_stonith_left_sbd_disabled(self):
+        resources = """
+            <resources>
+                <primitive id="S1" class="stonith" type="fence_any" />
+                <primitive id="S2" class="stonith" type="fence_sbd" />
+            </resources>
+        """
+        self.config.runner.cib.load(resources=resources)
+        self.fixture_config_sbd_calls(sbd_enabled=False)
+
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.remove_elements(self.env_assist.get_env(), ["S1"])
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.NO_STONITH_MEANS_WOULD_BE_LEFT,
+                    force_code=reports.codes.FORCE,
+                )
+            ]
+        )
+
+    def test_no_stonith_left_sbd_disabled(self):
+        self.config.runner.cib.load(resources=self.resources)
+        self.fixture_config_sbd_calls(sbd_enabled=False)
+
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.remove_elements(self.env_assist.get_env(), ["S1", "S2"])
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.NO_STONITH_MEANS_WOULD_BE_LEFT,
+                    force_code=reports.codes.FORCE,
+                )
+            ]
+        )
+
+    def test_no_stonith_left_sbd_disabled_forced(self):
+        self.fixture_init_tmp_file_mocker()
+
+        # TODO reports.codes.force does two things:
+        # 1) overrides NO_STONITH_MEANS_WOULD_BE_LEFT error
+        # 2) disables stoppiong resources before deleting
+        # This is wrong, we need those two effects to be independent.
+        # Possible solutions:
+        # 1) Use specific forces codes - This is planned, but not yet
+        #    implemented in CLI. Also, the library would have to emit specific
+        #    force codes in error reports.
+        # 2) Add specific flag to CLI and LIB command to disable stopping
+        #    resources before deleting them.
+
+        self.config.runner.cib.load(resources=self.resources)
+        self.fixture_config_sbd_calls(sbd_enabled=False)
+        self.tmp_file_mock_obj.extend_calls(
+            [
+                TmpFileCall(
+                    "cib.delete.before",
+                    orig_content=self.config.calls.get(
+                        "runner.cib.load"
+                    ).stdout,
+                ),
+                TmpFileCall(
+                    "cib.delete.after",
+                    orig_content=read_test_resource("cib-empty.xml"),
+                ),
+            ]
+        )
+        self.config.runner.cib.diff(
+            "cib.delete.before",
+            "cib.delete.after",
+            name="cib.diff.delete",
+            stdout="cib.diff.delete",
+        )
+        self.config.runner.cib.push_diff(
+            name="cib.push.delete", cib_diff="cib.diff.delete"
+        )
+
+        lib.remove_elements(
+            self.env_assist.get_env(), ["S1", "S2"], {reports.codes.FORCE}
+        )
+
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.NO_STONITH_MEANS_WOULD_BE_LEFT,
+                ),
+                fixture.warn(
+                    reports.codes.STOPPING_RESOURCES_BEFORE_DELETING_SKIPPED,
+                ),
+            ]
+        )
+
+    def test_no_stonith_left_sbd_partially_disabled(self):
+        self.config.runner.cib.load(resources=self.resources)
+
+        node_name_list = ["node-1", "node-2"]
+        self.config.env.set_known_nodes(node_name_list)
+        self.config.corosync_conf.load(node_name_list=node_name_list)
+        self.config.http.sbd.check_sbd(
+            communication_list=[
+                dict(
+                    label="node-1",
+                    param_list=[("watchdog", ""), ("device_list", "[]")],
+                    output=json.dumps(
+                        dict(
+                            sbd=dict(installed=True, enabled=True, running=True)
+                        )
+                    ),
+                ),
+                dict(
+                    label="node-2",
+                    param_list=[("watchdog", ""), ("device_list", "[]")],
+                    output=json.dumps(
+                        dict(
+                            sbd=dict(
+                                installed=True, enabled=False, running=False
+                            )
+                        )
+                    ),
+                ),
+            ]
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.remove_elements(self.env_assist.get_env(), ["S1", "S2"])
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.NO_STONITH_MEANS_WOULD_BE_LEFT,
+                    force_code=reports.codes.FORCE,
+                )
+            ]
+        )
+
+    def test_communication_error(self):
+        self.fixture_init_tmp_file_mocker()
+        self.config.runner.cib.load(resources=self.resources)
+        node_name_list = ["node-1", "node-2"]
+        self.config.env.set_known_nodes(node_name_list)
+        self.config.corosync_conf.load(node_name_list=node_name_list)
+        self.config.http.sbd.check_sbd(
+            communication_list=[
+                dict(
+                    label="node-1",
+                    param_list=[("watchdog", ""), ("device_list", "[]")],
+                    output=json.dumps(
+                        dict(
+                            sbd=dict(installed=True, enabled=True, running=True)
+                        )
+                    ),
+                ),
+                dict(
+                    label="node-2",
+                    param_list=[("watchdog", ""), ("device_list", "[]")],
+                    was_connected=False,
+                ),
+            ]
+        )
+        self.fixture_remove_s1_s2()
+
+        lib.remove_elements(self.env_assist.get_env(), ["S1", "S2"])
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.NODE_COMMUNICATION_ERROR_UNABLE_TO_CONNECT,
+                    node="node-2",
+                    command="remote/check_sbd",
+                    reason=None,
+                ),
+                fixture.warn(
+                    reports.codes.UNABLE_TO_GET_SBD_STATUS,
+                    node="node-2",
+                    reason="",
+                ),
+                fixture.info(
+                    reports.codes.STOPPING_RESOURCES_BEFORE_DELETING,
+                    resource_id_list=["S1", "S2"],
+                ),
+                fixture.info(reports.codes.WAIT_FOR_IDLE_STARTED, timeout=0),
             ]
         )

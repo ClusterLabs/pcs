@@ -1380,7 +1380,22 @@ class StonithTest(TestCase, AssertPcsMixin):
         )
 
         self.pcs_runner.corosync_conf_opt = None
-        self.assert_pcs_success("stonith delete test_stonith".split())
+        self.assert_pcs_fail(
+            "stonith delete test_stonith".split(),
+            (
+                "Error: Requested action removes all stonith means, resulting "
+                "in the cluster not being able to recover from certain failure "
+                "conditions, use --force to override\n" + ERRORS_HAVE_OCCURRED
+            ),
+        )
+        self.assert_pcs_success(
+            "stonith delete test_stonith --force".split(),
+            stderr_full=(
+                "Warning: Requested action removes all stonith means, "
+                "resulting in the cluster not being able to recover from "
+                "certain failure conditions\n"
+            ),
+        )
 
         self.pcs_runner.corosync_conf_opt = self.temp_corosync_conf.name
         self.assert_pcs_success(

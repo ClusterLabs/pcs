@@ -38,6 +38,19 @@ FIXTURE_FENCING_LEVEL_XML = """
     <fencing-level index="3" devices="S2,S3" target="foo" id="fencing-level"/>
 """
 
+ERRORS_HAVE_OCCURRED = (
+    "Error: Errors have occurred, therefore pcs is unable to continue\n"
+)
+NO_STONITH_LEFT_ERROR = (
+    "Error: Requested action removes all stonith means, resulting in the "
+    "cluster not being able to recover from certain failure conditions, "
+    "use --force to override\n"
+)
+NO_STONITH_LEFT_WARNING = (
+    "Warning: Requested action removes all stonith means, resulting in the "
+    "cluster not being able to recover from certain failure conditions\n"
+)
+
 
 class StonithRemoveDeleteBase(
     get_assert_pcs_effect_mixin(
@@ -192,17 +205,24 @@ class StonithRemoveDeleteBase(
         )
 
     def test_remove_all_resources(self):
-        self.assert_effect_single(
+        self.assert_pcs_fail(
             ["stonith", self.command, "S1", "S2", "S3"],
+            NO_STONITH_LEFT_ERROR + ERRORS_HAVE_OCCURRED,
+        )
+        self.assert_effect_single(
+            ["stonith", self.command, "S1", "S2", "S3", "--force"],
             "<resources/>",
-            stderr_full=dedent(
-                """\
-                Removing dependant elements:
-                  Colocation constraint: 'colocation-constraint'
-                  Fencing level: 'fencing-level'
-                  Resource set: 'set1'
-                  Tag: 'TAG'
-                """
+            stderr_full=(
+                NO_STONITH_LEFT_WARNING
+                + dedent(
+                    """\
+                    Removing dependant elements:
+                      Colocation constraint: 'colocation-constraint'
+                      Fencing level: 'fencing-level'
+                      Resource set: 'set1'
+                      Tag: 'TAG'
+                    """
+                )
             ),
         )
         self.assert_constraints("<constraints/>")
@@ -246,15 +266,22 @@ class StonithReferencedInAcl(AssertPcsMixin, TestCase):
         self.temp_cib.close()
 
     def test_remove_primitive(self):
-        self.assert_pcs_success(
+        self.assert_pcs_fail(
             ["stonith", "delete", "S1"],
-            stderr_full=dedent(
-                """\
-                Removing dependant element:
-                  Acl permission: 'PERMISSION'
-                Removing references:
-                  Acl permission 'PERMISSION' from:
-                    Acl role: 'ROLE'
-                """
+            NO_STONITH_LEFT_ERROR + ERRORS_HAVE_OCCURRED,
+        )
+        self.assert_pcs_success(
+            ["stonith", "delete", "S1", "--force"],
+            stderr_full=(
+                NO_STONITH_LEFT_WARNING
+                + dedent(
+                    """\
+                    Removing dependant element:
+                      Acl permission: 'PERMISSION'
+                    Removing references:
+                      Acl permission 'PERMISSION' from:
+                        Acl role: 'ROLE'
+                    """
+                )
             ),
         )
