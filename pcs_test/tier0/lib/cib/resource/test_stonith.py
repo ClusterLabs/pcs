@@ -74,6 +74,52 @@ class IsStonithEnabled(TestCase):
         self.assertFalse(stonith.is_stonith_enabled(crm_config))
 
 
+class GetAllResourcesBase(TestCase):
+    resources = etree.fromstring(
+        """
+            <resources>
+                <primitive id="R" class="ocf" provider="pacemaker" type="Dummy" />
+                <primitive id="S1" class="stonith" type="fence_any" />
+                <primitive id="S2" class="stonith" type="fence_sbd" />
+                <group id="G1">
+                    <primitive id="S3" class="stonith" type="fence_any" />
+                    <primitive id="S4" class="stonith" type="fence_kdump" />
+                </group>
+                <clone id="C1">
+                    <group id="G2">
+                        <primitive id="S5" class="stonith" type="fence_any" />
+                        <primitive id="S6" class="stonith" type="fence_watchdog" />
+                    </group>
+                </clone>
+            </resources>
+        """
+    )
+
+
+class GetAllResources(GetAllResourcesBase):
+    def test_success(self):
+        self.assertEqual(
+            [
+                el.attrib["id"]
+                for el in stonith.get_all_resources(self.resources)
+            ],
+            ["S1", "S2", "S3", "S4", "S5", "S6"],
+        )
+
+
+class GetAllNodeIsolatingResources(GetAllResourcesBase):
+    def test_success(self):
+        self.assertEqual(
+            [
+                el.attrib["id"]
+                for el in stonith.get_all_node_isolating_resources(
+                    self.resources
+                )
+            ],
+            ["S1", "S3", "S5"],
+        )
+
+
 class GetMisconfiguredResources(TestCase):
     def test_no_stonith(self):
         resources = etree.fromstring(

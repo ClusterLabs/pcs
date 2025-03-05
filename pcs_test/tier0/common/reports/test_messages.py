@@ -6162,3 +6162,15 @@ class ConfiguredResourceMissingInStatus(NameBuildTest):
                 "id", ResourceState.STOPPED
             ),
         )
+
+
+class NoStonithMeansWouldBeLeft(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "Requested action removes all stonith means, resulting in the "
+                "cluster not being able to recover from certain failure "
+                "conditions"
+            ),
+            reports.NoStonithMeansWouldBeLeft(),
+        )

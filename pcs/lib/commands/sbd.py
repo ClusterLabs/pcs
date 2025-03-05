@@ -9,6 +9,8 @@ from pcs.lib import (
     sbd,
     validate,
 )
+from pcs.lib.cib.resource.stonith import get_all_node_isolating_resources
+from pcs.lib.cib.tools import get_resources
 from pcs.lib.communication.nodes import GetOnlineTargets
 from pcs.lib.communication.sbd import (
     CheckSbd,
@@ -314,33 +316,52 @@ def enable_sbd(  # noqa: PLR0913
 
 
 def disable_sbd(
-    lib_env: LibraryEnvironment, ignore_offline_nodes: bool = False
+    lib_env: LibraryEnvironment,
+    ignore_offline_nodes: bool = False,
+    force_flags: reports.types.ForceFlags = (),
 ) -> None:
     """
     Disable SBD on all nodes in cluster.
 
     ignore_offline_nodes -- if True, omit offline nodes
+    force_flags -- list of flags codes
     """
-    node_list, get_nodes_report_list = get_existing_nodes_names(
+
+    skip_offline_nodes = (
+        ignore_offline_nodes or reports.codes.SKIP_OFFLINE_NODES in force_flags
+    )
+
+    node_list, report_list = get_existing_nodes_names(
         lib_env.get_corosync_conf()
     )
     if not node_list:
-        get_nodes_report_list.append(
+        report_list.append(
             reports.ReportItem.error(
                 reports.messages.CorosyncConfigNoNodesDefined()
             )
         )
-    if lib_env.report_processor.report_list(get_nodes_report_list).has_errors:
+
+    if not get_all_node_isolating_resources(get_resources(lib_env.get_cib())):
+        report_list.append(
+            reports.ReportItem(
+                reports.get_severity(
+                    reports.codes.FORCE, reports.codes.FORCE in force_flags
+                ),
+                reports.messages.NoStonithMeansWouldBeLeft(),
+            )
+        )
+
+    if lib_env.report_processor.report_list(report_list).has_errors:
         raise LibraryError()
 
     com_cmd_1 = GetOnlineTargets(
         lib_env.report_processor,
-        ignore_offline_targets=ignore_offline_nodes,
+        ignore_offline_targets=skip_offline_nodes,
     )
     com_cmd_1.set_targets(
         lib_env.get_node_target_factory().get_target_list(
             node_list,
-            skip_non_existing=ignore_offline_nodes,
+            skip_non_existing=skip_offline_nodes,
         )
     )
     online_nodes = run_and_raise(lib_env.get_node_communicator(), com_cmd_1)

@@ -1,5 +1,4 @@
 from typing import (
-    Collection,
     Iterable,
     Sequence,
 )
@@ -25,15 +24,23 @@ from pcs.lib.cib.resource.guest_node import is_guest_node
 from pcs.lib.cib.resource.remote_node import (
     get_node_name_from_resource as get_node_name_from_remote_resource,
 )
+from pcs.lib.cib.resource.stonith import (
+    get_all_node_isolating_resources,
+    is_stonith,
+)
+from pcs.lib.cib.tools import get_resources
+from pcs.lib.communication.sbd import GetSbdStatus
+from pcs.lib.communication.tools import run as run_communication
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
+from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.pacemaker.live import remove_node
 
 
 def remove_elements(
     env: LibraryEnvironment,
     ids: StringCollection,
-    force_flags: Collection[reports.types.ForceCode] = (),
+    force_flags: reports.types.ForceFlags = (),
 ) -> None:
     """
     Remove elements with specified ids from CIB. This function is aware of
@@ -70,6 +77,9 @@ def remove_elements(
     if report_processor.report_list(
         _validate_elements_to_remove(elements_to_remove)
         + _warn_remote_guest(remote_node_names, guest_node_names)
+        + _ensure_some_stonith_remains(
+            env, get_resources(cib), elements_to_remove, force_flags
+        )
     ).has_errors:
         raise LibraryError()
 
@@ -96,7 +106,7 @@ def _stop_resources_wait(
     env: LibraryEnvironment,
     cib: _Element,
     resource_elements: Sequence[_Element],
-    force_flags: Collection[reports.types.ForceCode] = (),
+    force_flags: reports.types.ForceFlags = (),
 ) -> _Element:
     """
     Stop all resources that are going to be removed. Push cib, wait for the
@@ -194,3 +204,75 @@ def _get_guest_node_names(resource_elements: Iterable[_Element]) -> list[str]:
         for el in resource_elements
         if is_guest_node(el)
     ]
+
+
+def _ensure_some_stonith_remains(
+    env: LibraryEnvironment,
+    resources_el: _Element,
+    elements_to_remove: ElementsToRemove,
+    force_flags: reports.types.ForceFlags,
+) -> reports.ReportItemList:
+    if not any(is_stonith(el) for el in elements_to_remove.resources_to_remove):
+        # if no stonith are beieng removed then we don't need to check if any
+        # stonith will be left
+        return []
+
+    stonith_left = [
+        stonith_el
+        for stonith_el in get_all_node_isolating_resources(resources_el)
+        if stonith_el.attrib["id"] not in elements_to_remove.ids_to_remove
+    ]
+    if stonith_left:
+        return []
+    if _is_sbd_enabled(env):
+        return []
+    return [
+        reports.ReportItem(
+            reports.get_severity(
+                reports.codes.FORCE, reports.codes.FORCE in force_flags
+            ),
+            reports.messages.NoStonithMeansWouldBeLeft(),
+        )
+    ]
+
+
+def _is_sbd_enabled(env: LibraryEnvironment) -> bool:
+    if not env.is_cib_live:
+        # We cannot tell whether sbd is enabled or not, as we do not have
+        # access to a cluster. Expect sbd is not enabled.
+        return False
+
+    # Do not return errors. The check should not prevent deleting a resource
+    # just because a node in a cluster is temporarily unavailable. We do our
+    # best to figure out sbd status.
+    node_list, get_nodes_report_list = get_existing_nodes_names(
+        env.get_corosync_conf()
+    )
+    if not node_list:
+        get_nodes_report_list.append(
+            reports.ReportItem.warning(
+                reports.messages.CorosyncConfigNoNodesDefined()
+            )
+        )
+        return False
+
+    com_cmd = GetSbdStatus(env.report_processor)
+    com_cmd.set_targets(
+        env.get_node_target_factory().get_target_list(
+            node_list, skip_non_existing=True
+        )
+    )
+    response_per_node = run_communication(env.get_node_communicator(), com_cmd)
+    for response in response_per_node:
+        # It is required to compare with False even if it looks wrong. The
+        # value can be either True (== sbd is enabled), or False (== sbd is
+        # disabled), or None (== unknown, not connected).
+        # We do not want to block removing resources just because we were
+        # temporarily unable to connect to a node, so we do not return False
+        # when the result is None.
+        if (
+            response["status"]["enabled"] is False
+            or response["status"]["running"] is False
+        ):
+            return False
+    return True
