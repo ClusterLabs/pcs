@@ -920,7 +920,7 @@ class GetAllRecipientsTest(TestCase):
                         },
                     ],
                     "meta_attributes": [
-                        {"id": "nvset-name3", "name": "name3", "value": ""}
+                        {"id": "nvset-name3", "name": "name3", "value": None}
                     ],
                 },
                 {
@@ -1011,7 +1011,7 @@ class GetAllAlertsTest(TestCase):
                                 {
                                     "id": "meta_attributes-name3",
                                     "name": "name3",
-                                    "value": "",
+                                    "value": None,
                                 }
                             ],
                         },
@@ -1041,7 +1041,7 @@ class GetAllAlertsTest(TestCase):
                         },
                     ],
                     "meta_attributes": [
-                        {"id": "alert1-name3", "name": "name3", "value": ""}
+                        {"id": "alert1-name3", "name": "name3", "value": None}
                     ],
                     "recipient_list": [],
                 },

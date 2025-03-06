@@ -119,8 +119,9 @@ def find_nvsets_by_ids(
             parent_element,
             element_type_desc="options set",
         )
-        if searcher.element_found():
-            element_list.append(searcher.get_element())
+        found_element = searcher.get_element()
+        if found_element is not None:
+            element_list.append(found_element)
         else:
             report_list.extend(searcher.get_errors())
     return element_list, report_list

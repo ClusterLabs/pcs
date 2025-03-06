@@ -1,5 +1,5 @@
 import json
-from typing import Any
+from typing import Any, Iterable, Mapping
 
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import (
@@ -147,7 +147,7 @@ def recipient_remove(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     lib.alert.remove_recipient(argv)
 
 
-def _nvset_to_str(nvset_obj):
+def _nvset_to_str(nvset_obj: Iterable[Mapping[str, str]]) -> str:
     # TODO duplicite to pcs.resource._nvpairs_strings
     key_val = {
         nvpair_obj["name"]: nvpair_obj["value"] for nvpair_obj in nvset_obj
@@ -159,7 +159,7 @@ def _nvset_to_str(nvset_obj):
     return " ".join(output)
 
 
-def __description_attributes_to_str(obj):
+def __description_attributes_to_str(obj: Mapping[str, Any]) -> list[str]:
     output = []
     if obj.get("description"):
         output.append(f"Description: {obj['description']}")
@@ -172,11 +172,11 @@ def __description_attributes_to_str(obj):
     return output
 
 
-def _alert_to_str(alert):
-    content = []
+def _alert_to_str(alert: Mapping[str, Any]) -> list[str]:
+    content: list[str] = []
     content.extend(__description_attributes_to_str(alert))
 
-    recipients = []
+    recipients: list[str] = []
     for recipient in alert.get("recipient_list", []):
         recipients.extend(_recipient_to_str(recipient))
 
@@ -187,7 +187,7 @@ def _alert_to_str(alert):
     return [f"Alert: {alert['id']} (path={alert['path']})"] + indent(content, 1)
 
 
-def _recipient_to_str(recipient):
+def _recipient_to_str(recipient: Mapping[str, Any]) -> list[str]:
     return [
         f"Recipient: {recipient['id']} (value={recipient['value']})"
     ] + indent(__description_attributes_to_str(recipient), 1)

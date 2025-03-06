@@ -1,8 +1,4 @@
-from functools import partial
-from typing import (
-    Optional,
-    cast,
-)
+from typing import Any, Optional, cast
 
 from lxml import etree
 from lxml.etree import _Element
@@ -10,38 +6,52 @@ from lxml.etree import _Element
 from pcs.common import reports
 from pcs.lib.cib.nvpair import get_nvset
 from pcs.lib.cib.tools import (
+    ElementSearcher,
     IdProvider,
     create_subelement_id,
-    find_element_by_tag_and_id,
     get_alerts,
 )
+from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.values import validate_id_reports
-from pcs.lib.xml_tools import get_sub_element
+from pcs.lib.xml_tools import (
+    get_sub_element,
+    remove_one_element,
+    update_attribute_remove_empty,
+)
 
 TAG_ALERT = "alert"
 TAG_RECIPIENT = "recipient"
 
-find_alert = partial(find_element_by_tag_and_id, TAG_ALERT)
-find_recipient = partial(find_element_by_tag_and_id, TAG_RECIPIENT)
+
+def find_alert(context_el: _Element, alert_id: str) -> _Element:
+    searcher = ElementSearcher(TAG_ALERT, alert_id, context_el)
+    found_element = searcher.get_element()
+    if found_element is not None:
+        return found_element
+    raise LibraryError(*searcher.get_errors())
+
+
+def find_recipient(context_el: _Element, recipient_id: str) -> _Element:
+    searcher = ElementSearcher(TAG_RECIPIENT, recipient_id, context_el)
+    found_element = searcher.get_element()
+    if found_element is not None:
+        return found_element
+    raise LibraryError(*searcher.get_errors())
 
 
 def _update_optional_attribute(
     element: _Element, attribute: str, value: Optional[str]
 ) -> None:
     """
-    Update optional attribute of element. Remove existing element if value
-    is empty.
+    Set value of an optional attribute, remove the attribute on empty value
 
-    element -- parent element of specified attribute
+    element -- element to be updated
     attribute -- attribute to be updated
-    value -- new value
+    value -- new value of the attribute
     """
     if value is None:
         return
-    if value:
-        element.set(attribute, value)
-    elif attribute in element.attrib:
-        del element.attrib[attribute]
+    update_attribute_remove_empty(element, attribute, value)
 
 
 def _validate_recipient_value_is_unique(
@@ -82,7 +92,8 @@ def _validate_recipient_value_is_unique(
 
 def validate_create_alert(
     id_provider: IdProvider,
-    path: str,
+    # should be str, see lib.commands.alert.create_alert
+    path: Optional[str],
     alert_id: Optional[str] = None,
 ) -> reports.ReportItemList:
     """
@@ -115,7 +126,7 @@ def create_alert(
     description: Optional[str] = None,
 ) -> _Element:
     """
-    Create new alert element. Returns newly created element.
+    Create new alert element and return it
 
     tree -- cib etree node
     id_provider -- elements' ids generator
@@ -135,7 +146,12 @@ def create_alert(
     return alert_el
 
 
-def update_alert(tree, alert_id, path, description=None):
+def update_alert(
+    tree: _Element,
+    alert_id: str,
+    path: Optional[str],
+    description: Optional[str] = None,
+) -> _Element:
     """
     Update existing alert. Return updated alert element.
     Raises LibraryError if alert with specified id doesn't exist.
@@ -153,7 +169,7 @@ def update_alert(tree, alert_id, path, description=None):
     return alert
 
 
-def remove_alert(tree, alert_id):
+def remove_alert(tree: _Element, alert_id: str) -> None:
     """
     Remove alert with specified id.
     Raises LibraryError if alert with specified id doesn't exist.
@@ -161,14 +177,14 @@ def remove_alert(tree, alert_id):
     tree -- cib etree node
     alert_id -- id of alert which should be removed
     """
-    alert = find_alert(get_alerts(tree), alert_id)
-    alert.getparent().remove(alert)
+    remove_one_element(find_alert(get_alerts(tree), alert_id))
 
 
 def validate_add_recipient(
     id_provider: IdProvider,
     alert_el: _Element,
-    recipient_value: str,
+    # should be str, see lib.commands.alert.add_recipient
+    recipient_value: Optional[str],
     recipient_id: Optional[str] = None,
     allow_same_value: bool = False,
 ) -> reports.ReportItemList:
@@ -189,21 +205,21 @@ def validate_add_recipient(
                 reports.messages.RequiredOptionsAreMissing(["value"])
             )
         )
+    else:
+        report_list.extend(
+            _validate_recipient_value_is_unique(
+                alert_el,
+                recipient_value,
+                recipient_id,
+                allow_duplicity=allow_same_value,
+            )
+        )
 
     if recipient_id:
         report_list.extend(
             validate_id_reports(recipient_id, description="recipient-id")
         )
         report_list.extend(id_provider.book_ids(recipient_id))
-
-    report_list.extend(
-        _validate_recipient_value_is_unique(
-            alert_el,
-            recipient_value,
-            recipient_id,
-            allow_duplicity=allow_same_value,
-        )
-    )
 
     return report_list
 
@@ -291,7 +307,7 @@ def update_recipient(
     return recipient_el
 
 
-def remove_recipient(tree, recipient_id):
+def remove_recipient(tree: _Element, recipient_id: str) -> None:
     """
     Remove specified recipient.
     Raises LibraryError if recipient doesn't exist.
@@ -299,11 +315,10 @@ def remove_recipient(tree, recipient_id):
     tree -- cib etree node
     recipient_id -- id of recipient to be removed
     """
-    recipient = find_recipient(get_alerts(tree), recipient_id)
-    recipient.getparent().remove(recipient)
+    remove_one_element(find_recipient(get_alerts(tree), recipient_id))
 
 
-def get_all_recipients(alert):
+def get_all_recipients(alert: _Element) -> list[dict[str, Any]]:
     """
     Returns list of all recipient of specified alert. Format:
     [
@@ -334,7 +349,7 @@ def get_all_recipients(alert):
     ]
 
 
-def get_all_alerts(tree):
+def get_all_alerts(tree: _Element) -> list[dict[str, Any]]:
     """
     Returns list of all alerts specified in tree. Format:
     [

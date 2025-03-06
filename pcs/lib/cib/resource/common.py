@@ -66,8 +66,9 @@ def find_resources(
     resource_el_list = []
     for res_id in resource_ids:
         searcher = ElementSearcher(resource_tags, res_id, context_element)
-        if searcher.element_found():
-            resource_el_list.append(searcher.get_element())
+        found_element = searcher.get_element()
+        if found_element is not None:
+            resource_el_list.append(found_element)
         else:
             report_list.extend(searcher.get_errors())
     return resource_el_list, report_list
