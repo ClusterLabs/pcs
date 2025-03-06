@@ -148,7 +148,7 @@ def update_nvset(nvset_element, nvpair_dict, id_provider):
         set_nvpair_in_nvset(nvset_element, name, value, id_provider)
 
 
-def get_nvset(nvset):
+def get_nvset(nvset: _Element) -> list[dict[str, Optional[str]]]:
     """
     Returns nvset element as list of nvpairs with format:
     [
@@ -166,7 +166,7 @@ def get_nvset(nvset):
         {
             "id": nvpair.get("id"),
             "name": nvpair.get("name"),
-            "value": nvpair.get("value", ""),
+            "value": nvpair.get("value"),
         }
         for nvpair in nvset.findall("./nvpair")
     ]
