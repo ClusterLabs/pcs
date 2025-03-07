@@ -70,18 +70,11 @@ Source41: pyagentx-%{pyagentx_version}.tar.gz
 @gemsrc@
 
 # python for pcs
-%if 0%{?fedora} >= 30
 BuildRequires: python3 >= 3.9
 BuildRequires: python3-setuptools
-%endif
 
-%if 0%{?rhel} >= 8
-BuildRequires: platform-python
-BuildRequires: platform-python-setuptools
 # for bundled python dateutil
 BuildRequires: python3-setuptools_scm
-%endif
-
 BuildRequires: python3-devel
 # for tier0 tests
 BuildRequires: python3-cryptography
@@ -91,6 +84,12 @@ BuildRequires: python3-wheel
 BuildRequires: python3-lxml
 BuildRequires: python3-pycurl
 
+# for building pcs tarballs
+BuildRequires: make
+# printf from coreutils is used in makefile, head is used in spec
+BuildRequires: coreutils
+# find is used in Makefile and also somewhere else
+BuildRequires: findutils
 # gcc for compiling custom rubygems
 BuildRequires: gcc
 BuildRequires: gcc-c++
@@ -124,11 +123,14 @@ BuildRequires: mozilla-nss-tools
 %else
 BuildRequires: nss-tools
 %endif
+BuildRequires: pkgconf
 
 Requires: python3-cryptography
 Requires: python3-lxml
 Requires: python3-pycurl
 Requires: python3-pyparsing
+# entrypoints import parts of setuptools
+Requires: python3-setuptools
 # ruby and gems for pcsd
 Requires: ruby >= 2.5
 Requires: rubygems
