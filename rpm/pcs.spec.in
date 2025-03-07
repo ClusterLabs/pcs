@@ -44,8 +44,8 @@ Summary: Pacemaker/Corosync Configuration System
 
 %global pcs_bundled_dir @pcs_bundled_dir@
 
-%global required_pacemaker_version 2.1.0
-
+%global min_compatible_pacemaker_version 2.1.0
+%global first_incompatible_pacemaker_version 3.0.0
 
 # mangling shebang in /usr/lib/pcsd/vendor/bundle/ruby/gems/rack-2.0.5/test/cgi/test from /usr/bin/env ruby to #!/usr/bin/ruby
 #*** ERROR: ./usr/lib/pcsd/vendor/bundle/ruby/gems/rack-2.0.5/test/cgi/test.ru has shebang which doesn't start with '/' (../../bin/rackup)
@@ -101,20 +101,18 @@ BuildRequires: ruby-devel
 BuildRequires: rubygems
 # cluster stack packages for pkg-config
 BuildRequires: booth
-# not distributed in rhel 9
-%if 0%{?rhel} < 9
+# Buildroot only since RHEL 9
 BuildRequires: corosync-qdevice-devel
-%endif
 BuildRequires: corosynclib-devel >= 3.0
 BuildRequires: fence-agents-common
 %if 0%{?suse_version}
 %if 0%{?suse_version} > 1500
-BuildRequires: libpacemaker3-devel >= %{required_pacemaker_version}
+BuildRequires: libpacemaker3-devel >= %{min_compatible_pacemaker_version}, libpacemaker3-devel < %{first_incompatible_pacemaker_version}
 %else
-BuildRequires: libpacemaker-devel >= %{required_pacemaker_version}
+BuildRequires: libpacemaker-devel >= %{min_compatible_pacemaker_version}, libpacemaker-devel < %{first_incompatible_pacemaker_version}
 %endif
 %else
-BuildRequires: pacemaker-libs-devel >= %{required_pacemaker_version}
+BuildRequires: pacemaker-libs-devel >= %{min_compatible_pacemaker_version}, pacemaker-libs-devel < %{first_incompatible_pacemaker_version}
 %endif
 BuildRequires: resource-agents
 BuildRequires: sbd
@@ -137,7 +135,7 @@ Requires: rubygems
 # for killall
 Requires: psmisc
 # cluster stack and related packages
-Requires: pacemaker >= %{required_pacemaker_version}
+Requires: pacemaker >= %{min_compatible_pacemaker_version}, pacemaker < %{first_incompatible_pacemaker_version}
 Requires: corosync >= 3.0
 # pcs enables corosync encryption by default so we require libknet1-plugins-all
 Requires: libknet1-plugins-all
