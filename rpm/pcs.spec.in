@@ -11,9 +11,10 @@ Release: 99+git%{?numcomm:.%{numcomm}}%{?alphatag:.%{alphatag}}%{?dirty:.%{dirty
 # GPL-2.0-only: pcs
 # Apache-2.0: dataclasses, tornado
 # Apache-2.0 or BSD-3-Clause: dateutil
-# MIT: backports, childprocess, dacite, ethon, mustermann, nio4r, rack,
+# MIT: backports, childprocess, dacite, ethon, mustermann, rack,
 #      rack-protection, rack-test, sinatra, tilt
-# BSD-2-Clause or Ruby: ruby2_keywords
+# MIT AND (BSD-2-Clause OR GPL-2.0-or-later): nio4r
+# BSD-2-Clause or Ruby: base64, ruby2_keywords, strscan
 # BSD 3-Clause: puma
 # BSD-3-Clause and MIT: ffi
 # Some gems we bundle are just dependencies of gems that we use,
@@ -24,9 +25,16 @@ Release: 99+git%{?numcomm:.%{numcomm}}%{?alphatag:.%{alphatag}}%{?dirty:.%{dirty
 #   nio4r
 # sinatra:
 #   mustermann:
-#     ruby2_keywords
+#     ruby2_keywords (default gem - included with ruby 3.1+, part of ruby before)
+#   rack
+#   rack-protection
+#   rack-session
 #   tilt
-License: GPL-2.0-only AND Apache-2.0 AND MIT AND BSD-2-Clause AND BSD-3-Clause AND (Apache-2.0 OR BSD-3-CLause) AND (BSD-2-Clause OR Ruby)
+# rack-protection:
+#   base64 (default gem before ruby3.4)
+# rexml:
+#   strscan (default gem - included with ruby)
+License: GPL-2.0-only AND Apache-2.0 AND MIT AND BSD-2-Clause AND BSD-3-Clause AND (BSD-2-Clause OR GPL-2.0-or-later) AND (Apache-2.0 OR BSD-3-Clause) AND (BSD-2-Clause OR Ruby)
 URL: https://github.com/ClusterLabs/pcs
 Summary: Pacemaker/Corosync Configuration System
 
