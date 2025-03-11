@@ -134,7 +134,7 @@ class TestConfig < Test::Unit::TestCase
     assert_equal('error', $logger.log[0][0])
     assert_match(
       # the number is based on JSON gem version
-      /Unable to parse pcs_settings file: (\d+: )?unexpected token/,
+      /Unable to parse pcs_settings file: ((\d+: )?unexpected token|expected )/,
       $logger.log[0][1]
     )
     assert_equal_json(fixture_empty_config, cfg.text)
@@ -731,7 +731,7 @@ class TestCfgKnownHosts < Test::Unit::TestCase
     assert_equal('error', $logger.log[0][0])
     assert_match(
       # the number is based on JSON gem version
-      /Unable to parse known-hosts file: (\d+: )?unexpected token/,
+      /Unable to parse known-hosts file: ((\d+: )?unexpected token|expected )/,
       $logger.log[0][1]
     )
     assert_empty_data(cfg)
