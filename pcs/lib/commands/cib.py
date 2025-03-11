@@ -210,8 +210,9 @@ def _is_sbd_enabled(env: LibraryEnvironment) -> bool:
     node_list, get_nodes_report_list = get_existing_nodes_names(
         env.get_corosync_conf()
     )
+    env.report_processor.report_list(get_nodes_report_list)
     if not node_list:
-        get_nodes_report_list.append(
+        env.report_processor.report(
             reports.ReportItem.warning(
                 reports.messages.CorosyncConfigNoNodesDefined()
             )
