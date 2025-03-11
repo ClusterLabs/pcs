@@ -11,9 +11,10 @@ Release: 99+git%{?numcomm:.%{numcomm}}%{?alphatag:.%{alphatag}}%{?dirty:.%{dirty
 # GPL-2.0-only: pcs
 # Apache-2.0: dataclasses, tornado
 # Apache-2.0 or BSD-3-Clause: dateutil
-# MIT: backports, childprocess, dacite, ethon, mustermann, nio4r, rack,
+# MIT: backports, childprocess, dacite, ethon, mustermann, rack,
 #      rack-protection, rack-test, sinatra, tilt
-# BSD-2-Clause or Ruby: ruby2_keywords
+# MIT AND (BSD-2-Clause OR GPL-2.0-or-later): nio4r
+# BSD-2-Clause or Ruby: base64, ruby2_keywords, strscan
 # BSD 3-Clause: puma
 # BSD-3-Clause and MIT: ffi
 # Some gems we bundle are just dependencies of gems that we use,
@@ -24,9 +25,16 @@ Release: 99+git%{?numcomm:.%{numcomm}}%{?alphatag:.%{alphatag}}%{?dirty:.%{dirty
 #   nio4r
 # sinatra:
 #   mustermann:
-#     ruby2_keywords
+#     ruby2_keywords (default gem - included with ruby 3.1+, part of ruby before)
+#   rack
+#   rack-protection
+#   rack-session
 #   tilt
-License: GPL-2.0-only AND Apache-2.0 AND MIT AND BSD-2-Clause AND BSD-3-Clause AND (Apache-2.0 OR BSD-3-CLause) AND (BSD-2-Clause OR Ruby)
+# rack-protection:
+#   base64 (default gem before ruby3.4)
+# rexml:
+#   strscan (default gem - included with ruby)
+License: GPL-2.0-only AND Apache-2.0 AND MIT AND BSD-2-Clause AND BSD-3-Clause AND (BSD-2-Clause OR GPL-2.0-or-later) AND (Apache-2.0 OR BSD-3-Clause) AND (BSD-2-Clause OR Ruby)
 URL: https://github.com/ClusterLabs/pcs
 Summary: Pacemaker/Corosync Configuration System
 
@@ -36,8 +44,8 @@ Summary: Pacemaker/Corosync Configuration System
 
 %global pcs_bundled_dir @pcs_bundled_dir@
 
-%global required_pacemaker_version 2.1.0
-
+%global min_compatible_pacemaker_version 2.1.0
+%global first_incompatible_pacemaker_version 3.0.0
 
 # mangling shebang in /usr/lib/pcsd/vendor/bundle/ruby/gems/rack-2.0.5/test/cgi/test from /usr/bin/env ruby to #!/usr/bin/ruby
 #*** ERROR: ./usr/lib/pcsd/vendor/bundle/ruby/gems/rack-2.0.5/test/cgi/test.ru has shebang which doesn't start with '/' (../../bin/rackup)
@@ -62,18 +70,11 @@ Source41: pyagentx-%{pyagentx_version}.tar.gz
 @gemsrc@
 
 # python for pcs
-%if 0%{?fedora} >= 30
 BuildRequires: python3 >= 3.9
 BuildRequires: python3-setuptools
-%endif
 
-%if 0%{?rhel} >= 8
-BuildRequires: platform-python
-BuildRequires: platform-python-setuptools
 # for bundled python dateutil
 BuildRequires: python3-setuptools_scm
-%endif
-
 BuildRequires: python3-devel
 # for tier0 tests
 BuildRequires: python3-cryptography
@@ -83,6 +84,12 @@ BuildRequires: python3-wheel
 BuildRequires: python3-lxml
 BuildRequires: python3-pycurl
 
+# for building pcs tarballs
+BuildRequires: make
+# printf from coreutils is used in makefile, head is used in spec
+BuildRequires: coreutils
+# find is used in Makefile and also somewhere else
+BuildRequires: findutils
 # gcc for compiling custom rubygems
 BuildRequires: gcc
 BuildRequires: gcc-c++
@@ -93,20 +100,18 @@ BuildRequires: ruby-devel
 BuildRequires: rubygems
 # cluster stack packages for pkg-config
 BuildRequires: booth
-# not distributed in rhel 9
-%if 0%{?rhel} < 9
+# Buildroot only since RHEL 9
 BuildRequires: corosync-qdevice-devel
-%endif
 BuildRequires: corosynclib-devel >= 3.0
 BuildRequires: fence-agents-common
 %if 0%{?suse_version}
 %if 0%{?suse_version} > 1500
-BuildRequires: libpacemaker3-devel >= %{required_pacemaker_version}
+BuildRequires: libpacemaker3-devel >= %{min_compatible_pacemaker_version}, libpacemaker3-devel < %{first_incompatible_pacemaker_version}
 %else
-BuildRequires: libpacemaker-devel >= %{required_pacemaker_version}
+BuildRequires: libpacemaker-devel >= %{min_compatible_pacemaker_version}, libpacemaker-devel < %{first_incompatible_pacemaker_version}
 %endif
 %else
-BuildRequires: pacemaker-libs-devel >= %{required_pacemaker_version}
+BuildRequires: pacemaker-libs-devel >= %{min_compatible_pacemaker_version}, pacemaker-libs-devel < %{first_incompatible_pacemaker_version}
 %endif
 BuildRequires: resource-agents
 BuildRequires: sbd
@@ -118,18 +123,21 @@ BuildRequires: mozilla-nss-tools
 %else
 BuildRequires: nss-tools
 %endif
+BuildRequires: pkgconf
 
 Requires: python3-cryptography
 Requires: python3-lxml
 Requires: python3-pycurl
 Requires: python3-pyparsing
+# entrypoints import parts of setuptools
+Requires: python3-setuptools
 # ruby and gems for pcsd
 Requires: ruby >= 2.5
 Requires: rubygems
 # for killall
 Requires: psmisc
 # cluster stack and related packages
-Requires: pacemaker >= %{required_pacemaker_version}
+Requires: pacemaker >= %{min_compatible_pacemaker_version}, pacemaker < %{first_incompatible_pacemaker_version}
 Requires: corosync >= 3.0
 # pcs enables corosync encryption by default so we require libknet1-plugins-all
 Requires: libknet1-plugins-all
