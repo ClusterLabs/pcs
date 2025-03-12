@@ -9,7 +9,10 @@ from pcs.lib import (
     sbd,
     validate,
 )
-from pcs.lib.cib.resource.stonith import get_all_node_isolating_resources
+from pcs.lib.cib.resource.common import is_disabled as is_resource_disabled
+from pcs.lib.cib.resource.stonith import (
+    get_all_node_isolating_resources,
+)
 from pcs.lib.cib.tools import get_resources
 from pcs.lib.communication.nodes import GetOnlineTargets
 from pcs.lib.communication.sbd import (
@@ -341,7 +344,26 @@ def disable_sbd(
             )
         )
 
-    if not get_all_node_isolating_resources(get_resources(lib_env.get_cib())):
+    stonith_left = [
+        stonith_el
+        for stonith_el in get_all_node_isolating_resources(
+            get_resources(lib_env.get_cib())
+        )
+        # If any nvset disables the resource, even with a rule to limit it to
+        # specific time, than the resource wouldn't be able to fence all the
+        # time.
+        # However, pcs currently supports only one nvset for meta attributes,
+        # so we only check that to be consistent. Checking all nvsets could
+        # lead to a situation not resolvable by pcs, as pcs doesn't allow to
+        # change other nvsets than the first one.
+        # Technically, stonith resources can be disabled by their parent clones
+        # or groups. However, pcs doesn't allow putting stonith to groups and
+        # clones, so we don't check that.
+        # The check is not perfect, but it is a reasonable effort, considering
+        # that multiple nvsets are not supported for meta attributes by pcs now.
+        if not is_resource_disabled(stonith_el)
+    ]
+    if not stonith_left:
         report_list.append(
             reports.ReportItem(
                 reports.get_severity(

@@ -1383,17 +1383,18 @@ class StonithTest(TestCase, AssertPcsMixin):
         self.assert_pcs_fail(
             "stonith delete test_stonith".split(),
             (
-                "Error: Requested action removes all stonith means, resulting "
-                "in the cluster not being able to recover from certain failure "
-                "conditions, use --force to override\n" + ERRORS_HAVE_OCCURRED
+                "Error: Requested action lefts the cluster with no enabled "
+                "means to fence nodes, resulting in the cluster not being able "
+                "to recover from certain failure conditions, use --force to "
+                "override\n" + ERRORS_HAVE_OCCURRED
             ),
         )
         self.assert_pcs_success(
             "stonith delete test_stonith --force".split(),
             stderr_full=(
-                "Warning: Requested action removes all stonith means, "
-                "resulting in the cluster not being able to recover from "
-                "certain failure conditions\n"
+                "Warning: Requested action lefts the cluster with no enabled "
+                "means to fence nodes, resulting in the cluster not being able "
+                "to recover from certain failure conditions\n"
             ),
         )
 

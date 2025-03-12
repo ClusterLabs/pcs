@@ -17,6 +17,7 @@ from pcs.lib.cib.remove_elements import (
     stop_resources,
     warn_resource_unmanaged,
 )
+from pcs.lib.cib.resource.common import is_disabled as is_resource_disabled
 from pcs.lib.cib.resource.guest_node import (
     get_node_name_from_resource as get_node_name_from_guest_resource,
 )
@@ -221,6 +222,19 @@ def _ensure_some_stonith_remains(
         stonith_el
         for stonith_el in get_all_node_isolating_resources(resources_el)
         if stonith_el.attrib["id"] not in elements_to_remove.ids_to_remove
+        # If any nvset disables the resource, even with a rule to limit it to
+        # specific time, than the resource wouldn't be able to fence all the
+        # time.
+        # However, pcs currently supports only one nvset for meta attributes,
+        # so we only check that to be consistent. Checking all nvsets could
+        # lead to a situation not resolvable by pcs, as pcs doesn't allow to
+        # change other nvsets than the first one.
+        # Technically, stonith resources can be disabled by their parent clones
+        # or groups. However, pcs doesn't allow putting stonith to groups and
+        # clones, so we don't check that.
+        # The check is not perfect, but it is a reasonable effort, considering
+        # that multiple nvsets are not supported for meta attributes by pcs now.
+        and not is_resource_disabled(stonith_el)
     ]
     if stonith_left:
         return []

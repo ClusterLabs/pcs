@@ -8308,6 +8308,7 @@ class NoStonithMeansWouldBeLeft(ReportItemMessage):
     @property
     def message(self) -> str:
         return (
-            "Requested action removes all stonith means, resulting in the "
-            "cluster not being able to recover from certain failure conditions"
+            "Requested action lefts the cluster with no enabled means to fence "
+            "nodes, resulting in the cluster not being able to recover from "
+            "certain failure conditions"
         )

@@ -1238,6 +1238,32 @@ class StonithAndSbdCheck(StopResourcesWaitMixin, TestCase):
             ]
         )
 
+    def test_disabled_stonith_left_sbd_disabled(self):
+        resources = """
+            <resources>
+                <primitive id="S1" class="stonith" type="fence_any">
+                    <meta_attributes>
+                        <nvpair name="target-role" value="stopped" />
+                    </meta_attributes>
+                </primitive>
+                <primitive id="S2" class="stonith" type="fence_sbd" />
+            </resources>
+        """
+        self.config.runner.cib.load(resources=resources)
+        self.fixture_config_sbd_calls(sbd_enabled=False)
+
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.remove_elements(self.env_assist.get_env(), ["S2"])
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.NO_STONITH_MEANS_WOULD_BE_LEFT,
+                    force_code=reports.codes.FORCE,
+                )
+            ]
+        )
+
     def test_no_stonith_left_sbd_disabled(self):
         self.config.runner.cib.load(resources=self.resources)
         self.fixture_config_sbd_calls(sbd_enabled=False)
