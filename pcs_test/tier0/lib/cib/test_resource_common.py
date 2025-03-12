@@ -64,44 +64,6 @@ fixture_cib = etree.fromstring(
 )
 
 
-class AreMetaDisabled(TestCase):
-    def test_detect_is_disabled(self):
-        self.assertTrue(common.are_meta_disabled({"target-role": "Stopped"}))
-        self.assertTrue(common.are_meta_disabled({"target-role": "stopped"}))
-
-    def test_detect_is_not_disabled(self):
-        self.assertFalse(common.are_meta_disabled({}))
-        self.assertFalse(common.are_meta_disabled({"target-role": "any"}))
-
-
-class IsCloneDeactivatedByMeta(TestCase):
-    def assert_is_disabled(self, meta_attributes):
-        self.assertTrue(common.is_clone_deactivated_by_meta(meta_attributes))
-
-    def assert_is_not_disabled(self, meta_attributes):
-        self.assertFalse(common.is_clone_deactivated_by_meta(meta_attributes))
-
-    def test_detect_is_disabled(self):
-        self.assert_is_disabled({"target-role": "Stopped"})
-        self.assert_is_disabled({"target-role": "stopped"})
-        self.assert_is_disabled({"clone-max": "0"})
-        self.assert_is_disabled({"clone-max": "00"})
-        self.assert_is_disabled({"clone-max": 0})
-        self.assert_is_disabled({"clone-node-max": "0"})
-        self.assert_is_disabled({"clone-node-max": "abc1"})
-
-    def test_detect_is_not_disabled(self):
-        self.assert_is_not_disabled({})
-        self.assert_is_not_disabled({"target-role": "any"})
-        self.assert_is_not_disabled({"clone-max": "1"})
-        self.assert_is_not_disabled({"clone-max": "01"})
-        self.assert_is_not_disabled({"clone-max": 1})
-        self.assert_is_not_disabled({"clone-node-max": "1"})
-        self.assert_is_not_disabled({"clone-node-max": 1})
-        self.assert_is_not_disabled({"clone-node-max": "1abc"})
-        self.assert_is_not_disabled({"clone-node-max": "1.1"})
-
-
 class FindOneOrMoreResources(TestCase):
     def setUp(self):
         self.cib = etree.fromstring(
@@ -614,6 +576,50 @@ class Disable(TestCase):
                 </resource>
             """,
         )
+
+
+class IsDisabled(TestCase):
+    def test_success(self):
+        # Using non-existing tag "res" as the function doesn't care whether it's
+        # a primitive, group or clone
+        resources = etree.fromstring(
+            """
+            <resources>
+                <res id="R1" />
+                <res id="R2">
+                    <meta_attributes>
+                        <nvpair name="target-role" value="Stopped" />
+                    </meta_attributes>
+                </res>
+                <res id="R3">
+                    <meta_attributes>
+                        <nvpair name="target-role" value="stopped" />
+                    </meta_attributes>
+                </res>
+                <res id="R4">
+                    <meta_attributes>
+                        <nvpair name="target-role" value="something" />
+                    </meta_attributes>
+                </res>
+            </resources>
+            """
+        )
+        res_disabled = (
+            ("R1", False),
+            ("R2", True),
+            ("R3", True),
+            ("R4", False),
+        )
+        for res_name, expected_disabled in res_disabled:
+            with self.subTest(
+                resource=res_name, expected_disabled=expected_disabled
+            ):
+                self.assertEqual(
+                    common.is_disabled(
+                        resources.find(f".//*[@id='{res_name}']")
+                    ),
+                    expected_disabled,
+                )
 
 
 class FindResourcesToManage(TestCase):

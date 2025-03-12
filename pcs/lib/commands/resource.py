@@ -352,6 +352,24 @@ _find_bundle = partial(
 )
 
 
+def _are_meta_disabled(meta_attributes: Mapping[str, str]) -> bool:
+    return meta_attributes.get("target-role", "Started").lower() == "stopped"
+
+
+def _can_be_evaluated_as_positive_num(value: str) -> bool:
+    string_wo_leading_zeros = str(value).lstrip("0")
+    return bool(string_wo_leading_zeros) and (
+        string_wo_leading_zeros[0] in list("123456789")
+    )
+
+
+def _is_clone_deactivated_by_meta(meta_attributes: Mapping[str, str]) -> bool:
+    return _are_meta_disabled(meta_attributes) or any(
+        not _can_be_evaluated_as_positive_num(meta_attributes.get(key, "1"))
+        for key in ["clone-max", "clone-node-max"]
+    )
+
+
 def create(  # noqa: PLR0913
     env: LibraryEnvironment,
     resource_id: str,
@@ -427,8 +445,7 @@ def create(  # noqa: PLR0913
         wait,
         [resource_id],
         _ensure_disabled_after_wait(
-            ensure_disabled
-            or resource.common.are_meta_disabled(meta_attributes)
+            ensure_disabled or _are_meta_disabled(meta_attributes)
         ),
         required_cib_version=get_required_cib_version_for_primitive(
             operation_list
@@ -573,8 +590,8 @@ def create_as_clone(  # noqa: PLR0913
         [resource_id],
         _ensure_disabled_after_wait(
             ensure_disabled
-            or resource.common.are_meta_disabled(meta_attributes)
-            or resource.common.is_clone_deactivated_by_meta(clone_meta_options)
+            or _are_meta_disabled(meta_attributes)
+            or _is_clone_deactivated_by_meta(clone_meta_options)
         ),
         required_cib_version=get_required_cib_version_for_primitive(
             operation_list
@@ -697,8 +714,7 @@ def create_in_group(  # noqa: PLR0913
         wait,
         [resource_id],
         _ensure_disabled_after_wait(
-            ensure_disabled
-            or resource.common.are_meta_disabled(meta_attributes)
+            ensure_disabled or _are_meta_disabled(meta_attributes)
         ),
         required_cib_version=get_required_cib_version_for_primitive(
             operation_list
@@ -853,8 +869,7 @@ def create_into_bundle(  # noqa: PLR0913
         wait,
         [resource_id],
         _ensure_disabled_after_wait(
-            ensure_disabled
-            or resource.common.are_meta_disabled(meta_attributes)
+            ensure_disabled or _are_meta_disabled(meta_attributes)
         ),
         required_cib_version=required_cib_version,
     ) as resources_section:
@@ -955,8 +970,7 @@ def bundle_create(  # noqa: PLR0913
         wait,
         [bundle_id],
         _ensure_disabled_after_wait(
-            ensure_disabled
-            or resource.common.are_meta_disabled(meta_attributes)
+            ensure_disabled or _are_meta_disabled(meta_attributes)
         ),
         required_cib_version=(
             Version(3, 2, 0) if container_type == "podman" else None
@@ -1041,8 +1055,7 @@ def bundle_reset(  # noqa: PLR0913
         wait,
         [bundle_id],
         _ensure_disabled_after_wait(
-            ensure_disabled
-            or resource.common.are_meta_disabled(meta_attributes)
+            ensure_disabled or _are_meta_disabled(meta_attributes)
         ),
         # The only requirement for CIB schema version currently is:
         #   if container_type == "podman" then required_version = '3.2.0'

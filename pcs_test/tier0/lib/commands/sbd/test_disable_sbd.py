@@ -55,6 +55,31 @@ class DisableSbd(TestCase):
             ]
         )
 
+    def test_only_disabled_stonith_left(self):
+        cib_resources = """
+            <resources>
+                <primitive id="S-any" class="stonith" type="fence_any">
+                    <meta_attributes>
+                        <nvpair name="target-role" value="stopped" />
+                    </meta_attributes>
+                </primitive>
+            </resources>
+        """
+        self.config.corosync_conf.load(filename=self.corosync_conf_name)
+        self.config.runner.cib.load(resources=cib_resources)
+
+        self.env_assist.assert_raise_library_error(
+            lambda: disable_sbd(self.env_assist.get_env())
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.NO_STONITH_MEANS_WOULD_BE_LEFT,
+                    force_code=reports.codes.FORCE,
+                )
+            ]
+        )
+
     def test_no_stonith_left(self):
         self.config.corosync_conf.load(filename=self.corosync_conf_name)
         self.config.runner.cib.load()
