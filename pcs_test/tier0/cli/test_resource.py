@@ -8,6 +8,7 @@ from unittest import (
 from pcs import resource
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.reports.processor import ReportItemSeverity
+from pcs.common.reports.codes import FORCE
 
 from pcs_test.tools.assertions import (
     AssertPcsMixin,
@@ -654,7 +655,7 @@ class ResourceDisable(TestCase):
         resource.resource_disable_common(
             self.lib, ["R1"], dict_to_modifiers({})
         )
-        self.resource.disable.assert_called_once_with(["R1"], False)
+        self.resource.disable.assert_called_once_with(["R1"], False, set())
         self.report_processor.suppress_reports_of_severity.assert_not_called()
         self.resource.disable_safe.assert_not_called()
         self.resource.disable_simulate.assert_not_called()
@@ -663,7 +664,18 @@ class ResourceDisable(TestCase):
         resource.resource_disable_common(
             self.lib, ["R1", "R2"], dict_to_modifiers({})
         )
-        self.resource.disable.assert_called_once_with(["R1", "R2"], False)
+        self.resource.disable.assert_called_once_with(
+            ["R1", "R2"], False, set()
+        )
+        self.report_processor.suppress_reports_of_severity.assert_not_called()
+        self.resource.disable_safe.assert_not_called()
+        self.resource.disable_simulate.assert_not_called()
+
+    def test_force(self):
+        resource.resource_disable_common(
+            self.lib, ["R1"], dict_to_modifiers(dict(force=True))
+        )
+        self.resource.disable.assert_called_once_with(["R1"], False, {FORCE})
         self.report_processor.suppress_reports_of_severity.assert_not_called()
         self.resource.disable_safe.assert_not_called()
         self.resource.disable_simulate.assert_not_called()
@@ -849,7 +861,7 @@ class ResourceDisable(TestCase):
             self.lib, ["R1", "R2"], dict_to_modifiers(dict(wait="10"))
         )
         self.report_processor.suppress_reports_of_severity.assert_not_called()
-        self.resource.disable.assert_called_once_with(["R1", "R2"], "10")
+        self.resource.disable.assert_called_once_with(["R1", "R2"], "10", set())
         self.resource.disable_safe.assert_not_called()
         self.resource.disable_simulate.assert_not_called()
 
@@ -948,7 +960,9 @@ class ResourceSafeDisable(TestCase):
         resource.resource_safe_disable_cmd(
             self.lib, ["R1", "R2"], dict_to_modifiers({"force": True})
         )
-        self.resource.disable.assert_called_once_with(["R1", "R2"], False)
+        self.resource.disable.assert_called_once_with(
+            ["R1", "R2"], False, set()
+        )
         self.resource.disable_safe.assert_not_called()
         self.resource.disable_simulate.assert_not_called()
         mock_warn.assert_called_once_with(self.force_warning)
@@ -960,7 +974,7 @@ class ResourceSafeDisable(TestCase):
             ["R1", "R2"],
             dict_to_modifiers({"force": True, "wait": "10"}),
         )
-        self.resource.disable.assert_called_once_with(["R1", "R2"], "10")
+        self.resource.disable.assert_called_once_with(["R1", "R2"], "10", set())
         self.resource.disable_safe.assert_not_called()
         self.resource.disable_simulate.assert_not_called()
         mock_warn.assert_called_once_with(self.force_warning)

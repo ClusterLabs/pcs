@@ -9,10 +9,6 @@ from pcs.lib import (
     sbd,
     validate,
 )
-from pcs.lib.cib.resource.common import is_disabled as is_resource_disabled
-from pcs.lib.cib.resource.stonith import (
-    get_all_node_isolating_resources,
-)
 from pcs.lib.cib.tools import get_resources
 from pcs.lib.communication.nodes import GetOnlineTargets
 from pcs.lib.communication.sbd import (
@@ -30,6 +26,7 @@ from pcs.lib.communication.tools import run_and_raise
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 from pcs.lib.node import get_existing_nodes_names
+from pcs.lib.sbd_stonith import ensure_some_stonith_remains
 from pcs.lib.tools import environment_file_to_dict
 
 _UNSUPPORTED_SBD_OPTION_LIST = [
@@ -341,35 +338,15 @@ def disable_sbd(
                 reports.messages.CorosyncConfigNoNodesDefined()
             )
         )
-
-    stonith_left = [
-        stonith_el
-        for stonith_el in get_all_node_isolating_resources(
-            get_resources(lib_env.get_cib())
+    report_list.extend(
+        ensure_some_stonith_remains(
+            lib_env,
+            get_resources(lib_env.get_cib()),
+            stonith_resources_to_ignore=[],
+            sbd_being_disabled=True,
+            force_flags=force_flags,
         )
-        # If any nvset disables the resource, even with a rule to limit it to
-        # specific time, than the resource wouldn't be able to fence all the
-        # time.
-        # However, pcs currently supports only one nvset for meta attributes,
-        # so we only check that to be consistent. Checking all nvsets could
-        # lead to a situation not resolvable by pcs, as pcs doesn't allow to
-        # change other nvsets than the first one.
-        # Technically, stonith resources can be disabled by their parent clones
-        # or groups. However, pcs doesn't allow putting stonith to groups and
-        # clones, so we don't check that.
-        # The check is not perfect, but it is a reasonable effort, considering
-        # that multiple nvsets are not supported for meta attributes by pcs now.
-        if not is_resource_disabled(stonith_el)
-    ]
-    if not stonith_left:
-        report_list.append(
-            reports.ReportItem(
-                reports.get_severity(
-                    reports.codes.FORCE, reports.codes.FORCE in force_flags
-                ),
-                reports.messages.NoStonithMeansWouldBeLeft(),
-            )
-        )
+    )
 
     if lib_env.report_processor.report_list(report_list).has_errors:
         raise LibraryError()

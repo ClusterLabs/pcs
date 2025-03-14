@@ -92,6 +92,7 @@ from pcs.lib.resource_agent import (
     resource_agent_error_to_report_item,
     split_resource_agent_name,
 )
+from pcs.lib.sbd_stonith import ensure_some_stonith_remains
 from pcs.lib.tools import get_tmp_cib
 from pcs.lib.validate import ValueTimeInterval
 from pcs.lib.xml_tools import (
@@ -1183,27 +1184,6 @@ def bundle_update(  # noqa: PLR0913
         )
 
 
-def _disable_validate_and_edit_cib(
-    env: LibraryEnvironment,
-    cib: _Element,
-    resource_or_tag_ids: StringCollection,
-) -> List[_Element]:
-    resource_el_list, report_list = _find_resources_expand_tags(
-        cib, resource_or_tag_ids
-    )
-    env.report_processor.report_list(report_list)
-    if env.report_processor.report_list(
-        _resource_list_enable_disable(
-            resource_el_list,
-            resource.common.disable,
-            IdProvider(cib),
-            env.get_cluster_state(),
-        )
-    ).has_errors:
-        raise LibraryError()
-    return resource_el_list
-
-
 def _disable_get_element_ids(
     disabled_resource_el_list: Iterable[_Element],
 ) -> Tuple[Set[str], Set[str]]:
@@ -1272,6 +1252,7 @@ def disable(
     env: LibraryEnvironment,
     resource_or_tag_ids: StringCollection,
     wait: WaitType = False,
+    force_flags: reports.types.ForceFlags = (),
 ):
     """
     Disallow specified resources to be started by the cluster
@@ -1290,7 +1271,42 @@ def disable(
         )
 
     wait_timeout = env.ensure_wait_satisfiable(wait)
-    _disable_validate_and_edit_cib(env, env.get_cib(), resource_or_tag_ids)
+    cib = env.get_cib()
+    resource_el_list, report_list = _find_resources_expand_tags(
+        cib, resource_or_tag_ids
+    )
+    env.report_processor.report_list(report_list)
+
+    if any(
+        resource.stonith.is_stonith(resource_el)
+        for resource_el in resource_el_list
+    ):
+        env.report_processor.report_list(
+            ensure_some_stonith_remains(
+                env,
+                get_resources(cib),
+                [str(res.attrib["id"]) for res in resource_el_list],
+                sbd_being_disabled=False,
+                force_flags=force_flags,
+            )
+        )
+
+    # Validation done, do the disabling. Do not mind errors that happened so
+    # far. The disabling may report errors on its own and we want the user to
+    # see those. In case of errors, we exit before pushing CIB, not making any
+    # change to cluster configuration.
+    env.report_processor.report_list(
+        _resource_list_enable_disable(
+            resource_el_list,
+            resource.common.disable,
+            IdProvider(cib),
+            env.get_cluster_state(),
+        )
+    )
+
+    if env.report_processor.has_errors:
+        raise LibraryError()
+
     _push_cib_wait(
         env,
         wait_timeout,
@@ -1332,9 +1348,11 @@ def disable_safe(
 
     wait_timeout = env.ensure_wait_satisfiable(wait)
     cib = env.get_cib()
-    resource_el_list = _disable_validate_and_edit_cib(
-        env, cib, resource_or_tag_ids
+    resource_el_list, report_list = _find_resources_expand_tags(
+        cib, resource_or_tag_ids
     )
+    env.report_processor.report_list(report_list)
+
     if any(
         resource.stonith.is_stonith(resource_el)
         for resource_el in resource_el_list
@@ -1346,6 +1364,22 @@ def disable_safe(
                 )
             )
         )
+
+    # Validation done, do the disabling. Do not mind errors that happened so
+    # far. The disabling may report errors on its own and we want the user to
+    # see those. In case of errors, we exit before pushing CIB, not making any
+    # change to cluster configuration.
+    env.report_processor.report_list(
+        _resource_list_enable_disable(
+            resource_el_list,
+            resource.common.disable,
+            IdProvider(cib),
+            env.get_cluster_state(),
+        )
+    )
+    if env.report_processor.has_errors:
+        raise LibraryError()
+
     disabled_resource_id_set, inner_resource_id_set = _disable_get_element_ids(
         resource_el_list
     )
@@ -1403,9 +1437,27 @@ def disable_simulate(
         )
 
     cib = env.get_cib()
-    resource_el_list = _disable_validate_and_edit_cib(
-        env, cib, resource_or_tag_ids
+    resource_el_list, report_list = _find_resources_expand_tags(
+        cib, resource_or_tag_ids
     )
+    env.report_processor.report_list(report_list)
+
+    # Validation done, do the disabling. Do not mind errors that happened so
+    # far. The disabling may report errors on its own and we want the user to
+    # see those. In case of errors, we exit before pushing CIB, not making any
+    # change to cluster configuration.
+    env.report_processor.report_list(
+        _resource_list_enable_disable(
+            resource_el_list,
+            resource.common.disable,
+            IdProvider(cib),
+            env.get_cluster_state(),
+        )
+    )
+
+    if env.report_processor.has_errors:
+        raise LibraryError()
+
     disabled_resource_id_set, inner_resource_id_set = _disable_get_element_ids(
         resource_el_list
     )
@@ -1472,11 +1524,14 @@ def enable(
 
 
 def _resource_list_enable_disable(
-    resource_el_list, func, id_provider, cluster_state
-):
+    resource_el_list: Iterable[_Element],
+    func: Callable[[_Element, IdProvider], None],
+    id_provider: IdProvider,
+    cluster_state,
+) -> ReportItemList:
     report_list = []
     for resource_el in resource_el_list:
-        res_id = resource_el.attrib["id"]
+        res_id = str(resource_el.attrib["id"])
         try:
             if not is_resource_managed(cluster_state, res_id):
                 report_list.append(

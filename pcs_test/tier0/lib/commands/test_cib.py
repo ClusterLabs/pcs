@@ -1054,7 +1054,7 @@ class StonithAndSbdCheck(StopResourcesWaitMixin, TestCase):
             ]
         )
 
-    def fixture_remove_s1_s2(self):
+    def fixture_remove_s1_s2(self, s2_type="fence_any"):
         self.fixture_stop_resources_wait_calls(
             self.config.calls.get("runner.cib.load").stdout,
             initial_state_modifiers={
@@ -1066,7 +1066,7 @@ class StonithAndSbdCheck(StopResourcesWaitMixin, TestCase):
                 """
             },
             after_disable_cib_modifiers={
-                "resources": """
+                "resources": f"""
                     <resources>
                         <primitive id="S1" class="stonith" type="fence_any">
                             <meta_attributes id="S1-meta_attributes">
@@ -1075,7 +1075,7 @@ class StonithAndSbdCheck(StopResourcesWaitMixin, TestCase):
                                 />
                             </meta_attributes>
                         </primitive>
-                        <primitive id="S2" class="stonith" type="fence_any">
+                        <primitive id="S2" class="stonith" type="{s2_type}">
                             <meta_attributes id="S2-meta_attributes">
                                 <nvpair id="S2-meta_attributes-target-role"
                                     name="target-role" value="Stopped"
@@ -1204,7 +1204,7 @@ class StonithAndSbdCheck(StopResourcesWaitMixin, TestCase):
                         <nvpair name="target-role" value="stopped" />
                     </meta_attributes>
                 </primitive>
-                <primitive id="S2" class="stonith" type="fence_sbd" />
+                <primitive id="S2" class="stonith" type="fence_any" />
             </resources>
         """
         self.config.runner.cib.load(resources=resources)
@@ -1219,6 +1219,35 @@ class StonithAndSbdCheck(StopResourcesWaitMixin, TestCase):
                     reports.codes.NO_STONITH_MEANS_WOULD_BE_LEFT,
                     force_code=reports.codes.FORCE,
                 )
+            ]
+        )
+
+    def test_stonith_was_already_noneffective_and_sbd_disabled(self):
+        resources = """
+            <resources>
+                <primitive id="S1" class="stonith" type="fence_any">
+                    <meta_attributes id="S1-meta_attributes">
+                        <nvpair id="S1-meta_attributes-target-role" 
+                            name="target-role" value="Stopped"
+                        />
+                    </meta_attributes>
+                </primitive>
+                <primitive id="S2" class="stonith" type="fence_sbd" />
+            </resources>
+        """
+        self.fixture_init_tmp_file_mocker()
+        self.config.runner.cib.load(resources=resources)
+        self.fixture_config_sbd_calls(sbd_enabled=False)
+        self.fixture_remove_s1_s2(s2_type="fence_sbd")
+
+        lib.remove_elements(self.env_assist.get_env(), ["S1", "S2"])
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    reports.codes.STOPPING_RESOURCES_BEFORE_DELETING,
+                    resource_id_list=["S1", "S2"],
+                ),
+                fixture.info(reports.codes.WAIT_FOR_IDLE_STARTED, timeout=0),
             ]
         )
 
@@ -1293,11 +1322,11 @@ class StonithAndSbdCheck(StopResourcesWaitMixin, TestCase):
             ]
         )
 
-    def test_no_stonith_left_sbd_partially_disabled(self):
-        self.config.runner.cib.load(resources=self.resources)
-
+    def test_no_stonith_left_sbd_partially_enabled(self):
         node_name_list = ["node-1", "node-2"]
         self.config.env.set_known_nodes(node_name_list)
+        self.fixture_init_tmp_file_mocker()
+        self.config.runner.cib.load(resources=self.resources)
         self.config.corosync_conf.load(node_name_list=node_name_list)
         self.config.http.sbd.check_sbd(
             communication_list=[
@@ -1323,16 +1352,16 @@ class StonithAndSbdCheck(StopResourcesWaitMixin, TestCase):
                 ),
             ]
         )
+        self.fixture_remove_s1_s2()
 
-        self.env_assist.assert_raise_library_error(
-            lambda: lib.remove_elements(self.env_assist.get_env(), ["S1", "S2"])
-        )
+        lib.remove_elements(self.env_assist.get_env(), ["S1", "S2"])
         self.env_assist.assert_reports(
             [
-                fixture.error(
-                    reports.codes.NO_STONITH_MEANS_WOULD_BE_LEFT,
-                    force_code=reports.codes.FORCE,
-                )
+                fixture.info(
+                    reports.codes.STOPPING_RESOURCES_BEFORE_DELETING,
+                    resource_id_list=["S1", "S2"],
+                ),
+                fixture.info(reports.codes.WAIT_FOR_IDLE_STARTED, timeout=0),
             ]
         )
 

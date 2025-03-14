@@ -877,6 +877,7 @@ def disable_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * -f - CIB file
+      * --force
       * --wait
     """
     if not argv:
@@ -884,7 +885,9 @@ def disable_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
             "You must specify stonith resource(s) to disable"
         )
     _check_is_stonith(lib, argv, "pcs resource disable")
-    modifiers.ensure_only_supported("-f", "--wait", hint_syntax_changed="0.12")
+    modifiers.ensure_only_supported(
+        "-f", "--force", "--wait", hint_syntax_changed="0.12"
+    )
     resource.resource_disable_common(lib, argv, modifiers)
 
 
