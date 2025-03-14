@@ -1016,6 +1016,7 @@ def disable_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
       * --safe - only disable if no other resource gets stopped or demoted
       * --simulate - do not push the CIB, print its effects
       * --no-strict - allow disable if other resource is affected
+      * --force
       * --wait
     """
     if not argv:

@@ -1,3 +1,4 @@
+import json
 from unittest import TestCase
 
 from pcs.common import reports
@@ -19,6 +20,30 @@ class DisableSbd(TestCase):
                 <primitive id="S-any" class="stonith" type="fence_any" />
             </resources>
         """
+
+    def fixture_config_sbd_status_calls(self, sbd_enabled):
+        self.config.corosync_conf.load(
+            filename=self.corosync_conf_name,
+            name="corosync_conf.load.for_sbd_status",
+        )
+        self.config.http.sbd.check_sbd(
+            communication_list=[
+                dict(
+                    label=node,
+                    param_list=[("watchdog", ""), ("device_list", "[]")],
+                    output=json.dumps(
+                        dict(
+                            sbd=dict(
+                                installed=True,
+                                enabled=sbd_enabled,
+                                running=sbd_enabled,
+                            )
+                        )
+                    ),
+                )
+                for node in self.node_list
+            ]
+        )
 
     def test_success(self):
         self.config.corosync_conf.load(filename=self.corosync_conf_name)
@@ -67,6 +92,7 @@ class DisableSbd(TestCase):
         """
         self.config.corosync_conf.load(filename=self.corosync_conf_name)
         self.config.runner.cib.load(resources=cib_resources)
+        self.fixture_config_sbd_status_calls(True)
 
         self.env_assist.assert_raise_library_error(
             lambda: disable_sbd(self.env_assist.get_env())
@@ -83,6 +109,7 @@ class DisableSbd(TestCase):
     def test_no_stonith_left(self):
         self.config.corosync_conf.load(filename=self.corosync_conf_name)
         self.config.runner.cib.load()
+        self.fixture_config_sbd_status_calls(True)
 
         self.env_assist.assert_raise_library_error(
             lambda: disable_sbd(self.env_assist.get_env())
@@ -99,6 +126,7 @@ class DisableSbd(TestCase):
     def test_no_stonith_left_forced(self):
         self.config.corosync_conf.load(filename=self.corosync_conf_name)
         self.config.runner.cib.load()
+        self.fixture_config_sbd_status_calls(True)
         self.config.http.host.check_auth(node_labels=self.node_list)
         self.config.http.pcmk.set_stonith_watchdog_timeout_to_zero(
             communication_list=[[dict(label=node)] for node in self.node_list],
@@ -113,6 +141,43 @@ class DisableSbd(TestCase):
                 fixture.warn(
                     reports.codes.NO_STONITH_MEANS_WOULD_BE_LEFT,
                 ),
+                fixture.info(
+                    reports.codes.SERVICE_ACTION_STARTED,
+                    action=reports.const.SERVICE_ACTION_DISABLE,
+                    service="sbd",
+                    instance="",
+                ),
+            ]
+            + [
+                fixture.info(
+                    reports.codes.SERVICE_ACTION_SUCCEEDED,
+                    action=reports.const.SERVICE_ACTION_DISABLE,
+                    service="sbd",
+                    node=node,
+                    instance="",
+                )
+                for node in self.node_list
+            ]
+            + [
+                fixture.warn(
+                    report_codes.CLUSTER_RESTART_REQUIRED_TO_APPLY_CHANGES
+                )
+            ]
+        )
+
+    def test_no_stonith_left_sbd_was_disabled(self):
+        self.config.corosync_conf.load(filename=self.corosync_conf_name)
+        self.config.runner.cib.load()
+        self.fixture_config_sbd_status_calls(False)
+        self.config.http.host.check_auth(node_labels=self.node_list)
+        self.config.http.pcmk.set_stonith_watchdog_timeout_to_zero(
+            communication_list=[[dict(label=node)] for node in self.node_list],
+        )
+        self.config.http.sbd.disable_sbd(node_labels=self.node_list)
+
+        disable_sbd(self.env_assist.get_env())
+        self.env_assist.assert_reports(
+            [
                 fixture.info(
                     reports.codes.SERVICE_ACTION_STARTED,
                     action=reports.const.SERVICE_ACTION_DISABLE,

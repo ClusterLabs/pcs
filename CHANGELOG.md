@@ -8,8 +8,8 @@
 - Command `pcs stonith sbd watchdog list` now prints watchdogs' identity and
   driver ([RHEL-76177])
 - Command `pcs cluster rename` for changing cluster name ([RHEL-76055])
-- Removing stonith devices or disabling SBD fails if the cluster would be left
-  with disabled SBD and no stonith devices ([RHEL-76170])
+- Removing or disabling stonith devices or disabling SBD fails if the cluster
+  would be left with disabled SBD and no stonith devices ([RHEL-76170])
 
 ### Fixed
 - Command `pcs resource restart` allows restarting bundle instances (broken

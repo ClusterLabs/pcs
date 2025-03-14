@@ -2331,6 +2331,7 @@ def resource_disable_common(
     """
     Commandline options:
       * -f - CIB file
+      * --force - allow to disable the last stonith resource in the cluster
       * --brief - show brief output of --simulate
       * --safe - only disable if no other resource gets stopped or demoted
       * --simulate - do not push the CIB, print its effects
@@ -2338,7 +2339,13 @@ def resource_disable_common(
       * --wait
     """
     modifiers.ensure_only_supported(
-        "-f", "--brief", "--safe", "--simulate", "--no-strict", "--wait"
+        "-f",
+        "--force",
+        "--brief",
+        "--safe",
+        "--simulate",
+        "--no-strict",
+        "--wait",
     )
     modifiers.ensure_not_mutually_exclusive("-f", "--simulate", "--wait")
     modifiers.ensure_not_incompatible("--simulate", {"-f", "--safe", "--wait"})
@@ -2378,7 +2385,10 @@ def resource_disable_common(
         raise CmdLineInputError(
             "'--brief' cannot be used without '--simulate' or '--safe'"
         )
-    lib.resource.disable(argv, modifiers.get("--wait"))
+    force_flags = set()
+    if modifiers.get("--force"):
+        force_flags.add(reports.codes.FORCE)
+    lib.resource.disable(argv, modifiers.get("--wait"), force_flags)
 
 
 def resource_safe_disable_cmd(
