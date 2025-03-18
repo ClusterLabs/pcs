@@ -1,0 +1,222 @@
+# https://tmt.readthedocs.io/en/stable/spec/plans.html
+# https://tmt.readthedocs.io/en/stable/spec/plans.html#discover
+discover:
+  how: fmf
+
+# https://tmt.readthedocs.io/en/stable/spec/plans.html#prepare
+prepare:
+  - name: Disable testing-farm RHEL repos that may contain packages of
+          different versions than we want
+    when: distro == rhel
+    how: shell
+    script:
+      - |
+        if dnf repolist --enabled | grep testing-farm-tag-repository; then
+          dnf config-manager --set-disabled testing-farm-tag-repository
+        fi
+      - |
+        if dnf repolist --enabled | grep rhel-buildroot; then
+          dnf config-manager --set-disabled rhel-buildroot
+        fi
+
+  - name: Enable testing-farm HighAvailability RHEL repo
+    when: distro == rhel
+    how: shell
+    script:
+      - |
+        if dnf repolist --disabled | grep rhel-HighAvailability; then
+          dnf config-manager --set-enabled rhel-HighAvailability
+        fi
+
+  - name: Install common packages required for pcs
+    how: install
+    package:
+      - autoconf
+      - automake
+      - bash
+      - bzip2
+      - coreutils
+      - curl
+      - diffutils
+      - findutils
+      - gawk
+      - git
+      - make
+      - nss-tools
+      - pkgconf-pkg-config
+      - psmisc
+      - sed
+      - systemd
+      - tar
+      - time
+      - wget
+      - xz
+
+  - name: Install minimum python packages required for pcs ./configure
+    how: install
+    package:
+      - python3
+      - python3-pip
+      - python3-setuptools
+      - python3-wheel
+
+  - name: Install minimum ruby packages required for pcs ./configure
+    how: install
+    package:
+      - ruby
+      - ruby-default-gems
+      - ruby-devel
+      - rubygem-bundler
+      - rubygem-io-console
+      - rubygem-json
+      - rubygem-power_assert
+      - rubygem-rexml
+      - rubygem-test-unit
+      - rubygems
+
+# https://tmt.readthedocs.io/en/stable/spec/plans.html#execute
+execute:
+  how: tmt
+
+# https://tmt.readthedocs.io/en/stable/spec/plans.html#finish
+finish:
+  - name: Gather some system info
+    how: shell
+    script:
+      - mkdir -p $TMT_PLAN_DATA/misc
+      - cp -r /etc/yum.repos.d/ $TMT_PLAN_DATA/misc/repo_files
+      - rpm -qa booth* corosync* fence-agents* pacemaker* resource-agents* sbd
+        | tee $TMT_PLAN_DATA/misc/cluster_packages.log
+      - dnf repolist --all | tee $TMT_PLAN_DATA/misc/repolist.log
+      - dnf list --installed | tee $TMT_PLAN_DATA/misc/installed.log
+      - rpm -qa | sort | tee $TMT_PLAN_DATA/misc/packages.log
+      - lscpu | tee $TMT_PLAN_DATA/misc/lscpu.log
+      - free -h | tee $TMT_PLAN_DATA/misc/free.log
+      - "ausearch -m AVC,USER_AVC,SELINUX_ERR,USER_SELINUX_ERR -ts boot || : | tee $TMT_PLAN_DATA/misc/ausearch.log"
+      - sysctl crypto.fips_enabled | tee $TMT_PLAN_DATA/misc/fips_status.log
+
+/linters:
+  summary: Run linters on pcs source code
+  discover+:
+    test:
+      - autotools_linters
+      - ruff_lint
+      - ruff_format_check
+      - mypy
+      - typos
+  prepare+:
+    - name: Install pcs python development requirements
+      how: shell
+      script:
+        - python3 -m pip install --upgrade -r dev_requirements.txt
+
+    - name: Install typos to /usr/bin/local
+      how: shell
+      script:
+        - mkdir -p /usr/local/bin /usr/local/lib/typos
+        - curl -L -o typos.tar.gz https://github.com/crate-ci/typos/releases/download/v1.7.3/typos-v1.7.3-x86_64-unknown-linux-musl.tar.gz
+        - tar -C /usr/local/lib/typos -zxf typos.tar.gz
+        - rm -rf typos.tar.gz
+        - ln -fs /usr/local/lib/typos/typos /usr/local/bin/typos
+
+/dev_tests:
+  prepare+:
+    - name: Install common python packages required for pcs
+      how: install
+      package:
+        - python3
+        - python3-cryptography
+        - python3-dateutil
+        - python3-devel
+        - python3-lxml
+        - python3-pip
+        - python3-pyparsing
+        - python3-tornado
+        - python3-wheel
+    - name: Install python3-pycurl system package
+      when: distro == fedora, rhel-9
+      how: install
+      package:
+        - python3-pycurl
+    - name: Distro is defined
+      when: distro is defined
+      how: shell
+      script: echo "Distro is defined"
+    - name: Distro is NOT defined
+      when: distro is not defined
+      how: shell
+      script: echo "Distro is NOT defined"
+    - name: Install dependencies for bundled python3-pycurl
+      when: distro >= rhel-10
+      how: install
+      package:
+        - libcurl
+        - libcurl-devel
+        - openssl-devel
+    - name: Install system rubygem packages
+      when: distro == fedora
+      how: install
+      package:
+        - rubygem-backports
+        - rubygem-childprocess
+        - rubygem-ethon
+        - rubygem-ffi
+        - rubygem-mustermann
+        - rubygem-nio4r
+        - rubygem-puma
+        - rubygem-rack-protection
+        - rubygem-rack-test
+        - rubygem-sinatra
+        - rubygem-tilt
+    - name: Install dependencies for bundled rubygem-ffi
+      when: distro == rhel-9, rhel-10
+      how: install
+      package:
+        - gcc
+        - libffi-devel
+
+  /tier0:
+    summary: Run python and ruby tier0 tests
+    discover+:
+      test:
+        - autotools_tier0
+        - python_tier0_tests
+        - ruby_tests
+    prepare+:
+      - name: Make sure that tier0 tests run without cluster packages installed
+        how: shell
+        script:
+          - dnf remove -y corosync* pacemaker* fence-agents* resource-agents* booth* sbd
+
+  /tier1:
+    summary: make rpm
+    discover+:
+      test:
+        - autotools_archive
+        - distcheck
+        - rpm_build
+        - autotools_tier1
+        - python_tier1_tests
+        - python_smoke_tests
+    provision+:
+      # https://tmt.readthedocs.io/en/stable/spec/hardware.html
+      hardware:
+        cpu:
+          processors: ">= 6"
+    prepare+:
+      - name: Install common packages required for rpm build
+        how: install
+        package:
+          - redhat-rpm-config
+          - rpm-build
+          - rpmdevtools
+      - name: Install common packages required for pcs smoke test
+        how: install
+        package:
+          - procps-ng
+          - shadow-utils
+          - util-linux
+      - name: Install common packages required for tier1 pcs tests
+        how: install
+        package:
+          - booth-site

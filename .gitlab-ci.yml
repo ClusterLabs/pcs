@@ -1,147 +1,65 @@
-default:
-  before_script:
-    - git remote add upstream https://github.com/ClusterLabs/pcs.git
-    - git fetch upstream
+---
+variables:
+  # override these by CI variables
+  # set to empty in order to disable FIPS
+  ENABLE_FIPS: '--insert --order 0 --how feature --fips enabled'
+  TFCLI_TMT_PREPARE: $ENABLE_FIPS
+  # e.g. 'name:.*linters\|.*tier0'
+  TFCLI_PLAN_FILTER:
+  # e.g. to skip python_tier1_tests: 'name:(?!.*python_tier1_tests).*'
+  TFCLI_TEST_FILTER:
+
 
 .parallel:
   parallel:
     matrix:
       - BASE_IMAGE_NAME: ["PcsRhel9CurrentRelease", "PcsRhel9Next"]
+        OS_TAG: "shared-podman"
+  tags:
+    - ${OS_TAG}
 
 stages:
   - stage1
-  - stage2
 
-rpm_build:
+.download_artifacts_from_tf: &download_artifacts_from_tf
+  - UUID_REGEX="[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}"
+  - REQUEST_ID=$(sed -n -E "s/.*($UUID_REGEX).*/\1/p" output.txt | head -n 1)
+  - echo "Testing Farm request id is $REQUEST_ID"
+  - EXIT_CODE=0
+  - testing-farm watch --id $REQUEST_ID || EXIT_CODE=$?
+  - >
+    curl --insecure --location --remote-name \
+      "https://artifacts.osci.redhat.com/testing-farm/$REQUEST_ID/results.xml"
+  - >
+    for ARTIFACT_DIR in rpms dist; do
+      for ARTIFACT_URL in $(
+        xmllint \
+          --xpath "//log[starts-with(@name, 'data/$ARTIFACT_DIR')]/@href" \
+          results.xml \
+        | sed "s/.*=\"\(.*\)\"/\1/"
+      ); do
+        echo $ARTIFACT_URL >&2;
+        curl --insecure --remote-name --create-dirs \
+          --output-dir "$ARTIFACT_DIR" "$ARTIFACT_URL";
+      done
+    done
+  - exit $EXIT_CODE
+
+testing_farm_tmt_tests:
   extends: .parallel
   stage: stage1
+  image: $SHARED_RUNNER_CONTAINER_IMAGE
   script:
-    - ./autogen.sh
-    - ./configure --enable-local-build
-    - make CI_BRANCH=${BASE_IMAGE_NAME} rpm/pcs.spec
-    - dnf builddep -y rpm/pcs.spec
-    - make CI_BRANCH=${BASE_IMAGE_NAME} rpm
-    - mkdir -p rpms && cp -v $(find rpm  -type f -name '*.rpm' -not -name '*.src.rpm') rpms
-  artifacts:
-    expire_in: 1 week
-    paths:
-      - rpms
-
-distcheck:
-  extends: .parallel
-  stage: stage1
-  script:
-    - "pip3 install
-        dacite
-        tornado
-        pyagentx
-      "
-    - ./autogen.sh
-    - ./configure --enable-local-build
-    - make distcheck DISTCHECK_CONFIGURE_FLAGS='--enable-local-build'
-    - rename --verbose .tar. ".${BASE_IMAGE_NAME}.tar." pcs*.tar.*
-    - mkdir -p dist && cp -v pcs*.tar.* dist/
-  artifacts:
-    expire_in: 1 week
-    paths:
-      - dist
-
-typos:
-  extends: .parallel
-  stage: stage1
-  script:
-    - python3 -m pip install --upgrade -r dev_requirements.txt
-    - ./autogen.sh
-    - ./configure --enable-local-build --enable-dev-tests --enable-individual-bundling
-    - make
-    - make typos_check
-
-ruff_isort:
-  extends: .parallel
-  stage: stage1
-  script:
-    - python3 -m pip install --upgrade -r dev_requirements.txt
-    - ./autogen.sh
-    - ./configure --enable-local-build --enable-dev-tests --enable-tests-only --enable-individual-bundling
-    - make ruff_isort_check
-
-ruff_format:
-  extends: .parallel
-  stage: stage1
-  script:
-    - python3 -m pip install --upgrade -r dev_requirements.txt
-    - ./autogen.sh
-    - ./configure --enable-local-build --enable-dev-tests --enable-tests-only --enable-individual-bundling
-    - make ruff_format_check
-
-ruff_lint:
-  extends: .parallel
-  stage: stage1
-  script:
-    - python3 -m pip install --upgrade -r dev_requirements.txt
-    - ./autogen.sh
-    - ./configure --enable-local-build --enable-dev-tests --enable-tests-only --enable-individual-bundling
-    - make
-    - make ruff_lint
-
-mypy:
-  extends: .parallel
-  stage: stage1
-  script:
-    - python3 -m pip install --upgrade -r dev_requirements.txt
-    - ./autogen.sh
-    - ./configure --enable-local-build --enable-dev-tests
-    - make
-    - make mypy
-
-ruby_tests:
-  extends: .parallel
-  stage: stage1
-  script:
-    - ./autogen.sh
-    - ./configure --enable-local-build
-    - make
-    - make pcsd-tests
-
-python_tier0_tests:
-  extends: .parallel
-  stage: stage1
-  script:
-    # make sure that tier0 tests run without cluster packages installed
-    - dnf remove -y corosync* pacemaker* fence-agents* resource-agents* booth* sbd
-    - ./autogen.sh
-    - ./configure --enable-local-build
-    - make
-    - make tests_tier0
-
-python_tier1_tests:
-  extends: .parallel
-  stage: stage2
-  needs:
-    - rpm_build
-  script:
-    - "dnf install -y rpms/pcs-*${BASE_IMAGE_NAME}*$(rpm -E %{dist}).*.rpm"
-    - ./autogen.sh
-    - ./configure --enable-local-build --enable-destructive-tests --enable-tests-only
-    - rm -rf pcs pcsd pcs_bundled # make sure we are testing installed package
-    - pcs_test/suite -v --installed --tier1
-
-python_smoke_tests:
-  extends: .parallel
-  stage: stage2
-  needs:
-    - rpm_build
-  script:
-    - "dnf install -y rpms/pcs-*${BASE_IMAGE_NAME}*$(rpm -E %{dist}).*.rpm"
-    - systemctl start pcsd
-    - sleep 2
-    - ./autogen.sh
-    - ./configure --enable-local-build
-    - make
-    - rm -rf pcs
-    - pcs_test/smoke.sh
-  artifacts:
-    paths:
-      - /var/log/pcsd/
-    when: on_failure
-    expire_in: 1 week
+    - testing-farm request
+      --git-url
+      https://gitlab-ci-token:$CI_JOB_TOKEN@$CI_SERVER_HOST/$CI_PROJECT_PATH
+      --git-ref $CI_COMMIT_REF_NAME
+      --compose $(eval echo \$$BASE_IMAGE_NAME)
+      --context distro=$(eval echo \$${BASE_IMAGE_NAME}_distro)
+      --environment BASE_IMAGE_NAME=$BASE_IMAGE_NAME
+      --plan-filter "$TFCLI_PLAN_FILTER"
+      --test-filter "$TFCLI_TEST_FILTER"
+      --tmt-prepare "$TFCLI_TMT_PREPARE"
+      --no-wait
+      | tee output.txt
+    - *download_artifacts_from_tf
