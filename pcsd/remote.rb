@@ -1031,7 +1031,7 @@ def remove_resource(params, request, auth_user)
   if retval == 0
     return 200
   else
-    $logger.info("Remove resource errors:\n"+err)
+    $logger.info("Remove resource errors:\n"+err.join('\n'))
     return [400, err]
   end
 end
