@@ -8,7 +8,7 @@
 - Command `pcs cluster rename` for changing cluster name ([RHEL-22423])
 - Command `pcs stonith sbd watchdog list` now prints watchdogs' identity and
   driver ([RHEL-76176])
-- Removing or disabling stonith devices or disabling SBD fails if the cluster
+- Prevent removing or disabling stonith devices or disabling SBD if the cluster
   would be left with disabled SBD and no stonith devices ([RHEL-66607])
 
 ### Fixed
