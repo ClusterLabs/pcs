@@ -15,6 +15,8 @@
 - Do not end with traceback when using `pcs resource delete` to remove bundle
   resources when the bundle has no IP address specified ([RHEL-79090])
 - Fixed a traceback when removing a resource fails in web UI
+- It is now possible to override errors when editing cluster properties in web
+  UI
 
 [RHEL-22423]: https://issues.redhat.com/browse/RHEL-22423
 [RHEL-63186]: https://issues.redhat.com/browse/RHEL-63186

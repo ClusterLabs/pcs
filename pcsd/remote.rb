@@ -1355,6 +1355,9 @@ def update_cluster_settings(params, request, auth_user)
     end
   end
 
+  options = []
+  options << "--force" if params["force"]
+
   if to_update.empty?
     $logger.info('No properties to update')
   else
@@ -1363,10 +1366,10 @@ def update_cluster_settings(params, request, auth_user)
       cmd_args << "#{prop.downcase}=#{properties[prop]}"
     }
     stdout, stderr, retval = run_cmd(
-      auth_user, PCS, '--', 'property', 'set', *cmd_args
+      auth_user, PCS, *options, '--', 'property', 'set', *cmd_args
     )
     if retval != 0
-      return [400, stderr.join('').gsub(', (use --force to override)', '')]
+      return [400, stderr.join('')]
     end
   end
   return [200, "Update Successful"]
