@@ -65,14 +65,14 @@ def ensure_some_stonith_remains(
         return []
 
     # No stonith in the cluster, need to check SBD.
-    current_sbd_enabled = _is_sbd_enabled_on_any_node(env)
-    sbd_left_enabled = current_sbd_enabled and not sbd_being_disabled
+    current_sbd_active = _is_sbd_active_on_any_node(env)
+    sbd_left_active = current_sbd_active and not sbd_being_disabled
 
-    if sbd_left_enabled:
+    if sbd_left_active:
         # SBD will be left enabled.
         return []
 
-    if not current_stonith and not current_sbd_enabled:
+    if not current_stonith and not current_sbd_active:
         # Now we know that no enabled stonith will be left in the cluster and
         # sbd will also be disabled. However, if that already was the case, we
         # don't produce an error -> the cluster already cannot fence, saying
@@ -89,7 +89,7 @@ def ensure_some_stonith_remains(
     ]
 
 
-def _is_sbd_enabled_on_any_node(env: LibraryEnvironment) -> bool:
+def _is_sbd_active_on_any_node(env: LibraryEnvironment) -> bool:
     # SBD can be enabled only partially in the cluster. Even when that is the
     # case, we warn the user when disabling it. For example, SBD can be enabled
     # for full stack nodes and disabled for remote / guest nodes.
@@ -125,6 +125,11 @@ def _is_sbd_enabled_on_any_node(env: LibraryEnvironment) -> bool:
         # disabled), or None (== unknown, not connected).
         # We do not want to block removing resources just because we were
         # temporarily unable to connect to a node.
-        if response["status"]["enabled"] or response["status"]["running"]:
+        # If sbd is enabled and not running, then the cluster won't have any
+        # fencing after removing all stonith resources. If sbd is not enabled
+        # and running, then the cluster won't have any fencing after removing
+        # all stonith resources and rebooting nodes once. So we need both
+        # enabled and running to be true to consider sbd as active.
+        if response["status"]["enabled"] and response["status"]["running"]:
             return True
     return False
