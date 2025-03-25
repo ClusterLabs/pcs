@@ -8344,3 +8344,20 @@ class CibXmlMissing(ReportItemMessage):
     @property
     def message(self) -> str:
         return "CIB XML file cannot be found"
+
+
+@dataclass(frozen=True)
+class NoStonithMeansWouldBeLeft(ReportItemMessage):
+    """
+    The requested change would left the cluster with no stonith configured
+    """
+
+    _code = codes.NO_STONITH_MEANS_WOULD_BE_LEFT
+
+    @property
+    def message(self) -> str:
+        return (
+            "Requested action lefts the cluster with no enabled means to fence "
+            "nodes, resulting in the cluster not being able to recover from "
+            "certain failure conditions"
+        )

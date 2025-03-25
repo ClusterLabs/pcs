@@ -1,4 +1,5 @@
 # pylint: disable=too-many-lines
+import json
 from unittest import (
     TestCase,
     mock,
@@ -7,7 +8,6 @@ from unittest import (
 from pcs import settings
 from pcs.common import reports
 from pcs.common.reports import ReportItemSeverity as severities
-from pcs.common.reports import codes as report_codes
 from pcs.lib.commands import resource
 from pcs.lib.errors import LibraryError
 
@@ -20,6 +20,7 @@ from pcs_test.tools.custom_mock import (
 )
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import outdent
+from pcs_test.tools.xml import XmlManipulation
 
 TIMEOUT = 10
 
@@ -595,7 +596,7 @@ fixture_tag = fixture_tags_xml([("T", ("A", "B"))])
 def fixture_report_unmanaged(resource_id):
     return (
         severities.WARNING,
-        report_codes.RESOURCE_IS_UNMANAGED,
+        reports.codes.RESOURCE_IS_UNMANAGED,
         {
             "resource_id": resource_id,
         },
@@ -664,6 +665,202 @@ class DisablePrimitive(TestCase):
         )
         resource.disable(self.env_assist.get_env(), ["A"], False)
         self.env_assist.assert_reports([fixture_report_unmanaged("A")])
+
+
+@mock.patch.object(
+    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+)
+class DisableStonith(TestCase):
+    resources_cib = """
+        <resources>
+            <primitive id="S1" class="stonith" type="fence_any" />
+            <primitive id="S2" class="stonith" type="fence_any" />
+            <primitive id="S3" class="stonith" type="fence_kdump" />
+        </resources>
+    """
+    resources_cib_disabled = """
+        <resources>
+            <primitive id="S1" class="stonith" type="fence_any">
+                <meta_attributes id="S1-meta_attributes">
+                    <nvpair id="S1-meta_attributes-target-role"
+                        name="target-role" value="Stopped"
+                    />
+                </meta_attributes>
+            </primitive>
+            <primitive id="S2" class="stonith" type="fence_any">
+                <meta_attributes id="S2-meta_attributes">
+                    <nvpair id="S2-meta_attributes-target-role"
+                        name="target-role" value="Stopped"
+                    />
+                </meta_attributes>
+            </primitive>
+            <primitive id="S3" class="stonith" type="fence_kdump" />
+        </resources>
+    """
+    resources_status = """
+        <resources>
+            <resource id="S1" managed="true" />
+            <resource id="S2" managed="true" />
+            <resource id="S3" managed="true" />
+        </resources>
+    """
+
+    def fixture_config_sbd_calls(self, sbd_enabled):
+        node_name_list = ["node-1", "node-2"]
+        self.config.env.set_known_nodes(node_name_list)
+        self.config.corosync_conf.load(node_name_list=node_name_list)
+        self.config.http.sbd.check_sbd(
+            communication_list=[
+                dict(
+                    label=node,
+                    param_list=[("watchdog", ""), ("device_list", "[]")],
+                    output=json.dumps(
+                        dict(
+                            sbd=dict(
+                                installed=True,
+                                enabled=sbd_enabled,
+                                running=sbd_enabled,
+                            )
+                        )
+                    ),
+                )
+                for node in node_name_list
+            ]
+        )
+
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+
+    def test_useful_enabled_stonith_left(self):
+        resources_cib_disabled = """
+            <resources>
+                <primitive id="S1" class="stonith" type="fence_any" />
+                <primitive id="S2" class="stonith" type="fence_any">
+                    <meta_attributes id="S2-meta_attributes">
+                        <nvpair id="S2-meta_attributes-target-role"
+                            name="target-role" value="Stopped"
+                        />
+                    </meta_attributes>
+                </primitive>
+                <primitive id="S3" class="stonith" type="fence_kdump" />
+            </resources>
+        """
+        self.config.runner.cib.load(resources=self.resources_cib)
+        self.config.runner.pcmk.load_state(resources=self.resources_status)
+        self.config.env.push_cib(resources=resources_cib_disabled)
+
+        resource.disable(self.env_assist.get_env(), ["S2"], False)
+
+    def test_no_stonith_left_sbd_enabled(self):
+        self.config.runner.cib.load(resources=self.resources_cib)
+        self.fixture_config_sbd_calls(True)
+        self.config.runner.pcmk.load_state(resources=self.resources_status)
+        self.config.env.push_cib(resources=self.resources_cib_disabled)
+
+        resource.disable(self.env_assist.get_env(), ["S1", "S2"], False)
+
+    def test_no_stonith_left_not_live(self):
+        tmp_file = "/fake/tmp_file"
+        cmd_env = dict(CIB_file=tmp_file)
+        cib_xml_man = XmlManipulation.from_file(rc("cib-empty.xml"))
+        cib_xml_man.append_to_first_tag_name("resources", self.resources_cib)
+        self.config.env.set_cib_data(str(cib_xml_man), cib_tempfile=tmp_file)
+        self.config.runner.cib.load(resources=self.resources_cib, env=cmd_env)
+        self.config.runner.pcmk.load_state(
+            resources=self.resources_status, env=cmd_env
+        )
+        # doesn't call other nodes to check sbd status
+
+        self.env_assist.assert_raise_library_error(
+            lambda: resource.disable(
+                self.env_assist.get_env(), ["S1", "S2"], False
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.NO_STONITH_MEANS_WOULD_BE_LEFT,
+                    force_code=reports.codes.FORCE,
+                )
+            ]
+        )
+
+    def test_no_stonith_left_sbd_disabled(self):
+        self.config.runner.cib.load(resources=self.resources_cib)
+        self.fixture_config_sbd_calls(False)
+        self.config.runner.pcmk.load_state(resources=self.resources_status)
+
+        self.env_assist.assert_raise_library_error(
+            lambda: resource.disable(
+                self.env_assist.get_env(), ["S1", "S2"], False
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.NO_STONITH_MEANS_WOULD_BE_LEFT,
+                    force_code=reports.codes.FORCE,
+                )
+            ]
+        )
+
+    def test_no_stonith_left_sbd_disabled_forced(self):
+        self.config.runner.cib.load(resources=self.resources_cib)
+        self.fixture_config_sbd_calls(False)
+        self.config.runner.pcmk.load_state(resources=self.resources_status)
+        self.config.env.push_cib(resources=self.resources_cib_disabled)
+
+        resource.disable(
+            self.env_assist.get_env(),
+            ["S1", "S2"],
+            False,
+            force_flags={reports.codes.FORCE},
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.NO_STONITH_MEANS_WOULD_BE_LEFT,
+                )
+            ]
+        )
+
+    def test_no_useful_enabled_stonith_removed(self):
+        resources_cib = """
+            <resources>
+                <primitive id="S1" class="stonith" type="fence_any">
+                    <meta_attributes id="S1-meta_attributes">
+                        <nvpair id="S1-meta_attributes-target-role"
+                            name="target-role" value="Stopped"
+                        />
+                    </meta_attributes>
+                </primitive>
+                <primitive id="S3" class="stonith" type="fence_kdump" />
+            </resources>
+        """
+        resources_cib_disabled = """
+            <resources>
+                <primitive id="S1" class="stonith" type="fence_any">
+                    <meta_attributes id="S1-meta_attributes">
+                        <nvpair id="S1-meta_attributes-target-role"
+                            name="target-role" value="Stopped"
+                        />
+                    </meta_attributes>
+                </primitive>
+                <primitive id="S3" class="stonith" type="fence_kdump">
+                    <meta_attributes id="S3-meta_attributes">
+                        <nvpair id="S3-meta_attributes-target-role"
+                            name="target-role" value="Stopped"
+                        />
+                    </meta_attributes>
+                </primitive>
+            </resources>
+        """
+        self.config.runner.cib.load(resources=resources_cib)
+        self.fixture_config_sbd_calls(False)
+        self.config.runner.pcmk.load_state(resources=self.resources_status)
+        self.config.env.push_cib(resources=resources_cib_disabled)
+
+        resource.disable(self.env_assist.get_env(), ["S1", "S3"], False)
 
 
 @mock.patch.object(
@@ -940,7 +1137,7 @@ class Wait(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.report_not_resource_or_tag("B"),
-                fixture.deprecation(report_codes.RESOURCE_WAIT_DEPRECATED),
+                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -954,7 +1151,7 @@ class Wait(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.report_not_resource_or_tag("B"),
-                fixture.deprecation(report_codes.RESOURCE_WAIT_DEPRECATED),
+                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -983,7 +1180,7 @@ class Wait(TestCase):
             [
                 fixture.report_resource_not_running("A", severities.ERROR),
                 fixture.report_resource_not_running("B", severities.ERROR),
-                fixture.deprecation(report_codes.RESOURCE_WAIT_DEPRECATED),
+                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -1007,7 +1204,7 @@ class Wait(TestCase):
             [
                 fixture.report_resource_not_running("A"),
                 fixture.report_resource_not_running("B"),
-                fixture.deprecation(report_codes.RESOURCE_WAIT_DEPRECATED),
+                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -1033,7 +1230,7 @@ class Wait(TestCase):
             [
                 fixture.report_resource_running("A", {"Started": ["node1"]}),
                 fixture.report_resource_running("B", {"Started": ["node2"]}),
-                fixture.deprecation(report_codes.RESOURCE_WAIT_DEPRECATED),
+                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -1065,7 +1262,7 @@ class Wait(TestCase):
                 fixture.report_resource_running(
                     "B", {"Started": ["node2"]}, severities.ERROR
                 ),
-                fixture.deprecation(report_codes.RESOURCE_WAIT_DEPRECATED),
+                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -1098,7 +1295,7 @@ class Wait(TestCase):
             expected_in_processor=False,
         )
         self.env_assist.assert_reports(
-            [fixture.deprecation(report_codes.RESOURCE_WAIT_DEPRECATED)]
+            [fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED)]
         )
 
     def test_disable_wait_timeout(self):
@@ -1128,7 +1325,7 @@ class Wait(TestCase):
             expected_in_processor=False,
         )
         self.env_assist.assert_reports(
-            [fixture.deprecation(report_codes.RESOURCE_WAIT_DEPRECATED)]
+            [fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED)]
         )
 
 
@@ -1180,13 +1377,13 @@ class WaitClone(TestCase):
             [
                 (
                     severities.INFO,
-                    report_codes.RESOURCE_DOES_NOT_RUN,
+                    reports.codes.RESOURCE_DOES_NOT_RUN,
                     {
                         "resource_id": "A-clone",
                     },
                     None,
                 ),
-                fixture.deprecation(report_codes.RESOURCE_WAIT_DEPRECATED),
+                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -1211,14 +1408,14 @@ class WaitClone(TestCase):
             [
                 (
                     severities.INFO,
-                    report_codes.RESOURCE_RUNNING_ON_NODES,
+                    reports.codes.RESOURCE_RUNNING_ON_NODES,
                     {
                         "resource_id": "A-clone",
                         "roles_with_nodes": {"Started": ["node1", "node2"]},
                     },
                     None,
                 ),
-                fixture.deprecation(report_codes.RESOURCE_WAIT_DEPRECATED),
+                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -2168,7 +2365,7 @@ class DisableSimulate(DisableSafeFixturesMixin, TestCase):
             ),
             [
                 fixture.error(
-                    report_codes.LIVE_ENVIRONMENT_REQUIRED,
+                    reports.codes.LIVE_ENVIRONMENT_REQUIRED,
                     forbidden_options=["CIB"],
                 ),
             ],
@@ -2335,7 +2532,7 @@ class DisableSimulate(DisableSafeFixturesMixin, TestCase):
             ),
             [
                 fixture.error(
-                    report_codes.CIB_SIMULATE_ERROR,
+                    reports.codes.CIB_SIMULATE_ERROR,
                     reason="some stderr",
                 ),
             ],
@@ -2352,7 +2549,7 @@ class DisableSafeMixin(DisableSafeFixturesMixin):
             ),
             [
                 fixture.error(
-                    report_codes.LIVE_ENVIRONMENT_REQUIRED,
+                    reports.codes.LIVE_ENVIRONMENT_REQUIRED,
                     forbidden_options=["CIB"],
                 ),
             ],
@@ -2390,7 +2587,7 @@ class DisableSafeMixin(DisableSafeFixturesMixin):
             ),
             [
                 fixture.error(
-                    report_codes.CIB_SIMULATE_ERROR,
+                    reports.codes.CIB_SIMULATE_ERROR,
                     reason="some stderr",
                 ),
             ],
@@ -2471,12 +2668,12 @@ class DisableSafeMixin(DisableSafeFixturesMixin):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.RESOURCE_DISABLE_AFFECTS_OTHER_RESOURCES,
+                    reports.codes.RESOURCE_DISABLE_AFFECTS_OTHER_RESOURCES,
                     disabled_resource_list=["A"],
                     affected_resource_list=["B"],
                 ),
                 fixture.info(
-                    report_codes.PACEMAKER_SIMULATION_RESULT,
+                    reports.codes.PACEMAKER_SIMULATION_RESULT,
                     plaintext_output="simulate output",
                 ),
             ],
@@ -2517,12 +2714,12 @@ class DisableSafeMixin(DisableSafeFixturesMixin):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.RESOURCE_DISABLE_AFFECTS_OTHER_RESOURCES,
+                    reports.codes.RESOURCE_DISABLE_AFFECTS_OTHER_RESOURCES,
                     disabled_resource_list=["A"],
                     affected_resource_list=["B"],
                 ),
                 fixture.info(
-                    report_codes.PACEMAKER_SIMULATION_RESULT,
+                    reports.codes.PACEMAKER_SIMULATION_RESULT,
                     plaintext_output="simulate output",
                 ),
             ]
@@ -2791,7 +2988,7 @@ class DisableSafeMixin(DisableSafeFixturesMixin):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.RESOURCE_DISABLE_AFFECTS_OTHER_RESOURCES,
+                    reports.codes.RESOURCE_DISABLE_AFFECTS_OTHER_RESOURCES,
                     disabled_resource_list=[
                         "B-clone",
                         "C-master",
@@ -2803,7 +3000,7 @@ class DisableSafeMixin(DisableSafeFixturesMixin):
                     affected_resource_list=["A"],
                 ),
                 fixture.info(
-                    report_codes.PACEMAKER_SIMULATION_RESULT,
+                    reports.codes.PACEMAKER_SIMULATION_RESULT,
                     plaintext_output="simulate output",
                 ),
             ],
@@ -2892,12 +3089,12 @@ class DisableSafeStrict(DisableSafeMixin, TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.RESOURCE_DISABLE_AFFECTS_OTHER_RESOURCES,
+                    reports.codes.RESOURCE_DISABLE_AFFECTS_OTHER_RESOURCES,
                     disabled_resource_list=["A"],
                     affected_resource_list=["B"],
                 ),
                 fixture.info(
-                    report_codes.PACEMAKER_SIMULATION_RESULT,
+                    reports.codes.PACEMAKER_SIMULATION_RESULT,
                     plaintext_output="simulate output",
                 ),
             ]
@@ -2938,12 +3135,12 @@ class DisableSafeStrict(DisableSafeMixin, TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    report_codes.RESOURCE_DISABLE_AFFECTS_OTHER_RESOURCES,
+                    reports.codes.RESOURCE_DISABLE_AFFECTS_OTHER_RESOURCES,
                     disabled_resource_list=["A"],
                     affected_resource_list=["B"],
                 ),
                 fixture.info(
-                    report_codes.PACEMAKER_SIMULATION_RESULT,
+                    reports.codes.PACEMAKER_SIMULATION_RESULT,
                     plaintext_output="simulate output",
                 ),
             ]

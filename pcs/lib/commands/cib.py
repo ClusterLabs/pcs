@@ -1,5 +1,4 @@
 from typing import (
-    Collection,
     Iterable,
     Sequence,
 )
@@ -19,14 +18,17 @@ from pcs.lib.cib.resource.guest_node import is_guest_node
 from pcs.lib.cib.resource.remote_node import (
     get_node_name_from_resource as get_node_name_from_remote_resource,
 )
+from pcs.lib.cib.resource.stonith import is_stonith
+from pcs.lib.cib.tools import get_resources
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
+from pcs.lib.sbd_stonith import ensure_some_stonith_remains
 
 
 def remove_elements(
     env: LibraryEnvironment,
     ids: StringCollection,
-    force_flags: Collection[reports.types.ForceCode] = (),
+    force_flags: reports.types.ForceFlags = (),
 ) -> None:
     """
     Remove elements with specified ids from CIB. This function is aware of
@@ -44,6 +46,17 @@ def remove_elements(
     if report_processor.report_list(
         _validate_elements_to_remove(elements_to_remove)
         + _ensure_not_guest_remote(elements_to_remove.resources_to_remove)
+        + ensure_some_stonith_remains(
+            env,
+            get_resources(cib),
+            stonith_resources_to_ignore=[
+                str(res_el.attrib["id"])
+                for res_el in elements_to_remove.resources_to_remove
+                if is_stonith(res_el)
+            ],
+            sbd_being_disabled=False,
+            force_flags=force_flags,
+        )
     ).has_errors:
         raise LibraryError()
 
@@ -66,7 +79,7 @@ def _stop_resources_wait(
     env: LibraryEnvironment,
     cib: _Element,
     resource_elements: Sequence[_Element],
-    force_flags: Collection[reports.types.ForceCode] = (),
+    force_flags: reports.types.ForceFlags = (),
 ) -> _Element:
     """
     Stop all resources that are going to be removed. Push cib, wait for the

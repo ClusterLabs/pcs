@@ -557,12 +557,21 @@ def sbd_disable(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     Options:
       * --request-timeout - HTTP request timeout
       * --skip-offline - skip offline cluster nodes
+      * --force - override validation errors
     """
-    modifiers.ensure_only_supported("--request-timeout", "--skip-offline")
+    modifiers.ensure_only_supported(
+        "--request-timeout", "--skip-offline", "--force"
+    )
     if argv:
         raise CmdLineInputError()
 
-    lib.sbd.disable_sbd(modifiers.get("--skip-offline"))
+    force_flags = set()
+    if modifiers.is_specified("--force"):
+        force_flags.add(reports.codes.FORCE)
+    if modifiers.is_specified("--skip-offline"):
+        force_flags.add(reports.codes.SKIP_OFFLINE_NODES)
+
+    lib.sbd.disable_sbd(modifiers.get("--skip-offline"), force_flags)
 
 
 def sbd_status(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
@@ -868,6 +877,7 @@ def disable_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * -f - CIB file
+      * --force
       * --wait
     """
     if not argv:
@@ -875,7 +885,9 @@ def disable_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
             "You must specify stonith resource(s) to disable"
         )
     _check_is_stonith(lib, argv, "pcs resource disable")
-    modifiers.ensure_only_supported("-f", "--wait", hint_syntax_changed="0.12")
+    modifiers.ensure_only_supported(
+        "-f", "--force", "--wait", hint_syntax_changed="0.12"
+    )
     resource.resource_disable_common(lib, argv, modifiers)
 
 

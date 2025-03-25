@@ -396,6 +396,7 @@ EXTRA_DIST		= \
 			  lib/resource_agent/types.py \
 			  lib/resource_agent/xml.py \
 			  lib/sbd.py \
+			  lib/sbd_stonith.py \
 			  lib/services.py \
 			  lib/tools.py \
 			  lib/validate.py \

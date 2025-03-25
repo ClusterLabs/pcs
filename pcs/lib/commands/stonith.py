@@ -20,6 +20,7 @@ from pcs.lib.cib.nvpair import (
 )
 from pcs.lib.cib.tools import IdProvider
 from pcs.lib.commands.resource import (
+    _are_meta_disabled,
     _ensure_disabled_after_wait,
     resource_environment,
 )
@@ -161,8 +162,7 @@ def create(  # noqa: PLR0913
         wait,
         [stonith_id],
         _ensure_disabled_after_wait(
-            ensure_disabled
-            or resource.common.are_meta_disabled(meta_attributes),
+            ensure_disabled or _are_meta_disabled(meta_attributes)
         ),
     ) as resources_section:
         id_provider = IdProvider(resources_section)
