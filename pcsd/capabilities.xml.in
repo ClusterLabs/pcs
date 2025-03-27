@@ -2692,6 +2692,15 @@
           /api/v1/sbd-enable-sbd/v1
       </description>
     </capability>
+    <capability id="sbd.disable.force-flags" in-pcs="1" in-pcsd="1">
+      <description>
+        Command for disabling SBD accepts '--force' option / force-flags
+
+        pcs commands: stonith sbd disable
+        daemon urls: /api/v1/sbd-disable-sbd/v1
+        API v2: sbd.disable_sbd
+      </description>
+    </capability>
     <capability id="sbd.option-timeout-action" in-pcs="1" in-pcsd="1">
       <description>
         Allows to set SBD_TIMEOUT_ACTION option.
