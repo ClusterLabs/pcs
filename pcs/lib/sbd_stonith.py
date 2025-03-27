@@ -1,7 +1,10 @@
+from typing import Optional
+
 from lxml.etree import _Element
 
 from pcs.common import reports
 from pcs.common.types import StringCollection
+from pcs.lib.cib.resource.common import get_parent_resource
 from pcs.lib.cib.resource.common import is_disabled as is_resource_disabled
 from pcs.lib.cib.resource.stonith import get_all_node_isolating_resources
 from pcs.lib.communication.sbd import GetSbdStatus
@@ -36,9 +39,8 @@ def ensure_some_stonith_remains(
         # capabilities and therefore nothing to report.
         return []
 
-    current_stonith = [
-        stonith_el
-        for stonith_el in get_all_node_isolating_resources(resources_el)
+    current_stonith = []
+    for stonith_el in get_all_node_isolating_resources(resources_el):
         # If any nvset disables the resource, even with a rule to limit it to
         # specific time, then the resource wouldn't be able to fence all the
         # time and should be considered disabled.
@@ -46,14 +48,19 @@ def ensure_some_stonith_remains(
         # so we only check that to be consistent. Checking all nvsets could
         # lead to a situation not resolvable by pcs, as pcs doesn't allow to
         # change other nvsets than the first one.
-        # Technically, stonith resources can be disabled by their parent clones
-        # or groups. However, pcs doesn't allow putting stonith to groups and
-        # clones, so we don't check that.
+        # Stonith resources can be disabled by their parent clones or groups,
+        # so check them as well.
         # The check is not perfect, but it is a reasonable effort, considering
         # that multiple nvsets are not supported for meta attributes by pcs now.
         # It can be improved when a need for it raises.
-        if not is_resource_disabled(stonith_el)
-    ]
+        resource_tree = []
+        element: Optional[_Element] = stonith_el
+        while element is not None:
+            resource_tree.append(element)
+            element = get_parent_resource(element)
+        if all(not is_resource_disabled(res_el) for res_el in resource_tree):
+            current_stonith.append(stonith_el)
+
     stonith_left = [
         stonith_el
         for stonith_el in current_stonith

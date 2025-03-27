@@ -863,6 +863,192 @@ class DisableStonith(TestCase):
         resource.disable(self.env_assist.get_env(), ["S1", "S3"], False)
 
 
+class DisableStonithGroupsAndClones(TestCase):
+    # The point is to ensure that stonith in clones and groups are checked
+    # correctly. This is achieved by checking that "no stonith would be left"
+    # error is produced. Testing error overriding and successful cases bring
+    # little benefits for the effort spent.
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+
+    def fixture_config_sbd_calls(self):
+        node_name_list = ["node-1", "node-2"]
+        self.config.env.set_known_nodes(node_name_list)
+        self.config.corosync_conf.load(node_name_list=node_name_list)
+        self.config.http.sbd.check_sbd(
+            communication_list=[
+                dict(
+                    label=node,
+                    param_list=[("watchdog", ""), ("device_list", "[]")],
+                    output=json.dumps(
+                        dict(
+                            sbd=dict(
+                                installed=True, enabled=False, running=False
+                            )
+                        )
+                    ),
+                )
+                for node in node_name_list
+            ]
+        )
+
+    def _assert_no_stonith_left(
+        self, resources_cib, resources_status, resource_to_disable
+    ):
+        self.config.runner.cib.load(resources=resources_cib)
+        self.fixture_config_sbd_calls()
+        self.config.runner.pcmk.load_state(resources=resources_status)
+
+        self.env_assist.assert_raise_library_error(
+            lambda: resource.disable(
+                self.env_assist.get_env(), [resource_to_disable], False
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.NO_STONITH_MEANS_WOULD_BE_LEFT,
+                    force_code=reports.codes.FORCE,
+                )
+            ]
+        )
+
+    def test_disable_group_with_stonith(self):
+        resources_cib = """
+            <resources>
+                <group id="G">
+                    <primitive id="S1" class="stonith" type="fence_any" />
+                </group>
+            </resources>
+        """
+        resources_status = """
+            <resources>
+                <group id="G" managed="true" number_resources="1">
+                    <resource id="S1" managed="true" />
+                </group>
+            </resources>
+        """
+        self._assert_no_stonith_left(resources_cib, resources_status, "G")
+
+    def test_disable_stonith_while_other_stonith_in_disabled_group(self):
+        resources_cib = """
+            <resources>
+                <group id="G">
+                    <meta_attributes id="G-meta_attributes">
+                        <nvpair id="G-meta_attributes-target-role"
+                            name="target-role" value="Stopped"
+                        />
+                    </meta_attributes>
+                    <primitive id="S1" class="stonith" type="fence_any" />
+                </group>
+                <primitive id="S2" class="stonith" type="fence_any" />
+            </resources>
+        """
+        resources_status = """
+            <resources>
+                <group id="G" managed="true" number_resources="1" disabled="true">
+                    <resource id="S1" managed="true" />
+                </group>
+                <resource id="S2" managed="true" />
+            </resources>
+        """
+        self._assert_no_stonith_left(resources_cib, resources_status, "S2")
+
+    def test_disable_clone_with_stonith(self):
+        resources_cib = """
+            <resources>
+                <clone id="C">
+                    <primitive id="S1" class="stonith" type="fence_any" />
+                </clone>
+            </resources>
+        """
+        resources_status = """
+            <resources>
+                <clone id="C" managed="true" multi_state="false" unique="false">
+                    <resource id="S1" managed="true" />
+                </clone>
+            </resources>
+        """
+        self._assert_no_stonith_left(resources_cib, resources_status, "C")
+
+    def test_disable_stonith_while_other_stonith_in_disabled_clone(self):
+        resources_cib = """
+            <resources>
+                <clone id="C">
+                    <meta_attributes id="C-meta_attributes">
+                        <nvpair id="C-meta_attributes-target-role"
+                            name="target-role" value="Stopped"
+                        />
+                    </meta_attributes>
+                    <primitive id="S1" class="stonith" type="fence_any" />
+                </clone>
+                <primitive id="S2" class="stonith" type="fence_any" />
+            </resources>
+        """
+        resources_status = """
+            <resources>
+                <clone id="C" managed="true" multi_state="false" unique="false"
+                    disabled="true"
+                >
+                    <resource id="S1" managed="true" />
+                </clone>
+                <resource id="S2" managed="true" />
+            </resources>
+        """
+        self._assert_no_stonith_left(resources_cib, resources_status, "S2")
+
+    def test_disable_cloned_group_with_stonith(self):
+        resources_cib = """
+            <resources>
+                <clone id="C">
+                    <group id="G">
+                        <primitive id="S1" class="stonith" type="fence_any" />
+                    </group>
+                </clone>
+            </resources>
+        """
+        resources_status = """
+            <resources>
+                <clone id="C" managed="true" multi_state="false" unique="false">
+                    <group id="G" managed="true" number_resources="1">
+                        <resource id="S1" managed="true" />
+                    </group>
+                </clone>
+            </resources>
+        """
+        self._assert_no_stonith_left(resources_cib, resources_status, "C")
+
+    def test_disable_stonith_while_other_stonith_in_disabled_cloned_group(self):
+        resources_cib = """
+            <resources>
+                <clone id="C">
+                    <meta_attributes id="C-meta_attributes">
+                        <nvpair id="C-meta_attributes-target-role"
+                            name="target-role" value="Stopped"
+                        />
+                    </meta_attributes>
+                    <group id="G">
+                        <primitive id="S1" class="stonith" type="fence_any" />
+                    </group>
+                </clone>
+                <primitive id="S2" class="stonith" type="fence_any" />
+            </resources>
+        """
+        resources_status = """
+            <resources>
+                <clone id="C" managed="true" multi_state="false" unique="false"
+                    disabled="true"
+                >
+                    <group id="G" managed="true" number_resources="1">
+                        <resource id="S1" managed="true" />
+                    </group>
+                </clone>
+                <resource id="S2" managed="true" />
+            </resources>
+        """
+        self._assert_no_stonith_left(resources_cib, resources_status, "S2")
+
+
 @mock.patch.object(
     settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
 )

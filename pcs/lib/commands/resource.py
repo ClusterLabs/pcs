@@ -1222,15 +1222,23 @@ def disable(
     )
     env.report_processor.report_list(report_list)
 
-    if any(
-        resource.stonith.is_stonith(resource_el)
-        for resource_el in resource_el_list
-    ):
+    stonith_to_be_disabled = []
+    for resource_el in resource_el_list:
+        stonith_to_be_disabled += [
+            primitive_el
+            for primitive_el in resource.common.get_all_inner_resources(
+                resource_el
+            )
+            | {resource_el}
+            if resource.stonith.is_stonith(primitive_el)
+        ]
+
+    if stonith_to_be_disabled:
         env.report_processor.report_list(
             ensure_some_stonith_remains(
                 env,
                 get_resources(cib),
-                [str(res.attrib["id"]) for res in resource_el_list],
+                [str(res.attrib["id"]) for res in stonith_to_be_disabled],
                 sbd_being_disabled=False,
                 force_flags=force_flags,
             )
