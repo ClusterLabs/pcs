@@ -10,6 +10,7 @@
 - Command `pcs cluster rename` for changing cluster name ([RHEL-76055])
 - Prevent removing or disabling stonith devices or disabling SBD if the cluster
   would be left with disabled SBD and no stonith devices ([RHEL-76170])
+- Support for exporting alerts in `json` and `cmd` formats ([RHEL-76153])
 
 ### Fixed
 - Command `pcs resource restart` allows restarting bundle instances (broken
@@ -23,6 +24,7 @@
 
 [RHEL-76055]: https://issues.redhat.com/browse/RHEL-76055
 [RHEL-76059]: https://issues.redhat.com/browse/RHEL-76059
+[RHEL-76153]: https://issues.redhat.com/browse/RHEL-76153
 [RHEL-76170]: https://issues.redhat.com/browse/RHEL-76170
 [RHEL-76177]: https://issues.redhat.com/browse/RHEL-76177
 [RHEL-79055]: https://issues.redhat.com/browse/RHEL-79055

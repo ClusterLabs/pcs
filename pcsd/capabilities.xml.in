@@ -873,6 +873,18 @@
           /api/v1/alert-update-recipient/v1
       </description>
     </capability>
+    <capability id="pcmk.alert.config.output-formats" in-pcs="1" in-pcsd="0">
+      <description>
+        Show / export alerts in various formats.
+
+        pcs commands: alert [config] --output-format=text|json|cmd
+      </description>
+    </capability>
+    <capability id="pcmk.alert.config.rest-api.v2" in-pcs="0" in-pcsd="1">
+      <description>
+        API v2: alert.get_config_dto
+      </description>
+    </capability>
 
 
 

@@ -1564,8 +1564,8 @@ utilization [[<node>] [\fB\-\-name\fR <name>] | <node> <name>=<value> ...]
 Add specified utilization options to specified node.  If node is not specified, shows utilization of all nodes.  If \fB\-\-name\fR is specified, shows specified utilization value from all nodes. If utilization options are not specified, shows utilization of specified node.  Utilization option should be in format name=value, value has to be integer.  Options may be removed by setting an option without a value.  Example: pcs node utilization node1 cpu=4 ram=  For the utilization configuration to be in effect, cluster property 'placement-strategy' must be configured accordingly.
 .SS "alert"
 .TP
-[config]
-Show all configured alerts.
+[config] [@OUTPUT_FORMAT_SYNTAX_DOC@]
+Show all configured alerts. @OUTPUT_FORMAT_DESC_DOC@
 .TP
 create path=<path> [id=<alert\-id>] [description=<description>] [options [<option>=<value>]...] [meta [<meta\-option>=<value>]...]
 Define an alert handler with specified path. Id will be automatically generated if it is not specified.

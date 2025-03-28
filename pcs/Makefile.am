@@ -20,6 +20,9 @@ EXTRA_DIST		= \
 			  acl.py \
 			  alert.py \
 			  app.py \
+			  cli/alert/__init__.py \
+			  cli/alert/command.py \
+			  cli/alert/output.py \
 			  cli/booth/command.py \
 			  cli/booth/env.py \
 			  cli/booth/__init__.py \
@@ -132,6 +135,7 @@ EXTRA_DIST		= \
 			  common/interface/__init__.py \
 			  common/node_communicator.py \
 			  common/pacemaker/__init__.py \
+			  common/pacemaker/alert.py \
 			  common/pacemaker/cluster_property.py \
 			  common/pacemaker/constraint/__init__.py \
 			  common/pacemaker/constraint/all.py \

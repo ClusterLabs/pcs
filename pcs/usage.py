@@ -3336,8 +3336,9 @@ Usage: pcs alert <command>
 Set pacemaker alerts.
 
 Commands:
-    [config]
+    [config] [{output_format_syntax}]
         Show all configured alerts.
+        {output_format_desc}
 
     create path=<path> [id=<alert-id>] [description=<description>]
             [options [<option>=<value>]...] [meta [<meta-option>=<value>]...]
@@ -3373,7 +3374,10 @@ Commands:
 
     recipient remove <recipient-id> ...
         Remove specified recipients.
-"""
+""".format(
+        output_format_syntax=_output_format_syntax(),
+        output_format_desc=_format_desc((" ", _output_format_desc())),
+    )
     return sub_usage(args, output)
 
 

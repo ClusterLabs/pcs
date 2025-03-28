@@ -1,7 +1,9 @@
 import json
 from typing import Any, Iterable, Mapping
 
+from pcs.cli.alert.output import config_dto_to_lines
 from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.common.output import lines_to_str
 from pcs.cli.common.parse_args import (
     Argv,
     InputModifiers,
@@ -159,7 +161,7 @@ def _nvset_to_str(nvset_obj: Iterable[Mapping[str, str]]) -> str:
     return " ".join(output)
 
 
-def __description_attributes_to_str(obj: Mapping[str, Any]) -> list[str]:
+def _old__description_attributes_to_str(obj: Mapping[str, Any]) -> list[str]:
     output = []
     if obj.get("description"):
         output.append(f"Description: {obj['description']}")
@@ -172,13 +174,13 @@ def __description_attributes_to_str(obj: Mapping[str, Any]) -> list[str]:
     return output
 
 
-def _alert_to_str(alert: Mapping[str, Any]) -> list[str]:
+def _old_alert_to_str(alert: Mapping[str, Any]) -> list[str]:
     content: list[str] = []
-    content.extend(__description_attributes_to_str(alert))
+    content.extend(_old__description_attributes_to_str(alert))
 
     recipients: list[str] = []
     for recipient in alert.get("recipient_list", []):
-        recipients.extend(_recipient_to_str(recipient))
+        recipients.extend(_old_recipient_to_str(recipient))
 
     if recipients:
         content.append("Recipients:")
@@ -187,10 +189,10 @@ def _alert_to_str(alert: Mapping[str, Any]) -> list[str]:
     return [f"Alert: {alert['id']} (path={alert['path']})"] + indent(content, 1)
 
 
-def _recipient_to_str(recipient: Mapping[str, Any]) -> list[str]:
+def _old_recipient_to_str(recipient: Mapping[str, Any]) -> list[str]:
     return [
         f"Recipient: {recipient['id']} (value={recipient['value']})"
-    ] + indent(__description_attributes_to_str(recipient), 1)
+    ] + indent(_old__description_attributes_to_str(recipient), 1)
 
 
 def print_alert_show(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
@@ -198,10 +200,17 @@ def print_alert_show(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
         "This command is deprecated and will be removed. "
         "Please use 'pcs alert config' instead."
     )
-    return print_alert_config(lib, argv, modifiers)
+    modifiers.ensure_only_supported("-f")
+    if argv:
+        raise CmdLineInputError()
+    result_text = lines_to_str(config_dto_to_lines(lib.alert.get_config_dto()))
+    if result_text:
+        print(result_text)
 
 
-def print_alert_config(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
+def old_print_alert_config(
+    lib: Any, argv: Argv, modifiers: InputModifiers
+) -> None:
     """
     Options:
       * -f - CIB file (in lib wrapper)
@@ -209,18 +218,18 @@ def print_alert_config(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     modifiers.ensure_only_supported("-f")
     if argv:
         raise CmdLineInputError()
-    lines = alert_config_lines(lib)
+    lines = old_alert_config_lines(lib)
     if lines:
         print("\n".join(lines))
 
 
-def alert_config_lines(lib: Any) -> list[str]:
+def old_alert_config_lines(lib: Any) -> list[str]:
     lines = []
     alert_list = lib.alert.get_all_alerts()
     if alert_list:
         lines.append("Alerts:")
         for alert in alert_list:
-            lines.extend(indent(_alert_to_str(alert), 1))
+            lines.extend(indent(_old_alert_to_str(alert), 1))
     return lines
 
 

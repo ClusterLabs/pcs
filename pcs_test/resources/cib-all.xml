@@ -178,6 +178,36 @@
         </resource_set>
       </rsc_ticket>
     </constraints>
+    <alerts>
+      <!--
+      alerts in this file have been created using a set of commands in commands-alert file
+      -->
+      <alert id="alert1" path="/path/1"/>
+      <alert id="alert2" path="/path/2">
+        <recipient id="alert2-recipient1" value="test_value_1"/>
+        <recipient id="alert2-recipient2" value="test_value_2" description="alert2 recipient2 description"/>
+      </alert>
+      <alert id="alert-all" path="/path/all" description="alert all options">
+        <meta_attributes id="alert-all-meta_attributes">
+          <nvpair id="alert-all-meta_attributes-aam1n" name="aam1n" value="aam1v"/>
+          <nvpair id="alert-all-meta_attributes-aam2n" name="aam2n" value="aam2v"/>
+        </meta_attributes>
+        <instance_attributes id="alert-all-instance_attributes">
+          <nvpair id="alert-all-instance_attributes-aai1n" name="aai1n" value="aai1v"/>
+          <nvpair id="alert-all-instance_attributes-aai2n" name="aai2n" value="aai2v"/>
+        </instance_attributes>
+        <recipient id="alert-all-recipient" value="value-all" description="all options recipient">
+          <meta_attributes id="alert-all-recipient-meta_attributes">
+            <nvpair id="alert-all-recipient-meta_attributes-aar1m1n" name="aar1m1n" value="aar1m1v"/>
+            <nvpair id="alert-all-recipient-meta_attributes-aar1m2n" name="aar1m2n" value="aar1m2v"/>
+          </meta_attributes>
+          <instance_attributes id="alert-all-recipient-instance_attributes">
+            <nvpair id="alert-all-recipient-instance_attributes-aar1i1n" name="aar1i1n" value="aar1i1v"/>
+            <nvpair id="alert-all-recipient-instance_attributes-aar1i2n" name="aar1i2n" value="aar1i2v"/>
+          </instance_attributes>
+        </recipient>
+      </alert>
+    </alerts>
   </configuration>
   <status/>
 </cib>

@@ -4,6 +4,13 @@ from lxml import etree
 from lxml.etree import _Element
 
 from pcs.common import reports
+from pcs.common.pacemaker.alert import (
+    CibAlertDto,
+    CibAlertRecipientDto,
+    CibAlertSelectAttributeDto,
+    CibAlertSelectDto,
+)
+from pcs.lib.cib import nvpair_multi, rule
 from pcs.lib.cib.nvpair import get_nvset
 from pcs.lib.cib.tools import (
     ElementSearcher,
@@ -21,6 +28,10 @@ from pcs.lib.xml_tools import (
 
 TAG_ALERT = "alert"
 TAG_RECIPIENT = "recipient"
+
+
+def get_all_alert_elements(tree: _Element) -> list[_Element]:
+    return tree.findall(TAG_ALERT)
 
 
 def find_alert(context_el: _Element, alert_id: str) -> _Element:
@@ -318,7 +329,79 @@ def remove_recipient(tree: _Element, recipient_id: str) -> None:
     remove_one_element(find_recipient(get_alerts(tree), recipient_id))
 
 
-def get_all_recipients(alert: _Element) -> list[dict[str, Any]]:
+def _recipient_el_to_dto(
+    recipient_el: _Element,
+    rule_eval: Optional[rule.RuleInEffectEval] = None,
+) -> CibAlertRecipientDto:
+    if rule_eval is None:
+        rule_eval = rule.RuleInEffectEvalDummy()
+    return CibAlertRecipientDto(
+        id=str(recipient_el.attrib["id"]),
+        value=str(recipient_el.attrib["value"]),
+        description=recipient_el.get("description"),
+        meta_attributes=[
+            nvpair_multi.nvset_element_to_dto(nvset, rule_eval)
+            for nvset in nvpair_multi.find_nvsets(
+                recipient_el, nvpair_multi.NVSET_META
+            )
+        ],
+        instance_attributes=[
+            nvpair_multi.nvset_element_to_dto(nvset, rule_eval)
+            for nvset in nvpair_multi.find_nvsets(
+                recipient_el, nvpair_multi.NVSET_INSTANCE
+            )
+        ],
+    )
+
+
+def _select_el_to_dto(select_el: _Element) -> CibAlertSelectDto:
+    return CibAlertSelectDto(
+        nodes=(select_el.find("select_nodes") is not None),
+        fencing=(select_el.find("select_fencing") is not None),
+        resources=(select_el.find("select_resources") is not None),
+        attributes=(select_el.find("select_attributes") is not None),
+        attributes_select=[
+            CibAlertSelectAttributeDto(
+                str(attr_el.attrib["id"]), str(attr_el.attrib["name"])
+            )
+            for attr_el in select_el.iterfind("select_attributes/attribute")
+        ],
+    )
+
+
+def alert_el_to_dto(
+    alert_el: _Element,
+    rule_eval: Optional[rule.RuleInEffectEval] = None,
+) -> CibAlertDto:
+    if rule_eval is None:
+        rule_eval = rule.RuleInEffectEvalDummy()
+    select_el = alert_el.find("select")
+    return CibAlertDto(
+        id=str(alert_el.attrib["id"]),
+        path=str(alert_el.attrib["path"]),
+        description=alert_el.get("description"),
+        recipients=[
+            _recipient_el_to_dto(recipient_el)
+            for recipient_el in alert_el.iterfind(TAG_RECIPIENT)
+        ],
+        select=_select_el_to_dto(select_el) if select_el is not None else None,
+        meta_attributes=[
+            nvpair_multi.nvset_element_to_dto(nvset, rule_eval)
+            for nvset in nvpair_multi.find_nvsets(
+                alert_el, nvpair_multi.NVSET_META
+            )
+        ],
+        instance_attributes=[
+            nvpair_multi.nvset_element_to_dto(nvset, rule_eval)
+            for nvset in nvpair_multi.find_nvsets(
+                alert_el, nvpair_multi.NVSET_INSTANCE
+            )
+        ],
+    )
+
+
+# DEPRECATED, used only in get_all_alerts_dict
+def get_all_recipients_dict(alert: _Element) -> list[dict[str, Any]]:
     """
     Returns list of all recipient of specified alert. Format:
     [
@@ -349,7 +432,8 @@ def get_all_recipients(alert: _Element) -> list[dict[str, Any]]:
     ]
 
 
-def get_all_alerts(tree: _Element) -> list[dict[str, Any]]:
+# DEPRECATED, use alert_el_to_dto + get_all_alert_elements
+def get_all_alerts_dict(tree: _Element) -> list[dict[str, Any]]:
     """
     Returns list of all alerts specified in tree. Format:
     [
@@ -376,7 +460,7 @@ def get_all_alerts(tree: _Element) -> list[dict[str, Any]]:
             "meta_attributes": get_nvset(
                 get_sub_element(alert, "meta_attributes")
             ),
-            "recipient_list": get_all_recipients(alert),
+            "recipient_list": get_all_recipients_dict(alert),
         }
         for alert in get_alerts(tree).findall("./alert")
     ]

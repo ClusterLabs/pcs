@@ -2,6 +2,7 @@ from pcs import (
     alert,
     usage,
 )
+from pcs.cli.alert import command as alert_command
 from pcs.cli.common.routing import create_router
 
 alert_cmd = create_router(
@@ -11,7 +12,7 @@ alert_cmd = create_router(
         "update": alert.alert_update,
         "delete": alert.alert_remove,
         "remove": alert.alert_remove,
-        "config": alert.print_alert_config,
+        "config": alert_command.alert_config,
         # TODO remove, deprecated command
         # replaced with 'config'
         "show": alert.print_alert_show,
