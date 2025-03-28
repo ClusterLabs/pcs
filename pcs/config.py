@@ -16,7 +16,6 @@ from typing import cast
 from xml.dom.minidom import parse
 
 from pcs import (
-    alert,
     cluster,
     quorum,
     settings,
@@ -24,6 +23,7 @@ from pcs import (
     usage,
     utils,
 )
+from pcs.cli.alert.output import config_dto_to_lines as alerts_to_lines
 from pcs.cli.cluster_property.output import (
     PropertyConfigurationFacade,
     properties_to_text,
@@ -175,10 +175,11 @@ def _config_show_cib_lines(lib, properties_facade=None):  # noqa: PLR0912, PLR09
             all_lines.append("")
         all_lines.extend(constraints_lines)
 
-    alert_lines = alert.alert_config_lines(lib)
+    alert_lines = indent(alerts_to_lines(lib.alert.get_config_dto()))
     if alert_lines:
         if all_lines:
             all_lines.append("")
+        all_lines.append("Alerts:")
         all_lines.extend(alert_lines)
 
     resources_defaults_lines = indent(

@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING, Any, Mapping, Optional
 
+from pcs.common.pacemaker.alert import CibAlertListDto
 from pcs.common.types import StringIterable
 from pcs.lib.cib import alert
 from pcs.lib.cib.nvpair import (
@@ -256,6 +257,17 @@ def remove_recipient(
     lib_env.push_cib()
 
 
+def get_config_dto(lib_env: LibraryEnvironment) -> CibAlertListDto:
+    cib = lib_env.get_cib()
+    return CibAlertListDto(
+        [
+            alert.alert_el_to_dto(alert_el)
+            for alert_el in alert.get_all_alert_elements(get_alerts(cib))
+        ]
+    )
+
+
+# DEPRECATED, use get_config_dto
 def get_all_alerts(lib_env: LibraryEnvironment) -> list[dict[str, Any]]:
     """
     Returns list of all alerts. See docs of pcs.lib.cib.alert.get_all_alerts for
@@ -263,4 +275,4 @@ def get_all_alerts(lib_env: LibraryEnvironment) -> list[dict[str, Any]]:
 
     lib_env -- LibraryEnvironment
     """
-    return alert.get_all_alerts(lib_env.get_cib())
+    return alert.get_all_alerts_dict(lib_env.get_cib())

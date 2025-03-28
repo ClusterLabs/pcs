@@ -2,6 +2,13 @@ from unittest import TestCase
 
 from lxml import etree
 
+from pcs.common.pacemaker.alert import (
+    CibAlertDto,
+    CibAlertRecipientDto,
+    CibAlertSelectAttributeDto,
+    CibAlertSelectDto,
+)
+from pcs.common.pacemaker.nvset import CibNvpairDto, CibNvsetDto
 from pcs.common.reports import ReportItemSeverity as severities
 from pcs.common.reports import codes as report_codes
 from pcs.lib.cib import alert
@@ -877,111 +884,332 @@ class RemoveRecipientTest(TestCase):
         )
 
 
-class GetAllRecipientsTest(TestCase):
-    def test_success(self):
-        alert_obj = etree.XML(
+class CibMixin:
+    maxDiff = None
+
+    @staticmethod
+    def get_cib():
+        return etree.fromstring(
             """
-            <alert id="alert" path="/path">
-                <recipient id="alert-recipient" value="test_val">
+            <cib><configuration>
+            <resources />
+            <alerts>
+                <alert id="alert" path="/path">
+                    <recipient id="alert-recipient" value="test_val">
+                        <instance_attributes>
+                            <nvpair
+                                id="instance_attributes-name1-value1"
+                                name="name1"
+                                value="value1"
+                            />
+                            <nvpair
+                                id="instance_attributes-name2-value2"
+                                name="name2"
+                                value="value2"
+                            />
+                        </instance_attributes>
+                        <meta_attributes>
+                            <nvpair id="meta_attributes-name3" name="name3"/>
+                        </meta_attributes>
+                    </recipient>
+                    <recipient
+                        id="alert-recipient-1" value="value1" description="desc"
+                    />
+                </alert>
+                <alert id="alert1" path="/test/path" description="desc">
                     <instance_attributes>
                         <nvpair
-                            id="nvset-name1-value1" name="name1" value="value1"
+                            id="alert1-name1-value1" name="name1" value="value1"
                         />
                         <nvpair
-                            id="nvset-name2-value2" name="name2" value="value2"
+                            id="alert1-name2-value2" name="name2" value="value2"
                         />
                     </instance_attributes>
                     <meta_attributes>
-                        <nvpair id="nvset-name3" name="name3"/>
+                        <nvpair id="alert1-name3" name="name3"/>
                     </meta_attributes>
-                </recipient>
-                <recipient
-                    id="alert-recipient-1" value="value1" description="desc"
-                />
-            </alert>
-            """
+                </alert>
+                <alert id="alert-select1" path="/path/select1">
+                    <select>
+                        <select_nodes />
+                        <select_fencing />
+                    </select>
+                </alert>
+                <alert id="alert-select2" path="/path/select2">
+                    <select>
+                        <select_resources />
+                        <select_attributes>
+                            <attribute id="alert-standby" name="standby" />
+                            <attribute id="alert-shutdown" name="shutdown" />
+                        </select_attributes>
+                    </select>
+                </alert>
+                <alert id="alert-all" path="/path/all" description="all options">
+                    <recipient id="alert-all-recipient" value="value-all"
+                        description="all options recipient"
+                    >
+                        <instance_attributes>
+                            <nvpair id="alert-all-recipient-ia"
+                                name="all-iar1-name" value="all-iar1-value"
+                            />
+                        </instance_attributes>
+                        <meta_attributes>
+                            <nvpair id="alert-all-recipient-ma"
+                                name="all-mar1-name" value="all-mar1-value" />
+                        </meta_attributes>
+                    </recipient>
+                    <instance_attributes>
+                        <nvpair id="alert-all-ia"
+                            name="all-iaa1-name" value="all-iaa1-value"
+                        />
+                    </instance_attributes>
+                    <meta_attributes>
+                        <nvpair id="alert-all-ma"
+                            name="all-maa1-name" value="all-maa1-value"
+                        />
+                    </meta_attributes>
+                    <select>
+                        <select_nodes />
+                        <select_attributes />
+                    </select>
+                </alert>
+            </alerts>
+            </configuration></cib>
+        """
         )
+
+
+class AlertElToDto(CibMixin, TestCase):
+    def setUp(self):
+        self.cib = self.get_cib()
+        self.tree = self.cib.find(".//alerts")
+
+    def test_success(self):
         self.assertEqual(
             [
-                {
-                    "id": "alert-recipient",
-                    "value": "test_val",
-                    "description": "",
-                    "instance_attributes": [
-                        {
-                            "id": "nvset-name1-value1",
-                            "name": "name1",
-                            "value": "value1",
-                        },
-                        {
-                            "id": "nvset-name2-value2",
-                            "name": "name2",
-                            "value": "value2",
-                        },
-                    ],
-                    "meta_attributes": [
-                        {"id": "nvset-name3", "name": "name3", "value": None}
-                    ],
-                },
-                {
-                    "id": "alert-recipient-1",
-                    "value": "value1",
-                    "description": "desc",
-                    "instance_attributes": [],
-                    "meta_attributes": [],
-                },
+                alert.alert_el_to_dto(element)
+                for element in alert.get_all_alert_elements(self.tree)
             ],
-            alert.get_all_recipients(alert_obj),
+            [
+                CibAlertDto(
+                    id="alert",
+                    path="/path",
+                    description=None,
+                    recipients=[
+                        CibAlertRecipientDto(
+                            id="alert-recipient",
+                            value="test_val",
+                            description=None,
+                            meta_attributes=[
+                                CibNvsetDto(
+                                    id="",
+                                    options={},
+                                    rule=None,
+                                    nvpairs=[
+                                        CibNvpairDto(
+                                            id="meta_attributes-name3",
+                                            name="name3",
+                                            value="",
+                                        )
+                                    ],
+                                )
+                            ],
+                            instance_attributes=[
+                                CibNvsetDto(
+                                    id="",
+                                    options={},
+                                    rule=None,
+                                    nvpairs=[
+                                        CibNvpairDto(
+                                            id="instance_attributes-name1-value1",
+                                            name="name1",
+                                            value="value1",
+                                        ),
+                                        CibNvpairDto(
+                                            id="instance_attributes-name2-value2",
+                                            name="name2",
+                                            value="value2",
+                                        ),
+                                    ],
+                                )
+                            ],
+                        ),
+                        CibAlertRecipientDto(
+                            id="alert-recipient-1",
+                            value="value1",
+                            description="desc",
+                            meta_attributes=[],
+                            instance_attributes=[],
+                        ),
+                    ],
+                    select=None,
+                    meta_attributes=[],
+                    instance_attributes=[],
+                ),
+                CibAlertDto(
+                    id="alert1",
+                    path="/test/path",
+                    description="desc",
+                    recipients=[],
+                    select=None,
+                    meta_attributes=[
+                        CibNvsetDto(
+                            id="",
+                            options={},
+                            rule=None,
+                            nvpairs=[
+                                CibNvpairDto(
+                                    id="alert1-name3", name="name3", value=""
+                                )
+                            ],
+                        )
+                    ],
+                    instance_attributes=[
+                        CibNvsetDto(
+                            id="",
+                            options={},
+                            rule=None,
+                            nvpairs=[
+                                CibNvpairDto(
+                                    id="alert1-name1-value1",
+                                    name="name1",
+                                    value="value1",
+                                ),
+                                CibNvpairDto(
+                                    id="alert1-name2-value2",
+                                    name="name2",
+                                    value="value2",
+                                ),
+                            ],
+                        )
+                    ],
+                ),
+                CibAlertDto(
+                    id="alert-select1",
+                    path="/path/select1",
+                    description=None,
+                    recipients=[],
+                    select=CibAlertSelectDto(
+                        nodes=True,
+                        fencing=True,
+                        resources=False,
+                        attributes=False,
+                        attributes_select=[],
+                    ),
+                    meta_attributes=[],
+                    instance_attributes=[],
+                ),
+                CibAlertDto(
+                    id="alert-select2",
+                    path="/path/select2",
+                    description=None,
+                    recipients=[],
+                    select=CibAlertSelectDto(
+                        nodes=False,
+                        fencing=False,
+                        resources=True,
+                        attributes=True,
+                        attributes_select=[
+                            CibAlertSelectAttributeDto(
+                                id="alert-standby", name="standby"
+                            ),
+                            CibAlertSelectAttributeDto(
+                                id="alert-shutdown", name="shutdown"
+                            ),
+                        ],
+                    ),
+                    meta_attributes=[],
+                    instance_attributes=[],
+                ),
+                CibAlertDto(
+                    id="alert-all",
+                    path="/path/all",
+                    description="all options",
+                    recipients=[
+                        CibAlertRecipientDto(
+                            id="alert-all-recipient",
+                            value="value-all",
+                            description="all options recipient",
+                            meta_attributes=[
+                                CibNvsetDto(
+                                    id="",
+                                    options={},
+                                    rule=None,
+                                    nvpairs=[
+                                        CibNvpairDto(
+                                            id="alert-all-recipient-ma",
+                                            name="all-mar1-name",
+                                            value="all-mar1-value",
+                                        )
+                                    ],
+                                )
+                            ],
+                            instance_attributes=[
+                                CibNvsetDto(
+                                    id="",
+                                    options={},
+                                    rule=None,
+                                    nvpairs=[
+                                        CibNvpairDto(
+                                            id="alert-all-recipient-ia",
+                                            name="all-iar1-name",
+                                            value="all-iar1-value",
+                                        )
+                                    ],
+                                )
+                            ],
+                        )
+                    ],
+                    select=CibAlertSelectDto(
+                        nodes=True,
+                        fencing=False,
+                        resources=False,
+                        attributes=True,
+                        attributes_select=[],
+                    ),
+                    meta_attributes=[
+                        CibNvsetDto(
+                            id="",
+                            options={},
+                            rule=None,
+                            nvpairs=[
+                                CibNvpairDto(
+                                    id="alert-all-ma",
+                                    name="all-maa1-name",
+                                    value="all-maa1-value",
+                                )
+                            ],
+                        )
+                    ],
+                    instance_attributes=[
+                        CibNvsetDto(
+                            id="",
+                            options={},
+                            rule=None,
+                            nvpairs=[
+                                CibNvpairDto(
+                                    id="alert-all-ia",
+                                    name="all-iaa1-name",
+                                    value="all-iaa1-value",
+                                )
+                            ],
+                        )
+                    ],
+                ),
+            ],
         )
 
 
-class GetAllAlertsTest(TestCase):
+class GetAllRecipientsDictTest(TestCase):
+    # covered by GetAllAlertsDictTest
+    pass
+
+
+class GetAllAlertsDictTest(CibMixin, TestCase):
+    def setUp(self):
+        self.cib = self.get_cib()
+
     def test_success(self):
-        alerts = etree.XML(
-            """
-<cib>
-    <configuration>
-        <alerts>
-            <alert id="alert" path="/path">
-                <recipient id="alert-recipient" value="test_val">
-                    <instance_attributes>
-                        <nvpair
-                            id="instance_attributes-name1-value1"
-                            name="name1"
-                            value="value1"
-                        />
-                        <nvpair
-                            id="instance_attributes-name2-value2"
-                            name="name2"
-                            value="value2"
-                        />
-                    </instance_attributes>
-                    <meta_attributes>
-                        <nvpair id="meta_attributes-name3" name="name3"/>
-                    </meta_attributes>
-                </recipient>
-                <recipient
-                    id="alert-recipient-1" value="value1" description="desc"
-                />
-            </alert>
-            <alert id="alert1" path="/test/path" description="desc">
-                <instance_attributes>
-                    <nvpair
-                        id="alert1-name1-value1" name="name1" value="value1"
-                    />
-                    <nvpair
-                        id="alert1-name2-value2" name="name2" value="value2"
-                    />
-                </instance_attributes>
-                <meta_attributes>
-                    <nvpair id="alert1-name3" name="name3"/>
-                </meta_attributes>
-            </alert>
-        </alerts>
-    </configuration>
-</cib>
-            """
-        )
         self.assertEqual(
             [
                 {
@@ -1045,6 +1273,65 @@ class GetAllAlertsTest(TestCase):
                     ],
                     "recipient_list": [],
                 },
+                # select is not supported by the legacy export and it cannot be
+                # added, because the export is passed to web ui and that may
+                # not be able to cope with it
+                {
+                    "id": "alert-select1",
+                    "path": "/path/select1",
+                    "description": "",
+                    "instance_attributes": [],
+                    "meta_attributes": [],
+                    "recipient_list": [],
+                },
+                {
+                    "id": "alert-select2",
+                    "path": "/path/select2",
+                    "description": "",
+                    "instance_attributes": [],
+                    "meta_attributes": [],
+                    "recipient_list": [],
+                },
+                {
+                    "id": "alert-all",
+                    "path": "/path/all",
+                    "description": "all options",
+                    "instance_attributes": [
+                        {
+                            "id": "alert-all-ia",
+                            "name": "all-iaa1-name",
+                            "value": "all-iaa1-value",
+                        }
+                    ],
+                    "meta_attributes": [
+                        {
+                            "id": "alert-all-ma",
+                            "name": "all-maa1-name",
+                            "value": "all-maa1-value",
+                        }
+                    ],
+                    "recipient_list": [
+                        {
+                            "id": "alert-all-recipient",
+                            "value": "value-all",
+                            "description": "all options recipient",
+                            "instance_attributes": [
+                                {
+                                    "id": "alert-all-recipient-ia",
+                                    "name": "all-iar1-name",
+                                    "value": "all-iar1-value",
+                                }
+                            ],
+                            "meta_attributes": [
+                                {
+                                    "id": "alert-all-recipient-ma",
+                                    "name": "all-mar1-name",
+                                    "value": "all-mar1-value",
+                                }
+                            ],
+                        }
+                    ],
+                },
             ],
-            alert.get_all_alerts(alerts),
+            alert.get_all_alerts_dict(self.cib),
         )

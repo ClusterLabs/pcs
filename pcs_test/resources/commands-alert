@@ -1,0 +1,7 @@
+# set of commands to generate various alerts configuration
+pcs -- alert create path=/path/1 id=alert1;
+pcs -- alert create path=/path/2 id=alert2;
+pcs -- alert recipient add alert2 value=test_value_1 id=alert2-recipient1;
+pcs -- alert recipient add alert2 value=test_value_2 id=alert2-recipient2 description='alert2 recipient2 description';
+pcs -- alert create path=/path/all id=alert-all description='alert all options' options aai1n=aai1v aai2n=aai2v meta aam1n=aam1v aam2n=aam2v;
+pcs -- alert recipient add alert-all value=value-all id=alert-all-recipient description='all options recipient' options aar1i1n=aar1i1v aar1i2n=aar1i2v meta aar1m1n=aar1m1v aar1m2n=aar1m2v
