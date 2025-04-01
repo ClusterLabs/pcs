@@ -19,6 +19,7 @@
 - Fixed a traceback when removing a resource fails in web UI
 - It is now possible to override errors when editing cluster properties in web
   UI
+- Display node-attribute in colocation constraints configuration ([RHEL-81938])
 
 [RHEL-22423]: https://issues.redhat.com/browse/RHEL-22423
 [RHEL-63186]: https://issues.redhat.com/browse/RHEL-63186
@@ -26,6 +27,7 @@
 [RHEL-76176]: https://issues.redhat.com/browse/RHEL-76176
 [RHEL-79033]: https://issues.redhat.com/browse/RHEL-79033
 [RHEL-79090]: https://issues.redhat.com/browse/RHEL-79090
+[RHEL-81938]: https://issues.redhat.com/browse/RHEL-81938
 
 
 ## [0.12.0] - 2025-01-09
