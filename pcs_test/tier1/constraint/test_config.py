@@ -223,7 +223,7 @@ class ConstraintConfigCmdUnsupported(TestCase):
                 f"Warning: Lifetime configuration detected in constraint 'location-lifetime' but {sufix}"
                 f"Warning: Option 'influence' detected in constraint 'colocation-influence' but {sufix}"
                 f"Warning: Lifetime configuration detected in constraint 'colocation-lifetime' but {sufix}"
-                f"Warning: Option 'node_attribute' detected in constraint 'colocation-node-attribute' but {sufix}"
+                f"Warning: Option 'node-attribute' detected in constraint 'colocation-node-attribute' but {sufix}"
                 f"Warning: Option 'ordering' detected in resource set 'colocation-set-ordering-set' but {sufix}"
                 f"Warning: Option 'require-all' detected in constraint 'order-set-require-all' but {sufix}"
                 f"Warning: Option 'ordering' detected in resource set 'order-set-ordering-set' but {sufix}"

@@ -39,9 +39,14 @@ def _attributes_to_pairs(
 def _attributes_to_text(
     attributes_dto: CibConstraintColocationAttributesDto,
     with_id: bool,
+    extra_attributes: Iterable[tuple[str, str]] = (),
 ) -> list[str]:
     result = [
-        " ".join(format_name_value_list(_attributes_to_pairs(attributes_dto)))
+        " ".join(
+            format_name_value_list(
+                _attributes_to_pairs(attributes_dto) + list(extra_attributes)
+            )
+        )
     ]
     if attributes_dto.lifetime:
         result.append("Lifetime:")
@@ -72,9 +77,16 @@ def plain_constraint_to_text(
     ]
     if with_id:
         result[0] += f" (id: {constraint_dto.attributes.constraint_id})"
+    extra_attributes = []
+    if constraint_dto.node_attribute:
+        extra_attributes += [
+            ("node-attribute", constraint_dto.node_attribute),
+        ]
     result.extend(
         indent(
-            _attributes_to_text(constraint_dto.attributes, with_id),
+            _attributes_to_text(
+                constraint_dto.attributes, with_id, extra_attributes
+            ),
             indent_step=INDENT_STEP,
         )
     )
@@ -167,7 +179,7 @@ def plain_constraint_to_cmd(
         return []
     if constraint_dto.node_attribute is not None:
         warn(
-            "Option 'node_attribute' detected in constraint "
+            "Option 'node-attribute' detected in constraint "
             f"'{constraint_dto.attributes.constraint_id}' but not supported by "
             "this command."
             " Command for creating the constraint is omitted."

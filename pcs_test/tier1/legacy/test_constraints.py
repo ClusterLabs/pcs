@@ -908,7 +908,7 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
                 """\
                 Colocation Constraints:
                   resource 'D1' with resource 'D2'
-                    score=-100
+                    score=-100 node-attribute=y
                 """
             ),
         )
