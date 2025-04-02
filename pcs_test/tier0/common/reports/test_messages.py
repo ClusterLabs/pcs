@@ -6162,3 +6162,15 @@ class ConfiguredResourceMissingInStatus(NameBuildTest):
                 "id", ResourceState.STOPPED
             ),
         )
+
+
+class NoStonithMeansWouldBeLeft(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "Requested action lefts the cluster with no enabled means "
+                "to fence nodes, resulting in the cluster not being able to "
+                "recover from certain failure conditions"
+            ),
+            reports.NoStonithMeansWouldBeLeft(),
+        )

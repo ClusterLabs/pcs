@@ -1,6 +1,5 @@
 from typing import (
     List,
-    Mapping,
     Optional,
     Set,
     Tuple,
@@ -26,24 +25,6 @@ from .clone import is_any_clone
 from .group import get_inner_resources as get_group_inner_resources
 from .group import is_group
 from .primitive import is_primitive
-
-
-def are_meta_disabled(meta_attributes: Mapping[str, str]) -> bool:
-    return meta_attributes.get("target-role", "Started").lower() == "stopped"
-
-
-def _can_be_evaluated_as_positive_num(value: str) -> bool:
-    string_wo_leading_zeros = str(value).lstrip("0")
-    return bool(string_wo_leading_zeros) and (
-        string_wo_leading_zeros[0] in list("123456789")
-    )
-
-
-def is_clone_deactivated_by_meta(meta_attributes: Mapping[str, str]) -> bool:
-    return are_meta_disabled(meta_attributes) or any(
-        not _can_be_evaluated_as_positive_num(meta_attributes.get(key, "1"))
-        for key in ["clone-max", "clone-node-max"]
-    )
 
 
 def find_one_resource(
@@ -230,6 +211,18 @@ def disable(resource_el: _Element, id_provider: IdProvider) -> None:
         resource_el,
         {"target-role": "Stopped"},
         id_provider,
+    )
+
+
+def is_disabled(resource_el: _Element) -> bool:
+    """
+    Is the resource disabled by its own meta? (Doesn't check parent resources.)
+    """
+    return (
+        nvpair.get_value(
+            nvpair.META_ATTRIBUTES_TAG, resource_el, "target-role", default=""
+        ).lower()
+        == "stopped"
     )
 
 

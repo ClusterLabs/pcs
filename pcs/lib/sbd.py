@@ -1,6 +1,7 @@
 import re
 from os import path
 from typing import (
+    Mapping,
     Optional,
     Union,
 )
@@ -8,10 +9,12 @@ from typing import (
 from pcs import settings
 from pcs.common import reports
 from pcs.common.services.interfaces import ServiceManagerInterface
+from pcs.common.types import StringSequence
 from pcs.common.validate import is_integer
 from pcs.lib import validate
 from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfFacade
 from pcs.lib.errors import LibraryError
+from pcs.lib.external import CommandRunner
 from pcs.lib.services import is_systemd
 from pcs.lib.tools import (
     dict_to_environment_file,
@@ -64,8 +67,8 @@ class _StonithWatchdogTimeoutValidator(validate.ValuePredicateBase):
 
 
 def _even_number_of_nodes_and_no_qdevice(
-    corosync_conf_facade, node_number_modifier=0
-):
+    corosync_conf_facade: CorosyncConfFacade, node_number_modifier: int = 0
+) -> bool:
     """
     Returns True whenever cluster has no quorum device configured and number of
     nodes + node_number_modifier is even number, False otherwise.
@@ -107,7 +110,9 @@ def is_auto_tie_breaker_needed(
     )
 
 
-def atb_has_to_be_enabled_pre_enable_check(corosync_conf_facade):
+def atb_has_to_be_enabled_pre_enable_check(
+    corosync_conf_facade: CorosyncConfFacade,
+) -> bool:
     """
     Returns True whenever quorum option auto_tie_breaker is needed to be enabled
     for proper working of SBD fencing. False if it is not needed. This function
@@ -146,11 +151,13 @@ def atb_has_to_be_enabled(
     )
 
 
-def validate_new_nodes_devices(nodes_devices):
+def validate_new_nodes_devices(
+    nodes_devices: Mapping[str, StringSequence],
+) -> reports.ReportItemList:
     """
     Validate if SBD devices are set for new nodes when they should be
 
-    dict nodes_devices -- name: node name, key: list of SBD devices
+    nodes_devices -- name: node name, key: list of SBD devices
     """
     if _is_device_set_local():
         return validate_nodes_devices(
@@ -166,16 +173,16 @@ def validate_new_nodes_devices(nodes_devices):
 
 
 def validate_nodes_devices(
-    node_device_dict, adding_nodes_to_sbd_enabled_cluster=False
-):
+    node_device_dict: Mapping[str, StringSequence],
+    adding_nodes_to_sbd_enabled_cluster: bool = False,
+) -> reports.ReportItemList:
     """
     Validates device list for all nodes. If node is present, it checks if there
     is at least one device and at max settings.sbd_max_device_num. Also devices
     have to be specified with absolute path.
-    Returns list of ReportItem
 
-    dict node_device_dict -- name: node name, key: list of SBD devices
-    bool adding_nodes_to_sbd_enabled_cluster -- provides context to reports
+    node_device_dict -- name: node name, key: list of SBD devices
+    adding_nodes_to_sbd_enabled_cluster -- provides context to reports
     """
     report_item_list = []
     for node_label, device_list in node_device_dict.items():
@@ -194,7 +201,9 @@ def validate_nodes_devices(
             report_item_list.append(
                 reports.ReportItem.error(
                     reports.messages.SbdTooManyDevicesForNode(
-                        node_label, device_list, settings.sbd_max_device_num
+                        node_label,
+                        list(device_list),
+                        settings.sbd_max_device_num,
                     )
                 )
             )
@@ -208,7 +217,12 @@ def validate_nodes_devices(
     return report_item_list
 
 
-def create_sbd_config(base_config, node_label, watchdog, device_list=None):
+def create_sbd_config(
+    base_config: Mapping[str, str],
+    node_label: str,
+    watchdog: str,
+    device_list: Optional[StringSequence] = None,
+) -> str:
     # TODO: figure out which name/ring has to be in SBD_OPTS
     config = dict(base_config)
     config["SBD_OPTS"] = f'"-n {node_label}"'
@@ -220,7 +234,7 @@ def create_sbd_config(base_config, node_label, watchdog, device_list=None):
     return dict_to_environment_file(config)
 
 
-def get_default_sbd_config():
+def get_default_sbd_config() -> dict[str, str]:
     """
     Returns default SBD configuration as dictionary.
     """
@@ -235,9 +249,7 @@ def get_default_sbd_config():
 
 def get_local_sbd_config() -> str:
     """
-    Get local SBD configuration.
-
-    Raises LibraryError on any failure.
+    Get local SBD configuration. Raise LibraryError on any failure.
     """
     try:
         with open(settings.sbd_config, "r") as sbd_cfg:
@@ -272,22 +284,18 @@ def is_sbd_installed(service_manager: ServiceManagerInterface) -> bool:
 
 def initialize_block_devices(
     report_processor: reports.ReportProcessor,
-    cmd_runner,
-    device_list,
-    option_dict,
-):
+    cmd_runner: CommandRunner,
+    device_list: StringSequence,
+    option_dict: Mapping[str, str],
+) -> None:
     """
     Initialize devices with specified options in option_dict.
     Raise LibraryError on failure.
 
-    report_processor -- report processor
-    cmd_runner -- CommandRunner
-    device_list -- list of strings
-    option_dict -- dictionary of options and their values
     """
     report_processor.report(
         reports.ReportItem.info(
-            reports.messages.SbdDeviceInitializationStarted(device_list)
+            reports.messages.SbdDeviceInitializationStarted(list(device_list))
         )
     )
 
@@ -304,18 +312,18 @@ def initialize_block_devices(
         raise LibraryError(
             reports.ReportItem.error(
                 reports.messages.SbdDeviceInitializationError(
-                    device_list, std_err
+                    list(device_list), std_err
                 )
             )
         )
     report_processor.report(
         reports.ReportItem.info(
-            reports.messages.SbdDeviceInitializationSuccess(device_list)
+            reports.messages.SbdDeviceInitializationSuccess(list(device_list))
         )
     )
 
 
-def get_local_sbd_device_list():
+def get_local_sbd_device_list() -> list[str]:
     """
     Returns list of devices specified in local SBD config
     """
@@ -339,12 +347,9 @@ def _is_device_set_local() -> bool:
     return len(get_local_sbd_device_list()) > 0
 
 
-def get_device_messages_info(cmd_runner, device):
+def get_device_messages_info(cmd_runner: CommandRunner, device: str) -> str:
     """
     Returns info about messages (string) stored on specified SBD device.
-
-    cmd_runner -- CommandRunner
-    device -- string
     """
     std_out, dummy_std_err, ret_val = cmd_runner.run(
         [settings.sbd_exec, "-d", device, "list"]
@@ -359,12 +364,9 @@ def get_device_messages_info(cmd_runner, device):
     return std_out
 
 
-def get_device_sbd_header_dump(cmd_runner, device):
+def get_device_sbd_header_dump(cmd_runner: CommandRunner, device: str) -> str:
     """
     Returns header dump (string) of specified SBD device.
-
-    cmd_runner -- CommandRunner
-    device -- string
     """
     std_out, dummy_std_err, ret_val = cmd_runner.run(
         [settings.sbd_exec, "-d", device, "dump"]
@@ -401,8 +403,6 @@ def validate_stonith_watchdog_timeout(
 ) -> reports.ReportItemList:
     """
     Check sbd status and config when user is setting stonith-watchdog-timeout
-    Returns error message if the value is unacceptable, otherwise return nothing
-    to set the property
 
     stonith_watchdog_timeout -- value to be validated
     """
@@ -442,14 +442,15 @@ def validate_stonith_watchdog_timeout(
     ).validate({"stonith-watchdog-timeout": stonith_watchdog_timeout})
 
 
-def set_message(cmd_runner, device, node_name, message):
+def set_message(
+    cmd_runner: CommandRunner, device: str, node_name: str, message: str
+) -> None:
     """
     Set message of specified type 'message' on SBD device for node.
 
-    cmd_runner -- CommandRunner
-    device -- string, device path
-    node_name -- string, name of node for which message should be set
-    message -- string, message type
+    device -- device path
+    node_name -- name of node for which message should be set
+    message -- message type
     """
     dummy_std_out, std_err, ret_val = cmd_runner.run(
         [settings.sbd_exec, "-d", device, "message", node_name, message]
@@ -464,7 +465,9 @@ def set_message(cmd_runner, device, node_name, message):
         )
 
 
-def get_available_watchdogs(cmd_runner):
+def get_available_watchdogs(
+    cmd_runner: CommandRunner,
+) -> dict[str, dict[str, str]]:
     regex = (
         r"\[\d+\] (?P<watchdog>.+)$\n"
         r"Identity: (?P<identity>.+)$\n"
@@ -488,7 +491,9 @@ def get_available_watchdogs(cmd_runner):
     }
 
 
-def test_watchdog(cmd_runner, watchdog=None):
+def test_watchdog(
+    cmd_runner: CommandRunner, watchdog: Optional[str] = None
+) -> None:
     cmd = [settings.sbd_exec, "test-watchdog"]
     if watchdog:
         cmd.extend(["-w", watchdog])

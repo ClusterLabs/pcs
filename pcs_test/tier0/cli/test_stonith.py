@@ -171,6 +171,40 @@ class SbdEnable(TestCase):
         )
 
 
+class SbdDisable(TestCase):
+    def setUp(self):
+        self.lib = mock.Mock(spec_set=["sbd"])
+        self.sbd = mock.Mock(spec_set=["disable_sbd"])
+        self.lib.sbd = self.sbd
+
+    def _call_cmd(self, argv=None, modifiers=None):
+        stonith.sbd_disable(
+            self.lib, argv or [], _dict_to_modifiers(modifiers or {})
+        )
+
+    def test_no_options(self):
+        self._call_cmd()
+        self.lib.sbd.disable_sbd.assert_called_once_with(False, set())
+
+    def test_skip_offline(self):
+        self._call_cmd(modifiers={"skip-offline": ""})
+        self.lib.sbd.disable_sbd.assert_called_once_with(
+            True, {reports.codes.SKIP_OFFLINE_NODES}
+        )
+
+    def test_force(self):
+        self._call_cmd(modifiers={"force": ""})
+        self.lib.sbd.disable_sbd.assert_called_once_with(
+            False, {reports.codes.FORCE}
+        )
+
+    def test_all_modifiers(self):
+        self._call_cmd(modifiers={"skip-offline": "", "force": ""})
+        self.lib.sbd.disable_sbd.assert_called_once_with(
+            True, {reports.codes.SKIP_OFFLINE_NODES, reports.codes.FORCE}
+        )
+
+
 class SbdDeviceSetup(TestCase):
     def setUp(self):
         self.lib = mock.Mock(spec_set=["sbd"])
