@@ -541,8 +541,9 @@ def find_tag_elements_by_ids(
     report_list: ReportItemList = []
     for tag_id in tag_id_list:
         searcher = ElementSearcher(TAG_TAG, tag_id, tags_section)
-        if searcher.element_found():
-            element_list.append(searcher.get_element())
+        found_element = searcher.get_element()
+        if found_element is not None:
+            element_list.append(found_element)
         else:
             report_list.extend(searcher.get_errors())
 
@@ -695,8 +696,9 @@ def expand_tag(
             searcher = ElementSearcher(
                 only_expand_types, element_id, conf_section
             )
-            if searcher.element_found():
-                expanded_elements.append(searcher.get_element())
+            found_element = searcher.get_element()
+            if found_element is not None:
+                expanded_elements.append(found_element)
         else:
             expanded_elements.extend(
                 get_configuration_elements_by_id(conf_section, element_id)

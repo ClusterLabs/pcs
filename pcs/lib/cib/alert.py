@@ -1,47 +1,68 @@
-from functools import partial
-from typing import (
-    Optional,
-    cast,
-)
+from typing import Any, Optional, cast
 
 from lxml import etree
 from lxml.etree import _Element
 
 from pcs.common import reports
+from pcs.common.pacemaker.alert import (
+    CibAlertDto,
+    CibAlertRecipientDto,
+    CibAlertSelectAttributeDto,
+    CibAlertSelectDto,
+)
+from pcs.lib.cib import nvpair_multi, rule
 from pcs.lib.cib.nvpair import get_nvset
 from pcs.lib.cib.tools import (
+    ElementSearcher,
     IdProvider,
     create_subelement_id,
-    find_element_by_tag_and_id,
     get_alerts,
 )
+from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.values import validate_id_reports
-from pcs.lib.xml_tools import get_sub_element
+from pcs.lib.xml_tools import (
+    get_sub_element,
+    remove_one_element,
+    update_attribute_remove_empty,
+)
 
 TAG_ALERT = "alert"
 TAG_RECIPIENT = "recipient"
 
-find_alert = partial(find_element_by_tag_and_id, TAG_ALERT)
-find_recipient = partial(find_element_by_tag_and_id, TAG_RECIPIENT)
+
+def get_all_alert_elements(tree: _Element) -> list[_Element]:
+    return tree.findall(TAG_ALERT)
+
+
+def find_alert(context_el: _Element, alert_id: str) -> _Element:
+    searcher = ElementSearcher(TAG_ALERT, alert_id, context_el)
+    found_element = searcher.get_element()
+    if found_element is not None:
+        return found_element
+    raise LibraryError(*searcher.get_errors())
+
+
+def find_recipient(context_el: _Element, recipient_id: str) -> _Element:
+    searcher = ElementSearcher(TAG_RECIPIENT, recipient_id, context_el)
+    found_element = searcher.get_element()
+    if found_element is not None:
+        return found_element
+    raise LibraryError(*searcher.get_errors())
 
 
 def _update_optional_attribute(
     element: _Element, attribute: str, value: Optional[str]
 ) -> None:
     """
-    Update optional attribute of element. Remove existing element if value
-    is empty.
+    Set value of an optional attribute, remove the attribute on empty value
 
-    element -- parent element of specified attribute
+    element -- element to be updated
     attribute -- attribute to be updated
-    value -- new value
+    value -- new value of the attribute
     """
     if value is None:
         return
-    if value:
-        element.set(attribute, value)
-    elif attribute in element.attrib:
-        del element.attrib[attribute]
+    update_attribute_remove_empty(element, attribute, value)
 
 
 def _validate_recipient_value_is_unique(
@@ -82,7 +103,8 @@ def _validate_recipient_value_is_unique(
 
 def validate_create_alert(
     id_provider: IdProvider,
-    path: str,
+    # should be str, see lib.commands.alert.create_alert
+    path: Optional[str],
     alert_id: Optional[str] = None,
 ) -> reports.ReportItemList:
     """
@@ -115,7 +137,7 @@ def create_alert(
     description: Optional[str] = None,
 ) -> _Element:
     """
-    Create new alert element. Returns newly created element.
+    Create new alert element and return it
 
     tree -- cib etree node
     id_provider -- elements' ids generator
@@ -135,7 +157,12 @@ def create_alert(
     return alert_el
 
 
-def update_alert(tree, alert_id, path, description=None):
+def update_alert(
+    tree: _Element,
+    alert_id: str,
+    path: Optional[str],
+    description: Optional[str] = None,
+) -> _Element:
     """
     Update existing alert. Return updated alert element.
     Raises LibraryError if alert with specified id doesn't exist.
@@ -153,7 +180,7 @@ def update_alert(tree, alert_id, path, description=None):
     return alert
 
 
-def remove_alert(tree, alert_id):
+def remove_alert(tree: _Element, alert_id: str) -> None:
     """
     Remove alert with specified id.
     Raises LibraryError if alert with specified id doesn't exist.
@@ -161,14 +188,14 @@ def remove_alert(tree, alert_id):
     tree -- cib etree node
     alert_id -- id of alert which should be removed
     """
-    alert = find_alert(get_alerts(tree), alert_id)
-    alert.getparent().remove(alert)
+    remove_one_element(find_alert(get_alerts(tree), alert_id))
 
 
 def validate_add_recipient(
     id_provider: IdProvider,
     alert_el: _Element,
-    recipient_value: str,
+    # should be str, see lib.commands.alert.add_recipient
+    recipient_value: Optional[str],
     recipient_id: Optional[str] = None,
     allow_same_value: bool = False,
 ) -> reports.ReportItemList:
@@ -189,21 +216,21 @@ def validate_add_recipient(
                 reports.messages.RequiredOptionsAreMissing(["value"])
             )
         )
+    else:
+        report_list.extend(
+            _validate_recipient_value_is_unique(
+                alert_el,
+                recipient_value,
+                recipient_id,
+                allow_duplicity=allow_same_value,
+            )
+        )
 
     if recipient_id:
         report_list.extend(
             validate_id_reports(recipient_id, description="recipient-id")
         )
         report_list.extend(id_provider.book_ids(recipient_id))
-
-    report_list.extend(
-        _validate_recipient_value_is_unique(
-            alert_el,
-            recipient_value,
-            recipient_id,
-            allow_duplicity=allow_same_value,
-        )
-    )
 
     return report_list
 
@@ -291,7 +318,7 @@ def update_recipient(
     return recipient_el
 
 
-def remove_recipient(tree, recipient_id):
+def remove_recipient(tree: _Element, recipient_id: str) -> None:
     """
     Remove specified recipient.
     Raises LibraryError if recipient doesn't exist.
@@ -299,11 +326,82 @@ def remove_recipient(tree, recipient_id):
     tree -- cib etree node
     recipient_id -- id of recipient to be removed
     """
-    recipient = find_recipient(get_alerts(tree), recipient_id)
-    recipient.getparent().remove(recipient)
+    remove_one_element(find_recipient(get_alerts(tree), recipient_id))
 
 
-def get_all_recipients(alert):
+def _recipient_el_to_dto(
+    recipient_el: _Element,
+    rule_eval: Optional[rule.RuleInEffectEval] = None,
+) -> CibAlertRecipientDto:
+    if rule_eval is None:
+        rule_eval = rule.RuleInEffectEvalDummy()
+    return CibAlertRecipientDto(
+        id=str(recipient_el.attrib["id"]),
+        value=str(recipient_el.attrib["value"]),
+        description=recipient_el.get("description"),
+        meta_attributes=[
+            nvpair_multi.nvset_element_to_dto(nvset, rule_eval)
+            for nvset in nvpair_multi.find_nvsets(
+                recipient_el, nvpair_multi.NVSET_META
+            )
+        ],
+        instance_attributes=[
+            nvpair_multi.nvset_element_to_dto(nvset, rule_eval)
+            for nvset in nvpair_multi.find_nvsets(
+                recipient_el, nvpair_multi.NVSET_INSTANCE
+            )
+        ],
+    )
+
+
+def _select_el_to_dto(select_el: _Element) -> CibAlertSelectDto:
+    return CibAlertSelectDto(
+        nodes=(select_el.find("select_nodes") is not None),
+        fencing=(select_el.find("select_fencing") is not None),
+        resources=(select_el.find("select_resources") is not None),
+        attributes=(select_el.find("select_attributes") is not None),
+        attributes_select=[
+            CibAlertSelectAttributeDto(
+                str(attr_el.attrib["id"]), str(attr_el.attrib["name"])
+            )
+            for attr_el in select_el.iterfind("select_attributes/attribute")
+        ],
+    )
+
+
+def alert_el_to_dto(
+    alert_el: _Element,
+    rule_eval: Optional[rule.RuleInEffectEval] = None,
+) -> CibAlertDto:
+    if rule_eval is None:
+        rule_eval = rule.RuleInEffectEvalDummy()
+    select_el = alert_el.find("select")
+    return CibAlertDto(
+        id=str(alert_el.attrib["id"]),
+        path=str(alert_el.attrib["path"]),
+        description=alert_el.get("description"),
+        recipients=[
+            _recipient_el_to_dto(recipient_el)
+            for recipient_el in alert_el.iterfind(TAG_RECIPIENT)
+        ],
+        select=_select_el_to_dto(select_el) if select_el is not None else None,
+        meta_attributes=[
+            nvpair_multi.nvset_element_to_dto(nvset, rule_eval)
+            for nvset in nvpair_multi.find_nvsets(
+                alert_el, nvpair_multi.NVSET_META
+            )
+        ],
+        instance_attributes=[
+            nvpair_multi.nvset_element_to_dto(nvset, rule_eval)
+            for nvset in nvpair_multi.find_nvsets(
+                alert_el, nvpair_multi.NVSET_INSTANCE
+            )
+        ],
+    )
+
+
+# DEPRECATED, used only in get_all_alerts_dict
+def get_all_recipients_dict(alert: _Element) -> list[dict[str, Any]]:
     """
     Returns list of all recipient of specified alert. Format:
     [
@@ -334,7 +432,8 @@ def get_all_recipients(alert):
     ]
 
 
-def get_all_alerts(tree):
+# DEPRECATED, use alert_el_to_dto + get_all_alert_elements
+def get_all_alerts_dict(tree: _Element) -> list[dict[str, Any]]:
     """
     Returns list of all alerts specified in tree. Format:
     [
@@ -361,7 +460,7 @@ def get_all_alerts(tree):
             "meta_attributes": get_nvset(
                 get_sub_element(alert, "meta_attributes")
             ),
-            "recipient_list": get_all_recipients(alert),
+            "recipient_list": get_all_recipients_dict(alert),
         }
         for alert in get_alerts(tree).findall("./alert")
     ]

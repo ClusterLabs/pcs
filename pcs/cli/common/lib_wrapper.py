@@ -140,6 +140,7 @@ def load_module(env, middleware_factory, name):  # noqa: PLR0911, PLR0912
                 "update_recipient": alert.update_recipient,
                 "remove_recipient": alert.remove_recipient,
                 "get_all_alerts": alert.get_all_alerts,
+                "get_config_dto": alert.get_config_dto,
             },
         )
 

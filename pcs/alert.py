@@ -8,7 +8,6 @@ from pcs.cli.common.parse_args import (
     KeyValueParser,
     group_by_keywords,
 )
-from pcs.common.str_tools import indent
 
 
 def alert_add(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
@@ -144,75 +143,6 @@ def recipient_remove(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
         raise CmdLineInputError()
 
     lib.alert.remove_recipient(argv)
-
-
-def _nvset_to_str(nvset_obj):
-    # TODO duplicite to pcs.resource._nvpairs_strings
-    key_val = {
-        nvpair_obj["name"]: nvpair_obj["value"] for nvpair_obj in nvset_obj
-    }
-    output = []
-    for name, value in sorted(key_val.items()):
-        safe_value = f'"{value}"' if " " in value else value
-        output.append(f"{name}={safe_value}")
-    return " ".join(output)
-
-
-def __description_attributes_to_str(obj):
-    output = []
-    if obj.get("description"):
-        output.append(f"Description: {obj['description']}")
-    if obj.get("instance_attributes"):
-        attributes = _nvset_to_str(obj["instance_attributes"])
-        output.append(f"Options: {attributes}")
-    if obj.get("meta_attributes"):
-        attributes = _nvset_to_str(obj["meta_attributes"])
-        output.append(f"Meta options: {attributes}")
-    return output
-
-
-def _alert_to_str(alert):
-    content = []
-    content.extend(__description_attributes_to_str(alert))
-
-    recipients = []
-    for recipient in alert.get("recipient_list", []):
-        recipients.extend(_recipient_to_str(recipient))
-
-    if recipients:
-        content.append("Recipients:")
-        content.extend(indent(recipients, 1))
-
-    return [f"Alert: {alert['id']} (path={alert['path']})"] + indent(content, 1)
-
-
-def _recipient_to_str(recipient):
-    return [
-        f"Recipient: {recipient['id']} (value={recipient['value']})"
-    ] + indent(__description_attributes_to_str(recipient), 1)
-
-
-def print_alert_config(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
-    """
-    Options:
-      * -f - CIB file (in lib wrapper)
-    """
-    modifiers.ensure_only_supported("-f")
-    if argv:
-        raise CmdLineInputError()
-    lines = alert_config_lines(lib)
-    if lines:
-        print("\n".join(lines))
-
-
-def alert_config_lines(lib: Any) -> list[str]:
-    lines = []
-    alert_list = lib.alert.get_all_alerts()
-    if alert_list:
-        lines.append("Alerts:")
-        for alert in alert_list:
-            lines.extend(indent(_alert_to_str(alert), 1))
-    return lines
 
 
 def print_alerts_in_json(

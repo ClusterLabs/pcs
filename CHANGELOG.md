@@ -10,6 +10,7 @@
   driver ([RHEL-76176])
 - Prevent removing or disabling stonith devices or disabling SBD if the cluster
   would be left with disabled SBD and no stonith devices ([RHEL-66607])
+- Support for exporting alerts in `json` and `cmd` formats ([RHEL-44347])
 
 ### Fixed
 - Command `pcs resource restart` allows restarting bundle instances (broken
@@ -22,6 +23,7 @@
 - Display node-attribute in colocation constraints configuration ([RHEL-81938])
 
 [RHEL-22423]: https://issues.redhat.com/browse/RHEL-22423
+[RHEL-44347]: https://issues.redhat.com/browse/RHEL-44347
 [RHEL-63186]: https://issues.redhat.com/browse/RHEL-63186
 [RHEL-66607]: https://issues.redhat.com/browse/RHEL-66607
 [RHEL-76176]: https://issues.redhat.com/browse/RHEL-76176

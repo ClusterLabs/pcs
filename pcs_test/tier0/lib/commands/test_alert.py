@@ -1,11 +1,14 @@
 import logging
-from functools import partial
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
 import pcs.lib.commands.alert as cmd_alert
+from pcs.common.pacemaker.alert import (
+    CibAlertDto,
+    CibAlertListDto,
+    CibAlertRecipientDto,
+    CibAlertSelectDto,
+)
+from pcs.common.pacemaker.nvset import CibNvpairDto, CibNvsetDto
 from pcs.common.reports import ReportItemSeverity as Severities
 from pcs.common.reports import codes as report_codes
 from pcs.lib.env import LibraryEnvironment
@@ -13,11 +16,6 @@ from pcs.lib.env import LibraryEnvironment
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.custom_mock import MockLibraryReportProcessor
-
-get_env_tools = partial(
-    get_env_tools,
-    exception_reports_in_processor_by_default=False,
-)
 
 
 class CreateAlertTest(TestCase):
@@ -212,6 +210,7 @@ class UpdateAlertTest(TestCase):
                     None,
                 ),
             ],
+            expected_in_processor=False,
         )
 
 
@@ -313,6 +312,7 @@ class AddRecipientTest(TestCase):
                     expected_types=["alert"],
                 )
             ],
+            expected_in_processor=False,
         )
 
     def test_value_not_defined(self):
@@ -541,6 +541,7 @@ class UpdateRecipientTest(TestCase):
                     context_type="alerts",
                 )
             ],
+            expected_in_processor=False,
         )
 
     def test_update_duplicity_allowed(self):
@@ -726,8 +727,139 @@ class RemoveRecipientTest(TestCase):
         cmd_alert.remove_recipient(self.env_assist.get_env(), [])
 
 
+class GetConfigDto(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+
+    def test_success_no_alerts(self):
+        self.config.runner.cib.load()
+        self.assertEqual(
+            cmd_alert.get_config_dto(self.env_assist.get_env()),
+            CibAlertListDto([]),
+        )
+
+    def test_success(self):
+        self.config.runner.cib.load(
+            optional_in_conf="""
+            <alerts>
+                <alert id="alert-all" path="/path/all" description="all options">
+                    <recipient id="alert-all-recipient" value="value-all"
+                        description="all options recipient"
+                    >
+                        <instance_attributes>
+                            <nvpair id="alert-all-recipient-ia"
+                                name="all-iar1-name" value="all-iar1-value"
+                            />
+                        </instance_attributes>
+                        <meta_attributes>
+                            <nvpair id="alert-all-recipient-ma"
+                                name="all-mar1-name" value="all-mar1-value" />
+                        </meta_attributes>
+                    </recipient>
+                    <instance_attributes>
+                        <nvpair id="alert-all-ia"
+                            name="all-iaa1-name" value="all-iaa1-value"
+                        />
+                    </instance_attributes>
+                    <meta_attributes>
+                        <nvpair id="alert-all-ma"
+                            name="all-maa1-name" value="all-maa1-value"
+                        />
+                    </meta_attributes>
+                    <select>
+                        <select_nodes />
+                        <select_attributes />
+                    </select>
+                </alert>
+            </alerts>
+            """
+        )
+        self.assertEqual(
+            cmd_alert.get_config_dto(self.env_assist.get_env()),
+            CibAlertListDto(
+                [
+                    CibAlertDto(
+                        id="alert-all",
+                        path="/path/all",
+                        description="all options",
+                        recipients=[
+                            CibAlertRecipientDto(
+                                id="alert-all-recipient",
+                                value="value-all",
+                                description="all options recipient",
+                                meta_attributes=[
+                                    CibNvsetDto(
+                                        id="",
+                                        options={},
+                                        rule=None,
+                                        nvpairs=[
+                                            CibNvpairDto(
+                                                id="alert-all-recipient-ma",
+                                                name="all-mar1-name",
+                                                value="all-mar1-value",
+                                            )
+                                        ],
+                                    )
+                                ],
+                                instance_attributes=[
+                                    CibNvsetDto(
+                                        id="",
+                                        options={},
+                                        rule=None,
+                                        nvpairs=[
+                                            CibNvpairDto(
+                                                id="alert-all-recipient-ia",
+                                                name="all-iar1-name",
+                                                value="all-iar1-value",
+                                            )
+                                        ],
+                                    )
+                                ],
+                            )
+                        ],
+                        select=CibAlertSelectDto(
+                            nodes=True,
+                            fencing=False,
+                            resources=False,
+                            attributes=True,
+                            attributes_select=[],
+                        ),
+                        meta_attributes=[
+                            CibNvsetDto(
+                                id="",
+                                options={},
+                                rule=None,
+                                nvpairs=[
+                                    CibNvpairDto(
+                                        id="alert-all-ma",
+                                        name="all-maa1-name",
+                                        value="all-maa1-value",
+                                    )
+                                ],
+                            )
+                        ],
+                        instance_attributes=[
+                            CibNvsetDto(
+                                id="",
+                                options={},
+                                rule=None,
+                                nvpairs=[
+                                    CibNvpairDto(
+                                        id="alert-all-ia",
+                                        name="all-iaa1-name",
+                                        value="all-iaa1-value",
+                                    )
+                                ],
+                            )
+                        ],
+                    ),
+                ]
+            ),
+        )
+
+
 @mock.patch.object(LibraryEnvironment, "get_cib")
-@mock.patch("pcs.lib.cib.alert.get_all_alerts")
+@mock.patch("pcs.lib.cib.alert.get_all_alerts_dict")
 class GetAllAlertsTest(TestCase):
     def setUp(self):
         self.mock_log = mock.MagicMock(spec_set=logging.Logger)

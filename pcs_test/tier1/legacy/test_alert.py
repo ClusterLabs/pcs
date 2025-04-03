@@ -1,10 +1,10 @@
 import unittest
+from textwrap import dedent
 
 from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.misc import (
     ParametrizedTestMetaClass,
     get_tmp_file,
-    outdent,
     write_file_to_tmpfile,
 )
 from pcs_test.tools.misc import get_test_resource as rc
@@ -36,12 +36,16 @@ class CreateAlertTest(PcsAlertTest):
         self.assert_pcs_success("alert create path=test2".split())
         self.assert_pcs_success(
             "alert config".split(),
-            """\
-Alerts:
- Alert: alert (path=test)
- Alert: alert-1 (path=test)
- Alert: alert-2 (path=test2)
-""",
+            dedent(
+                """\
+                Alert: alert
+                  Path: test
+                Alert: alert-1
+                  Path: test
+                Alert: alert-2
+                  Path: test2
+                """
+            ),
         )
 
     def test_create_multiple_with_id(self):
@@ -55,14 +59,18 @@ Alerts:
         )
         self.assert_pcs_success(
             "alert config".split(),
-            """\
-Alerts:
- Alert: alert1 (path=test)
- Alert: alert2 (path=test)
-  Description: desc
- Alert: alert3 (path=test2)
-  Description: desc2
-""",
+            dedent(
+                """\
+                Alert: alert1
+                  Path: test
+                Alert: alert2
+                  Description: desc
+                  Path: test
+                Alert: alert3
+                  Description: desc2
+                  Path: test2
+                """
+            ),
         )
 
     def test_create_with_options(self):
@@ -74,13 +82,19 @@ Alerts:
         )
         self.assert_pcs_success(
             "alert config".split(),
-            """\
-Alerts:
- Alert: alert1 (path=test)
-  Description: desc
-  Options: opt1=val1 opt2=val2
-  Meta options: m1=v1 m2=v2
-""",
+            dedent(
+                """\
+                Alert: alert1
+                  Description: desc
+                  Path: test
+                  Attributes: alert1-instance_attributes
+                    opt1=val1
+                    opt2=val2
+                  Meta Attributes: alert1-meta_attributes
+                    m1=v1
+                    m2=v2
+                """
+            ),
         )
 
     def test_already_exists(self):
@@ -91,10 +105,12 @@ Alerts:
         )
         self.assert_pcs_success(
             "alert config".split(),
-            """\
-Alerts:
- Alert: alert1 (path=test)
-""",
+            dedent(
+                """\
+                Alert: alert1
+                  Path: test
+                """
+            ),
         )
 
     def test_path_is_required(self):
@@ -115,13 +131,19 @@ class UpdateAlertTest(PcsAlertTest):
         )
         self.assert_pcs_success(
             "alert config".split(),
-            """\
-Alerts:
- Alert: alert1 (path=test)
-  Description: desc
-  Options: opt1=val1 opt3=val3
-  Meta options: m1=v1 m3=v3
-""",
+            dedent(
+                """\
+                Alert: alert1
+                  Description: desc
+                  Path: test
+                  Attributes: alert1-instance_attributes
+                    opt1=val1
+                    opt3=val3
+                  Meta Attributes: alert1-meta_attributes
+                    m1=v1
+                    m3=v3
+                """
+            ),
         )
         self.assert_pcs_success(
             (
@@ -131,13 +153,19 @@ Alerts:
         )
         self.assert_pcs_success(
             "alert config".split(),
-            """\
-Alerts:
- Alert: alert1 (path=/new/path)
-  Description: new_desc
-  Options: opt2=test opt3=1
-  Meta options: m2=v m3=3
-""",
+            dedent(
+                """\
+                Alert: alert1
+                  Description: new_desc
+                  Path: /new/path
+                  Attributes: alert1-instance_attributes
+                    opt2=test
+                    opt3=1
+                  Meta Attributes: alert1-meta_attributes
+                    m2=v
+                    m3=3
+                """
+            ),
         )
 
     def test_not_existing_alert(self):
@@ -153,7 +181,7 @@ class DeleteRemoveAlertTest(PcsAlertTest):
     def _test_usage(self):
         self.assert_pcs_fail(
             ["alert", self.command],
-            stderr_start=outdent(
+            stderr_start=dedent(
                 f"""
                 Usage: pcs alert <command>
                     {self.command} <"""
@@ -172,10 +200,10 @@ class DeleteRemoveAlertTest(PcsAlertTest):
         self.assert_pcs_success("alert create path=test id=alert1".split())
         self.assert_pcs_success(
             "alert config".split(),
-            outdent(
+            dedent(
                 """\
-                Alerts:
-                 Alert: alert1 (path=test)
+                Alert: alert1
+                  Path: test
                 """
             ),
         )
@@ -190,22 +218,24 @@ class DeleteRemoveAlertTest(PcsAlertTest):
         self.assert_pcs_success("alert create path=test id=alert3".split())
         self.assert_pcs_success(
             "alert config".split(),
-            outdent(
+            dedent(
                 """\
-                Alerts:
-                 Alert: alert1 (path=test)
-                 Alert: alert2 (path=test)
-                 Alert: alert3 (path=test)
+                Alert: alert1
+                  Path: test
+                Alert: alert2
+                  Path: test
+                Alert: alert3
+                  Path: test
                 """
             ),
         )
         self.assert_pcs_success(["alert", self.command, "alert1", "alert3"])
         self.assert_pcs_success(
             "alert config".split(),
-            outdent(
+            dedent(
                 """\
-                Alerts:
-                 Alert: alert2 (path=test)
+                Alert: alert2
+                  Path: test
                 """
             ),
         )
@@ -228,22 +258,27 @@ class AddRecipientTest(PcsAlertTest):
         self.assert_pcs_success("alert create path=test".split())
         self.assert_pcs_success(
             "alert config".split(),
-            """\
-Alerts:
- Alert: alert (path=test)
-""",
+            dedent(
+                """\
+                Alert: alert
+                  Path: test
+                """
+            ),
         )
         self.assert_pcs_success(
             "alert recipient add alert value=rec_value".split()
         )
         self.assert_pcs_success(
             "alert config".split(),
-            """\
-Alerts:
- Alert: alert (path=test)
-  Recipients:
-   Recipient: alert-recipient (value=rec_value)
-""",
+            dedent(
+                """\
+                Alert: alert
+                  Path: test
+                  Recipients:
+                    Recipient: alert-recipient
+                      Value: rec_value
+                """
+            ),
         )
         self.assert_pcs_success(
             (
@@ -253,16 +288,24 @@ Alerts:
         )
         self.assert_pcs_success(
             "alert config".split(),
-            """\
-Alerts:
- Alert: alert (path=test)
-  Recipients:
-   Recipient: alert-recipient (value=rec_value)
-   Recipient: my-recipient (value=rec_value2)
-    Description: description
-    Options: o1=1 o2=2
-    Meta options: m1=v1 m2=v2
-""",
+            dedent(
+                """\
+                Alert: alert
+                  Path: test
+                  Recipients:
+                    Recipient: alert-recipient
+                      Value: rec_value
+                    Recipient: my-recipient
+                      Description: description
+                      Value: rec_value2
+                      Attributes: my-recipient-instance_attributes
+                        o1=1
+                        o2=2
+                      Meta Attributes: my-recipient-meta_attributes
+                        m1=v1
+                        m2=v2
+                """
+            ),
         )
 
     def test_already_exists(self):
@@ -293,12 +336,15 @@ Alerts:
         )
         self.assert_pcs_success(
             "alert config".split(),
-            """\
-Alerts:
- Alert: alert (path=test)
-  Recipients:
-   Recipient: rec (value=rec_value)
-""",
+            dedent(
+                """\
+                Alert: alert
+                  Path: test
+                  Recipients:
+                    Recipient: rec
+                      Value: rec_value
+                """
+            ),
         )
         self.assert_pcs_success(
             "alert recipient add alert value=rec_value --force".split(),
@@ -306,13 +352,17 @@ Alerts:
         )
         self.assert_pcs_success(
             "alert config".split(),
-            """\
-Alerts:
- Alert: alert (path=test)
-  Recipients:
-   Recipient: rec (value=rec_value)
-   Recipient: alert-recipient (value=rec_value)
-""",
+            dedent(
+                """\
+                Alert: alert
+                  Path: test
+                  Recipients:
+                    Recipient: rec
+                      Value: rec_value
+                    Recipient: alert-recipient
+                      Value: rec_value
+                """
+            ),
         )
 
     def test_no_value(self):
@@ -335,15 +385,22 @@ class UpdateRecipientAlert(PcsAlertTest):
         )
         self.assert_pcs_success(
             "alert config".split(),
-            """\
-Alerts:
- Alert: alert (path=test)
-  Recipients:
-   Recipient: alert-recipient (value=rec_value)
-    Description: description
-    Options: o1=1 o3=3
-    Meta options: m1=v1 m3=v3
-""",
+            dedent(
+                """\
+                Alert: alert
+                  Path: test
+                  Recipients:
+                    Recipient: alert-recipient
+                      Description: description
+                      Value: rec_value
+                      Attributes: alert-recipient-instance_attributes
+                        o1=1
+                        o3=3
+                      Meta Attributes: alert-recipient-meta_attributes
+                        m1=v1
+                        m3=v3
+                """
+            ),
         )
         self.assert_pcs_success(
             (
@@ -353,30 +410,44 @@ Alerts:
         )
         self.assert_pcs_success(
             "alert config".split(),
-            """\
-Alerts:
- Alert: alert (path=test)
-  Recipients:
-   Recipient: alert-recipient (value=new)
-    Description: desc
-    Options: o2=v2 o3=3
-    Meta options: m2=2 m3=3
-""",
+            dedent(
+                """\
+                Alert: alert
+                  Path: test
+                  Recipients:
+                    Recipient: alert-recipient
+                      Description: desc
+                      Value: new
+                      Attributes: alert-recipient-instance_attributes
+                        o2=v2
+                        o3=3
+                      Meta Attributes: alert-recipient-meta_attributes
+                        m2=2
+                        m3=3
+                """
+            ),
         )
         self.assert_pcs_success(
             "alert recipient update alert-recipient value=new".split()
         )
         self.assert_pcs_success(
             "alert config".split(),
-            """\
-Alerts:
- Alert: alert (path=test)
-  Recipients:
-   Recipient: alert-recipient (value=new)
-    Description: desc
-    Options: o2=v2 o3=3
-    Meta options: m2=2 m3=3
-""",
+            dedent(
+                """\
+                Alert: alert
+                  Path: test
+                  Recipients:
+                    Recipient: alert-recipient
+                      Description: desc
+                      Value: new
+                      Attributes: alert-recipient-instance_attributes
+                        o2=v2
+                        o3=3
+                      Meta Attributes: alert-recipient-meta_attributes
+                        m2=2
+                        m3=3
+                """
+            ),
         )
 
     def test_value_exists(self):
@@ -387,13 +458,17 @@ Alerts:
         self.assert_pcs_success("alert recipient add alert value=value".split())
         self.assert_pcs_success(
             "alert config".split(),
-            """\
-Alerts:
- Alert: alert (path=test)
-  Recipients:
-   Recipient: alert-recipient (value=rec_value)
-   Recipient: alert-recipient-1 (value=value)
-""",
+            dedent(
+                """\
+                Alert: alert
+                  Path: test
+                  Recipients:
+                    Recipient: alert-recipient
+                      Value: rec_value
+                    Recipient: alert-recipient-1
+                      Value: value
+                """
+            ),
         )
         self.assert_pcs_fail(
             "alert recipient update alert-recipient value=value".split(),
@@ -408,13 +483,17 @@ Alerts:
         )
         self.assert_pcs_success(
             "alert config".split(),
-            """\
-Alerts:
- Alert: alert (path=test)
-  Recipients:
-   Recipient: alert-recipient (value=value)
-   Recipient: alert-recipient-1 (value=value)
-""",
+            dedent(
+                """\
+                Alert: alert
+                  Path: test
+                  Recipients:
+                    Recipient: alert-recipient
+                      Value: value
+                    Recipient: alert-recipient-1
+                      Value: value
+                """
+            ),
         )
 
     def test_value_same_as_previous(self):
@@ -424,24 +503,30 @@ Alerts:
         )
         self.assert_pcs_success(
             "alert config".split(),
-            """\
-Alerts:
- Alert: alert (path=test)
-  Recipients:
-   Recipient: alert-recipient (value=rec_value)
-""",
+            dedent(
+                """\
+                Alert: alert
+                  Path: test
+                  Recipients:
+                    Recipient: alert-recipient
+                      Value: rec_value
+                """
+            ),
         )
         self.assert_pcs_success(
             "alert recipient update alert-recipient value=rec_value".split()
         )
         self.assert_pcs_success(
             "alert config".split(),
-            """\
-Alerts:
- Alert: alert (path=test)
-  Recipients:
-   Recipient: alert-recipient (value=rec_value)
-""",
+            dedent(
+                """\
+                Alert: alert
+                  Path: test
+                  Recipients:
+                    Recipient: alert-recipient
+                      Value: rec_value
+                """
+            ),
         )
 
     def test_no_recipient(self):
@@ -467,7 +552,7 @@ class DeleteRemoveRecipientTest(PcsAlertTest):
     def _test_usage(self):
         self.assert_pcs_fail(
             ["alert", "recipient", self.command],
-            stderr_start=outdent(
+            stderr_start=dedent(
                 f"""
                 Usage: pcs alert <command>
                     recipient {self.command} <"""
@@ -481,22 +566,23 @@ class DeleteRemoveRecipientTest(PcsAlertTest):
         )
         self.assert_pcs_success(
             "alert config".split(),
-            outdent(
+            dedent(
                 """\
-                Alerts:
-                 Alert: alert (path=test)
+                Alert: alert
+                  Path: test
                   Recipients:
-                   Recipient: rec (value=rec_value)
+                    Recipient: rec
+                      Value: rec_value
                 """
             ),
         )
         self.assert_pcs_success(["alert", "recipient", self.command, "rec"])
         self.assert_pcs_success(
             "alert config".split(),
-            outdent(
+            dedent(
                 """\
-                Alerts:
-                 Alert: alert (path=test)
+                Alert: alert
+                  Path: test
                 """
             ),
         )
@@ -518,17 +604,22 @@ class DeleteRemoveRecipientTest(PcsAlertTest):
         )
         self.assert_pcs_success(
             "alert config".split(),
-            outdent(
+            dedent(
                 """\
-                Alerts:
-                 Alert: alert1 (path=test)
+                Alert: alert1
+                  Path: test
                   Recipients:
-                   Recipient: rec1 (value=rec_value1)
-                   Recipient: rec2 (value=rec_value2)
-                 Alert: alert2 (path=test)
+                    Recipient: rec1
+                      Value: rec_value1
+                    Recipient: rec2
+                      Value: rec_value2
+                Alert: alert2
+                  Path: test
                   Recipients:
-                   Recipient: rec3 (value=rec_value3)
-                   Recipient: rec4 (value=rec_value4)
+                    Recipient: rec3
+                      Value: rec_value3
+                    Recipient: rec4
+                      Value: rec_value4
                 """
             ),
         )
@@ -537,13 +628,15 @@ class DeleteRemoveRecipientTest(PcsAlertTest):
         )
         self.assert_pcs_success(
             "alert config".split(),
-            outdent(
+            dedent(
                 """\
-                Alerts:
-                 Alert: alert1 (path=test)
-                 Alert: alert2 (path=test)
+                Alert: alert1
+                  Path: test
+                Alert: alert2
+                  Path: test
                   Recipients:
-                   Recipient: rec3 (value=rec_value3)
+                    Recipient: rec3
+                      Value: rec_value3
                 """
             ),
         )
@@ -563,12 +656,13 @@ class DeleteRemoveRecipientTest(PcsAlertTest):
         )
         self.assert_pcs_success(
             "alert config".split(),
-            outdent(
+            dedent(
                 """\
-                Alerts:
-                 Alert: alert1 (path=test)
+                Alert: alert1
+                  Path: test
                   Recipients:
-                   Recipient: rec1 (value=rec_value1)
+                    Recipient: rec1
+                      Value: rec_value1
                 """
             ),
         )

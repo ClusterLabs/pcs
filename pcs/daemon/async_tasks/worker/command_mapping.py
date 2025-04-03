@@ -93,6 +93,10 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
         cmd=alert.create_alert,
         required_permission=p.WRITE,
     ),
+    "alert.get_config_dto": _Cmd(
+        cmd=alert.get_config_dto,
+        required_permission=p.READ,
+    ),
     "alert.remove_alert": _Cmd(
         cmd=alert.remove_alert,
         required_permission=p.WRITE,
