@@ -1,5 +1,7 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Mapping, Optional
 
+from pcs.common.pacemaker.alert import CibAlertListDto
+from pcs.common.types import StringIterable
 from pcs.lib.cib import alert
 from pcs.lib.cib.nvpair import (
     arrange_first_instance_attributes,
@@ -17,13 +19,21 @@ if TYPE_CHECKING:
 
 
 def create_alert(
+    # Path is mandatory, so it should not be optional. However, the current
+    # code calling this function does not prevent it being None. The idea behind
+    # that was, that the validation would happen in the lib command. Since
+    # then, however, the paradigma got changed as we found out that a client
+    # should actually be responsible for providing all mandatory parameters.
+    # The interface cannot be simply changed, as backward compatibility must be
+    # maintained for lib.commands. We still want to change it, but it needs to
+    # be done in the proper way.
     lib_env: LibraryEnvironment,
-    alert_id,
-    path,
-    instance_attribute_dict,
-    meta_attribute_dict,
-    description=None,
-):
+    alert_id: Optional[str],
+    path: Optional[str],
+    instance_attribute_dict: Mapping[str, str],
+    meta_attribute_dict: Mapping[str, str],
+    description: Optional[str] = None,
+) -> None:
     """
     Create new alert.
     Raises LibraryError if path is not specified, or any other failure.
@@ -44,7 +54,13 @@ def create_alert(
     if lib_env.report_processor.has_errors:
         raise LibraryError()
 
-    alert_el = alert.create_alert(cib, id_provider, path, alert_id, description)
+    alert_el = alert.create_alert(
+        cib,
+        id_provider,
+        str(path),  # if path were None, validation above would raise
+        alert_id,
+        description,
+    )
     arrange_first_instance_attributes(
         alert_el, instance_attribute_dict, id_provider
     )
@@ -55,12 +71,12 @@ def create_alert(
 
 def update_alert(
     lib_env: LibraryEnvironment,
-    alert_id,
-    path,
-    instance_attribute_dict,
-    meta_attribute_dict,
-    description=None,
-):
+    alert_id: str,
+    path: Optional[str],
+    instance_attribute_dict: Mapping[str, str],
+    meta_attribute_dict: Mapping[str, str],
+    description: Optional[str] = None,
+) -> None:
     """
     Update existing alert with specified id.
 
@@ -84,7 +100,9 @@ def update_alert(
     lib_env.push_cib()
 
 
-def remove_alert(lib_env: LibraryEnvironment, alert_id_list):
+def remove_alert(
+    lib_env: LibraryEnvironment, alert_id_list: StringIterable
+) -> None:
     """
     Remove alerts with specified ids.
 
@@ -105,15 +123,24 @@ def remove_alert(lib_env: LibraryEnvironment, alert_id_list):
 
 
 def add_recipient(
+    # Recipient value is mandatory, so it should not be optional. However, the
+    # current code calling this function does not prevent it being None. The
+    # idea behind that was, that the validation would happen in the lib
+    # command. Since then, however, the paradigma got changed as we found out
+    # that a client should actually be responsible for providing all mandatory
+    # parameters.
+    # The interface cannot be simply changed, as backward compatibility must be
+    # maintained for lib.commands. We still want to change it, but it needs to
+    # be done in the proper way.
     lib_env: LibraryEnvironment,
-    alert_id,
-    recipient_value,
-    instance_attribute_dict,
-    meta_attribute_dict,
-    recipient_id=None,
-    description=None,
-    allow_same_value=False,
-):
+    alert_id: str,
+    recipient_value: Optional[str],
+    instance_attribute_dict: Mapping[str, str],
+    meta_attribute_dict: Mapping[str, str],
+    recipient_id: Optional[str] = None,
+    description: Optional[str] = None,
+    allow_same_value: bool = False,
+) -> None:
     """
     Add new recipient to alert witch id alert_id.
 
@@ -145,7 +172,8 @@ def add_recipient(
     recipient_el = alert.add_recipient(
         id_provider,
         alert_el,
-        recipient_value,
+        # if recipient_value were None, validation above would raise
+        str(recipient_value),
         recipient_id,
         description=description,
     )
@@ -161,13 +189,13 @@ def add_recipient(
 
 def update_recipient(
     lib_env: LibraryEnvironment,
-    recipient_id,
-    instance_attribute_dict,
-    meta_attribute_dict,
-    recipient_value=None,
-    description=None,
-    allow_same_value=False,
-):
+    recipient_id: str,
+    instance_attribute_dict: Mapping[str, str],
+    meta_attribute_dict: Mapping[str, str],
+    recipient_value: Optional[str] = None,
+    description: Optional[str] = None,
+    allow_same_value: bool = False,
+) -> None:
     """
     Update existing recipient.
 
@@ -208,7 +236,9 @@ def update_recipient(
     lib_env.push_cib()
 
 
-def remove_recipient(lib_env: LibraryEnvironment, recipient_id_list):
+def remove_recipient(
+    lib_env: LibraryEnvironment, recipient_id_list: StringIterable
+) -> None:
     """
     Remove specified recipients.
 
@@ -227,11 +257,22 @@ def remove_recipient(lib_env: LibraryEnvironment, recipient_id_list):
     lib_env.push_cib()
 
 
-def get_all_alerts(lib_env: LibraryEnvironment):
+def get_config_dto(lib_env: LibraryEnvironment) -> CibAlertListDto:
+    cib = lib_env.get_cib()
+    return CibAlertListDto(
+        [
+            alert.alert_el_to_dto(alert_el)
+            for alert_el in alert.get_all_alert_elements(get_alerts(cib))
+        ]
+    )
+
+
+# DEPRECATED, use get_config_dto
+def get_all_alerts(lib_env: LibraryEnvironment) -> list[dict[str, Any]]:
     """
     Returns list of all alerts. See docs of pcs.lib.cib.alert.get_all_alerts for
     description of data format.
 
     lib_env -- LibraryEnvironment
     """
-    return alert.get_all_alerts(lib_env.get_cib())
+    return alert.get_all_alerts_dict(lib_env.get_cib())

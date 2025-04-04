@@ -323,7 +323,7 @@ class GetNvsetTest(TestCase):
             [
                 {"id": "nvset-name1", "name": "name1", "value": "value1"},
                 {"id": "nvset-name2", "name": "name2", "value": "value2"},
-                {"id": "nvset-name3", "name": "name3", "value": ""},
+                {"id": "nvset-name3", "name": "name3", "value": None},
             ],
             nvpair.get_nvset(nvset),
         )

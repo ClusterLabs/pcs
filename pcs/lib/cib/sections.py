@@ -3,6 +3,8 @@ This module defines mandatory and optional cib sections. It provides functions
 for getting existing sections from the cib (lxml) tree.
 """
 
+from lxml.etree import _Element
+
 from pcs.common import reports
 from pcs.common.reports.item import ReportItem
 from pcs.lib.errors import LibraryError
@@ -39,7 +41,7 @@ __OPTIONAL_SECTIONS = [
 ]
 
 
-def get(tree, section_name):
+def get(tree: _Element, section_name: str) -> _Element:
     """
     Return the element which represents section 'section_name' in the tree.
 
@@ -68,7 +70,7 @@ def get(tree, section_name):
     raise AssertionError(f"Unknown cib section '{section_name}'")
 
 
-def exists(tree, section_name):
+def exists(tree: _Element, section_name: str) -> bool:
     if section_name not in __MANDATORY_SECTIONS + __OPTIONAL_SECTIONS:
         raise AssertionError(f"Unknown cib section '{section_name}'")
     return tree.find(f".//{section_name}") is not None

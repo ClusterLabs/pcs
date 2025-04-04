@@ -1,10 +1,8 @@
 import contextlib
 import re
 from typing import (
-    List,
-    Pattern,
-    Set,
-    Tuple,
+    Optional,
+    Union,
     cast,
 )
 
@@ -24,7 +22,7 @@ from pcs.common.reports.item import (
     ReportItemList,
 )
 from pcs.common.tools import Version
-from pcs.common.types import StringIterable
+from pcs.common.types import StringCollection, StringIterable
 from pcs.lib.cib import sections
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.values import (
@@ -61,13 +59,13 @@ class IdProvider:
         cib_element -- any element of the xml to check against
         """
         self._cib = get_root(cib_element)
-        self._booked_ids: Set[str] = set()
+        self._booked_ids: set[str] = set()
 
     def allocate_id(self, proposed_id: str) -> str:
         """
         Generate a new unique id based on the proposal and keep track of it
 
-        string proposed_id -- requested id
+        proposed_id -- requested id
         """
         final_id = find_unique_id(self._cib, proposed_id, self._booked_ids)
         self._booked_ids.add(final_id)
@@ -110,41 +108,48 @@ class ElementSearcher:
     """
 
     def __init__(
-        self, tags, element_id, context_element, element_type_desc=None
+        self,
+        tags: Union[str, StringIterable],
+        element_id: str,
+        context_element: _Element,
+        element_type_desc: Union[None, str, StringIterable] = None,
     ):
         """
-        string|iterable tags -- a tag (string) or tags (iterable) to look for
-        string element_id -- an id to look for
-        etree.Element context_element -- an element to look in
-        string|iterable element_type_desc -- element types for reports, tags
-            if not specified
+        tags -- a tag (string) or tags (iterable) to look for
+        element_id -- an id to look for
+        context_element -- an element to look in
+        element_type_desc -- element types for reports, tags if not specified
         """
         self._executed = False
-        self._element = None
+        self._element: Optional[_Element] = None
         self._element_id = element_id
         self._context_element = context_element
         self._tag_list = [tags] if isinstance(tags, str) else tags
         self._expected_types = self._prepare_expected_types(element_type_desc)
-        self._book_errors = None
+        self._book_errors: Optional[ReportItemList] = None
 
-    def _prepare_expected_types(self, element_type_desc):
+    def _prepare_expected_types(
+        self, element_type_desc: Union[None, str, StringIterable]
+    ) -> list[str]:
         if element_type_desc is None:
-            return self._tag_list
+            return list(self._tag_list)
         if isinstance(element_type_desc, str):
             return [element_type_desc]
-        return element_type_desc
+        return list(element_type_desc)
 
-    def element_found(self):
+    def element_found(self) -> bool:
         if not self._executed:
             self._execute()
         return self._element is not None
 
-    def get_element(self):
+    def get_element(self) -> Optional[_Element]:
         if not self._executed:
             self._execute()
         return self._element
 
-    def validate_book_id(self, id_provider, id_description="id"):
+    def validate_book_id(
+        self, id_provider: IdProvider, id_description: str = "id"
+    ) -> bool:
         """
         Book element_id in the id_provider, return True if success
         """
@@ -158,7 +163,7 @@ class ElementSearcher:
             self._book_errors += id_provider.book_ids(self._element_id)
         return len(self._book_errors) < 1
 
-    def get_errors(self):
+    def get_errors(self) -> ReportItemList:
         """
         Report why the element has not been found or booking its id failed
         """
@@ -208,13 +213,16 @@ class ElementSearcher:
             ]
         return self._book_errors
 
-    def _execute(self):
+    def _execute(self) -> None:
         self._executed = True
         for tag in self._tag_list:
-            element_list = self._context_element.xpath(
-                ".//*[local-name()=$tag_name and @id=$element_id]",
-                tag_name=tag,
-                element_id=self._element_id,
+            element_list = cast(
+                list[_Element],
+                self._context_element.xpath(
+                    ".//*[local-name()=$tag_name and @id=$element_id]",
+                    tag_name=tag,
+                    element_id=self._element_id,
+                ),
             )
             if element_list:
                 self._element = element_list[0]
@@ -223,7 +231,7 @@ class ElementSearcher:
 
 def get_configuration_elements_by_id(
     tree: _Element, check_id: str
-) -> List[_Element]:
+) -> list[_Element]:
     """
     Return any configuration elements (not in status section of cib) with value
     of attribute id specified as 'check_id'; skip any and all elements having id
@@ -241,7 +249,7 @@ def get_configuration_elements_by_id(
     # attribute of the explicit resource. So the value of nvpair named
     # "remote-node" is considered to be id
     return cast(
-        List[_Element],
+        list[_Element],
         get_root(tree).xpath(
             """
             (
@@ -299,13 +307,12 @@ def get_element_by_id(cib: _Element, element_id: str) -> _Element:
 
 def get_elements_by_ids(
     cib: _Element, element_ids: StringIterable
-) -> Tuple[List[_Element], List[str]]:
+) -> tuple[list[_Element], list[str]]:
     """
-    Returns a list of elements from CIB with the given IDs and a list of IDs
-    that weren't found
+    Return elements from CIB with the given IDs and IDs that weren't found
 
     cib -- the whole cib
-    element_ids -- iterable with element IDs to look for
+    element_ids -- element IDs to look for
     """
     found_element_list = []
     id_not_found_list = []
@@ -318,9 +325,10 @@ def get_elements_by_ids(
 
 
 # DEPRECATED, use IdProvider instead
-def does_id_exist(tree, check_id):
+def does_id_exist(tree: _Element, check_id: str) -> bool:
     """
     Checks to see if id exists in the xml dom passed
+
     tree cib -- etree node
     check_id -- id to check
     """
@@ -328,9 +336,9 @@ def does_id_exist(tree, check_id):
 
 
 # DEPRECATED, use IdProvider instead
-def validate_id_does_not_exist(tree, _id):
+def validate_id_does_not_exist(tree: _Element, _id: str) -> None:
     """
-    tree cib etree node
+    Raise LibraryError if specified id exists in specified dom tree
     """
     if does_id_exist(tree, _id):
         raise LibraryError(
@@ -339,13 +347,18 @@ def validate_id_does_not_exist(tree, _id):
 
 
 # DEPRECATED, use IdProvider instead
-def find_unique_id(tree, check_id, reserved_ids=None):
+def find_unique_id(
+    tree: _Element,
+    check_id: str,
+    reserved_ids: Optional[StringCollection] = None,
+) -> str:
     """
-    Returns check_id if it doesn't exist in the dom, otherwise it adds
-    an integer to the end of the id and increments it until a unique id is found
-    etree tree -- cib etree node
-    string check_id -- id to check
-    iterable reserved_ids -- ids to think about as already used
+    Return check_id if it doesn't exist in the dom, otherwise add an integer to
+    the end of the id and increment it until a unique id is found
+
+    tree -- cib etree node
+    check_id -- id to check
+    reserved_ids -- ids to think about as already used
     """
     if not reserved_ids:
         reserved_ids = set()
@@ -359,19 +372,23 @@ def find_unique_id(tree, check_id, reserved_ids=None):
 
 # DEPRECATED, use ElementSearcher instead
 def find_element_by_tag_and_id(
-    tag, context_element, element_id, none_if_id_unused=False, id_types=None
-):
+    tag: Union[str, StringIterable],
+    context_element: _Element,
+    element_id: str,
+    none_if_id_unused: bool = False,
+    id_types: Optional[StringIterable] = None,
+) -> Optional[_Element]:
     """
     Return element with given tag and element_id under context_element. When
     element does not exists raises LibraryError or return None if specified in
     none_if_id_unused.
 
-    etree.Element(Tree) context_element is part of tree for element scan
-    string|list tag is expected tag (or list of tags) of search element
-    string element_id is id of search element
-    bool none_if_id_unused if the element is not found then return None if True
+    tag -- expected tag (or list of tags) of search element
+    context_element -- part of tree for element scan
+    element_id -- id of search element
+    none_if_id_unused -- if the element is not found then return None if True
         or raise a LibraryError if False
-    list id_types optional list of descriptions for id / expected types of id
+    id_types -- optional list of descriptions for id / expected types of id
     """
     searcher = ElementSearcher(
         tag, element_id, context_element, element_type_desc=id_types
@@ -402,30 +419,33 @@ def create_subelement_id(
 
 # DEPRECATED
 # use ElementSearcher, IdProvider or pcs.lib.validate.ValueId instead
-def check_new_id_applicable(tree, description, _id):
+def check_new_id_applicable(tree: _Element, description: str, _id: str) -> None:
     validate_id(_id, description)
     validate_id_does_not_exist(tree, _id)
 
 
-def get_configuration(tree):
+def get_configuration(tree: _Element) -> _Element:
     """
     Return 'configuration' element from tree, raise LibraryError if missing
+
     tree cib etree node
     """
     return sections.get(tree, sections.CONFIGURATION)
 
 
-def get_acls(tree):
+def get_acls(tree: _Element) -> _Element:
     """
     Return 'acls' element from tree, create a new one if missing
+
     tree cib etree node
     """
     return sections.get(tree, sections.ACLS)
 
 
-def get_alerts(tree):
+def get_alerts(tree: _Element) -> _Element:
     """
     Return 'alerts' element from tree, create a new one if missing
+
     tree -- cib etree node
     """
     return sections.get(tree, sections.ALERTS)
@@ -434,6 +454,7 @@ def get_alerts(tree):
 def get_constraints(tree: _Element) -> _Element:
     """
     Return 'constraint' element from tree
+
     tree cib etree node
     """
     return sections.get(tree, sections.CONSTRAINTS)
@@ -451,14 +472,16 @@ def get_crm_config(tree: _Element) -> _Element:
 def get_fencing_topology(tree: _Element) -> _Element:
     """
     Return the 'fencing-topology' element from the tree
+
     tree -- cib etree node
     """
     return sections.get(tree, sections.FENCING_TOPOLOGY)
 
 
-def get_nodes(tree):
+def get_nodes(tree: _Element) -> _Element:
     """
     Return 'nodes' element from the tree
+
     tree cib etree node
     """
     return sections.get(tree, sections.NODES)
@@ -473,9 +496,10 @@ def get_resources(tree: _Element) -> _Element:
     return sections.get(tree, sections.RESOURCES)
 
 
-def get_status(tree):
+def get_status(tree: _Element) -> _Element:
     """
     Return the 'status' element from the tree
+
     tree -- cib etree node
     """
     return get_sub_element(tree, "status")
@@ -484,13 +508,14 @@ def get_status(tree):
 def get_tags(tree: _Element) -> _Element:
     """
     Return 'tags' element from tree, create a new one if missing
+
     tree -- cib etree node
     """
     return sections.get(tree, sections.TAGS)
 
 
 def _get_cib_version(
-    cib: _ElementTree, attribute: str, regexp: Pattern
+    cib: _ElementTree, attribute: str, regexp: re.Pattern
 ) -> Version:
     version = cib.getroot().get(attribute)
     if version is None:
