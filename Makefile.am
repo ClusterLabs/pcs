@@ -389,7 +389,7 @@ check-local: check-local-deps test-tree-prep typos_check ruff_lint ruff_isort_ch
 # New setuptools use the build directory to build wheels
 clean-local: test-tree-clean
 	rm -rf ./*.pyc ./*.egg-info ./*.dist-info build/
-	rm -rf $(PCS_BUNDLED_DIR)/*
+	rm -rf ${abs_top_builddir}/${PCS_BUNDLED_DIR_LOCAL} ${abs_top_builddir}/${PCSD_BUNDLED_DIR_ROOT_LOCAL}
 	rm -rf Gemfile.lock .bundle pcs_test/resources/temp
 	rm -rf $(PACKAGE_NAME)-$(VERSION).tar.* rpm/*tar* rpm/*.gem rpm/*.rpm
 	rm -rf stamps/*
