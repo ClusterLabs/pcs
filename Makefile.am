@@ -186,7 +186,7 @@ install-exec-local: install_python_embedded_mods stamps/install_ruby_deps_local
 	${PIP} ${pipopts} install ${pipinstallopts} \
 		--root=$(or ${DESTDIR}, /) \
 		--prefix=${prefix} ${EXTRA_SETUP_OPTS} .
-	if test "${DESTDIR}/$(prefix)/bin/" != "${DESTDIR}/$(SBINDIR)/"; then \
+	if test "$$(realpath ${DESTDIR}/$(prefix)/bin)" != "$$(realpath ${DESTDIR}/$(SBINDIR))"; then \
 		mv ${DESTDIR}/$(prefix)/bin/pcs ${DESTDIR}/$(SBINDIR)/ || \
 			mv ${DESTDIR}/$(prefix)/local/bin/pcs ${DESTDIR}/${prefix}/local/sbin/; \
 		mv ${DESTDIR}/$(prefix)/bin/pcsd ${DESTDIR}/$(SBINDIR)/ || \
@@ -215,11 +215,14 @@ install-exec-local: install_python_embedded_mods stamps/install_ruby_deps_local
 # which are untouched by make install.
 uninstall-local:
 	rm -rf ${DESTDIR}/$(PCS_BUNDLED_DIR)
-	if test "${DESTDIR}/$(prefix)/bin/" != "${DESTDIR}/$(SBINDIR)/"; then \
-		find ${DESTDIR}/$(prefix)/local/sbin -name pcs -type f -delete || \
-			rm -fv ${DESTDIR}/$(SBINDIR)/pcs; \
-		find ${DESTDIR}/$(prefix)/local/sbin -name pcsd -type f -delete || \
-			rm -fv ${DESTDIR}/$(SBINDIR)/pcsd; \
+	if test "$$(realpath ${DESTDIR}/$(prefix)/bin)" != "$$(realpath ${DESTDIR}/$(SBINDIR))"; then \
+		if ls ${DESTDIR}/$(prefix)/local/sbin/pcs; then \
+			rm -fv ${DESTDIR}/$(prefix)/local/sbin/pcs \
+				${DESTDIR}/$(prefix)/local/sbin/pcsd; \
+		else \
+			rm -fv ${DESTDIR}/$(SBINDIR)/pcs \
+				${DESTDIR}/$(SBINDIR)/pcsd; \
+		fi \
 	fi
 	rm -fv ${DESTDIR}/$(LIB_DIR)/pcs/pcs_internal
 	rm -fv ${DESTDIR}/$(LIB_DIR)/pcs/pcs_snmp_agent
