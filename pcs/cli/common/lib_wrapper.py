@@ -314,6 +314,7 @@ def load_module(env, middleware_factory, name):  # noqa: PLR0911, PLR0912
             env,
             middleware.build(middleware_factory.cib),
             {
+                "get_config_dto": node.get_config_dto,
                 "maintenance_unmaintenance_all": (
                     node.maintenance_unmaintenance_all
                 ),

@@ -2689,7 +2689,7 @@ def get_token_from_file(file_name: str) -> str:
 
 def print_warning_if_utilization_attrs_has_no_effect(
     properties_facade: PropertyConfigurationFacade,
-):
+) -> None:
     PLACEMENT_STRATEGIES_USING_UTILIZATION_ATTRS = [
         "balanced",
         "minimal",
