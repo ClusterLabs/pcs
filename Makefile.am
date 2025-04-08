@@ -229,7 +229,7 @@ uninstall-local:
 	rm -fv ${DESTDIR}/$(LIB_DIR)/pcs/pcs_snmp_agent
 	sitelib=${DESTDIR}/${prefix}/local/lib/python*/dist-packages; \
 	recordfile=$$(echo $${sitelib}/pcs*.dist-info/RECORD); \
-	if test -n "$$recordfile"; then \
+	if ! stat "$$recordfile"; then \
 		sitelib=${DESTDIR}/$(PYTHON_SITELIB); \
 		recordfile=$$(echo $${sitelib}/pcs*.dist-info/RECORD); \
 	fi; \
