@@ -2779,7 +2779,7 @@ def print_depracation_warning_for_legacy_roles(role: str) -> None:
 
 def print_warning_if_utilization_attrs_has_no_effect(
     properties_facade: PropertyConfigurationFacade,
-):
+) -> None:
     PLACEMENT_STRATEGIES_USING_UTILIZATION_ATTRS = [
         "balanced",
         "minimal",

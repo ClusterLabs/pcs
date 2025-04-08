@@ -69,6 +69,9 @@ EXTRA_DIST		= \
 			  cli/file/__init__.py \
 			  cli/file/metadata.py \
 			  cli/__init__.py \
+			  cli/node/__init__.py \
+			  cli/node/command.py \
+			  cli/node/output.py \
 			  cli/nvset.py \
 			  cli/query/__init__.py \
 			  cli/query/resource.py \
@@ -148,6 +151,7 @@ EXTRA_DIST		= \
 			  common/pacemaker/constraint/ticket.py \
 			  common/pacemaker/defaults.py \
 			  common/pacemaker/fencing_topology.py \
+			  common/pacemaker/node.py \
 			  common/pacemaker/nvset.py \
 			  common/pacemaker/resource/__init__.py \
 			  common/pacemaker/resource/bundle.py \

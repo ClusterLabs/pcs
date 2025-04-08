@@ -12,6 +12,7 @@ from pcs.cli.common.errors import (
     CmdLineInputError,
 )
 from pcs.cli.common.parse_args import (
+    OUTPUT_FORMAT_OPTION,
     Argv,
     InputModifiers,
     KeyValueParser,
@@ -23,20 +24,19 @@ def node_attribute_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * -f - CIB file (in lib wrapper)
-      * --force - allows not unique recipient values
-      * --name - specify attribute name to filter out
+      * --force - no error if attribute to delete doesn't exist
+      * --name - specify attribute name for filter
+      * --output-format - supported formats: text, cmd, json
     """
     del lib
-    modifiers.ensure_only_supported("-f", "--force", "--name")
-    if modifiers.get("--name") and len(argv) > 1:
+    modifiers.ensure_only_supported(
+        "-f", "--force", "--name", output_format_supported=True
+    )
+    if len(argv) < 2 or modifiers.is_specified_any(
+        ["--name", OUTPUT_FORMAT_OPTION]
+    ):
         raise CmdLineInputError()
-    if not argv:
-        attribute_show_cmd(filter_attr=modifiers.get("--name"))
-    elif len(argv) == 1:
-        attribute_show_cmd(argv.pop(0), filter_attr=modifiers.get("--name"))
-    else:
-        # --force is used only when setting attributes
-        attribute_set_cmd(argv.pop(0), argv)
+    attribute_set_cmd(argv.pop(0), argv)
 
 
 def node_utilization_cmd(
@@ -45,10 +45,15 @@ def node_utilization_cmd(
     """
     Options:
       * -f - CIB file (in lib wrapper)
-      * --name - specify attribute name to filter out
+      * --name - specify attribute name for filter
+      * --output-format - supported formats: text, cmd, json
     """
-    modifiers.ensure_only_supported("-f", "--name")
-    if modifiers.get("--name") and len(argv) > 1:
+    modifiers.ensure_only_supported(
+        "-f", "--name", output_format_supported=True
+    )
+    if len(argv) < 2 or modifiers.is_specified_any(
+        ["--name", OUTPUT_FORMAT_OPTION]
+    ):
         raise CmdLineInputError()
     utils.print_warning_if_utilization_attrs_has_no_effect(
         PropertyConfigurationFacade.from_properties_dtos(
@@ -56,12 +61,7 @@ def node_utilization_cmd(
             lib.cluster_property.get_properties_metadata(),
         )
     )
-    if not argv:
-        print_node_utilization(filter_name=modifiers.get("--name"))
-    elif len(argv) == 1:
-        print_node_utilization(argv.pop(0), filter_name=modifiers.get("--name"))
-    else:
-        set_node_utilization(argv.pop(0), argv)
+    set_node_utilization(argv.pop(0), argv)
 
 
 def node_maintenance_cmd(
