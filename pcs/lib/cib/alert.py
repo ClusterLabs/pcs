@@ -381,7 +381,7 @@ def alert_el_to_dto(
         path=str(alert_el.attrib["path"]),
         description=alert_el.get("description"),
         recipients=[
-            _recipient_el_to_dto(recipient_el)
+            _recipient_el_to_dto(recipient_el, rule_eval)
             for recipient_el in alert_el.iterfind(TAG_RECIPIENT)
         ],
         select=_select_el_to_dto(select_el) if select_el is not None else None,

@@ -7,6 +7,7 @@ from pcs.lib.cib.nvpair import (
     arrange_first_instance_attributes,
     arrange_first_meta_attributes,
 )
+from pcs.lib.cib.rule.in_effect import get_rule_evaluator
 from pcs.lib.cib.tools import (
     IdProvider,
     get_alerts,
@@ -257,11 +258,16 @@ def remove_recipient(
     lib_env.push_cib()
 
 
-def get_config_dto(lib_env: LibraryEnvironment) -> CibAlertListDto:
+def get_config_dto(
+    lib_env: LibraryEnvironment, evaluate_expired: bool = False
+) -> CibAlertListDto:
     cib = lib_env.get_cib()
+    rule_in_effect_eval = get_rule_evaluator(
+        cib, lib_env.cmd_runner(), lib_env.report_processor, evaluate_expired
+    )
     return CibAlertListDto(
         [
-            alert.alert_el_to_dto(alert_el)
+            alert.alert_el_to_dto(alert_el, rule_eval=rule_in_effect_eval)
             for alert_el in alert.get_all_alert_elements(get_alerts(cib))
         ]
     )
