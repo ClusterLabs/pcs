@@ -21,6 +21,7 @@
 - It is now possible to override errors when editing cluster properties in web
   UI
 - Display node-attribute in colocation constraints configuration ([RHEL-81938])
+- Make install no longer fails on systems with merged /usr/sbin and /usr/bin
 
 [RHEL-22423]: https://issues.redhat.com/browse/RHEL-22423
 [RHEL-44347]: https://issues.redhat.com/browse/RHEL-44347

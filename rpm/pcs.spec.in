@@ -115,7 +115,9 @@ BuildRequires: python%{python3_version}-pycurl
 BuildRequires: autoconf
 BuildRequires: automake
 BuildRequires: make
-# printf from coreutils is used in makefile, head is used in spec
+# coreutils usages:
+# Makefile: printf, realpath, stat
+# spec: head
 BuildRequires: coreutils
 # find is used in Makefile and also somewhere else
 BuildRequires: findutils

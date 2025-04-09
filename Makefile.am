@@ -187,7 +187,7 @@ install-exec-local: install_python_embedded_mods stamps/install_ruby_deps_local
 	${PIP} ${pipopts} install ${pipinstallopts} \
 		--root=$(or ${DESTDIR}, /) \
 		--prefix=${prefix} ${EXTRA_SETUP_OPTS} .
-	if test "${DESTDIR}/$(prefix)/bin/" != "${DESTDIR}/$(SBINDIR)/"; then \
+	if test "$$(realpath ${DESTDIR}/$(prefix)/bin)" != "$$(realpath ${DESTDIR}/$(SBINDIR))"; then \
 		mv ${DESTDIR}/$(prefix)/bin/pcs ${DESTDIR}/$(SBINDIR)/ || \
 			mv ${DESTDIR}/$(prefix)/local/bin/pcs ${DESTDIR}/${prefix}/local/sbin/; \
 		mv ${DESTDIR}/$(prefix)/bin/pcsd ${DESTDIR}/$(SBINDIR)/ || \
@@ -216,7 +216,7 @@ install-exec-local: install_python_embedded_mods stamps/install_ruby_deps_local
 # which are untouched by make install.
 uninstall-local:
 	rm -rf ${DESTDIR}/$(PCS_BUNDLED_DIR)
-	if test "${DESTDIR}/$(prefix)/bin/" != "${DESTDIR}/$(SBINDIR)/"; then \
+	if test "$$(realpath ${DESTDIR}/$(prefix)/bin)" != "$$(realpath ${DESTDIR}/$(SBINDIR))"; then \
 		if ls ${DESTDIR}/$(prefix)/local/sbin/pcs; then \
 			rm -fv ${DESTDIR}/$(prefix)/local/sbin/pcs \
 				${DESTDIR}/$(prefix)/local/sbin/pcsd; \
@@ -229,7 +229,7 @@ uninstall-local:
 	rm -fv ${DESTDIR}/$(LIB_DIR)/pcs/pcs_snmp_agent
 	sitelib=${DESTDIR}/${prefix}/local/lib/python*/dist-packages; \
 	recordfile=$$(echo $${sitelib}/pcs*.dist-info/RECORD); \
-	if test -n "$$recordfile"; then \
+	if ! stat "$$recordfile"; then \
 		sitelib=${DESTDIR}/$(PYTHON_SITELIB); \
 		recordfile=$$(echo $${sitelib}/pcs*.dist-info/RECORD); \
 	fi; \
@@ -389,7 +389,7 @@ check-local: check-local-deps test-tree-prep typos_check ruff_lint ruff_isort_ch
 # New setuptools use the build directory to build wheels
 clean-local: test-tree-clean
 	rm -rf ./*.pyc ./*.egg-info ./*.dist-info build/
-	rm -rf $(PCS_BUNDLED_DIR)/*
+	rm -rf ${abs_top_builddir}/${PCS_BUNDLED_DIR_LOCAL} ${abs_top_builddir}/${PCSD_BUNDLED_DIR_ROOT_LOCAL}
 	rm -rf Gemfile.lock .bundle pcs_test/resources/temp
 	rm -rf $(PACKAGE_NAME)-$(VERSION).tar.* rpm/*tar* rpm/*.gem rpm/*.rpm
 	rm -rf stamps/*
