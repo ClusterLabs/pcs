@@ -1,12 +1,7 @@
 import base64
 import os.path
 from functools import partial
-from typing import (
-    Collection,
-    Mapping,
-    Optional,
-    cast,
-)
+from typing import Mapping, Optional, cast
 
 from lxml.etree import _Element
 
@@ -553,7 +548,7 @@ def create_in_cluster(
 def remove_from_cluster(
     env: LibraryEnvironment,
     instance_name: Optional[str] = None,
-    force_flags: Collection[reports.types.ForceCode] = (),
+    force_flags: reports.types.ForceFlags = (),
 ) -> None:
     """
     Remove group with ip resource and booth resource

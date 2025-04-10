@@ -1,11 +1,4 @@
-from typing import (
-    Collection,
-    Container,
-    List,
-    Mapping,
-    Optional,
-    Tuple,
-)
+from typing import Collection, List, Mapping, Optional, Tuple
 
 from lxml.etree import _Element
 
@@ -437,7 +430,7 @@ def _unfencing_scsi_devices(
     stonith_el: _Element,
     original_devices: StringCollection,
     updated_devices: StringCollection,
-    force_flags: Container[reports.types.ForceCode] = (),
+    force_flags: reports.types.ForceFlags = (),
 ) -> None:
     """
     Unfence scsi devices provided in device_list if it is possible to connect
@@ -498,7 +491,7 @@ def update_scsi_devices(
     env: LibraryEnvironment,
     stonith_id: str,
     set_device_list: StringCollection,
-    force_flags: Container[reports.types.ForceCode] = (),
+    force_flags: reports.types.ForceFlags = (),
 ) -> None:
     """
     Update scsi fencing devices without restart and affecting other resources.
@@ -544,7 +537,7 @@ def update_scsi_devices_add_remove(
     stonith_id: str,
     add_device_list: StringCollection,
     remove_device_list: StringCollection,
-    force_flags: Container[reports.types.ForceCode] = (),
+    force_flags: reports.types.ForceFlags = (),
 ) -> None:
     """
     Update scsi fencing devices without restart and affecting other resources.

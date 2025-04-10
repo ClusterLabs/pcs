@@ -1,10 +1,4 @@
-from typing import (
-    Any,
-    Collection,
-    Container,
-    Mapping,
-    Optional,
-)
+from typing import Any, Mapping, Optional
 
 from lxml.etree import _Element
 
@@ -41,7 +35,7 @@ def resource_defaults_create(
     nvpairs: Mapping[str, str],
     nvset_options: Mapping[str, str],
     nvset_rule: Optional[str] = None,
-    force_flags: Collection[reports.types.ForceCode] = (),
+    force_flags: reports.types.ForceFlags = (),
 ) -> None:
     """
     Create new resource defaults nvset
@@ -72,7 +66,7 @@ def operation_defaults_create(
     nvpairs: Mapping[str, str],
     nvset_options: Mapping[str, str],
     nvset_rule: Optional[str] = None,
-    force_flags: Collection[reports.types.ForceCode] = (),
+    force_flags: reports.types.ForceFlags = (),
 ) -> None:
     """
     Create new operation defaults nvset
@@ -105,7 +99,7 @@ def _defaults_create(
     nvpairs: Mapping[str, str],
     nvset_options: Mapping[str, str],
     nvset_rule: Optional[str] = None,
-    force_flags: Container[reports.types.ForceCode] = (),
+    force_flags: reports.types.ForceFlags = (),
 ) -> None:
     required_cib_version = None
     nice_to_have_cib_version = None

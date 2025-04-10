@@ -1,11 +1,4 @@
-from typing import (
-    TYPE_CHECKING,
-    Callable,
-    Collection,
-    Iterable,
-    Mapping,
-    Optional,
-)
+from typing import TYPE_CHECKING, Callable, Iterable, Mapping, Optional
 
 from lxml.etree import _Element
 
@@ -709,7 +702,7 @@ def _report_skip_live_parts_in_remove(node_names_list):
 def node_remove_remote(
     env: LibraryEnvironment,
     node_identifier: str,
-    force_flags: Collection[reports.types.ForceCode] = (),
+    force_flags: reports.types.ForceFlags = (),
 ):
     """
     remove a resource representing remote node and destroy remote node
