@@ -1,12 +1,4 @@
-from typing import (
-    Any,
-    Container,
-    Iterable,
-    List,
-    Mapping,
-    Tuple,
-    cast,
-)
+from typing import Any, Iterable, List, Mapping, Tuple, cast
 
 from pcs.common import (
     file_type_codes,
@@ -311,7 +303,7 @@ def _load_dr_config(
 
 def destroy(
     env: LibraryEnvironment,
-    force_flags: Container[reports.types.ForceCode] = (),
+    force_flags: reports.types.ForceFlags = (),
 ) -> None:
     """
     Destroy disaster-recovery configuration on all sites

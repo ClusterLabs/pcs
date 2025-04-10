@@ -1,8 +1,4 @@
-from typing import (
-    Collection,
-    Mapping,
-    Optional,
-)
+from typing import Mapping, Optional
 
 from lxml import etree
 from lxml.etree import _Element
@@ -132,7 +128,7 @@ class DuplicatesCheckerLocationRulePlain(DuplicatesChecker):
         self,
         constraint_section: _Element,
         constraint_to_check: _Element,
-        force_flags: Collection[reports.types.ForceCode] = (),
+        force_flags: reports.types.ForceFlags = (),
     ) -> reports.ReportItemList:
         self._constraint_to_check_rule = None
         if len(constraint_to_check.findall(TAG_RULE)) != 1:
@@ -207,7 +203,7 @@ class ValidateCreatePlainWithRule:
         self._constraint_options = constraint_options
 
     def validate(
-        self, force_flags: Collection[reports.types.ForceCode] = ()
+        self, force_flags: reports.types.ForceFlags = ()
     ) -> reports.ReportItemList:
         """
         Run validation

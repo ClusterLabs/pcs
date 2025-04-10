@@ -6,6 +6,11 @@ BoothConfigUsedWhere = NewType("BoothConfigUsedWhere", str)
 DefaultAddressSource = NewType("DefaultAddressSource", str)
 FenceHistoryCommandType = NewType("FenceHistoryCommandType", str)
 ForceCode = NewType("ForceCode", str)
+# Container would suffice. However, this type is used in interfaces of many
+# library commands. When calling the commands via API, their input comes in
+# JSON and is transformed by dacite. In JSON, force flags are held in a list,
+# there is no other way. And dacite is unable to deserialize a list to
+# attributes annotated as Iterable or Container.
 ForceFlags = Collection[ForceCode]
 MessageCode = NewType("MessageCode", str)
 DeprecatedMessageCode = NewType("DeprecatedMessageCode", str)

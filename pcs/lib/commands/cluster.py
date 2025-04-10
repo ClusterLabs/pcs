@@ -2,15 +2,7 @@
 import math
 import os.path
 import time
-from typing import (
-    Any,
-    Collection,
-    Mapping,
-    Optional,
-    Sequence,
-    Tuple,
-    cast,
-)
+from typing import Any, Mapping, Optional, Sequence, Tuple, cast
 
 from lxml.etree import _Element
 
@@ -214,7 +206,7 @@ def setup(  # noqa:  PLR0913, PLR0915
     enable: bool = False,
     no_keys_sync: bool = False,
     no_cluster_uuid: bool = False,
-    force_flags: Collection[reports.types.ForceCode] = (),
+    force_flags: reports.types.ForceFlags = (),
 ):
     # pylint: disable=too-many-arguments
     # pylint: disable=too-many-positional-arguments
@@ -472,7 +464,7 @@ def setup_local(  # noqa: PLR0913
     totem_options: Mapping[str, str],
     quorum_options: Mapping[str, str],
     no_cluster_uuid: bool = False,
-    force_flags: Collection[reports.types.ForceCode] = (),
+    force_flags: reports.types.ForceFlags = (),
 ) -> bytes:
     """
     Return corosync.conf text based on specified parameters.
@@ -857,7 +849,7 @@ def add_nodes(  # noqa: PLR0912, PLR0915
     start=False,
     enable=False,
     no_watchdog_validation=False,
-    force_flags: Collection[reports.types.ForceCode] = (),
+    force_flags: reports.types.ForceFlags = (),
 ):
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-locals
@@ -1734,7 +1726,7 @@ def _verify_corosync_conf(corosync_conf_facade):
 def remove_nodes(  # noqa: PLR0912, PLR0915
     env: LibraryEnvironment,
     node_list,
-    force_flags: Collection[reports.types.ForceCode] = (),
+    force_flags: reports.types.ForceFlags = (),
 ):
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-locals
@@ -1993,7 +1985,7 @@ def add_link(
     env: LibraryEnvironment,
     node_addr_map,
     link_options=None,
-    force_flags: Collection[reports.types.ForceCode] = (),
+    force_flags: reports.types.ForceFlags = (),
 ):
     """
     Add a corosync link to a cluster
@@ -2060,7 +2052,7 @@ def add_link(
 def remove_links(
     env: LibraryEnvironment,
     linknumber_list,
-    force_flags: Collection[reports.types.ForceCode] = (),
+    force_flags: reports.types.ForceFlags = (),
 ):
     """
     Remove corosync links from a cluster
@@ -2103,7 +2095,7 @@ def update_link(
     linknumber,
     node_addr_map=None,
     link_options=None,
-    force_flags: Collection[reports.types.ForceCode] = (),
+    force_flags: reports.types.ForceFlags = (),
 ):
     """
     Change an existing corosync link
@@ -2167,7 +2159,7 @@ def update_link(
 def corosync_authkey_change(
     env: LibraryEnvironment,
     corosync_authkey: Optional[bytes] = None,
-    force_flags: Collection[reports.types.ForceCode] = (),
+    force_flags: reports.types.ForceFlags = (),
 ) -> None:
     """
     Distribute new corosync authkey to all cluster nodes.
@@ -2267,7 +2259,7 @@ def _generate_cluster_uuid(
 
 def generate_cluster_uuid(
     env: LibraryEnvironment,
-    force_flags: Collection[reports.types.ForceCode] = (),
+    force_flags: reports.types.ForceFlags = (),
 ) -> None:
     """
     Add or update cluster UUID in live cluster
@@ -2287,7 +2279,7 @@ def generate_cluster_uuid(
 def generate_cluster_uuid_local(
     env: LibraryEnvironment,
     corosync_conf_content: bytes,
-    force_flags: Collection[reports.types.ForceCode] = (),
+    force_flags: reports.types.ForceFlags = (),
 ) -> bytes:
     """
     Add or update cluster UUID in corosync.conf passed as an argument and return
@@ -2338,7 +2330,7 @@ def wait_for_pcmk_idle(env: LibraryEnvironment, wait_value: WaitType) -> None:
 def rename(
     env: LibraryEnvironment,
     new_name: str,
-    force_flags: Collection[reports.types.ForceCode] = (),
+    force_flags: reports.types.ForceFlags = (),
 ) -> None:
     """
     Change the name of the local cluster

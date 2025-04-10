@@ -1,7 +1,4 @@
-from typing import (
-    Collection,
-    Mapping,
-)
+from typing import Mapping
 
 from pcs.common import (
     const,
@@ -27,7 +24,7 @@ def create_plain_with_rule(
     rule: str,
     rule_options: Mapping[str, str],
     constraint_options: Mapping[str, str],
-    force_flags: Collection[reports.types.ForceCode] = (),
+    force_flags: reports.types.ForceFlags = (),
 ) -> None:
     """
     Create a location constraint with a rule for a resource

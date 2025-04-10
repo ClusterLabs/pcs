@@ -1,8 +1,5 @@
 import abc
-from typing import (
-    Collection,
-    Iterable,
-)
+from typing import Iterable
 
 from lxml.etree import _Element
 
@@ -61,7 +58,7 @@ class DuplicatesChecker:
         self,
         constraint_section: _Element,
         constraint_to_check: _Element,
-        force_flags: Collection[reports.types.ForceCode] = (),
+        force_flags: reports.types.ForceFlags = (),
     ) -> reports.ReportItemList:
         """
         Check if a constraint is a duplicate of an already existing constraint
