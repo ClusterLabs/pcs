@@ -63,7 +63,7 @@ class Queue:
                 "\nHint: check call compatibility: for example if you use"
                 " env.push_cib() then runner.cib.push() will be never launched"
             ).format(
-                self.__index + 1,
+                self.__index,
                 call.type,
                 real_type,
                 call,
