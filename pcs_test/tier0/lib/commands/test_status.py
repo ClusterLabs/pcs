@@ -2,10 +2,7 @@
 import os
 from textwrap import dedent
 from typing import Optional
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
 from pcs import settings
 from pcs.common import file_type_codes
@@ -27,10 +24,7 @@ from pcs.lib.booth import constants
 from pcs.lib.commands import status
 from pcs.lib.errors import LibraryError
 
-from pcs_test.tools import (
-    fixture,
-    fixture_crm_mon,
-)
+from pcs_test.tools import fixture, fixture_crm_mon
 from pcs_test.tools.assertions import assert_xml_equal
 from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.command_env.config_runner_pcmk import (
@@ -103,41 +97,37 @@ class FullClusterStatusPlaintextBase(TestCase):
             """.format(name=name)
 
     def _fixture_config_live_minimal(self):
-        (
-            self.config.runner.pcmk.load_state_plaintext(
-                stdout="crm_mon cluster status",
-            )
-            .fs.exists(settings.corosync_conf_file, return_value=True)
-            .corosync_conf.load()
-            .runner.cib.load(
-                resources="""
+        self.config.runner.pcmk.load_state_plaintext(
+            stdout="crm_mon cluster status"
+        )
+        self.config.fs.exists(settings.corosync_conf_file, return_value=True)
+        self.config.corosync_conf.load()
+        self.config.runner.cib.load(
+            resources="""
                 <resources>
                     <primitive id="S" class="stonith" type="fence_dummy" />
                 </resources>
             """
-            )
-            .services.is_running(
-                "sbd", return_value=False, name="services.is_running.sbd"
-            )
+        )
+        self.config.services.is_running(
+            "sbd", return_value=False, name="services.is_running.sbd"
         )
 
     def _fixture_config_live_remote_minimal(self):
-        (
-            self.config.runner.pcmk.load_state_plaintext(
-                stdout="crm_mon cluster status",
-            )
-            .fs.exists(settings.corosync_conf_file, return_value=False)
-            .runner.cib.load(
-                optional_in_conf=self._fixture_xml_clustername("test-cib"),
-                resources="""
+        self.config.runner.pcmk.load_state_plaintext(
+            stdout="crm_mon cluster status"
+        )
+        self.config.fs.exists(settings.corosync_conf_file, return_value=False)
+        self.config.runner.cib.load(
+            optional_in_conf=self._fixture_xml_clustername("test-cib"),
+            resources="""
                 <resources>
                     <primitive id="S" class="stonith" type="fence_dummy" />
                 </resources>
             """,
-            )
-            .services.is_running(
-                "sbd", return_value=False, name="services.is_running.sbd"
-            )
+        )
+        self.config.services.is_running(
+            "sbd", return_value=False, name="services.is_running.sbd"
         )
 
     def _fixture_config_local_daemons(  # noqa: PLR0913
@@ -155,57 +145,55 @@ class FullClusterStatusPlaintextBase(TestCase):
         sbd_active=False,
     ):
         # pylint: disable=too-many-arguments
-        (
-            self.config.services.is_enabled(
-                "corosync",
-                name="services.is_enabled.corosync",
-                return_value=corosync_enabled,
-            )
-            .services.is_running(
-                "corosync",
-                name="services.is_running.corosync",
-                return_value=corosync_active,
-            )
-            .services.is_enabled(
-                "pacemaker",
-                name="services.is_enabled.pacemaker",
-                return_value=pacemaker_enabled,
-            )
-            .services.is_running(
-                "pacemaker",
-                name="services.is_running.pacemaker",
-                return_value=pacemaker_active,
-            )
-            .services.is_enabled(
-                "pacemaker_remote",
-                name="services.is_enabled.pacemaker_remote",
-                return_value=pacemaker_remote_enabled,
-            )
-            .services.is_running(
-                "pacemaker_remote",
-                name="services.is_running.pacemaker_remote",
-                return_value=pacemaker_remote_active,
-            )
-            .services.is_enabled(
-                "pcsd",
-                name="services.is_enabled.pcsd",
-                return_value=pcsd_enabled,
-            )
-            .services.is_running(
-                "pcsd",
-                name="services.is_running.pcsd",
-                return_value=pcsd_active,
-            )
-            .services.is_enabled(
-                "sbd",
-                name="services.is_enabled.sbd_2",
-                return_value=sbd_enabled,
-            )
-            .services.is_running(
-                "sbd",
-                name="services.is_running.sbd_2",
-                return_value=sbd_active,
-            )
+        self.config.services.is_enabled(
+            "corosync",
+            name="services.is_enabled.corosync",
+            return_value=corosync_enabled,
+        )
+        self.config.services.is_running(
+            "corosync",
+            name="services.is_running.corosync",
+            return_value=corosync_active,
+        )
+        self.config.services.is_enabled(
+            "pacemaker",
+            name="services.is_enabled.pacemaker",
+            return_value=pacemaker_enabled,
+        )
+        self.config.services.is_running(
+            "pacemaker",
+            name="services.is_running.pacemaker",
+            return_value=pacemaker_active,
+        )
+        self.config.services.is_enabled(
+            "pacemaker_remote",
+            name="services.is_enabled.pacemaker_remote",
+            return_value=pacemaker_remote_enabled,
+        )
+        self.config.services.is_running(
+            "pacemaker_remote",
+            name="services.is_running.pacemaker_remote",
+            return_value=pacemaker_remote_active,
+        )
+        self.config.services.is_enabled(
+            "pcsd",
+            name="services.is_enabled.pcsd",
+            return_value=pcsd_enabled,
+        )
+        self.config.services.is_running(
+            "pcsd",
+            name="services.is_running.pcsd",
+            return_value=pcsd_active,
+        )
+        self.config.services.is_enabled(
+            "sbd",
+            name="services.is_enabled.sbd_2",
+            return_value=sbd_enabled,
+        )
+        self.config.services.is_running(
+            "sbd",
+            name="services.is_running.sbd_2",
+            return_value=sbd_active,
         )
 
 
@@ -215,6 +203,7 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
     # pylint: disable=too-many-public-methods
     def test_life_cib_mocked_corosync(self):
         self.config.env.set_corosync_conf_data("corosync conf data")
+
         self.env_assist.assert_raise_library_error(
             lambda: status.full_cluster_status_plaintext(
                 self.env_assist.get_env()
@@ -231,6 +220,7 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
 
     def test_mocked_cib_life_corosync(self):
         self.config.env.set_cib_data("<cib/>")
+
         self.env_assist.assert_raise_library_error(
             lambda: status.full_cluster_status_plaintext(
                 self.env_assist.get_env()
@@ -246,13 +236,10 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
         )
 
     def test_fail_getting_cluster_status(self):
-        (
-            self.config.runner.pcmk.load_state_plaintext(
-                stdout="some stdout",
-                stderr="some stderr",
-                returncode=1,
-            )
+        self.config.runner.pcmk.load_state_plaintext(
+            stdout="some stdout", stderr="some stderr", returncode=1
         )
+
         self.env_assist.assert_raise_library_error(
             lambda: status.full_cluster_status_plaintext(
                 self.env_assist.get_env()
@@ -267,13 +254,12 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
         )
 
     def test_fail_getting_corosync_conf(self):
-        (
-            self.config.runner.pcmk.load_state_plaintext(
-                stdout="crm_mon cluster status",
-            )
-            .fs.exists(settings.corosync_conf_file, return_value=True)
-            .corosync_conf.load_content("invalid corosync conf")
+        self.config.runner.pcmk.load_state_plaintext(
+            stdout="crm_mon cluster status"
         )
+        self.config.fs.exists(settings.corosync_conf_file, return_value=True)
+        self.config.corosync_conf.load_content("invalid corosync conf")
+
         self.env_assist.assert_raise_library_error(
             lambda: status.full_cluster_status_plaintext(
                 self.env_assist.get_env()
@@ -288,16 +274,15 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
         )
 
     def test_fail_getting_cib(self):
-        (
-            self.config.runner.pcmk.load_state_plaintext(
-                stdout="crm_mon cluster status",
-            )
-            .fs.exists(settings.corosync_conf_file, return_value=True)
-            .corosync_conf.load()
-            .runner.cib.load_content(
-                "some stdout", stderr="cib load error", returncode=1
-            )
+        self.config.runner.pcmk.load_state_plaintext(
+            stdout="crm_mon cluster status",
         )
+        self.config.fs.exists(settings.corosync_conf_file, return_value=True)
+        self.config.corosync_conf.load()
+        self.config.runner.cib.load_content(
+            "some stdout", stderr="cib load error", returncode=1
+        )
+
         self.env_assist.assert_raise_library_error(
             lambda: status.full_cluster_status_plaintext(
                 self.env_assist.get_env()
@@ -315,6 +300,7 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
         self._fixture_config_live_minimal()
         self._fixture_config_local_daemons()
         self.config.fs.isfile(settings.crm_rule_exec, return_value=True)
+
         self.assertEqual(
             status.full_cluster_status_plaintext(self.env_assist.get_env()),
             dedent(
@@ -330,32 +316,29 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
         )
 
     def test_success_live_verbose(self):
-        (
-            self.config.env.set_known_nodes(self.node_name_list)
-            .runner.pcmk.can_fence_history_status(stderr="not supported")
-            .runner.pcmk.load_state_plaintext(
-                verbose=True,
-                stdout="crm_mon cluster status",
-            )
-            .fs.exists(settings.corosync_conf_file, return_value=True)
-            .corosync_conf.load(node_name_list=self.node_name_list)
-            .runner.cib.load(
-                resources="""
+        self.config.env.set_known_nodes(self.node_name_list)
+        self.config.runner.pcmk.can_fence_history_status(stderr="not supported")
+        self.config.runner.pcmk.load_state_plaintext(
+            verbose=True, stdout="crm_mon cluster status"
+        )
+        self.config.fs.exists(settings.corosync_conf_file, return_value=True)
+        self.config.corosync_conf.load(node_name_list=self.node_name_list)
+        self.config.runner.cib.load(
+            resources="""
                 <resources>
                     <primitive id="S" class="stonith" type="fence_dummy" />
                 </resources>
             """
-            )
-            .runner.pcmk.load_ticket_state_plaintext(stdout="ticket status")
-            .services.is_running(
-                "sbd", return_value=False, name="services.is_running.sbd"
-            )
+        )
+        self.config.runner.pcmk.load_ticket_state_plaintext(
+            stdout="ticket status"
+        )
+        self.config.services.is_running(
+            "sbd", return_value=False, name="services.is_running.sbd"
         )
         self._fixture_config_local_daemons()
-        (
-            self.config.http.host.check_reachability(
-                node_labels=self.node_name_list
-            )
+        self.config.http.host.check_reachability(
+            node_labels=self.node_name_list
         )
         self.config.fs.isfile(settings.crm_rule_exec, return_value=True)
 
@@ -394,6 +377,7 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
             pacemaker_remote_active=True,
         )
         self.config.fs.isfile(settings.crm_rule_exec, return_value=True)
+
         self.assertEqual(
             status.full_cluster_status_plaintext(self.env_assist.get_env()),
             dedent(
@@ -410,27 +394,24 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
         )
 
     def test_success_live_remote_node_verbose(self):
-        (
-            self.config.runner.pcmk.can_fence_history_status(
-                stderr="not supported"
-            )
-            .runner.pcmk.load_state_plaintext(
-                verbose=True,
-                stdout="crm_mon cluster status",
-            )
-            .fs.exists(settings.corosync_conf_file, return_value=False)
-            .runner.cib.load(
-                optional_in_conf=self._fixture_xml_clustername("test-cib"),
-                resources="""
+        self.config.runner.pcmk.can_fence_history_status(stderr="not supported")
+        self.config.runner.pcmk.load_state_plaintext(
+            verbose=True, stdout="crm_mon cluster status"
+        )
+        self.config.fs.exists(settings.corosync_conf_file, return_value=False)
+        self.config.runner.cib.load(
+            optional_in_conf=self._fixture_xml_clustername("test-cib"),
+            resources="""
                 <resources>
                     <primitive id="S" class="stonith" type="fence_dummy" />
                 </resources>
             """,
-            )
-            .runner.pcmk.load_ticket_state_plaintext(stdout="ticket status")
-            .services.is_running(
-                "sbd", return_value=False, name="services.is_running.sbd"
-            )
+        )
+        self.config.runner.pcmk.load_ticket_state_plaintext(
+            stdout="ticket status"
+        )
+        self.config.services.is_running(
+            "sbd", return_value=False, name="services.is_running.sbd"
         )
         self._fixture_config_local_daemons(
             corosync_enabled=False,
@@ -465,23 +446,21 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
     def test_success_mocked(self):
         tmp_file = "/fake/tmp_file"
         env = dict(CIB_file=tmp_file)
-        (
-            self.config.env.set_corosync_conf_data(rc_read("corosync.conf"))
-            .env.set_cib_data("<cib/>", cib_tempfile=tmp_file)
-            .runner.pcmk.load_state_plaintext(
-                stdout="crm_mon cluster status",
-                env=env,
-            )
-            .runner.cib.load(
-                resources="""
+        self.config.env.set_corosync_conf_data(rc_read("corosync.conf"))
+        self.config.env.set_cib_data("<cib/>", cib_tempfile=tmp_file)
+        self.config.runner.pcmk.load_state_plaintext(
+            stdout="crm_mon cluster status", env=env
+        )
+        self.config.runner.cib.load(
+            resources="""
                 <resources>
                     <primitive id="S" class="stonith" type="fence_dummy" />
                 </resources>
             """,
-                env=env,
-            )
-            .fs.isfile(settings.crm_rule_exec, return_value=True)
+            env=env,
         )
+        self.config.fs.isfile(settings.crm_rule_exec, return_value=True)
+
         self.assertEqual(
             status.full_cluster_status_plaintext(self.env_assist.get_env()),
             dedent(
@@ -494,31 +473,26 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
     def test_success_mocked_verbose(self):
         tmp_file = "/fake/tmp_file"
         env = dict(CIB_file=tmp_file)
-        (
-            self.config.env.set_corosync_conf_data(rc_read("corosync.conf"))
-            .env.set_cib_data("<cib/>", cib_tempfile=tmp_file)
-            .runner.pcmk.can_fence_history_status(
-                stderr="not supported",
-                env=env,
-            )
-            .runner.pcmk.load_state_plaintext(
-                verbose=True,
-                stdout="crm_mon cluster status",
-                env=env,
-            )
-            .runner.cib.load(
-                resources="""
+        self.config.env.set_corosync_conf_data(rc_read("corosync.conf"))
+        self.config.env.set_cib_data("<cib/>", cib_tempfile=tmp_file)
+        self.config.runner.pcmk.can_fence_history_status(
+            stderr="not supported", env=env
+        )
+        self.config.runner.pcmk.load_state_plaintext(
+            verbose=True, stdout="crm_mon cluster status", env=env
+        )
+        self.config.runner.cib.load(
+            resources="""
                 <resources>
                     <primitive id="S" class="stonith" type="fence_dummy" />
                 </resources>
             """,
-                env=env,
-            )
-            .runner.pcmk.load_ticket_state_plaintext(
-                stdout="ticket status", env=env
-            )
-            .fs.isfile(settings.crm_rule_exec, return_value=True)
+            env=env,
         )
+        self.config.runner.pcmk.load_ticket_state_plaintext(
+            stdout="ticket status", env=env
+        )
+        self.config.fs.isfile(settings.crm_rule_exec, return_value=True)
         self.assertEqual(
             status.full_cluster_status_plaintext(
                 self.env_assist.get_env(), verbose=True
@@ -534,34 +508,32 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
         )
 
     def test_success_verbose_inactive_and_fence_history(self):
-        (
-            self.config.env.set_known_nodes(self.node_name_list)
-            .runner.pcmk.can_fence_history_status()
-            .runner.pcmk.load_state_plaintext(
-                verbose=True,
-                inactive=False,
-                fence_history=True,
-                stdout="crm_mon cluster status",
-            )
-            .fs.exists(settings.corosync_conf_file, return_value=True)
-            .corosync_conf.load(node_name_list=self.node_name_list)
-            .runner.cib.load(
-                resources="""
+        self.config.env.set_known_nodes(self.node_name_list)
+        self.config.runner.pcmk.can_fence_history_status()
+        self.config.runner.pcmk.load_state_plaintext(
+            verbose=True,
+            inactive=False,
+            fence_history=True,
+            stdout="crm_mon cluster status",
+        )
+        self.config.fs.exists(settings.corosync_conf_file, return_value=True)
+        self.config.corosync_conf.load(node_name_list=self.node_name_list)
+        self.config.runner.cib.load(
+            resources="""
                 <resources>
                     <primitive id="S" class="stonith" type="fence_dummy" />
                 </resources>
             """
-            )
-            .runner.pcmk.load_ticket_state_plaintext(stdout="ticket status")
-            .services.is_running(
-                "sbd", return_value=False, name="services.is_running.sbd"
-            )
+        )
+        self.config.runner.pcmk.load_ticket_state_plaintext(
+            stdout="ticket status"
+        )
+        self.config.services.is_running(
+            "sbd", return_value=False, name="services.is_running.sbd"
         )
         self._fixture_config_local_daemons()
-        (
-            self.config.http.host.check_reachability(
-                node_labels=self.node_name_list
-            )
+        self.config.http.host.check_reachability(
+            node_labels=self.node_name_list
         )
         self.config.fs.isfile(settings.crm_rule_exec, return_value=True)
 
@@ -592,34 +564,29 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
         )
 
     def _assert_success_with_ticket_status_failure(self, stderr="", msg=""):
-        (
-            self.config.env.set_known_nodes(self.node_name_list)
-            .runner.pcmk.can_fence_history_status(stderr="not supported")
-            .runner.pcmk.load_state_plaintext(
-                verbose=True,
-                stdout="crm_mon cluster status",
-            )
-            .fs.exists(settings.corosync_conf_file, return_value=True)
-            .corosync_conf.load(node_name_list=self.node_name_list)
-            .runner.cib.load(
-                resources="""
+        self.config.env.set_known_nodes(self.node_name_list)
+        self.config.runner.pcmk.can_fence_history_status(stderr="not supported")
+        self.config.runner.pcmk.load_state_plaintext(
+            verbose=True, stdout="crm_mon cluster status"
+        )
+        self.config.fs.exists(settings.corosync_conf_file, return_value=True)
+        self.config.corosync_conf.load(node_name_list=self.node_name_list)
+        self.config.runner.cib.load(
+            resources="""
                 <resources>
                     <primitive id="S" class="stonith" type="fence_dummy" />
                 </resources>
             """
-            )
-            .runner.pcmk.load_ticket_state_plaintext(
-                stdout="ticket stdout", stderr=stderr, returncode=1
-            )
-            .services.is_running(
-                "sbd", return_value=False, name="services.is_running.sbd"
-            )
+        )
+        self.config.runner.pcmk.load_ticket_state_plaintext(
+            stdout="ticket stdout", stderr=stderr, returncode=1
+        )
+        self.config.services.is_running(
+            "sbd", return_value=False, name="services.is_running.sbd"
         )
         self._fixture_config_local_daemons()
-        (
-            self.config.http.host.check_reachability(
-                node_labels=self.node_name_list
-            )
+        self.config.http.host.check_reachability(
+            node_labels=self.node_name_list
         )
         self.config.fs.isfile(settings.crm_rule_exec, return_value=True)
 
@@ -657,16 +624,14 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
         )
 
     def test_stonith_warning_no_devices(self):
-        (
-            self.config.runner.pcmk.load_state_plaintext(
-                stdout="crm_mon cluster status",
-            )
-            .fs.exists(settings.corosync_conf_file, return_value=True)
-            .corosync_conf.load()
-            .runner.cib.load()
-            .services.is_running(
-                "sbd", return_value=False, name="services.is_running.sbd"
-            )
+        self.config.runner.pcmk.load_state_plaintext(
+            stdout="crm_mon cluster status"
+        )
+        self.config.fs.exists(settings.corosync_conf_file, return_value=True)
+        self.config.corosync_conf.load()
+        self.config.runner.cib.load()
+        self.config.services.is_running(
+            "sbd", return_value=False, name="services.is_running.sbd"
         )
         self._fixture_config_local_daemons()
         self.config.fs.isfile(settings.crm_rule_exec, return_value=True)
@@ -690,16 +655,14 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
         )
 
     def test_stonith_warning_no_devices_sbd_enabled(self):
-        (
-            self.config.runner.pcmk.load_state_plaintext(
-                stdout="crm_mon cluster status",
-            )
-            .fs.exists(settings.corosync_conf_file, return_value=True)
-            .corosync_conf.load()
-            .runner.cib.load()
-            .services.is_running(
-                "sbd", return_value=True, name="services.is_running.sbd"
-            )
+        self.config.runner.pcmk.load_state_plaintext(
+            stdout="crm_mon cluster status"
+        )
+        self.config.fs.exists(settings.corosync_conf_file, return_value=True)
+        self.config.corosync_conf.load()
+        self.config.runner.cib.load()
+        self.config.services.is_running(
+            "sbd", return_value=True, name="services.is_running.sbd"
         )
         self._fixture_config_local_daemons()
         self.config.fs.isfile(settings.crm_rule_exec, return_value=True)
@@ -719,14 +682,13 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
         )
 
     def test_stonith_warnings_regarding_devices_configuration(self):
-        (
-            self.config.runner.pcmk.load_state_plaintext(
-                stdout="crm_mon cluster status",
-            )
-            .fs.exists(settings.corosync_conf_file, return_value=True)
-            .corosync_conf.load()
-            .runner.cib.load(
-                resources="""
+        self.config.runner.pcmk.load_state_plaintext(
+            stdout="crm_mon cluster status"
+        )
+        self.config.fs.exists(settings.corosync_conf_file, return_value=True)
+        self.config.corosync_conf.load()
+        self.config.runner.cib.load(
+            resources="""
                 <resources>
                     <primitive id="S1" class="stonith" type="fence_dummy">
                         <instance_attributes>
@@ -752,10 +714,9 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
                     </primitive>
                 </resources>
             """
-            )
-            .services.is_running(
-                "sbd", return_value=False, name="services.is_running.sbd"
-            )
+        )
+        self.config.services.is_running(
+            "sbd", return_value=False, name="services.is_running.sbd"
         )
         self._fixture_config_local_daemons()
         self.config.fs.isfile(settings.crm_rule_exec, return_value=True)
@@ -781,54 +742,40 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
 
     def test_pcsd_status_issues(self):
         self.node_name_list = ["node1", "node2", "node3", "node4", "node5"]
-
-        (
-            self.config.env.set_known_nodes(self.node_name_list[1:])
-            .runner.pcmk.can_fence_history_status(stderr="not supported")
-            .runner.pcmk.load_state_plaintext(
-                verbose=True,
-                stdout="crm_mon cluster status",
-            )
-            .fs.exists(settings.corosync_conf_file, return_value=True)
-            .corosync_conf.load(node_name_list=self.node_name_list)
-            .runner.cib.load(
-                resources="""
+        self.config.env.set_known_nodes(self.node_name_list[1:])
+        self.config.runner.pcmk.can_fence_history_status(stderr="not supported")
+        self.config.runner.pcmk.load_state_plaintext(
+            verbose=True, stdout="crm_mon cluster status"
+        )
+        self.config.fs.exists(settings.corosync_conf_file, return_value=True)
+        self.config.corosync_conf.load(node_name_list=self.node_name_list)
+        self.config.runner.cib.load(
+            resources="""
                 <resources>
                     <primitive id="S" class="stonith" type="fence_dummy" />
                 </resources>
             """
-            )
-            .runner.pcmk.load_ticket_state_plaintext(stdout="ticket status")
-            .services.is_running(
-                "sbd", return_value=False, name="services.is_running.sbd"
-            )
+        )
+        self.config.runner.pcmk.load_ticket_state_plaintext(
+            stdout="ticket status"
+        )
+        self.config.services.is_running(
+            "sbd", return_value=False, name="services.is_running.sbd"
         )
         self._fixture_config_local_daemons()
-        (
-            self.config.http.host.check_reachability(
-                communication_list=[
-                    # node1 has no record in known-hosts
-                    dict(
-                        label="node2",
-                        was_connected=False,
-                        errno=7,
-                        error_msg="node2 error",
-                    ),
-                    dict(
-                        label="node3",
-                        response_code=401,
-                        output="node3 output",
-                    ),
-                    dict(
-                        label="node4",
-                        response_code=500,
-                        output="node4 output",
-                    ),
-                    dict(
-                        label="node5",
-                    ),
-                ]
-            )
+        self.config.http.host.check_reachability(
+            communication_list=[
+                # node1 has no record in known-hosts
+                dict(
+                    label="node2",
+                    was_connected=False,
+                    errno=7,
+                    error_msg="node2 error",
+                ),
+                dict(label="node3", response_code=401, output="node3 output"),
+                dict(label="node4", response_code=500, output="node4 output"),
+                dict(label="node5"),
+            ]
         )
         self.config.fs.isfile(settings.crm_rule_exec, return_value=True)
 
@@ -938,7 +885,7 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
                 <rsc_location id="location-P3-node3--INFINITY" rsc="P3"
                     node="node3" score="-INFINITY"/>
             </constraints>
-        """,
+            """,
             resources="""
             <resources>
                 <primitive class="ocf" id="P1" provider="pacemaker"
@@ -948,7 +895,7 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
                 <primitive class="ocf" id="P3" provider="pacemaker"
                     type="Dummy"/>
             </resources>
-        """,
+            """,
         )
         self.config.services.is_running(
             "sbd", return_value=True, name="services.is_running.sbd"
@@ -997,7 +944,7 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
                     </rule>
                 </rsc_location>
             </constraints>
-        """,
+            """,
             resources="""
             <resources>
                 <primitive class="ocf" id="P1" provider="pacemaker"
@@ -1007,7 +954,7 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
                 <primitive class="ocf" id="P3" provider="pacemaker"
                     type="Dummy"/>
             </resources>
-        """,
+            """,
         )
         self.config.services.is_running(
             "sbd", return_value=True, name="services.is_running.sbd"
@@ -1066,7 +1013,7 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
                     </rule>
                 </rsc_location>
             </constraints>
-        """,
+            """,
             resources="""
             <resources>
                 <primitive class="ocf" id="P1" provider="pacemaker"
@@ -1076,7 +1023,7 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
                 <primitive class="ocf" id="P3" provider="pacemaker"
                     type="Dummy"/>
             </resources>
-        """,
+            """,
         )
         self.config.services.is_running(
             "sbd", return_value=True, name="services.is_running.sbd"
@@ -1130,7 +1077,7 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
                     <docker image="pcs:test" />
                 </bundle>
             </resources>
-        """,
+            """,
         )
         self.config.services.is_running(
             "sbd", return_value=True, name="services.is_running.sbd"
@@ -1381,7 +1328,12 @@ class ResourcesStatus(TestCase):
         self.config.runner.pcmk.load_state(
             resources="""
                 <resources>
-                    <resource id="R7" role="NotPcmkRole" resource_agent="ocf:pacemaker:Dummy" active="false" orphaned="false" blocked="false" maintenance="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="0"/>
+                    <resource id="R7" resource_agent="ocf:pacemaker:Dummy"
+                        role="NotPcmkRole" active="false" orphaned="false"
+                        blocked="false" maintenance="false" managed="true"
+                        failed="false" failure_ignored="false"
+                        nodes_running_on="0"
+                    />
                 </resources>
             """,
         )
@@ -1568,11 +1520,31 @@ class ResourcesStatus(TestCase):
         self.config.runner.pcmk.load_state(
             resources="""
                 <resources>
-                    <bundle id="B1" type="docker" image="pcs:test" unique="true" maintenance="false" managed="false" failed="false">
+                    <bundle id="B1" type="docker" image="pcs:test" unique="true"
+                        maintenance="false" managed="false" failed="false"
+                    >
                         <replica id="0">
-                            <resource id="B1-0" resource_agent="ocf:heartbeat:Dummy" role="Stopped" target_role="Stopped" active="false" orphaned="false" blocked="false" maintenance="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="0"/>
-                            <resource id="B1-docker-0" resource_agent="ocf:heartbeat:docker" role="Stopped" target_role="Stopped" active="false" orphaned="false" blocked="false" maintenance="false" managed="false" failed="false" failure_ignored="false" nodes_running_on="0"/>
-                            <resource id="B1-0" resource_agent="ocf:pacemaker:remote" role="Stopped" target_role="Stopped" active="false" orphaned="false" blocked="false" maintenance="false" managed="false" failed="false" failure_ignored="false" nodes_running_on="0"/>
+                            <resource id="B1-0"
+                                resource_agent="ocf:heartbeat:Dummy"
+                                role="Stopped" target_role="Stopped"
+                                active="false" orphaned="false" blocked="false"
+                                maintenance="false" managed="true" failed="false"
+                                failure_ignored="false" nodes_running_on="0"
+                            />
+                            <resource id="B1-docker-0"
+                                resource_agent="ocf:heartbeat:docker"
+                                role="Stopped" target_role="Stopped"
+                                active="false" orphaned="false" blocked="false"
+                                maintenance="false" managed="false" failed="false"
+                                failure_ignored="false" nodes_running_on="0"
+                            />
+                            <resource id="B1-0"
+                                resource_agent="ocf:pacemaker:remote"
+                                role="Stopped" target_role="Stopped"
+                                active="false" orphaned="false" blocked="false"
+                                maintenance="false" managed="false" failed="false"
+                                failure_ignored="false" nodes_running_on="0"
+                            />
                         </replica>
                     </bundle>
                 </resources>

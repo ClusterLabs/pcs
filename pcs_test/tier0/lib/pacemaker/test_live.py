@@ -1,24 +1,17 @@
 # pylint: disable=too-many-lines
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
 from lxml import etree
 
 import pcs.lib.pacemaker.live as lib
 from pcs import settings
-from pcs.common.reports import ReportItemSeverity as Severity
 from pcs.common.reports import codes as report_codes
 from pcs.common.tools import Version
 from pcs.common.types import CibRuleInEffectStatus
 from pcs.lib.external import CommandRunner
 from pcs.lib.resource_agent import ResourceAgentName
 
-from pcs_test.tools import (
-    fixture,
-    fixture_crm_mon,
-)
+from pcs_test.tools import fixture, fixture_crm_mon
 from pcs_test.tools.assertions import (
     assert_raise_library_error,
     assert_report_item_list_equal,
@@ -26,16 +19,10 @@ from pcs_test.tools.assertions import (
     start_tag_error_text,
 )
 from pcs_test.tools.command_env import get_env_tools
-from pcs_test.tools.custom_mock import (
-    TmpFileCall,
-    TmpFileMock,
-)
+from pcs_test.tools.custom_mock import TmpFileCall, TmpFileMock
 from pcs_test.tools.custom_mock import get_runner_mock as get_runner
 from pcs_test.tools.misc import get_test_resource as rc
-from pcs_test.tools.xml import (
-    XmlManipulation,
-    etree_to_str,
-)
+from pcs_test.tools.xml import XmlManipulation, etree_to_str
 
 _EXITCODE_NOT_CONNECTED = 102
 
@@ -354,11 +341,10 @@ class GetCibXmlTest(TestCase):
         assert_raise_library_error(
             lambda: lib.get_cib_xml(mock_runner),
             (
-                Severity.ERROR,
-                report_codes.CIB_LOAD_ERROR,
-                {
-                    "reason": expected_stderr + "\n" + expected_stdout,
-                },
+                fixture.error(
+                    report_codes.CIB_LOAD_ERROR,
+                    reason=expected_stderr + "\n" + expected_stdout,
+                )
             ),
         )
 
@@ -404,12 +390,11 @@ class GetCibXmlTest(TestCase):
         assert_raise_library_error(
             lambda: lib.get_cib_xml(mock_runner, scope=scope),
             (
-                Severity.ERROR,
-                report_codes.CIB_LOAD_ERROR_SCOPE_MISSING,
-                {
-                    "scope": scope,
-                    "reason": expected_stderr + "\n" + expected_stdout,
-                },
+                fixture.error(
+                    report_codes.CIB_LOAD_ERROR_SCOPE_MISSING,
+                    scope=scope,
+                    reason=expected_stderr + "\n" + expected_stdout,
+                )
             ),
         )
 
@@ -606,12 +591,11 @@ class ReplaceCibConfigurationTest(TestCase):
                 mock_runner, XmlManipulation.from_str(xml).tree
             ),
             (
-                Severity.ERROR,
-                report_codes.CIB_PUSH_ERROR,
-                {
-                    "reason": expected_stderr,
-                    "pushed_cib": expected_stdout,
-                },
+                fixture.error(
+                    report_codes.CIB_PUSH_ERROR,
+                    reason=expected_stderr,
+                    pushed_cib=expected_stdout,
+                )
             ),
         )
 
@@ -648,11 +632,10 @@ class UpgradeCibTest(TestCase):
         assert_raise_library_error(
             lambda: lib._upgrade_cib(mock_runner),
             (
-                Severity.ERROR,
-                report_codes.CIB_UPGRADE_FAILED,
-                {
-                    "reason": expected_stderr + "\n" + expected_stdout,
-                },
+                fixture.error(
+                    report_codes.CIB_UPGRADE_FAILED,
+                    reason=expected_stderr + "\n" + expected_stdout,
+                )
             ),
         )
         mock_runner.run.assert_called_once_with(
@@ -714,9 +697,11 @@ class EnsureCibVersionTest(TestCase):
                 self.mock_runner, self.cib, Version(2, 3, 5)
             ),
             (
-                Severity.ERROR,
-                report_codes.CIB_UPGRADE_FAILED_TO_MINIMAL_REQUIRED_VERSION,
-                {"required_version": "2.3.5", "current_version": "2.3.4"},
+                fixture.error(
+                    report_codes.CIB_UPGRADE_FAILED_TO_MINIMAL_REQUIRED_VERSION,
+                    required_version="2.3.5",
+                    current_version="2.3.4",
+                )
             ),
         )
         mock_upgrade.assert_called_once_with(self.mock_runner)
@@ -743,11 +728,10 @@ class EnsureCibVersionTest(TestCase):
                 self.mock_runner, self.cib, Version(2, 3, 5)
             ),
             (
-                Severity.ERROR,
-                report_codes.CIB_UPGRADE_FAILED,
-                {
-                    "reason": start_tag_error_text(),
-                },
+                fixture.error(
+                    report_codes.CIB_UPGRADE_FAILED,
+                    reason=start_tag_error_text(),
+                )
             ),
         )
         mock_upgrade.assert_called_once_with(self.mock_runner)
@@ -1010,11 +994,10 @@ class GetLocalNodeName(TestCase):
             cm.exception.args,
             [
                 (
-                    Severity.ERROR,
-                    report_codes.PACEMAKER_LOCAL_NODE_NAME_NOT_FOUND,
-                    {
-                        "reason": stderr.strip(),
-                    },
+                    fixture.error(
+                        report_codes.PACEMAKER_LOCAL_NODE_NAME_NOT_FOUND,
+                        reason=stderr.strip(),
+                    )
                 ),
             ],
         )
@@ -1137,13 +1120,12 @@ class RemoveNode(TestCase):
         assert_raise_library_error(
             lambda: lib.remove_node(mock_runner, "NODE_NAME"),
             (
-                Severity.ERROR,
-                report_codes.NODE_REMOVE_IN_PACEMAKER_FAILED,
-                {
-                    "node": "",
-                    "node_list_to_remove": ["NODE_NAME"],
-                    "reason": expected_stderr,
-                },
+                fixture.error(
+                    report_codes.NODE_REMOVE_IN_PACEMAKER_FAILED,
+                    node="",
+                    node_list_to_remove=["NODE_NAME"],
+                    reason=expected_stderr,
+                )
             ),
         )
 
@@ -1497,11 +1479,10 @@ class ResourcesWaitingTest(TestCase):
         assert_raise_library_error(
             lambda: lib.wait_for_idle(mock_runner, 0),
             (
-                Severity.ERROR,
-                report_codes.WAIT_FOR_IDLE_ERROR,
-                {
-                    "reason": expected_stderr + "\n" + expected_stdout,
-                },
+                fixture.error(
+                    report_codes.WAIT_FOR_IDLE_ERROR,
+                    reason=expected_stderr + "\n" + expected_stdout,
+                )
             ),
         )
 
@@ -1520,11 +1501,10 @@ class ResourcesWaitingTest(TestCase):
         assert_raise_library_error(
             lambda: lib.wait_for_idle(mock_runner, 0),
             (
-                Severity.ERROR,
-                report_codes.WAIT_FOR_IDLE_TIMED_OUT,
-                {
-                    "reason": expected_stderr + "\n" + expected_stdout,
-                },
+                fixture.error(
+                    report_codes.WAIT_FOR_IDLE_TIMED_OUT,
+                    reason=expected_stderr + "\n" + expected_stdout,
+                )
             ),
         )
 
@@ -1635,9 +1615,10 @@ class GetResourceDigests(TestCase):
                 self.CRM_ATTRS,
             ),
             (
-                Severity.ERROR,
-                report_codes.UNABLE_TO_GET_RESOURCE_OPERATION_DIGESTS,
-                {"output": report_output},
+                fixture.error(
+                    report_codes.UNABLE_TO_GET_RESOURCE_OPERATION_DIGESTS,
+                    output=report_output,
+                )
             ),
         )
         runner.run.assert_called_once_with(self.CALL_ARGS)
