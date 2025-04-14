@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.12.0.1] - 2025-04-14
 
 ### Fixed
 - Command `pcs resource restart` allows restarting bundle instances (broken
