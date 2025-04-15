@@ -9,14 +9,10 @@ from pcs_test.tools.bin_mock import get_mock_settings
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import (
     get_tmp_file,
-    is_minimum_pacemaker_version,
-    is_pacemaker_21_without_20_compatibility,
     outdent,
     write_file_to_tmpfile,
 )
 from pcs_test.tools.pcs_runner import PcsRunner
-
-PCMK_2_0_3_PLUS = is_minimum_pacemaker_version(2, 0, 3)
 
 
 class StonithWarningTest(TestCase, AssertPcsMixin):
@@ -64,163 +60,86 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
         self.fixture_stonith_action()
         self.fixture_resource()
         self.pcs_runner.corosync_conf_opt = self.corosync_conf
-        if PCMK_2_0_3_PLUS:
-            self.assert_pcs_success(
-                ["status"],
-                stdout_start=dedent(
-                    """\
-                    Cluster name: test99
+        self.assert_pcs_success(
+            ["status"],
+            stdout_start=dedent(
+                """\
+                Cluster name: test99
 
-                    WARNINGS:
-                    Following stonith devices have the 'action' option set, it is recommended to set 'pcmk_off_action', 'pcmk_reboot_action' instead: 'Sa'
+                WARNINGS:
+                Following stonith devices have the 'action' option set, it is recommended to set 'pcmk_off_action', 'pcmk_reboot_action' instead: 'Sa'
 
-                    Cluster Summary:
+                Cluster Summary:
                 """
-                ),
-            )
-        else:
-            self.assert_pcs_success(
-                ["status"],
-                stdout_start=dedent(
-                    """\
-                    Cluster name: test99
-
-                    WARNINGS:
-                    Following stonith devices have the 'action' option set, it is recommended to set 'pcmk_off_action', 'pcmk_reboot_action' instead: 'Sa'
-
-                    Stack: unknown
-                    Current DC: NONE
-                """
-                ),
-            )
+            ),
+        )
 
     def test_warning_stonith_method_cycle(self):
         self.fixture_stonith_cycle()
         self.fixture_resource()
         self.pcs_runner.corosync_conf_opt = self.corosync_conf
-        if PCMK_2_0_3_PLUS:
-            self.assert_pcs_success(
-                ["status"],
-                stdout_start=dedent(
-                    """\
-                    Cluster name: test99
+        self.assert_pcs_success(
+            ["status"],
+            stdout_start=dedent(
+                """\
+                Cluster name: test99
 
-                    WARNINGS:
-                    Following stonith devices have the 'method' option set to 'cycle' which is potentially dangerous, please consider using 'onoff': 'Sc'
+                WARNINGS:
+                Following stonith devices have the 'method' option set to 'cycle' which is potentially dangerous, please consider using 'onoff': 'Sc'
 
-                    Cluster Summary:
+                Cluster Summary:
                 """
-                ),
-            )
-        else:
-            self.assert_pcs_success(
-                ["status"],
-                stdout_start=dedent(
-                    """\
-                    Cluster name: test99
-
-                    WARNINGS:
-                    Following stonith devices have the 'method' option set to 'cycle' which is potentially dangerous, please consider using 'onoff': 'Sc'
-
-                    Stack: unknown
-                    Current DC: NONE
-                """
-                ),
-            )
+            ),
+        )
 
     def test_stonith_warnings(self):
         self.fixture_stonith_action()
         self.fixture_stonith_cycle()
         self.fixture_resource()
         self.pcs_runner.corosync_conf_opt = self.corosync_conf
-        if PCMK_2_0_3_PLUS:
-            self.assert_pcs_success(
-                ["status"],
-                stdout_start=dedent(
-                    """\
-                    Cluster name: test99
+        self.assert_pcs_success(
+            ["status"],
+            stdout_start=dedent(
+                """\
+                Cluster name: test99
 
-                    WARNINGS:
-                    Following stonith devices have the 'action' option set, it is recommended to set 'pcmk_off_action', 'pcmk_reboot_action' instead: 'Sa'
-                    Following stonith devices have the 'method' option set to 'cycle' which is potentially dangerous, please consider using 'onoff': 'Sc'
+                WARNINGS:
+                Following stonith devices have the 'action' option set, it is recommended to set 'pcmk_off_action', 'pcmk_reboot_action' instead: 'Sa'
+                Following stonith devices have the 'method' option set to 'cycle' which is potentially dangerous, please consider using 'onoff': 'Sc'
 
-                    Cluster Summary:
+                Cluster Summary:
                 """
-                ),
-            )
-        else:
-            self.assert_pcs_success(
-                ["status"],
-                stdout_start=dedent(
-                    """\
-                    Cluster name: test99
-
-                    WARNINGS:
-                    Following stonith devices have the 'action' option set, it is recommended to set 'pcmk_off_action', 'pcmk_reboot_action' instead: 'Sa'
-                    Following stonith devices have the 'method' option set to 'cycle' which is potentially dangerous, please consider using 'onoff': 'Sc'
-
-                    Stack: unknown
-                    Current DC: NONE
-                """
-                ),
-            )
+            ),
+        )
 
     def test_warn_when_no_stonith(self):
         self.pcs_runner.corosync_conf_opt = self.corosync_conf
-        if PCMK_2_0_3_PLUS:
-            self.assert_pcs_success(
-                ["status"],
-                stdout_start=dedent(
-                    """\
-                    Cluster name: test99
+        self.assert_pcs_success(
+            ["status"],
+            stdout_start=dedent(
+                """\
+                Cluster name: test99
 
-                    WARNINGS:
-                    No stonith devices and stonith-enabled is not false
+                WARNINGS:
+                No stonith devices and stonith-enabled is not false
 
-                    Cluster Summary:
+                Cluster Summary:
                 """
-                ),
-            )
-        else:
-            self.assert_pcs_success(
-                ["status"],
-                stdout_start=dedent(
-                    """\
-                    Cluster name: test99
-
-                    WARNINGS:
-                    No stonith devices and stonith-enabled is not false
-
-                    Stack: unknown
-                    Current DC: NONE
-                """
-                ),
-            )
+            ),
+        )
 
     def test_disabled_stonith_does_not_care_about_missing_devices(self):
         self.assert_pcs_success("property set stonith-enabled=false".split())
         self.pcs_runner.corosync_conf_opt = self.corosync_conf
-        if PCMK_2_0_3_PLUS:
-            self.assert_pcs_success(
-                ["status"],
-                stdout_start=dedent(
-                    """\
-                    Cluster name: test99
-                    Cluster Summary:
+        self.assert_pcs_success(
+            ["status"],
+            stdout_start=dedent(
+                """\
+                Cluster name: test99
+                Cluster Summary:
                 """
-                ),
-            )
-        else:
-            self.assert_pcs_success(
-                ["status"],
-                stdout_start=dedent(
-                    """\
-                    Cluster name: test99
-                    Stack: unknown
-                    Current DC: NONE
-                """
-                ),
-            )
+            ),
+        )
 
 
 class ResourceStonithStatusBase(AssertPcsMixin):
@@ -283,13 +202,9 @@ class ResourceStonithStatusBase(AssertPcsMixin):
         )
 
     def test_resource_id(self):
-        if is_pacemaker_21_without_20_compatibility():
-            stdout_full = "  * x1	(ocf:pcsmock:minimal):	 Started rh-1\n"
-        else:
-            stdout_full = "  * x1	(ocf::pcsmock:minimal):	 Started rh-1\n"
         self.assert_pcs_success(
             self.command + ["x1"],
-            stdout_full=stdout_full,
+            stdout_full="  * x1	(ocf:pcsmock:minimal):	 Started rh-1\n",
         )
 
     def test_resource_id_hide_inactive(self):
@@ -305,23 +220,15 @@ class ResourceStonithStatusBase(AssertPcsMixin):
         )
 
     def test_resource_id_with_node_started(self):
-        if is_pacemaker_21_without_20_compatibility():
-            stdout_full = "  * x1	(ocf:pcsmock:minimal):	 Started rh-1\n"
-        else:
-            stdout_full = "  * x1	(ocf::pcsmock:minimal):	 Started rh-1\n"
         self.assert_pcs_success(
             self.command + ["x1", "node=rh-1"],
-            stdout_full=stdout_full,
+            stdout_full="  * x1	(ocf:pcsmock:minimal):	 Started rh-1\n",
         )
 
     def test_resource_id_with_node_stopped(self):
-        if is_pacemaker_21_without_20_compatibility():
-            stdout_full = "  * x2	(ocf:pcsmock:minimal):	 Stopped\n"
-        else:
-            stdout_full = "  * x2	(ocf::pcsmock:minimal):	 Stopped\n"
         self.assert_pcs_success(
             self.command + ["x2", "node=rh-1"],
-            stdout_full=stdout_full,
+            stdout_full="  * x2	(ocf:pcsmock:minimal):	 Stopped\n",
         )
 
     def test_resource_id_with_node_without_status(self):
@@ -331,13 +238,9 @@ class ResourceStonithStatusBase(AssertPcsMixin):
         )
 
     def test_resource_id_with_node_changed_arg_order(self):
-        if is_pacemaker_21_without_20_compatibility():
-            stdout_full = "  * x1	(ocf:pcsmock:minimal):	 Started rh-1\n"
-        else:
-            stdout_full = "  * x1	(ocf::pcsmock:minimal):	 Started rh-1\n"
         self.assert_pcs_success(
             self.command + ["node=rh-1", "x1"],
-            stdout_full=stdout_full,
+            stdout_full="  * x1	(ocf:pcsmock:minimal):	 Started rh-1\n",
         )
 
     def test_stonith_id(self):
@@ -377,27 +280,16 @@ class ResourceStonithStatusBase(AssertPcsMixin):
         )
 
     def test_tag_id(self):
-        if is_pacemaker_21_without_20_compatibility():
-            stdout_full = outdent(
+        self.assert_pcs_success(
+            self.command + ["tag-mixed-stonith-devices-and-resources"],
+            stdout_full=outdent(
                 """\
                   * fence-rh-1	(stonith:fence_pcsmock_minimal):	 Started rh-1
                   * fence-rh-2	(stonith:fence_pcsmock_minimal):	 Stopped
                   * x3	(ocf:pcsmock:minimal):	 Stopped
                   * y1	(ocf:pcsmock:minimal):	 Stopped
                 """
-            )
-        else:
-            stdout_full = outdent(
-                """\
-                  * fence-rh-1	(stonith:fence_pcsmock_minimal):	 Started rh-1
-                  * fence-rh-2	(stonith:fence_pcsmock_minimal):	 Stopped
-                  * x3	(ocf::pcsmock:minimal):	 Stopped
-                  * y1	(ocf::pcsmock:minimal):	 Stopped
-                """
-            )
-        self.assert_pcs_success(
-            self.command + ["tag-mixed-stonith-devices-and-resources"],
-            stdout_full=stdout_full,
+            ),
         )
 
     def test_tag_id_hide_inactive(self):
@@ -412,26 +304,16 @@ class ResourceStonithStatusBase(AssertPcsMixin):
         )
 
     def test_tag_id_with_node(self):
-        if is_pacemaker_21_without_20_compatibility():
-            stdout_full = outdent(
+        self.assert_pcs_success(
+            self.command
+            + ["tag-mixed-stonith-devices-and-resources", "node=rh-2"],
+            stdout_full=outdent(
                 """\
                   * fence-rh-2	(stonith:fence_pcsmock_minimal):	 Stopped
                   * x3	(ocf:pcsmock:minimal):	 Stopped
                   * y1	(ocf:pcsmock:minimal):	 Stopped
                 """
-            )
-        else:
-            stdout_full = outdent(
-                """\
-                  * fence-rh-2	(stonith:fence_pcsmock_minimal):	 Stopped
-                  * x3	(ocf::pcsmock:minimal):	 Stopped
-                  * y1	(ocf::pcsmock:minimal):	 Stopped
-                """
-            )
-        self.assert_pcs_success(
-            self.command
-            + ["tag-mixed-stonith-devices-and-resources", "node=rh-2"],
-            stdout_full=stdout_full,
+            ),
         )
 
     def test_tag_id_with_node_hide_inactive(self):
@@ -568,37 +450,19 @@ class StonithStatus(ResourceStonithStatusBase, TestCase):
 
 def fixture_resources_status_output(nodes="rh-1 rh-2", inactive=True):
     if not inactive:
-        if is_pacemaker_21_without_20_compatibility():
-            return outdent(
-                """\
-                  * x1	(ocf:pcsmock:minimal):	 Started rh-1
-                """
-            )
         return outdent(
             """\
-              * x1	(ocf::pcsmock:minimal):	 Started rh-1
+              * x1	(ocf:pcsmock:minimal):	 Started rh-1
             """
         )
 
-    if is_pacemaker_21_without_20_compatibility():
-        return outdent(
-            f"""\
-              * not-in-tags	(ocf:pcsmock:minimal):	 Stopped
-              * x1	(ocf:pcsmock:minimal):	 Started rh-1
-              * x2	(ocf:pcsmock:minimal):	 Stopped
-              * x3	(ocf:pcsmock:minimal):	 Stopped
-              * y1	(ocf:pcsmock:minimal):	 Stopped
-              * Clone Set: y2-clone [y2]:
-                * Stopped: [ {nodes} ]
-            """
-        )
     return outdent(
         f"""\
-          * not-in-tags	(ocf::pcsmock:minimal):	 Stopped
-          * x1	(ocf::pcsmock:minimal):	 Started rh-1
-          * x2	(ocf::pcsmock:minimal):	 Stopped
-          * x3	(ocf::pcsmock:minimal):	 Stopped
-          * y1	(ocf::pcsmock:minimal):	 Stopped
+          * not-in-tags	(ocf:pcsmock:minimal):	 Stopped
+          * x1	(ocf:pcsmock:minimal):	 Started rh-1
+          * x2	(ocf:pcsmock:minimal):	 Stopped
+          * x3	(ocf:pcsmock:minimal):	 Stopped
+          * y1	(ocf:pcsmock:minimal):	 Stopped
           * Clone Set: y2-clone [y2]:
             * Stopped: [ {nodes} ]
         """
