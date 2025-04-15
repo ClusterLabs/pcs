@@ -576,6 +576,83 @@ class Verify(TestCase):
         )
 
 
+@mock.patch.object(
+    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+)
+class GetCibVerificationErrors(TestCase):
+    fixture_ok = """
+        <pacemaker-result api-version="2.38"
+            request="crm_verify --live-check --output-as=xml"
+        >
+          <status code="0" message="OK"/>
+        </pacemaker-result>
+    """
+
+    def test_run_on_live_cib(self):
+        runner = get_runner(self.fixture_ok)
+        self.assertEqual(lib.get_cib_verification_errors(runner), [])
+        runner.run.assert_called_once_with(
+            [settings.crm_verify_exec, "--output-as", "xml", "--live-check"],
+        )
+
+    def test_run_on_mocked_cib(self):
+        fake_tmp_file = "/fake/tmp/file"
+        runner = get_runner(
+            self.fixture_ok, env_vars={"CIB_file": fake_tmp_file}
+        )
+
+        self.assertEqual(lib.get_cib_verification_errors(runner), [])
+        runner.run.assert_called_once_with(
+            [
+                settings.crm_verify_exec,
+                "--output-as",
+                "xml",
+                "--xml-file",
+                fake_tmp_file,
+            ],
+        )
+
+    def test_errors_present(self):
+        fixture_errors = """
+            <pacemaker-result api-version="2.38"
+                request="crm_verify --live-check --output-as=xml"
+            >
+              <status code="78" message="Invalid configuration">
+                <errors>
+                  <error>error: Somewthing wrong with &lt;clone&gt; bad-clone</error>
+                  <error>error: CIB did not pass schema validation</error>
+                  <error>Configuration invalid (with errors)</error>
+                </errors>
+              </status>
+            </pacemaker-result>
+        """
+        runner = get_runner(fixture_errors)
+        self.assertEqual(
+            lib.get_cib_verification_errors(runner),
+            [
+                "error: Somewthing wrong with <clone> bad-clone",
+                "error: CIB did not pass schema validation",
+                "Configuration invalid (with errors)",
+            ],
+        )
+        runner.run.assert_called_once_with(
+            [settings.crm_verify_exec, "--output-as", "xml", "--live-check"],
+        )
+
+    def test_not_xml_response(self):
+        runner = get_runner("not xml output")
+        with self.assertRaises(lib.BadApiResultFormat) as cm:
+            lib.get_cib_verification_errors(runner)
+        self.assertEqual(cm.exception.pacemaker_response, "not xml output")
+        self.assertEqual(
+            type(cm.exception.original_exception), etree.XMLSyntaxError
+        )
+
+        runner.run.assert_called_once_with(
+            [settings.crm_verify_exec, "--output-as", "xml", "--live-check"],
+        )
+
+
 class ReplaceCibConfigurationTest(TestCase):
     # pylint: disable=no-self-use
     def test_success(self):

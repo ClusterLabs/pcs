@@ -34,6 +34,7 @@ from pcs.lib.pacemaker.state import ClusterState
 from pcs.lib.resource_agent import ResourceAgentName
 from pcs.lib.xml_tools import etree_to_str
 
+__EXITCODE_INVALID_CIB = 78
 __EXITCODE_NOT_CONNECTED = 102
 __EXITCODE_CIB_SCOPE_VALID_BUT_NOT_PRESENT = 105
 __EXITCODE_WAIT_TIMEOUT = 124
@@ -46,6 +47,12 @@ class PacemakerNotConnectedException(LibraryError):
 
 class FenceHistoryCommandErrorException(Exception):
     pass
+
+
+class BadApiResultFormat(Exception):
+    def __init__(self, original_exception: Exception, pacemaker_response: str):
+        self.original_exception = original_exception
+        self.pacemaker_response = pacemaker_response
 
 
 ### status
@@ -195,25 +202,35 @@ def get_cib(xml: str) -> _Element:
         ) from e
 
 
-def verify(
-    runner: CommandRunner, verbose: bool = False
-) -> tuple[str, str, int, bool]:
+def _run_crm_verify(
+    runner: CommandRunner, xml_output: bool = False, verbose: bool = False
+) -> tuple[str, str, int]:
     crm_verify_cmd = [settings.crm_verify_exec]
     # Currently, crm_verify can suggest up to two -V options but it accepts
     # more than two. We stick with two -V options if verbose mode was enabled.
     if verbose:
         crm_verify_cmd.extend(["-V", "-V"])
-    # With the `crm_verify` command it is not possible simply use the
-    # environment variable CIB_file because `crm_verify` simply tries to
-    # connect to cib file via tool that can fail because: Update does not
-    # conform to the configured schema
+    if xml_output:
+        crm_verify_cmd.extend(["--output-as", "xml"])
+    # With the `crm_verify` command it is not possible to simply use the
+    # environment variable CIB_file because `crm_verify` tries to connect to
+    # cib file via tool that can fail because: Update does not conform to the
+    # configured schema
     # So we use the explicit flag `--xml-file`.
     cib_tmp_file = runner.env_vars.get("CIB_file", None)
     if cib_tmp_file is None:
         crm_verify_cmd.append("--live-check")
     else:
         crm_verify_cmd.extend(["--xml-file", cib_tmp_file])
-    stdout, stderr, returncode = runner.run(crm_verify_cmd)
+    return runner.run(crm_verify_cmd)
+
+
+def verify(
+    runner: CommandRunner, verbose: bool = False
+) -> tuple[str, str, int, bool]:
+    stdout, stderr, returncode = _run_crm_verify(
+        runner, xml_output=False, verbose=verbose
+    )
     can_be_more_verbose = False
     if returncode != 0:
         # remove lines with -V options
@@ -231,6 +248,26 @@ def verify(
             can_be_more_verbose = False
         stderr = "".join(new_lines)
     return stdout, stderr, returncode, can_be_more_verbose
+
+
+def get_cib_verification_errors(runner: CommandRunner) -> list[str]:
+    # Uses XML output of crm_verify which is easier to work with. Verbose mode
+    # is not needed, it only adds debug messages outside of the XML. We don't
+    # need to filter out hints to add more -V to increase verbosity, as they
+    # are not printed by crm_verify in XML output mode.
+
+    # in case of invalid configuration, returncode != 0 - it cannot be used to
+    # determine whether the command succeeded or failed
+    stdout, stderr, returncode = _run_crm_verify(
+        runner, xml_output=True, verbose=False
+    )
+    try:
+        api_status = _get_status_from_api_result(_get_api_result_dom(stdout))
+        if api_status.code == __EXITCODE_INVALID_CIB:
+            return list(api_status.errors)
+        return []
+    except (etree.XMLSyntaxError, etree.DocumentInvalid) as e:
+        raise BadApiResultFormat(e, join_multilines([stderr, stdout])) from e
 
 
 def replace_cib_configuration_xml(runner: CommandRunner, xml: str) -> None:

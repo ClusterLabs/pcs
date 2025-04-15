@@ -46,6 +46,8 @@ from pcs.lib.external import CommandRunner
 from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.node_communication import NodeTargetLibFactory
 from pcs.lib.pacemaker.live import (
+    BadApiResultFormat,
+    get_cib_verification_errors,
     get_cluster_status_text,
     get_cluster_status_xml_raw,
     get_ticket_status_text,
@@ -147,6 +149,20 @@ def full_cluster_status_plaintext(  # noqa: PLR0912, PLR0915
     if not live or os.path.exists(settings.corosync_conf_file):
         corosync_conf = env.get_corosync_conf()
     cib = env.get_cib()
+    # get messages from crm_verify
+    crm_verify_messages = []
+    try:
+        crm_verify_messages = get_cib_verification_errors(runner)
+    except BadApiResultFormat as e:
+        # do not fail the whole command just because we cannot load this
+        report_processor.report(
+            reports.ReportItem.debug(
+                reports.messages.BadPcmkApiResponseFormat(
+                    str(e.original_exception), e.pacemaker_response
+                )
+            )
+        )
+    # get extra info for verbose output
     if verbose:
         (
             ticket_status_text,
@@ -182,6 +198,7 @@ def full_cluster_status_plaintext(  # noqa: PLR0912, PLR0915
     warning_list.extend(
         _booth_authfile_warning(env.report_processor, env.get_booth_env(None))
     )
+    warning_list.extend(crm_verify_messages)
 
     # put it all together
     if report_processor.has_errors:

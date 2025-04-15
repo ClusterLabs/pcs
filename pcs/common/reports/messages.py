@@ -3262,6 +3262,24 @@ class CrmMonError(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class BadPcmkApiResponseFormat(ReportItemMessage):
+    """
+    Structured response from pacemaker doesn't match expected format / schema
+    """
+
+    _code = codes.BAD_PCMK_API_RESPONSE_FORMAT
+    reason: str
+    api_response: str
+
+    @property
+    def message(self) -> str:
+        return (
+            "Cannot process pacemaker response due to a parse error: "
+            f"{self.reason}\n{self.api_response}"
+        )
+
+
+@dataclass(frozen=True)
 class BadClusterStateFormat(ReportItemMessage):
     """
     crm_mon xml output does not conform to the schema

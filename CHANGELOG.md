@@ -11,6 +11,8 @@
 - Prevent removing or disabling stonith devices or disabling SBD if the cluster
   would be left with disabled SBD and no stonith devices ([RHEL-76170])
 - Support for exporting alerts in `json` and `cmd` formats ([RHEL-76153])
+- Output of `pcs status` now contains messages about CIB misconfiguration
+  provided by `crm_verify` pacemaker tool ([RHEL-76060])
 
 ### Fixed
 - Fixed a traceback when removing a resource fails in web UI
@@ -20,6 +22,7 @@
 
 [RHEL-76055]: https://issues.redhat.com/browse/RHEL-76055
 [RHEL-76059]: https://issues.redhat.com/browse/RHEL-76059
+[RHEL-76060]: https://issues.redhat.com/browse/RHEL-76060
 [RHEL-76153]: https://issues.redhat.com/browse/RHEL-76153
 [RHEL-76170]: https://issues.redhat.com/browse/RHEL-76170
 [RHEL-76177]: https://issues.redhat.com/browse/RHEL-76177

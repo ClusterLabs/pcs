@@ -2185,6 +2185,20 @@ class CrmMonError(NameBuildTest):
         )
 
 
+class BadPcmkApiResponseFormat(NameBuildTest):
+    def test_all(self):
+        self.assert_message_from_report(
+            (
+                "Cannot process pacemaker response due to a parse error: "
+                "detailed parse or xml error\n"
+                "pacemaker tool output"
+            ),
+            reports.BadPcmkApiResponseFormat(
+                "detailed parse or xml error", "pacemaker tool output"
+            ),
+        )
+
+
 class BadClusterStateFormat(NameBuildTest):
     def test_all(self):
         self.assert_message_from_report(
