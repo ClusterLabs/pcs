@@ -869,9 +869,9 @@ def cluster_push(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  # no
         utils.err("unable to parse new cib: %s" % e)
 
     EXITCODE_INVALID_CIB = 78
+    runner = utils.cmd_runner()
 
     if diff_against:
-        runner = utils.cmd_runner()
         command = [
             settings.crm_diff_exec,
             "--original",
@@ -942,6 +942,15 @@ def cluster_push(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  # no
             utils.err("unable to push cib\n" + error_text)
 
     print_to_stderr("CIB updated")
+    try:
+        cib_errors = lib_pacemaker.get_cib_verification_errors(runner)
+        if cib_errors:
+            print_to_stderr("\n".join(cib_errors))
+    except lib_pacemaker.BadApiResultFormat as e:
+        print_to_stderr(
+            f"Unable to verify CIB: {e.original_exception}\n"
+            f"crm_verify output:\n{e.pacemaker_response}"
+        )
 
     if not modifiers.is_specified("--wait"):
         return

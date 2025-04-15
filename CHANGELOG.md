@@ -5,6 +5,8 @@
 ### Added
 - Commands `pcs cluster cib-push` and `pcs cluster edit` now print more info
   when new CIB does not conform to the CIB schema ([RHEL-63186])
+- Commands `pcs cluster cib-push` and `pcs cluster edit` now print info about
+  problems in pushed CIB even if it conforms to the CIB schema ([RHEL-7681])
 - Command `pcs cluster rename` for changing cluster name ([RHEL-22423])
 - Command `pcs stonith sbd watchdog list` now prints watchdogs' identity and
   driver ([RHEL-76176])
