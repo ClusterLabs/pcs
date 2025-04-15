@@ -122,6 +122,11 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
 
                 WARNINGS:
                 No stonith devices and stonith-enabled is not false
+                error: Resource start-up disabled since no STONITH resources have been defined
+                error: Either configure some or disable STONITH with the stonith-enabled option
+                error: NOTE: Clusters with shared data need STONITH to ensure data integrity
+                error: CIB did not pass schema validation
+                Configuration invalid (with errors)
 
                 Cluster Summary:
                 """
@@ -491,6 +496,11 @@ class StatusResources(ResourceStonithStatusBase, TestCase):
 
         WARNINGS:
         No stonith devices and stonith-enabled is not false
+        error: Resource start-up disabled since no STONITH resources have been defined
+        error: Either configure some or disable STONITH with the stonith-enabled option
+        error: NOTE: Clusters with shared data need STONITH to ensure data integrity
+        error: CIB did not pass schema validation
+        Configuration invalid (with errors)
 
         Cluster Summary:
           * Stack: unknown

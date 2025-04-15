@@ -11,6 +11,8 @@
 - Prevent removing or disabling stonith devices or disabling SBD if the cluster
   would be left with disabled SBD and no stonith devices ([RHEL-66607])
 - Support for exporting alerts in `json` and `cmd` formats ([RHEL-44347])
+- Output of `pcs status` now contains messages about CIB misconfiguration
+  provided by `crm_verify` pacemaker tool ([RHEL-7681])
 
 ### Fixed
 - Fixed a traceback when removing a resource fails in web UI
@@ -18,6 +20,7 @@
   UI
 - Display node-attribute in colocation constraints configuration ([RHEL-81938])
 
+[RHEL-7681]: https://issues.redhat.com/browse/RHEL-7681
 [RHEL-22423]: https://issues.redhat.com/browse/RHEL-22423
 [RHEL-44347]: https://issues.redhat.com/browse/RHEL-44347
 [RHEL-63186]: https://issues.redhat.com/browse/RHEL-63186

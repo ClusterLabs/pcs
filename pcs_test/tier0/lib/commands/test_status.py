@@ -34,6 +34,8 @@ from pcs_test.tools.command_env.config_runner_pcmk import (
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import read_test_resource as rc_read
 
+EXITCODE_INVALID_CIB = 78
+
 
 def _booth_config_path_fixture(instance_name="booth"):
     return os.path.join(settings.booth_config_dir, f"{instance_name}.conf")
@@ -96,6 +98,46 @@ class FullClusterStatusPlaintextBase(TestCase):
             </crm_config>
             """.format(name=name)
 
+    @staticmethod
+    def _fixture_crm_verify_success():
+        return """
+            <pacemaker-result api-version="2.38"
+                request="crm_verify --live-check --output-as=xml"
+            >
+                <status code="0" message="OK"/>
+            </pacemaker-result>
+        """
+
+    @staticmethod
+    def _fixture_crm_verify_invalid_cib(error_list):
+        errors = "\n".join(f"<error>{error}</error>" for error in error_list)
+        return f"""
+            <pacemaker-result api-version="2.38"
+                request="crm_verify --live-check --output-as=xml"
+            >
+                <status code="{EXITCODE_INVALID_CIB}"
+                    message="Invalid configuration"
+                >
+                    <errors>{errors}</errors>
+                </status>
+            </pacemaker-result>
+        """
+
+    def _fixture_config_crm_verify(
+        self, stdout, stderr="", retval=0, cib_file=None
+    ):
+        self.config.runner.pcmk.verify_xml(
+            cib_tempfile=cib_file,
+            stdout=stdout,
+            stderr=stderr,
+            returncode=retval,
+            env=({"CIB_file": cib_file} if cib_file else None),
+        )
+        self.config.fs.isfile(
+            settings.pacemaker_api_result_schema,
+            name="fs.exists.crm_verify_xml_schema",
+        )
+
     def _fixture_config_live_minimal(self):
         self.config.runner.pcmk.load_state_plaintext(
             stdout="crm_mon cluster status"
@@ -109,6 +151,7 @@ class FullClusterStatusPlaintextBase(TestCase):
                 </resources>
             """
         )
+        self._fixture_config_crm_verify(self._fixture_crm_verify_success())
         self.config.services.is_running(
             "sbd", return_value=False, name="services.is_running.sbd"
         )
@@ -126,6 +169,7 @@ class FullClusterStatusPlaintextBase(TestCase):
                 </resources>
             """,
         )
+        self._fixture_config_crm_verify(self._fixture_crm_verify_success())
         self.config.services.is_running(
             "sbd", return_value=False, name="services.is_running.sbd"
         )
@@ -199,6 +243,9 @@ class FullClusterStatusPlaintextBase(TestCase):
 
 @mock.patch("pcs.settings.booth_enable_authfile_set_enabled", False)
 @mock.patch("pcs.settings.booth_enable_authfile_unset_enabled", False)
+@mock.patch.object(
+    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+)
 class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
     # pylint: disable=too-many-public-methods
     def test_life_cib_mocked_corosync(self):
@@ -330,6 +377,7 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
                 </resources>
             """
         )
+        self._fixture_config_crm_verify(self._fixture_crm_verify_success())
         self.config.runner.pcmk.load_ticket_state_plaintext(
             stdout="ticket status"
         )
@@ -407,6 +455,7 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
                 </resources>
             """,
         )
+        self._fixture_config_crm_verify(self._fixture_crm_verify_success())
         self.config.runner.pcmk.load_ticket_state_plaintext(
             stdout="ticket status"
         )
@@ -459,6 +508,9 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
             """,
             env=env,
         )
+        self._fixture_config_crm_verify(
+            self._fixture_crm_verify_success(), cib_file=tmp_file
+        )
         self.config.fs.isfile(settings.crm_rule_exec, return_value=True)
 
         self.assertEqual(
@@ -488,6 +540,9 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
                 </resources>
             """,
             env=env,
+        )
+        self._fixture_config_crm_verify(
+            self._fixture_crm_verify_success(), cib_file=tmp_file
         )
         self.config.runner.pcmk.load_ticket_state_plaintext(
             stdout="ticket status", env=env
@@ -525,6 +580,7 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
                 </resources>
             """
         )
+        self._fixture_config_crm_verify(self._fixture_crm_verify_success())
         self.config.runner.pcmk.load_ticket_state_plaintext(
             stdout="ticket status"
         )
@@ -578,6 +634,7 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
                 </resources>
             """
         )
+        self._fixture_config_crm_verify(self._fixture_crm_verify_success())
         self.config.runner.pcmk.load_ticket_state_plaintext(
             stdout="ticket stdout", stderr=stderr, returncode=1
         )
@@ -623,6 +680,104 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
             msg="\n    ticket status error\n    multiline",
         )
 
+    def test_crm_verify_messages(self):
+        errors = [
+            "error: Resource chr:0 is of type systemd and therefore cannot be used as a promotable clone resource",
+            "error: Ignoring &lt;clone&gt; resource 'chr-clone' because configuration is invalid",
+            "error: CIB did not pass schema validation",
+            "Configuration invalid (with errors)",
+        ]
+        self.config.runner.pcmk.load_state_plaintext(
+            stdout="crm_mon cluster status"
+        )
+        self.config.fs.exists(settings.corosync_conf_file, return_value=True)
+        self.config.corosync_conf.load()
+        self.config.runner.cib.load(
+            resources="""
+                <resources>
+                    <primitive id="S" class="stonith" type="fence_dummy" />
+                </resources>
+            """
+        )
+        self._fixture_config_crm_verify(
+            self._fixture_crm_verify_invalid_cib(errors),
+            retval=EXITCODE_INVALID_CIB,
+        )
+        self.config.services.is_running(
+            "sbd", return_value=False, name="services.is_running.sbd"
+        )
+        self._fixture_config_local_daemons()
+        self.config.fs.isfile(settings.crm_rule_exec, return_value=True)
+
+        self.assertEqual(
+            status.full_cluster_status_plaintext(self.env_assist.get_env()),
+            dedent(
+                """\
+                Cluster name: test99
+
+                WARNINGS:
+                error: Resource chr:0 is of type systemd and therefore cannot be used as a promotable clone resource
+                error: Ignoring <clone> resource 'chr-clone' because configuration is invalid
+                error: CIB did not pass schema validation
+                Configuration invalid (with errors)
+
+                crm_mon cluster status
+
+                Daemon Status:
+                  corosync: active/enabled
+                  pacemaker: active/enabled
+                  pcsd: active/enabled"""
+            ),
+        )
+
+    def test_crm_verify_error(self):
+        self.config.runner.pcmk.load_state_plaintext(
+            stdout="crm_mon cluster status"
+        )
+        self.config.fs.exists(settings.corosync_conf_file, return_value=True)
+        self.config.corosync_conf.load()
+        self.config.runner.cib.load(
+            resources="""
+                <resources>
+                    <primitive id="S" class="stonith" type="fence_dummy" />
+                </resources>
+            """
+        )
+        self.config.runner.pcmk.verify_xml(
+            stdout="not a xml", stderr="some message"
+        )
+        self.config.services.is_running(
+            "sbd", return_value=False, name="services.is_running.sbd"
+        )
+        self._fixture_config_local_daemons()
+        self.config.fs.isfile(settings.crm_rule_exec, return_value=True)
+
+        self.assertEqual(
+            status.full_cluster_status_plaintext(self.env_assist.get_env()),
+            dedent(
+                """\
+                Cluster name: test99
+                crm_mon cluster status
+
+                Daemon Status:
+                  corosync: active/enabled
+                  pacemaker: active/enabled
+                  pcsd: active/enabled"""
+            ),
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.debug(
+                    report_codes.BAD_PCMK_API_RESPONSE_FORMAT,
+                    reason=(
+                        "Start tag expected, '<' not found, line 1, column 1 "
+                        "(<string>, line 1)"
+                    ),
+                    api_response="some message\nnot a xml",
+                )
+            ]
+        )
+
     def test_stonith_warning_no_devices(self):
         self.config.runner.pcmk.load_state_plaintext(
             stdout="crm_mon cluster status"
@@ -630,6 +785,7 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
         self.config.fs.exists(settings.corosync_conf_file, return_value=True)
         self.config.corosync_conf.load()
         self.config.runner.cib.load()
+        self._fixture_config_crm_verify(self._fixture_crm_verify_success())
         self.config.services.is_running(
             "sbd", return_value=False, name="services.is_running.sbd"
         )
@@ -661,6 +817,7 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
         self.config.fs.exists(settings.corosync_conf_file, return_value=True)
         self.config.corosync_conf.load()
         self.config.runner.cib.load()
+        self._fixture_config_crm_verify(self._fixture_crm_verify_success())
         self.config.services.is_running(
             "sbd", return_value=True, name="services.is_running.sbd"
         )
@@ -715,6 +872,7 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
                 </resources>
             """
         )
+        self._fixture_config_crm_verify(self._fixture_crm_verify_success())
         self.config.services.is_running(
             "sbd", return_value=False, name="services.is_running.sbd"
         )
@@ -756,6 +914,7 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
                 </resources>
             """
         )
+        self._fixture_config_crm_verify(self._fixture_crm_verify_success())
         self.config.runner.pcmk.load_ticket_state_plaintext(
             stdout="ticket status"
         )
@@ -897,6 +1056,7 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
             </resources>
             """,
         )
+        self._fixture_config_crm_verify(self._fixture_crm_verify_success())
         self.config.services.is_running(
             "sbd", return_value=True, name="services.is_running.sbd"
         )
@@ -956,6 +1116,7 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
             </resources>
             """,
         )
+        self._fixture_config_crm_verify(self._fixture_crm_verify_success())
         self.config.services.is_running(
             "sbd", return_value=True, name="services.is_running.sbd"
         )
@@ -1025,6 +1186,7 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
             </resources>
             """,
         )
+        self._fixture_config_crm_verify(self._fixture_crm_verify_success())
         self.config.services.is_running(
             "sbd", return_value=True, name="services.is_running.sbd"
         )
@@ -1079,6 +1241,7 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
             </resources>
             """,
         )
+        self._fixture_config_crm_verify(self._fixture_crm_verify_success())
         self.config.services.is_running(
             "sbd", return_value=True, name="services.is_running.sbd"
         )
@@ -1108,8 +1271,16 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
 class FullClusterStatusPlaintextBoothWarning(FullClusterStatusPlaintextBase):
     def setUp(self):
         super().setUp()
+        self.settings_patcher = mock.patch(
+            "pcs.settings.pacemaker_api_result_schema",
+            rc("pcmk_api_rng/api-result.rng"),
+        )
+        self.settings_patcher.start()
         self._fixture_config_live_minimal()
         self._fixture_config_local_daemons()
+
+    def tearDown(self):
+        self.settings_patcher.stop()
 
     def _assert_status_output(self, warning=None):
         warning_str = ""

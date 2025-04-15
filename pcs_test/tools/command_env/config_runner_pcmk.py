@@ -1,5 +1,5 @@
 import os
-from typing import Optional
+from typing import Mapping, Optional
 
 from pcs import settings
 
@@ -1001,18 +1001,20 @@ class PcmkShortcuts:
 
     def verify(
         self,
-        name="runner.pcmk.verify",
-        cib_tempfile=None,
-        stderr=None,
-        verbose=False,
-        env=None,
-    ):
+        name: str = "runner.pcmk.verify",
+        cib_tempfile: Optional[str] = None,
+        stderr: Optional[str] = None,
+        verbose: bool = False,
+        env: Optional[Mapping[str, str]] = None,
+    ) -> None:
         """
-        Create call that checks that wait for idle is supported
+        Create a call for running crm_verify with plaintext output
 
-        string name -- key of the call
-        string before -- key of call before which this new call is to be placed
-        dict env -- CommandRunner environment variables
+        name -- key of the call
+        cib_tempfile -- path to a file with CIB
+        stderr -- output of crm_verify
+        verbose -- run crm_verify in verbose mode
+        env -- CommandRunner environment variables
         """
         cmd = ["crm_verify"]
         if verbose:
@@ -1027,6 +1029,41 @@ class PcmkShortcuts:
                 cmd,
                 stderr=("" if stderr is None else stderr),
                 returncode=(0 if stderr is None else 55),
+                env=env,
+            ),
+        )
+
+    def verify_xml(
+        self,
+        name="runner.pcmk.verify_xml",
+        cib_tempfile: Optional[str] = None,
+        stdout: str = "",
+        stderr: str = "",
+        returncode: int = 0,
+        env: Optional[Mapping[str, str]] = None,
+    ) -> None:
+        """
+        Create a call for running crm_verify with xml output
+
+        name -- key of the call
+        cib_tempfile -- path to a file with CIB
+        stdout -- usually XML output of crm_verify
+        stderr -- error output of crm_verify, debug_messages
+        returncode -- crm_verify return code
+        env -- CommandRunner environment variables
+        """
+        cmd = ["crm_verify", "--output-as", "xml"]
+        if cib_tempfile:
+            cmd.extend(["--xml-file", cib_tempfile])
+        else:
+            cmd.append("--live-check")
+        self.__calls.place(
+            name,
+            RunnerCall(
+                cmd,
+                stdout=stdout,
+                stderr=stderr,
+                returncode=returncode,
                 env=env,
             ),
         )
