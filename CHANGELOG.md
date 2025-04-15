@@ -13,24 +13,30 @@
 - Support for exporting alerts in `json` and `cmd` formats ([RHEL-44347])
 
 ### Fixed
-- Command `pcs resource restart` allows restarting bundle instances (broken
-  since pcs-0.12.0b1) ([RHEL-79033])
-- Do not end with traceback when using `pcs resource delete` to remove bundle
-  resources when the bundle has no IP address specified ([RHEL-79090])
 - Fixed a traceback when removing a resource fails in web UI
 - It is now possible to override errors when editing cluster properties in web
   UI
 - Display node-attribute in colocation constraints configuration ([RHEL-81938])
-- Make install no longer fails on systems with merged /usr/sbin and /usr/bin
 
 [RHEL-22423]: https://issues.redhat.com/browse/RHEL-22423
 [RHEL-44347]: https://issues.redhat.com/browse/RHEL-44347
 [RHEL-63186]: https://issues.redhat.com/browse/RHEL-63186
 [RHEL-66607]: https://issues.redhat.com/browse/RHEL-66607
 [RHEL-76176]: https://issues.redhat.com/browse/RHEL-76176
+[RHEL-81938]: https://issues.redhat.com/browse/RHEL-81938
+
+
+## [0.12.0.1] - 2025-04-14
+
+### Fixed
+- Command `pcs resource restart` allows restarting bundle instances (broken
+  since pcs-0.12.0b1) ([RHEL-79033])
+- Do not end with traceback when using `pcs resource delete` to remove bundle
+  resources when the bundle has no IP address specified ([RHEL-79090])
+- Make install no longer fails on systems with merged /usr/sbin and /usr/bin
+
 [RHEL-79033]: https://issues.redhat.com/browse/RHEL-79033
 [RHEL-79090]: https://issues.redhat.com/browse/RHEL-79090
-[RHEL-81938]: https://issues.redhat.com/browse/RHEL-81938
 
 
 ## [0.12.0] - 2025-01-09
