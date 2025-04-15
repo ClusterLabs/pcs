@@ -1,10 +1,8 @@
+from textwrap import dedent
 from unittest import TestCase
 
 from pcs_test.tools.assertions import AssertPcsMixin
-from pcs_test.tools.misc import (
-    get_tmp_file,
-    write_data_to_tmpfile,
-)
+from pcs_test.tools.misc import get_tmp_file, write_data_to_tmpfile
 from pcs_test.tools.pcs_runner import PcsRunner
 
 CIB_EPOCH_TEMPLATE = """
@@ -127,4 +125,14 @@ class CibPush(AssertPcsMixin, TestCase):
 
     def test_cib_updated(self):
         write_data_to_tmpfile(CIB_EPOCH_NEWER, self.updated_cib)
-        self.assert_pcs_success(self.cib_push_cmd, stderr_full="CIB updated\n")
+        self.assert_pcs_success(
+            self.cib_push_cmd,
+            stderr_full=dedent("""\
+                CIB updated
+                error: Resource start-up disabled since no STONITH resources have been defined
+                error: Either configure some or disable STONITH with the stonith-enabled option
+                error: NOTE: Clusters with shared data need STONITH to ensure data integrity
+                error: CIB did not pass schema validation
+                Errors found during check: config not valid
+                """),
+        )
