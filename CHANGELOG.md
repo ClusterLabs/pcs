@@ -13,10 +13,6 @@
 - Support for exporting alerts in `json` and `cmd` formats ([RHEL-76153])
 
 ### Fixed
-- Command `pcs resource restart` allows restarting bundle instances (broken
-  since pcs-0.11.9) ([RHEL-79055])
-- Do not end with traceback when using `pcs resource delete` to remove bundle
-  resources when the bundle has no IP address specified ([RHEL-79160])
 - Fixed a traceback when removing a resource fails in web UI
 - It is now possible to override errors when editing cluster properties in web
   UI
@@ -27,9 +23,19 @@
 [RHEL-76153]: https://issues.redhat.com/browse/RHEL-76153
 [RHEL-76170]: https://issues.redhat.com/browse/RHEL-76170
 [RHEL-76177]: https://issues.redhat.com/browse/RHEL-76177
+[RHEL-82894]: https://issues.redhat.com/browse/RHEL-82894
+
+
+## [0.11.9.1] - 2025-04-14
+
+### Fixed
+- Command `pcs resource restart` allows restarting bundle instances (broken
+  since pcs-0.11.9) ([RHEL-79055])
+- Do not end with traceback when using `pcs resource delete` to remove bundle
+  resources when the bundle has no IP address specified ([RHEL-79160])
+
 [RHEL-79055]: https://issues.redhat.com/browse/RHEL-79055
 [RHEL-79160]: https://issues.redhat.com/browse/RHEL-79160
-[RHEL-82894]: https://issues.redhat.com/browse/RHEL-82894
 
 
 ## [0.11.9] - 2025-01-10
