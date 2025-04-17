@@ -90,14 +90,7 @@ class NodeUtilizationSet(
         stdout, stderr, retval = pcs(
             self.temp_cib.name, "node utilization rh7-2".split()
         )
-        self.assertEqual(
-            stdout,
-            outdent(
-                """\
-                Node Utilization:
-                """
-            ),
-        )
+        self.assertEqual(stdout, "")
         self.assertEqual(stderr, FIXTURE_UTILIZATION_WARNING)
         self.assertEqual(retval, 0)
 
@@ -108,8 +101,9 @@ class NodeUtilizationSet(
             stdout,
             outdent(
                 """\
-                Node Utilization:
-                 rh7-1: test1=10
+                Node: rh7-1
+                  Utilization: nodes-1-utilization
+                    test1=10
                 """
             ),
         )
@@ -131,8 +125,10 @@ class NodeUtilizationSet(
             stdout,
             outdent(
                 """\
-                Node Utilization:
-                 rh7-1: test1=-10 test4=1234
+                Node: rh7-1
+                  Utilization: nodes-1-utilization
+                    test1=-10
+                    test4=1234
                 """
             ),
         )
@@ -155,8 +151,9 @@ class NodeUtilizationSet(
             stdout,
             outdent(
                 """\
-                Node Utilization:
-                 rh7-2: test2=321
+                Node: rh7-2
+                  Utilization: nodes-2-utilization
+                    test2=321
                 """
             ),
         )
@@ -170,9 +167,13 @@ class NodeUtilizationSet(
             stdout,
             outdent(
                 """\
-                Node Utilization:
-                 rh7-1: test1=-10 test4=1234
-                 rh7-2: test2=321
+                Node: rh7-1
+                  Utilization: nodes-1-utilization
+                    test1=-10
+                    test4=1234
+                Node: rh7-2
+                  Utilization: nodes-2-utilization
+                    test2=321
                 """
             ),
         )
@@ -193,9 +194,12 @@ class NodeUtilizationSet(
             stdout,
             outdent(
                 """\
-                Node Utilization:
-                 rh7-1: test1=-10
-                 rh7-2: test1=-20
+                Node: rh7-1
+                  Utilization: nodes-1-utilization
+                    test1=-10
+                Node: rh7-2
+                  Utilization: nodes-2-utilization
+                    test1=-20
                 """
             ),
         )
@@ -210,8 +214,9 @@ class NodeUtilizationSet(
             stdout,
             outdent(
                 """\
-                Node Utilization:
-                 rh7-2: test1=-20
+                Node: rh7-2
+                  Utilization: nodes-2-utilization
+                    test1=-20
                 """
             ),
         )
@@ -295,9 +300,7 @@ class NodeUtilizationSet(
             self.fixture_xml_no_utilization(),
         )
         self.assert_effect(
-            "node utilization".split(),
-            self.fixture_xml_no_utilization(),
-            stdout_full="Node Utilization:\n",
+            "node utilization".split(), self.fixture_xml_no_utilization()
         )
 
 
@@ -341,24 +344,30 @@ class NodeStandby(TestCase, AssertPcsMixin):
         self.pcs_runner = PcsRunner(self.temp_cib.name)
 
     def tearDown(self):
-        self.temp_cib.close()
+        pass
+        # self.temp_cib.close()
 
     def fixture_standby_all(self):
         self.assert_pcs_success("node standby --all".split())
         self.assert_standby_all()
 
     def assert_standby_none(self):
-        self.assert_pcs_success("node attribute".split(), "Node Attributes:\n")
+        self.assert_pcs_success("node attribute".split())
 
     def assert_standby_all(self):
         self.assert_pcs_success(
             "node attribute".split(),
             outdent(
                 """\
-                Node Attributes:
-                 rh7-1: standby=on
-                 rh7-2: standby=on
-                 rh7-3: standby=on
+                Node: rh7-1
+                  Attributes: nodes-1
+                    standby=on
+                Node: rh7-2
+                  Attributes: nodes-2
+                    standby=on
+                Node: rh7-3
+                  Attributes: nodes-3
+                    standby=on
                 """
             ),
         )
@@ -425,8 +434,9 @@ class NodeStandby(TestCase, AssertPcsMixin):
             "node attribute".split(),
             outdent(
                 """\
-                Node Attributes:
-                 rh7-1: standby=on
+                Node: rh7-1
+                  Attributes: nodes-1
+                    standby=on
                 """
             ),
         )
@@ -438,9 +448,12 @@ class NodeStandby(TestCase, AssertPcsMixin):
             "node attribute".split(),
             outdent(
                 """\
-                Node Attributes:
-                 rh7-2: standby=on
-                 rh7-3: standby=on
+                Node: rh7-2
+                  Attributes: nodes-2
+                    standby=on
+                Node: rh7-3
+                  Attributes: nodes-3
+                    standby=on
                 """
             ),
         )
@@ -453,9 +466,12 @@ class NodeStandby(TestCase, AssertPcsMixin):
             "node attribute".split(),
             outdent(
                 """\
-                Node Attributes:
-                 rh7-1: standby=on
-                 rh7-2: standby=on
+                Node: rh7-1
+                  Attributes: nodes-1
+                    standby=on
+                Node: rh7-2
+                  Attributes: nodes-2
+                    standby=on
                 """
             ),
         )
@@ -466,8 +482,9 @@ class NodeStandby(TestCase, AssertPcsMixin):
             "node attribute".split(),
             outdent(
                 """\
-                Node Attributes:
-                 rh7-3: standby=on
+                Node: rh7-3
+                  Attributes: nodes-3
+                    standby=on
                 """
             ),
         )
@@ -497,17 +514,22 @@ class NodeMaintenance(TestCase, AssertPcsMixin):
         self.assert_maintenance_all()
 
     def assert_maintenance_none(self):
-        self.assert_pcs_success("node attribute".split(), "Node Attributes:\n")
+        self.assert_pcs_success("node attribute".split())
 
     def assert_maintenance_all(self):
         self.assert_pcs_success(
             "node attribute".split(),
             outdent(
                 """\
-                Node Attributes:
-                 rh7-1: maintenance=on
-                 rh7-2: maintenance=on
-                 rh7-3: maintenance=on
+                Node: rh7-1
+                  Attributes: nodes-1
+                    maintenance=on
+                Node: rh7-2
+                  Attributes: nodes-2
+                    maintenance=on
+                Node: rh7-3
+                  Attributes: nodes-3
+                    maintenance=on
                 """
             ),
         )
@@ -574,8 +596,9 @@ class NodeMaintenance(TestCase, AssertPcsMixin):
             "node attribute".split(),
             outdent(
                 """\
-                Node Attributes:
-                 rh7-1: maintenance=on
+                Node: rh7-1
+                  Attributes: nodes-1
+                    maintenance=on
                 """
             ),
         )
@@ -587,9 +610,12 @@ class NodeMaintenance(TestCase, AssertPcsMixin):
             "node attribute".split(),
             outdent(
                 """\
-                Node Attributes:
-                 rh7-2: maintenance=on
-                 rh7-3: maintenance=on
+                Node: rh7-2
+                  Attributes: nodes-2
+                    maintenance=on
+                Node: rh7-3
+                  Attributes: nodes-3
+                    maintenance=on
                 """
             ),
         )
@@ -602,9 +628,12 @@ class NodeMaintenance(TestCase, AssertPcsMixin):
             "node attribute".split(),
             outdent(
                 """\
-                Node Attributes:
-                 rh7-1: maintenance=on
-                 rh7-2: maintenance=on
+                Node: rh7-1
+                  Attributes: nodes-1
+                    maintenance=on
+                Node: rh7-2
+                  Attributes: nodes-2
+                    maintenance=on
                 """
             ),
         )
@@ -615,8 +644,9 @@ class NodeMaintenance(TestCase, AssertPcsMixin):
             "node attribute".split(),
             outdent(
                 """\
-                Node Attributes:
-                 rh7-3: maintenance=on
+                Node: rh7-3
+                  Attributes: nodes-3
+                    maintenance=on
                 """
             ),
         )
@@ -714,7 +744,7 @@ class NodeAttributeTest(
 
     def test_show_empty(self):
         self.fixture_attrs(["rh7-1", "rh7-2"])
-        self.assert_pcs_success("node attribute".split(), "Node Attributes:\n")
+        self.assert_pcs_success("node attribute".split())
 
     def test_show_nonempty(self):
         self.fixture_attrs(
@@ -730,11 +760,16 @@ class NodeAttributeTest(
         )
         self.assert_pcs_success(
             "node attribute".split(),
-            """\
-Node Attributes:
- rh7-1: IP=192.168.1.1
- rh7-2: IP=192.168.1.2
-""",
+            outdent(
+                """\
+                Node: rh7-1
+                  Attributes: nodes-1
+                    IP=192.168.1.1
+                Node: rh7-2
+                  Attributes: nodes-2
+                    IP=192.168.1.2
+                """
+            ),
         )
 
     def test_show_multiple_per_node(self):
@@ -753,11 +788,18 @@ Node Attributes:
         )
         self.assert_pcs_success(
             "node attribute".split(),
-            """\
-Node Attributes:
- rh7-1: IP=192.168.1.1 alias=node1
- rh7-2: IP=192.168.1.2 alias=node2
-""",
+            outdent(
+                """\
+                Node: rh7-1
+                  Attributes: nodes-1
+                    IP=192.168.1.1
+                    alias=node1
+                Node: rh7-2
+                  Attributes: nodes-2
+                    IP=192.168.1.2
+                    alias=node2
+                """
+            ),
         )
 
     def test_show_one_node(self):
@@ -776,10 +818,14 @@ Node Attributes:
         )
         self.assert_pcs_success(
             "node attribute rh7-1".split(),
-            """\
-Node Attributes:
- rh7-1: IP=192.168.1.1 alias=node1
-""",
+            outdent(
+                """\
+                Node: rh7-1
+                  Attributes: nodes-1
+                    IP=192.168.1.1
+                    alias=node1
+                """
+            ),
         )
 
     def test_show_missing_node(self):
@@ -796,11 +842,9 @@ Node Attributes:
                 },
             },
         )
-        self.assert_pcs_success(
+        self.assert_pcs_fail(
             "node attribute rh7-3".split(),
-            """\
-Node Attributes:
-""",
+            "Error: Unable to find a node: rh7-3\n",
         )
 
     def test_show_name(self):
@@ -819,11 +863,16 @@ Node Attributes:
         )
         self.assert_pcs_success(
             "node attribute --name alias".split(),
-            """\
-Node Attributes:
- rh7-1: alias=node1
- rh7-2: alias=node2
-""",
+            outdent(
+                """\
+                Node: rh7-1
+                  Attributes: nodes-1
+                    alias=node1
+                Node: rh7-2
+                  Attributes: nodes-2
+                    alias=node2
+                """
+            ),
         )
 
     def test_show_missing_name(self):
@@ -840,12 +889,7 @@ Node Attributes:
                 },
             },
         )
-        self.assert_pcs_success(
-            "node attribute --name missing".split(),
-            """\
-Node Attributes:
-""",
-        )
+        self.assert_pcs_success("node attribute --name missing".split())
 
     def test_show_node_and_name(self):
         self.fixture_attrs(
@@ -863,10 +907,13 @@ Node Attributes:
         )
         self.assert_pcs_success(
             "node attribute --name alias rh7-1".split(),
-            """\
-Node Attributes:
- rh7-1: alias=node1
-""",
+            outdent(
+                """\
+                Node: rh7-1
+                  Attributes: nodes-1
+                    alias=node1
+                """
+            ),
         )
 
     def test_set_new(self):
@@ -874,19 +921,27 @@ Node Attributes:
         self.assert_pcs_success("node attribute rh7-1 IP=192.168.1.1".split())
         self.assert_pcs_success(
             "node attribute".split(),
-            """\
-Node Attributes:
- rh7-1: IP=192.168.1.1
-""",
+            outdent(
+                """\
+                Node: rh7-1
+                  Attributes: nodes-1
+                    IP=192.168.1.1
+                """
+            ),
         )
         self.assert_pcs_success("node attribute rh7-2 IP=192.168.1.2".split())
         self.assert_pcs_success(
             "node attribute".split(),
-            """\
-Node Attributes:
- rh7-1: IP=192.168.1.1
- rh7-2: IP=192.168.1.2
-""",
+            outdent(
+                """\
+                Node: rh7-1
+                  Attributes: nodes-1
+                    IP=192.168.1.1
+                Node: rh7-2
+                  Attributes: nodes-2
+                    IP=192.168.1.2
+                """
+            ),
         )
 
     def test_set_existing(self):
@@ -904,11 +959,16 @@ Node Attributes:
         self.assert_pcs_success("node attribute rh7-2 IP=192.168.2.2".split())
         self.assert_pcs_success(
             "node attribute".split(),
-            """\
-Node Attributes:
- rh7-1: IP=192.168.1.1
- rh7-2: IP=192.168.2.2
-""",
+            outdent(
+                """\
+                Node: rh7-1
+                  Attributes: nodes-1
+                    IP=192.168.1.1
+                Node: rh7-2
+                  Attributes: nodes-2
+                    IP=192.168.2.2
+                """
+            ),
         )
 
     def test_unset(self):
@@ -926,10 +986,13 @@ Node Attributes:
         self.assert_pcs_success("node attribute rh7-2 IP=".split())
         self.assert_pcs_success(
             "node attribute".split(),
-            """\
-Node Attributes:
- rh7-1: IP=192.168.1.1
-""",
+            outdent(
+                """\
+                Node: rh7-1
+                  Attributes: nodes-1
+                    IP=192.168.1.1
+                """
+            ),
         )
 
     def test_unset_nonexisting(self):
