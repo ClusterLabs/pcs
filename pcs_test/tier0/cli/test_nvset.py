@@ -82,6 +82,102 @@ class FilterOutExpiredNvset(TestCase):
         self.assertEqual(nvset.filter_out_expired_nvset([]), [])
 
 
+class FilterNvpairsByNames(TestCase):
+    test_nvsets = [
+        CibNvsetDto(
+            id="1",
+            options={},
+            rule=None,
+            nvpairs=[
+                CibNvpairDto(id="1a", name="a", value="1"),
+                CibNvpairDto(id="1b", name="b", value="2"),
+                CibNvpairDto(id="1c", name="c", value="3"),
+            ],
+        ),
+        CibNvsetDto(
+            id="2",
+            options={},
+            rule=None,
+            nvpairs=[
+                CibNvpairDto(id="2a", name="a", value="1"),
+                CibNvpairDto(id="2b", name="b", value="2"),
+            ],
+        ),
+    ]
+
+    def test_filter_no_match(self):
+        self.assertEqual(
+            nvset.filter_nvpairs_by_names(self.test_nvsets, ["x"]),
+            [
+                CibNvsetDto(id="1", options={}, rule=None, nvpairs=[]),
+                CibNvsetDto(id="2", options={}, rule=None, nvpairs=[]),
+            ],
+        )
+
+    def test_filter_match_in_one_set(self):
+        self.assertEqual(
+            nvset.filter_nvpairs_by_names(self.test_nvsets, ["c"]),
+            [
+                CibNvsetDto(
+                    id="1",
+                    options={},
+                    rule=None,
+                    nvpairs=[
+                        CibNvpairDto(id="1c", name="c", value="3"),
+                    ],
+                ),
+                CibNvsetDto(id="2", options={}, rule=None, nvpairs=[]),
+            ],
+        )
+
+    def test_filter_match_in_more_set(self):
+        self.assertEqual(
+            nvset.filter_nvpairs_by_names(self.test_nvsets, ["a"]),
+            [
+                CibNvsetDto(
+                    id="1",
+                    options={},
+                    rule=None,
+                    nvpairs=[
+                        CibNvpairDto(id="1a", name="a", value="1"),
+                    ],
+                ),
+                CibNvsetDto(
+                    id="2",
+                    options={},
+                    rule=None,
+                    nvpairs=[
+                        CibNvpairDto(id="2a", name="a", value="1"),
+                    ],
+                ),
+            ],
+        )
+
+    def test_filter_multiple_filter(self):
+        self.assertEqual(
+            nvset.filter_nvpairs_by_names(self.test_nvsets, ["a", "c", "x"]),
+            [
+                CibNvsetDto(
+                    id="1",
+                    options={},
+                    rule=None,
+                    nvpairs=[
+                        CibNvpairDto(id="1a", name="a", value="1"),
+                        CibNvpairDto(id="1c", name="c", value="3"),
+                    ],
+                ),
+                CibNvsetDto(
+                    id="2",
+                    options={},
+                    rule=None,
+                    nvpairs=[
+                        CibNvpairDto(id="2a", name="a", value="1"),
+                    ],
+                ),
+            ],
+        )
+
+
 class NvsetDtoToLines(TestCase):
     def setUp(self):
         self.label = "Meta Attributes"
