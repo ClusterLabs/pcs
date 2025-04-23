@@ -63,11 +63,14 @@ installation:
 During the installation, all required rubygems are automatically downloaded and
 compiled.
 
+Web UI frontend is no longer part of pcs sources. You can get it at
+[https://github.com/ClusterLabs/pcs-web-ui](https://github.com/ClusterLabs/pcs-web-ui).
+
 To install pcs and pcsd run the following in terminal:
 ```shell
 ./autogen.sh
 ./configure
-# alternatively './configure --enable-local-build' can be used to also download
+# alternatively, './configure --enable-local-build' can be used to also download
 # missing dependencies
 make
 make install
