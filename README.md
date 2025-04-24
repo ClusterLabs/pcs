@@ -63,12 +63,21 @@ installation:
 During the installation, all required rubygems are automatically downloaded and
 compiled.
 
+Web UI frontend is no longer part of pcs sources. You can get it at
+[https://github.com/ClusterLabs/pcs-web-ui](https://github.com/ClusterLabs/pcs-web-ui).
+Web UI frontend can run in two modes, either as a cockpit plugin or as a
+standalone application served by pcsd. Specify `--enable-webui` flag for
+`./configure` to build pcsd backend support for running the web UI frontend as
+a standalone application.
+
 To install pcs and pcsd run the following in terminal:
 ```shell
 ./autogen.sh
 ./configure
-# alternatively './configure --enable-local-build' can be used to also download
+# alternatively, './configure --enable-local-build' can be used to also download
 # missing dependencies
+# alternatively, './configure --enable-webui' to build support for web UI as
+# a standalone application
 make
 make install
 ```
