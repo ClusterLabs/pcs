@@ -1,7 +1,6 @@
 import json
 from typing import (
     Any,
-    Optional,
 )
 
 import pcs.lib.pacemaker.live as lib_pacemaker
@@ -16,7 +15,6 @@ from pcs.cli.common.parse_args import (
     Argv,
     InputModifiers,
     KeyValueParser,
-    ModifierValueType,
 )
 
 
@@ -154,49 +152,6 @@ def set_node_utilization(node: str, argv: Argv) -> None:
     utils.replace_cib_configuration(cib)
 
 
-def print_node_utilization(
-    filter_node: Optional[str] = None,
-    filter_name: ModifierValueType = None,
-) -> None:
-    """
-    Commandline options:
-      * -f - CIB file
-    """
-    cib = utils.get_cib_dom()
-
-    node_element_list = cib.getElementsByTagName("node")
-
-    if (
-        filter_node
-        and filter_node
-        not in [
-            node_element.getAttribute("uname")
-            for node_element in node_element_list
-        ]
-        and (
-            utils.usefile
-            or filter_node
-            not in [
-                node_attrs.name
-                for node_attrs in utils.getNodeAttributesFromPacemaker()
-            ]
-        )
-    ):
-        utils.err(f"Unable to find a node: {filter_node}")
-
-    utilization = {}
-    for node_el in node_element_list:
-        node = node_el.getAttribute("uname")
-        if filter_node is not None and node != filter_node:
-            continue
-        util_str = utils.get_utilization_str(node_el, filter_name)
-        if util_str:
-            utilization[node] = util_str
-    print("Node Utilization:")
-    for node in sorted(utilization):
-        print(f" {node}: {utilization[node]}")
-
-
 def node_pacemaker_status(
     lib: Any, argv: Argv, modifiers: InputModifiers
 ) -> None:
@@ -209,21 +164,6 @@ def node_pacemaker_status(
     print(json.dumps(lib_pacemaker.get_local_node_status(utils.cmd_runner())))
 
 
-def attribute_show_cmd(
-    filter_node: Optional[str] = None,
-    filter_attr: ModifierValueType = None,
-) -> None:
-    """
-    Commandline options:
-      * -f - CIB file (in lib wrapper)
-    """
-    node_attributes = utils.get_node_attributes(
-        filter_node=filter_node, filter_attr=filter_attr
-    )
-    print("Node Attributes:")
-    attribute_print(node_attributes)
-
-
 def attribute_set_cmd(node: str, argv: Argv) -> None:
     """
     Commandline options:
@@ -232,14 +172,3 @@ def attribute_set_cmd(node: str, argv: Argv) -> None:
     """
     for name, value in KeyValueParser(argv).get_unique().items():
         utils.set_node_attribute(name, value, node)
-
-
-def attribute_print(node_attributes):
-    """
-    Commandline options: no options
-    """
-    for node in sorted(node_attributes.keys()):
-        line_parts = [" " + node + ":"]
-        for name, value in sorted(node_attributes[node].items()):
-            line_parts.append(f"{name}={value}")
-        print(" ".join(line_parts))
