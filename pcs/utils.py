@@ -1803,34 +1803,6 @@ def get_operation_ocf_check_level(operation_el):
     return None
 
 
-def get_node_attributes(filter_node=None, filter_attr=None):
-    """
-    Commandline options:
-      * -f - CIB file
-    """
-    node_config = get_cib_xpath("//nodes")
-    if node_config == "":
-        err("unable to get crm_config, is pacemaker running?")
-    dom = parseString(node_config).documentElement
-    nas = {}
-    for node in dom.getElementsByTagName("node"):
-        nodename = node.getAttribute("uname")
-        if filter_node is not None and nodename != filter_node:
-            continue
-        for attributes in node.getElementsByTagName("instance_attributes"):
-            for nvp in attributes.getElementsByTagName("nvpair"):
-                attr_name = nvp.getAttribute("name")
-                if filter_attr is not None and attr_name != filter_attr:
-                    continue
-                if nodename not in nas:
-                    nas[nodename] = {}
-                nas[nodename][attr_name] = nvp.getAttribute("value")
-            # Use just first element of attributes. We don't support
-            # attributes with rules just yet.
-            break
-    return nas
-
-
 def set_node_attribute(prop, value, node):
     """
     Commandline options:
