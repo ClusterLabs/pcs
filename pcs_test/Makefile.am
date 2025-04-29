@@ -105,10 +105,12 @@ EXTRA_DIST		= \
 			  tier0/cli/reports/__init__.py \
 			  tier0/cli/reports/test_messages.py \
 			  tier0/cli/resource/__init__.py \
+			  tier0/cli/resource/test_common.py \
 			  tier0/cli/resource/test_defaults.py \
 			  tier0/cli/resource/test_parse_args.py \
 			  tier0/cli/resource/test_relations.py \
 			  tier0/cli/resource/test_remove.py \
+			  tier0/cli/resource/test_update.py \
 			  tier0/cli/tag/__init__.py \
 			  tier0/cli/tag/test_command.py \
 			  tier0/cli/test_booth.py \
@@ -123,6 +125,7 @@ EXTRA_DIST		= \
 			  tier0/cli/stonith/__init__.py \
 			  tier0/cli/stonith/levels/__init__.py \
 			  tier0/cli/stonith/levels/test_output.py \
+			  tier0/cli/stonith/test_update.py \
 			  tier0/common/__init__.py \
 			  tier0/common/communication/__init__.py \
 			  tier0/common/communication/test_logger.py \
@@ -280,6 +283,7 @@ EXTRA_DIST		= \
 			  tier0/lib/commands/resource/test_resource_move_autoclean.py \
 			  tier0/lib/commands/resource/test_resource_move_ban.py \
 			  tier0/lib/commands/resource/test_resource_relations.py \
+			  tier0/lib/commands/resource/test_resource_update.py \
 			  tier0/lib/commands/resource/test_restart.py \
 			  tier0/lib/commands/sbd/__init__.py \
 			  tier0/lib/commands/sbd/test_disable_sbd.py \
@@ -311,9 +315,9 @@ EXTRA_DIST		= \
 			  tier0/lib/commands/test_sbd.py \
 			  tier0/lib/commands/test_scsi.py \
 			  tier0/lib/commands/test_status.py \
+			  tier0/lib/commands/test_stonith.py \
 			  tier0/lib/commands/test_stonith_agent.py \
 			  tier0/lib/commands/test_stonith_history.py \
-			  tier0/lib/commands/test_stonith.py \
 			  tier0/lib/commands/test_stonith_update_scsi_devices.py \
 			  tier0/lib/commands/test_ticket.py \
 			  tier0/lib/communication/__init__.py \
@@ -404,6 +408,7 @@ EXTRA_DIST		= \
 			  tier1/cib_resource/test_stonith_create.py \
 			  tier1/cib_resource/test_stonith_enable_disable.py \
 			  tier1/cib_resource/test_stonith_resource_is_forbidden.py \
+			  tier1/cib_resource/test_update.py \
 			  tier1/cluster/common.py \
 			  tier1/cluster/__init__.py \
 			  tier1/cluster/test_cib_push.py \

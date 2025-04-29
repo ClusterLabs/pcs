@@ -19,6 +19,7 @@ from .dto import (
 )
 from .types import (
     ForceCode,
+    ForceFlags,
     MessageCode,
     SeverityLevel,
 )
@@ -75,6 +76,27 @@ def get_severity(
     force_code: Optional[ForceCode], is_forced: bool
 ) -> ReportItemSeverity:
     if is_forced:
+        return ReportItemSeverity(ReportItemSeverity.WARNING)
+    return ReportItemSeverity(ReportItemSeverity.ERROR, force_code)
+
+
+def get_severity_from_flags(
+    force_code: Optional[ForceCode], force_flags: ForceFlags
+) -> ReportItemSeverity:
+    """
+    Returns warning/error severity for report creation depending on whether the
+    force_code is in force_flags.
+
+    force_code -- the force code by which the report can be overridden
+    force_flags -- force flags specified to the command
+
+    TODO: When pcs starts using other force codes than all-mighty force, this
+    function can be expanded to allow for checking the weaker force code with
+    automatic override by the all-mighty force. For example, if force_code is
+    weak_force, and force_flags contain force but not weak_force, the function
+    would return warning severity.
+    """
+    if force_code in force_flags:
         return ReportItemSeverity(ReportItemSeverity.WARNING)
     return ReportItemSeverity(ReportItemSeverity.ERROR, force_code)
 

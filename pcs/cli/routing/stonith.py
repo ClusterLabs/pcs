@@ -24,7 +24,7 @@ stonith_cmd = create_router(
         "delete": stonith.delete_cmd,
         "remove": stonith.delete_cmd,
         "status": stonith.stonith_status_cmd,
-        "meta": stonith.meta_cmd,
+        "meta": stonith_cli.meta,
         "op": create_router(
             {
                 "defaults": resource_op_defaults_cmd(

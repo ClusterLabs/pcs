@@ -15,6 +15,9 @@
 - Support for exporting alerts in `json` and `cmd` formats ([RHEL-44347])
 - Output of `pcs status` now contains messages about CIB misconfiguration
   provided by `crm_verify` pacemaker tool ([RHEL-7681])
+- Support for bundle resources in `pcs resource meta`, disallow updating
+  `remote-node` and `remote-addr` without `--force`, add lib command
+  `resource.update_meta` to API v2 ([RHEL-35407])
 
 ### Fixed
 - Fixed a traceback when removing a resource fails in web UI
@@ -24,6 +27,7 @@
 
 [RHEL-7681]: https://issues.redhat.com/browse/RHEL-7681
 [RHEL-22423]: https://issues.redhat.com/browse/RHEL-22423
+[RHEL-35420]: https://issues.redhat.com/browse/RHEL-35407
 [RHEL-44347]: https://issues.redhat.com/browse/RHEL-44347
 [RHEL-63186]: https://issues.redhat.com/browse/RHEL-63186
 [RHEL-66607]: https://issues.redhat.com/browse/RHEL-66607

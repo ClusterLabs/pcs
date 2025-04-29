@@ -2680,10 +2680,17 @@ class IdNotFound(ReportItemMessage):
     """
     Specified id does not exist in CIB, user referenced a nonexisting id
 
+    Context provides info about what CIB subsection was searched - group for
+    example.
+
+    Examples:
+        resource 'r1' does not exist
+        there is no resource 'r1' in the group 'g1'
+
     id -- specified id
     expected_types -- list of id's roles - expected types with the id
-    context_type -- context_id's role / type
-    context_id -- specifies the search area
+    context_type -- subsection role / type
+    context_id -- id of the subsection
     """
 
     id: str  # pylint: disable=invalid-name
@@ -3411,7 +3418,7 @@ class WaitForIdleNotLiveCluster(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        return "Cannot use 'mocked CIB' together with 'wait'"
+        return "Cannot pass CIB together with 'wait'"
 
 
 @dataclass(frozen=True)
@@ -4940,10 +4947,12 @@ class LiveEnvironmentRequired(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        return "This command does not support {forbidden_options}".format(
-            forbidden_options=format_list(
-                [str(item) for item in self.forbidden_options]
-            ),
+        return (
+            "This command does not support passing {forbidden_options}".format(
+                forbidden_options=format_list(
+                    [str(item) for item in self.forbidden_options]
+                ),
+            )
         )
 
 
@@ -5306,6 +5315,43 @@ class UseCommandNodeRemoveGuest(ReportItemMessage):
     def message(self) -> str:
         return "this command is not sufficient for removing a guest node{id}".format(
             id=format_optional(self.resource_id, template=": '{}")
+        )
+
+
+@dataclass(frozen=True)
+class UseCommandRemoveAndAddGuestNode(ReportItemMessage):
+    """
+    Changing connection parameters of an existing guest node is not recommended,
+    new guest nodes should be readded.
+    """
+
+    _code = codes.USE_COMMAND_REMOVE_AND_ADD_GUEST_NODE
+
+    @property
+    def message(self) -> str:
+        return (
+            "Changing connection parameters of an existing guest node is not "
+            "sufficient for connecting to a different guest node, remove the "
+            "existing guest node and add a new one instead"
+        )
+
+
+@dataclass(frozen=True)
+class GuestNodeNameAlreadyExists(ReportItemMessage):
+    """
+    Cannot set a guest node name that overlaps with another id in the CIB.
+
+    node_name -- node name conflicting with another id
+    """
+
+    node_name: str
+    _code = codes.GUEST_NODE_NAME_ALREADY_EXISTS
+
+    @property
+    def message(self) -> str:
+        return (
+            f"Cannot set name of the guest node to '{self.node_name}' because "
+            "that ID already exists in the cluster configuration."
         )
 
 

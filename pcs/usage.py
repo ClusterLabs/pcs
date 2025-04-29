@@ -1404,15 +1404,11 @@ Notes:
         meta_syntax=_format_syntax(
             "{} {}".format(
                 _RESOURCE_META_CMD,
-                _RESOURCE_META_SYNTAX.format(
-                    obj="resource id | group id | clone id"
-                ),
+                _RESOURCE_META_SYNTAX.format(obj="resource id"),
             )
         ),
         meta_desc=_format_desc(
-            _resource_meta_desc_fn(
-                obj="resource, group or clone", parent_cmd="resource"
-            )
+            _resource_meta_desc_fn(obj="resource", parent_cmd="resource")
         ),
         defaults_config_syntax=_format_syntax(
             f"{_RESOURCE_DEFAULTS_CONFIG_CMD} {_RESOURCE_DEFAULTS_CONFIG_SYNTAX}"

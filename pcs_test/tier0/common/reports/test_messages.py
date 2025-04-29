@@ -2291,7 +2291,7 @@ class WaitForIdleError(NameBuildTest):
 class WaitForIdleNotLiveCluster(NameBuildTest):
     def test_all(self):
         self.assert_message_from_report(
-            "Cannot use 'mocked CIB' together with 'wait'",
+            "Cannot pass CIB together with 'wait'",
             reports.WaitForIdleNotLiveCluster(),
         )
 
@@ -3594,7 +3594,7 @@ class UnsupportedOperationOnNonSystemdSystems(NameBuildTest):
 class LiveEnvironmentRequired(NameBuildTest):
     def test_build_messages_transformable_codes(self):
         self.assert_message_from_report(
-            "This command does not support '{}', '{}'".format(
+            "This command does not support passing '{}', '{}'".format(
                 str(file_type_codes.CIB),
                 str(file_type_codes.COROSYNC_CONF),
             ),
@@ -3935,6 +3935,25 @@ class UseCommandNodeRemoveGuest(NameBuildTest):
         self.assert_message_from_report(
             "this command is not sufficient for removing a guest node",
             reports.UseCommandNodeRemoveGuest(),
+        )
+
+
+class UseCommandRemoveAndAddGuestNode(NameBuildTest):
+    def test_message(self):
+        self.assert_message_from_report(
+            "Changing connection parameters of an existing guest node is not "
+            "sufficient for connecting to a different guest node, remove the "
+            "existing guest node and add a new one instead",
+            reports.UseCommandRemoveAndAddGuestNode(),
+        )
+
+
+class GuestNodeNameAlreadyExists(NameBuildTest):
+    def test_message(self):
+        self.assert_message_from_report(
+            "Cannot set name of the guest node to 'N' because that ID already "
+            "exists in the cluster configuration.",
+            reports.GuestNodeNameAlreadyExists("N"),
         )
 
 

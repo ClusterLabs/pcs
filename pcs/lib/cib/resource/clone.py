@@ -19,9 +19,13 @@ from typing import (
 from lxml import etree
 from lxml.etree import _Element
 
+from pcs.common import (
+    const,
+)
 from pcs.common.pacemaker import nvset
 from pcs.common.pacemaker.resource.clone import CibResourceCloneDto
 from pcs.common.reports import ReportItemList
+from pcs.common.tools import Version
 from pcs.lib.cib import (
     nvpair,
     nvpair_multi,
@@ -29,6 +33,13 @@ from pcs.lib.cib import (
 )
 from pcs.lib.cib.const import TAG_RESOURCE_CLONE as TAG_CLONE
 from pcs.lib.cib.const import TAG_RESOURCE_MASTER as TAG_MASTER
+from pcs.lib.cib.nvpair_multi import (
+    NVSET_META,
+    find_nvsets,
+    nvset_append_new,
+    nvset_update,
+)
+from pcs.lib.cib.resource.operations import get_resource_operations
 from pcs.lib.cib.tools import IdProvider
 from pcs.lib.pacemaker.values import (
     is_true,
@@ -36,6 +47,9 @@ from pcs.lib.pacemaker.values import (
 )
 
 ALL_TAGS = [TAG_CLONE, TAG_MASTER]
+
+META_GLOBALLY_UNIQUE = "globally-unique"
+META_PROMOTABLE = "promotable"
 
 
 def is_clone(resource_el: _Element) -> bool:
@@ -182,6 +196,13 @@ def get_inner_resource(clone_el: _Element) -> _Element:
     return cast(List[_Element], clone_el.xpath("./primitive | ./group"))[0]
 
 
+def get_inner_primitives(clone_el: _Element) -> list[_Element]:
+    """
+    Also returns primitives inside cloned groups.
+    """
+    return cast(List[_Element], clone_el.xpath(".//primitive"))
+
+
 def validate_clone_id(clone_id: str, id_provider: IdProvider) -> ReportItemList:
     """
     Validate that clone_id is a valid xml id and it is unique in the cib.
@@ -193,3 +214,33 @@ def validate_clone_id(clone_id: str, id_provider: IdProvider) -> ReportItemList:
     validate_id(clone_id, reporter=report_list)
     report_list.extend(id_provider.book_ids(clone_id))
     return report_list
+
+
+def convert_master_to_promotable(
+    id_provider: IdProvider, cib_validate_with: Version, master_el: _Element
+) -> None:
+    master_el.tag = TAG_CLONE
+    meta_attrs = {META_PROMOTABLE: "true"}
+    meta_attrs_nvset_list = find_nvsets(master_el, NVSET_META)
+    if meta_attrs_nvset_list:
+        nvset_update(meta_attrs_nvset_list[0], id_provider, meta_attrs)
+    else:
+        nvset_append_new(
+            master_el,
+            id_provider,
+            cib_validate_with,
+            NVSET_META,
+            nvpair_dict=meta_attrs,
+            nvset_options={},
+        )
+
+    clone_primitives = get_inner_primitives(master_el)
+
+    for primitive_el in clone_primitives:
+        ops_monitor = get_resource_operations(primitive_el, names=["monitor"])
+        for op_monitor in ops_monitor:
+            role = op_monitor.get("role", "")
+            if role == const.PCMK_ROLE_PROMOTED_LEGACY:
+                op_monitor.set("role", const.PCMK_ROLE_PROMOTED)
+            if role == const.PCMK_ROLE_UNPROMOTED_LEGACY:
+                op_monitor.set("role", const.PCMK_ROLE_UNPROMOTED)

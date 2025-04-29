@@ -43,7 +43,7 @@ def get_pacemaker_node_names(cib: _Element) -> Set[str]:
 
 def get_existing_nodes_names_addrs(
     corosync_conf=None, cib=None, error_on_missing_name=False
-):
+) -> tuple[list[str], list[str], ReportItemList]:
     corosync_nodes, remote_and_guest_nodes = __get_nodes(corosync_conf, cib)
     names, report_list = __get_nodes_names(
         corosync_nodes, remote_and_guest_nodes, error_on_missing_name
@@ -106,7 +106,10 @@ def __get_nodes_names(
     )
 
 
-def __get_nodes_addrs(corosync_nodes, remote_and_guest_nodes):
+def __get_nodes_addrs(
+    corosync_nodes: Iterable[CorosyncNode],
+    remote_and_guest_nodes: Iterable[PacemakerNode],
+) -> list[str]:
     nodes_addrs = [node.addr for node in remote_and_guest_nodes]
     for node in corosync_nodes:
         nodes_addrs += node.addrs_plain()

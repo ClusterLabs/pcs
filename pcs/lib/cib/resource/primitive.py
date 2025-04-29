@@ -57,6 +57,16 @@ def is_primitive(resource_el: _Element) -> bool:
     return resource_el.tag == TAG
 
 
+def resource_agent_name_from_primitive(
+    primitive_el: _Element,
+) -> ResourceAgentName:
+    return ResourceAgentName(
+        standard=str(primitive_el.attrib["class"]),
+        provider=primitive_el.get("provider"),
+        type=str(primitive_el.attrib["type"]),
+    )
+
+
 def primitive_element_to_dto(
     primitive_element: _Element,
     rule_eval: Optional[rule.RuleInEffectEval] = None,

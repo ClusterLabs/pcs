@@ -38,6 +38,12 @@ from pcs_test.tools.assertions import (
 )
 from pcs_test.tools.xml import etree_to_str
 
+ALL_NVSETS = (
+    nvpair_multi.NVSET_INSTANCE,
+    nvpair_multi.NVSET_META,
+    nvpair_multi.NVSET_UTILIZATION,
+)
+
 
 class RuleInEffectEvalMock(RuleInEffectEval):
     def __init__(self, mock_data=None):
@@ -65,14 +71,8 @@ class NvpairElementToDto(TestCase):
 
 
 class NvsetElementToDto(TestCase):
-    all_nvsets = (
-        nvpair_multi.NVSET_INSTANCE,
-        nvpair_multi.NVSET_META,
-        nvpair_multi.NVSET_UTILIZATION,
-    )
-
     def test_minimal(self):
-        for tag in self.all_nvsets:
+        for tag in ALL_NVSETS:
             with self.subTest(tag=tag):
                 xml = etree.fromstring(f"""<{tag} id="my-id" />""")
                 self.assertEqual(
@@ -83,7 +83,7 @@ class NvsetElementToDto(TestCase):
                 )
 
     def test_expired(self):
-        for tag in self.all_nvsets:
+        for tag in ALL_NVSETS:
             with self.subTest(tag=tag):
                 xml = etree.fromstring(
                     f"""
@@ -138,7 +138,7 @@ class NvsetElementToDto(TestCase):
                 )
 
     def test_full(self):
-        for tag in self.all_nvsets:
+        for tag in ALL_NVSETS:
             with self.subTest(tag=tag):
                 xml = etree.fromstring(
                     f"""
@@ -355,6 +355,74 @@ class NvsetElementToDto(TestCase):
                         ],
                     ),
                 )
+
+
+class NvsetToDict(TestCase):
+    command = staticmethod(nvpair_multi.nvset_to_dict)
+
+    def test_empty(self):
+        for tag in ALL_NVSETS:
+            with self.subTest(tag=tag):
+                xml = etree.fromstring(f"""<{tag} id="my-id" />""")
+                self.assertEqual(
+                    self.command(xml),
+                    {},
+                )
+
+    def _empty_value(self, result):
+        for tag in ALL_NVSETS:
+            with self.subTest(tag=tag):
+                xml = etree.fromstring(
+                    f"""
+                    <{tag} id="my-id">
+                        <nvpair id="my-id-pair1" name="name1" value="value1" />
+                        <nvpair id="my-id-pair-novalue" name="name2" />
+                        <nvpair id="my-id-pair-emptyvalue" name="name3" value=""/>
+                    </{tag}>
+                    """
+                )
+                self.assertEqual(
+                    self.command(xml),
+                    result,
+                )
+
+    def test_empty_value(self):
+        result = {
+            "name1": "value1",
+            "name2": None,
+            "name3": "",
+        }
+        self._empty_value(result)
+
+    def test_multiple(self):
+        for tag in ALL_NVSETS:
+            with self.subTest(tag=tag):
+                xml = etree.fromstring(
+                    f"""
+                    <{tag} id="my-id">
+                        <nvpair id="my-id-pair1" name="name1" value="value1" />
+                        <nvpair id="my-id-pair2" name="name2" value="value2" />
+                    </{tag}>
+                    """
+                )
+                self.assertEqual(
+                    self.command(xml),
+                    {
+                        "name1": "value1",
+                        "name2": "value2",
+                    },
+                )
+
+
+class NvsetToDictExceptWithoutValues(NvsetToDict):
+    command = staticmethod(nvpair_multi.nvset_to_dict_except_without_values)
+
+    def test_empty_value(self):
+        result = {
+            "name1": "value1",
+            "name3": "",
+        }
+        self._empty_value(result)
 
 
 class FindNvsets(TestCase):

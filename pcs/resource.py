@@ -48,6 +48,7 @@ from pcs.cli.reports.output import (
     error,
     warn,
 )
+from pcs.cli.resource.common import check_is_not_stonith
 from pcs.cli.resource.output import (
     operation_defaults_to_cmd,
     resource_agent_metadata_to_text,
@@ -79,7 +80,6 @@ from pcs.common.pacemaker.resource.operations import (
 from pcs.common.str_tools import (
     format_list,
     format_list_custom_last_separator,
-    format_optional,
     format_plural,
 )
 from pcs.lib.cib.resource import (
@@ -104,18 +104,6 @@ if TYPE_CHECKING:
     from pcs.common.resource_agent.dto import ResourceAgentNameDto
 
 RESOURCE_RELOCATE_CONSTRAINT_PREFIX = "pcs-relocate-"
-
-
-def _check_is_not_stonith(
-    lib: Any, resource_id_list: list[str], cmd_to_use: Optional[str] = None
-) -> None:
-    if lib.resource.is_any_stonith(resource_id_list):
-        raise error(
-            reports.messages.CommandArgumentTypeMismatch(
-                "stonith resources"
-            ).message
-            + format_optional(cmd_to_use, " Please use '{}' instead.")
-        )
 
 
 def _detect_guest_change(
@@ -160,7 +148,7 @@ def resource_utilization_cmd(
     resource_id = None
     if argv:
         resource_id = argv.pop(0)
-        _check_is_not_stonith(lib, [resource_id])
+        check_is_not_stonith(lib, [resource_id])
     utils.print_warning_if_utilization_attrs_has_no_effect(
         PropertyConfigurationFacade.from_properties_dtos(
             lib.cluster_property.get_properties(),
@@ -270,8 +258,7 @@ def _defaults_config_cmd(
         and output_format != OUTPUT_FORMAT_VALUE_TEXT
     ):
         raise CmdLineInputError(
-            f"option '--full' is not compatible with '{output_format}' output "
-            "format."
+            f"option '--full' is not compatible with '{output_format}' output format."
         )
     cib_defaults_dto = _filter_defaults(
         lib_command(not modifiers.get("--no-expire-check")),
@@ -443,7 +430,7 @@ def op_add_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     if not argv:
         raise CmdLineInputError()
-    _check_is_not_stonith(lib, [argv[0]], "pcs stonith op add")
+    check_is_not_stonith(lib, [argv[0]], "pcs stonith op add")
     resource_op_add(argv, modifiers)
 
 
@@ -489,7 +476,7 @@ def op_delete_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     if not argv:
         raise CmdLineInputError()
     resource_id = argv.pop(0)
-    _check_is_not_stonith(lib, [resource_id], "pcs stonith op delete")
+    check_is_not_stonith(lib, [resource_id], "pcs stonith op delete")
     resource_operation_remove(resource_id, argv)
 
 
@@ -548,8 +535,7 @@ def resource_list_available(
         if search:
             utils.err("No resource agents matching the filter.")
         utils.err(
-            "No resource agents available. "
-            "Do you have resource agents installed?"
+            "No resource agents available. Do you have resource agents installed?"
         )
 
     for agent_info in agent_list:
@@ -980,7 +966,7 @@ def update_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     if not argv:
         raise CmdLineInputError()
-    _check_is_not_stonith(lib, [argv[0]], "pcs stonith update")
+    check_is_not_stonith(lib, [argv[0]], "pcs stonith update")
     resource_update(argv, modifiers)
 
 
@@ -1486,105 +1472,6 @@ def resource_operation_remove(res_id: str, argv: Argv) -> None:  # noqa: PLR0912
     utils.replace_cib_configuration(dom)
 
 
-def meta_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
-    """
-    Options:
-      * --force - allow not suitable command
-      * --wait
-      * -f - CIB file
-    """
-    if not argv:
-        raise CmdLineInputError()
-    _check_is_not_stonith(lib, [argv[0]], "pcs stonith meta")
-    resource_meta(argv, modifiers)
-
-
-def resource_meta(argv: Argv, modifiers: InputModifiers) -> None:  # noqa: PLR0912
-    """
-    Commandline options:
-      * --force - allow not suitable command
-      * --wait
-      * -f - CIB file
-    """
-    # pylint: disable=too-many-branches
-    modifiers.ensure_only_supported("--force", "--wait", "-f")
-    if len(argv) < 2:
-        raise CmdLineInputError()
-    res_id = argv.pop(0)
-    _detect_guest_change(
-        KeyValueParser(argv).get_unique(),
-        bool(modifiers.get("--force")),
-    )
-
-    dom = utils.get_cib_dom()
-
-    master = utils.dom_get_master(dom, res_id)
-    if master:
-        resource_el = transform_master_to_clone(master)
-    else:
-        resource_el = utils.dom_get_any_resource(dom, res_id)
-    if resource_el is None:
-        raise CmdLineInputError(
-            f"unable to find a resource/clone/group: {res_id}"
-        )
-
-    if modifiers.is_specified("--wait"):
-        # deprecated in the first version of 0.12
-        process_library_reports(
-            [
-                reports.ReportItem.deprecation(
-                    reports.messages.ResourceWaitDeprecated()
-                )
-            ]
-        )
-
-        wait_timeout = utils.validate_wait_get_timeout()
-
-    attr_tuples = utils.convert_args_to_tuples(argv)
-
-    if resource_el.tagName == "clone":
-        clone_child = utils.dom_elem_get_clone_ms_resource(resource_el)
-        if clone_child:
-            _check_clone_incompatible_options_child(
-                clone_child,
-                dict(attr_tuples),
-                force=bool(modifiers.get("--force")),
-            )
-
-    remote_node_name = utils.dom_get_resource_remote_node_name(resource_el)
-    utils.dom_update_meta_attr(resource_el, attr_tuples)
-
-    utils.replace_cib_configuration(dom)
-
-    if (
-        remote_node_name
-        and remote_node_name
-        != utils.dom_get_resource_remote_node_name(resource_el)
-    ):
-        # if the resource was a remote node and it is not anymore, (or its name
-        # changed) we need to tell pacemaker about it
-        output, retval = utils.run(
-            ["crm_node", "--force", "--remove", remote_node_name]
-        )
-
-    if modifiers.is_specified("--wait"):
-        args = ["crm_resource", "--wait"]
-        if wait_timeout:
-            args.extend(["--timeout=%s" % wait_timeout])
-        output, retval = utils.run(args)
-        running_on = utils.resource_running_on(res_id)
-        if retval == 0:
-            print_to_stderr(running_on["message"])
-        else:
-            msg = []
-            if retval == PACEMAKER_WAIT_TIMEOUT_STATUS:
-                msg.append("waiting timeout")
-            msg.append(running_on["message"])
-            if retval != 0 and output:
-                msg.append("\n" + output)
-            utils.err("\n".join(msg).strip())
-
-
 def resource_group_rm_cmd(
     lib: Any, argv: Argv, modifiers: InputModifiers
 ) -> None:
@@ -1682,7 +1569,7 @@ def resource_clone(
         raise CmdLineInputError()
 
     res = argv[0]
-    _check_is_not_stonith(lib, [res])
+    check_is_not_stonith(lib, [res])
     cib_dom = utils.get_cib_dom()
 
     if modifiers.is_specified("--wait"):
@@ -2206,10 +2093,7 @@ def resource_status(  # noqa: PLR0912, PLR0915
         for arg in argv[:]:
             if "=" not in arg:
                 resource_or_tag_id = arg
-                crm_mon_err_msg = (
-                    f"unable to get status of '{resource_or_tag_id}' from crm_"
-                    "mon\n"
-                )
+                crm_mon_err_msg = f"unable to get status of '{resource_or_tag_id}' from crm_mon\n"
                 monitor_command.extend(
                     [
                         "--include",
@@ -2311,7 +2195,7 @@ def resource_disable_cmd(
     """
     if not argv:
         raise CmdLineInputError("You must specify resource(s) to disable")
-    _check_is_not_stonith(lib, argv, "pcs stonith disable")
+    check_is_not_stonith(lib, argv, "pcs stonith disable")
     resource_disable_common(lib, argv, modifiers)
 
 
@@ -2425,7 +2309,7 @@ def resource_enable_cmd(
     if not argv:
         raise CmdLineInputError("You must specify resource(s) to enable")
     resources = argv
-    _check_is_not_stonith(lib, resources, "pcs stonith enable")
+    check_is_not_stonith(lib, resources, "pcs stonith enable")
     lib.resource.enable(resources, modifiers.get("--wait"))
 
 
@@ -2483,7 +2367,7 @@ def resource_force_action(  # noqa: PLR0912
         raise CmdLineInputError()
 
     resource = argv[0]
-    _check_is_not_stonith(lib, [resource])
+    check_is_not_stonith(lib, [resource])
     dom = utils.get_cib_dom()
 
     if not (
@@ -2508,8 +2392,7 @@ def resource_force_action(  # noqa: PLR0912
         group_resources = utils.get_group_children(resource)
         utils.err(
             (
-                "unable to {0} a group, try one of the group's resource(s) "
-                "({1})"
+                "unable to {0} a group, try one of the group's resource(s) ({1})"
             ).format(action, ",".join(group_resources))
         )
     if utils.dom_get_clone(dom, resource) or utils.dom_get_master(
@@ -2553,7 +2436,7 @@ def resource_manage_cmd(
     if not argv:
         raise CmdLineInputError("You must specify resource(s) to manage")
     resources = argv
-    _check_is_not_stonith(lib, resources)
+    check_is_not_stonith(lib, resources)
     lib.resource.manage(resources, with_monitor=modifiers.get("--monitor"))
 
 
@@ -2569,7 +2452,7 @@ def resource_unmanage_cmd(
     if not argv:
         raise CmdLineInputError("You must specify resource(s) to unmanage")
     resources = argv
-    _check_is_not_stonith(lib, resources)
+    check_is_not_stonith(lib, resources)
     lib.resource.unmanage(resources, with_monitor=modifiers.get("--monitor"))
 
 
@@ -2651,8 +2534,7 @@ def resource_failcount_show(
                             interval_failures
                         )
                         result_lines.append(
-                            f"    {current_operation} {current_interval}ms: "
-                            f"{failcount}"
+                            f"    {current_operation} {current_interval}ms: {failcount}"
                         )
             else:
                 failcount, dummy_last_failure = __aggregate_failures(
@@ -2793,7 +2675,7 @@ def resource_relocate_dry_run_cmd(
     """
     modifiers.ensure_only_supported("-f")
     if argv:
-        _check_is_not_stonith(lib, argv)
+        check_is_not_stonith(lib, argv)
     resource_relocate_run(utils.get_cib_dom(), argv, dry=True)
 
 
@@ -2805,7 +2687,7 @@ def resource_relocate_run_cmd(
     """
     modifiers.ensure_only_supported()
     if argv:
-        _check_is_not_stonith(lib, argv)
+        check_is_not_stonith(lib, argv)
     resource_relocate_run(utils.get_cib_dom(), argv, dry=False)
 
 
