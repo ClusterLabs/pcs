@@ -18,6 +18,8 @@
 - Support for bundle resources in `pcs resource meta`, disallow updating
   `remote-node` and `remote-addr` without `--force`, add lib command
   `resource.update_meta` to API v2 ([RHEL-35420])
+- Support for exporting node attributes and utilization in `json` and `cmd`
+  formats ([RHEL-76154])
 
 ### Fixed
 - Fixed a traceback when removing a resource fails in web UI
@@ -30,6 +32,7 @@
 [RHEL-76059]: https://issues.redhat.com/browse/RHEL-76059
 [RHEL-76060]: https://issues.redhat.com/browse/RHEL-76060
 [RHEL-76153]: https://issues.redhat.com/browse/RHEL-76153
+[RHEL-76154]: https://issues.redhat.com/browse/RHEL-76154
 [RHEL-76170]: https://issues.redhat.com/browse/RHEL-76170
 [RHEL-76177]: https://issues.redhat.com/browse/RHEL-76177
 [RHEL-82894]: https://issues.redhat.com/browse/RHEL-82894

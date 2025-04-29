@@ -1545,8 +1545,9 @@ deauth [<host name>]...
 Delete authentication tokens which allow pcs/pcsd on the current system to connect to remote pcsd instances on specified host names. If the current system is a member of a cluster, the tokens will be deleted from all nodes in the cluster. If no host names are specified all tokens will be deleted. After this command is run this node will need to re-authenticate against other nodes to be able to connect to them.
 .SS "node"
 .TP
-attribute [[<node>] [\fB\-\-name\fR <name>] | <node> <name>=<value> ...]
-Manage node attributes.  If no parameters are specified, show attributes of all nodes.  If one parameter is specified, show attributes of specified node.  If \fB\-\-name\fR is specified, show specified attribute's value from all nodes.  If more parameters are specified, set attributes of specified node.  Attributes can be removed by setting an attribute without a value.
+attribute [[<node>] [\fB\-\-name\fR <name>] | (@OUTPUT_FORMAT_SYNTAX_DOC@) | <node> <name>=<value> ...]
+Manage node attributes.  If no parameters are specified, show attributes of all nodes.  If one parameter is specified, show attributes of specified node.  If \fB\-\-name\fR is specified, show specified attribute's value from all nodes.  If more parameters are specified, set attributes of specified node.  Attributes can be removed by setting an attribute without a value. @OUTPUT_FORMAT_DESC_DOC@
+
 .TP
 maintenance [\fB\-\-all\fR | <node>...] [\fB\-\-wait\fR[=n]]
 Put specified node(s) into maintenance mode, if no nodes or options are specified the current node will be put into maintenance mode, if \fB\-\-all\fR is specified all nodes will be put into maintenance mode. If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the node(s) to be put into maintenance mode and then return 0 on success or 1 if the operation not succeeded yet. If 'n' is not specified it defaults to 60 minutes.
@@ -1560,8 +1561,10 @@ Put specified node(s) into standby mode (the node specified will no longer be ab
 unstandby [\fB\-\-all\fR | <node>...] [\fB\-\-wait\fR[=n]]
 Remove node(s) from standby mode (the node specified will now be able to host resources), if no nodes or options are specified the current node will be removed from standby mode, if \fB\-\-all\fR is specified all nodes will be removed from standby mode. If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the node(s) to be removed from standby mode and then return 0 on success or 1 if the operation not succeeded yet. If 'n' is not specified it defaults to 60 minutes.
 .TP
-utilization [[<node>] [\fB\-\-name\fR <name>] | <node> <name>=<value> ...]
-Add specified utilization options to specified node.  If node is not specified, shows utilization of all nodes.  If \fB\-\-name\fR is specified, shows specified utilization value from all nodes. If utilization options are not specified, shows utilization of specified node.  Utilization option should be in format name=value, value has to be integer.  Options may be removed by setting an option without a value.  Example: pcs node utilization node1 cpu=4 ram=  For the utilization configuration to be in effect, cluster property 'placement-strategy' must be configured accordingly.
+utilization [[<node>] [\fB\-\-name\fR <name>] | (@OUTPUT_FORMAT_SYNTAX_DOC@) | <node> <name>=<value> ...]
+Add specified utilization options to specified node.  If node is not specified, shows utilization of all nodes.  If \fB\-\-name\fR is specified, shows specified utilization value from all nodes. If utilization options are not specified, shows utilization of specified node.  Utilization option should be in format name=value, value has to be integer.  Options may be removed by setting an option without a value. @OUTPUT_FORMAT_DESC_DOC@
+
+Example: pcs node utilization node1 cpu=4 ram=  For the utilization configuration to be in effect, cluster property 'placement-strategy' must be configured accordingly.
 .SS "alert"
 .TP
 [config] [@OUTPUT_FORMAT_SYNTAX_DOC@]

@@ -3008,13 +3008,15 @@ Usage: pcs node <command>
 Manage cluster nodes
 
 Commands:
-    attribute [[<node>] [--name <name>] | <node> <name>=<value> ...]
+    attribute [[<node>] [--name <name>] | ({output_format_syntax})
+            | <node> <name>=<value> ...]
         Manage node attributes.  If no parameters are specified, show attributes
         of all nodes.  If one parameter is specified, show attributes
         of specified node.  If --name is specified, show specified attribute's
         value from all nodes.  If more parameters are specified, set attributes
         of specified node.  Attributes can be removed by setting an attribute
         without a value.
+        {output_format_desc}
 
     maintenance [--all | <node>...] [--wait[=n]]
         Put specified node(s) into maintenance mode, if no nodes or options are
@@ -3054,19 +3056,24 @@ Commands:
         the operation not succeeded yet. If 'n' is not specified it defaults
         to 60 minutes.
 
-    utilization [[<node>] [--name <name>] | <node> <name>=<value> ...]
+    utilization [[<node>] [--name <name>] | ({output_format_syntax})
+            | <node> <name>=<value> ...]
         Add specified utilization options to specified node.  If node is not
         specified, shows utilization of all nodes.  If --name is specified,
         shows specified utilization value from all nodes. If utilization options
         are not specified, shows utilization of specified node.  Utilization
         option should be in format name=value, value has to be integer.  Options
         may be removed by setting an option without a value.
+        {output_format_desc}
+
         Example: pcs node utilization node1 cpu=4 ram=
 {utilization_placement_strategy_desc}
 """.format(
+        output_format_syntax=_output_format_syntax(),
+        output_format_desc=_format_desc((" ", _output_format_desc())),
         utilization_placement_strategy_desc=_format_desc(
             _UTILIZATION_PLACEMENT_STRATEGY_DESC
-        )
+        ),
     )
     return sub_usage(args, output)
 
