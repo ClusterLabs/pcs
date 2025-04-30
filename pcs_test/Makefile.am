@@ -124,6 +124,8 @@ EXTRA_DIST		= \
 			  tier0/cli/stonith/levels/__init__.py \
 			  tier0/cli/stonith/levels/test_output.py \
 			  tier0/common/__init__.py \
+			  tier0/common/communication/__init__.py \
+			  tier0/common/communication/test_logger.py \
 			  tier0/common/interface/__init__.py \
 			  tier0/common/interface/test_dto.py \
 			  tier0/common/pacemaker/constraint/__init__.py \

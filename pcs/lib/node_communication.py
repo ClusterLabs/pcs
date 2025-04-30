@@ -1,172 +1,38 @@
-import os
+from typing import Mapping
 
-from pcs import settings
 from pcs.common import pcs_pycurl as pycurl
 from pcs.common import reports
+from pcs.common.host import PcsKnownHost
 from pcs.common.node_communicator import (
-    CommunicatorLoggerInterface,
     HostNotFound,
     NodeTargetFactory,
+    RequestTarget,
 )
 from pcs.common.reports import (
     ReportItemSeverity,
     ReportProcessor,
 )
-from pcs.common.reports.item import ReportItem
+from pcs.common.reports.item import ReportItem, ReportItemList
+from pcs.common.types import StringIterable
 from pcs.lib.errors import LibraryError
 
 
-def _get_port(port):
-    return port if port is not None else settings.pcsd_default_port
-
-
-class LibCommunicatorLogger(CommunicatorLoggerInterface):
-    def __init__(self, logger, reporter: ReportProcessor):
-        self._logger = logger
-        self._reporter = reporter
-
-    def log_request_start(self, request):
-        msg = "Sending HTTP Request to: {url}"
-        if request.data:
-            msg += "\n--Debug Input Start--\n{data}\n--Debug Input End--"
-        self._logger.debug(msg.format(url=request.url, data=request.data))
-        self._reporter.report(
-            ReportItem.debug(
-                reports.messages.NodeCommunicationStarted(
-                    request.url,
-                    request.data,
-                )
-            )
-        )
-
-    def log_response(self, response):
-        if response.was_connected:
-            self._log_response_successful(response)
-        else:
-            self._log_response_failure(response)
-        self._log_debug(response)
-
-    def _log_response_successful(self, response):
-        url = response.request.url
-        msg = (
-            "Finished calling: {url}\nResponse Code: {code}"
-            + "\n--Debug Response Start--\n{response}\n--Debug Response End--"
-        )
-        self._logger.debug(
-            msg.format(
-                url=url, code=response.response_code, response=response.data
-            )
-        )
-        self._reporter.report(
-            ReportItem.debug(
-                reports.messages.NodeCommunicationFinished(
-                    url,
-                    response.response_code,
-                    response.data,
-                )
-            )
-        )
-
-    def _log_response_failure(self, response):
-        msg = "Unable to connect to {node} ({reason})"
-        self._logger.debug(
-            msg.format(
-                node=response.request.host_label, reason=response.error_msg
-            )
-        )
-        self._reporter.report(
-            ReportItem.debug(
-                reports.messages.NodeCommunicationNotConnected(
-                    response.request.host_label,
-                    response.error_msg,
-                )
-            )
-        )
-        if is_proxy_set(os.environ):
-            self._logger.warning("Proxy is set")
-            self._reporter.report(
-                ReportItem.warning(
-                    reports.messages.NodeCommunicationProxyIsSet(
-                        response.request.host_label,
-                        response.request.dest.addr,
-                    )
-                )
-            )
-
-    def _log_debug(self, response):
-        url = response.request.url
-        debug_data = response.debug
-        self._logger.debug(
-            "Communication debug info for calling: %s\n"
-            "--Debug Communication Info Start--\n"
-            "%s\n"
-            "--Debug Communication Info End--",
-            url,
-            debug_data,
-        )
-        self._reporter.report(
-            ReportItem.debug(
-                reports.messages.NodeCommunicationDebugInfo(url, debug_data)
-            )
-        )
-
-    def log_retry(self, response, previous_dest):
-        old_port = _get_port(previous_dest.port)
-        new_port = _get_port(response.request.dest.port)
-        msg = (
-            "Unable to connect to '{label}' via address '{old_addr}' and port "
-            "'{old_port}'. Retrying request '{req}' via address '{new_addr}' "
-            "and port '{new_port}'"
-        ).format(
-            label=response.request.host_label,
-            old_addr=previous_dest.addr,
-            old_port=old_port,
-            new_addr=response.request.dest.addr,
-            new_port=new_port,
-            req=response.request.url,
-        )
-        self._logger.warning(msg)
-        self._reporter.report(
-            ReportItem.warning(
-                reports.messages.NodeCommunicationRetrying(
-                    response.request.host_label,
-                    previous_dest.addr,
-                    old_port,
-                    response.request.dest.addr,
-                    new_port,
-                    response.request.url,
-                )
-            )
-        )
-
-    def log_no_more_addresses(self, response):
-        msg = "No more addresses for node {label} to run '{req}'".format(
-            label=response.request.host_label,
-            req=response.request.url,
-        )
-        self._logger.warning(msg)
-        self._reporter.report(
-            ReportItem.warning(
-                reports.messages.NodeCommunicationNoMoreAddresses(
-                    response.request.host_label,
-                    response.request.url,
-                )
-            )
-        )
-
-
 class NodeTargetLibFactory(NodeTargetFactory):
-    def __init__(self, known_hosts, report_processor: ReportProcessor):
+    def __init__(
+        self,
+        known_hosts: Mapping[str, PcsKnownHost],
+        report_processor: ReportProcessor,
+    ):
         super().__init__(known_hosts)
         self._report_processor = report_processor
 
     def get_target_list_with_reports(
         self,
-        host_name_list,
-        skip_non_existing=False,
-        allow_skip=True,
-        report_none_host_found=True,
-    ):
+        host_name_list: StringIterable,
+        skip_non_existing: bool = False,
+        allow_skip: bool = True,
+        report_none_host_found: bool = True,
+    ) -> tuple[ReportItemList, list[RequestTarget]]:
         target_list = []
         unknown_host_list = []
         for host_name in host_name_list:
@@ -281,17 +147,3 @@ def response_to_report_item(
             reason,
         ),
     )
-
-
-def is_proxy_set(env_dict):
-    """
-    Returns True whenever any of proxy environment variables (https_proxy,
-    HTTPS_PROXY, all_proxy, ALL_PROXY) are set in env_dict. False otherwise.
-
-    dict env_dict -- environment variables in dict
-    """
-    proxy_list = ["https_proxy", "all_proxy"]
-    for var in proxy_list + [v.upper() for v in proxy_list]:
-        if env_dict.get(var, "") != "":
-            return True
-    return False

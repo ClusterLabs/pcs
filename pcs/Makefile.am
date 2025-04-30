@@ -129,6 +129,7 @@ EXTRA_DIST		= \
 			  common/communication/__init__.py \
 			  common/communication/const.py \
 			  common/communication/dto.py \
+			  common/communication/logger.py \
 			  common/communication/types.py \
 			  common/interface/dto.py \
 			  common/interface/__init__.py \
