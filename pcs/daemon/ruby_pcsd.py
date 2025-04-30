@@ -6,7 +6,6 @@ from base64 import (
     binascii,
 )
 from collections import namedtuple
-from time import time as now
 
 import pycurl
 from tornado.curl_httpclient import CurlError
@@ -27,7 +26,6 @@ from pcs.lib.auth.types import AuthUser
 SYNC_CONFIGS = "sync_configs"
 SINATRA = "sinatra"
 
-DEFAULT_SYNC_CONFIG_DELAY = 5
 RUBY_LOG_LEVEL_MAP = {
     "UNKNOWN": logging.NOTSET,
     "FATAL": logging.CRITICAL,
@@ -286,10 +284,3 @@ class Wrapper:
                 )
             )
         )
-
-    async def sync_configs(self):
-        try:
-            return (await convert_yielded(self.run_ruby(SYNC_CONFIGS)))["next"]
-        except HTTPError:
-            log.pcsd.error("Config synchronization failed")
-            return int(now()) + DEFAULT_SYNC_CONFIG_DELAY

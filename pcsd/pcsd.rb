@@ -74,46 +74,6 @@ configure do
   CAPABILITIES_PCSD = capabilities_pcsd.freeze
 end
 
-def run_cfgsync
-  node_connected = true
-  if Cfgsync::ConfigSyncControl.sync_thread_allowed?()
-    $logger.info('Config files sync started')
-    begin
-      # do not sync if this host is not in a cluster
-      cluster_name = get_cluster_name()
-      cluster_nodes = get_corosync_nodes_names()
-      if cluster_name and !cluster_name.empty?() and cluster_nodes and cluster_nodes.count > 1
-        $logger.debug('Config files sync fetching')
-        fetcher = Cfgsync::ConfigFetcher.new(
-          PCSAuth.getSuperuserAuth(),
-          Cfgsync::get_cfg_classes(),
-          cluster_nodes,
-          cluster_name
-        )
-        cfgs_to_save, _, node_connected = fetcher.fetch()
-        cfgs_to_save.each { |cfg_to_save|
-          cfg_to_save.save()
-        }
-        $logger.info('Config files sync finished')
-      else
-        $logger.info(
-          'Config files sync skipped, this host does not seem to be in ' +
-          'a cluster of at least 2 nodes'
-        )
-      end
-    rescue => e
-      $logger.warn("Config files sync exception: #{e}")
-    end
-  else
-    $logger.info('Config files sync is disabled or paused, skipping')
-  end
-  if node_connected
-    return Cfgsync::ConfigSyncControl.sync_thread_interval()
-  else
-    return Cfgsync::ConfigSyncControl.sync_thread_interval_previous_not_connected()
-  end
-end
-
 get '/remote/?:command?' do
   return remote(params, request, @auth_user)
 end

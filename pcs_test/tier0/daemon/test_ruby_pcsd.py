@@ -81,20 +81,6 @@ class RunRuby(AsyncTestCase):
             yield self.wrapper.run_ruby(ruby_pcsd.SYNC_CONFIGS)
 
     @gen_test
-    def test_sync_config_shortcut_success(self):
-        _next = 10
-        self.set_run_result({"next": _next})
-        result = yield self.wrapper.sync_configs()
-        self.assertEqual(result, _next)
-
-    @patch_ruby_pcsd("now", return_value=0)
-    @gen_test
-    def test_sync_config_shorcut_fail(self, now):
-        del now
-        result = yield self.wrapper.sync_configs()
-        self.assertEqual(result, ruby_pcsd.DEFAULT_SYNC_CONFIG_DELAY)
-
-    @gen_test
     def test_request(self):
         headers = {"some": "header"}
         status = 200
