@@ -224,6 +224,7 @@ EXTRA_DIST		= \
 			  daemon/async_tasks/worker/logging.py \
 			  daemon/async_tasks/worker/report_processor.py \
 			  daemon/async_tasks/worker/types.py \
+			  daemon/cfgsync.py \
 			  daemon/env.py \
 			  daemon/http_server.py \
 			  daemon/__init__.py \
