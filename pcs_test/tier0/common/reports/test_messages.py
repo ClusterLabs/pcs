@@ -6200,3 +6200,21 @@ class NoStonithMeansWouldBeLeft(NameBuildTest):
             ),
             reports.NoStonithMeansWouldBeLeft(),
         )
+
+
+class ParseErrorInvalidFileStructure(NameBuildTest):
+    def test_no_path(self):
+        self.assert_message_from_report(
+            "Unable to parse known-hosts file: reason",
+            reports.ParseErrorInvalidFileStructure(
+                "reason", file_type_codes.PCS_KNOWN_HOSTS, None
+            ),
+        )
+
+    def test_path(self):
+        self.assert_message_from_report(
+            "Unable to parse known-hosts file '/foo/bar': reason",
+            reports.ParseErrorInvalidFileStructure(
+                "reason", file_type_codes.PCS_KNOWN_HOSTS, "/foo/bar"
+            ),
+        )

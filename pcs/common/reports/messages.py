@@ -6735,6 +6735,30 @@ class ResourceMoveAutocleanSimulationFailure(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class ParseErrorInvalidFileStructure(ReportItemMessage):
+    """
+    Unable to parse a file, the file content structure is invalid
+
+    reason -- error message describing why the file content is invalid
+    file_type_code -- file type, item of pcs.common.file_type_codes
+    file_path -- path to the parsed file if available
+    """
+
+    reason: str
+    file_type_code: file_type_codes.FileTypeCode
+    file_path: Optional[str]
+    _code = codes.PARSE_ERROR_INVALID_FILE_STRUCTURE
+
+    @property
+    def message(self) -> str:
+        return "Unable to parse {file_role} file{file_path}: {reason}".format(
+            reason=self.reason,
+            file_path=format_optional(self.file_path, " '{0}'"),
+            file_role=_format_file_role(self.file_type_code),
+        )
+
+
+@dataclass(frozen=True)
 class ParseErrorJsonFile(ReportItemMessage):
     """
     Unable to parse a file with JSON data

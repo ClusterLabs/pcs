@@ -372,6 +372,12 @@ EXTRA_DIST		= \
 			  lib/file/metadata.py \
 			  lib/file/raw_file.py \
 			  lib/file/toolbox.py \
+			  lib/host/config/exporter.py \
+			  lib/host/config/facade.py \
+			  lib/host/config/__init__.py \
+			  lib/host/config/parser.py \
+			  lib/host/config/types.py \
+			  lib/host/__init__.py \
 			  lib/__init__.py \
 			  lib/interface/config.py \
 			  lib/interface/__init__.py \

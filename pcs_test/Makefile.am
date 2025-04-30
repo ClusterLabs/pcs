@@ -39,6 +39,7 @@ EXTRA_DIST		= \
 			  resources/crm_mon.minimal.xml \
 			  resources/crm_mon.all_resources.xml \
 			  resources/fenced_metadata.xml \
+			  resources/known-hosts \
 			  resources/pcmk_api_rng/api-result.rng \
 			  resources/pcmk_api_rng/crm_attribute-2.36.rng \
 			  resources/pcmk_api_rng/crm_mon-2.29.rng \
@@ -343,6 +344,10 @@ EXTRA_DIST		= \
 			  tier0/lib/file/test_instance.py \
 			  tier0/lib/file/test_raw_file.py \
 			  tier0/lib/file/test_toolbox.py \
+			  tier0/lib/host/config/__init__.py \
+			  tier0/lib/host/config/test_facade.py \
+			  tier0/lib/host/config/test_parser.py \
+			  tier0/lib/host/__init__.py \
 			  tier0/lib/__init__.py \
 			  tier0/lib/misc.py \
 			  tier0/lib/pacemaker/__init__.py \

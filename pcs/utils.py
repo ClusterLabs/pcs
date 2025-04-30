@@ -22,6 +22,7 @@ from typing import (
     Dict,
     Optional,
     Tuple,
+    cast,
 )
 from urllib.parse import urlencode
 from xml.dom.minidom import Document as DomDocument
@@ -72,6 +73,7 @@ from pcs.lib.external import (
     is_proxy_set,
 )
 from pcs.lib.file.instance import FileInstance as LibFileInstance
+from pcs.lib.host.config.facade import Facade as KnownHostsFacade
 from pcs.lib.interface.config import ParserErrorException
 from pcs.lib.pacemaker.live import get_cluster_status_dom
 from pcs.lib.pacemaker.state import ClusterState
@@ -313,15 +315,14 @@ def remove_uid_gid_file(uid, gid):
 
 
 @lru_cache()
-def read_known_hosts_file():
+def read_known_hosts_file() -> dict[str, PcsKnownHost]:
     return read_known_hosts_file_not_cached()
 
 
-def read_known_hosts_file_not_cached():
+def read_known_hosts_file_not_cached() -> dict[str, PcsKnownHost]:
     """
     Commandline options: no options
     """
-    data = {}
     try:
         if os.getuid() != 0:
             known_hosts_raw_file = pcs_file.RawFile(
@@ -329,26 +330,28 @@ def read_known_hosts_file_not_cached():
             )
             # json.loads handles bytes, it expects utf-8, 16 or 32 encoding
             known_hosts_struct = json.loads(known_hosts_raw_file.read())
-        else:
-            # TODO remove
-            # This is here to provide known-hosts to functions not yet
-            # overhauled to pcs.lib. Cli should never read known hosts from
-            # /var/lib/pcsd/.
-            known_hosts_instance = LibFileInstance.for_known_hosts()
-            known_hosts_struct = known_hosts_instance.read_to_structure()
+            # TODO use known hosts facade for getting info from json struct once the
+            # facade exists
+            return {
+                name: PcsKnownHost.from_known_host_file_dict(name, host)
+                for name, host in known_hosts_struct["known_hosts"].items()
+            }
+        # TODO remove
+        # This is here to provide known-hosts to functions not yet
+        # overhauled to pcs.lib. Cli should never read known hosts from
+        # /var/lib/pcsd/.
+        known_hosts_instance = LibFileInstance.for_known_hosts()
+        known_hosts_facade = cast(
+            KnownHostsFacade, known_hosts_instance.read_to_facade()
+        )
+        return known_hosts_facade.known_hosts
 
-        # TODO use known hosts facade for getting info from json struct once the
-        # facade exists
-        data = {
-            name: PcsKnownHost.from_known_host_file_dict(name, host)
-            for name, host in known_hosts_struct["known_hosts"].items()
-        }
     except LibraryError as e:
         # TODO remove
         # This is here to provide known-hosts to functions not yet
         # overhauled to pcs.lib. Cli should never read known hosts from
         # /var/lib/pcsd/.
-        process_library_reports(e.args)
+        process_library_reports(list(e.args))
     except ParserErrorException as e:
         # TODO remove
         # This is here to provide known-hosts to functions not yet
@@ -363,7 +366,7 @@ def read_known_hosts_file_not_cached():
         reports_output.warn(f"Unable to parse the known-hosts file: {e}")
     except (TypeError, KeyError):
         reports_output.warn("Warning: Unable to parse the known-hosts file.")
-    return data
+    return {}
 
 
 def repeat_if_timeout(send_http_request_function, repeat_count=15):
