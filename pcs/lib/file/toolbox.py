@@ -10,10 +10,14 @@ from pcs.lib.auth import config as auth_config
 from pcs.lib.booth.config_facade import ConfigFacade as BoothConfigFacade
 from pcs.lib.booth.config_parser import Exporter as BoothConfigExporter
 from pcs.lib.booth.config_parser import Parser as BoothConfigParser
+from pcs.lib.cfgsync.config.facade import Facade as CfgsyncCtlFacade
 from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
 from pcs.lib.corosync.config_parser import Exporter as CorosyncConfigExporter
 from pcs.lib.corosync.config_parser import Parser as CorosyncConfigParser
 from pcs.lib.dr.config.facade import Facade as DrConfigFacade
+from pcs.lib.host.config.exporter import Exporter as KnownHostsExporter
+from pcs.lib.host.config.facade import Facade as KnownHostsFacade
+from pcs.lib.host.config.parser import Parser as KnownHostsParser
 from pcs.lib.interface.config import (
     ExporterInterface,
     FacadeInterface,
@@ -96,6 +100,14 @@ _toolboxes = {
         validator=None,  # TODO needed for files syncing
         version_controller=None,  # TODO needed for files syncing
     ),
+    code.CFGSYNC_CTL: FileToolbox(
+        file_type_code=code.CFGSYNC_CTL,
+        facade=CfgsyncCtlFacade,
+        parser=JsonParser,
+        exporter=JsonExporter,
+        validator=None,
+        version_controller=None,
+    ),
     code.COROSYNC_CONF: FileToolbox(
         file_type_code=code.COROSYNC_CONF,
         facade=CorosyncConfigFacade,
@@ -122,10 +134,9 @@ _toolboxes = {
     ),
     code.PCS_KNOWN_HOSTS: FileToolbox(
         file_type_code=code.PCS_KNOWN_HOSTS,
-        # TODO needed for 'auth' and 'deauth' commands
-        facade=None,  # type: ignore
-        parser=JsonParser,
-        exporter=JsonExporter,
+        facade=KnownHostsFacade,
+        parser=KnownHostsParser,
+        exporter=KnownHostsExporter,
         validator=None,  # TODO needed for files syncing
         version_controller=None,  # TODO needed for files syncing
     ),

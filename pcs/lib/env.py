@@ -14,6 +14,7 @@ from pcs.common import (
     file_type_codes,
     reports,
 )
+from pcs.common.communication.logger import CommunicatorLogger
 from pcs.common.host import PcsKnownHost
 from pcs.common.node_communicator import (
     Communicator,
@@ -21,6 +22,7 @@ from pcs.common.node_communicator import (
 )
 from pcs.common.reports import ReportProcessor
 from pcs.common.reports.item import ReportItem
+from pcs.common.reports.processor import ReportProcessorToLog
 from pcs.common.services.interfaces import ServiceManagerInterface
 from pcs.common.tools import Version
 from pcs.common.types import StringIterable
@@ -47,7 +49,6 @@ from pcs.lib.file.instance import FileInstance
 from pcs.lib.interface.config import ParserErrorException
 from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.node_communication import (
-    LibCommunicatorLogger,
     NodeTargetLibFactory,
 )
 from pcs.lib.pacemaker.live import (
@@ -124,7 +125,9 @@ class LibraryEnvironment:
         self.__loaded_cib_diff_source: Optional[str] = None
         self.__loaded_cib_to_modify: Optional[_Element] = None
         self._communicator_factory = NodeCommunicatorFactory(
-            LibCommunicatorLogger(self.logger, self.report_processor),
+            CommunicatorLogger(
+                [ReportProcessorToLog(self.logger), self.report_processor]
+            ),
             self.user_login,
             self.user_groups,
             self._request_timeout,

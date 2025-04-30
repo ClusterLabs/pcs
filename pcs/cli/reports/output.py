@@ -1,12 +1,11 @@
 import sys
-from typing import Optional
 
 from pcs.cli.common.tools import print_to_stderr
 from pcs.common.reports import (
     ReportItemList,
     ReportItemSeverity,
 )
-from pcs.common.reports.dto import ReportItemContextDto
+from pcs.common.reports.utils import add_context_to_message
 
 from .messages import report_item_msg_from_dto
 
@@ -22,14 +21,6 @@ def deprecation_warning(message: str) -> None:
 def error(message: str) -> SystemExit:
     print_to_stderr(f"Error: {message}")
     return SystemExit(1)
-
-
-def add_context_to_message(
-    msg: str, context: Optional[ReportItemContextDto]
-) -> str:
-    if context:
-        msg = f"{context.node}: {msg}"
-    return msg
 
 
 def process_library_reports(

@@ -46,6 +46,9 @@ class FacadeV2GetEntryTest(TestCase):
     def setUp(self):
         self.facade = FacadeV2(_CONFIG)
 
+    def test_data_version(self):
+        self.assertEqual(1, self.facade.data_version)
+
     def test_user_success(self):
         self.assertEqual(
             _USER1, self.facade.get_entry(_USER1.name, _USER1.type)

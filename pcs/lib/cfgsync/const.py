@@ -1,0 +1,3 @@
+from pcs.common.file_type_codes import PCS_KNOWN_HOSTS, PCS_SETTINGS_CONF
+
+SYNCED_CONFIGS = [PCS_KNOWN_HOSTS, PCS_SETTINGS_CONF]

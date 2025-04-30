@@ -171,7 +171,7 @@ def kill_services(runner, services):
             raise KillServicesError(list(services), message)
 
 
-def is_proxy_set(env_dict):
+def is_proxy_set(env_dict: Mapping) -> bool:
     """
     Returns True whenever any of proxy environment variables (https_proxy,
     HTTPS_PROXY, all_proxy, ALL_PROXY) are set in env_dict. False otherwise.

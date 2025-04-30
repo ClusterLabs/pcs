@@ -86,46 +86,50 @@ class FileInstance:
         """
         Factory for known-hosts file
         """
-        return cls._for_common(file_type_codes.PCS_KNOWN_HOSTS)
+        return cls.for_common(file_type_codes.PCS_KNOWN_HOSTS)
 
     @classmethod
     def for_pacemaker_key(cls) -> "FileInstance":
         """
         Factory for pacemaker key file
         """
-        return cls._for_common(file_type_codes.PACEMAKER_AUTHKEY)
+        return cls.for_common(file_type_codes.PACEMAKER_AUTHKEY)
 
     @classmethod
     def for_dr_config(cls) -> "FileInstance":
         """
         Factory for disaster-recovery config file
         """
-        return cls._for_common(file_type_codes.PCS_DR_CONFIG)
+        return cls.for_common(file_type_codes.PCS_DR_CONFIG)
 
     @classmethod
     def for_corosync_conf(cls) -> "FileInstance":
         """
         Factory for corosync config file
         """
-        return cls._for_common(file_type_codes.COROSYNC_CONF)
+        return cls.for_common(file_type_codes.COROSYNC_CONF)
 
     @classmethod
     def for_qnetd_ca_cert(cls) -> "FileInstance":
         """
         Factory for corosync qnetd CA certificate
         """
-        return cls._for_common(file_type_codes.COROSYNC_QNETD_CA_CERT)
+        return cls.for_common(file_type_codes.COROSYNC_QNETD_CA_CERT)
 
     @classmethod
     def for_pcs_users_config(cls) -> "FileInstance":
-        return cls._for_common(file_type_codes.PCS_USERS_CONF)
+        return cls.for_common(file_type_codes.PCS_USERS_CONF)
 
     @classmethod
     def for_pcs_settings_config(cls) -> "FileInstance":
-        return cls._for_common(file_type_codes.PCS_SETTINGS_CONF)
+        return cls.for_common(file_type_codes.PCS_SETTINGS_CONF)
 
     @classmethod
-    def _for_common(
+    def for_cfgsync_ctl(cls) -> "FileInstance":
+        return cls.for_common(file_type_codes.CFGSYNC_CTL)
+
+    @classmethod
+    def for_common(
         cls,
         file_type_code: file_type_codes.FileTypeCode,
     ) -> "FileInstance":

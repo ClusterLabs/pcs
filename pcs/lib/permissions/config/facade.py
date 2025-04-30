@@ -5,7 +5,7 @@ from typing import (
     cast,
 )
 
-from pcs.lib.interface.config import FacadeInterface
+from pcs.lib.interface.config import SyncVersionFacadeInterface
 
 from .types import (
     ClusterPermissions,
@@ -19,13 +19,17 @@ class PermissionEntryNotFound(Exception):
     pass
 
 
-class FacadeV2(FacadeInterface):
+class FacadeV2(SyncVersionFacadeInterface):
     def __init__(self, parsed_config: ConfigV2) -> None:
         super().__init__(parsed_config)
 
     @property
     def config(self) -> ConfigV2:
         return cast(ConfigV2, super().config)
+
+    @property
+    def data_version(self) -> int:
+        return self.config.data_version
 
     def _set_config(self, config: ConfigV2) -> None:
         super()._set_config(config)

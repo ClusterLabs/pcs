@@ -125,9 +125,11 @@ EXTRA_DIST		= \
 			  common/async_tasks/dto.py \
 			  common/async_tasks/types.py \
 			  common/capabilities.py \
+			  common/cfgsync_dto.py \
 			  common/communication/__init__.py \
 			  common/communication/const.py \
 			  common/communication/dto.py \
+			  common/communication/logger.py \
 			  common/communication/types.py \
 			  common/interface/dto.py \
 			  common/interface/__init__.py \
@@ -171,6 +173,7 @@ EXTRA_DIST		= \
 			  common/reports/messages.py \
 			  common/reports/processor.py \
 			  common/reports/types.py \
+			  common/reports/utils.py \
 			  common/resource_agent/__init__.py \
 			  common/resource_agent/const.py \
 			  common/resource_agent/dto.py \
@@ -221,6 +224,7 @@ EXTRA_DIST		= \
 			  daemon/async_tasks/worker/logging.py \
 			  daemon/async_tasks/worker/report_processor.py \
 			  daemon/async_tasks/worker/types.py \
+			  daemon/cfgsync.py \
 			  daemon/env.py \
 			  daemon/http_server.py \
 			  daemon/__init__.py \
@@ -259,6 +263,11 @@ EXTRA_DIST		= \
 			  lib/booth/resource.py \
 			  lib/booth/status.py \
 			  lib/booth/sync.py \
+			  lib/cfgsync/config/facade.py \
+			  lib/cfgsync/config/__init__.py \
+			  lib/cfgsync/const.py \
+			  lib/cfgsync/fetcher.py \
+			  lib/cfgsync/__init__.py \
 			  lib/cib/acl.py \
 			  lib/cib/alert.py \
 			  lib/cib/const.py \
@@ -308,6 +317,7 @@ EXTRA_DIST		= \
 			  lib/commands/acl.py \
 			  lib/commands/alert.py \
 			  lib/commands/booth.py \
+			  lib/commands/cfgsync.py \
 			  lib/commands/cib.py \
 			  lib/commands/cib_options.py \
 			  lib/commands/cluster.py \
@@ -336,6 +346,7 @@ EXTRA_DIST		= \
 			  lib/commands/stonith.py \
 			  lib/commands/tag.py \
 			  lib/communication/booth.py \
+			  lib/communication/cfgsync.py \
 			  lib/communication/cluster.py \
 			  lib/communication/corosync.py \
 			  lib/communication/__init__.py \
@@ -369,6 +380,12 @@ EXTRA_DIST		= \
 			  lib/file/metadata.py \
 			  lib/file/raw_file.py \
 			  lib/file/toolbox.py \
+			  lib/host/config/exporter.py \
+			  lib/host/config/facade.py \
+			  lib/host/config/__init__.py \
+			  lib/host/config/parser.py \
+			  lib/host/config/types.py \
+			  lib/host/__init__.py \
 			  lib/__init__.py \
 			  lib/interface/config.py \
 			  lib/interface/__init__.py \

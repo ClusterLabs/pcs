@@ -628,7 +628,7 @@ class NodeCommunicationStarted(NameBuildTest):
 
     def test_build_message_without_data(self):
         self.assert_message_from_report(
-            "Sending HTTP Request to: TARGET\n",
+            "Sending HTTP Request to: TARGET",
             reports.NodeCommunicationStarted("TARGET", ""),
         )
 
@@ -6199,4 +6199,30 @@ class NoStonithMeansWouldBeLeft(NameBuildTest):
                 "recover from certain failure conditions"
             ),
             reports.NoStonithMeansWouldBeLeft(),
+        )
+
+
+class ParseErrorInvalidFileStructure(NameBuildTest):
+    def test_no_path(self):
+        self.assert_message_from_report(
+            "Unable to parse known-hosts file: reason",
+            reports.ParseErrorInvalidFileStructure(
+                "reason", file_type_codes.PCS_KNOWN_HOSTS, None
+            ),
+        )
+
+    def test_path(self):
+        self.assert_message_from_report(
+            "Unable to parse known-hosts file '/foo/bar': reason",
+            reports.ParseErrorInvalidFileStructure(
+                "reason", file_type_codes.PCS_KNOWN_HOSTS, "/foo/bar"
+            ),
+        )
+
+
+class NodeReportsUnexpectedClusterName(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "The node is not in the cluster named 'name'",
+            reports.NodeReportsUnexpectedClusterName("name"),
         )

@@ -67,3 +67,17 @@ class FacadeInterface:
         Export a parsed config file
         """
         return self._config
+
+
+class SyncVersionFacadeInterface(FacadeInterface):
+    """
+    Interface implemented by files that support automatic synchronization done
+    by pcsd
+    """
+
+    @property
+    def data_version(self) -> int:
+        """
+        Get data version of the underlying config file
+        """
+        raise NotImplementedError()

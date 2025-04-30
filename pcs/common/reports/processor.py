@@ -1,4 +1,7 @@
 import abc
+from logging import Logger
+
+from pcs.common.reports.utils import add_context_to_message
 
 from .item import (
     ReportItem,
@@ -37,3 +40,32 @@ def has_errors(report_list: ReportItemList) -> bool:
 
 def _is_error(report_item: ReportItem) -> bool:
     return report_item.severity.level == ReportItemSeverity.ERROR
+
+
+class ReportProcessorToLog(ReportProcessor):
+    def __init__(self, logger: Logger):
+        super().__init__()
+        self._logger = logger
+
+    def _do_report(self, report_item: ReportItem) -> None:
+        severity = report_item.severity.level
+
+        context_dto = None
+        if report_item.context:
+            context_dto = report_item.context.to_dto()
+
+        msg = add_context_to_message(report_item.message.message, context_dto)
+
+        if severity == ReportItemSeverity.ERROR:
+            self._logger.error(msg)
+        elif severity in (
+            ReportItemSeverity.WARNING,
+            ReportItemSeverity.DEPRECATION,
+        ):
+            self._logger.warning(msg)
+        elif severity == ReportItemSeverity.INFO:
+            self._logger.info(msg)
+        elif severity == ReportItemSeverity.DEBUG:
+            self._logger.debug(msg)
+        else:
+            raise AssertionError("Unknown report severity")

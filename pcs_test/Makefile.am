@@ -39,6 +39,7 @@ EXTRA_DIST		= \
 			  resources/crm_mon.minimal.xml \
 			  resources/crm_mon.all_resources.xml \
 			  resources/fenced_metadata.xml \
+			  resources/known-hosts \
 			  resources/pcmk_api_rng/api-result.rng \
 			  resources/pcmk_api_rng/crm_attribute-2.36.rng \
 			  resources/pcmk_api_rng/crm_mon-2.29.rng \
@@ -123,6 +124,8 @@ EXTRA_DIST		= \
 			  tier0/cli/stonith/levels/__init__.py \
 			  tier0/cli/stonith/levels/test_output.py \
 			  tier0/common/__init__.py \
+			  tier0/common/communication/__init__.py \
+			  tier0/common/communication/test_logger.py \
 			  tier0/common/interface/__init__.py \
 			  tier0/common/interface/test_dto.py \
 			  tier0/common/pacemaker/constraint/__init__.py \
@@ -132,6 +135,7 @@ EXTRA_DIST		= \
 			  tier0/common/reports/__init__.py \
 			  tier0/common/reports/test_item.py \
 			  tier0/common/reports/test_messages.py \
+			  tier0/common/reports/test_processor.py \
 			  tier0/common/services/drivers/__init__.py \
 			  tier0/common/services/drivers/test_systemd.py \
 			  tier0/common/services/drivers/test_sysvinit_rhel.py \
@@ -164,6 +168,7 @@ EXTRA_DIST		= \
 			  tier0/daemon/async_tasks/test_worker.py \
 			  tier0/daemon/async_tasks/test_command_mapping.py \
 			  tier0/daemon/__init__.py \
+			  tier0/daemon/test_cfgsync.py \
 			  tier0/daemon/test_env.py \
 			  tier0/daemon/test_http_server.py \
 			  tier0/daemon/test_ruby_pcsd.py \
@@ -185,6 +190,10 @@ EXTRA_DIST		= \
 			  tier0/lib/booth/test_resource.py \
 			  tier0/lib/booth/test_status.py \
 			  tier0/lib/booth/test_sync.py \
+			  tier0/lib/cfgsync/config/__init__.py \
+			  tier0/lib/cfgsync/config/test_facade.py \
+			  tier0/lib/cfgsync/__init__.py \
+			  tier0/lib/cfgsync/test_fetcher.py \
 			  tier0/lib/cib/__init__.py \
 			  tier0/lib/cib/constraint/__init__.py \
 			  tier0/lib/cib/constraint/test_common.py \
@@ -287,6 +296,7 @@ EXTRA_DIST		= \
 			  tier0/lib/commands/test_acl.py \
 			  tier0/lib/commands/test_alert.py \
 			  tier0/lib/commands/test_booth.py \
+			  tier0/lib/commands/test_cfgsync.py \
 			  tier0/lib/commands/test_cib_options.py \
 			  tier0/lib/commands/test_cib.py \
 			  tier0/lib/commands/test_cluster_property.py \
@@ -308,6 +318,7 @@ EXTRA_DIST		= \
 			  tier0/lib/commands/test_ticket.py \
 			  tier0/lib/communication/__init__.py \
 			  tier0/lib/communication/test_booth.py \
+			  tier0/lib/communication/test_cfgsync.py \
 			  tier0/lib/communication/test_cluster.py \
 			  tier0/lib/communication/test_corosync.py \
 			  tier0/lib/communication/test_nodes.py \
@@ -340,6 +351,10 @@ EXTRA_DIST		= \
 			  tier0/lib/file/test_instance.py \
 			  tier0/lib/file/test_raw_file.py \
 			  tier0/lib/file/test_toolbox.py \
+			  tier0/lib/host/config/__init__.py \
+			  tier0/lib/host/config/test_facade.py \
+			  tier0/lib/host/config/test_parser.py \
+			  tier0/lib/host/__init__.py \
 			  tier0/lib/__init__.py \
 			  tier0/lib/misc.py \
 			  tier0/lib/pacemaker/__init__.py \

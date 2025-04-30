@@ -1,0 +1,32 @@
+{
+  "format_version": 1,
+  "data_version": 5,
+  "known_hosts": {
+    "node1": {
+      "dest_list": [
+        {
+          "addr": "10.0.1.1",
+          "port": 2224
+        },
+        {
+          "addr": "10.0.2.1",
+          "port": 2225
+        }
+      ],
+      "token": "abcde"
+    },
+    "node2": {
+      "dest_list": [
+        {
+          "addr": "10.0.1.2",
+          "port": 2234
+        },
+        {
+          "addr": "10.0.2.2",
+          "port": 2235
+        }
+      ],
+      "token": "fghij"
+    }
+  }
+}

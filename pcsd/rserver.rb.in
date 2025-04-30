@@ -37,13 +37,6 @@ class TornadoCommunicationMiddleware
         })
       end
 
-      if type == "sync_configs"
-        return pack_response({
-          :next => Time.now.to_i + run_cfgsync(),
-          :logs => Thread.current[:pcsd_logger_container],
-        })
-      end
-
       return pack_response({
         :error => "Unexpected value for key 'type': '#{type}'"
       })

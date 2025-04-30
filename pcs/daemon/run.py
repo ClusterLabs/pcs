@@ -3,6 +3,7 @@ import os
 import signal
 import socket
 import sys
+from logging import Logger
 from pathlib import Path
 from typing import (
     Iterable,
@@ -40,6 +41,9 @@ try:
 except ImportError:
     webui = None
 
+from pcs.common.communication.logger import CommunicatorLogger
+from pcs.common.node_communicator import NodeCommunicatorFactory
+from pcs.common.reports.processor import ReportProcessorToLog
 from pcs.daemon.app.common import (
     Http404Handler,
     RedirectHandler,
@@ -49,6 +53,7 @@ from pcs.daemon.async_tasks.scheduler import (
     SchedulerConfig,
 )
 from pcs.daemon.async_tasks.task import TaskConfig
+from pcs.daemon.cfgsync import CfgSyncPullManager
 from pcs.daemon.env import prepare_env
 from pcs.daemon.http_server import HttpsServerManage
 from pcs.lib.auth.provider import AuthProvider
@@ -76,13 +81,36 @@ def sign_ioloop_started():
     SignalInfo.ioloop_started = True
 
 
-def config_sync(sync_config_lock: Lock, ruby_pcsd_wrapper: ruby_pcsd.Wrapper):
-    async def config_synchronization():
-        async with sync_config_lock:
-            next_run_time = await ruby_pcsd_wrapper.sync_configs()
-        IOLoop.current().call_at(next_run_time, config_synchronization)
+def create_pull_manager(logger: Logger) -> CfgSyncPullManager:
+    log_report_processor = ReportProcessorToLog(logger)
+    node_communicator = NodeCommunicatorFactory(
+        CommunicatorLogger([log_report_processor]),
+        user=None,
+        groups=None,
+        # 30, because cfgsync in ruby used the same value. Probably
+        # because 30 was default for request timeouts back then.
+        # This value might be reconsider
+        request_timeout=30,
+    ).get_communicator()
+    return CfgSyncPullManager(log_report_processor, node_communicator, logger)
 
-    return config_synchronization
+
+async def config_sync(
+    sync_config_lock: Lock, config_puller: CfgSyncPullManager
+):
+    async with sync_config_lock:
+        # run_cfgsync sends requests to all cluster nodes, including the local
+        # one. However, this runs in the same IOLoop as the async_scheduler
+        # that handles these requests -> so run cfgsync waits for responses
+        # but the async scheduler cannot process them, resulting in timeout.
+        # So we need to run this blocking function in executor
+        next_run_after_seconds = await IOLoop.current().run_in_executor(
+            None, lambda: config_puller.run_cfgsync()
+        )
+    IOLoop.current().call_later(
+        next_run_after_seconds,
+        lambda: config_sync(sync_config_lock, config_puller),
+    )
 
 
 def configure_app(  # noqa: PLR0913
@@ -269,5 +297,9 @@ def main(argv=None) -> None:
     ioloop.add_callback(sign_ioloop_started)
     if systemd.is_systemd() and env.NOTIFY_SOCKET:
         ioloop.add_callback(systemd.notify, env.NOTIFY_SOCKET)
-    ioloop.add_callback(config_sync(sync_config_lock, ruby_pcsd_wrapper))
+
+    cfgsync_pull_manager = create_pull_manager(log.pcsd)
+    ioloop.add_callback(
+        lambda: config_sync(sync_config_lock, cfgsync_pull_manager)
+    )
     ioloop.start()

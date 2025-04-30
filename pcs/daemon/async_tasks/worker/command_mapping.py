@@ -9,6 +9,7 @@ from pcs.lib.commands import (  # services,
     acl,
     alert,
     booth,
+    cfgsync,
     cib,
     cib_options,
     cluster,
@@ -128,6 +129,10 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
     "booth.ticket_unstandby": _Cmd(
         cmd=booth.ticket_unstandby,
         required_permission=p.WRITE,
+    ),
+    "cfgsync.get_configs": _Cmd(
+        cmd=cfgsync.get_configs,
+        required_permission=p.FULL,
     ),
     "cluster.add_nodes": _Cmd(
         cmd=cluster.add_nodes,

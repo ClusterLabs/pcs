@@ -4,6 +4,7 @@ FileTypeCode = NewType("FileTypeCode", str)
 
 BOOTH_CONFIG = FileTypeCode("BOOTH_CONFIG")
 BOOTH_KEY = FileTypeCode("BOOTH_KEY")
+CFGSYNC_CTL = FileTypeCode("CFGSYNC_CTL")
 CIB = FileTypeCode("CIB")
 COROSYNC_AUTHKEY = FileTypeCode("COROSYNC_AUTHKEY")
 COROSYNC_CONF = FileTypeCode("COROSYNC_CONF")
