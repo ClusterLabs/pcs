@@ -6218,3 +6218,11 @@ class ParseErrorInvalidFileStructure(NameBuildTest):
                 "reason", file_type_codes.PCS_KNOWN_HOSTS, "/foo/bar"
             ),
         )
+
+
+class NodeReportsUnexpectedClusterName(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "The node is not in the cluster named 'name'",
+            reports.NodeReportsUnexpectedClusterName("name"),
+        )

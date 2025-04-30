@@ -8385,3 +8385,19 @@ class NoStonithMeansWouldBeLeft(ReportItemMessage):
             "nodes, resulting in the cluster not being able to recover from "
             "certain failure conditions"
         )
+
+
+@dataclass(frozen=True)
+class NodeReportsUnexpectedClusterName(ReportItemMessage):
+    """
+    The node is not in a cluster with the expected name
+
+    cluster_name -- expected cluster name
+    """
+
+    cluster_name: str
+    _code = codes.NODE_REPORTS_UNEXPECTED_CLUSTER_NAME
+
+    @property
+    def message(self) -> str:
+        return f"The node is not in the cluster named '{self.cluster_name}'"

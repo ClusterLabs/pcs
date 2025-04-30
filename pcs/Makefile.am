@@ -125,6 +125,7 @@ EXTRA_DIST		= \
 			  common/async_tasks/dto.py \
 			  common/async_tasks/types.py \
 			  common/capabilities.py \
+			  common/cfgsync_dto.py \
 			  common/communication/__init__.py \
 			  common/communication/const.py \
 			  common/communication/dto.py \
@@ -261,6 +262,7 @@ EXTRA_DIST		= \
 			  lib/booth/sync.py \
 			  lib/cfgsync/config/facade.py \
 			  lib/cfgsync/config/__init__.py \
+			  lib/cfgsync/const.py \
 			  lib/cfgsync/__init__.py \
 			  lib/cib/acl.py \
 			  lib/cib/alert.py \
@@ -311,6 +313,7 @@ EXTRA_DIST		= \
 			  lib/commands/acl.py \
 			  lib/commands/alert.py \
 			  lib/commands/booth.py \
+			  lib/commands/cfgsync.py \
 			  lib/commands/cib.py \
 			  lib/commands/cib_options.py \
 			  lib/commands/cluster.py \
