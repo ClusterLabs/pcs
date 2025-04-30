@@ -259,6 +259,9 @@ EXTRA_DIST		= \
 			  lib/booth/resource.py \
 			  lib/booth/status.py \
 			  lib/booth/sync.py \
+			  lib/cfgsync/config/facade.py \
+			  lib/cfgsync/config/__init__.py \
+			  lib/cfgsync/__init__.py \
 			  lib/cib/acl.py \
 			  lib/cib/alert.py \
 			  lib/cib/const.py \

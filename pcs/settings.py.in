@@ -73,6 +73,15 @@ task_unresponsive_timeout_seconds = 60 * 60
 task_abandoned_timeout_seconds = 1 * 60
 task_deletion_timeout_seconds = 1 * 60
 
+# pcsd cfgsync settings
+cfgsync_ctl_location = os.path.join(pcsd_var_location, "cfgsync_ctl")
+cfgsync_file_backup_count_default = 50
+cfgsync_file_backup_count_minimum = 0
+cfgsync_thread_interval_default = 600
+cfgsync_thread_interval_minimum = 60
+cfgsync_thread_interval_previous_not_connected_default = 60
+cfgsync_thread_interval_previous_not_connected_minimum = 20
+
 
 # corosync
 # Used only in settings.py and utils.py. Make it private once utils.py is removed.

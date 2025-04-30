@@ -185,6 +185,9 @@ EXTRA_DIST		= \
 			  tier0/lib/booth/test_resource.py \
 			  tier0/lib/booth/test_status.py \
 			  tier0/lib/booth/test_sync.py \
+			  tier0/lib/cfgsync/config/__init__.py \
+			  tier0/lib/cfgsync/config/test_facade.py \
+			  tier0/lib/cfgsync/__init__.py \
 			  tier0/lib/cib/__init__.py \
 			  tier0/lib/cib/constraint/__init__.py \
 			  tier0/lib/cib/constraint/test_common.py \
