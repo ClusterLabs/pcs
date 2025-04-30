@@ -125,8 +125,12 @@ class ConfigFetcher:
 
 
 def _file_hash(file_instance: FileInstance, facade: FacadeInterface) -> str:
-    # sha1 is used to be compatible with the old ruby implementation
-    return sha1(file_instance.facade_to_raw(facade)).hexdigest()
+    # sha1 is used to be compatible with the old ruby implementation.
+    # The hash is only used to compare and sort the files, not for security
+    # reasons
+    return sha1(
+        file_instance.facade_to_raw(facade), usedforsecurity=False
+    ).hexdigest()
 
 
 def _find_newest_config(
