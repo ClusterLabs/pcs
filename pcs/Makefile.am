@@ -172,6 +172,7 @@ EXTRA_DIST		= \
 			  common/reports/messages.py \
 			  common/reports/processor.py \
 			  common/reports/types.py \
+			  common/reports/utils.py \
 			  common/resource_agent/__init__.py \
 			  common/resource_agent/const.py \
 			  common/resource_agent/dto.py \

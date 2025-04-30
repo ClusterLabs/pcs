@@ -54,6 +54,7 @@ from . import (
 )
 from .dto import ReportItemMessageDto
 from .item import ReportItemMessage
+from .utils import format_file_role
 
 INSTANCE_SUFFIX = "@{0}"
 NODE_PREFIX = "{0}: "
@@ -128,22 +129,6 @@ _add_remove_item_translation = {
     const.ADD_REMOVE_ITEM_TYPE_PROPERTY: "property",
 }
 
-_file_role_translation = {
-    file_type_codes.BOOTH_CONFIG: "Booth configuration",
-    file_type_codes.BOOTH_KEY: "Booth key",
-    file_type_codes.COROSYNC_AUTHKEY: "Corosync authkey",
-    file_type_codes.COROSYNC_CONF: "Corosync configuration",
-    file_type_codes.COROSYNC_QDEVICE_NSSDB: "QDevice certificate database",
-    file_type_codes.COROSYNC_QNETD_CA_CERT: "QNetd CA certificate",
-    file_type_codes.COROSYNC_QNETD_NSSDB: "QNetd certificate database",
-    file_type_codes.PCS_DR_CONFIG: "disaster-recovery configuration",
-    file_type_codes.PACEMAKER_AUTHKEY: "Pacemaker authkey",
-    file_type_codes.PCSD_ENVIRONMENT_CONFIG: "pcsd configuration",
-    file_type_codes.PCSD_SSL_CERT: "pcsd SSL certificate",
-    file_type_codes.PCSD_SSL_KEY: "pcsd SSL key",
-    file_type_codes.PCS_KNOWN_HOSTS: "known-hosts",
-    file_type_codes.PCS_SETTINGS_CONF: "pcs configuration",
-}
 
 _type_translation = {
     "acl_group": "ACL group",
@@ -179,10 +164,6 @@ def _add_remove_container_str(
 
 def _add_remove_item_str(item: types.AddRemoveItemType) -> str:
     return _add_remove_item_translation.get(item, item)
-
-
-def _format_file_role(role: file_type_codes.FileTypeCode) -> str:
-    return _file_role_translation.get(role, role)
 
 
 def _format_file_action(action: FileAction) -> str:
@@ -1023,9 +1004,9 @@ class NodeCommunicationStarted(ReportItemMessage):
     @property
     def message(self) -> str:
         data = format_optional(
-            self.data, "--Debug Input Start--\n{}\n--Debug Input End--\n"
+            self.data, "\n--Debug Input Start--\n{}\n--Debug Input End--\n"
         )
-        return f"Sending HTTP Request to: {self.target}\n{data}"
+        return f"Sending HTTP Request to: {self.target}{data}"
 
 
 @dataclass(frozen=True)
@@ -4888,7 +4869,7 @@ class FileAlreadyExists(ReportItemMessage):
         return "{node}{file_role} file '{file_path}' already exists".format(
             file_path=self.file_path,
             node=format_optional(self.node, NODE_PREFIX),
-            file_role=_format_file_role(self.file_type_code),
+            file_role=format_file_role(self.file_type_code),
         )
 
 
@@ -4915,7 +4896,7 @@ class FileIoError(ReportItemMessage):
             reason=self.reason,
             action=_format_file_action(self.operation),
             file_path=format_optional(self.file_path, " '{0}'"),
-            file_role=_format_file_role(self.file_type_code),
+            file_role=format_file_role(self.file_type_code),
         )
 
 
@@ -6754,7 +6735,7 @@ class ParseErrorInvalidFileStructure(ReportItemMessage):
         return "Unable to parse {file_role} file{file_path}: {reason}".format(
             reason=self.reason,
             file_path=format_optional(self.file_path, " '{0}'"),
-            file_role=_format_file_role(self.file_type_code),
+            file_role=format_file_role(self.file_type_code),
         )
 
 
@@ -6787,7 +6768,7 @@ class ParseErrorJsonFile(ReportItemMessage):
             "Unable to parse {_file_type} file{_file_path}: {full_msg}"
         ).format(
             _file_path=format_optional(self.file_path, " '{}'"),
-            _file_type=_format_file_role(self.file_type_code),
+            _file_type=format_file_role(self.file_type_code),
             full_msg=self.full_msg,
         )
 
@@ -7246,7 +7227,7 @@ class BoothUnsupportedFileLocation(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        file_role = _format_file_role(self.file_type_code)
+        file_role = format_file_role(self.file_type_code)
         return (
             f"{file_role} '{self.file_path}' is outside of supported booth "
             f"config directory '{self.expected_dir}', ignoring the file"

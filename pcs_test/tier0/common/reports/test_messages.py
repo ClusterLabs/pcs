@@ -628,7 +628,7 @@ class NodeCommunicationStarted(NameBuildTest):
 
     def test_build_message_without_data(self):
         self.assert_message_from_report(
-            "Sending HTTP Request to: TARGET\n",
+            "Sending HTTP Request to: TARGET",
             reports.NodeCommunicationStarted("TARGET", ""),
         )
 

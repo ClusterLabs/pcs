@@ -133,6 +133,7 @@ EXTRA_DIST		= \
 			  tier0/common/reports/__init__.py \
 			  tier0/common/reports/test_item.py \
 			  tier0/common/reports/test_messages.py \
+			  tier0/common/reports/test_processor.py \
 			  tier0/common/services/drivers/__init__.py \
 			  tier0/common/services/drivers/test_systemd.py \
 			  tier0/common/services/drivers/test_sysvinit_rhel.py \

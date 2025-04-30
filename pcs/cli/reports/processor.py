@@ -14,10 +14,10 @@ from pcs.common.reports import (
 )
 from pcs.common.reports.dto import ReportItemDto
 from pcs.common.reports.types import SeverityLevel
+from pcs.common.reports.utils import add_context_to_message
 
 from .messages import report_item_msg_from_dto
 from .output import (
-    add_context_to_message,
     deprecation_warning,
     error,
     warn,
