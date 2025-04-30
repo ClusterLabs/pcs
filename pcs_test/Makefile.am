@@ -189,6 +189,7 @@ EXTRA_DIST		= \
 			  tier0/lib/cfgsync/config/__init__.py \
 			  tier0/lib/cfgsync/config/test_facade.py \
 			  tier0/lib/cfgsync/__init__.py \
+			  tier0/lib/cfgsync/test_fetcher.py \
 			  tier0/lib/cib/__init__.py \
 			  tier0/lib/cib/constraint/__init__.py \
 			  tier0/lib/cib/constraint/test_common.py \
@@ -313,6 +314,7 @@ EXTRA_DIST		= \
 			  tier0/lib/commands/test_ticket.py \
 			  tier0/lib/communication/__init__.py \
 			  tier0/lib/communication/test_booth.py \
+			  tier0/lib/communication/test_cfgsync.py \
 			  tier0/lib/communication/test_cluster.py \
 			  tier0/lib/communication/test_corosync.py \
 			  tier0/lib/communication/test_nodes.py \

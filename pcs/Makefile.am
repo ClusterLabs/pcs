@@ -263,6 +263,7 @@ EXTRA_DIST		= \
 			  lib/cfgsync/config/facade.py \
 			  lib/cfgsync/config/__init__.py \
 			  lib/cfgsync/const.py \
+			  lib/cfgsync/fetcher.py \
 			  lib/cfgsync/__init__.py \
 			  lib/cib/acl.py \
 			  lib/cib/alert.py \
@@ -342,6 +343,7 @@ EXTRA_DIST		= \
 			  lib/commands/stonith.py \
 			  lib/commands/tag.py \
 			  lib/communication/booth.py \
+			  lib/communication/cfgsync.py \
 			  lib/communication/cluster.py \
 			  lib/communication/corosync.py \
 			  lib/communication/__init__.py \
