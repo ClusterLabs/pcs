@@ -8,7 +8,7 @@ import dacite
 
 from pcs.common import file_type_codes as code
 from pcs.common import reports
-from pcs.lib.file.json import JsonParser
+from pcs.lib.file.json import JsonParser, JsonParserException
 from pcs.lib.interface.config import (
     ParserErrorException,
     ParserInterface,
@@ -52,4 +52,23 @@ class ParserV2(ParserInterface):
         force_code: Optional[reports.types.ForceCode],
         is_forced_or_warning: bool,
     ) -> reports.ReportItemList:
-        raise NotImplementedError()
+        if isinstance(exception, JsonParserException):
+            return JsonParser.exception_to_report_list(
+                exception,
+                file_type_code,
+                file_path,
+                force_code,
+                is_forced_or_warning,
+            )
+        if isinstance(exception, ParserError):
+            return [
+                reports.ReportItem(
+                    severity=reports.item.get_severity(
+                        force_code, is_forced_or_warning
+                    ),
+                    message=reports.messages.ParseErrorInvalidFileStructure(
+                        exception.msg or "", file_type_code, file_path
+                    ),
+                )
+            ]
+        raise AssertionError() from exception
