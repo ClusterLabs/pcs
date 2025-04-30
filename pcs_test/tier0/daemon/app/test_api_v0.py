@@ -12,7 +12,7 @@ from tornado.httputil import HTTPHeaders
 from tornado.testing import AsyncHTTPTestCase
 from tornado.web import Application
 
-from pcs.common import reports
+from pcs.common import file_type_codes, reports
 from pcs.common.async_tasks.dto import (
     CommandDto,
     CommandOptionsDto,
@@ -23,6 +23,8 @@ from pcs.common.async_tasks.types import (
     TaskKillReason,
     TaskState,
 )
+from pcs.common.cfgsync_dto import SyncConfigsDto
+from pcs.common.file import RawFileError
 from pcs.common.tools import bin_to_str
 from pcs.daemon.app import api_v0
 from pcs.daemon.async_tasks.scheduler import (
@@ -528,4 +530,125 @@ class QdeviceNetClientDestroyHandler(ApiV0HandlerTest):
         self.assert_error_with_report(self.url)
         self.mock_process_request.assert_called_once_with(
             "qdevice.client_net_destroy", {}
+        )
+
+
+class GetConfigsHandler(ApiV0HandlerTest):
+    url = "/remote/get_configs"
+    request_data = {"cluster_name": "test"}
+    command = "cfgsync.get_configs"
+
+    def test_success(self):
+        file_contents = [
+            ("foo", "bar"),
+            ("foo", None),
+            (None, "bar"),
+            (None, None),
+        ]
+        for known_hosts_content, pcs_settings_content in file_contents:
+            with self.subTest(
+                value=(
+                    f"known-hosts: {known_hosts_content};"
+                    "pcs_settings.conf: {pcs_settings_content}"
+                )
+            ):
+                self.mock_process_request.reset_mock()
+                self.mock_process_request.return_value = self.result_success(
+                    SyncConfigsDto(
+                        "test",
+                        {
+                            file_type_codes.PCS_KNOWN_HOSTS: known_hosts_content,
+                            file_type_codes.PCS_SETTINGS_CONF: pcs_settings_content,
+                        },
+                    )
+                )
+                response = self.fetch(
+                    self.url, body=urlencode(self.request_data)
+                )
+                self.assertEqual(response.code, 200)
+                self.assert_body(
+                    response.body,
+                    json.dumps(
+                        {
+                            "status": "ok",
+                            "cluster_name": "test",
+                            "configs": {
+                                "known-hosts": {
+                                    "type": "file",
+                                    "text": known_hosts_content,
+                                },
+                                "pcs_settings.conf": {
+                                    "type": "file",
+                                    "text": pcs_settings_content,
+                                },
+                            },
+                        }
+                    ),
+                )
+                self.mock_process_request.assert_called_once_with(
+                    self.command, self.request_data
+                )
+
+    def test_wrong_cluster_name(self):
+        self.mock_process_request.return_value = self.result_failure(
+            report_items=[
+                reports.ReportItem.error(
+                    reports.messages.NodeReportsUnexpectedClusterName("test")
+                ).to_dto()
+            ],
+        )
+        response = self.fetch(self.url, body=urlencode(self.request_data))
+        self.assertEqual(response.code, 200)
+        self.assert_body(
+            response.body, json.dumps({"status": "wrong_cluster_name"})
+        )
+        self.mock_process_request.assert_called_once_with(
+            self.command, self.request_data
+        )
+
+    def test_cluster_name_parameter_not_provided(self):
+        self.mock_process_request.return_value = self.result_failure(
+            report_items=[
+                reports.ReportItem.error(
+                    reports.messages.NodeReportsUnexpectedClusterName("test")
+                ).to_dto()
+            ],
+        )
+        response = self.fetch(self.url)
+        self.assertEqual(response.code, 200)
+        self.assert_body(
+            response.body, json.dumps({"status": "wrong_cluster_name"})
+        )
+        self.mock_process_request.assert_called_once_with(
+            self.command, {"cluster_name": ""}
+        )
+
+    def test_unable_to_read_corosync_conf(self):
+        self.mock_process_request.return_value = self.result_failure(
+            report_items=[
+                reports.ReportItem.error(
+                    reports.messages.FileIoError(
+                        file_type_codes.COROSYNC_CONF,
+                        RawFileError.ACTION_READ,
+                        reason="foo",
+                        file_path="bar",
+                    )
+                ).to_dto()
+            ],
+        )
+        response = self.fetch(self.url, body=urlencode(self.request_data))
+        self.assertEqual(response.code, 200)
+        self.assert_body(
+            response.body, json.dumps({"status": "not_in_cluster"})
+        )
+        self.mock_process_request.assert_called_once_with(
+            self.command, self.request_data
+        )
+
+    def test_failure(self):
+        self.assert_error_with_report(
+            self.url, body=urlencode(self.request_data)
+        )
+        self.mock_process_request.assert_called_once_with(
+            self.command, self.request_data
         )

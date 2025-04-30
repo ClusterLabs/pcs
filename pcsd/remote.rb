@@ -30,7 +30,6 @@ def remote(params, request, auth_user)
       :set_corosync_conf => method(:set_corosync_conf),
       :get_sync_capabilities => method(:get_sync_capabilities),
       :set_sync_options => method(:set_sync_options),
-      :get_configs => method(:get_configs),
       :set_configs => method(:set_configs),
       :set_certs => method(:set_certs),
       :get_permissions => method(:get_permissions_remote),
@@ -497,30 +496,6 @@ def set_sync_options(params, request, auth_user)
   end
 
   return [400, 'Exactly one option has to be specified']
-end
-
-def get_configs(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::FULL)
-    return 403, 'Permission denied'
-  end
-  if not $cluster_name or $cluster_name.empty?
-    return JSON.generate({'status' => 'not_in_cluster'})
-  end
-  if params[:cluster_name] != $cluster_name
-    return JSON.generate({'status' => 'wrong_cluster_name'})
-  end
-  out = {
-    'status' => 'ok',
-    'cluster_name' => $cluster_name,
-    'configs' => {},
-  }
-  Cfgsync::get_configs_local.each { |name, cfg|
-    out['configs'][cfg.class.name] = {
-      'type' => 'file',
-      'text' => cfg.text,
-    }
-  }
-  return JSON.generate(out)
 end
 
 def set_configs(params, request, auth_user)
