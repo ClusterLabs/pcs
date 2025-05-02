@@ -363,6 +363,10 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
         cmd=resource.manage,
         required_permission=p.WRITE,
     ),
+    "resource.update_meta": _Cmd(
+        cmd=resource.update_meta,
+        required_permission=p.WRITE,
+    ),
     "resource.move": _Cmd(
         cmd=resource.move,
         required_permission=p.WRITE,

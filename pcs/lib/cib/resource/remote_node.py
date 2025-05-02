@@ -145,7 +145,9 @@ def validate_host_not_conflicts(
     host = instance_attributes.get("server", node_name)
     if host in existing_nodes_addrs:
         return [
-            reports.ReportItem.error(reports.messages.IdAlreadyExists(host))
+            reports.ReportItem.error(
+                reports.messages.NodeAddressesAlreadyExist([host])
+            )
         ]
     return []
 

@@ -27,7 +27,7 @@ stonith_cmd = create_router(
         # replaced with 'stonith status' and 'stonith config'
         "show": stonith.stonith_show_cmd,
         "status": stonith.stonith_status_cmd,
-        "meta": stonith.meta_cmd,
+        "meta": stonith_cli.meta,
         "op": create_router(
             {
                 "defaults": resource_op_defaults_cmd(

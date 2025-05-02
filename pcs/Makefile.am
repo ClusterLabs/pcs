@@ -79,6 +79,7 @@ EXTRA_DIST		= \
 			  cli/reports/processor.py \
 			  cli/resource/__init__.py \
 			  cli/resource/command.py \
+			  cli/resource/common.py \
 			  cli/resource/parse_args.py \
 			  cli/resource/output.py \
 			  cli/resource/relations.py \
@@ -108,6 +109,7 @@ EXTRA_DIST		= \
 			  cli/status/__init__.py \
 			  cli/stonith/__init__.py \
 			  cli/stonith/command.py \
+			  cli/stonith/common.py \
 			  cli/stonith/levels/__init__.py \
 			  cli/stonith/levels/command.py \
 			  cli/stonith/levels/output.py \

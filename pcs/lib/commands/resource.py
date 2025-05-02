@@ -26,7 +26,7 @@ from pcs.common import (
 )
 from pcs.common.interface import dto
 from pcs.common.pacemaker.resource.list import CibResourcesDto
-from pcs.common.reports import ReportItemList
+from pcs.common.reports import ReportItemList, ReportProcessor
 from pcs.common.reports.item import ReportItem
 from pcs.common.tools import (
     Version,
@@ -36,6 +36,13 @@ from pcs.common.types import StringCollection
 from pcs.lib.cib import const as cib_const
 from pcs.lib.cib import resource
 from pcs.lib.cib import status as cib_status
+from pcs.lib.cib.nvpair_multi import (
+    NVSET_META,
+    find_nvsets,
+    nvset_append_new,
+    nvset_to_dict_except_without_values,
+    nvset_update,
+)
 from pcs.lib.cib.tag import expand_tag
 from pcs.lib.cib.tools import (
     ElementNotFound,
@@ -43,6 +50,7 @@ from pcs.lib.cib.tools import (
     find_element_by_tag_and_id,
     get_element_by_id,
     get_elements_by_ids,
+    get_pacemaker_version_by_which_cib_was_validated,
     get_resources,
     get_status,
 )
@@ -64,6 +72,7 @@ from pcs.lib.pacemaker.live import (
     get_cluster_status_dom,
     has_resource_unmove_unban_expired_support,
     push_cib_diff_xml,
+    remove_node,
     resource_ban,
     resource_move,
     resource_restart,
@@ -92,6 +101,7 @@ from pcs.lib.resource_agent import (
     resource_agent_error_to_report_item,
     split_resource_agent_name,
 )
+from pcs.lib.resource_agent.const import OCF_1_1
 from pcs.lib.sbd_stonith import ensure_some_stonith_remains
 from pcs.lib.tools import get_tmp_cib
 from pcs.lib.validate import ValueTimeInterval
@@ -158,53 +168,15 @@ def _ensure_disabled_after_wait(disabled_after_wait):
     return inner
 
 
-def _get_agent_facade(
-    report_processor: reports.ReportProcessor,
-    runner: CommandRunner,
-    factory: ResourceAgentFacadeFactory,
-    name: str,
-    allow_absent_agent: bool,
-) -> ResourceAgentFacade:
+def _get_resource_agent_name(
+    runner: CommandRunner, report_processor: reports.ReportProcessor, name: str
+) -> ResourceAgentName:
     try:
-        split_name = (
+        agent_name = (
             split_resource_agent_name(name)
             if ":" in name
             else find_one_resource_agent_by_type(runner, report_processor, name)
         )
-        if split_name.is_stonith:
-            report_processor.report(
-                reports.ReportItem.deprecation(
-                    reports.messages.ResourceStonithCommandsMismatch(
-                        "fence agent", reports.const.PCS_COMMAND_STONITH_CREATE
-                    )
-                )
-            )
-        if split_name.standard in ("nagios", "upstart"):
-            # TODO deprecated in pacemaker 2, to be removed in pacemaker 3
-            # added to pcs after 0.11.7
-            report_processor.report(
-                reports.ReportItem.deprecation(
-                    reports.messages.DeprecatedOptionValue(
-                        "standard", split_name.standard
-                    )
-                )
-            )
-
-        return factory.facade_from_parsed_name(split_name)
-    except (UnableToGetAgentMetadata, UnsupportedOcfVersion) as e:
-        if allow_absent_agent:
-            report_processor.report(
-                resource_agent_error_to_report_item(
-                    e, reports.ReportItemSeverity.warning()
-                )
-            )
-            return factory.void_facade_from_parsed_name(split_name)
-        report_processor.report(
-            resource_agent_error_to_report_item(
-                e, reports.ReportItemSeverity.error(reports.codes.FORCE)
-            )
-        )
-        raise LibraryError() from e
     except ResourceAgentError as e:
         report_processor.report(
             resource_agent_error_to_report_item(
@@ -212,6 +184,50 @@ def _get_agent_facade(
             )
         )
         raise LibraryError() from e
+
+    if agent_name.is_stonith:
+        report_processor.report(
+            reports.ReportItem.deprecation(
+                reports.messages.ResourceStonithCommandsMismatch(
+                    "fence agent", reports.const.PCS_COMMAND_STONITH_CREATE
+                )
+            )
+        )
+
+    if agent_name.standard in ("nagios", "upstart"):
+        # TODO deprecated in pacemaker 2, to be removed in pacemaker 3
+        # added to pcs after 0.11.7
+        report_processor.report(
+            reports.ReportItem.deprecation(
+                reports.messages.DeprecatedOptionValue(
+                    "standard", agent_name.standard
+                )
+            )
+        )
+
+    return agent_name
+
+
+def _get_resource_agent_facade(
+    report_processor: reports.ReportProcessor,
+    factory: ResourceAgentFacadeFactory,
+    agent_name: ResourceAgentName,
+    force_flags: reports.types.ForceFlags,
+) -> ResourceAgentFacade:
+    try:
+        return factory.facade_from_parsed_name(agent_name)
+    except (UnableToGetAgentMetadata, UnsupportedOcfVersion) as e:
+        report_processor.report(
+            resource_agent_error_to_report_item(
+                e,
+                reports.get_severity_from_flags(
+                    reports.codes.FORCE, force_flags
+                ),
+            )
+        )
+        if report_processor.has_errors:
+            raise LibraryError() from e
+        return factory.void_facade_from_parsed_name(agent_name)
 
 
 def _validate_remote_connection(
@@ -356,6 +372,79 @@ def _check_special_cases(
         raise LibraryError()
 
 
+def _validate_clone_meta_attributes(
+    report_processor: ReportProcessor,
+    agent_facade_factory: ResourceAgentFacadeFactory,
+    resource_el: _Element,
+    meta_attrs: Mapping[str, str],
+    force_flags: reports.types.ForceFlags,
+) -> None:
+    clone_child_el = resource.clone.get_inner_resource(resource_el)
+    if clone_child_el is None:
+        return
+
+    group_id = None
+    if resource.group.is_group(clone_child_el):
+        group_id = str(clone_child_el.attrib["id"])
+
+    inner_primitives = resource.clone.get_inner_primitives(resource_el)
+
+    facade_cache: dict[ResourceAgentName, ResourceAgentFacade] = {}
+    for primitive_el in inner_primitives:
+        agent_name = resource.primitive.resource_agent_name_from_primitive(
+            primitive_el
+        )
+        if agent_name.is_ocf:
+            if agent_name in facade_cache:
+                agent_facade = facade_cache[agent_name]
+            else:
+                agent_facade = _get_resource_agent_facade(
+                    report_processor,
+                    agent_facade_factory,
+                    agent_name,
+                    force_flags,
+                )
+                facade_cache[agent_name] = agent_facade
+
+            if (
+                agent_facade.metadata.ocf_version == OCF_1_1
+                and is_true(meta_attrs.get(resource.clone.META_PROMOTABLE, "0"))
+                and not agent_facade.metadata.provides_promotability
+            ):
+                report_processor.report(
+                    reports.ReportItem(
+                        reports.get_severity_from_flags(
+                            reports.codes.FORCE,
+                            force_flags,
+                        ),
+                        reports.messages.ResourceCloneIncompatibleMetaAttributes(
+                            resource.clone.META_PROMOTABLE,
+                            agent_name.to_dto(),
+                            resource_id=primitive_el.get("id"),
+                            group_id=group_id,
+                        ),
+                    )
+                )
+        else:
+            report_processor.report_list(
+                [
+                    reports.ReportItem.error(
+                        reports.messages.ResourceCloneIncompatibleMetaAttributes(
+                            incompatible_attr,
+                            agent_name.to_dto(),
+                            resource_id=primitive_el.get("id"),
+                            group_id=group_id,
+                        )
+                    )
+                    for incompatible_attr in [
+                        resource.clone.META_GLOBALLY_UNIQUE,
+                        resource.clone.META_PROMOTABLE,
+                    ]
+                    if is_true(meta_attrs.get(incompatible_attr, "0"))
+                ]
+            )
+
+
 _find_bundle = partial(
     find_element_by_tag_and_id, cib_const.TAG_RESOURCE_BUNDLE
 )
@@ -434,12 +523,14 @@ def create(  # noqa: PLR0913
     """
     runner = env.cmd_runner()
     agent_factory = ResourceAgentFacadeFactory(runner, env.report_processor)
-    resource_agent = _get_agent_facade(
+    agent_name = _get_resource_agent_name(
+        runner, env.report_processor, resource_agent_name
+    )
+    resource_agent = _get_resource_agent_facade(
         env.report_processor,
-        runner,
         agent_factory,
-        resource_agent_name,
-        allow_absent_agent,
+        agent_name,
+        [reports.codes.FORCE] if allow_absent_agent else [],
     )
     with resource_environment(
         env,
@@ -540,12 +631,14 @@ def create_as_clone(  # noqa: PLR0913
     """
     runner = env.cmd_runner()
     agent_factory = ResourceAgentFacadeFactory(runner, env.report_processor)
-    resource_agent = _get_agent_facade(
+    agent_name = _get_resource_agent_name(
+        runner, env.report_processor, resource_agent_name
+    )
+    resource_agent = _get_resource_agent_facade(
         env.report_processor,
-        runner,
         agent_factory,
-        resource_agent_name,
-        allow_absent_agent,
+        agent_name,
+        [reports.codes.FORCE] if allow_absent_agent else [],
     )
     if resource_agent.metadata.name.standard != "ocf":
         for incompatible_attr in ("globally-unique", "promotable"):
@@ -688,12 +781,14 @@ def create_in_group(  # noqa: PLR0913
     """
     runner = env.cmd_runner()
     agent_factory = ResourceAgentFacadeFactory(runner, env.report_processor)
-    resource_agent = _get_agent_facade(
+    agent_name = _get_resource_agent_name(
+        runner, env.report_processor, resource_agent_name
+    )
+    resource_agent = _get_resource_agent_facade(
         env.report_processor,
-        runner,
         agent_factory,
-        resource_agent_name,
-        allow_absent_agent,
+        agent_name,
+        [reports.codes.FORCE] if allow_absent_agent else [],
     )
     with resource_environment(
         env,
@@ -832,12 +927,14 @@ def create_into_bundle(  # noqa: PLR0913
     """
     runner = env.cmd_runner()
     agent_factory = ResourceAgentFacadeFactory(runner, env.report_processor)
-    resource_agent = _get_agent_facade(
+    agent_name = _get_resource_agent_name(
+        runner, env.report_processor, resource_agent_name
+    )
+    resource_agent = _get_resource_agent_facade(
         env.report_processor,
-        runner,
         agent_factory,
-        resource_agent_name,
-        allow_absent_agent,
+        agent_name,
+        [reports.codes.FORCE] if allow_absent_agent else [],
     )
     required_cib_version = get_required_cib_version_for_primitive(
         operation_list
@@ -2463,6 +2560,39 @@ def unmove_unban(
             raise LibraryError()
 
 
+def _find_resource_elem(
+    cib: _Element,
+    resource_id: str,
+) -> _Element:
+    """
+    Find a resource element in CIB and handle errors.
+
+    cib -- CIB
+    resource_id -- name of the resource
+    """
+    try:
+        resource_el = get_element_by_id(cib, resource_id)
+    except ElementNotFound as exc:
+        raise LibraryError(
+            ReportItem.error(
+                reports.messages.IdNotFound(
+                    resource_id, expected_types=["resource"]
+                )
+            )
+        ) from exc
+    if not resource.common.is_resource(resource_el):
+        raise LibraryError(
+            ReportItem.error(
+                reports.messages.IdBelongsToUnexpectedType(
+                    resource_id,
+                    expected_types=["resource"],
+                    current_type=resource_el.tag,
+                )
+            )
+        )
+    return resource_el
+
+
 def get_resource_relations_tree(
     env: LibraryEnvironment,
     resource_id: str,
@@ -2476,27 +2606,7 @@ def get_resource_relations_tree(
         tree
     """
     cib = env.get_cib()
-
-    try:
-        resource_el = get_element_by_id(cib, resource_id)
-    except ElementNotFound as e:
-        raise LibraryError(
-            ReportItem.error(
-                reports.messages.IdNotFound(
-                    resource_id, expected_types=["resource"]
-                )
-            )
-        ) from e
-    if not resource.common.is_resource(resource_el):
-        raise LibraryError(
-            ReportItem.error(
-                reports.messages.IdBelongsToUnexpectedType(
-                    resource_id,
-                    expected_types=["resource"],
-                    current_type=resource_el.tag,
-                )
-            )
-        )
+    resource_el = _find_resource_elem(cib, resource_id)
     if resource.stonith.is_stonith(resource_el):
         env.report_processor.report(
             reports.ReportItem.deprecation(
@@ -2708,3 +2818,102 @@ def restart(
         node=node,
         timeout=timeout,
     )
+
+
+def update_meta(
+    env: LibraryEnvironment,
+    resource_id: str,
+    meta_attrs: Mapping[str, str],
+    force_flags: reports.types.ForceFlags,
+) -> None:
+    """
+    Update meta attributes of all resource types without stonith check
+
+    env -- library environment
+    resource_id -- id of resource to update
+    meta_attrs -- meta attributes to update with desired values
+    force_flags -- force flags
+    """
+    cib = env.get_cib()
+    resource_el = _find_resource_elem(cib, resource_id)
+    id_provider = IdProvider(cib)
+    cib_validate_with = get_pacemaker_version_by_which_cib_was_validated(cib)
+    if resource.clone.is_master(resource_el):
+        resource.clone.convert_master_to_promotable(
+            id_provider, cib_validate_with, resource_el
+        )
+
+    meta_attrs_nvset_list = find_nvsets(resource_el, NVSET_META)
+    meta_attrs_nvset = (
+        meta_attrs_nvset_list[0] if meta_attrs_nvset_list else None
+    )
+
+    (
+        existing_nodes_names,
+        existing_nodes_addrs,
+        report_list,
+    ) = get_existing_nodes_names_addrs(
+        env.get_corosync_conf() if env.is_cib_live else None,
+        cib=cib,
+    )
+    env.report_processor.report_list(report_list)
+
+    existing_meta_attrs = (
+        nvset_to_dict_except_without_values(meta_attrs_nvset)
+        if meta_attrs_nvset is not None
+        else {}
+    )
+    if not resource.stonith.is_stonith(resource_el):
+        env.report_processor.report_list(
+            resource.guest_node.validate_updating_guest_attributes(
+                cib,
+                existing_nodes_names,
+                existing_nodes_addrs,
+                meta_attrs,
+                existing_meta_attrs,
+                force_flags,
+            )
+        )
+
+    cmd_runner = env.cmd_runner()
+
+    if resource.clone.is_any_clone(resource_el):
+        _validate_clone_meta_attributes(
+            env.report_processor,
+            ResourceAgentFacadeFactory(cmd_runner, env.report_processor),
+            resource_el,
+            meta_attrs,
+            force_flags,
+        )
+
+    if env.report_processor.has_errors:
+        raise LibraryError()
+
+    # Do not add element if user didn't provide any value
+    if meta_attrs_nvset is None and any(meta_attrs.values()):
+        nvset_append_new(
+            resource_el,
+            id_provider,
+            cib_validate_with,
+            NVSET_META,
+            nvpair_dict=meta_attrs,
+            nvset_options={},
+        )
+    elif meta_attrs_nvset is not None:
+        nvset_update(meta_attrs_nvset, id_provider, meta_attrs)
+
+    env.push_cib()
+
+    # If remote node was removed or its name changed, it needs to be removed
+    # from pacemaker
+    if (
+        reports.codes.FORCE in force_flags
+        and resource.guest_node.OPTION_REMOTE_NODE in meta_attrs
+        and resource.guest_node.OPTION_REMOTE_NODE in existing_meta_attrs
+        and existing_meta_attrs[resource.guest_node.OPTION_REMOTE_NODE]
+        != meta_attrs[resource.guest_node.OPTION_REMOTE_NODE]
+    ):
+        remove_node(
+            cmd_runner,
+            existing_meta_attrs[resource.guest_node.OPTION_REMOTE_NODE],
+        )

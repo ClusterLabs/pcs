@@ -304,6 +304,19 @@ class UseCommandNodeAddRemote(CliReportMessageCustom):
         )
 
 
+class UseCommandRemoveAndAddGuestNode(CliReportMessageCustom):
+    _obj: messages.UseCommandRemoveAndAddGuestNode
+
+    @property
+    def message(self) -> str:
+        return (
+            "Changing connection parameters of an existing guest node is not "
+            "sufficient for connecting to a different guest node, remove the "
+            "existing guest node with 'pcs cluster node remove-guest' and add "
+            "a new one with 'pcs cluster node add-guest'"
+        )
+
+
 class CorosyncNodeConflictCheckSkipped(CliReportMessageCustom):
     _obj: messages.CorosyncNodeConflictCheckSkipped
 

@@ -22,6 +22,16 @@ class ResourceAgentName(TestCase):
             "standard:type",
         )
 
+    def test_is_ocf_yes(self):
+        self.assertTrue(
+            ra.ResourceAgentName("ocf", "pacemaker", "Dummy").is_ocf
+        )
+
+    def test_is_ocf_no(self):
+        self.assertFalse(
+            ra.ResourceAgentName("systemd", None, "chronyd").is_ocf
+        )
+
     def test_is_stonith_yes(self):
         self.assertTrue(
             ra.ResourceAgentName("stonith", "pacemaker", "Dummy").is_stonith

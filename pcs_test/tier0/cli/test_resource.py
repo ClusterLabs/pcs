@@ -1304,7 +1304,7 @@ class ResourceRestart(TestCase):
         self.resource.restart.assert_called_once_with("resource", "node", "10s")
         mock_print.assert_called_once_with("resource successfully restarted")
 
-    @mock.patch("pcs.resource.deprecation_warning")
+    @mock.patch("pcs.cli.resource.common.deprecation_warning")
     def test_stonith(self, mock_deprecation, mock_print):
         self.resource.is_any_stonith.return_value = True
         resource.resource_restart_cmd(

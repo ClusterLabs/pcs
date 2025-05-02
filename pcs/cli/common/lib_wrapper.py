@@ -418,6 +418,7 @@ def load_module(env, middleware_factory, name):  # noqa: PLR0911, PLR0912
                 "is_any_resource_except_stonith": resource.is_any_resource_except_stonith,
                 "is_any_stonith": resource.is_any_stonith,
                 "manage": resource.manage,
+                "update_meta": resource.update_meta,
                 "move": resource.move,
                 "move_autoclean": resource.move_autoclean,
                 "restart": resource.restart,

@@ -15,6 +15,9 @@
 - Support for exporting alerts in `json` and `cmd` formats ([RHEL-76153])
 - Output of `pcs status` now contains messages about CIB misconfiguration
   provided by `crm_verify` pacemaker tool ([RHEL-76060])
+- Support for bundle resources in `pcs resource meta`, disallow updating
+  `remote-node` and `remote-addr` without `--force`, add lib command
+  `resource.update_meta` to API v2 ([RHEL-35420])
 
 ### Fixed
 - Fixed a traceback when removing a resource fails in web UI
@@ -22,6 +25,7 @@
   UI
 - Display node-attribute in colocation constraints configuration ([RHEL-82894])
 
+[RHEL-35420]: https://issues.redhat.com/browse/RHEL-35420
 [RHEL-76055]: https://issues.redhat.com/browse/RHEL-76055
 [RHEL-76059]: https://issues.redhat.com/browse/RHEL-76059
 [RHEL-76060]: https://issues.redhat.com/browse/RHEL-76060

@@ -85,6 +85,30 @@ def nvset_element_to_dto(
     )
 
 
+def nvset_to_dict(nvset_el: _Element) -> dict[str, Optional[str]]:
+    """
+    Export only nvpairs from an nvset xml element into a dictionary
+    """
+    return {
+        str(nvpair_el.attrib["name"]): nvpair_el.get("value")
+        for nvpair_el in nvset_el.iterfind("./nvpair")
+    }
+
+
+def nvset_to_dict_except_without_values(
+    nvset_el: _Element,
+) -> dict[str, str]:
+    """
+    Value in a nvpair is not mandatory. This function ignores such entries in
+    the same way as Pacemaker does.
+    """
+    return {
+        key: value
+        for key, value in nvset_to_dict(nvset_el).items()
+        if value is not None
+    }
+
+
 def find_nvsets(parent_element: _Element, tag: NvsetTag) -> List[_Element]:
     """
     Get all nvset xml elements in the given parent element

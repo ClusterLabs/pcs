@@ -1563,6 +1563,14 @@
         daemon urls: add_meta_attr_remote
       </description>
     </capability>
+    <capability id="pcmk.resource.update-meta.bundle" in-pcs="1" in-pcsd="1">
+      <description>
+        The resource meta command also supports bundle resources.
+
+        pcs commands: resource meta
+        daemon urls: add_meta_attr_remote
+      </description>
+    </capability>
     <capability id="pcmk.resource.update-meta.list" in-pcs="1" in-pcsd="0">
       <description>
         Update several meta attributes of a resource at once.
@@ -1575,6 +1583,13 @@
         Wait for the changes to take effect.
 
         pcs commands: resource update --wait, resource meta --wait
+      </description>
+    </capability>
+    <capability id="pcmk.resource.update-meta.rest-api.v2" in-pcs="0" in-pcsd="1">
+      <description>
+        Add, update or remove meta attributes of any resource.
+
+        API v2: resource.update_meta
       </description>
     </capability>
     <capability id="pcmk.resource.update-operations" in-pcs="1" in-pcsd="0">

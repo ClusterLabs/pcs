@@ -1,4 +1,7 @@
-from unittest import TestCase
+from unittest import (
+    TestCase,
+    mock,
+)
 
 from lxml import etree
 
@@ -8,6 +11,7 @@ from pcs.lib.cib.node import PacemakerNode
 from pcs.lib.cib.resource import guest_node
 from pcs.lib.cib.tools import IdProvider
 
+from pcs_test.tools import fixture
 from pcs_test.tools.assertions import (
     assert_report_item_list_equal,
     assert_xml_equal,
@@ -15,6 +19,390 @@ from pcs_test.tools.assertions import (
 from pcs_test.tools.misc import create_setup_patch_mixin
 
 SetupPatchMixin = create_setup_patch_mixin(guest_node)
+
+
+class ValidateUpdatingGuestAttributes(TestCase):
+    def setUp(self):
+        self.validate_conflicts_mock = mock.patch(
+            "pcs.lib.cib.resource.guest_node.validate_conflicts"
+        )
+        self.validate_conflicts_mock.return_value = []
+        self.validate_conflicts_mock.start()
+        self.cib = etree.fromstring("<cib />")
+
+    def tearDown(self):
+        self.validate_conflicts_mock.stop()
+
+    def test_no_existing_no_new(self):
+        assert_report_item_list_equal(
+            guest_node.validate_updating_guest_attributes(
+                self.cib, [], [], {}, {}, []
+            ),
+            [],
+        )
+
+    def test_no_existing_add_addr(self):
+        assert_report_item_list_equal(
+            guest_node.validate_updating_guest_attributes(
+                self.cib, [], [], {"node-addr": "192.168.1.100"}, {}, []
+            ),
+            [],
+        )
+
+    def test_fake_guest_conn_update(self):
+        assert_report_item_list_equal(
+            guest_node.validate_updating_guest_attributes(
+                self.cib,
+                [],
+                [],
+                {
+                    "is_managed": "true",
+                    "remote-node": "remote1",
+                },
+                {
+                    "is_managed": "false",
+                    "remote-node": "remote1",
+                },
+                force_flags=[],
+            ),
+            [],
+        )
+
+    def test_existing_guest_add_other(self):
+        assert_report_item_list_equal(
+            guest_node.validate_updating_guest_attributes(
+                self.cib,
+                [],
+                [],
+                {
+                    "is-managed": "false",
+                },
+                {
+                    "remote-node": "remote-1",
+                },
+                force_flags=[],
+            ),
+            [],
+        )
+
+    def test_existing_guest_update_all(self):
+        assert_report_item_list_equal(
+            guest_node.validate_updating_guest_attributes(
+                self.cib,
+                [],
+                [],
+                {
+                    "remote-node": "remote-2",
+                },
+                {
+                    "remote-node": "remote-1",
+                },
+                force_flags=[],
+            ),
+            [
+                fixture.error(
+                    report_codes.USE_COMMAND_REMOVE_AND_ADD_GUEST_NODE,
+                    force_code=report_codes.FORCE,
+                )
+            ],
+        )
+
+    def test_existing_guest_update_all_force(self):
+        assert_report_item_list_equal(
+            guest_node.validate_updating_guest_attributes(
+                self.cib,
+                [],
+                [],
+                {
+                    "remote-node": "remote-2",
+                },
+                {
+                    "remote-node": "remote-1",
+                },
+                force_flags=[report_codes.FORCE],
+            ),
+            [fixture.warn(report_codes.USE_COMMAND_REMOVE_AND_ADD_GUEST_NODE)],
+        )
+
+    def test_existing_guest_update_addr(self):
+        assert_report_item_list_equal(
+            guest_node.validate_updating_guest_attributes(
+                self.cib,
+                [],
+                [],
+                {
+                    "remote-addr": "192.168.1.100",
+                },
+                {
+                    "remote-node": "remote-1",
+                },
+                force_flags=[],
+            ),
+            [
+                fixture.error(
+                    report_codes.USE_COMMAND_REMOVE_AND_ADD_GUEST_NODE,
+                    force_code=report_codes.FORCE,
+                )
+            ],
+        )
+
+    def test_existing_guest_update_addr_force(self):
+        assert_report_item_list_equal(
+            guest_node.validate_updating_guest_attributes(
+                self.cib,
+                [],
+                [],
+                {
+                    "remote-addr": "192.168.1.100",
+                },
+                {
+                    "remote-node": "remote-1",
+                },
+                force_flags=[report_codes.FORCE],
+            ),
+            [fixture.warn(report_codes.USE_COMMAND_REMOVE_AND_ADD_GUEST_NODE)],
+        )
+
+    def test_existing_guest_update_some(self):
+        assert_report_item_list_equal(
+            guest_node.validate_updating_guest_attributes(
+                self.cib,
+                [],
+                [],
+                {
+                    "remote-addr": "192.168.1.100",
+                },
+                {
+                    "remote-node": "remote-1",
+                    "remote-addr": "10.0.0.10",
+                    "remote-connect-timeout": "30s",
+                },
+                force_flags=[],
+            ),
+            [
+                fixture.error(
+                    report_codes.USE_COMMAND_REMOVE_AND_ADD_GUEST_NODE,
+                    force_code=report_codes.FORCE,
+                )
+            ],
+        )
+
+    def test_remote_addr_exists_add_remote_node(self):
+        assert_report_item_list_equal(
+            guest_node.validate_updating_guest_attributes(
+                self.cib,
+                [],
+                [],
+                {
+                    "remote-node": "remote-1",
+                },
+                {
+                    "remote-addr": "192.168.1.100",
+                },
+                force_flags=[],
+            ),
+            [
+                fixture.error(
+                    report_codes.USE_COMMAND_NODE_ADD_GUEST,
+                    force_code=report_codes.FORCE,
+                ),
+            ],
+        )
+
+    def test_remote_addr_exists_add_remote_node_force(self):
+        assert_report_item_list_equal(
+            guest_node.validate_updating_guest_attributes(
+                self.cib,
+                [],
+                [],
+                {
+                    "remote-node": "remote-1",
+                },
+                {
+                    "remote-addr": "192.168.1.100",
+                },
+                force_flags=[report_codes.FORCE],
+            ),
+            [
+                fixture.warn(report_codes.USE_COMMAND_NODE_ADD_GUEST),
+            ],
+        )
+
+    def test_remote_addr_exists_update_and_add_remote_node(self):
+        assert_report_item_list_equal(
+            guest_node.validate_updating_guest_attributes(
+                self.cib,
+                [],
+                [],
+                {
+                    "remote-node": "remote-1",
+                    "remote-addr": "10.0.0.10",
+                },
+                {
+                    "remote-addr": "192.168.1.100",
+                },
+                force_flags=[],
+            ),
+            [
+                fixture.error(
+                    report_codes.USE_COMMAND_NODE_ADD_GUEST,
+                    force_code=report_codes.FORCE,
+                ),
+            ],
+        )
+
+    def test_existing_guest_remove_guest_some(self):
+        assert_report_item_list_equal(
+            guest_node.validate_updating_guest_attributes(
+                self.cib,
+                [],
+                [],
+                {
+                    "remote-addr": "",
+                },
+                {
+                    "remote-node": "remote-1",
+                    "remote-addr": "10.0.0.10",
+                    "remote-connect-timeout": "30s",
+                },
+                force_flags=[],
+            ),
+            [
+                fixture.error(
+                    report_codes.USE_COMMAND_NODE_REMOVE_GUEST,
+                    force_code=report_codes.FORCE,
+                )
+            ],
+        )
+
+    def test_existing_guest_remove_guest_some_force(self):
+        assert_report_item_list_equal(
+            guest_node.validate_updating_guest_attributes(
+                self.cib,
+                [],
+                [],
+                {
+                    "remote-addr": "",
+                },
+                {
+                    "remote-node": "remote-1",
+                    "remote-addr": "10.0.0.10",
+                    "remote-connect-timeout": "30s",
+                },
+                force_flags=[report_codes.FORCE],
+            ),
+            [fixture.warn(report_codes.USE_COMMAND_NODE_REMOVE_GUEST)],
+        )
+
+    def test_existing_guest_remove_guest_all(self):
+        assert_report_item_list_equal(
+            guest_node.validate_updating_guest_attributes(
+                self.cib,
+                [],
+                [],
+                {
+                    "remote-node": "",
+                    "remote-addr": "",
+                    "remote_port": "",
+                    "remote-connect-timeout": "",
+                },
+                {
+                    "remote-node": "remote-1",
+                    "remote-addr": "10.0.0.10",
+                    "remote_port": "50000",
+                    "remote-connect-timeout": "30s",
+                },
+                force_flags=[],
+            ),
+            [
+                fixture.error(
+                    report_codes.USE_COMMAND_NODE_REMOVE_GUEST,
+                    force_code=report_codes.FORCE,
+                )
+            ],
+        )
+
+    def test_invalid_remote_port(self):
+        assert_report_item_list_equal(
+            guest_node.validate_updating_guest_attributes(
+                self.cib,
+                [],
+                [],
+                {
+                    "remote-port": "808080",
+                },
+                {},
+                force_flags=[],
+            ),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="remote-port",
+                    option_value="808080",
+                    allowed_values="a port number (1..65535)",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                )
+            ],
+        )
+
+    def test_remove_remote_port(self):
+        assert_report_item_list_equal(
+            guest_node.validate_updating_guest_attributes(
+                self.cib,
+                [],
+                [],
+                {
+                    "remote-port": "",
+                },
+                {
+                    "remote-port": "50000",
+                },
+                force_flags=[],
+            ),
+            [],
+        )
+
+    def test_invalid_remote_timeout(self):
+        assert_report_item_list_equal(
+            guest_node.validate_updating_guest_attributes(
+                self.cib,
+                [],
+                [],
+                {
+                    "remote-connect-timeout": "abc",
+                },
+                {},
+                force_flags=[],
+            ),
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="remote-connect-timeout",
+                    option_value="abc",
+                    allowed_values="time interval (e.g. 1, 2s, 3m, 4h, ...)",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                )
+            ],
+        )
+
+    def test_remove_remote_timeout(self):
+        assert_report_item_list_equal(
+            guest_node.validate_updating_guest_attributes(
+                self.cib,
+                [],
+                [],
+                {
+                    "remote-connect-timeout": "",
+                },
+                {
+                    "remote-connect-timeout": "30s",
+                },
+                force_flags=[],
+            ),
+            [],
+        )
 
 
 class ValidateHostConflicts(TestCase):
@@ -65,37 +453,46 @@ class ValidateHostConflicts(TestCase):
             tree, existing_nodes_names, existing_nodes_addrs, node_name, options
         )
 
-    def assert_already_exists_error(
-        self, conflict_name, node_name, options=None
+    def assert_node_name_already_exists_error(
+        self, report_node_name, node_name, options=None
     ):
         assert_report_item_list_equal(
             self.validate(node_name, options if options else {}),
             [
-                (
-                    severities.ERROR,
-                    report_codes.ID_ALREADY_EXISTS,
-                    {
-                        "id": conflict_name,
-                    },
-                    None,
-                ),
+                fixture.error(
+                    report_codes.GUEST_NODE_NAME_ALREADY_EXISTS,
+                    node_name=report_node_name,
+                )
+            ],
+        )
+
+    def assert_remote_addr_already_exists_error(self, node_name, options):
+        assert_report_item_list_equal(
+            self.validate(node_name, options),
+            [
+                fixture.error(
+                    report_codes.NODE_ADDRESSES_ALREADY_EXIST,
+                    address_list=[options["remote-addr"]],
+                )
             ],
         )
 
     def test_report_conflict_with_id(self):
-        self.assert_already_exists_error("CONFLICT", "CONFLICT")
+        self.assert_node_name_already_exists_error("CONFLICT", "CONFLICT")
 
     def test_report_conflict_guest_node(self):
-        self.assert_already_exists_error("GUEST_CONFLICT", "GUEST_CONFLICT")
+        self.assert_node_name_already_exists_error(
+            "GUEST_CONFLICT", "GUEST_CONFLICT"
+        )
 
     def test_report_conflict_guest_addr(self):
-        self.assert_already_exists_error(
+        self.assert_node_name_already_exists_error(
             "GUEST_ADDR_CONFLICT",
             "GUEST_ADDR_CONFLICT",
         )
 
     def test_report_conflict_guest_addr_by_addr(self):
-        self.assert_already_exists_error(
+        self.assert_node_name_already_exists_error(
             "GUEST_ADDR_CONFLICT",
             "GUEST_ADDR_CONFLICT",
         )
@@ -112,7 +509,9 @@ class ValidateHostConflicts(TestCase):
         )
 
     def test_report_conflict_remote_node(self):
-        self.assert_already_exists_error("REMOTE_CONFLICT", "REMOTE_CONFLICT")
+        self.assert_node_name_already_exists_error(
+            "REMOTE_CONFLICT", "REMOTE_CONFLICT"
+        )
 
     def test_no_conflict_remote_node_when_addr_is_different(self):
         self.assertEqual(
@@ -126,9 +525,8 @@ class ValidateHostConflicts(TestCase):
         )
 
     def test_report_conflict_remote_node_by_addr(self):
-        self.assert_already_exists_error(
+        self.assert_remote_addr_already_exists_error(
             "REMOTE_CONFLICT",
-            "different",
             {
                 "remote-addr": "REMOTE_CONFLICT",
             },
@@ -192,14 +590,10 @@ class ValidateOptions(TestCase):
         assert_report_item_list_equal(
             self.validate({}, "EXISTING-HOST-NAME"),
             [
-                (
-                    severities.ERROR,
-                    report_codes.ID_ALREADY_EXISTS,
-                    {
-                        "id": "EXISTING-HOST-NAME",
-                    },
-                    None,
-                ),
+                fixture.error(
+                    report_codes.GUEST_NODE_NAME_ALREADY_EXISTS,
+                    node_name="EXISTING-HOST-NAME",
+                )
             ],
         )
 

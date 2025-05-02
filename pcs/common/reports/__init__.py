@@ -14,6 +14,7 @@ from .item import (
     ReportItemMessage,
     ReportItemSeverity,
     get_severity,
+    get_severity_from_flags,
 )
 from .processor import (
     ReportProcessor,

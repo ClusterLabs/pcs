@@ -20,6 +20,9 @@ from pcs.lib.xml_tools import find_parent
 
 from .bundle import get_inner_resource as get_bundle_inner_resource
 from .bundle import is_bundle
+from .clone import (
+    get_inner_primitives as get_clone_inner_primitive_resources,
+)
 from .clone import get_inner_resource as get_clone_inner_resource
 from .clone import is_any_clone
 from .group import get_inner_resources as get_group_inner_resources
@@ -27,6 +30,7 @@ from .group import is_group
 from .primitive import is_primitive
 
 
+# DEPRECATED, use get_element_by_id
 def find_one_resource(
     context_element: _Element,
     resource_id: str,
@@ -48,6 +52,8 @@ def find_one_resource(
     return resource, report_list
 
 
+# DEPRECATED, use get_elements_by_ids
+# Issue: produces report with CIB tags when wrong element type was found
 def find_resources(
     context_element: _Element,
     resource_ids: StringCollection,
@@ -84,7 +90,7 @@ def find_primitives(resource_el: _Element) -> List[_Element]:
         in_bundle = get_bundle_inner_resource(resource_el)
         return [in_bundle] if in_bundle is not None else []
     if is_any_clone(resource_el):
-        resource_el = get_clone_inner_resource(resource_el)
+        return get_clone_inner_primitive_resources(resource_el)
     if is_group(resource_el):
         return get_group_inner_resources(resource_el)
     if is_primitive(resource_el):

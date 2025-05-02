@@ -296,7 +296,9 @@ class NodeAddGuest(RemoteTest):
             "Unable to check if there is a conflict with nodes set in corosync "
             "because the command does not run on a live cluster (e.g. -f "
             "was used)\n"
-            "Error: 'CONFLICT' already exists\n" + ERRORS_HAVE_OCCURRED,
+            "Error: Cannot set name of the guest node to 'CONFLICT' because "
+            "that ID already exists in the cluster configuration.\n"
+            + ERRORS_HAVE_OCCURRED,
         )
 
     def test_fail_when_guest_node_conflicts_with_existing_guest(self):
@@ -313,7 +315,9 @@ class NodeAddGuest(RemoteTest):
             "Unable to check if there is a conflict with nodes set in corosync "
             "because the command does not run on a live cluster (e.g. -f "
             "was used)\n"
-            "Error: 'node-name' already exists\n" + ERRORS_HAVE_OCCURRED,
+            "Error: Cannot set name of the guest node to 'node-name' because "
+            "that ID already exists in the cluster configuration.\n"
+            + ERRORS_HAVE_OCCURRED,
         )
 
     def test_fail_when_guest_node_conflicts_with_existing_remote(self):
@@ -332,7 +336,8 @@ class NodeAddGuest(RemoteTest):
             "Unable to check if there is a conflict with nodes set in corosync "
             "because the command does not run on a live cluster (e.g. -f "
             "was used)\n"
-            "Error: 'node-addr' already exists\n" + ERRORS_HAVE_OCCURRED,
+            "Error: Node address 'node-addr' is already used by existing "
+            "nodes; please, use other address\n" + ERRORS_HAVE_OCCURRED,
         )
 
     def test_fail_when_guest_node_name_conflicts_with_existing_remote(self):
@@ -351,7 +356,9 @@ class NodeAddGuest(RemoteTest):
             "Unable to check if there is a conflict with nodes set in corosync "
             "because the command does not run on a live cluster (e.g. -f "
             "was used)\n"
-            "Error: 'R' already exists\n" + ERRORS_HAVE_OCCURRED,
+            "Error: Cannot set name of the guest node to 'R' because that ID "
+            "already exists in the cluster configuration.\n"
+            + ERRORS_HAVE_OCCURRED,
         )
 
     def test_success(self):

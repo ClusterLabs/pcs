@@ -27,7 +27,7 @@ resource_cmd = create_router(
         "providers": resource.resource_providers,
         "agents": resource.resource_agents,
         "update": resource.update_cmd,
-        "meta": resource.meta_cmd,
+        "meta": resource_cli.meta,
         "delete": resource.resource_remove_cmd,
         "remove": resource.resource_remove_cmd,
         # TODO remove, deprecated command

@@ -366,6 +366,17 @@ class UseCommandNodeAddRemote(CliReportMessageTestBase):
         )
 
 
+class UseCommandRemoveAndAddGuestNode(CliReportMessageTestBase):
+    def test_success(self):
+        self.assert_message(
+            messages.UseCommandRemoveAndAddGuestNode(),
+            "Changing connection parameters of an existing guest node is not "
+            "sufficient for connecting to a different guest node, remove the "
+            "existing guest node with 'pcs cluster node remove-guest' and add "
+            "a new one with 'pcs cluster node add-guest'",
+        )
+
+
 class CorosyncNodeConflictCheckSkipped(CliReportMessageTestBase):
     def test_not_live_cib(self):
         self.assert_message(

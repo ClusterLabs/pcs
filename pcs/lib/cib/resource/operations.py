@@ -5,6 +5,7 @@ from typing import (
     List,
     Optional,
     Tuple,
+    cast,
 )
 
 from lxml import etree
@@ -449,15 +450,17 @@ def append_new_operation(operations_element, id_provider, options):
     return op_element
 
 
-def get_resource_operations(resource_el, names=None):
+def get_resource_operations(
+    resource_el: _Element, names: Optional[StringCollection] = None
+) -> list[_Element]:
     """
     Get operations of a given resource, optionally filtered by name
-    etree resource_el -- resource element
-    iterable names -- return only operations of these names if specified
+    resource_el -- resource element
+    names -- return only operations of these names if specified
     """
     return [
         op_el
-        for op_el in resource_el.xpath("./operations/op")
+        for op_el in cast(list[_Element], resource_el.xpath("./operations/op"))
         if not names or op_el.attrib.get("name", "") in names
     ]
 

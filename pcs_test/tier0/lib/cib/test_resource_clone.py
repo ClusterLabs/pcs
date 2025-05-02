@@ -1,7 +1,10 @@
-from unittest import TestCase
+from unittest import (
+    TestCase,
+)
 
 from lxml import etree
 
+from pcs.common.tools import Version
 from pcs.lib.cib.resource import clone
 from pcs.lib.cib.tools import IdProvider
 
@@ -10,6 +13,81 @@ from pcs_test.tools.assertions import (
     assert_report_item_list_equal,
     assert_xml_equal,
 )
+from pcs_test.tools.xml import etree_to_str
+
+
+def fixture_resource_meta_stateful(
+    meta_nvpairs="",
+    use_legacy_roles=False,
+    is_grouped=False,
+):
+    clone_el_tag = "clone"
+    role_promoted = "Promoted"
+    role_unpromoted = "Unpromoted"
+    meta_attributes_xml = ""
+
+    if use_legacy_roles:
+        clone_el_tag = "master"
+        role_promoted = "Master"
+        role_unpromoted = "Slave"
+        if meta_nvpairs:
+            meta_attributes_xml = f"""
+                <meta_attributes id="custom-clone-meta_attributes">
+                    {meta_nvpairs}
+                </meta_attributes>
+            """
+    else:
+        meta_attributes_xml = f"""
+            <meta_attributes id="custom-clone-meta_attributes">
+                {meta_nvpairs}
+                <nvpair id="custom-clone-meta_attributes-promotable"
+                    name="promotable" value="true"
+                />
+            </meta_attributes>
+        """
+
+    group_start = group_end = ""
+    if is_grouped:
+        group_start = """<group id="G">"""
+        group_end = "</group>"
+
+    return f"""
+        <{clone_el_tag} id="custom-clone">
+            {group_start}
+                <primitive id="A" class="ocf" type="Stateful"
+                    provider="pacemaker"
+                >
+                    <operations>
+                        <op name="demote" interval="0s" timeout="10s"
+                            id="A-demote-interval-0s"
+                        />
+                        <op name="monitor" interval="10s" timeout="20s"
+                            role="{role_promoted}" id="A-monitor-interval-10s"
+                        />
+                        <op name="monitor" interval="11s" timeout="20s"
+                            role="{role_unpromoted}" id="A-monitor-interval-11s"
+                        />
+                        <op name="notify" interval="0s" timeout="5s"
+                            id="A-notify-interval-0s"
+                        />
+                        <op name="promote" interval="0s" timeout="10s"
+                            id="A-promote-interval-0s"
+                        />
+                        <op name="reload-agent" interval="0s" timeout="10s"
+                            id="A-reload-agent-interval-0s"
+                        />
+                        <op name="start" interval="0s" timeout="20s"
+                            id="A-start-interval-0s"
+                        />
+                        <op name="stop" interval="0s" timeout="20s"
+                            id="A-stop-interval-0s"
+                        />
+                    </operations>
+                </primitive>
+            {group_end}
+            {meta_attributes_xml}
+        </{clone_el_tag}>
+    """
 
 
 class AppendNewCommon(TestCase):
@@ -308,6 +386,61 @@ class GetInnerResource(TestCase):
         )
 
 
+class GetInnerPrimitiveResources(TestCase):
+    def assert_inner_resource(self, resource_id_list, xml):
+        self.assertListEqual(
+            resource_id_list,
+            [
+                inner_el.get("id", "")
+                for inner_el in clone.get_inner_primitives(
+                    etree.fromstring(xml)
+                )
+            ],
+        )
+
+    def test_primitive(self):
+        self.assert_inner_resource(
+            ["A"],
+            """
+                <clone id="A-clone">
+                    <meta_attributes />
+                    <primitive id="A" />
+                    <meta_attributes />
+                </clone>
+            """,
+        )
+
+    def test_group_single(self):
+        self.assert_inner_resource(
+            ["A"],
+            """
+                <clone id="custom-clone">
+                    <meta_attributes />
+                    <group>
+                        <primitive id="A" />
+                    </group>
+                    <meta_attributes />
+                </clone>
+            """,
+        )
+
+    def test_group_multiple(self):
+        self.assert_inner_resource(
+            ["A", "B", "C"],
+            """
+                <clone id="custom-clone">
+                    <meta_attributes />
+                    <group>
+                        <primitive id="A" />
+                        <primitive id="B" />
+                        <primitive id="C" />
+                    </group>
+                    <meta_attributes />
+                </clone>
+            """,
+        )
+
+
 class ValidateCloneId(TestCase):
     def setUp(self):
         self.cib = etree.fromstring(
@@ -343,4 +476,69 @@ class ValidateCloneId(TestCase):
         self.assert_validate_clone_id(
             "CloneId-meta_attributes",
             [fixture.report_id_already_exist("CloneId-meta_attributes")],
+        )
+
+
+class ConvertLegacyPromotableElement(TestCase):
+    _EXISTING_NVPAIR = (
+        '<nvpair id="custom-clone-priority" name="priority" value="2" />'
+    )
+
+    def test_update_primitive(self):
+        legacy_el_str = fixture_resource_meta_stateful(
+            use_legacy_roles=True,
+        )
+        legacy_el = etree.fromstring(legacy_el_str)
+        clone.convert_master_to_promotable(
+            IdProvider(legacy_el), Version(3, 7), legacy_el
+        )
+        assert_xml_equal(
+            etree_to_str(legacy_el),
+            fixture_resource_meta_stateful(),
+        )
+
+    def test_update_primitive_with_existing_meta(self):
+        legacy_el_str = fixture_resource_meta_stateful(
+            meta_nvpairs=self._EXISTING_NVPAIR,
+            use_legacy_roles=True,
+        )
+        legacy_el = etree.fromstring(legacy_el_str)
+        clone.convert_master_to_promotable(
+            IdProvider(legacy_el), Version(3, 7), legacy_el
+        )
+        assert_xml_equal(
+            etree_to_str(legacy_el),
+            fixture_resource_meta_stateful(meta_nvpairs=self._EXISTING_NVPAIR),
+        )
+
+    def test_update_group(self):
+        legacy_el_str = fixture_resource_meta_stateful(
+            use_legacy_roles=True,
+            is_grouped=True,
+        )
+        legacy_el = etree.fromstring(legacy_el_str)
+        clone.convert_master_to_promotable(
+            IdProvider(legacy_el), Version(3, 7), legacy_el
+        )
+        assert_xml_equal(
+            etree_to_str(legacy_el),
+            fixture_resource_meta_stateful(is_grouped=True),
+        )
+
+    def test_update_group_with_existing_meta(self):
+        legacy_el_str = fixture_resource_meta_stateful(
+            meta_nvpairs=self._EXISTING_NVPAIR,
+            use_legacy_roles=True,
+            is_grouped=True,
+        )
+        legacy_el = etree.fromstring(legacy_el_str)
+        clone.convert_master_to_promotable(
+            IdProvider(legacy_el), Version(3, 7), legacy_el
+        )
+        assert_xml_equal(
+            etree_to_str(legacy_el),
+            fixture_resource_meta_stateful(
+                meta_nvpairs=self._EXISTING_NVPAIR,
+                is_grouped=True,
+            ),
         )

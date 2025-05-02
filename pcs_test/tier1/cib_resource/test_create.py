@@ -1817,7 +1817,8 @@ class FailOrWarnPacemakerRemoteOrGuestNode(ResourceTest):
             (
                 "Warning: this command is not sufficient for creating a "
                 "remote connection, use 'pcs cluster node add-remote'\n"
-                "Error: 'R' already exists\n" + ERRORS_HAVE_OCCURRED
+                "Error: Node address 'R' is already used by existing nodes; "
+                "please, use other address\n" + ERRORS_HAVE_OCCURRED
             ),
         )
 
@@ -1835,7 +1836,8 @@ class FailOrWarnPacemakerRemoteOrGuestNode(ResourceTest):
             (
                 "Warning: this command is not sufficient for creating a "
                 "remote connection, use 'pcs cluster node add-remote'\n"
-                "Error: 'R2' already exists\n" + ERRORS_HAVE_OCCURRED
+                "Error: Node address 'R2' is already used by existing nodes; "
+                "please, use other address\n" + ERRORS_HAVE_OCCURRED
             ),
         )
 
@@ -1856,7 +1858,9 @@ class FailOrWarnPacemakerRemoteOrGuestNode(ResourceTest):
             (
                 "Warning: this command is not sufficient for creating a "
                 "guest node, use 'pcs cluster node add-guest'\n"
-                "Error: 'R' already exists\n" + ERRORS_HAVE_OCCURRED
+                "Error: Cannot set name of the guest node to 'R' because that "
+                "ID already exists in the cluster configuration.\n"
+                + ERRORS_HAVE_OCCURRED
             ),
         )
 
@@ -1877,7 +1881,9 @@ class FailOrWarnPacemakerRemoteOrGuestNode(ResourceTest):
             (
                 "Warning: this command is not sufficient for creating a "
                 "guest node, use 'pcs cluster node add-guest'\n"
-                "Error: 'HOST' already exists\n" + ERRORS_HAVE_OCCURRED
+                "Error: Cannot set name of the guest node to 'HOST' because "
+                "that ID already exists in the cluster configuration.\n"
+                + ERRORS_HAVE_OCCURRED
             ),
         )
 
@@ -1898,7 +1904,8 @@ class FailOrWarnPacemakerRemoteOrGuestNode(ResourceTest):
             (
                 "Warning: this command is not sufficient for creating a "
                 "guest node, use 'pcs cluster node add-guest'\n"
-                "Error: 'HOST' already exists\n" + ERRORS_HAVE_OCCURRED
+                "Error: Node address 'HOST' is already used by existing nodes; "
+                "please, use other address\n" + ERRORS_HAVE_OCCURRED
             ),
         )
 

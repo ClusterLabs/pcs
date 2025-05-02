@@ -4023,25 +4023,11 @@ class MetaAttrs(
             ),
         )
 
-    def test_resource_meta_keep_empty_meta(self):
-        self.fixture_resource_meta()
-        self.assert_effect(
-            "resource meta R a=".split(),
-            self.fixture_xml_resource_empty_meta(),
-        )
-
     def test_resource_update_keep_empty_meta(self):
         self.fixture_resource_meta()
         self.assert_effect(
             "resource update R meta a=".split(),
             self.fixture_xml_resource_empty_meta(),
-        )
-
-    def test_resource_meta_dont_create_meta_on_removal(self):
-        self.fixture_resource()
-        self.assert_effect(
-            "resource meta R a=".split(),
-            self.fixture_xml_resource_no_meta(),
         )
 
     def test_resource_update_dont_create_meta_on_removal(self):
@@ -4065,78 +4051,6 @@ class MetaAttrs(
                 </primitive>
             </clone>
             """
-
-    def test_clone_promotable_not_ocf(self):
-        self.set_cib_file(self.fixture_not_ocf_clone())
-        self.assert_pcs_fail(
-            "resource meta clone-R promotable=1".split(),
-            (
-                "Error: Clone option 'promotable' is not compatible with "
-                "'systemd:pcsmock' resource agent of resource 'R'\n"
-            ),
-        )
-
-    def test_clone_globally_unique_not_ocf(self):
-        self.set_cib_file(self.fixture_not_ocf_clone())
-        self.assert_pcs_fail(
-            "resource meta clone-R globally-unique=1".split(),
-            (
-                "Error: Clone option 'globally-unique' is not compatible with "
-                "'systemd:pcsmock' resource agent of resource 'R'\n"
-            ),
-        )
-
-    def test_clone_promotable_unsupported(self):
-        self.set_cib_file(
-            f"""
-            <clone id="clone-R">
-                {self._fixture_xml_resource_no_meta()}
-            </clone>
-            """
-        )
-        self.assert_pcs_fail(
-            "resource meta clone-R promotable=1".split(),
-            (
-                "Error: Clone option 'promotable' is not compatible with "
-                "'ocf:pcsmock:minimal' resource agent of resource 'R', use --force to override\n"
-            ),
-        )
-
-    def test_clone_promotable_unsupported_force(self):
-        self.set_cib_file(
-            f"""
-            <clone id="clone-R">
-                {self._fixture_xml_resource_no_meta()}
-            </clone>
-            """
-        )
-        self.assert_effect(
-            "resource meta clone-R promotable=1 --force".split(),
-            """
-                <resources>
-                    <clone id="clone-R">
-                        <primitive class="ocf" id="R" provider="pcsmock"
-                            type="minimal"
-                        >
-                            <operations>
-                                <op id="R-monitor-interval-10s" interval="10s"
-                                    name="monitor" timeout="20s"
-                                />
-                            </operations>
-                        </primitive>
-                        <meta_attributes id="clone-R-meta_attributes">
-                            <nvpair id="clone-R-meta_attributes-promotable"
-                                name="promotable" value="1"
-                            />
-                        </meta_attributes>
-                    </clone>
-                </resources>
-            """,
-            stderr_full=(
-                "Warning: Clone option 'promotable' is not compatible with "
-                "'ocf:pcsmock:minimal' resource agent of resource 'R'\n"
-            ),
-        )
 
 
 class UpdateInstanceAttrs(
@@ -4559,94 +4473,6 @@ class TransformMasterToClone(ResourceTest):
         super().setUp()
         self.pcs_runner.mock_settings = get_mock_settings()
 
-    def test_transform_master_without_meta_on_meta(self):
-        # pcs no longer allows creating masters but supports existing ones. In
-        # order to test it, we need to put a master in the CIB without pcs.
-        fixture_to_cib(self.temp_cib.name, fixture_master_xml("dummy"))
-        self.assert_effect(
-            "resource meta dummy-master a=b".split(),
-            """<resources>
-                <clone id="dummy-master">
-                    <primitive class="ocf" id="dummy" provider="pcsmock"
-                        type="stateful"
-                    >
-                        <operations>
-                            <op id="dummy-monitor-interval-10" interval="10"
-                                name="monitor" role="Master" timeout="20"
-                            />
-                            <op id="dummy-monitor-interval-11" interval="11"
-                                name="monitor" role="Slave" timeout="20"
-                            />
-                            <op id="dummy-notify-interval-0s" interval="0s"
-                                name="notify" timeout="5"
-                            />
-                            <op id="dummy-start-interval-0s" interval="0s"
-                                name="start" timeout="20"
-                            />
-                            <op id="dummy-stop-interval-0s" interval="0s"
-                                name="stop" timeout="20"
-                            />
-                        </operations>
-                    </primitive>
-                    <meta_attributes id="dummy-master-meta_attributes">
-                        <nvpair id="dummy-master-meta_attributes-promotable"
-                              name="promotable" value="true"
-                        />
-                        <nvpair id="dummy-master-meta_attributes-a" name="a"
-                            value="b"
-                        />
-                    </meta_attributes>
-                </clone>
-            </resources>""",
-        )
-
-    def test_transform_master_with_meta_on_meta(self):
-        # pcs no longer allows creating masters but supports existing ones. In
-        # order to test it, we need to put a master in the CIB without pcs.
-        fixture_to_cib(
-            self.temp_cib.name,
-            fixture_master_xml("dummy", meta_dict=dict(a="A", b="B", c="C")),
-        )
-        self.assert_effect(
-            "resource meta dummy-master a=AA b= d=D promotable=".split(),
-            """<resources>
-                <clone id="dummy-master">
-                    <primitive class="ocf" id="dummy" provider="pcsmock"
-                        type="stateful"
-                    >
-                        <operations>
-                            <op id="dummy-monitor-interval-10" interval="10"
-                                name="monitor" role="Master" timeout="20"
-                            />
-                            <op id="dummy-monitor-interval-11" interval="11"
-                                name="monitor" role="Slave" timeout="20"
-                            />
-                            <op id="dummy-notify-interval-0s" interval="0s"
-                                name="notify" timeout="5"
-                            />
-                            <op id="dummy-start-interval-0s" interval="0s"
-                                name="start" timeout="20"
-                            />
-                            <op id="dummy-stop-interval-0s" interval="0s"
-                                name="stop" timeout="20"
-                            />
-                        </operations>
-                    </primitive>
-                    <meta_attributes id="dummy-master-meta_attributes">
-                        <nvpair id="dummy-master-meta_attributes-a" name="a"
-                            value="AA"
-                        />
-                        <nvpair id="dummy-master-meta_attributes-c" name="c"
-                            value="C"
-                        />
-                        <nvpair id="dummy-master-meta_attributes-d" name="d"
-                            value="D"
-                        />
-                    </meta_attributes>
-                </clone>
-            </resources>""",
-        )
-
     def test_transform_master_without_meta_on_update(self):
         # pcs no longer allows creating masters but supports existing ones. In
         # order to test it, we need to put a master in the CIB without pcs.
@@ -4900,13 +4726,6 @@ class BundleMiscCommands(BundleCommon):
             "Error: Unable to find resource: B\n",
         )
 
-    def test_meta(self):
-        self.fixture_bundle("B")
-        self.assert_pcs_fail_regardless_of_force(
-            "resource meta B aaa=bbb".split(),
-            "Error: unable to find a resource/clone/group: B\n",
-        )
-
     def test_utilization(self):
         self.fixture_bundle("B")
         self.assert_pcs_fail(
@@ -5097,66 +4916,6 @@ class ResourceUpdateRemoteAndGuestChecks(TestCase, AssertPcsMixin):
         )
         self.assert_pcs_success(
             "resource update R meta remote-node= --force".split(),
-            stderr_full=(
-                "Warning: this command is not sufficient for removing a guest node,"
-                " use 'pcs cluster node remove-guest'\n"
-            ),
-        )
-
-    def test_meta_fail_on_pacemaker_guest_attempt(self):
-        self.assert_pcs_success("resource create R ocf:pcsmock:minimal".split())
-        self.assert_pcs_fail(
-            "resource meta R remote-node=HOST".split(),
-            (
-                "Error: this command is not sufficient for creating a guest "
-                "node, use 'pcs cluster node add-guest', use --force to "
-                "override\n" + ERRORS_HAVE_OCCURRED
-            ),
-        )
-
-    def test_meta_warn_on_pacemaker_guest_attempt(self):
-        self.assert_pcs_success("resource create R ocf:pcsmock:minimal".split())
-        self.assert_pcs_success(
-            "resource meta R remote-node=HOST --force".split(),
-            stderr_full=(
-                "Warning: this command is not sufficient for creating a guest node,"
-                " use 'pcs cluster node add-guest'\n"
-            ),
-        )
-
-    def test_meta_fail_on_pacemaker_guest_attempt_remove(self):
-        self.assert_pcs_success(
-            (
-                "resource create R ocf:pcsmock:minimal meta remote-node=HOST"
-                " --force"
-            ).split(),
-            stderr_full=(
-                "Warning: this command is not sufficient for creating a guest node,"
-                " use 'pcs cluster node add-guest'\n"
-            ),
-        )
-        self.assert_pcs_fail(
-            "resource meta R remote-node=".split(),
-            (
-                "Error: this command is not sufficient for removing a guest "
-                "node, use 'pcs cluster node remove-guest', use --force to "
-                "override\n" + ERRORS_HAVE_OCCURRED
-            ),
-        )
-
-    def test_meta_warn_on_pacemaker_guest_attempt_remove(self):
-        self.assert_pcs_success(
-            (
-                "resource create R ocf:pcsmock:minimal meta remote-node=HOST"
-                " --force"
-            ).split(),
-            stderr_full=(
-                "Warning: this command is not sufficient for creating a guest node,"
-                " use 'pcs cluster node add-guest'\n"
-            ),
-        )
-        self.assert_pcs_success(
-            "resource meta R remote-node= --force".split(),
             stderr_full=(
                 "Warning: this command is not sufficient for removing a guest node,"
                 " use 'pcs cluster node remove-guest'\n"

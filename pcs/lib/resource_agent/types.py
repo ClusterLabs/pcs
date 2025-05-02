@@ -38,6 +38,10 @@ class ResourceAgentName:
     def is_stonith(self) -> bool:
         return self.standard == "stonith"
 
+    @property
+    def is_ocf(self) -> bool:
+        return self.standard == "ocf"
+
     def to_dto(self) -> ResourceAgentNameDto:
         return ResourceAgentNameDto(
             standard=self.standard,

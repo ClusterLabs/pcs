@@ -6,7 +6,10 @@ from typing import (
 from lxml.etree import _Element
 
 from pcs.common import reports
-from pcs.common.reports.item import ReportItem
+from pcs.common.reports.item import (
+    ReportItem,
+    ReportItemList,
+)
 from pcs.common.types import StringCollection
 from pcs.lib import validate
 from pcs.lib.cib.node import PacemakerNode
@@ -17,13 +20,148 @@ from pcs.lib.cib.nvpair import (
 )
 from pcs.lib.cib.tools import does_id_exist
 
+OPTION_REMOTE_NODE = "remote-node"
+_OPTION_REMOTE_ADDR = "remote-addr"
+_OPTION_REMOTE_PORT = "remote-port"
+_OPTION_REMOTE_CONN_TIMEOUT = "remote-connect-timeout"
+
+
 # TODO pcs currently does not care about multiple meta_attributes and here
 # we don't care as well
 GUEST_OPTIONS = [
-    "remote-port",
-    "remote-addr",
-    "remote-connect-timeout",
+    _OPTION_REMOTE_ADDR,
+    _OPTION_REMOTE_PORT,
+    _OPTION_REMOTE_CONN_TIMEOUT,
 ]
+
+
+def validate_updating_guest_attributes(
+    cib: _Element,
+    existing_nodes_names: list[str],
+    existing_nodes_addrs: list[str],
+    new_meta_attrs: Mapping[str, str],
+    existing_meta_attrs: Mapping[str, str],
+    force_flags: reports.types.ForceFlags,
+) -> ReportItemList:
+    """
+    Guest nodes have an implicit connection resource created by Pacemaker with
+    attributes remote-node and remode-addr that defaults to remote-node.
+    Updating these attributes doesn't make sense because Pacemaker Remote also
+    needs authkey, so changing the address to another host will not work as
+    expected. However it can still be forced (in case of a networking change)
+    and additional check for IDs in CIB is performed.
+
+    TODO: needs to be consolidated with checks in resource create during its
+        overhaul
+
+    existing_nodes_names -- list of existing guest and remote node names to
+        check for name conflicts
+    existing_nodes_addrs -- list of existing guest and remote node addresses to
+        check for name conflicts, since address is used if name is not defined
+    new_meta_attrs -- meta attributes that are being updated with their new
+        values
+    existing_meta_attrs -- currently defined meta attributes with their values
+    force_flags -- force flags
+    """
+
+    validator_list = [
+        validate.ValueTimeInterval(_OPTION_REMOTE_CONN_TIMEOUT),
+        validate.ValuePortNumber(_OPTION_REMOTE_PORT),
+    ]
+    for validator in validator_list:
+        validator.empty_string_valid = True
+    report_list = validate.ValidatorAll(validator_list).validate(new_meta_attrs)
+
+    # Validate remote-node collision with other CIB IDs
+    report_list.extend(
+        validate_conflicts(
+            cib,
+            existing_nodes_names,
+            existing_nodes_addrs,
+            new_meta_attrs.get(OPTION_REMOTE_NODE, ""),
+            new_meta_attrs,
+        )
+    )
+
+    # Validating previously undefined meta attributes
+    new_meta_attrs_set = set(new_meta_attrs.keys())
+    existing_meta_attrs_set = set(existing_meta_attrs.keys())
+
+    # Only addition of remote-node constitutes creating of a guest node, just
+    # adding remote-addr when remote-node is not defined is fine
+    added_guest_conn_keys = set(new_meta_attrs_set - existing_meta_attrs_set)
+    if OPTION_REMOTE_NODE in added_guest_conn_keys:
+        # Suggesting remove is not needed, this is only triggered when the
+        # attributes weren't defined previously
+        report_list.append(
+            ReportItem(
+                severity=reports.item.get_severity_from_flags(
+                    reports.codes.FORCE,
+                    force_flags,
+                ),
+                message=reports.messages.UseCommandNodeAddGuest(),
+            )
+        )
+        # Never return reports with contradictory guidance
+        return report_list
+
+    # Validating previously defined meta attributes
+    updated_guest_conn_keys = existing_meta_attrs_set.intersection(
+        new_meta_attrs_set
+    ).intersection(
+        # These keys are crucial for defining the connection to the guest node
+        # and should only be changed by recreating the guest node in most cases
+        {OPTION_REMOTE_NODE, _OPTION_REMOTE_ADDR}
+    )
+    if any(
+        new_meta_attrs[key] != existing_meta_attrs[key]
+        for key in updated_guest_conn_keys
+    ):
+        # If all new values are empty, this is a delete operation
+        if not all(new_meta_attrs[key] for key in updated_guest_conn_keys):
+            report_list.append(
+                ReportItem(
+                    severity=reports.item.get_severity_from_flags(
+                        reports.codes.FORCE,
+                        force_flags,
+                    ),
+                    message=reports.messages.UseCommandNodeRemoveGuest(),
+                )
+            )
+        elif OPTION_REMOTE_NODE in existing_meta_attrs:
+            # Otherwise, this is an update, suggest readding resource but only
+            # if remote-node is defined - if it isn't, it's not a dangerous
+            # operation
+            report_list.append(
+                ReportItem(
+                    severity=reports.item.get_severity_from_flags(
+                        reports.codes.FORCE,
+                        force_flags,
+                    ),
+                    message=reports.messages.UseCommandRemoveAndAddGuestNode(),
+                )
+            )
+
+    # Special case - when remote-node is set up without node-addr, it is used as
+    # an address, so adding remote-addr counts as an address change too
+    if (
+        _OPTION_REMOTE_ADDR not in existing_meta_attrs
+        and OPTION_REMOTE_NODE in existing_meta_attrs
+        and existing_meta_attrs[OPTION_REMOTE_NODE]
+        and _OPTION_REMOTE_ADDR in new_meta_attrs
+        and new_meta_attrs[_OPTION_REMOTE_ADDR]
+    ):
+        report_list.append(
+            ReportItem(
+                severity=reports.item.get_severity_from_flags(
+                    reports.codes.FORCE,
+                    force_flags,
+                ),
+                message=reports.messages.UseCommandRemoveAndAddGuestNode(),
+            )
+        )
+
+    return report_list
 
 
 def validate_conflicts(
@@ -37,33 +175,40 @@ def validate_conflicts(
     if (
         does_id_exist(tree, node_name)
         or node_name in existing_nodes_names
-        or ("remote-addr" not in options and node_name in existing_nodes_addrs)
-    ):
-        report_list.append(
-            ReportItem.error(reports.messages.IdAlreadyExists(node_name))
+        or (
+            _OPTION_REMOTE_ADDR not in options
+            and node_name in existing_nodes_addrs
         )
-
-    if (
-        "remote-addr" in options
-        and options["remote-addr"] in existing_nodes_addrs
     ):
         report_list.append(
             ReportItem.error(
-                reports.messages.IdAlreadyExists(options["remote-addr"])
+                reports.messages.GuestNodeNameAlreadyExists(node_name)
+            )
+        )
+
+    if (
+        _OPTION_REMOTE_ADDR in options
+        and options[_OPTION_REMOTE_ADDR] in existing_nodes_addrs
+    ):
+        report_list.append(
+            ReportItem.error(
+                reports.messages.NodeAddressesAlreadyExist(
+                    [options[_OPTION_REMOTE_ADDR]]
+                )
             )
         )
     return report_list
 
 
 def is_node_name_in_options(options):
-    return "remote-node" in options
+    return OPTION_REMOTE_NODE in options
 
 
 def get_guest_option_value(options, default=None):
     """
     Commandline options: no options
     """
-    return options.get("remote-node", default)
+    return options.get(OPTION_REMOTE_NODE, default)
 
 
 def validate_set_as_guest(
@@ -71,8 +216,8 @@ def validate_set_as_guest(
 ):
     validator_list = [
         validate.NamesIn(GUEST_OPTIONS, option_type="guest"),
-        validate.ValueTimeInterval("remote-connect-timeout"),
-        validate.ValuePortNumber("remote-port"),
+        validate.ValueTimeInterval(_OPTION_REMOTE_CONN_TIMEOUT),
+        validate.ValuePortNumber(_OPTION_REMOTE_PORT),
     ]
     return (
         validate.ValidatorAll(validator_list).validate(options)
@@ -91,7 +236,7 @@ def is_guest_node(resource_element):
 
     etree.Element resource_element is a search element
     """
-    return has_meta_attribute(resource_element, "remote-node")
+    return has_meta_attribute(resource_element, OPTION_REMOTE_NODE)
 
 
 def validate_is_not_guest(resource_element):
@@ -124,13 +269,13 @@ def set_as_guest(
     etree.Element resource_element
 
     """
-    meta_options = {"remote-node": str(node)}
+    meta_options = {OPTION_REMOTE_NODE: str(node)}
     if addr:
-        meta_options["remote-addr"] = str(addr)
+        meta_options[_OPTION_REMOTE_ADDR] = str(addr)
     if port:
-        meta_options["remote-port"] = str(port)
+        meta_options[_OPTION_REMOTE_PORT] = str(port)
     if connect_timeout:
-        meta_options["remote-connect-timeout"] = str(connect_timeout)
+        meta_options[_OPTION_REMOTE_CONN_TIMEOUT] = str(connect_timeout)
 
     arrange_first_meta_attributes(resource_element, meta_options, id_provider)
 
@@ -152,7 +297,7 @@ def unset_guest(resource_element):
             " or ".join(
                 [
                     f'@name="{option}"'
-                    for option in (GUEST_OPTIONS + ["remote-node"])
+                    for option in (GUEST_OPTIONS + [OPTION_REMOTE_NODE])
                 ]
             )
         )
@@ -167,7 +312,7 @@ def get_node_name_from_options(meta_options, default=None):
     Return node_name from meta options.
     dict meta_options
     """
-    return meta_options.get("remote-node", default)
+    return meta_options.get(OPTION_REMOTE_NODE, default)
 
 
 def get_node_name_from_resource(resource_element):
@@ -176,7 +321,7 @@ def get_node_name_from_resource(resource_element):
 
     etree.Element resource_element
     """
-    return get_meta_attribute_value(resource_element, "remote-node")
+    return get_meta_attribute_value(resource_element, OPTION_REMOTE_NODE)
 
 
 def find_node_list(tree):
@@ -201,9 +346,9 @@ def find_node_list(tree):
         host = None
         name = None
         for nvpair in meta_attrs:
-            if nvpair.attrib.get("name", "") == "remote-addr":
+            if nvpair.attrib.get("name", "") == _OPTION_REMOTE_ADDR:
                 host = nvpair.attrib["value"]
-            if nvpair.attrib.get("name", "") == "remote-node":
+            if nvpair.attrib.get("name", "") == OPTION_REMOTE_NODE:
                 name = nvpair.attrib["value"]
                 if host is None:
                     host = name
