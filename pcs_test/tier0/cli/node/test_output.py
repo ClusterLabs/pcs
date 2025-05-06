@@ -26,7 +26,7 @@ class NodeToLinesCmdBaseMixin:
 
 class NodeAttributeToLines(NodeToLinesCmdBaseMixin, TestCase):
     def _call_func(self, config):
-        return node_output.node_attribute_to_lines(config)
+        return node_output.config_dto_to_attribute_lines(config)
 
     def test_nodes_attributes_to_lines(self):
         config = FIXTURE_NODE_CONFIG
@@ -50,7 +50,7 @@ class NodeAttributeToLines(NodeToLinesCmdBaseMixin, TestCase):
 
 class NodeUtilizationToLines(NodeToLinesCmdBaseMixin, TestCase):
     def _call_func(self, config):
-        return node_output.node_utilization_to_lines(config)
+        return node_output.config_dto_to_utilization_lines(config)
 
     def test_nodes_utilization_to_lines(self):
         config = FIXTURE_NODE_CONFIG
@@ -228,7 +228,7 @@ class FilterNodesByNvpairName(TestCase):
                     ),
                 ]
             ),
-            node_output.filter_nodes_by_nvpair_name(self.nodes_config, "X"),
+            node_output.filter_nodes_nvpairs_by_name(self.nodes_config, "X"),
         )
 
     def test_match(self):
@@ -291,5 +291,5 @@ class FilterNodesByNvpairName(TestCase):
                     ),
                 ]
             ),
-            node_output.filter_nodes_by_nvpair_name(self.nodes_config, "a"),
+            node_output.filter_nodes_nvpairs_by_name(self.nodes_config, "a"),
         )

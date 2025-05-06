@@ -18,11 +18,11 @@ from pcs.utils import print_warning_if_utilization_attrs_has_no_effect
 
 from .output import (
     config_dto_to_attribute_cmd,
+    config_dto_to_attribute_lines,
     config_dto_to_utilization_cmd,
+    config_dto_to_utilization_lines,
     filter_nodes_by_node_name,
-    filter_nodes_by_nvpair_name,
-    node_attribute_to_lines,
-    node_utilization_to_lines,
+    filter_nodes_nvpairs_by_name,
 )
 
 
@@ -54,28 +54,28 @@ def _node_output_cmd(
             f"filtering is not supported with {OUTPUT_FORMAT_OPTION}="
             f"{OUTPUT_FORMAT_VALUE_CMD}|{OUTPUT_FORMAT_VALUE_JSON}"
         )
-    if utilization_warning:
-        print_warning_if_utilization_attrs_has_no_effect(
-            PropertyConfigurationFacade.from_properties_dtos(
-                lib.cluster_property.get_properties(),
-                lib.cluster_property.get_properties_metadata(),
-            )
-        )
     config_dto = lib.node.get_config_dto()
-    if argv:
-        node_name = argv[0]
-        config_dto = filter_nodes_by_node_name(config_dto, node_name)
-        if not config_dto.nodes:
-            raise CmdLineInputError(f"Unable to find a node: {node_name}")
-    if modifiers.is_specified("--name"):
-        config_dto = filter_nodes_by_nvpair_name(
-            config_dto, str(modifiers.get("--name"))
-        )
     if output_format == OUTPUT_FORMAT_VALUE_CMD:
         output = ";\n".join(to_cmd(config_dto))
     elif output_format == OUTPUT_FORMAT_VALUE_JSON:
         output = json.dumps(to_dict(config_dto))
     else:
+        if argv:
+            node_name = argv[0]
+            config_dto = filter_nodes_by_node_name(config_dto, node_name)
+            if not config_dto.nodes:
+                raise CmdLineInputError(f"Unable to find a node: {node_name}")
+        if modifiers.is_specified("--name"):
+            config_dto = filter_nodes_nvpairs_by_name(
+                config_dto, str(modifiers.get("--name"))
+            )
+        if utilization_warning:
+            print_warning_if_utilization_attrs_has_no_effect(
+                PropertyConfigurationFacade.from_properties_dtos(
+                    lib.cluster_property.get_properties(),
+                    lib.cluster_property.get_properties_metadata(),
+                )
+            )
         output = lines_to_str(to_lines(config_dto))
     if output:
         print(output)
@@ -96,7 +96,7 @@ def node_attribute_output_cmd(
         modifiers,
         ["-f", "--force", "--name"],
         config_dto_to_attribute_cmd,
-        node_attribute_to_lines,
+        config_dto_to_attribute_lines,
     )
 
 
@@ -115,6 +115,6 @@ def node_utilization_output_cmd(
         modifiers,
         ["-f", "--name"],
         config_dto_to_utilization_cmd,
-        node_utilization_to_lines,
+        config_dto_to_utilization_lines,
         utilization_warning=True,
     )

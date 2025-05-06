@@ -1,3 +1,4 @@
+from dataclasses import replace
 from typing import (
     Iterable,
     List,
@@ -32,10 +33,8 @@ def filter_nvpairs_by_names(
     nvsets: Iterable[CibNvsetDto], nvpair_names: StringSequence
 ) -> list[CibNvsetDto]:
     return [
-        CibNvsetDto(
-            id=nvset_dto.id,
-            options=nvset_dto.options,
-            rule=nvset_dto.rule,
+        replace(
+            nvset_dto,
             nvpairs=[
                 nvpair_dto
                 for nvpair_dto in nvset_dto.nvpairs

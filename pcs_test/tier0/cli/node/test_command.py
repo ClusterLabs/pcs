@@ -144,6 +144,16 @@ FIXTURE_TEXT_OUTPUT = {
 
 
 class NodeOutputCmdBaseMixin:
+    def _assert_lib_mocks(self, utilization_warning=False):
+        self.node.get_config_dto.assert_called_once_with()
+        if self.command == "utilization":
+            if utilization_warning:
+                self.cluster_property.get_properties.assert_called_once_with()
+                self.cluster_property.get_properties_metadata.assert_called_once_with()
+            else:
+                self.cluster_property.get_properties.assert_not_called()
+                self.cluster_property.get_properties_metadata.assert_not_called()
+
     def test_no_text_output_format_and_node_arg(self, mock_print):
         with self.assertRaises(CmdLineInputError) as cm:
             self._call_cmd(["node"], {"output-format": "json"})
@@ -193,7 +203,7 @@ class NodeOutputCmdBaseMixin:
     def test_empty_config_default_output_format(self, mock_print):
         self._set_empty_config()
         self._call_cmd([])
-        self._assert_lib_mocks()
+        self._assert_lib_mocks(utilization_warning=True)
         mock_print.assert_not_called()
 
     def test_empty_config_json_output_format(self, mock_print):
@@ -224,28 +234,35 @@ class NodeOutputCmdBaseMixin:
 
     def test_output_format_text(self, mock_print):
         self._call_cmd([], {"output-format": "text"})
-        self._assert_lib_mocks()
+        self._assert_lib_mocks(utilization_warning=True)
         mock_print.assert_called_once_with(
             FIXTURE_TEXT_OUTPUT[self.command]["text"]
         )
 
     def test_output_format_text_filter_node(self, mock_print):
         self._call_cmd(["node2"])
-        self._assert_lib_mocks()
+        self._assert_lib_mocks(utilization_warning=True)
         mock_print.assert_called_once_with(
             FIXTURE_TEXT_OUTPUT[self.command]["node"]
         )
 
+    def test_output_format_text_filter_node_does_not_exist(self, mock_print):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self._call_cmd(["nodeX"])
+        self.assertEqual(cm.exception.message, "Unable to find a node: nodeX")
+        self._assert_lib_mocks()
+        mock_print.assert_not_called()
+
     def test_output_format_text_filter_name(self, mock_print):
         self._call_cmd([], {"name": self.filter_name})
-        self._assert_lib_mocks()
+        self._assert_lib_mocks(utilization_warning=True)
         mock_print.assert_called_once_with(
             FIXTURE_TEXT_OUTPUT[self.command]["name"]
         )
 
     def test_output_format_text_filter_node_and_name(self, mock_print):
         self._call_cmd(["node2"], {"name": self.filter_node_and_name})
-        self._assert_lib_mocks()
+        self._assert_lib_mocks(utilization_warning=True)
         mock_print.assert_called_once_with(
             FIXTURE_TEXT_OUTPUT[self.command]["node_and_name"]
         )
@@ -280,9 +297,6 @@ class TestNodeAttributeOutputCmd(NodeOutputCmdBaseMixin, TestCase):
 
     def _set_empty_config(self):
         self.node.get_config_dto.return_value = CibNodeListDto(nodes=[])
-
-    def _assert_lib_mocks(self):
-        self.node.get_config_dto.assert_called_once_with()
 
     def test_force_option_shows_help(self, mock_print):
         with self.assertRaises(CmdLineInputError) as cm:
@@ -346,11 +360,6 @@ class TestNodeUtilizationOutputCmd(NodeOutputCmdBaseMixin, TestCase):
             )
         )
 
-    def _assert_lib_mocks(self):
-        self.node.get_config_dto.assert_called_once_with()
-        self.cluster_property.get_properties.assert_called_once_with()
-        self.cluster_property.get_properties_metadata.assert_called_once_with()
-
     @mock.patch("pcs.utils.reports_output.warn")
     def test_utilization_warning(self, mock_warn, mock_print):
         self._set_empty_config()
@@ -358,7 +367,7 @@ class TestNodeUtilizationOutputCmd(NodeOutputCmdBaseMixin, TestCase):
             nvsets=[]
         )
         self._call_cmd([])
-        self._assert_lib_mocks()
+        self._assert_lib_mocks(utilization_warning=True)
         mock_print.assert_not_called()
         mock_warn.assert_called_once_with(UTILIZATION_WARNING)
 

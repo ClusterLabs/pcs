@@ -1,16 +1,12 @@
 import shlex
+from dataclasses import replace
 from typing import Optional, Sequence
 
-from pcs.cli.common.output import (
-    INDENT_STEP,
-    pairs_to_cmd,
-)
+from pcs.cli.common.output import INDENT_STEP, pairs_to_cmd
 from pcs.cli.nvset import filter_nvpairs_by_names, nvset_dto_to_lines
 from pcs.common.pacemaker.node import CibNodeDto, CibNodeListDto
 from pcs.common.pacemaker.nvset import CibNvsetDto
-from pcs.common.str_tools import (
-    indent,
-)
+from pcs.common.str_tools import indent
 
 
 def _description_to_lines(desc: Optional[str]) -> list[str]:
@@ -34,7 +30,7 @@ def _node_dto_to_nvset_lines(
     return [f"Node: {node_dto.uname}"] + indent(lines, indent_step=INDENT_STEP)
 
 
-def node_utilization_to_lines(config_dto: CibNodeListDto) -> list[str]:
+def config_dto_to_utilization_lines(config_dto: CibNodeListDto) -> list[str]:
     result = []
     for node_dto in config_dto.nodes:
         result.extend(
@@ -45,7 +41,7 @@ def node_utilization_to_lines(config_dto: CibNodeListDto) -> list[str]:
     return result
 
 
-def node_attribute_to_lines(config_dto: CibNodeListDto) -> list[str]:
+def config_dto_to_attribute_lines(config_dto: CibNodeListDto) -> list[str]:
     result = []
     for node_dto in config_dto.nodes:
         result.extend(
@@ -60,7 +56,6 @@ def _nvsets_to_cmd(
     nvset_cmd: str, node_name: str, nvsets: Sequence[CibNvsetDto]
 ) -> list[str]:
     if nvsets and nvsets[0].nvpairs:
-        nvset_cmd = shlex.quote(nvset_cmd)
         node = shlex.quote(node_name)
         options = pairs_to_cmd(
             (nvpair.name, nvpair.value) for nvpair in nvsets[0].nvpairs
@@ -101,17 +96,13 @@ def filter_nodes_by_node_name(
     )
 
 
-def filter_nodes_by_nvpair_name(
+def filter_nodes_nvpairs_by_name(
     config_dto: CibNodeListDto, name: str
 ) -> CibNodeListDto:
     return CibNodeListDto(
         [
-            CibNodeDto(
-                id=node_dto.id,
-                uname=node_dto.uname,
-                description=node_dto.description,
-                score=node_dto.score,
-                type=node_dto.type,
+            replace(
+                node_dto,
                 instance_attributes=filter_nvpairs_by_names(
                     node_dto.instance_attributes, [name]
                 ),

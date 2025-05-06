@@ -1,26 +1,15 @@
-from unittest import (
-    TestCase,
-)
+from unittest import TestCase
 
 from lxml import etree
 
-from pcs import (
-    utils,
-)
+from pcs import utils
 
 from pcs_test.tier1.legacy.common import FIXTURE_UTILIZATION_WARNING
 from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.cib import get_assert_pcs_effect_mixin
 from pcs_test.tools.misc import get_test_resource as rc
-from pcs_test.tools.misc import (
-    get_tmp_file,
-    outdent,
-    write_file_to_tmpfile,
-)
-from pcs_test.tools.pcs_runner import (
-    PcsRunner,
-    pcs,
-)
+from pcs_test.tools.misc import get_tmp_file, outdent, write_file_to_tmpfile
+from pcs_test.tools.pcs_runner import PcsRunner, pcs
 
 empty_cib = rc("cib-empty-withnodes.xml")
 
@@ -309,8 +298,7 @@ class NodeStandby(TestCase, AssertPcsMixin):
         self.pcs_runner = PcsRunner(self.temp_cib.name)
 
     def tearDown(self):
-        pass
-        # self.temp_cib.close()
+        self.temp_cib.close()
 
     def fixture_standby_all(self):
         self.assert_pcs_success("node standby --all".split())
