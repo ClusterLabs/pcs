@@ -1,7 +1,5 @@
 import json
-from typing import (
-    Any,
-)
+from typing import Any
 
 import pcs.lib.pacemaker.live as lib_pacemaker
 from pcs import utils

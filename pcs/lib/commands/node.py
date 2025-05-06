@@ -6,14 +6,8 @@ from pcs.common.reports.item import ReportItem
 from pcs.lib.cib import node
 from pcs.lib.cib.node import update_node_instance_attrs
 from pcs.lib.cib.rule.in_effect import get_rule_evaluator
-from pcs.lib.cib.tools import (
-    IdProvider,
-    get_nodes,
-)
-from pcs.lib.env import (
-    LibraryEnvironment,
-    WaitType,
-)
+from pcs.lib.cib.tools import IdProvider, get_nodes
+from pcs.lib.env import LibraryEnvironment, WaitType
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.live import get_local_node_name
 from pcs.lib.pacemaker.state import ClusterState

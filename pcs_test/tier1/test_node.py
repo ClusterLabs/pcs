@@ -150,7 +150,7 @@ class NodeOutputFormatJsonMixin:
         self.assertEqual(
             json.loads(stdout), dto.to_dict(FIXTURE_EMPTY_NODES_DTO)
         )
-        self.assertEqual(stderr, self.expected_stderr)
+        self.assertEqual(stderr, "")
         self.assertEqual(retval, 0)
 
     def test_success(self):
@@ -161,19 +161,17 @@ class NodeOutputFormatJsonMixin:
             ["node", self.command, "--output-format=json"]
         )
         self.assertEqual(json.loads(stdout), dto.to_dict(FIXTURE_NODES_DTO))
-        self.assertEqual(stderr, self.expected_stderr)
+        self.assertEqual(stderr, "")
         self.assertEqual(retval, 0)
         temp_cib.close()
 
 
 class NodeAttributeOutputFormatJson(NodeOutputFormatJsonMixin, TestCase):
     command = "attribute"
-    expected_stderr = ""
 
 
 class NodeUtilizationOutputFormatJson(NodeOutputFormatJsonMixin, TestCase):
     command = "utilization"
-    expected_stderr = FIXTURE_UTILIZATION_WARNING
 
 
 class NodeAttributeUtilizationOutputFormatCmd(TestCase):
@@ -196,10 +194,7 @@ class NodeAttributeUtilizationOutputFormatCmd(TestCase):
         stdout, stderr, retval = runner.run(
             ["node", command, "--output-format=json"]
         )
-        self.assertEqual(
-            stderr,
-            "" if command != "utilization" else FIXTURE_UTILIZATION_WARNING,
-        )
+        self.assertEqual(stderr, "")
         self.assertEqual(retval, 0)
         return json.loads(stdout)
 
