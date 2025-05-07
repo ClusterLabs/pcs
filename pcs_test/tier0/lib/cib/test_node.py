@@ -17,7 +17,11 @@ from pcs_test.tools.assertions import (
     assert_raise_library_error,
     assert_xml_equal,
 )
+from pcs_test.tools.custom_mock import (
+    RuleInEffectEvalMock,
+)
 from pcs_test.tools.misc import get_test_resource as rc
+from pcs_test.tools.nodes_dto import FIXTURE_NODES_CONFIG_XML, get_nodes_dto
 from pcs_test.tools.xml import etree_to_str
 
 
@@ -331,4 +335,18 @@ class CreateNode(TestCase):
             </nodes>
             """,
             etree_to_str(self.nodes),
+        )
+
+
+class NodeElToDto(TestCase):
+    def setUp(self):
+        self.tree = etree.fromstring(FIXTURE_NODES_CONFIG_XML)
+
+    def test_success(self):
+        self.assertEqual(
+            [
+                node.node_el_to_dto(element)
+                for element in node.get_all_node_elements(self.tree)
+            ],
+            get_nodes_dto(RuleInEffectEvalMock({})).nodes,
         )

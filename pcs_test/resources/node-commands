@@ -1,0 +1,4 @@
+pcs node attribute rh7-1 a=1 b=1
+pcs node attribute rh7-2 a=1 b=1
+pcs node utilization rh7-1 cpu=4 ram=32
+pcs node utilization rh7-2 cpu=8 ram=64

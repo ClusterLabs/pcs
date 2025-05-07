@@ -1,13 +1,13 @@
 from contextlib import contextmanager
 
 from pcs.common import reports
+from pcs.common.pacemaker.node import CibNodeListDto
 from pcs.common.reports.item import ReportItem
+from pcs.lib.cib import node
 from pcs.lib.cib.node import update_node_instance_attrs
-from pcs.lib.cib.tools import IdProvider
-from pcs.lib.env import (
-    LibraryEnvironment,
-    WaitType,
-)
+from pcs.lib.cib.rule.in_effect import get_rule_evaluator
+from pcs.lib.cib.tools import IdProvider, get_nodes
+from pcs.lib.env import LibraryEnvironment, WaitType
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.live import get_local_node_name
 from pcs.lib.pacemaker.state import ClusterState
@@ -182,3 +182,18 @@ def _set_instance_attrs_all_nodes(
             update_node_instance_attrs(
                 cib, IdProvider(cib), node, attrs, state_nodes=state_nodes
             )
+
+
+def get_config_dto(
+    lib_env: LibraryEnvironment, evaluate_expired: bool = False
+) -> CibNodeListDto:
+    cib = lib_env.get_cib()
+    rule_in_effect_eval = get_rule_evaluator(
+        cib, lib_env.cmd_runner(), lib_env.report_processor, evaluate_expired
+    )
+    return CibNodeListDto(
+        nodes=[
+            node.node_el_to_dto(node_el, rule_eval=rule_in_effect_eval)
+            for node_el in node.get_all_node_elements(get_nodes(cib))
+        ]
+    )

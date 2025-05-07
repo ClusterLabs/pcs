@@ -1,11 +1,13 @@
 from collections import namedtuple
-from typing import Set
+from typing import Optional, Set
 
 from lxml import etree
 from lxml.etree import _Element
 
 from pcs.common import reports
+from pcs.common.pacemaker.node import CibNodeDto
 from pcs.common.reports.item import ReportItem
+from pcs.lib.cib import nvpair_multi, rule
 from pcs.lib.cib.nvpair import update_nvset
 from pcs.lib.cib.tools import get_nodes
 from pcs.lib.errors import LibraryError
@@ -13,6 +15,38 @@ from pcs.lib.xml_tools import (
     append_when_useful,
     get_root,
 )
+
+TAG_NODE = "node"
+
+
+def get_all_node_elements(nodes_section: _Element) -> list[_Element]:
+    return nodes_section.findall(TAG_NODE)
+
+
+def node_el_to_dto(
+    node_el: _Element, rule_eval: Optional[rule.RuleInEffectEval] = None
+) -> CibNodeDto:
+    if rule_eval is None:
+        rule_eval = rule.RuleInEffectEvalDummy()
+    return CibNodeDto(
+        id=str(node_el.attrib["id"]),
+        uname=str(node_el.attrib["uname"]),
+        description=node_el.get("description"),
+        score=node_el.get("score"),
+        type=node_el.get("type"),
+        instance_attributes=[
+            nvpair_multi.nvset_element_to_dto(nvset, rule_eval)
+            for nvset in nvpair_multi.find_nvsets(
+                node_el, nvpair_multi.NVSET_INSTANCE
+            )
+        ],
+        utilization=[
+            nvpair_multi.nvset_element_to_dto(nvset, rule_eval)
+            for nvset in nvpair_multi.find_nvsets(
+                node_el, nvpair_multi.NVSET_UTILIZATION
+            )
+        ],
+    )
 
 
 class PacemakerNode(namedtuple("PacemakerNode", "name addr")):
