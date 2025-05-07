@@ -8,16 +8,25 @@ from unittest import (
 
 from lxml import etree
 
+from pcs.common import reports
+from pcs.common.pacemaker.node import CibNodeDto, CibNodeListDto
 from pcs.common.reports import ReportItemSeverity as severity
 from pcs.common.reports import codes as report_codes
+from pcs.common.types import CibRuleInEffectStatus
 from pcs.lib.cib.tools import IdProvider
 from pcs.lib.commands import node as lib
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 
+from pcs_test.tools import fixture
 from pcs_test.tools.assertions import assert_raise_library_error
-from pcs_test.tools.custom_mock import MockLibraryReportProcessor
+from pcs_test.tools.command_env import get_env_tools
+from pcs_test.tools.custom_mock import (
+    MockLibraryReportProcessor,
+    RuleInEffectEvalMock,
+)
 from pcs_test.tools.misc import create_patcher
+from pcs_test.tools.nodes_dto import FIXTURE_NODES_CONFIG_XML, get_nodes_dto
 
 mocked_cib = etree.fromstring("<cib />")
 
@@ -298,3 +307,85 @@ class CibRunnerNodes(TestCase):
 
         self.assertRaises(LibraryError, run)
         push_cib.assert_not_called()
+
+
+class GetConfigDto(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+
+    def command(self, evaluate_expired=False):
+        return lib.get_config_dto(
+            self.env_assist.get_env(),
+            evaluate_expired=evaluate_expired,
+        )
+
+    def test_no_node_config(self):
+        self.config.runner.cib.load()
+        self.assertEqual(self.command(), CibNodeListDto(nodes=[]))
+
+    def test_nodes_without_attributes(self):
+        self.config.runner.cib.load(filename="cib-empty-withnodes.xml")
+        self.assertEqual(
+            self.command(),
+            CibNodeListDto(
+                nodes=[
+                    CibNodeDto(
+                        id="1",
+                        uname="rh7-1",
+                        description=None,
+                        score=None,
+                        type=None,
+                        instance_attributes=[],
+                        utilization=[],
+                    ),
+                    CibNodeDto(
+                        id="2",
+                        uname="rh7-2",
+                        description=None,
+                        score=None,
+                        type=None,
+                        instance_attributes=[],
+                        utilization=[],
+                    ),
+                ]
+            ),
+        )
+
+    @mock.patch("pcs.lib.cib.rule.in_effect.has_rule_in_effect_status_tool")
+    def test_nodes_config_without_rule_evaluation(self, mock_has_rule_tool):
+        mock_has_rule_tool.side_effect = AssertionError(
+            "has_rule_in_effect_status_tool should not be called"
+        )
+        self.config.runner.cib.load(nodes=FIXTURE_NODES_CONFIG_XML)
+        self.assertEqual(
+            self.command(),
+            get_nodes_dto(RuleInEffectEvalMock({})),
+        )
+
+    @mock.patch("pcs.lib.commands.node.get_rule_evaluator")
+    def test_nodes_config_with_rule_evaluation(self, mock_get_rule_evaluator):
+        self.config.runner.cib.load(nodes=FIXTURE_NODES_CONFIG_XML)
+        rule_evaluator = RuleInEffectEvalMock(
+            {
+                "nodes-1-rule": CibRuleInEffectStatus.EXPIRED,
+                "nodes-1-2-rule": CibRuleInEffectStatus.IN_EFFECT,
+                "nodes-2-utilization-rule": CibRuleInEffectStatus.IN_EFFECT,
+            }
+        )
+        mock_get_rule_evaluator.return_value = rule_evaluator
+        self.assertEqual(
+            self.command(evaluate_expired=True),
+            get_nodes_dto(rule_evaluator),
+        )
+        mock_get_rule_evaluator.assert_called_once()
+
+    def test_cib_error(self):
+        self.config.runner.cib.load(returncode=1, stderr="error")
+        self.env_assist.assert_raise_library_error(
+            self.command,
+            reports=[
+                fixture.error(reports.codes.CIB_LOAD_ERROR, reason="error")
+            ],
+            expected_in_processor=False,
+        )
+        self.env_assist.assert_reports([])

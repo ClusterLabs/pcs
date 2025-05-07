@@ -18,6 +18,8 @@
 - Support for bundle resources in `pcs resource meta`, disallow updating
   `remote-node` and `remote-addr` without `--force`, add lib command
   `resource.update_meta` to API v2 ([RHEL-35407])
+- Support for exporting node attributes and utilization in `json` and `cmd`
+  formats ([RHEL-21050])
 
 ### Fixed
 - Fixed a traceback when removing a resource fails in web UI
@@ -26,6 +28,7 @@
 - Display node-attribute in colocation constraints configuration ([RHEL-81938])
 
 [RHEL-7681]: https://issues.redhat.com/browse/RHEL-7681
+[RHEL-21050]: https://issues.redhat.com/browse/RHEL-21050
 [RHEL-22423]: https://issues.redhat.com/browse/RHEL-22423
 [RHEL-35420]: https://issues.redhat.com/browse/RHEL-35407
 [RHEL-44347]: https://issues.redhat.com/browse/RHEL-44347

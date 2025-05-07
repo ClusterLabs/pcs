@@ -100,6 +100,9 @@ EXTRA_DIST		= \
 			  tier0/cli/constraint_ticket/test_command.py \
 			  tier0/cli/constraint_ticket/test_parse_args.py \
 			  tier0/cli/__init__.py \
+			  tier0/cli/node/__init__.py \
+			  tier0/cli/node/test_command.py \
+			  tier0/cli/node/test_output.py \
 			  tier0/cli/query/__init__.py \
 			  tier0/cli/query/test_resource.py \
 			  tier0/cli/reports/__init__.py \
@@ -444,6 +447,7 @@ EXTRA_DIST		= \
 			  tier1/test_cluster_pcmk_remote.py \
 			  tier1/test_cluster_property.py \
 			  tier1/test_misc.py \
+			  tier1/test_node.py \
 			  tier1/test_quorum.py \
 			  tier1/test_status.py \
 			  tier1/test_status_query_resource.py \
@@ -528,6 +532,7 @@ EXTRA_DIST		= \
 			  tools/fixture.py \
 			  tools/__init__.py \
 			  tools/misc.py \
+			  tools/nodes_dto.py \
 			  tools/pcs_runner.py \
 			  tools/parallel_test_runner.py \
 			  tools/resources_dto.py \

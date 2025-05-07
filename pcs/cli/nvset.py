@@ -1,3 +1,4 @@
+from dataclasses import replace
 from typing import (
     Iterable,
     List,
@@ -14,7 +15,7 @@ from pcs.common.str_tools import (
     format_optional,
     indent,
 )
-from pcs.common.types import CibRuleInEffectStatus
+from pcs.common.types import CibRuleInEffectStatus, StringSequence
 
 
 def filter_out_expired_nvset(
@@ -25,6 +26,22 @@ def filter_out_expired_nvset(
         for nvset_dto in nvset_dto_list
         if not nvset_dto.rule
         or nvset_dto.rule.in_effect != CibRuleInEffectStatus.EXPIRED
+    ]
+
+
+def filter_nvpairs_by_names(
+    nvsets: Iterable[CibNvsetDto], nvpair_names: StringSequence
+) -> list[CibNvsetDto]:
+    return [
+        replace(
+            nvset_dto,
+            nvpairs=[
+                nvpair_dto
+                for nvpair_dto in nvset_dto.nvpairs
+                if nvpair_dto.name in nvpair_names
+            ],
+        )
+        for nvset_dto in nvsets
     ]
 
 

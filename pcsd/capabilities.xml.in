@@ -657,12 +657,24 @@
 
 
 
+     <capability id="pcmk.node.config.rest-api.v2" in-pcs="0" in-pcsd="1">
+       <description>
+         API v2: node.get_config_dto
+       </description>
+     </capability>
     <capability id="node.attributes" in-pcs="1" in-pcsd="1">
       <description>
         Show node attributes, add and remove a node attribute.
 
         pcs commands: node attribute
         daemon urls: add_node_attr_remote
+      </description>
+    </capability>
+    <capability id="node.attributes.output-formats" in-pcs="1" in-pcsd="0">
+      <description>
+        Show / export node attributes in various formats.
+
+        pcs commands: node attribute --output-format=text|json|cmd
       </description>
     </capability>
     <capability id="node.attributes.set-list-for-node" in-pcs="1" in-pcsd="0">
@@ -762,7 +774,13 @@
         pcs commands: node utilization
       </description>
     </capability>
+    <capability id="node.utilization.output-formats" in-pcs="1" in-pcsd="0">
+      <description>
+        Show / export node utilization in various formats.
 
+        pcs commands: node utilization --output-format=text|json|cmd
+      </description>
+    </capability>
 
 
     <capability id="node.confirm-off" in-pcs="1" in-pcsd="0">
