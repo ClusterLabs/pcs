@@ -190,6 +190,11 @@ AC_ARG_WITH([distro],
 	    [AS_HELP_STRING([--with-distro=DIR], [Set defaults to specified distro. Default: autodetected])],
 	    [DISTRO="$withval"])
 
+AC_ARG_ENABLE([ci-rpm-workarounds],
+	    [AS_HELP_STRING([--enable-ci-rpm-workarounds], [NOT TO BE USED UNLESS YOUR NAME IS JENKINS])],
+	    [CIRPMWORKAROUNDS="yes"], [CIRPMWORKAROUNDS=""])
+AC_SUBST([CIRPMWORKAROUNDS])
+
 if test "x$cache_only" != "xyes"; then
 	AC_CHECK_PROGS([WGET], [wget])
 	if test "x$WGET" = "x"; then
@@ -404,22 +409,43 @@ AC_DEFUN([PCS_CHECK_GEM], [
 PCS_CHECK_GEM([power_assert])
 PCS_CHECK_GEM([test-unit])
 
-if test "x$tests_only" != "xyes"; then
-	PCS_CHECK_GEM([backports])
-	PCS_CHECK_GEM([ethon])
-	PCS_CHECK_GEM([ffi])
-	PCS_CHECK_GEM([json])
-	PCS_CHECK_GEM([ruby2_keywords])
-	PCS_CHECK_GEM([mustermann], [< 3.0.0])
-	PCS_CHECK_GEM([open4])
-	PCS_CHECK_GEM([rack])
-	PCS_CHECK_GEM([rack-protection])
-	PCS_CHECK_GEM([rack-test])
-	PCS_CHECK_GEM([sinatra])
-	PCS_CHECK_GEM([tilt])
-	PCS_CHECK_GEM([nio4r])
-	PCS_CHECK_GEM([puma])
-	PCS_CHECK_GEM([rexml])
+if test "x$CIRPMWORKAROUNDS" = "xyes"; then
+	# limit rubygems to ruby 2.5.9 which is available in RHEL 8 machines in CI
+	if test "x$tests_only" != "xyes"; then
+		PCS_CHECK_GEM([backports])
+		PCS_CHECK_GEM([ethon])
+		PCS_CHECK_GEM([ffi], [< 1.17.0])
+		PCS_CHECK_GEM([json], [< 2.8.0])
+		PCS_CHECK_GEM([ruby2_keywords])
+		PCS_CHECK_GEM([mustermann], [< 3.0.0])
+		PCS_CHECK_GEM([open4])
+		PCS_CHECK_GEM([rack])
+		PCS_CHECK_GEM([rack-protection], [< 3.0.0])
+		PCS_CHECK_GEM([rack-test])
+		PCS_CHECK_GEM([sinatra], [< 3.0.0])
+		PCS_CHECK_GEM([tilt])
+		PCS_CHECK_GEM([nio4r], [< 2.7.0])
+		PCS_CHECK_GEM([puma])
+		PCS_CHECK_GEM([rexml])
+	fi
+else
+	if test "x$tests_only" != "xyes"; then
+		PCS_CHECK_GEM([backports])
+		PCS_CHECK_GEM([ethon])
+		PCS_CHECK_GEM([ffi])
+		PCS_CHECK_GEM([json])
+		PCS_CHECK_GEM([ruby2_keywords])
+		PCS_CHECK_GEM([mustermann], [< 3.0.0])
+		PCS_CHECK_GEM([open4])
+		PCS_CHECK_GEM([rack])
+		PCS_CHECK_GEM([rack-protection])
+		PCS_CHECK_GEM([rack-test])
+		PCS_CHECK_GEM([sinatra])
+		PCS_CHECK_GEM([tilt])
+		PCS_CHECK_GEM([nio4r])
+		PCS_CHECK_GEM([puma])
+		PCS_CHECK_GEM([rexml])
+	fi
 fi
 
 if test "x$local_build" = "xyes" && test $(wc -l < Gemfile) -gt 2; then
