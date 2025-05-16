@@ -37,7 +37,6 @@ def create_http_request():
         uri="/pcsd/uri",
         headers=HTTPHeaders({"Cookie": "cookie1=first;cookie2=second"}),
         body=str.encode(urlencode({"post-key": "post-value"})),
-        host="pcsd-host:2224",
     )
 
 
