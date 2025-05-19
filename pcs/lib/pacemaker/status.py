@@ -386,9 +386,10 @@ def _get_target_role(resource: _Element) -> Optional[PcmkRoleType]:
     target_role = resource.get("target_role")
     if target_role is None:
         return None
-    if target_role not in PCMK_ROLES_WITH_LEGACY:
+    target_role_normalized = target_role.capitalize()
+    if target_role_normalized not in PCMK_ROLES_WITH_LEGACY:
         raise UnknownPcmkRoleError(str(resource.get("id")), target_role)
-    return get_primary_role_value(PcmkRoleType(target_role))
+    return get_primary_role_value(PcmkRoleType(target_role_normalized))
 
 
 def _remove_clone_suffix(resource_id: str) -> tuple[str, Optional[str]]:

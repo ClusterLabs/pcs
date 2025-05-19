@@ -581,6 +581,17 @@ class TestPrimitiveStatusToDto(TestCase):
                 self.assertEqual(cm.exception.resource_id, "resource")
                 self.assertEqual(cm.exception.role, value)
 
+    def test_target_role_ignore_case(self):
+        for value in ["started", "STARTED", "sTaRtEd"]:
+            with self.subTest(value=value):
+                primitive_xml = etree.fromstring(
+                    fixture_primitive_xml(target_role=value)
+                )
+                result = status._primitive_to_dto(primitive_xml)
+                self.assertEqual(
+                    result, fixture_primitive_dto(target_role=PCMK_ROLE_STARTED)
+                )
+
 
 class TestGroupStatusToDto(TestCase):
     # pylint: disable=protected-access
