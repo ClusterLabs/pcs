@@ -26,6 +26,13 @@
 - It is now possible to override errors when editing cluster properties in web
   UI
 - Display node-attribute in colocation constraints configuration ([RHEL-82894])
+- Fixed cluster status parsing when the `target-role` meta attribute is not
+  properly capitalized as defined by pacemaker specification. Affected
+  commands:
+    - `pcs resource|stonith delete|remove`, `pcs booth delete|remove`,
+      and `pcs cluster node delete-remote|remove-remote` (broken since 0.11.9)
+      ([RHEL-92044])
+    - `pcs status query resource` (broken since 0.11.8)
 
 [RHEL-35420]: https://issues.redhat.com/browse/RHEL-35420
 [RHEL-76055]: https://issues.redhat.com/browse/RHEL-76055
@@ -36,6 +43,7 @@
 [RHEL-76170]: https://issues.redhat.com/browse/RHEL-76170
 [RHEL-76177]: https://issues.redhat.com/browse/RHEL-76177
 [RHEL-82894]: https://issues.redhat.com/browse/RHEL-82894
+[RHEL-92044]: https://issues.redhat.com/browse/RHEL-92044
 
 
 ## [0.11.9.1] - 2025-04-14
