@@ -46,5 +46,11 @@ PCSD_SESSION_LIFETIME=3600
 # is 50 (even if set lower).
 PCSD_RESTART_AFTER_REQUESTS=200
 
+# These environment variables set the maximum query string bytesize and the
+# maximum number of query parameters that pcsd will attempt to parse.
+# See CVE-2025-46727 for details.
+#RACK_QUERY_PARSER_BYTESIZE_LIMIT=4194304
+#RACK_QUERY_PARSER_PARAMS_LIMIT=4096
+
 # Do not change
 RACK_ENV=production

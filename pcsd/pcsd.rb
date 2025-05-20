@@ -74,6 +74,11 @@ configure do
   CAPABILITIES_PCSD = capabilities_pcsd.freeze
 end
 
+error Rack::QueryParser::QueryLimitError do
+  $logger.warn(env['sinatra.error'].message)
+  return 400, env['sinatra.error'].message
+end
+
 get '/remote/?:command?' do
   return remote(params, request, @auth_user)
 end

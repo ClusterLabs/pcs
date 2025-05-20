@@ -33,6 +33,7 @@
       and `pcs cluster node delete-remote|remove-remote` (broken since 0.12.0)
       ([RHEL-92043])
     - `pcs status query resource` (broken since 0.12.0)
+- Handle query limit errors coming from rubygem-rack ([RHEL-90151])
 
 [RHEL-7681]: https://issues.redhat.com/browse/RHEL-7681
 [RHEL-21050]: https://issues.redhat.com/browse/RHEL-21050
@@ -43,6 +44,7 @@
 [RHEL-66607]: https://issues.redhat.com/browse/RHEL-66607
 [RHEL-76176]: https://issues.redhat.com/browse/RHEL-76176
 [RHEL-81938]: https://issues.redhat.com/browse/RHEL-81938
+[RHEL-90151]: https://issues.redhat.com/browse/RHEL-90151
 [RHEL-92043]: https://issues.redhat.com/browse/RHEL-92043
 
 
