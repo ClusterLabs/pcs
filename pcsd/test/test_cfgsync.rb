@@ -161,9 +161,9 @@ class TestPcsdSettings < Test::Unit::TestCase
     # https://bugzilla.redhat.com/show_bug.cgi?id=2331005
     old_rubygem = JSON.pretty_generate([]) == "[\n\n]"
     if old_rubygem
-      expected_hash = '26579b79a27f9f56e1acd398eb761d2eb1872c6d'
+      expected_hash = '50939a7d12d2411020f9fb42b0c411add2db39ca'
     else
-      expected_hash = 'db2b44331c63c25874ec30398fa82decd740fef4'
+      expected_hash = '47fdd9bd32d9771f66685664cb0e7d20c4609f25'
     end
 
     cfg.version = 4
@@ -234,7 +234,7 @@ class TestPcsdKnownHosts < Test::Unit::TestCase
 
     cfg.version = 3
     assert_equal(3, cfg.version)
-    assert_equal('146e2be5708980d47bceb531729ba4f6a6e4a4e8', cfg.hash)
+    assert_equal('c55f29f635525d22f2935a2e26998f5ba468bbb0', cfg.hash)
 
     cfg.text = template % 4
     assert_equal(4, cfg.version)
@@ -754,32 +754,32 @@ class TestMergeKnownHosts < Test::Unit::TestCase
   def fixture_old_cfg()
     return (
 '{
-  "format_version": 1,
-  "data_version": 5,
-  "known_hosts": {
-    "node1": {
-      "dest_list": [
-        {
-          "addr": "10.0.1.1",
-          "port": 2224
-        }
-      ],
-      "token": "token1"
-    },
-    "node2": {
-      "dest_list": [
-        {
-          "addr": "10.0.1.2",
-          "port": 2234
+    "data_version": 5,
+    "format_version": 1,
+    "known_hosts": {
+        "node1": {
+            "dest_list": [
+                {
+                    "addr": "10.0.1.1",
+                    "port": 2224
+                }
+            ],
+            "token": "token1"
         },
-        {
-          "addr": "10.0.2.2",
-          "port": 2235
+        "node2": {
+            "dest_list": [
+                {
+                    "addr": "10.0.1.2",
+                    "port": 2234
+                },
+                {
+                    "addr": "10.0.2.2",
+                    "port": 2235
+                }
+            ],
+            "token": "token2"
         }
-      ],
-      "token": "token2"
     }
-  }
 }')
   end
 
@@ -827,37 +827,37 @@ class TestMergeKnownHosts < Test::Unit::TestCase
   def fixture_new_cfg(version=5)
     return (
 '{
-  "format_version": 1,
-  "data_version": %d,
-  "known_hosts": {
-    "node1": {
-      "dest_list": [
-        {
-          "addr": "10.0.1.1",
-          "port": 2224
+    "data_version": %d,
+    "format_version": 1,
+    "known_hosts": {
+        "node1": {
+            "dest_list": [
+                {
+                    "addr": "10.0.1.1",
+                    "port": 2224
+                }
+            ],
+            "token": "token1"
+        },
+        "node2": {
+            "dest_list": [
+                {
+                    "addr": "10.0.1.2",
+                    "port": 2224
+                }
+            ],
+            "token": "token2a"
+        },
+        "node3": {
+            "dest_list": [
+                {
+                    "addr": "10.0.1.3",
+                    "port": 2224
+                }
+            ],
+            "token": "token3"
         }
-      ],
-      "token": "token1"
-    },
-    "node2": {
-      "dest_list": [
-        {
-          "addr": "10.0.1.2",
-          "port": 2224
-        }
-      ],
-      "token": "token2a"
-    },
-    "node3": {
-      "dest_list": [
-        {
-          "addr": "10.0.1.3",
-          "port": 2224
-        }
-      ],
-      "token": "token3"
     }
-  }
 }' % version)
   end
 
@@ -884,18 +884,19 @@ class TestMergeKnownHosts < Test::Unit::TestCase
   def fixture_old_text()
     return (
 '{
-  "format_version": 1,
-  "data_version": 2,
-  "known_hosts": {
-    "node1": {
-      "dest_list": [
-        {
-          "addr": "10.0.1.1",
-          "port": 2224
+    "data_version": 2,
+    "format_version": 1,
+    "known_hosts": {
+        "node1": {
+            "dest_list": [
+                {
+                    "addr": "10.0.1.1",
+                    "port": 2224
+                }
+            ],
+            "token": "token1a"
         }
-      ],
-      "token": "token1a"
-  }
+    }
 }')
   end
 

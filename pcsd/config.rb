@@ -124,9 +124,9 @@ class PCSConfig
 
   def text()
     out_hash = Hash.new
-    out_hash['format_version'] = CURRENT_FORMAT
-    out_hash['data_version'] = @data_version
     out_hash['clusters'] = []
+    out_hash['data_version'] = @data_version
+    out_hash['format_version'] = CURRENT_FORMAT
     out_hash['permissions'] = Hash.new
     out_hash['permissions']['local_cluster'] = []
 
@@ -139,7 +139,7 @@ class PCSConfig
 
     out_hash['permissions']['local_cluster'] = @permissions_local.to_hash()
 
-    return JSON.pretty_generate(out_hash)
+    return JSON.pretty_generate(out_hash, {indent: '    '})
   end
 
   def remove_cluster(cluster_name)
@@ -253,11 +253,11 @@ class CfgKnownHosts
       }
     }
     out_hash = {
-      'format_version' => CURRENT_FORMAT,
       'data_version' => @data_version,
+      'format_version' => CURRENT_FORMAT,
       'known_hosts' => out_hosts,
     }
-    return JSON.pretty_generate(out_hash)
+    return JSON.pretty_generate(out_hash, {indent: '    '})
   end
 end
 

@@ -22,21 +22,21 @@ class TestConfig < Test::Unit::TestCase
   def fixture_nil_config()
     return (
 '{
-  "format_version": 2,
-  "data_version": 0,
   "clusters": [
 
   ],
+  "data_version": 0,
+  "format_version": 2,
   "permissions": {
     "local_cluster": [
       {
-        "type": "group",
-        "name": "haclient",
         "allow": [
           "grant",
           "read",
           "write"
-        ]
+        ],
+        "name": "haclient",
+        "type": "group"
       }
     ]
   }
@@ -46,11 +46,11 @@ class TestConfig < Test::Unit::TestCase
   def fixture_empty_config()
     return (
 '{
-  "format_version": 2,
-  "data_version": 0,
   "clusters": [
 
   ],
+  "data_version": 0,
+  "format_version": 2,
   "permissions": {
     "local_cluster": [
 
@@ -146,21 +146,21 @@ class TestConfig < Test::Unit::TestCase
     assert_equal(0, cfg.clusters.length)
     assert_equal_json(
 '{
-  "format_version": 2,
-  "data_version": 0,
   "clusters": [
 
   ],
+  "data_version": 0,
+  "format_version": 2,
   "permissions": {
     "local_cluster": [
       {
-        "type": "group",
-        "name": "haclient",
         "allow": [
           "grant",
           "read",
           "write"
-        ]
+        ],
+        "name": "haclient",
+        "type": "group"
       }
     ]
   }
@@ -187,8 +187,6 @@ class TestConfig < Test::Unit::TestCase
     assert_equal(["rh71-node1", "rh71-node2"], cfg.clusters[0].nodes)
     assert_equal_json(
 '{
-  "format_version": 2,
-  "data_version": 0,
   "clusters": [
     {
       "name": "cluster71",
@@ -198,16 +196,18 @@ class TestConfig < Test::Unit::TestCase
       ]
     }
   ],
+  "data_version": 0,
+  "format_version": 2,
   "permissions": {
     "local_cluster": [
       {
-        "type": "group",
-        "name": "haclient",
         "allow": [
           "grant",
           "read",
           "write"
-        ]
+        ],
+        "name": "haclient",
+        "type": "group"
       }
     ]
   }
@@ -232,8 +232,6 @@ class TestConfig < Test::Unit::TestCase
   def test_parse_format2_one_cluster()
     text =
 '{
-  "format_version": 2,
-  "data_version": 9,
   "clusters": [
     {
       "name": "cluster71",
@@ -243,6 +241,8 @@ class TestConfig < Test::Unit::TestCase
       ]
     }
   ],
+  "data_version": 9,
+  "format_version": 2,
   "permissions": {
     "local_cluster": [
 
@@ -300,8 +300,6 @@ class TestConfig < Test::Unit::TestCase
     )
     out_text =
 '{
-  "format_version": 2,
-  "data_version": 9,
   "clusters": [
     {
       "name": "cluster71",
@@ -320,6 +318,8 @@ class TestConfig < Test::Unit::TestCase
       ]
     }
   ],
+  "data_version": 9,
+  "format_version": 2,
   "permissions": {
     "local_cluster": [
 
@@ -357,8 +357,6 @@ class TestConfig < Test::Unit::TestCase
     assert_equal(["rh71-node1", "rh71-node2"], cfg.clusters[0].nodes)
     assert_equal_json(
 '{
-  "format_version": 2,
-  "data_version": 9,
   "clusters": [
     {
       "name": "cluster71",
@@ -368,6 +366,8 @@ class TestConfig < Test::Unit::TestCase
       ]
     }
   ],
+  "data_version": 9,
+  "format_version": 2,
   "permissions": {
     "local_cluster": [
 
@@ -434,8 +434,6 @@ class TestConfig < Test::Unit::TestCase
 }'
     out_text =
 '{
-  "format_version": 2,
-  "data_version": 9,
   "clusters": [
     {
       "name": "cluster71",
@@ -445,39 +443,41 @@ class TestConfig < Test::Unit::TestCase
       ]
     }
   ],
+  "data_version": 9,
+  "format_version": 2,
   "permissions": {
     "local_cluster": [
       {
-        "type": "group",
-        "name": "group1",
         "allow": [
           "full",
           "write"
-        ]
+        ],
+        "name": "group1",
+        "type": "group"
       },
       {
-        "type": "group",
-        "name": "group2",
         "allow": [
           "grant",
           "read"
-        ]
+        ],
+        "name": "group2",
+        "type": "group"
       },
       {
-        "type": "user",
-        "name": "user1",
         "allow": [
           "grant",
           "read",
           "write"
-        ]
+        ],
+        "name": "user1",
+        "type": "user"
       },
       {
-        "type": "user",
-        "name": "user2",
         "allow": [
 
-        ]
+        ],
+        "name": "user2",
+        "type": "user"
       }
     ]
   }
@@ -680,8 +680,8 @@ class TestCfgKnownHosts < Test::Unit::TestCase
   def fixture_empty_config()
     return(
 '{
-  "format_version": 1,
   "data_version": 0,
+  "format_version": 1,
   "known_hosts": {
   }
 }'
@@ -746,8 +746,8 @@ class TestCfgKnownHosts < Test::Unit::TestCase
   def test_parse_format1_simple()
     text =
 '{
-  "format_version": 1,
   "data_version": 2,
+  "format_version": 1,
   "known_hosts": {
     "node1": {
       "dest_list": [
@@ -779,8 +779,8 @@ class TestCfgKnownHosts < Test::Unit::TestCase
   def test_parse_format1_complex()
     text =
 '{
-  "format_version": 1,
   "data_version": 2,
+  "format_version": 1,
   "known_hosts": {
     "node1": {
       "dest_list": [
@@ -899,8 +899,8 @@ class TestCfgKnownHosts < Test::Unit::TestCase
     assert_equal_json(
       cfg.text,
 '{
-  "format_version": 1,
   "data_version": 3,
+  "format_version": 1,
   "known_hosts": {
     "node1": {
       "dest_list": [

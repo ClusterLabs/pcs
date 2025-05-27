@@ -103,9 +103,9 @@ module Permissions
 
     def to_hash()
       perm_hash = Hash.new
-      perm_hash['type'] = @type
-      perm_hash['name'] = @name
       perm_hash['allow'] = @allow_list.uniq.sort
+      perm_hash['name'] = @name
+      perm_hash['type'] = @type
       return perm_hash
     end
   end
