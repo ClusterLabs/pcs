@@ -1,16 +1,9 @@
 from functools import partial
-from typing import Callable
+from typing import Mapping, Optional
 
-from lxml.etree import (
-    SubElement,
-    _Element,
-)
+from lxml.etree import SubElement, _Element
 
-from pcs.common import (
-    const,
-    pacemaker,
-    reports,
-)
+from pcs.common import const, pacemaker, reports
 from pcs.common.pacemaker.constraint import (
     CibConstraintTicketAttributesDto,
     CibConstraintTicketDto,
@@ -23,14 +16,13 @@ from pcs.lib.booth.config_validators import validate_ticket_name
 from pcs.lib.cib import tools
 from pcs.lib.cib.const import TAG_CONSTRAINT_TICKET as TAG
 from pcs.lib.cib.constraint import constraint
-from pcs.lib.cib.constraint.common import is_set_constraint
-from pcs.lib.cib.constraint.resource_set import (
-    constraint_element_to_resource_set_dto_list,
-)
 from pcs.lib.cib.tools import role_constructor
 from pcs.lib.errors import LibraryError
 from pcs.lib.tools import get_optional_value
 from pcs.lib.xml_tools import remove_when_pointless
+
+from .common import DuplicatesChecker, is_set_constraint
+from .resource_set import constraint_element_to_resource_set_dto_list
 
 _DESCRIPTION = "constraint id"
 ATTRIB = {
@@ -216,23 +208,50 @@ def remove_with_resource_set(constraint_section, ticket_key, resource_id):
     return len(ref_element_list) > 0
 
 
-def get_duplicit_checker_callback(
-    new_roles_supported: bool,
-) -> Callable[[_Element, _Element], bool]:
-    def are_duplicate_plain(element: _Element, other_element: _Element) -> bool:
-        def convert_role(_el):
-            return pacemaker.role.get_value_for_cib(
-                _el.attrib.get("rsc-role", ""), new_roles_supported
-            )
+class DuplicatesCheckerTicketPlain(DuplicatesChecker):
+    """
+    Searcher of duplicate plain ticket constraints
+    """
 
-        if convert_role(element) != convert_role(other_element):
-            return False
-        return all(
-            element.attrib.get(name, "") == other_element.attrib.get(name, "")
-            for name in ("ticket", "rsc")
+    def __init__(self) -> None:
+        super().__init__()
+        self._constraint_characteristics: Optional[
+            Mapping[str, Optional[str]]
+        ] = None
+
+    def check(
+        self,
+        constraint_section: _Element,
+        constraint_to_check: _Element,
+        force_flags: reports.types.ForceFlags = (),
+    ) -> reports.ReportItemList:
+        self._constraint_characteristics = None
+        return super().check(
+            constraint_section, constraint_to_check, force_flags
         )
 
-    return are_duplicate_plain
+    @staticmethod
+    def _characteristics(constraint_el: _Element) -> dict[str, Optional[str]]:
+        return {
+            "ticket": constraint_el.get("ticket"),
+            "rsc": constraint_el.get("rsc"),
+            "rsc-role": get_optional_value(
+                role_constructor, constraint_el.get("rsc-role")
+            ),
+        }
+
+    def _are_duplicate(
+        self,
+        constraint_to_check: _Element,
+        constraint_el: _Element,
+    ) -> bool:
+        if self._constraint_characteristics is None:
+            self._constraint_characteristics = self._characteristics(
+                constraint_to_check
+            )
+        return self._constraint_characteristics == self._characteristics(
+            constraint_el
+        )
 
 
 def are_duplicate_with_resource_set(element, other_element):

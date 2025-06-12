@@ -1,13 +1,11 @@
 from functools import partial
+from typing import Mapping
 
-from pcs.lib.cib.constraint import (
-    constraint,
-    ticket,
-)
-from pcs.lib.cib.tools import (
-    are_new_role_names_supported,
-    get_constraints,
-)
+from pcs.common import reports
+from pcs.lib.cib.constraint import constraint, ticket
+from pcs.lib.cib.tools import get_constraints
+from pcs.lib.env import LibraryEnvironment
+from pcs.lib.errors import LibraryError
 
 from . import common
 
@@ -21,22 +19,21 @@ create_with_set = partial(
 
 
 def create(
-    env,
-    ticket_key,
-    resource_id,
-    options,
-    resource_in_clone_alowed=False,
-    duplication_alowed=False,
+    env: LibraryEnvironment,
+    ticket_key: str,
+    resource_id: str,
+    options: Mapping[str, str],
+    resource_in_clone_alowed: bool = False,
+    duplication_alowed: bool = False,
 ):
     """
-    create ticket constraint
-    string ticket_key ticket for constraining resource
-    dict options desired constraint attributes
-    bool resource_in_clone_alowed flag for allowing to reference id which is
-        in tag clone or master
-    bool duplication_alowed flag for allowing create duplicate element
-    callable duplicate_check takes two elements and decide if they are
-        duplicates
+    create a ticket constraint
+
+    ticket_key -- ticket for constraining a resource
+    resource_id -- resource to be constrained
+    options -- desired constraint attributes
+    resource_in_clone_alowed -- allow to constrain a resource in a clone
+    duplication_alowed -- allow to create a duplicate constraint
     """
     cib = env.get_cib()
 
@@ -51,18 +48,20 @@ def create(
     )
 
     constraint_section = get_constraints(cib)
-    constraint_element = ticket.create_plain(constraint_section, options)
+    new_constraint = ticket.create_plain(constraint_section, options)
 
-    constraint.check_is_without_duplication(
-        env.report_processor,
-        constraint_section,
-        constraint_element,
-        are_duplicate=ticket.get_duplicit_checker_callback(
-            are_new_role_names_supported(constraint_section)
-        ),
-        duplication_allowed=duplication_alowed,
+    # Check whether the created constraint is a duplicate of an existing one
+    env.report_processor.report_list(
+        ticket.DuplicatesCheckerTicketPlain().check(
+            constraint_section,
+            new_constraint,
+            {reports.codes.FORCE} if duplication_alowed else set(),
+        )
     )
+    if env.report_processor.has_errors:
+        raise LibraryError()
 
+    # push CIB
     env.push_cib()
 
 

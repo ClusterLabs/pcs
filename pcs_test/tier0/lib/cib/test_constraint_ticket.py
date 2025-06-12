@@ -1,19 +1,15 @@
 from functools import partial
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
 from lxml import etree
 
-from pcs.common import const
-from pcs.common.reports import ReportItemSeverity as severities
-from pcs.common.reports import codes as report_codes
+from pcs.common import const, reports
 from pcs.lib.cib.constraint import ticket
 
 from pcs_test.tools import fixture
 from pcs_test.tools.assertions import (
     assert_raise_library_error,
+    assert_report_item_list_equal,
     assert_xml_equal,
 )
 from pcs_test.tools.custom_mock import MockLibraryReportProcessor
@@ -90,7 +86,7 @@ class PrepareOptionsPlainTest(TestCase):
         self.report_processor.assert_reports(
             [
                 fixture.error(
-                    report_codes.INVALID_OPTIONS,
+                    reports.codes.INVALID_OPTIONS,
                     option_names=["unknown"],
                     option_type=None,
                     allowed=[
@@ -112,7 +108,7 @@ class PrepareOptionsPlainTest(TestCase):
         self.report_processor.assert_reports(
             [
                 fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
+                    reports.codes.INVALID_OPTION_VALUE,
                     allowed_values=const.PCMK_ROLES,
                     option_value="bad_role",
                     option_name="role",
@@ -132,7 +128,7 @@ class PrepareOptionsPlainTest(TestCase):
         self.report_processor.assert_reports(
             [
                 fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
+                    reports.codes.INVALID_OPTION_VALUE,
                     allowed_values=const.PCMK_ROLES,
                     option_value=role,
                     option_name="role",
@@ -152,7 +148,7 @@ class PrepareOptionsPlainTest(TestCase):
         self.report_processor.assert_reports(
             [
                 fixture.error(
-                    report_codes.REQUIRED_OPTIONS_ARE_MISSING,
+                    reports.codes.REQUIRED_OPTIONS_ARE_MISSING,
                     option_names=["ticket"],
                     option_type=None,
                 ),
@@ -172,7 +168,7 @@ class PrepareOptionsPlainTest(TestCase):
         self.report_processor.assert_reports(
             [
                 fixture.error(
-                    report_codes.BOOTH_TICKET_NAME_INVALID,
+                    reports.codes.BOOTH_TICKET_NAME_INVALID,
                     ticket_name="bad_ticket",
                 ),
             ]
@@ -189,7 +185,7 @@ class PrepareOptionsPlainTest(TestCase):
         self.report_processor.assert_reports(
             [
                 fixture.error(
-                    report_codes.REQUIRED_OPTIONS_ARE_MISSING,
+                    reports.codes.REQUIRED_OPTIONS_ARE_MISSING,
                     option_names=["rsc"],
                     option_type=None,
                 ),
@@ -208,7 +204,7 @@ class PrepareOptionsPlainTest(TestCase):
         self.report_processor.assert_reports(
             [
                 fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
+                    reports.codes.INVALID_OPTION_VALUE,
                     allowed_values=("fence", "stop", "freeze", "demote"),
                     option_value="unknown",
                     option_name="loss-policy",
@@ -306,26 +302,23 @@ class PrepareOptionsWithSetTest(TestCase):
                     "id": "id",
                 }
             ),
-            (
-                severities.ERROR,
-                report_codes.INVALID_OPTION_VALUE,
-                {
-                    "allowed_values": ("fence", "stop", "freeze", "demote"),
-                    "option_value": "unknown",
-                    "option_name": "loss-policy",
-                    "cannot_be_empty": False,
-                    "forbidden_characters": None,
-                },
+            fixture.error(
+                reports.codes.INVALID_OPTION_VALUE,
+                allowed_values=("fence", "stop", "freeze", "demote"),
+                option_value="unknown",
+                option_name="loss-policy",
+                cannot_be_empty=False,
+                forbidden_characters=None,
             ),
         )
 
     def test_refuse_missing_ticket(self, _):
         assert_raise_library_error(
             lambda: self.prepare({"loss-policy": "stop", "id": "id"}),
-            (
-                severities.ERROR,
-                report_codes.REQUIRED_OPTIONS_ARE_MISSING,
-                {"option_names": ["ticket"], "option_type": None},
+            fixture.error(
+                reports.codes.REQUIRED_OPTIONS_ARE_MISSING,
+                option_names=["ticket"],
+                option_type=None,
             ),
         )
 
@@ -334,22 +327,77 @@ class PrepareOptionsWithSetTest(TestCase):
             lambda: self.prepare(
                 {"loss-policy": "stop", "id": "id", "ticket": " "}
             ),
-            (
-                severities.ERROR,
-                report_codes.REQUIRED_OPTIONS_ARE_MISSING,
-                {"option_names": ["ticket"], "option_type": None},
+            fixture.error(
+                reports.codes.REQUIRED_OPTIONS_ARE_MISSING,
+                option_names=["ticket"],
+                option_type=None,
             ),
         )
 
     def test_refuse_bad_ticket(self, _):
         assert_raise_library_error(
             lambda: self.prepare({"id": "id", "ticket": "bad_ticket"}),
-            (
-                severities.ERROR,
-                report_codes.BOOTH_TICKET_NAME_INVALID,
-                {"ticket_name": "bad_ticket"},
+            fixture.error(
+                reports.codes.BOOTH_TICKET_NAME_INVALID,
+                ticket_name="bad_ticket",
             ),
         )
+
+
+class DuplicatesCheckerTicketPlain(TestCase):
+    cib = etree.fromstring(
+        """
+        <constraints>
+            <rsc_ticket id="C1" ticket="T1" rsc="R1" />
+            <rsc_ticket id="C2" ticket="T1" rsc="R1" />
+            <rsc_ticket id="C3" ticket="T1" rsc="R1" rsc-role="Master" />
+            <rsc_ticket id="C4" ticket="T1" rsc="R1" rsc-role="Promoted" />
+            <rsc_ticket id="C5" ticket="T1" rsc="R1" rsc-role="Unpromoted" />
+            <rsc_ticket id="C6" ticket="T2" rsc="R1" />
+            <rsc_ticket id="C7" ticket="T1" rsc="R2" />
+        </constraints>
+        """
+    )
+
+    def test_success(self):
+        duplicates = {
+            "C1": ["C2"],  # literally same constraints
+            "C2": ["C1"],  # literally same constraints
+            "C3": ["C4"],  # same constraints, legacy role vs the same new role
+            "C4": ["C3"],  # same constraints, legacy role vs the same new role
+            "C5": [],  # role doesn't match
+            "C6": [],  # ticket doesn't match
+            "C7": [],  # resource doesn't match
+        }
+        checker = ticket.DuplicatesCheckerTicketPlain()
+        for id_to_check, id_results in duplicates.items():
+            for forced in (False, True):
+                with self.subTest(id_to_check=id_to_check, forced=forced):
+                    real_reports = checker.check(
+                        self.cib,
+                        self.cib.xpath(".//*[@id=$id]", id=f"{id_to_check}")[0],
+                        force_flags=([reports.codes.FORCE] if forced else []),
+                    )
+                    expected_reports = []
+                    if id_results:
+                        if forced:
+                            expected_reports = [
+                                fixture.warn(
+                                    reports.codes.DUPLICATE_CONSTRAINTS_EXIST,
+                                    constraint_ids=id_results,
+                                )
+                            ]
+                        else:
+                            expected_reports = [
+                                fixture.error(
+                                    reports.codes.DUPLICATE_CONSTRAINTS_EXIST,
+                                    force_code=reports.codes.FORCE,
+                                    constraint_ids=id_results,
+                                )
+                            ]
+                    assert_report_item_list_equal(
+                        real_reports, expected_reports
+                    )
 
 
 class Element:
@@ -359,72 +407,6 @@ class Element:
     def update(self, attrib):
         self.attrib.update(attrib)
         return self
-
-
-class AreDuplicatePlain(TestCase):
-    def setUp(self):
-        self.first = Element(
-            {
-                "ticket": "ticket-key",
-                "rsc": "resourceA",
-                "rsc-role": const.PCMK_ROLE_PROMOTED_LEGACY,
-            }
-        )
-        self.second = Element(
-            {
-                "ticket": "ticket-key",
-                "rsc": "resourceA",
-                "rsc-role": const.PCMK_ROLE_PROMOTED_LEGACY,
-            }
-        )
-
-    def test_returns_true_for_duplicate_elements(self):
-        self.assertTrue(
-            ticket.get_duplicit_checker_callback(False)(self.first, self.second)
-        )
-
-    def test_returns_false_for_different_ticket(self):
-        self.assertFalse(
-            ticket.get_duplicit_checker_callback(False)(
-                self.first, self.second.update({"ticket": "X"})
-            )
-        )
-
-    def test_returns_false_for_different_resource(self):
-        self.assertFalse(
-            ticket.get_duplicit_checker_callback(False)(
-                self.first, self.second.update({"rsc": "Y"})
-            )
-        )
-
-    def test_returns_false_for_different_role(self):
-        self.assertFalse(
-            ticket.get_duplicit_checker_callback(False)(
-                self.first, self.second.update({"rsc-role": "Z"})
-            )
-        )
-
-    def test_returns_false_for_different_elements(self):
-        self.second.update({"ticket": "X", "rsc": "Y", "rsc-role": "Z"})
-        self.assertFalse(
-            ticket.get_duplicit_checker_callback(False)(self.first, self.second)
-        )
-
-    def test_returns_true_for_equivalent_new_role(self):
-        self.assertTrue(
-            ticket.get_duplicit_checker_callback(False)(
-                self.first,
-                self.second.update({"rsc-role": const.PCMK_ROLE_PROMOTED}),
-            )
-        )
-
-    def test_returns_true_for_equivalent_new_role_new_roles_supported(self):
-        self.assertTrue(
-            ticket.get_duplicit_checker_callback(True)(
-                self.first,
-                self.second.update({"rsc-role": const.PCMK_ROLE_PROMOTED}),
-            )
-        )
 
 
 @mock.patch(
