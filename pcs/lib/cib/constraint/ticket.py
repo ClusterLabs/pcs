@@ -3,81 +3,71 @@ from typing import Mapping, Optional
 
 from lxml.etree import SubElement, _Element
 
-from pcs.common import const, pacemaker, reports
+from pcs.common import const, reports
 from pcs.common.pacemaker.constraint import (
     CibConstraintTicketAttributesDto,
     CibConstraintTicketDto,
     CibConstraintTicketSetDto,
 )
+from pcs.common.pacemaker.role import (
+    get_value_for_cib as get_role_value_for_cib,
+)
 from pcs.common.pacemaker.types import CibTicketLossPolicy
-from pcs.common.reports.item import ReportItem
 from pcs.lib import validate
 from pcs.lib.booth.config_validators import validate_ticket_name
-from pcs.lib.cib import tools
 from pcs.lib.cib.const import TAG_CONSTRAINT_TICKET as TAG
-from pcs.lib.cib.constraint import constraint
-from pcs.lib.cib.tools import role_constructor
+from pcs.lib.cib.tools import (
+    IdProvider,
+    Version,
+    check_new_id_applicable,
+    role_constructor,
+)
 from pcs.lib.errors import LibraryError
+from pcs.lib.pacemaker.values import sanitize_id
 from pcs.lib.tools import get_optional_value
 from pcs.lib.xml_tools import remove_when_pointless
 
-from .common import DuplicatesChecker, is_set_constraint
+from .common import (
+    DuplicatesChecker,
+    is_set_constraint,
+    validate_constrainable_elements,
+)
+from .constraint import create_id, have_duplicate_resource_sets, prepare_options
 from .resource_set import constraint_element_to_resource_set_dto_list
 
-_DESCRIPTION = "constraint id"
-ATTRIB = {
-    "loss-policy": ("fence", "stop", "freeze", "demote"),
-    "ticket": None,
-}
-ATTRIB_PLAIN = {
-    "rsc": None,
-    "rsc-role": const.PCMK_ROLES,
-}
+_LOSS_POLICY_VALUES = ("fence", "stop", "freeze", "demote")
 
 
 def is_ticket_constraint(element: _Element) -> bool:
     return element.tag == TAG
 
 
-def _validate_options_common(options):
+def prepare_options_with_set(cib, options, resource_set_list):
+    options = prepare_options(
+        ("loss-policy", "ticket"),
+        options,
+        create_id_fn=partial(create_id, cib, "ticket", resource_set_list),
+        validate_id=partial(check_new_id_applicable, cib, "constraint id"),
+    )
+
     report_list = []
     if "loss-policy" in options:
         loss_policy = options["loss-policy"].lower()
-        if options["loss-policy"] not in ATTRIB["loss-policy"]:
+        if options["loss-policy"] not in _LOSS_POLICY_VALUES:
             report_list.append(
-                ReportItem.error(
+                reports.ReportItem.error(
                     reports.messages.InvalidOptionValue(
                         "loss-policy",
                         options["loss-policy"],
-                        ATTRIB["loss-policy"],
+                        _LOSS_POLICY_VALUES,
                     )
                 )
             )
         options["loss-policy"] = loss_policy
-    return report_list
 
-
-def _create_id(cib, ticket, resource_id, resource_role):
-    return tools.find_unique_id(
-        cib,
-        "-".join(("ticket", ticket, resource_id))
-        + (f"-{resource_role}" if resource_role else ""),
-    )
-
-
-def prepare_options_with_set(cib, options, resource_set_list):
-    options = constraint.prepare_options(
-        tuple(ATTRIB.keys()),
-        options,
-        create_id_fn=partial(
-            constraint.create_id, cib, "ticket", resource_set_list
-        ),
-        validate_id=partial(tools.check_new_id_applicable, cib, _DESCRIPTION),
-    )
-    report_list = _validate_options_common(options)
     if "ticket" not in options or not options["ticket"].strip():
         report_list.append(
-            ReportItem.error(
+            reports.ReportItem.error(
                 reports.messages.RequiredOptionsAreMissing(["ticket"])
             )
         )
@@ -88,88 +78,112 @@ def prepare_options_with_set(cib, options, resource_set_list):
     return options
 
 
-def prepare_options_plain(
-    cib: _Element,
-    report_processor: reports.ReportProcessor,
-    options,
+def validate_create_plain(
+    id_provider: IdProvider,
     ticket: str,
-    resource_id,
-):
-    options = options.copy()
+    constrained_el: Optional[_Element],
+    options: validate.TypeOptionMap,
+    in_multiinstance_allowed: bool,
+) -> reports.ReportItemList:
+    """
+    Validator for creating new plain ticket constraint
 
-    report_processor.report_list(_validate_options_common(options))
+    id_provider -- elements' ids generator
+    ticket -- name of the ticket
+    constrained_el -- an element to be constrained
+    options -- additional options for the constraint
+    in_multiinstance_allowed -- allow constraints for resources in clones/bundles
+    """
+    report_list: reports.ReportItemList = []
 
+    # validate resource specification
+    # caller is responsible for handling the 'resource not found' case
+    if constrained_el is not None:
+        report_list.extend(
+            validate_constrainable_elements(
+                [constrained_el], in_multiinstance_allowed
+            )
+        )
+
+    # use a booth ticket validator for validate a ticket
     if not ticket:
-        report_processor.report(
-            ReportItem.error(
+        report_list.append(
+            reports.ReportItem.error(
                 reports.messages.RequiredOptionsAreMissing(["ticket"])
             )
         )
     else:
-        report_processor.report_list(validate_ticket_name(ticket))
+        report_list += validate_ticket_name(ticket)
 
-    if not resource_id:
-        report_processor.report(
-            ReportItem.error(
-                reports.messages.RequiredOptionsAreMissing(["rsc"])
-            )
-        )
-
-    role_value_validator = validate.ValueIn(
-        "rsc-role", const.PCMK_ROLES, option_name_for_report="role"
-    )
-    role_value_validator.empty_string_valid = True
-
-    validators = [role_value_validator]
-    report_processor.report_list(
-        validate.ValidatorAll(validators).validate(
-            validate.values_to_pairs(
-                options,
-                validate.option_value_normalization(
-                    {"rsc-role": lambda value: value.capitalize()}
-                ),
-            )
-        )
-    )
-    report_processor.report_list(
+    # validate options
+    validators = [
         validate.NamesIn(
-            # rsc and rsc-ticket are passed as parameters not as items in the
+            # rsc and ticket are passed as parameters, not as items in the
             # options dict
-            (set(ATTRIB) | set(ATTRIB_PLAIN) | {"id"}) - {"rsc", "ticket"}
-        ).validate(options)
-    )
+            {"id", "loss-policy", "rsc-role"}
+        ),
+        # with id_provider it validates that the id is available as well
+        validate.ValueId(
+            "id",
+            option_name_for_report="constraint id",
+            id_provider=id_provider,
+        ),
+        validate.ValueIn(
+            "rsc-role", const.PCMK_ROLES, option_name_for_report="role"
+        ),
+        validate.ValueIn("loss-policy", _LOSS_POLICY_VALUES),
+    ]
+    report_list.extend(validate.ValidatorAll(validators).validate(options))
 
-    if report_processor.has_errors:
-        raise LibraryError()
+    return report_list
 
+
+def create_plain(
+    parent_element: _Element,
+    id_provider: IdProvider,
+    cib_schema_version: Version,
+    ticket: str,
+    resource_id: str,
+    options: Mapping[str, str],
+) -> _Element:
+    """
+    Create a plain ticket constraint
+
+    parent_element -- where to place the constraint
+    id_provider -- elements' ids generator
+    cib_schema_version -- current CIB schema version
+    ticket -- name of the ticket
+    resource_id -- resource to be constrained
+    options -- additional options for the constraint
+    """
+    options = dict(options)  # make a modifiable copy
+
+    # prepare resource role
+    if "rsc-role" in options:
+        options["rsc-role"] = get_role_value_for_cib(
+            const.PcmkRoleType(options["rsc-role"]),
+            cib_schema_version >= const.PCMK_NEW_ROLES_CIB_VERSION,
+        )
+    resource_role = options.get("rsc-role", "")
+
+    # autogenerate id if not provided
+    if "id" not in options:
+        options["id"] = id_provider.allocate_id(
+            sanitize_id(
+                "-".join(["ticket", ticket, resource_id])
+                + (f"-{resource_role}" if resource_role else ""),
+            )
+        )
+
+    # create the constraint element
     options["ticket"] = ticket
     options["rsc"] = resource_id
+    constraint_el = SubElement(parent_element, TAG)
+    for name, value in options.items():
+        if value != "":
+            constraint_el.attrib[name] = value
 
-    if "rsc-role" in options:
-        if options["rsc-role"]:
-            options["rsc-role"] = pacemaker.role.get_value_for_cib(
-                options["rsc-role"].capitalize(),
-                tools.are_new_role_names_supported(cib),
-            )
-        else:
-            del options["rsc-role"]
-
-    if "id" not in options:
-        options["id"] = _create_id(
-            cib,
-            options["ticket"],
-            resource_id,
-            options.get("rsc-role", ""),
-        )
-    else:
-        tools.check_new_id_applicable(cib, _DESCRIPTION, options["id"])
-    return options
-
-
-def create_plain(constraint_section, options):
-    element = SubElement(constraint_section, TAG)
-    element.attrib.update(options)
-    return element
+    return constraint_el
 
 
 def remove_plain(constraint_section, ticket_key, resource_id):
@@ -249,15 +263,16 @@ class DuplicatesCheckerTicketPlain(DuplicatesChecker):
             self._constraint_characteristics = self._characteristics(
                 constraint_to_check
             )
-        return self._constraint_characteristics == self._characteristics(
-            constraint_el
+        return (
+            self._characteristics(constraint_el)
+            == self._constraint_characteristics
         )
 
 
 def are_duplicate_with_resource_set(element, other_element):
     return element.attrib["ticket"] == other_element.attrib[
         "ticket"
-    ] and constraint.have_duplicate_resource_sets(element, other_element)
+    ] and have_duplicate_resource_sets(element, other_element)
 
 
 def _element_to_attributes_dto(

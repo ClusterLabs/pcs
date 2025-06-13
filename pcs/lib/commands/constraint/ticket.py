@@ -2,8 +2,15 @@ from functools import partial
 from typing import Mapping
 
 from pcs.common import reports
-from pcs.lib.cib.constraint import constraint, ticket
-from pcs.lib.cib.tools import get_constraints
+from pcs.lib import validate
+from pcs.lib.cib.constraint import ticket
+from pcs.lib.cib.tools import (
+    ElementNotFound,
+    IdProvider,
+    get_constraints,
+    get_element_by_id,
+    get_pacemaker_version_by_which_cib_was_validated,
+)
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 
@@ -36,19 +43,52 @@ def create(
     duplication_alowed -- allow to create a duplicate constraint
     """
     cib = env.get_cib()
+    id_provider = IdProvider(cib)
+    constraint_section = get_constraints(cib)
 
-    options = ticket.prepare_options_plain(
-        cib,
-        env.report_processor,
+    # validation
+    constrained_el = None
+    try:
+        constrained_el = get_element_by_id(cib, resource_id)
+    except ElementNotFound:
+        env.report_processor.report(
+            reports.ReportItem.error(
+                reports.messages.IdNotFound(resource_id, [])
+            )
+        )
+
+    options_pairs = validate.values_to_pairs(
         options,
-        ticket_key,
-        constraint.find_valid_resource_id(
-            env.report_processor, cib, resource_in_clone_alowed, resource_id
+        validate.option_value_normalization(
+            {
+                "loss-policy": lambda value: value.lower(),
+                "rsc-role": lambda value: value.capitalize(),
+            }
         ),
     )
 
-    constraint_section = get_constraints(cib)
-    new_constraint = ticket.create_plain(constraint_section, options)
+    env.report_processor.report_list(
+        ticket.validate_create_plain(
+            id_provider,
+            ticket_key,
+            constrained_el,
+            options_pairs,
+            in_multiinstance_allowed=resource_in_clone_alowed,
+        )
+    )
+
+    if env.report_processor.has_errors:
+        raise LibraryError()
+
+    # modify CIB
+    new_constraint = ticket.create_plain(
+        constraint_section,
+        id_provider,
+        get_pacemaker_version_by_which_cib_was_validated(cib),
+        ticket_key,
+        resource_id,
+        validate.pairs_to_values(options_pairs),
+    )
 
     # Check whether the created constraint is a duplicate of an existing one
     env.report_processor.report_list(

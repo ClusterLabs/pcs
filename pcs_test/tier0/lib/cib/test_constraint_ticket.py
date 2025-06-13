@@ -1,10 +1,10 @@
-from functools import partial
 from unittest import TestCase, mock
 
 from lxml import etree
 
 from pcs.common import const, reports
 from pcs.lib.cib.constraint import ticket
+from pcs.lib.cib.tools import IdProvider, Version
 
 from pcs_test.tools import fixture
 from pcs_test.tools.assertions import (
@@ -12,7 +12,7 @@ from pcs_test.tools.assertions import (
     assert_report_item_list_equal,
     assert_xml_equal,
 )
-from pcs_test.tools.custom_mock import MockLibraryReportProcessor
+from pcs_test.tools.xml import etree_to_str, str_to_etree
 
 
 class IsTicketConstraint(TestCase):
@@ -25,233 +25,343 @@ class IsTicketConstraint(TestCase):
         self.assertFalse(ticket.is_ticket_constraint(etree.Element("ticket")))
 
 
-@mock.patch(
-    "pcs.lib.cib.constraint.ticket.tools.are_new_role_names_supported",
-    lambda _: True,
-)
-@mock.patch("pcs.lib.cib.constraint.ticket.tools.check_new_id_applicable")
-class PrepareOptionsPlainTest(TestCase):
+class ValidateCreatePlain(TestCase):
     def setUp(self):
-        self.cib = "cib"
-        self.report_processor = MockLibraryReportProcessor(debug=False)
-        self.prepare = partial(
-            ticket.prepare_options_plain, self.cib, self.report_processor
-        )
+        cib = str_to_etree("""
+            <resources>
+                <primitive id="R">
+                    <meta_attributes id="R-meta" />
+                </primitive>
+                <clone id="C">
+                    <primitive id="CR" />
+                </clone>
+            </resources>
+        """)
+        self.el_primitive = cib.xpath(".//*[@id='R']")[0]
+        self.el_meta = cib.xpath(".//*[@id='R-meta']")[0]
+        self.el_clone = cib.xpath(".//*[@id='C']")[0]
+        self.el_cloned_primitive = cib.xpath(".//*[@id='CR']")[0]
+        self.id_provider = IdProvider(cib)
 
-    @mock.patch("pcs.lib.cib.constraint.ticket._create_id")
-    def test_prepare_correct_options(self, mock_create_id, _):
-        mock_create_id.return_value = "generated_id"
-        role = str(const.PCMK_ROLE_PROMOTED).lower()
-        self.assertEqual(
-            {
-                "id": "generated_id",
-                "loss-policy": "fence",
-                "rsc": "resourceA",
-                "rsc-role": const.PCMK_ROLE_PROMOTED,
-                "ticket": "ticket-key",
-            },
-            self.prepare(
-                {"loss-policy": "fence", "rsc-role": role},
-                "ticket-key",
-                "resourceA",
+    def test_resource_not_a_resource(self):
+        assert_report_item_list_equal(
+            ticket.validate_create_plain(
+                self.id_provider, "T", self.el_meta, {}, False
             ),
-        )
-
-    @mock.patch("pcs.lib.cib.constraint.ticket._create_id")
-    def test_does_not_include_role_if_not_presented(self, mock_create_id, _):
-        mock_create_id.return_value = "generated_id"
-        self.assertEqual(
-            {
-                "id": "generated_id",
-                "loss-policy": "fence",
-                "rsc": "resourceA",
-                "ticket": "ticket-key",
-            },
-            self.prepare(
-                {"loss-policy": "fence", "rsc-role": ""},
-                "ticket-key",
-                "resourceA",
-            ),
-        )
-        self.report_processor.assert_reports([])
-
-    def test_refuse_unknown_attributes(self, _):
-        assert_raise_library_error(
-            lambda: self.prepare(
-                {"unknown": "nonsense", "rsc-role": "promoted"},
-                "ticket-key",
-                "resourceA",
-            )
-        )
-        self.report_processor.assert_reports(
             [
                 fixture.error(
-                    reports.codes.INVALID_OPTIONS,
-                    option_names=["unknown"],
-                    option_type=None,
-                    allowed=[
-                        "id",
-                        "loss-policy",
-                        "rsc-role",
+                    reports.codes.ID_BELONGS_TO_UNEXPECTED_TYPE,
+                    id="R-meta",
+                    expected_types=[
+                        "bundle",
+                        "clone",
+                        "group",
+                        "master",
+                        "primitive",
                     ],
-                    allowed_patterns=[],
-                )
-            ]
+                    current_type="meta_attributes",
+                ),
+            ],
         )
 
-    def test_refuse_bad_role(self, _):
-        assert_raise_library_error(
-            lambda: self.prepare(
-                {"id": "id", "rsc-role": "bad_role"}, "ticket-key", "resourceA"
+    def test_resource_in_a_clone(self):
+        assert_report_item_list_equal(
+            ticket.validate_create_plain(
+                self.id_provider, "T", self.el_cloned_primitive, {}, False
             ),
-        )
-        self.report_processor.assert_reports(
             [
                 fixture.error(
-                    reports.codes.INVALID_OPTION_VALUE,
-                    allowed_values=const.PCMK_ROLES,
-                    option_value="bad_role",
-                    option_name="role",
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
+                    reports.codes.RESOURCE_FOR_CONSTRAINT_IS_MULTIINSTANCE,
+                    force_code=reports.codes.FORCE,
+                    resource_id="CR",
+                    parent_type="clone",
+                    parent_id="C",
                 ),
-            ]
+            ],
         )
 
-    def test_refuse_legacy_role(self, _):
-        role = str(const.PCMK_ROLE_UNPROMOTED_LEGACY).lower()
-        assert_raise_library_error(
-            lambda: self.prepare(
-                {"id": "id", "rsc-role": role}, "ticket-key", "resourceA"
+    def test_resource_in_a_clone_forced(self):
+        assert_report_item_list_equal(
+            ticket.validate_create_plain(
+                self.id_provider, "T", self.el_cloned_primitive, {}, True
             ),
-        )
-        self.report_processor.assert_reports(
             [
-                fixture.error(
-                    reports.codes.INVALID_OPTION_VALUE,
-                    allowed_values=const.PCMK_ROLES,
-                    option_value=role,
-                    option_name="role",
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
+                fixture.warn(
+                    reports.codes.RESOURCE_FOR_CONSTRAINT_IS_MULTIINSTANCE,
+                    resource_id="CR",
+                    parent_type="clone",
+                    parent_id="C",
                 ),
-            ]
+            ],
         )
 
-    def test_refuse_missing_ticket(self, _):
-        role = str(const.PCMK_ROLE_UNPROMOTED).lower()
-        assert_raise_library_error(
-            lambda: self.prepare(
-                {"id": "id", "rsc-role": role}, "", "resourceA"
+    def test_clone(self):
+        assert_report_item_list_equal(
+            ticket.validate_create_plain(
+                self.id_provider, "T", self.el_clone, {}, False
             ),
+            [],
         )
-        self.report_processor.assert_reports(
+
+    def test_ticket_missing(self):
+        assert_report_item_list_equal(
+            ticket.validate_create_plain(
+                self.id_provider, "", self.el_primitive, {}, False
+            ),
             [
                 fixture.error(
                     reports.codes.REQUIRED_OPTIONS_ARE_MISSING,
                     option_names=["ticket"],
                     option_type=None,
-                ),
-            ]
+                )
+            ],
         )
 
-    def test_refuse_bad_ticket(self, _):
-        assert_raise_library_error(
-            lambda: self.prepare(
-                {
-                    "id": "id",
-                },
-                "bad_ticket",
-                "resourceA",
+    def test_ticket_not_valid(self):
+        assert_report_item_list_equal(
+            ticket.validate_create_plain(
+                self.id_provider, "my_ticket", self.el_primitive, {}, False
             ),
-        )
-        self.report_processor.assert_reports(
             [
                 fixture.error(
                     reports.codes.BOOTH_TICKET_NAME_INVALID,
-                    ticket_name="bad_ticket",
-                ),
-            ]
+                    ticket_name="my_ticket",
+                )
+            ],
         )
 
-    def test_refuse_missing_resource_id(self, _):
-        assert_raise_library_error(
-            lambda: self.prepare(
-                {"id": "id", "rsc-role": const.PCMK_ROLE_PROMOTED},
-                "ticket-key",
-                "",
+    def test_id_not_valid(self):
+        assert_report_item_list_equal(
+            ticket.validate_create_plain(
+                self.id_provider, "T", self.el_primitive, {"id": "123"}, False
             ),
-        )
-        self.report_processor.assert_reports(
             [
                 fixture.error(
-                    reports.codes.REQUIRED_OPTIONS_ARE_MISSING,
-                    option_names=["rsc"],
-                    option_type=None,
-                ),
-            ]
+                    reports.codes.INVALID_ID_BAD_CHAR,
+                    id="123",
+                    id_description="constraint id",
+                    invalid_character="1",
+                    is_first_char=True,
+                )
+            ],
         )
 
-    def test_refuse_unknown_lost_policy(self, mock_check_new_id_applicable):
-        del mock_check_new_id_applicable
-        assert_raise_library_error(
-            lambda: self.prepare(
-                {"loss-policy": "unknown", "id": "id"},
-                "ticket-key",
-                "resourceA",
+    def test_id_already_used(self):
+        assert_report_item_list_equal(
+            ticket.validate_create_plain(
+                self.id_provider, "T", self.el_primitive, {"id": "R"}, False
             ),
+            [
+                fixture.error(
+                    reports.codes.ID_ALREADY_EXISTS,
+                    id="R",
+                )
+            ],
         )
-        self.report_processor.assert_reports(
+
+    def test_role_not_valid(self):
+        assert_report_item_list_equal(
+            ticket.validate_create_plain(
+                self.id_provider,
+                "T",
+                self.el_primitive,
+                {"rsc-role": "bad"},
+                False,
+            ),
             [
                 fixture.error(
                     reports.codes.INVALID_OPTION_VALUE,
-                    allowed_values=("fence", "stop", "freeze", "demote"),
-                    option_value="unknown",
-                    option_name="loss-policy",
+                    option_name="role",
+                    option_value="bad",
+                    allowed_values=(
+                        const.PCMK_ROLE_STOPPED,
+                        const.PCMK_ROLE_STARTED,
+                        const.PCMK_ROLE_PROMOTED,
+                        const.PCMK_ROLE_UNPROMOTED,
+                    ),
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),
-            ]
+            ],
         )
 
-    @mock.patch("pcs.lib.cib.constraint.ticket._create_id")
-    def test_complete_id(self, mock_create_id, _):
-        mock_create_id.return_value = "generated_id"
-        options = {
-            "loss-policy": "freeze",
-            "rsc-role": const.PCMK_ROLE_PROMOTED,
-        }
-        ticket_key = "ticket-key"
-        resource_id = "resourceA"
-        expected_options = options.copy()
-        expected_options.update(
-            {
-                "id": "generated_id",
-                "rsc": resource_id,
-                "rsc-role": const.PCMK_ROLE_PROMOTED,
-                "ticket": ticket_key,
-            }
-        )
-        self.assertEqual(
-            expected_options,
-            self.prepare(
-                options,
-                ticket_key,
-                resource_id,
+    def test_role_legacy(self):
+        assert_report_item_list_equal(
+            ticket.validate_create_plain(
+                self.id_provider,
+                "T",
+                self.el_primitive,
+                {"rsc-role": const.PCMK_ROLE_PROMOTED_LEGACY},
+                False,
             ),
+            [
+                fixture.error(
+                    reports.codes.INVALID_OPTION_VALUE,
+                    option_name="role",
+                    option_value=const.PCMK_ROLE_PROMOTED_LEGACY,
+                    allowed_values=(
+                        const.PCMK_ROLE_STOPPED,
+                        const.PCMK_ROLE_STARTED,
+                        const.PCMK_ROLE_PROMOTED,
+                        const.PCMK_ROLE_UNPROMOTED,
+                    ),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+            ],
         )
-        mock_create_id.assert_called_once_with(
-            self.cib,
-            ticket_key,
-            resource_id,
-            const.PCMK_ROLE_PROMOTED,
+
+    def test_loss_policy_not_valid(self):
+        assert_report_item_list_equal(
+            ticket.validate_create_plain(
+                self.id_provider,
+                "T",
+                self.el_primitive,
+                {"loss-policy": "bad"},
+                False,
+            ),
+            [
+                fixture.error(
+                    reports.codes.INVALID_OPTION_VALUE,
+                    option_name="loss-policy",
+                    option_value="bad",
+                    allowed_values=("fence", "stop", "freeze", "demote"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+            ],
+        )
+
+    def test_option_names(self):
+        assert_report_item_list_equal(
+            ticket.validate_create_plain(
+                self.id_provider,
+                "T",
+                self.el_primitive,
+                {
+                    "id": "const",
+                    "loss-policy": "stop",
+                    "rsc-role": const.PCMK_ROLE_PROMOTED,
+                    "unknown": "option",
+                },
+                False,
+            ),
+            [
+                fixture.error(
+                    reports.codes.INVALID_OPTIONS,
+                    option_names=["unknown"],
+                    allowed=["id", "loss-policy", "rsc-role"],
+                    option_type=None,
+                    allowed_patterns=[],
+                ),
+            ],
+        )
+
+
+class CreatePlain(TestCase):
+    def setUp(self):
+        cib = str_to_etree(
+            """
+            <cib>
+                <resources>
+                    <primitive id="resource1" />
+                </resources>
+                <constraints />
+            </cib>
+            """
+        )
+        self.el_constraints = cib.find("constraints")
+        self.id_provider = IdProvider(cib)
+
+    def test_minimal_options(self):
+        ticket.create_plain(
+            self.el_constraints,
+            self.id_provider,
+            Version(3, 8, 0),
+            "ticket1",
+            "resource1",
+            {},
+        )
+        assert_xml_equal(
+            """
+            <constraints>
+                <rsc_ticket id="ticket-ticket1-resource1" ticket="ticket1"
+                    rsc="resource1"
+                />
+            </constraints>
+            """,
+            etree_to_str(self.el_constraints),
+        )
+
+    def test_all_options(self):
+        ticket.create_plain(
+            self.el_constraints,
+            self.id_provider,
+            Version(3, 8, 0),
+            "ticket1",
+            "resource1",
+            {
+                "id": "my-id",
+                "loss-policy": "freeze",
+                "rsc-role": const.PCMK_ROLE_UNPROMOTED,
+            },
+        )
+        assert_xml_equal(
+            """
+            <constraints>
+                <rsc_ticket id="my-id" loss-policy="freeze" rsc="resource1"
+                    rsc-role="Unpromoted" ticket="ticket1"
+                />
+            </constraints>
+            """,
+            etree_to_str(self.el_constraints),
+        )
+
+    def test_build_id_with_role(self):
+        ticket.create_plain(
+            self.el_constraints,
+            self.id_provider,
+            Version(3, 8, 0),
+            "ticket1",
+            "resource1",
+            {"rsc-role": const.PCMK_ROLE_PROMOTED},
+        )
+        assert_xml_equal(
+            """
+            <constraints>
+                <rsc_ticket id="ticket-ticket1-resource1-{role}"
+                    ticket="ticket1" rsc="resource1" rsc-role="{role}"
+                />
+            </constraints>
+            """.format(role=const.PCMK_ROLE_PROMOTED),
+            etree_to_str(self.el_constraints),
+        )
+
+    def test_build_id_with_role_legacy(self):
+        ticket.create_plain(
+            self.el_constraints,
+            self.id_provider,
+            Version(3, 6, 0),
+            "ticket1",
+            "resource1",
+            {"rsc-role": const.PCMK_ROLE_PROMOTED},
+        )
+        assert_xml_equal(
+            """
+            <constraints>
+                <rsc_ticket id="ticket-ticket1-resource1-{role}"
+                    ticket="ticket1" rsc="resource1" rsc-role="{role}"
+                />
+            </constraints>
+            """.format(role=const.PCMK_ROLE_PROMOTED_LEGACY),
+            etree_to_str(self.el_constraints),
         )
 
 
 # Patch check_new_id_applicable is always desired when working with
 # prepare_options_with_set. Patched function raises when id not applicable
 # and do nothing when applicable - in this case tests do no actions with it
-@mock.patch("pcs.lib.cib.constraint.ticket.tools.check_new_id_applicable")
+@mock.patch("pcs.lib.cib.constraint.ticket.check_new_id_applicable")
 class PrepareOptionsWithSetTest(TestCase):
     def setUp(self):
         self.cib = "cib"
@@ -262,7 +372,7 @@ class PrepareOptionsWithSetTest(TestCase):
             self.resource_set_list,
         )
 
-    @mock.patch("pcs.lib.cib.constraint.ticket.constraint.create_id")
+    @mock.patch("pcs.lib.cib.constraint.ticket.create_id")
     def test_complete_id(self, mock_create_id, _):
         mock_create_id.return_value = "generated_id"
         options = {"loss-policy": "freeze", "ticket": "T"}
@@ -409,9 +519,7 @@ class Element:
         return self
 
 
-@mock.patch(
-    "pcs.lib.cib.constraint.ticket.constraint.have_duplicate_resource_sets"
-)
+@mock.patch("pcs.lib.cib.constraint.ticket.have_duplicate_resource_sets")
 class AreDuplicateWithResourceSet(TestCase):
     def test_returns_true_for_duplicate_elements(
         self, mock_have_duplicate_resource_sets
