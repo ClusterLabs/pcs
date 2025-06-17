@@ -26,7 +26,7 @@ def error(message: str) -> SystemExit:
 def process_library_reports(
     report_item_list: ReportItemList,
     exit_on_error: bool = True,
-    include_debug: bool = False,
+    include_debug: bool = True,
 ) -> None:
     if not report_item_list:
         raise error("Errors have occurred, therefore pcs is unable to continue")
