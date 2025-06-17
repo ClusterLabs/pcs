@@ -66,22 +66,28 @@ def remove_elements(
             force_flags=force_flags,
         )
     )
-    if elements_to_remove.resources_to_remove:
-        resource_ids = [
-            str(el.attrib["id"])
-            for el in elements_to_remove.resources_to_remove
-        ]
+
+    # check if all non-stonith resources are stopped before deleting them
+    non_stonith_resource_ids = [
+        str(res_el.attrib["id"])
+        for res_el in elements_to_remove.resources_to_remove
+        if not is_stonith(res_el)
+    ]
+    if non_stonith_resource_ids:
         if env.is_cib_live:
             report_processor.report_list(
                 ensure_resources_stopped(
-                    env.get_cluster_state(), resource_ids, force_flags
+                    env.get_cluster_state(),
+                    non_stonith_resource_ids,
+                    force_flags,
                 )
             )
         else:
             report_processor.report(
                 reports.ReportItem.warning(
                     reports.messages.StoppedResourcesBeforeDeleteCheckSkipped(
-                        resource_ids, reports.const.REASON_NOT_LIVE_CIB
+                        non_stonith_resource_ids,
+                        reports.const.REASON_NOT_LIVE_CIB,
                     )
                 )
             )

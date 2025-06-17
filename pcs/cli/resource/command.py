@@ -124,19 +124,6 @@ def remove(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
       * --no-stop - don't stop resource before deletion
       * --future - specifying '--force' does not skip resource stopping
     """
-    # TODO also implement in stonith delete
-
-    # TODO failing tier1:
-    """
-    pcs_test.tier1.legacy.test_stonith.StonithTest.test_no_stonith_warning \
-    pcs_test.tier1.stonith.test_remove.StonithDelete.test_remove_all_resources \
-    pcs_test.tier1.stonith.test_remove.StonithDelete.test_remove_references \
-    pcs_test.tier1.stonith.test_remove.StonithDelete.test_single_resource \
-    pcs_test.tier1.stonith.test_remove.StonithReferencedInAcl.test_remove_primitive \
-    pcs_test.tier1.stonith.test_remove.StonithRemove.test_remove_all_resources \
-    pcs_test.tier1.stonith.test_remove.StonithRemove.test_remove_references \
-    pcs_test.tier1.stonith.test_remove.StonithRemove.test_single_resource
-    """
     modifiers.ensure_only_supported("-f", "--force", FUTURE_OPTION, "--no-stop")
 
     if not argv:

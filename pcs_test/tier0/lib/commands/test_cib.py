@@ -539,6 +539,35 @@ class RemoveElements(TestCase):
             ]
         )
 
+    def test_remove_resources_stonith_state_check_skipped(self):
+        # adding extra stonith, so the last stonith check is skipped
+        self.config.runner.cib.load(
+            resources="""
+                <resources>
+                    <primitive id="P-1"/>
+                    <primitive class="stonith" id="S-1" type="fence_xvm"/>
+                    <primitive class="stonith" id="S-2" type="fence_xvm"/>
+                </resources>
+            """
+        )
+        self.config.runner.pcmk.load_state(
+            resources="""
+                <resources>
+                    <resource id="P-1" role="Stopped"/>
+                    <resource id="S-1" role="Started"/>
+                </resources>
+            """
+        )
+        self.config.env.push_cib(
+            resources="""
+                <resources>
+                    <primitive class="stonith" id="S-2" type="fence_xvm"/>
+                </resources>
+            """
+        )
+
+        lib.remove_elements(self.env_assist.get_env(), ["P-1", "S-1"])
+
     def test_remove_resources_not_live_cib(self):
         cib = modify_cib(
             read_test_resource("cib-empty.xml"),
@@ -582,13 +611,6 @@ class StonithAndSbdCheck(TestCase):
         </resources>
     """
 
-    resources_state = """
-        <resources>
-            <resource id="S1" managed="true" role="Stopped"/>
-            <resource id="S2" managed="true" role="Stopped"/>
-        </resources>
-    """
-
     def fixture_config_sbd_calls(self, sbd_enabled):
         node_name_list = ["node-1", "node-2"]
         self.config.env.set_known_nodes(node_name_list)
@@ -618,7 +640,6 @@ class StonithAndSbdCheck(TestCase):
     def test_some_stonith_left(self):
         # sbd calls do not happen if some stonith is left
         self.config.runner.cib.load(resources=self.resources)
-        self.config.runner.pcmk.load_state(resources=self.resources_state)
         self.config.env.push_cib(
             resources="""
                 <resources>
@@ -633,7 +654,6 @@ class StonithAndSbdCheck(TestCase):
     def test_no_stonith_left_sbd_enabled(self):
         self.config.runner.cib.load(resources=self.resources)
         self.fixture_config_sbd_calls(sbd_enabled=True)
-        self.config.runner.pcmk.load_state(resources=self.resources_state)
         self.config.env.push_cib(resources="<resources />")
 
         lib.remove_elements(self.env_assist.get_env(), ["S1", "S2"])
@@ -648,7 +668,6 @@ class StonithAndSbdCheck(TestCase):
         """
         self.config.runner.cib.load(resources=resources)
         self.fixture_config_sbd_calls(sbd_enabled=False)
-        self.config.runner.pcmk.load_state(resources=self.resources_state)
 
         self.env_assist.assert_raise_library_error(
             lambda: lib.remove_elements(self.env_assist.get_env(), ["S1"])
@@ -675,7 +694,6 @@ class StonithAndSbdCheck(TestCase):
         """
         self.config.runner.cib.load(resources=resources)
         self.fixture_config_sbd_calls(sbd_enabled=False)
-        self.config.runner.pcmk.load_state(resources=self.resources_state)
 
         self.env_assist.assert_raise_library_error(
             lambda: lib.remove_elements(self.env_assist.get_env(), ["S2"])
@@ -704,7 +722,6 @@ class StonithAndSbdCheck(TestCase):
         """
         self.config.runner.cib.load(resources=resources)
         self.fixture_config_sbd_calls(sbd_enabled=False)
-        self.config.runner.pcmk.load_state(resources=self.resources_state)
         self.config.env.push_cib(resources="<resources />")
 
         lib.remove_elements(self.env_assist.get_env(), ["S1", "S2"])
@@ -713,7 +730,6 @@ class StonithAndSbdCheck(TestCase):
     def test_no_stonith_left_sbd_disabled(self):
         self.config.runner.cib.load(resources=self.resources)
         self.fixture_config_sbd_calls(sbd_enabled=False)
-        self.config.runner.pcmk.load_state(resources=self.resources_state)
 
         self.env_assist.assert_raise_library_error(
             lambda: lib.remove_elements(self.env_assist.get_env(), ["S1", "S2"])
@@ -730,7 +746,6 @@ class StonithAndSbdCheck(TestCase):
     def test_no_stonith_left_sbd_disabled_forced(self):
         self.config.runner.cib.load(resources=self.resources)
         self.fixture_config_sbd_calls(sbd_enabled=False)
-        self.config.runner.pcmk.load_state(resources=self.resources_state)
         self.config.env.push_cib(resources="<resources />")
 
         lib.remove_elements(
@@ -770,7 +785,6 @@ class StonithAndSbdCheck(TestCase):
                 ),
             ]
         )
-        self.config.runner.pcmk.load_state(resources=self.resources_state)
         self.config.env.push_cib(resources="<resources />")
 
         lib.remove_elements(self.env_assist.get_env(), ["S1", "S2"])
@@ -799,7 +813,6 @@ class StonithAndSbdCheck(TestCase):
                 ),
             ]
         )
-        self.config.runner.pcmk.load_state(resources=self.resources_state)
         self.config.env.push_cib(resources="<resources />")
 
         lib.remove_elements(self.env_assist.get_env(), ["S1", "S2"])
