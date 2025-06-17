@@ -193,7 +193,8 @@ def remove(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
         # was specified
         lib.cib.remove_elements(resources_to_remove)
 
-        # the resources were successfully removed and we can exit
+        # the resources were successfully removed, but we still need to print
+        # out the reports, since there could be INFO or DEBUG reports
         if in_memory_report_processor.reports:
             process_library_reports(
                 in_memory_report_processor.reports,

@@ -104,6 +104,51 @@ def remove_elements(
     env.push_cib()
 
 
+def _validate_elements_to_remove(
+    element_to_remove: ElementsToRemove,
+) -> reports.ReportItemList:
+    report_list = [
+        reports.ReportItem.error(reports.messages.IdNotFound(missing_id, []))
+        for missing_id in sorted(element_to_remove.missing_ids)
+    ]
+    unsupported_elements = element_to_remove.unsupported_elements
+    report_list.extend(
+        reports.ReportItem.error(
+            reports.messages.IdBelongsToUnexpectedType(
+                unsupported_id,
+                list(unsupported_elements.supported_element_types),
+                unsupported_elements.id_tag_map[unsupported_id],
+            )
+        )
+        for unsupported_id in sorted(unsupported_elements.id_tag_map)
+    )
+    return report_list
+
+
+def _ensure_not_guest_remote(
+    resource_elements: Iterable[_Element],
+) -> reports.ReportItemList:
+    report_list = []
+    for element in resource_elements:
+        if is_guest_node(element):
+            report_list.append(
+                reports.ReportItem.error(
+                    reports.messages.UseCommandNodeRemoveGuest(
+                        str(element.attrib["id"])
+                    )
+                )
+            )
+        if get_node_name_from_remote_resource(element) is not None:
+            report_list.append(
+                reports.ReportItem.error(
+                    reports.messages.UseCommandNodeRemoveRemote(
+                        str(element.attrib["id"])
+                    )
+                )
+            )
+    return report_list
+
+
 # TODO: remove, since we want to handle resource stopping in clients instead
 # of this lib command
 def _stop_resources_wait(
@@ -157,51 +202,6 @@ def _stop_resources_wait(
         raise LibraryError()
 
     return env.get_cib()
-
-
-def _validate_elements_to_remove(
-    element_to_remove: ElementsToRemove,
-) -> reports.ReportItemList:
-    report_list = [
-        reports.ReportItem.error(reports.messages.IdNotFound(missing_id, []))
-        for missing_id in sorted(element_to_remove.missing_ids)
-    ]
-    unsupported_elements = element_to_remove.unsupported_elements
-    report_list.extend(
-        reports.ReportItem.error(
-            reports.messages.IdBelongsToUnexpectedType(
-                unsupported_id,
-                list(unsupported_elements.supported_element_types),
-                unsupported_elements.id_tag_map[unsupported_id],
-            )
-        )
-        for unsupported_id in sorted(unsupported_elements.id_tag_map)
-    )
-    return report_list
-
-
-def _ensure_not_guest_remote(
-    resource_elements: Iterable[_Element],
-) -> reports.ReportItemList:
-    report_list = []
-    for element in resource_elements:
-        if is_guest_node(element):
-            report_list.append(
-                reports.ReportItem.error(
-                    reports.messages.UseCommandNodeRemoveGuest(
-                        str(element.attrib["id"])
-                    )
-                )
-            )
-        if get_node_name_from_remote_resource(element) is not None:
-            report_list.append(
-                reports.ReportItem.error(
-                    reports.messages.UseCommandNodeRemoveRemote(
-                        str(element.attrib["id"])
-                    )
-                )
-            )
-    return report_list
 
 
 # TODO: remove, since we want to handle resource stopping in clients instead
