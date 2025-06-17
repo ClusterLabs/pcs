@@ -6121,6 +6121,20 @@ class StoppingResourcesBeforeDeleting(NameBuildTest):
         )
 
 
+class StoppingResources(NameBuildTest):
+    def test_one_resource(self) -> str:
+        self.assert_message_from_report(
+            "Stopping resource 'resourceId'",
+            reports.StoppingResources(["resourceId"]),
+        )
+
+    def test_multiple_resources(self) -> str:
+        self.assert_message_from_report(
+            "Stopping resources 'resourceId1', 'resourceId2'",
+            reports.StoppingResources(["resourceId1", "resourceId2"]),
+        )
+
+
 class StoppingResourcesBeforeDeletingSkipped(NameBuildTest):
     def test_success(self) -> str:
         self.assert_message_from_report(

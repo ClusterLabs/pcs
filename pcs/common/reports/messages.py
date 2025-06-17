@@ -6477,6 +6477,25 @@ class StoppingResourcesBeforeDeletingSkipped(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class StoppingResources(ReportItemMessage):
+    """
+    Resources are going to be stopped
+
+    resource_id_list -- ids of resources that are going to be stopped
+    """
+
+    resource_id_list: list[str]
+    _code = codes.STOPPING_RESOURCES
+
+    @property
+    def message(self) -> str:
+        return "Stopping {resource} {resource_list}".format(
+            resource=format_plural(self.resource_id_list, "resource"),
+            resource_list=format_list(self.resource_id_list),
+        )
+
+
+@dataclass(frozen=True)
 class CannotStopResourcesBeforeDeleting(ReportItemMessage):
     """
     Cannot stop resources that are being removed

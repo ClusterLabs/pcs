@@ -289,6 +289,7 @@ EXTRA_DIST		= \
 			  tier0/lib/commands/resource/test_resource_relations.py \
 			  tier0/lib/commands/resource/test_resource_update.py \
 			  tier0/lib/commands/resource/test_restart.py \
+			  tier0/lib/commands/resource/test_stop.py \
 			  tier0/lib/commands/sbd/__init__.py \
 			  tier0/lib/commands/sbd/test_disable_sbd.py \
 			  tier0/lib/commands/sbd/test_enable_sbd.py \
