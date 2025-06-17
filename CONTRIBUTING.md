@@ -1,5 +1,9 @@
 # Contributing to the pcs project
 
+## Applicable policies
+Pull request must comply with the following policies:
+* [AI policy](AI-policy.md)
+
 ## Running pcs and its test suite
 
 ### Python virtual environment
