@@ -1,4 +1,4 @@
-import os.path
+import os
 
 # generic system paths
 chkconfig_exec = "/sbin/chkconfig"
@@ -28,11 +28,17 @@ pcs_capabilities = os.path.join(pcsd_exec_location, "capabilities.xml")
 pcsd_gem_path = "@GEM_HOME@" or None
 pcsd_unix_socket = "@PCSD_UNIX_SOCKET@"
 pcsd_ruby_socket = "@LOCALSTATEDIR@/run/pcsd-ruby.socket"
-pcsd_log_location = "@LOCALSTATEDIR@/log/pcsd/pcsd.log"
+pcsd_log_location = os.path.join(
+    os.environ.get("LOGS_DIRECTORY", "@LOCALSTATEDIR@/log/pcsd"),
+    "pcsd.log",
+)
+
 pcsd_default_port = 2224
 pcsd_config = "@CONF_DIR@/pcsd"
 
-pcsd_var_location = "@LOCALSTATEDIR@/lib/pcsd"
+pcsd_var_location = os.environ.get(
+    "STATE_DIRECTORY", "@LOCALSTATEDIR@/lib/pcsd"
+)
 pcsd_cert_location = os.path.join(pcsd_var_location, "pcsd.crt")
 pcsd_dr_config_location = os.path.join(pcsd_var_location, "disaster-recovery")
 pcsd_key_location = os.path.join(pcsd_var_location, "pcsd.key")

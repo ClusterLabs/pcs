@@ -409,17 +409,17 @@ fi
 %{_unitdir}/pcsd-ruby.service
 
 # log dir
-%dir %{_var}/log/pcsd
+%ghost %attr(0700,root,root) %{_var}/log/pcsd
 
 # var/lib/pcsd
-%{_sharedstatedir}/pcsd
+%ghost %attr(0700,root,root) %{_sharedstatedir}/pcsd
 %ghost %config(noreplace) %attr(0600,root,root) %{_sharedstatedir}/pcsd/cfgsync_ctl
 %ghost %config(noreplace) %attr(0600,root,root) %{_sharedstatedir}/pcsd/known-hosts
 %ghost %config(noreplace) %attr(0600,root,root) %{_sharedstatedir}/pcsd/pcsd.cookiesecret
 %ghost %config(noreplace) %attr(0600,root,root) %{_sharedstatedir}/pcsd/pcsd.crt
 %ghost %config(noreplace) %attr(0600,root,root) %{_sharedstatedir}/pcsd/pcsd.key
 %ghost %config(noreplace) %attr(0644,root,root) %{_sharedstatedir}/pcsd/pcs_settings.conf
-%ghost %config(noreplace) %attr(0644,root,root) %{_sharedstatedir}/pcsd/pcs_users.conf
+%ghost %config(noreplace) %attr(0600,root,root) %{_sharedstatedir}/pcsd/pcs_users.conf
 
 # man page
 %{_mandir}/man8/pcsd.*

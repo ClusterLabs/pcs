@@ -14,6 +14,10 @@ EnvironmentFile=@CONF_DIR@/pcsd
 @SYSTEMD_GEM_HOME@
 # This file holds the selinux context
 ExecStart=@LIB_DIR@/pcsd/pcsd
+StateDirectory=pcsd
+StateDirectoryMode=0700
+LogsDirectory=pcsd
+LogsDirectoryMode=0700
 Type=notify
 
 [Install]
