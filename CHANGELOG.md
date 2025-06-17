@@ -20,6 +20,8 @@
   `resource.update_meta` to API v2 ([RHEL-35420])
 - Support for exporting node attributes and utilization in `json` and `cmd`
   formats ([RHEL-76154])
+- Support for reading sate and logs directories from systemd environment
+  variables `STATE_DIRECTORY` and `LOGS_DIRECTORY` ([RHEL-97220])
 
 ### Fixed
 - Fixed a traceback when removing a resource fails in web UI
@@ -46,6 +48,7 @@
 [RHEL-82894]: https://issues.redhat.com/browse/RHEL-82894
 [RHEL-90151]: https://issues.redhat.com/browse/RHEL-90151
 [RHEL-92044]: https://issues.redhat.com/browse/RHEL-92044
+[RHEL-97220]: https://issues.redhat.com/browse/RHEL-97220
 
 
 ## [0.11.9.1] - 2025-04-14

@@ -10,6 +10,10 @@ After=pcsd-ruby.service
 [Service]
 EnvironmentFile=@CONF_DIR@/pcsd
 ExecStart=@SBINDIR@/pcsd
+StateDirectory=pcsd
+StateDirectoryMode=0700
+LogsDirectory=pcsd
+LogsDirectoryMode=0700
 Type=notify
 KillMode=mixed
 
