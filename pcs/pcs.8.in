@@ -120,11 +120,19 @@ Example: Create a new resource called 'VirtualIP' with IP address 192.168.0.99, 
 .br
 pcs resource create VirtualIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 nic=eth2 op monitor interval=30s
 .TP
-delete <resource id|group id|bundle id|clone id>...
+delete <resource id|group id|bundle id|clone id>... [\fB\-\-no\-stop\fR] [\fB\-\-future\fR]
 Deletes the specified resources, groups, bundles or clones (and all resources within the groups/bundles/clones).
+
+If \fB\-\-no\-skip\fR is specified, the resources will not be stopped before their deletion.
+
+Using \fB\-\-force\fR currently also means the resources will not be stopped before their deletion. If you need to use \fB\-\-force\fR and still want to stop the resources, you need to combine it with the \fB\-\-future\fR flag
 .TP
-remove <resource id|group id|bundle id|clone id>...
+remove <resource id|group id|bundle id|clone id>... [\fB\-\-no\-stop\fR] [\fB\-\-future\fR]
 Deletes the specified resources, groups, bundles or clones (and all resources within the groups/bundles/clones).
+
+If \fB\-\-no\-skip\fR is specified, the resources will not be stopped before their deletion.
+
+Using \fB\-\-force\fR currently also means the resources will not be stopped before their deletion. If you need to use \fB\-\-force\fR and still want to stop the resources, you need to combine it with the \fB\-\-future\fR flag
 .TP
 enable <resource id | tag id>... [\fB\-\-wait\fR[=n]]
 Allow the cluster to start the resources. Depending on the rest of the configuration (constraints, options, failures, etc), the resources may remain stopped. If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the resources to start and then return 0 if the resources are started, or 1 if the resources have not yet started. If 'n' is not specified it defaults to 60 minutes.

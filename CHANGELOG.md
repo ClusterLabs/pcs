@@ -37,6 +37,16 @@
     - `pcs status query resource` (broken since 0.12.0)
 - Handle query limit errors coming from rubygem-rack ([RHEL-90151])
 
+### Changed
+- Lib command `cib.remove_elements` does not stop resources before deletion.
+  The resources should be stopped before calling this command
+
+### Deprecated
+- Using `--force` in `pcs resource delete|remove` to skip resource stopping
+  before their deletion. Use the new `--no-stop` flag instead. You can use
+  `--future` flag if you need to use `--force` and you do not wish to skip the
+  resource stopping.
+
 [RHEL-7681]: https://issues.redhat.com/browse/RHEL-7681
 [RHEL-21050]: https://issues.redhat.com/browse/RHEL-21050
 [RHEL-22423]: https://issues.redhat.com/browse/RHEL-22423

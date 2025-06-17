@@ -311,11 +311,24 @@ def _output_format_desc(cmd: bool = True) -> str:
 
 _DELETE_CMD = "delete"
 _REMOVE_CMD = "remove"
-_RESOURCE_DELETE_SYNTAX = "<resource id|group id|bundle id|clone id>..."
+_RESOURCE_DELETE_SYNTAX = (
+    "<resource id|group id|bundle id|clone id>... [--no-skip] [--future]"
+)
 _RESOURCE_DELETE_DESC = (
     """
     Deletes the specified resources, groups, bundles or clones (and all
     resources within the groups/bundles/clones).
+    """,
+    "",
+    """
+    If --no-skip is specified, the resources will not be stopped before their
+    deletion.
+    """,
+    "",
+    """
+    Using --force currently also means the resources will not be stopped before
+    their deletion. If you need to use --force and still want to stop the
+    resources, you need to combine it with the --future flag
     """,
 )
 

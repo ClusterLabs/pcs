@@ -969,9 +969,16 @@
         API v2: cib.remove_elements
       </description>
     </capability>
-    <capability id="pcmk.cib.remove_elements.resources" in-pcs="0" in-pcsd="1">
+    <capability id="pcmk.cib.remove_elements.resources" in-pcs="0" in-pcsd="0">
       <description>
         Remove resources by ids.
+
+        API v2: cib.remove_elements
+      </description>
+    </capability>
+    <capability id="pcmk.cib.remove_elements.resources-not-stopping" in-pcs="0" in-pcsd="1">
+      <description>
+        Remove resource by ids, the resources need to be stopped before they are removed.
 
         API v2: cib.remove_elements
       </description>

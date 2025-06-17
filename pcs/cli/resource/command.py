@@ -120,7 +120,8 @@ def remove(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * -f - CIB file
-      * --force - turn validation errors into warnings, skip resource stopping
+      * --force - turn validation errors into warnings, (derecated) skip
+                  resource stopping
       * --no-stop - don't stop resource before deletion
       * --future - specifying '--force' does not skip resource stopping
     """
