@@ -231,6 +231,7 @@ class ElementsToRemove:
         )
 
 
+# TODO remove
 def warn_resource_unmanaged(
     state: _Element, resource_ids: StringSequence
 ) -> reports.ReportItemList:
@@ -285,6 +286,7 @@ def warn_resource_unmanaged(
     return report_list
 
 
+# TODO remove
 def stop_resources(
     cib: _Element, resource_elements: Sequence[_Element]
 ) -> None:
@@ -300,7 +302,9 @@ def stop_resources(
 
 
 def ensure_resources_stopped(
-    state: _Element, resource_ids: StringSequence
+    state: _Element,
+    resource_ids: StringSequence,
+    force_flags: reports.types.ForceFlags,
 ) -> reports.ReportItemList:
     """
     Ensure that all resources that should be stopped are stopped.
@@ -356,11 +360,13 @@ def ensure_resources_stopped(
 
     if not_stopped_ids:
         report_list.append(
-            reports.ReportItem.error(
-                reports.messages.CannotStopResourcesBeforeDeleting(
+            reports.ReportItem(
+                reports.get_severity(
+                    reports.codes.FORCE, reports.codes.FORCE in force_flags
+                ),
+                reports.messages.CannotRemoveResourcesNotStopped(
                     not_stopped_ids
                 ),
-                force_code=reports.codes.FORCE,
             )
         )
 

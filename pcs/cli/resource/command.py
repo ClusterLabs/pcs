@@ -8,14 +8,20 @@ from pcs.cli.common.output import (
     smart_wrap_text,
 )
 from pcs.cli.common.parse_args import (
+    FUTURE_OPTION,
     OUTPUT_FORMAT_VALUE_CMD,
     OUTPUT_FORMAT_VALUE_JSON,
     Argv,
     InputModifiers,
     KeyValueParser,
+    ensure_unique_args,
     wait_to_timeout,
 )
-from pcs.cli.reports.output import deprecation_warning
+from pcs.cli.reports.output import (
+    deprecation_warning,
+    process_library_reports,
+    warn,
+)
 from pcs.cli.resource.common import (
     check_is_not_stonith,
     get_resource_status_msg,
@@ -27,7 +33,13 @@ from pcs.cli.resource.output import (
 )
 from pcs.common import reports
 from pcs.common.interface import dto
-from pcs.common.pacemaker.resource.list import CibResourcesDto
+from pcs.common.pacemaker.resource.list import (
+    CibResourcesDto,
+    get_all_resources_ids,
+    get_stonith_resources_ids,
+)
+from pcs.common.str_tools import format_list, format_plural
+from pcs.lib.errors import LibraryError
 
 
 def config(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
@@ -102,3 +114,144 @@ def meta(lib: Any, argv: list[str], modifiers: InputModifiers) -> None:
         deprecation_warning(reports.messages.ResourceWaitDeprecated().message)
         lib.cluster.wait_for_pcmk_idle(wait_timeout)
         print(get_resource_status_msg(lib, resource_id))
+
+
+def remove(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
+    """
+    Options:
+      * -f - CIB file
+      * --force - turn validation errors into warnings, skip resource stopping
+      * --no-stop - don't stop resource before deletion
+      * --future - specifying '--force' does not skip resource stopping
+    """
+    # TODO also implement in stonith delete
+
+    # TODO failing tier1:
+    """
+    pcs_test.tier1.legacy.test_stonith.StonithTest.test_no_stonith_warning \
+    pcs_test.tier1.stonith.test_remove.StonithDelete.test_remove_all_resources \
+    pcs_test.tier1.stonith.test_remove.StonithDelete.test_remove_references \
+    pcs_test.tier1.stonith.test_remove.StonithDelete.test_single_resource \
+    pcs_test.tier1.stonith.test_remove.StonithReferencedInAcl.test_remove_primitive \
+    pcs_test.tier1.stonith.test_remove.StonithRemove.test_remove_all_resources \
+    pcs_test.tier1.stonith.test_remove.StonithRemove.test_remove_references \
+    pcs_test.tier1.stonith.test_remove.StonithRemove.test_single_resource
+    """
+    modifiers.ensure_only_supported("-f", "--force", FUTURE_OPTION, "--no-stop")
+
+    if not argv:
+        raise CmdLineInputError()
+    ensure_unique_args(argv)
+
+    resources_to_remove = set(argv)
+    resources_dto = lib.resource.get_configured_resources()
+    missing_ids = resources_to_remove - get_all_resources_ids(resources_dto)
+    if missing_ids:
+        raise CmdLineInputError(
+            "Unable to find {resource}: {id_list}".format(
+                resource=format_plural(missing_ids, "resource"),
+                id_list=format_list(missing_ids),
+            )
+        )
+
+    stonith_ids = resources_to_remove & get_stonith_resources_ids(resources_dto)
+    if stonith_ids:
+        raise CmdLineInputError(
+            (
+                "This command cannot remove stonith {resource}: {id_list}. Use "
+                "'pcs stonith remove' instead."
+            ).format(
+                resource=format_plural(stonith_ids, "resource"),
+                id_list=format_list(stonith_ids),
+            )
+        )
+
+    force_flags = set()
+    if modifiers.is_specified("--force"):
+        force_flags.add(reports.codes.FORCE)
+
+    dont_stop_me_now = modifiers.is_specified("--no-stop")
+    if (
+        not modifiers.is_specified(FUTURE_OPTION)
+        and modifiers.is_specified("--force")
+        and not dont_stop_me_now
+    ):
+        # deprecated after pcs-0.12.0
+        deprecation_warning(
+            "Using '--force' to skip resource stopping is deprecated. Specify "
+            "'--future' to switch to the future behavior and use '--no-stop' "
+            "to skip resource stopping."
+        )
+        dont_stop_me_now = True
+
+    if dont_stop_me_now:
+        lib.cib.remove_elements(resources_to_remove, force_flags)
+        return
+
+    if modifiers.is_specified("-f"):
+        warn(
+            "Resources are not going to be stopped before deletion because the "
+            "command does not run on a live cluster"
+        )
+        lib.cib.remove_elements(resources_to_remove, force_flags)
+        return
+
+    original_report_processor = lib.env.report_processor
+    in_memory_report_processor = reports.processor.ReportProcessorInMemory()
+    lib.env.report_processor = in_memory_report_processor
+
+    try:
+        # call without force flags the first time, so we really catch the
+        # validation errors without deleting anything even when --force
+        # was specified
+        lib.cib.remove_elements(resources_to_remove)
+
+        # the resources were successfully removed and we can exit
+        if in_memory_report_processor.reports:
+            process_library_reports(
+                in_memory_report_processor.reports,
+                include_debug=modifiers.is_specified("--debug"),
+            )
+        return
+    except LibraryError as e:
+        filtered_reports = _process_reports(
+            in_memory_report_processor.reports, force_flags
+        )
+
+        # if there are other errors than CANNOT_REMOVE_RESOURCES_NOT_STOPPED or
+        # errors that would be forced, we can exit, since it does not make sense
+        # to try stopping and removing the resources again
+        if reports.has_errors(filtered_reports) or e.output or e.args:
+            if filtered_reports:
+                process_library_reports(
+                    filtered_reports,
+                    include_debug=modifiers.is_specified("--debug"),
+                    exit_on_error=False,
+                )
+            raise e
+
+    lib.env.report_processor = original_report_processor
+
+    lib.resource.stop(resources_to_remove, force_flags)
+    lib.cluster.wait_for_pcmk_idle(None)
+
+    lib.cib.remove_elements(resources_to_remove, force_flags)
+
+
+def _process_reports(
+    report_list: reports.ReportItemList, force_flags: reports.types.ForceFlags
+) -> reports.ReportItemList:
+    filtered_reports = []
+    for report in report_list:
+        if (
+            report.message.code
+            == reports.codes.CANNOT_REMOVE_RESOURCES_NOT_STOPPED
+        ):
+            continue
+        if (
+            report.severity.level == reports.ReportItemSeverity.ERROR
+            and report.severity.force_code in force_flags
+        ):
+            report.severity = reports.ReportItemSeverity.warning()
+        filtered_reports.append(report)
+    return filtered_reports

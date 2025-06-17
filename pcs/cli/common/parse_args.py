@@ -91,6 +91,7 @@ PCS_LONG_OPTIONS: Final = [
     "corosync_conf=",
     "booth-conf=",
     "booth-key=",
+    "no-stop",
     "no-watchdog-validation",
     # pcs cluster setup
     "no-cluster-uuid",
@@ -551,6 +552,7 @@ class InputModifiers:
                 "--no-expire-check": "--no-expire-check" in options,
                 "--no-cluster-uuid": "--no-cluster-uuid" in options,
                 "--no-keys-sync": "--no-keys-sync" in options,
+                "--no-stop": "--no-stop" in options,
                 "--no-strict": "--no-strict" in options,
                 "--no-watchdog-validation": (
                     "--no-watchdog-validation" in options

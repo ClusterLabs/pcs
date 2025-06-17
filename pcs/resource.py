@@ -30,7 +30,6 @@ from pcs.cli.common.parse_args import (
     Argv,
     InputModifiers,
     KeyValueParser,
-    ensure_unique_args,
     get_rule_str,
     group_by_keywords,
     wait_to_timeout,
@@ -70,18 +69,10 @@ from pcs.common import (
 )
 from pcs.common.interface import dto
 from pcs.common.pacemaker.defaults import CibDefaultsDto
-from pcs.common.pacemaker.resource.list import (
-    get_all_resources_ids,
-    get_stonith_resources_ids,
-)
 from pcs.common.pacemaker.resource.operations import (
     OCF_CHECK_LEVEL_INSTANCE_ATTRIBUTE_NAME,
 )
-from pcs.common.str_tools import (
-    format_list,
-    format_list_custom_last_separator,
-    format_plural,
-)
+from pcs.common.str_tools import format_list_custom_last_separator
 from pcs.lib.cib.resource import (
     guest_node,
     primitive,
@@ -1872,49 +1863,6 @@ def resource_clone_master_remove(
             if output:
                 msg.append("\n" + output)
             utils.err("\n".join(msg).strip())
-
-
-def resource_remove_cmd(
-    lib: Any, argv: Argv, modifiers: InputModifiers
-) -> None:
-    """
-    Options:
-      * -f - CIB file
-      * --force - don't stop resources before deletion
-    """
-    modifiers.ensure_only_supported("-f", "--force")
-    if not argv:
-        raise CmdLineInputError()
-    ensure_unique_args(argv)
-
-    resources_to_remove = set(argv)
-    resources_dto = lib.resource.get_configured_resources()
-    missing_ids = resources_to_remove - get_all_resources_ids(resources_dto)
-    if missing_ids:
-        raise CmdLineInputError(
-            "Unable to find {resource}: {id_list}".format(
-                resource=format_plural(missing_ids, "resource"),
-                id_list=format_list(missing_ids),
-            )
-        )
-
-    stonith_ids = resources_to_remove & get_stonith_resources_ids(resources_dto)
-    if stonith_ids:
-        raise CmdLineInputError(
-            (
-                "This command cannot remove stonith {resource}: {id_list}. Use "
-                "'pcs stonith remove' instead."
-            ).format(
-                resource=format_plural(stonith_ids, "resource"),
-                id_list=format_list(stonith_ids),
-            )
-        )
-
-    force_flags = set()
-    if modifiers.is_specified("--force"):
-        force_flags.add(reports.codes.FORCE)
-
-    lib.cib.remove_elements(resources_to_remove, force_flags)
 
 
 def stonith_level_rm_device(cib_dom, stn_id):

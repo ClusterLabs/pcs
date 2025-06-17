@@ -6146,6 +6146,41 @@ class StoppingResourcesBeforeDeletingSkipped(NameBuildTest):
         )
 
 
+class StoppedResourcesBeforeDeleteCheckSkipped(NameBuildTest):
+    def test_one_resource(self):
+        self.assert_message_from_report(
+            (
+                "Not checking if resource 'A' is stopped before deletion. "
+                "Deleting unstopped resources may result in orphaned resources "
+                "being present in the cluster."
+            ),
+            reports.StoppedResourcesBeforeDeleteCheckSkipped(["A"]),
+        )
+
+    def test_multiple_resources(self):
+        self.assert_message_from_report(
+            (
+                "Not checking if resources 'A', 'B' are stopped before "
+                "deletion. Deleting unstopped resources may result in orphaned "
+                "resources being present in the cluster."
+            ),
+            reports.StoppedResourcesBeforeDeleteCheckSkipped(["A", "B"]),
+        )
+
+    def test_with_reason(self):
+        self.assert_message_from_report(
+            (
+                "Not checking if resource 'A' is stopped before deletion "
+                "because the command does not run on a live cluster. Deleting "
+                "unstopped resources may result in orphaned resources being "
+                "present in the cluster."
+            ),
+            reports.StoppedResourcesBeforeDeleteCheckSkipped(
+                ["A"], reports.const.REASON_NOT_LIVE_CIB
+            ),
+        )
+
+
 class CannotStopResourcesBeforeDeleting(NameBuildTest):
     def test_one_resource(self) -> str:
         self.assert_message_from_report(
@@ -6157,6 +6192,31 @@ class CannotStopResourcesBeforeDeleting(NameBuildTest):
         self.assert_message_from_report(
             "Cannot stop resources 'resourceId1', 'resourceId2' before deleting",
             reports.CannotStopResourcesBeforeDeleting(
+                ["resourceId1", "resourceId2"]
+            ),
+        )
+
+
+class CannotRemoveResourcesNotStopped(NameBuildTest):
+    def test_one_resource(self) -> str:
+        self.assert_message_from_report(
+            (
+                "Cannot remove unstopped resource 'resourceId'. Stop the "
+                "resource before removing. Removing unstopped resources can "
+                "lead to orphaned resources being present in the cluster."
+            ),
+            reports.CannotRemoveResourcesNotStopped(["resourceId"]),
+        )
+
+    def test_multiple_resources(self) -> str:
+        self.assert_message_from_report(
+            (
+                "Cannot remove unstopped resources 'resourceId1', 'resourceId2'."
+                " Stop the resources before removing. Removing unstopped "
+                "resources can lead to orphaned resources being present in the "
+                "cluster."
+            ),
+            reports.CannotRemoveResourcesNotStopped(
                 ["resourceId1", "resourceId2"]
             ),
         )

@@ -24,7 +24,9 @@ def error(message: str) -> SystemExit:
 
 
 def process_library_reports(
-    report_item_list: ReportItemList, exit_on_error: bool = True
+    report_item_list: ReportItemList,
+    exit_on_error: bool = True,
+    include_debug: bool = False,
 ) -> None:
     if not report_item_list:
         raise error("Errors have occurred, therefore pcs is unable to continue")
@@ -32,9 +34,13 @@ def process_library_reports(
     critical_error = False
     for report_item in report_item_list:
         report_dto = report_item.to_dto()
+        severity = report_dto.severity.level
+
+        if severity == ReportItemSeverity.DEBUG and not include_debug:
+            continue
+
         cli_report_msg = report_item_msg_from_dto(report_dto.message)
         msg = add_context_to_message(cli_report_msg.message, report_dto.context)
-        severity = report_dto.severity.level
 
         if severity == ReportItemSeverity.WARNING:
             warn(msg)

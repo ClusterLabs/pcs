@@ -1,21 +1,11 @@
 import json
-from typing import Optional
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase
 
 from pcs.common import reports
-from pcs.common.resource_status import ResourceState
 from pcs.lib.commands import cib as lib
 
 from pcs_test.tools import fixture
-from pcs_test.tools.assertions import assert_xml_equal
 from pcs_test.tools.command_env import get_env_tools
-from pcs_test.tools.custom_mock import (
-    TmpFileCall,
-    TmpFileMock,
-)
 from pcs_test.tools.fixture_cib import modify_cib
 from pcs_test.tools.misc import read_test_resource
 
@@ -68,97 +58,6 @@ def fixture_guest_resource(resource_id: str) -> str:
             </meta_attributes>
         </primitive>
     """
-
-
-class StopResourcesWaitMixin:
-    def fixture_init_tmp_file_mocker(self):
-        self.tmp_file_mock_obj = TmpFileMock(
-            file_content_checker=assert_xml_equal,
-        )
-        self.addCleanup(self.tmp_file_mock_obj.assert_all_done)
-        tmp_file_patcher = mock.patch("pcs.lib.tools.get_tmp_file")
-        self.addCleanup(tmp_file_patcher.stop)
-        tmp_file_mock = tmp_file_patcher.start()
-        tmp_file_mock.side_effect = (
-            self.tmp_file_mock_obj.get_mock_side_effect()
-        )
-
-    def fixture_stop_resources_wait_calls(
-        self,
-        initial_cib: str,
-        initial_state_modifiers: Optional[dict[str, str]] = None,
-        after_disable_cib_modifiers: Optional[dict[str, str]] = None,
-        after_disable_state_modifiers: Optional[dict[str, str]] = None,
-        successful_stop: bool = True,
-    ):
-        self.config.runner.pcmk.load_state(
-            name="stop_wait.load_state.before",
-            **(initial_state_modifiers or {}),
-        )
-
-        self.__disabled_cib = modify_cib(
-            initial_cib, **(after_disable_cib_modifiers or {})
-        )
-        self.tmp_file_mock_obj.set_calls(
-            [
-                TmpFileCall(
-                    "stop_wait.cib.disable.before", orig_content=initial_cib
-                ),
-                TmpFileCall(
-                    "stop_wait.cib.disable.after",
-                    orig_content=self.__disabled_cib,
-                ),
-            ]
-        )
-        self.config.runner.cib.diff(
-            "stop_wait.cib.disable.before",
-            "stop_wait.cib.disable.after",
-            name="stop_wait.cib.diff.disable",
-            stdout="stop_wait.cib.diff.disable",
-        )
-        self.config.runner.cib.push_diff(
-            name="stop_wait.cib.push.disable",
-            cib_diff="stop_wait.cib.diff.disable",
-        )
-
-        self.config.runner.pcmk.wait(timeout=0)
-        self.config.runner.pcmk.load_state(
-            name="stop_wait.state.after",
-            **(after_disable_state_modifiers or {}),
-        )
-
-        if successful_stop:
-            self.config.runner.cib.load_content(
-                self.__disabled_cib, name="stop_wait.cib.load.after"
-            )
-
-    def fixture_push_cib_after_stopping(self, **modifiers):
-        self.tmp_file_mock_obj.extend_calls(
-            [
-                TmpFileCall(
-                    "stop_wait.cib.delete.before",
-                    orig_content=self.__disabled_cib,
-                ),
-                TmpFileCall(
-                    "stop_wait.cib.delete.after",
-                    orig_content=modify_cib(
-                        read_test_resource("cib-empty.xml"), **modifiers
-                    ),
-                ),
-            ]
-        )
-
-        self.config.runner.cib.diff(
-            "stop_wait.cib.delete.before",
-            "stop_wait.cib.delete.after",
-            name="stop_wait.cib.diff.delete",
-            stdout="stop_wait.cib.diff.delete",
-        )
-
-        self.config.runner.cib.push_diff(
-            name="stop_wait.cib.push.delete",
-            cib_diff="stop_wait.cib.diff.delete",
-        )
 
 
 class RemoveElements(TestCase):
@@ -287,9 +186,23 @@ class RemoveElements(TestCase):
                             <primitive id="C-G-2"/>
                         </group>
                     </clone>
-                    <bundle id="B">
-                        <primitive id="B-1"/>
-                    </bundle>
+                </resources>
+            """
+        )
+        self.config.runner.pcmk.load_state(
+            resources="""
+                <resources>
+                    <resource id="P-1" managed="true" role="Stopped"/>
+                    <group id="G" number_resources="2" maintenance="false" managed="true" disabled="false">
+                        <resource id="G-1" managed="true" role="Stopped"/>
+                        <resource id="G-2" managed="true" role="Stopped"/>
+                    </group>
+                    <clone id="C" multi_state="false" unique="false" maintenance="false" managed="true" disabled="false" failed="false" failure_ignored="false">
+                        <group id="C-G" number_resources="2" maintenance="false" managed="true" disabled="false">
+                            <resource id="C-G-1" managed="true" role="Stopped"/>
+                            <resource id="C-G-2" managed="true" role="Stopped"/>
+                        </group>
+                    </clone>
                 </resources>
             """
         )
@@ -302,8 +215,7 @@ class RemoveElements(TestCase):
         )
         lib.remove_elements(
             self.env_assist.get_env(),
-            ["P-1", "G", "C", "B"],
-            [reports.codes.FORCE],
+            ["P-1", "G", "C"],
         )
         self.env_assist.assert_reports(
             [
@@ -315,12 +227,8 @@ class RemoveElements(TestCase):
                         "C-G": "group",
                         "C-G-1": "primitive",
                         "C-G-2": "primitive",
-                        "B-1": "primitive",
                     },
-                ),
-                fixture.warn(
-                    reports.codes.STOPPING_RESOURCES_BEFORE_DELETING_SKIPPED
-                ),
+                )
             ]
         )
 
@@ -345,6 +253,24 @@ class RemoveElements(TestCase):
             """,
         )
         self.config.runner.cib.load_content(cib)
+        self.config.runner.pcmk.load_state(
+            resources="""
+                <resources>
+                    <resource id="R1" managed="true" role="Stopped"/>
+                    <group id="G1" number_resources="1" maintenance="false" managed="true" disabled="false">
+                        <resource id="R2" managed="true" role="Stopped"/>
+                    </group>
+                    <clone id="C1" multi_state="false" unique="false" maintenance="false" managed="true" disabled="false" failed="false" failure_ignored="false">
+                        <resource id="R3" managed="true" role="Stopped"/>
+                    </clone>
+                    <clone id="C1" multi_state="false" unique="false" maintenance="false" managed="true" disabled="false" failed="false" failure_ignored="false">
+                        <group id="G2" number_resources="1" maintenance="false" managed="true" disabled="false">
+                            <resource id="R4" managed="true" role="Stopped"/>
+                        </group>
+                    </clone>
+                </resources>
+            """
+        )
         self.env_assist.assert_raise_library_error(
             lambda: lib.remove_elements(
                 self.env_assist.get_env(), ["R1", "R2", "R3", "R4"]
@@ -392,6 +318,24 @@ class RemoveElements(TestCase):
             """,
         )
         self.config.runner.cib.load_content(cib)
+        self.config.runner.pcmk.load_state(
+            resources="""
+                <resources>
+                    <resource id="R1" managed="true" role="Stopped"/>
+                    <group id="G1" number_resources="1" maintenance="false" managed="true" disabled="false">
+                        <resource id="R2" managed="true" role="Stopped"/>
+                    </group>
+                    <clone id="C1" multi_state="false" unique="false" maintenance="false" managed="true" disabled="false" failed="false" failure_ignored="false">
+                        <resource id="R3" managed="true" role="Stopped"/>
+                    </clone>
+                    <clone id="C1" multi_state="false" unique="false" maintenance="false" managed="true" disabled="false" failed="false" failure_ignored="false">
+                        <group id="G2" number_resources="1" maintenance="false" managed="true" disabled="false">
+                            <resource id="R4" managed="true" role="Stopped"/>
+                        </group>
+                    </clone>
+                </resources>
+            """
+        )
         self.env_assist.assert_raise_library_error(
             lambda: lib.remove_elements(
                 self.env_assist.get_env(), ["R1", "R2", "R3", "R4"]
@@ -462,6 +406,14 @@ class RemoveElements(TestCase):
                 </acls>
             """,
         )
+        self.config.runner.pcmk.load_state(
+            resources="""
+                <resources>
+                    <resource id="A" role="Stopped" managed="true"/>
+                    <resource id="B" role="Stopped" managed="true"/>
+                </resources>
+            """
+        )
         self.config.env.push_cib(
             resources="""
                 <resources>
@@ -496,9 +448,7 @@ class RemoveElements(TestCase):
                 </acls>
             """,
         )
-        lib.remove_elements(
-            self.env_assist.get_env(), ["A"], [reports.codes.FORCE]
-        )
+        lib.remove_elements(self.env_assist.get_env(), ["A"])
         self.env_assist.assert_reports(
             [
                 fixture.info(
@@ -523,502 +473,103 @@ class RemoveElements(TestCase):
                         "PERMISSION": {"ROLE"},
                     },
                 ),
-                fixture.warn(
-                    reports.codes.STOPPING_RESOURCES_BEFORE_DELETING_SKIPPED
-                ),
             ]
         )
 
-
-class RemoveElementsStopResources(TestCase, StopResourcesWaitMixin):
-    def setUp(self):
-        self.env_assist, self.config = get_env_tools(self)
-        self.fixture_init_tmp_file_mocker()
-
-    def test_one_resource(self):
+    def test_remove_resources_started(self):
         self.config.runner.cib.load(
             resources="""
                 <resources>
-                    <primitive id="A"/>
+                    <primitive id="P-1"/>
+                    <primitive id="P-2"/>
                 </resources>
             """
         )
-        self.fixture_stop_resources_wait_calls(
-            self.config.calls.get("runner.cib.load").stdout,
-            initial_state_modifiers={
-                "resources": """
-                    <resources>
-                        <resource id="A" managed="true" role="Started"/>
-                    </resources>
-                """
-            },
-            after_disable_cib_modifiers={
-                "resources": """
-                    <resources>
-                        <primitive id="A">
-                            <meta_attributes id="A-meta_attributes">
-                                <nvpair id="A-meta_attributes-target-role" name="target-role" value="Stopped"/>
-                            </meta_attributes>
-                        </primitive>
-                    </resources>
-                """
-            },
-            after_disable_state_modifiers={
-                "resources": """
-                    <resources>
-                        <resource id="A" managed="true" role="Stopped"/>
-                    </resources>
-                """
-            },
-        )
-        self.fixture_push_cib_after_stopping(resources="<resources/>")
-
-        lib.remove_elements(self.env_assist.get_env(), ["A"])
-        self.env_assist.assert_reports(
-            [
-                fixture.info(
-                    reports.codes.STOPPING_RESOURCES_BEFORE_DELETING,
-                    resource_id_list=["A"],
-                ),
-                fixture.info(reports.codes.WAIT_FOR_IDLE_STARTED, timeout=0),
-            ]
-        )
-
-    def test_resource_unmanaged(self):
-        self.config.runner.cib.load(
+        self.config.runner.pcmk.load_state(
             resources="""
                 <resources>
-                    <primitive id="A"/>
+                    <resource id="P-1" role="Started"/>
+                    <resource id="P-2" role="Stopped"/>
                 </resources>
             """
         )
-        self.fixture_stop_resources_wait_calls(
-            self.config.calls.get("runner.cib.load").stdout,
-            initial_state_modifiers={
-                "resources": """
-                    <resources>
-                        <resource id="A" managed="false" role="Stopped"/>
-                    </resources>
-                """
-            },
-            after_disable_cib_modifiers={
-                "resources": """
-                    <resources>
-                        <primitive id="A">
-                            <meta_attributes id="A-meta_attributes">
-                                <nvpair id="A-meta_attributes-target-role" name="target-role" value="Stopped"/>
-                            </meta_attributes>
-                        </primitive>
-                    </resources>
-                """
-            },
-            after_disable_state_modifiers={
-                "resources": """
-                    <resources>
-                        <resource id="A" managed="false" role="Stopped"/>
-                    </resources>
-                """
-            },
-        )
-        self.fixture_push_cib_after_stopping(resources="<resources/>")
-
-        lib.remove_elements(self.env_assist.get_env(), ["A"])
-        self.env_assist.assert_reports(
-            [
-                fixture.warn(
-                    reports.codes.RESOURCE_IS_UNMANAGED, resource_id="A"
-                ),
-                fixture.info(
-                    reports.codes.STOPPING_RESOURCES_BEFORE_DELETING,
-                    resource_id_list=["A"],
-                ),
-                fixture.info(reports.codes.WAIT_FOR_IDLE_STARTED, timeout=0),
-            ]
-        )
-
-    def test_resource_remove_failed_to_stop(self):
-        self.config.runner.cib.load(
-            resources="""
-                <resources>
-                    <primitive id="A"/>
-                </resources>
-            """
-        )
-        self.fixture_stop_resources_wait_calls(
-            self.config.calls.get("runner.cib.load").stdout,
-            initial_state_modifiers={
-                "resources": """
-                    <resources>
-                        <resource id="A" managed="true" role="Started"/>
-                    </resources>
-                """
-            },
-            after_disable_cib_modifiers={
-                "resources": """
-                    <resources>
-                        <primitive id="A">
-                            <meta_attributes id="A-meta_attributes">
-                                <nvpair id="A-meta_attributes-target-role" name="target-role" value="Stopped"/>
-                            </meta_attributes>
-                        </primitive>
-                    </resources>
-                """
-            },
-            after_disable_state_modifiers={
-                "resources": """
-                    <resources>
-                        <resource id="A" managed="true" role="Started"/>
-                    </resources>
-                """
-            },
-            successful_stop=False,
-        )
-
         self.env_assist.assert_raise_library_error(
-            lambda: lib.remove_elements(self.env_assist.get_env(), ["A"])
+            lambda: lib.remove_elements(
+                self.env_assist.get_env(), ["P-1", "P-2"]
+            )
         )
         self.env_assist.assert_reports(
             [
-                fixture.info(
-                    reports.codes.STOPPING_RESOURCES_BEFORE_DELETING,
-                    resource_id_list=["A"],
-                ),
-                fixture.info(reports.codes.WAIT_FOR_IDLE_STARTED, timeout=0),
                 fixture.error(
-                    reports.codes.CANNOT_STOP_RESOURCES_BEFORE_DELETING,
-                    resource_id_list=["A"],
+                    reports.codes.CANNOT_REMOVE_RESOURCES_NOT_STOPPED,
+                    resource_id_list=["P-1"],
                     force_code=reports.codes.FORCE,
-                ),
+                )
             ]
         )
 
-    def test_disable_only_resources(self):
-        constraints = """
-            <constraints>
-                <rsc_location id="L" rsc="A" node="node2" score="200"/>
-            </constraints>
-        """
-        tags = """
-            <tags>
-                <tag id="T">
-                    <obj_ref id="A"/>
-                </tag>
-            </tags>
-        """
+    def test_remove_resources_started_forced(self):
         self.config.runner.cib.load(
+            resources="""
+                <resources>
+                    <primitive id="P-1"/>
+                    <primitive id="P-2"/>
+                </resources>
+            """
+        )
+        self.config.runner.pcmk.load_state(
+            resources="""
+                <resources>
+                    <resource id="P-1" role="Started"/>
+                    <resource id="P-2" role="Stopped"/>
+                </resources>
+            """
+        )
+        self.config.env.push_cib(resources="<resources />")
+
+        lib.remove_elements(
+            self.env_assist.get_env(), ["P-1", "P-2"], [reports.codes.FORCE]
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.CANNOT_REMOVE_RESOURCES_NOT_STOPPED,
+                    resource_id_list=["P-1"],
+                )
+            ]
+        )
+
+    def test_remove_resources_not_live_cib(self):
+        cib = modify_cib(
+            read_test_resource("cib-empty.xml"),
             resources="""
                 <resources>
                     <primitive id="A"/>
                 </resources>
             """,
-            constraints=constraints,
-            tags=tags,
         )
-        self.fixture_stop_resources_wait_calls(
-            self.config.calls.get("runner.cib.load").stdout,
-            initial_state_modifiers={
-                "resources": """
-                    <resources>
-                        <resource id="A" managed="true" role="Stopped"/>
-                    </resources>
-                """
-            },
-            after_disable_cib_modifiers={
-                "resources": """
-                    <resources>
-                        <primitive id="A">
-                            <meta_attributes id="A-meta_attributes">
-                                <nvpair id="A-meta_attributes-target-role" name="target-role" value="Stopped"/>
-                            </meta_attributes>
-                        </primitive>
-                    </resources>
-                """,
-                "constraints": constraints,
-                "tags": tags,
-            },
-            after_disable_state_modifiers={
-                "resources": """
-                    <resources>
-                        <resource id="A" managed="true" role="Stopped"/>
-                    </resources>
-                """
-            },
+        # This makes env.is_cib_live return False
+        self.config.env.set_cib_data(cib)
+        self.config.runner.cib.load_content(
+            cib, env={"CIB_file": "/fake/tmp/file"}
         )
-        self.fixture_push_cib_after_stopping(
-            resources="<resources/>",
-            constraints="<constraints/>",
-            tags="<tags/>",
+        self.config.env.push_cib(
+            resources="<resources/>", load_key="runner.cib.load_content"
         )
 
         lib.remove_elements(self.env_assist.get_env(), ["A"])
         self.env_assist.assert_reports(
             [
-                fixture.info(
-                    reports.codes.STOPPING_RESOURCES_BEFORE_DELETING,
+                fixture.warn(
+                    reports.codes.STOPPED_RESOURCES_BEFORE_DELETE_CHECK_SKIPPED,
                     resource_id_list=["A"],
-                ),
-                fixture.info(reports.codes.WAIT_FOR_IDLE_STARTED, timeout=0),
-                fixture.info(
-                    reports.codes.CIB_REMOVE_DEPENDANT_ELEMENTS,
-                    id_tag_map={"L": "rsc_location", "T": "tag"},
-                ),
-            ]
-        )
-
-    def test_stop_inner_elements(self):
-        self.config.runner.cib.load(
-            resources="""
-                <resources>
-                    <clone id="C">
-                        <group id="G">
-                            <primitive id="A"/>
-                            <primitive id="B"/>
-                        </group>
-                    </clone>
-                </resources>
-            """
-        )
-        self.fixture_stop_resources_wait_calls(
-            self.config.calls.get("runner.cib.load").stdout,
-            initial_state_modifiers={
-                "resources": """
-                    <resources>
-                        <clone id="C" multi_state="false" unique="false" maintenance="false" managed="true" disabled="false" failed="false" failure_ignored="false">
-                            <group id="G:0" number_resources="1" maintenance="false" managed="true" disabled="false">
-                                <resource id="A" role="Started" managed="true"/>
-                                <resource id="B" role="Started" managed="true"/>
-                            </group>
-                            <group id="G:1" number_resources="2" maintenance="false" managed="true" disabled="false">
-                                <resource id="A" role="Started" managed="true"/>
-                                <resource id="B" role="Started" managed="true"/>
-                            </group>
-                        </clone>
-                    </resources>
-                """
-            },
-            after_disable_cib_modifiers={
-                "resources": """
-                    <resources>
-                        <clone id="C">
-                            <meta_attributes id="C-meta_attributes">
-                                <nvpair id="C-meta_attributes-target-role" name="target-role" value="Stopped"/>
-                            </meta_attributes>
-                            <group id="G">
-                                <meta_attributes id="G-meta_attributes">
-                                    <nvpair id="G-meta_attributes-target-role" name="target-role" value="Stopped"/>
-                                </meta_attributes>
-                                <primitive id="A">
-                                    <meta_attributes id="A-meta_attributes">
-                                        <nvpair id="A-meta_attributes-target-role" name="target-role" value="Stopped"/>
-                                    </meta_attributes>
-                                </primitive>
-                                <primitive id="B">
-                                    <meta_attributes id="B-meta_attributes">
-                                        <nvpair id="B-meta_attributes-target-role" name="target-role" value="Stopped"/>
-                                    </meta_attributes>
-                                </primitive>
-                            </group>
-                        </clone>
-                    </resources>
-                """
-            },
-            after_disable_state_modifiers={
-                "resources": """
-                    <resources>
-                        <clone id="C" multi_state="false" unique="false" maintenance="false" managed="true" disabled="false" failed="false" failure_ignored="false">
-                            <group id="G:0" number_resources="1" maintenance="false" managed="true" disabled="false">
-                                <resource id="A" role="Stopped" managed="true"/>
-                                <resource id="B" role="Stopped" managed="true"/>
-                            </group>
-                            <group id="G:1" number_resources="2" maintenance="false" managed="true" disabled="false">
-                                <resource id="A" role="Stopped" managed="true"/>
-                                <resource id="B" role="Stopped" managed="true"/>
-                            </group>
-                        </clone>
-                    </resources>
-                """
-            },
-        )
-        self.fixture_push_cib_after_stopping(resources="<resources/>")
-
-        lib.remove_elements(self.env_assist.get_env(), ["C"])
-        self.env_assist.assert_reports(
-            [
-                fixture.info(
-                    reports.codes.STOPPING_RESOURCES_BEFORE_DELETING,
-                    resource_id_list=["A", "B", "C", "G"],
-                ),
-                fixture.info(reports.codes.WAIT_FOR_IDLE_STARTED, timeout=0),
-                fixture.info(
-                    reports.codes.CIB_REMOVE_DEPENDANT_ELEMENTS,
-                    id_tag_map={
-                        "G": "group",
-                        "A": "primitive",
-                        "B": "primitive",
-                    },
-                ),
-            ]
-        )
-
-    def test_disable_only_needed_resources(self):
-        self.config.runner.cib.load(
-            resources="""
-                <resources>
-                    <clone id="C">
-                        <group id="G">
-                            <primitive id="A"/>
-                            <primitive id="B"/>
-                        </group>
-                    </clone>
-                </resources>
-            """
-        )
-        self.fixture_stop_resources_wait_calls(
-            self.config.calls.get("runner.cib.load").stdout,
-            initial_state_modifiers={
-                "resources": """
-                    <resources>
-                        <clone id="C" multi_state="false" unique="false" maintenance="false" managed="true" disabled="false" failed="false" failure_ignored="false">
-                            <group id="G:0" number_resources="1" maintenance="false" managed="true" disabled="false">
-                                <resource id="A" role="Started" managed="true"/>
-                                <resource id="B" role="Started" managed="true"/>
-                            </group>
-                            <group id="G:1" number_resources="2" maintenance="false" managed="true" disabled="false">
-                                <resource id="A" role="Started" managed="true"/>
-                                <resource id="B" role="Started" managed="true"/>
-                            </group>
-                        </clone>
-                    </resources>
-                """
-            },
-            after_disable_cib_modifiers={
-                "resources": """
-                    <resources>
-                        <clone id="C">
-                            <group id="G">
-                                <primitive id="A">
-                                    <meta_attributes id="A-meta_attributes">
-                                        <nvpair id="A-meta_attributes-target-role" name="target-role" value="Stopped"/>
-                                    </meta_attributes>
-                                </primitive>
-                                <primitive id="B"/>
-                            </group>
-                        </clone>
-                    </resources>
-                """
-            },
-            after_disable_state_modifiers={
-                "resources": """
-                    <resources>
-                        <clone id="C" multi_state="false" unique="false" maintenance="false" managed="true" disabled="false" failed="false" failure_ignored="false">
-                            <group id="G:0" number_resources="1" maintenance="false" managed="true" disabled="false">
-                                <resource id="A" role="Stopped" managed="true"/>
-                                <resource id="B" role="Started" managed="true"/>
-                            </group>
-                            <group id="G:1" number_resources="2" maintenance="false" managed="true" disabled="false">
-                                <resource id="A" role="Stopped" managed="true"/>
-                                <resource id="B" role="Started" managed="true"/>
-                            </group>
-                        </clone>
-                    </resources>
-                """
-            },
-        )
-        self.fixture_push_cib_after_stopping(
-            resources="""
-                <resources>
-                    <clone id="C">
-                        <group id="G">
-                            <primitive id="B"/>
-                        </group>
-                    </clone>
-                </resources>
-            """
-        )
-
-        lib.remove_elements(self.env_assist.get_env(), ["A"])
-        self.env_assist.assert_reports(
-            [
-                fixture.info(
-                    reports.codes.STOPPING_RESOURCES_BEFORE_DELETING,
-                    resource_id_list=["A"],
-                ),
-                fixture.info(reports.codes.WAIT_FOR_IDLE_STARTED, timeout=0),
-                fixture.info(
-                    reports.codes.CIB_REMOVE_REFERENCES,
-                    id_tag_map={"A": "primitive", "G": "group"},
-                    removing_references_from={"A": {"G"}},
-                ),
-            ]
-        )
-
-    def test_skip_state_check_on_missing_from_status(self):
-        self.config.runner.cib.load(
-            resources="""
-                <resources>
-                    <bundle id="test-bundle">
-                        <podman image="localhost/pcmktest:test"/>
-                        <primitive id="apa" class="ocf" type="apache" provider="heartbeat"/>
-                    </bundle>
-                </resources>
-            """
-        )
-        self.fixture_stop_resources_wait_calls(
-            self.config.calls.get("runner.cib.load").stdout,
-            initial_state_modifiers={"resources": "<resources/>"},
-            after_disable_cib_modifiers={
-                "resources": """
-                    <resources>
-                        <bundle id="test-bundle">
-                            <podman image="localhost/pcmktest:test"/>
-                            <primitive id="apa" class="ocf" type="apache" provider="heartbeat">
-                                <meta_attributes id="apa-meta_attributes">
-                                    <nvpair id="apa-meta_attributes-target-role" name="target-role" value="Stopped"/>
-                                </meta_attributes>
-                            </primitive>
-                        </bundle>
-                    </resources>
-                """
-            },
-            after_disable_state_modifiers={"resources": "<resources/>"},
-        )
-        self.fixture_push_cib_after_stopping(
-            resources="""
-                <resources>
-                    <bundle id="test-bundle">
-                        <podman image="localhost/pcmktest:test"/>
-                    </bundle>
-                </resources>
-            """
-        )
-        lib.remove_elements(self.env_assist.get_env(), ["apa"])
-        self.env_assist.assert_reports(
-            [
-                fixture.info(
-                    reports.codes.STOPPING_RESOURCES_BEFORE_DELETING,
-                    resource_id_list=["apa"],
-                ),
-                fixture.debug(
-                    reports.codes.CONFIGURED_RESOURCE_MISSING_IN_STATUS,
-                    resource_id="apa",
-                    checked_state=ResourceState.UNMANAGED,
-                ),
-                fixture.info(reports.codes.WAIT_FOR_IDLE_STARTED, timeout=0),
-                fixture.debug(
-                    reports.codes.CONFIGURED_RESOURCE_MISSING_IN_STATUS,
-                    resource_id="apa",
-                    checked_state=ResourceState.STOPPED,
-                ),
-                fixture.info(
-                    reports.codes.CIB_REMOVE_REFERENCES,
-                    id_tag_map={"apa": "primitive", "test-bundle": "bundle"},
-                    removing_references_from={"apa": {"test-bundle"}},
-                ),
+                    reason_type=reports.const.REASON_NOT_LIVE_CIB,
+                )
             ]
         )
 
 
-class StonithAndSbdCheck(StopResourcesWaitMixin, TestCase):
+class StonithAndSbdCheck(TestCase):
     """
     Test that an error is produced when removing the last stonith resource and
     sbd is disabled
@@ -1028,6 +579,13 @@ class StonithAndSbdCheck(StopResourcesWaitMixin, TestCase):
         <resources>
             <primitive id="S1" class="stonith" type="fence_any" />
             <primitive id="S2" class="stonith" type="fence_any" />
+        </resources>
+    """
+
+    resources_state = """
+        <resources>
+            <resource id="S1" managed="true" role="Stopped"/>
+            <resource id="S2" managed="true" role="Stopped"/>
         </resources>
     """
 
@@ -1054,90 +612,14 @@ class StonithAndSbdCheck(StopResourcesWaitMixin, TestCase):
             ]
         )
 
-    def fixture_remove_s1_s2(self, s2_type="fence_any"):
-        self.fixture_stop_resources_wait_calls(
-            self.config.calls.get("runner.cib.load").stdout,
-            initial_state_modifiers={
-                "resources": """
-                    <resources>
-                        <resource id="S1" managed="true" role="Started"/>
-                        <resource id="S2" managed="true" role="Started"/>
-                    </resources>
-                """
-            },
-            after_disable_cib_modifiers={
-                "resources": f"""
-                    <resources>
-                        <primitive id="S1" class="stonith" type="fence_any">
-                            <meta_attributes id="S1-meta_attributes">
-                                <nvpair id="S1-meta_attributes-target-role"
-                                    name="target-role" value="Stopped"
-                                />
-                            </meta_attributes>
-                        </primitive>
-                        <primitive id="S2" class="stonith" type="{s2_type}">
-                            <meta_attributes id="S2-meta_attributes">
-                                <nvpair id="S2-meta_attributes-target-role"
-                                    name="target-role" value="Stopped"
-                                />
-                            </meta_attributes>
-                        </primitive>
-                    </resources>
-                """
-            },
-            after_disable_state_modifiers={
-                "resources": """
-                    <resources>
-                        <resource id="S1" managed="true" role="Stopped"/>
-                        <resource id="S2" managed="true" role="Stopped"/>
-                    </resources>
-                """
-            },
-        )
-        self.fixture_push_cib_after_stopping(resources="<resources />")
-
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
 
     def test_some_stonith_left(self):
-        self.fixture_init_tmp_file_mocker()
-
         # sbd calls do not happen if some stonith is left
         self.config.runner.cib.load(resources=self.resources)
-        self.fixture_stop_resources_wait_calls(
-            self.config.calls.get("runner.cib.load").stdout,
-            initial_state_modifiers={
-                "resources": """
-                    <resources>
-                        <resource id="S1" managed="true" role="Started"/>
-                        <resource id="S2" managed="true" role="Started"/>
-                    </resources>
-                """
-            },
-            after_disable_cib_modifiers={
-                "resources": """
-                    <resources>
-                        <primitive id="S1" class="stonith" type="fence_any">
-                            <meta_attributes id="S1-meta_attributes">
-                                <nvpair id="S1-meta_attributes-target-role"
-                                    name="target-role" value="Stopped"
-                                />
-                            </meta_attributes>
-                        </primitive>
-                        <primitive id="S2" class="stonith" type="fence_any" />
-                    </resources>
-                """
-            },
-            after_disable_state_modifiers={
-                "resources": """
-                    <resources>
-                        <resource id="S1" managed="true" role="Stopped"/>
-                        <resource id="S2" managed="true" role="Started"/>
-                    </resources>
-                """
-            },
-        )
-        self.fixture_push_cib_after_stopping(
+        self.config.runner.pcmk.load_state(resources=self.resources_state)
+        self.config.env.push_cib(
             resources="""
                 <resources>
                     <primitive id="S2" class="stonith" type="fence_any" />
@@ -1146,33 +628,16 @@ class StonithAndSbdCheck(StopResourcesWaitMixin, TestCase):
         )
 
         lib.remove_elements(self.env_assist.get_env(), ["S1"])
-        self.env_assist.assert_reports(
-            [
-                fixture.info(
-                    reports.codes.STOPPING_RESOURCES_BEFORE_DELETING,
-                    resource_id_list=["S1"],
-                ),
-                fixture.info(reports.codes.WAIT_FOR_IDLE_STARTED, timeout=0),
-            ]
-        )
+        self.env_assist.assert_reports([])
 
     def test_no_stonith_left_sbd_enabled(self):
-        self.fixture_init_tmp_file_mocker()
-
         self.config.runner.cib.load(resources=self.resources)
         self.fixture_config_sbd_calls(sbd_enabled=True)
-        self.fixture_remove_s1_s2()
+        self.config.runner.pcmk.load_state(resources=self.resources_state)
+        self.config.env.push_cib(resources="<resources />")
 
         lib.remove_elements(self.env_assist.get_env(), ["S1", "S2"])
-        self.env_assist.assert_reports(
-            [
-                fixture.info(
-                    reports.codes.STOPPING_RESOURCES_BEFORE_DELETING,
-                    resource_id_list=["S1", "S2"],
-                ),
-                fixture.info(reports.codes.WAIT_FOR_IDLE_STARTED, timeout=0),
-            ]
-        )
+        self.env_assist.assert_reports([])
 
     def test_fake_stonith_left_sbd_disabled(self):
         resources = """
@@ -1183,6 +648,7 @@ class StonithAndSbdCheck(StopResourcesWaitMixin, TestCase):
         """
         self.config.runner.cib.load(resources=resources)
         self.fixture_config_sbd_calls(sbd_enabled=False)
+        self.config.runner.pcmk.load_state(resources=self.resources_state)
 
         self.env_assist.assert_raise_library_error(
             lambda: lib.remove_elements(self.env_assist.get_env(), ["S1"])
@@ -1209,6 +675,7 @@ class StonithAndSbdCheck(StopResourcesWaitMixin, TestCase):
         """
         self.config.runner.cib.load(resources=resources)
         self.fixture_config_sbd_calls(sbd_enabled=False)
+        self.config.runner.pcmk.load_state(resources=self.resources_state)
 
         self.env_assist.assert_raise_library_error(
             lambda: lib.remove_elements(self.env_assist.get_env(), ["S2"])
@@ -1227,7 +694,7 @@ class StonithAndSbdCheck(StopResourcesWaitMixin, TestCase):
             <resources>
                 <primitive id="S1" class="stonith" type="fence_any">
                     <meta_attributes id="S1-meta_attributes">
-                        <nvpair id="S1-meta_attributes-target-role" 
+                        <nvpair id="S1-meta_attributes-target-role"
                             name="target-role" value="Stopped"
                         />
                     </meta_attributes>
@@ -1235,25 +702,18 @@ class StonithAndSbdCheck(StopResourcesWaitMixin, TestCase):
                 <primitive id="S2" class="stonith" type="fence_sbd" />
             </resources>
         """
-        self.fixture_init_tmp_file_mocker()
         self.config.runner.cib.load(resources=resources)
         self.fixture_config_sbd_calls(sbd_enabled=False)
-        self.fixture_remove_s1_s2(s2_type="fence_sbd")
+        self.config.runner.pcmk.load_state(resources=self.resources_state)
+        self.config.env.push_cib(resources="<resources />")
 
         lib.remove_elements(self.env_assist.get_env(), ["S1", "S2"])
-        self.env_assist.assert_reports(
-            [
-                fixture.info(
-                    reports.codes.STOPPING_RESOURCES_BEFORE_DELETING,
-                    resource_id_list=["S1", "S2"],
-                ),
-                fixture.info(reports.codes.WAIT_FOR_IDLE_STARTED, timeout=0),
-            ]
-        )
+        self.env_assist.assert_reports([])
 
     def test_no_stonith_left_sbd_disabled(self):
         self.config.runner.cib.load(resources=self.resources)
         self.fixture_config_sbd_calls(sbd_enabled=False)
+        self.config.runner.pcmk.load_state(resources=self.resources_state)
 
         self.env_assist.assert_raise_library_error(
             lambda: lib.remove_elements(self.env_assist.get_env(), ["S1", "S2"])
@@ -1268,64 +728,22 @@ class StonithAndSbdCheck(StopResourcesWaitMixin, TestCase):
         )
 
     def test_no_stonith_left_sbd_disabled_forced(self):
-        self.fixture_init_tmp_file_mocker()
-
-        # TODO reports.codes.force does two things:
-        # 1) overrides NO_STONITH_MEANS_WOULD_BE_LEFT error
-        # 2) disables stoppiong resources before deleting
-        # This is wrong, we need those two effects to be independent.
-        # Possible solutions:
-        # 1) Use specific forces codes - This is planned, but not yet
-        #    implemented in CLI. Also, the library would have to emit specific
-        #    force codes in error reports.
-        # 2) Add specific flag to CLI and LIB command to disable stopping
-        #    resources before deleting them.
-
         self.config.runner.cib.load(resources=self.resources)
         self.fixture_config_sbd_calls(sbd_enabled=False)
-        self.tmp_file_mock_obj.extend_calls(
-            [
-                TmpFileCall(
-                    "cib.delete.before",
-                    orig_content=self.config.calls.get(
-                        "runner.cib.load"
-                    ).stdout,
-                ),
-                TmpFileCall(
-                    "cib.delete.after",
-                    orig_content=read_test_resource("cib-empty.xml"),
-                ),
-            ]
-        )
-        self.config.runner.cib.diff(
-            "cib.delete.before",
-            "cib.delete.after",
-            name="cib.diff.delete",
-            stdout="cib.diff.delete",
-        )
-        self.config.runner.cib.push_diff(
-            name="cib.push.delete", cib_diff="cib.diff.delete"
-        )
+        self.config.runner.pcmk.load_state(resources=self.resources_state)
+        self.config.env.push_cib(resources="<resources />")
 
         lib.remove_elements(
             self.env_assist.get_env(), ["S1", "S2"], {reports.codes.FORCE}
         )
 
         self.env_assist.assert_reports(
-            [
-                fixture.warn(
-                    reports.codes.NO_STONITH_MEANS_WOULD_BE_LEFT,
-                ),
-                fixture.warn(
-                    reports.codes.STOPPING_RESOURCES_BEFORE_DELETING_SKIPPED,
-                ),
-            ]
+            [fixture.warn(reports.codes.NO_STONITH_MEANS_WOULD_BE_LEFT)]
         )
 
     def test_no_stonith_left_sbd_partially_enabled(self):
         node_name_list = ["node-1", "node-2"]
         self.config.env.set_known_nodes(node_name_list)
-        self.fixture_init_tmp_file_mocker()
         self.config.runner.cib.load(resources=self.resources)
         self.config.corosync_conf.load(node_name_list=node_name_list)
         self.config.http.sbd.check_sbd(
@@ -1352,21 +770,13 @@ class StonithAndSbdCheck(StopResourcesWaitMixin, TestCase):
                 ),
             ]
         )
-        self.fixture_remove_s1_s2()
+        self.config.runner.pcmk.load_state(resources=self.resources_state)
+        self.config.env.push_cib(resources="<resources />")
 
         lib.remove_elements(self.env_assist.get_env(), ["S1", "S2"])
-        self.env_assist.assert_reports(
-            [
-                fixture.info(
-                    reports.codes.STOPPING_RESOURCES_BEFORE_DELETING,
-                    resource_id_list=["S1", "S2"],
-                ),
-                fixture.info(reports.codes.WAIT_FOR_IDLE_STARTED, timeout=0),
-            ]
-        )
+        self.env_assist.assert_reports([])
 
     def test_communication_error(self):
-        self.fixture_init_tmp_file_mocker()
         self.config.runner.cib.load(resources=self.resources)
         node_name_list = ["node-1", "node-2"]
         self.config.env.set_known_nodes(node_name_list)
@@ -1389,7 +799,8 @@ class StonithAndSbdCheck(StopResourcesWaitMixin, TestCase):
                 ),
             ]
         )
-        self.fixture_remove_s1_s2()
+        self.config.runner.pcmk.load_state(resources=self.resources_state)
+        self.config.env.push_cib(resources="<resources />")
 
         lib.remove_elements(self.env_assist.get_env(), ["S1", "S2"])
         self.env_assist.assert_reports(
@@ -1405,10 +816,5 @@ class StonithAndSbdCheck(StopResourcesWaitMixin, TestCase):
                     node="node-2",
                     reason="",
                 ),
-                fixture.info(
-                    reports.codes.STOPPING_RESOURCES_BEFORE_DELETING,
-                    resource_id_list=["S1", "S2"],
-                ),
-                fixture.info(reports.codes.WAIT_FOR_IDLE_STARTED, timeout=0),
             ]
         )

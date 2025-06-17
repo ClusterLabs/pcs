@@ -3,6 +3,8 @@ from unittest import TestCase
 
 from lxml import etree
 
+from pcs.common.str_tools import format_list, format_plural
+
 from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.cib import get_assert_pcs_effect_mixin
 from pcs_test.tools.fixture_cib import modify_cib_file
@@ -65,6 +67,19 @@ FIXTURE_ALL_CONSTRAINTS_XML = f"""
     {FIXTURE_ALL_LOCATION_CONSTRAINTS}
     {FIXTURE_SET_CONSTRAINT}
 """
+
+
+def fixture_message_not_deleting_resources_not_live(resource_ids):
+    resources = format_plural(resource_ids, "resource")
+    are = format_plural(resource_ids, "is")
+    return (
+        "Warning: Resources are not going to be stopped before deletion "
+        "because the command does not run on a live cluster\n"
+        f"Warning: Not checking if {resources} {format_list(resource_ids)} "
+        f"{are} stopped before deletion because the command does not run on a "
+        "live cluster. Deleting unstopped resources may result in orphaned "
+        "resources being present in the cluster.\n"
+    )
 
 
 class ResourceRemoveDeleteBase(
@@ -135,7 +150,7 @@ class ResourceRemoveDeleteBase(
                 {FIXTURE_CLONED_GROUP_XML}
             </resources>
             """,
-            stderr_full="",
+            stderr_full=fixture_message_not_deleting_resources_not_live(["R1"]),
         )
         self.assert_constraints(
             f"""
@@ -161,7 +176,10 @@ class ResourceRemoveDeleteBase(
                 {FIXTURE_GROUP_XML}
             </resources>
             """,
-            stderr_full=dedent(
+            stderr_full=fixture_message_not_deleting_resources_not_live(
+                ["R2", "R2-clone", "R2-group"]
+            )
+            + dedent(
                 """\
                 Removing dependant elements:
                   Clone: 'R2-clone'
@@ -190,7 +208,8 @@ class ResourceRemoveDeleteBase(
                 {FIXTURE_CLONED_GROUP_XML}
             </resources>
             """,
-            stderr_full=dedent(
+            stderr_full=fixture_message_not_deleting_resources_not_live(["R3"])
+            + dedent(
                 """\
                 Removing references:
                   Resource 'R3' from:
@@ -226,7 +245,10 @@ class ResourceRemoveDeleteBase(
         self.assert_effect_single(
             ["resource", self.command, "R1", "R2", "R3", "R4"],
             "<resources/>",
-            stderr_full=dedent(
+            stderr_full=fixture_message_not_deleting_resources_not_live(
+                ["R1", "R2", "R3", "R4", "R2-clone", "R2-group", "R3R4-group"]
+            )
+            + dedent(
                 """\
                 Removing dependant elements:
                   Clone: 'R2-clone'
@@ -280,7 +302,8 @@ class ResourceReferencedInAcl(AssertPcsMixin, TestCase):
     def test_remove_primitive(self):
         self.assert_pcs_success(
             ["resource", "delete", "R1"],
-            stderr_full=dedent(
+            stderr_full=fixture_message_not_deleting_resources_not_live(["R1"])
+            + dedent(
                 """\
                 Removing dependant element:
                   Acl permission: 'PERMISSION'

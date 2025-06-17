@@ -1416,7 +1416,7 @@ class StopResources(TestCase, GetCibMixin):
         )
 
 
-class EnsureStoppedAfterDisable(TestCase):
+class EnsureResourcesStopped(TestCase):
     def setUp(self):
         self.state_xml = read_test_resource("crm_mon.minimal.xml")
 
@@ -1436,7 +1436,7 @@ class EnsureStoppedAfterDisable(TestCase):
             """,
         )
 
-        report_list = lib.ensure_resources_stopped(state, ["A", "B", "C"])
+        report_list = lib.ensure_resources_stopped(state, ["A", "B", "C"], [])
         self.assertEqual(report_list, [])
 
     def test_some_not_stopped(self):
@@ -1455,13 +1455,35 @@ class EnsureStoppedAfterDisable(TestCase):
             """,
         )
 
-        report_list = lib.ensure_resources_stopped(state, ["A", "B", "C"])
+        report_list = lib.ensure_resources_stopped(state, ["A", "B", "C"], [])
         self.assertEqual(
             report_list,
             [
                 reports.ReportItem.error(
-                    reports.messages.CannotStopResourcesBeforeDeleting(["B"]),
+                    reports.messages.CannotRemoveResourcesNotStopped(["B"]),
                     force_code=reports.codes.FORCE,
+                )
+            ],
+        )
+
+    def test_not_stopped_forced(self):
+        state = complete_state(
+            self.state_xml,
+            """
+                <resources>
+                    <resource id="A" managed="true" role="Started"/>
+                </resources>
+            """,
+        )
+
+        report_list = lib.ensure_resources_stopped(
+            state, ["A"], [reports.codes.FORCE]
+        )
+        self.assertEqual(
+            report_list,
+            [
+                reports.ReportItem.warning(
+                    reports.messages.CannotRemoveResourcesNotStopped(["A"])
                 )
             ],
         )
@@ -1479,12 +1501,12 @@ class EnsureStoppedAfterDisable(TestCase):
             """,
         )
 
-        report_list = lib.ensure_resources_stopped(state, ["C"])
+        report_list = lib.ensure_resources_stopped(state, ["C"], [])
         self.assertEqual(
             report_list,
             [
                 reports.ReportItem.error(
-                    reports.messages.CannotStopResourcesBeforeDeleting(["C"]),
+                    reports.messages.CannotRemoveResourcesNotStopped(["C"]),
                     force_code=reports.codes.FORCE,
                 )
             ],
@@ -1503,12 +1525,12 @@ class EnsureStoppedAfterDisable(TestCase):
             """,
         )
 
-        report_list = lib.ensure_resources_stopped(state, ["A"])
+        report_list = lib.ensure_resources_stopped(state, ["A"], [])
         self.assertEqual(
             report_list,
             [
                 reports.ReportItem.error(
-                    reports.messages.CannotStopResourcesBeforeDeleting(["A"]),
+                    reports.messages.CannotRemoveResourcesNotStopped(["A"]),
                     force_code=reports.codes.FORCE,
                 )
             ],
@@ -1534,7 +1556,7 @@ class EnsureStoppedAfterDisable(TestCase):
         """,
         )
 
-        report_list = lib.ensure_resources_stopped(state, ["C"])
+        report_list = lib.ensure_resources_stopped(state, ["C"], [])
         self.assertEqual(report_list, [])
 
 

@@ -28,8 +28,8 @@ resource_cmd = create_router(
         "agents": resource.resource_agents,
         "update": resource.update_cmd,
         "meta": resource_cli.meta,
-        "delete": resource.resource_remove_cmd,
-        "remove": resource.resource_remove_cmd,
+        "delete": resource_cli.remove,
+        "remove": resource_cli.remove,
         "status": resource.resource_status,
         "config": resource_cli.config,
         "group": create_router(

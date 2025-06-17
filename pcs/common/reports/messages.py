@@ -6496,6 +6496,38 @@ class StoppingResources(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class StoppedResourcesBeforeDeleteCheckSkipped(ReportItemMessage):
+    """
+    Not checking that resources are stopped before delete.
+
+    resource_id_list -- ids of resources
+    reason_type -- why was the action skipped
+    """
+
+    resource_id_list: list[str]
+    reason_type: Optional[types.ReasonType] = None
+    _code = codes.STOPPED_RESOURCES_BEFORE_DELETE_CHECK_SKIPPED
+
+    @property
+    def message(self) -> str:
+        return (
+            "Not checking if {resources} {resource_list} {are} stopped before "
+            "deletion{reason}. Deleting unstopped resources may result in "
+            "orphaned resources being present in the cluster."
+        ).format(
+            resources=format_plural(self.resource_id_list, "resource"),
+            resource_list=format_list(self.resource_id_list),
+            are=format_plural(self.resource_id_list, "is"),
+            reason=format_optional(
+                _skip_reason_to_string(self.reason_type)
+                if self.reason_type
+                else None,
+                template=" because {}",
+            ),
+        )
+
+
+@dataclass(frozen=True)
 class CannotStopResourcesBeforeDeleting(ReportItemMessage):
     """
     Cannot stop resources that are being removed
@@ -6509,6 +6541,29 @@ class CannotStopResourcesBeforeDeleting(ReportItemMessage):
     @property
     def message(self) -> str:
         return "Cannot stop {resource} {resource_list} before deleting".format(
+            resource=format_plural(self.resource_id_list, "resource"),
+            resource_list=format_list(self.resource_id_list),
+        )
+
+
+@dataclass(frozen=True)
+class CannotRemoveResourcesNotStopped(ReportItemMessage):
+    """
+    Cannot remove resources that are not stopped
+
+    resource_id_list -- ids of resources
+    """
+
+    resource_id_list: list[str]
+    _code = codes.CANNOT_REMOVE_RESOURCES_NOT_STOPPED
+
+    @property
+    def message(self) -> str:
+        return (
+            "Cannot remove unstopped {resource} {resource_list}. Stop the "
+            "{resource} before removing. Removing unstopped resources can "
+            "lead to orphaned resources being present in the cluster."
+        ).format(
             resource=format_plural(self.resource_id_list, "resource"),
             resource_list=format_list(self.resource_id_list),
         )

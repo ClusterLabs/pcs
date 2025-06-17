@@ -1,28 +1,117 @@
 # pylint: disable=too-many-lines
 import os
 from textwrap import dedent
-from unittest import (
-    TestCase,
-    mock,
-)
+from typing import Optional
+from unittest import TestCase, mock
 
 from pcs import settings
-from pcs.common import (
-    file_type_codes,
-    reports,
-)
+from pcs.common import file_type_codes, reports
 from pcs.common.file import RawFileError
 from pcs.lib.booth import constants
 from pcs.lib.commands import booth as commands
 
-from pcs_test.tier0.lib.commands.test_cib import StopResourcesWaitMixin
 from pcs_test.tools import fixture
+from pcs_test.tools.assertions import assert_xml_equal
 from pcs_test.tools.command_env import get_env_tools
+from pcs_test.tools.custom_mock import TmpFileCall, TmpFileMock
+from pcs_test.tools.fixture_cib import modify_cib
 from pcs_test.tools.misc import get_test_resource as rc
+from pcs_test.tools.misc import read_test_resource
 from pcs_test.tools.xml import XmlManipulation
 
 RANDOM_KEY = "I'm so random!".encode()
 REASON = "This is a reason"
+
+
+class StopResourcesWaitMixin:
+    def fixture_init_tmp_file_mocker(self):
+        self.tmp_file_mock_obj = TmpFileMock(
+            file_content_checker=assert_xml_equal,
+        )
+        self.addCleanup(self.tmp_file_mock_obj.assert_all_done)
+        tmp_file_patcher = mock.patch("pcs.lib.tools.get_tmp_file")
+        self.addCleanup(tmp_file_patcher.stop)
+        tmp_file_mock = tmp_file_patcher.start()
+        tmp_file_mock.side_effect = (
+            self.tmp_file_mock_obj.get_mock_side_effect()
+        )
+
+    def fixture_stop_resources_wait_calls(
+        self,
+        initial_cib: str,
+        initial_state_modifiers: Optional[dict[str, str]] = None,
+        after_disable_cib_modifiers: Optional[dict[str, str]] = None,
+        after_disable_state_modifiers: Optional[dict[str, str]] = None,
+        successful_stop: bool = True,
+    ):
+        self.config.runner.pcmk.load_state(
+            name="stop_wait.load_state.before",
+            **(initial_state_modifiers or {}),
+        )
+
+        self.__disabled_cib = modify_cib(
+            initial_cib, **(after_disable_cib_modifiers or {})
+        )
+        self.tmp_file_mock_obj.set_calls(
+            [
+                TmpFileCall(
+                    "stop_wait.cib.disable.before", orig_content=initial_cib
+                ),
+                TmpFileCall(
+                    "stop_wait.cib.disable.after",
+                    orig_content=self.__disabled_cib,
+                ),
+            ]
+        )
+        self.config.runner.cib.diff(
+            "stop_wait.cib.disable.before",
+            "stop_wait.cib.disable.after",
+            name="stop_wait.cib.diff.disable",
+            stdout="stop_wait.cib.diff.disable",
+        )
+        self.config.runner.cib.push_diff(
+            name="stop_wait.cib.push.disable",
+            cib_diff="stop_wait.cib.diff.disable",
+        )
+
+        self.config.runner.pcmk.wait(timeout=0)
+        self.config.runner.pcmk.load_state(
+            name="stop_wait.state.after",
+            **(after_disable_state_modifiers or {}),
+        )
+
+        if successful_stop:
+            self.config.runner.cib.load_content(
+                self.__disabled_cib, name="stop_wait.cib.load.after"
+            )
+
+    def fixture_push_cib_after_stopping(self, **modifiers):
+        self.tmp_file_mock_obj.extend_calls(
+            [
+                TmpFileCall(
+                    "stop_wait.cib.delete.before",
+                    orig_content=self.__disabled_cib,
+                ),
+                TmpFileCall(
+                    "stop_wait.cib.delete.after",
+                    orig_content=modify_cib(
+                        read_test_resource("cib-empty.xml"), **modifiers
+                    ),
+                ),
+            ]
+        )
+
+        self.config.runner.cib.diff(
+            "stop_wait.cib.delete.before",
+            "stop_wait.cib.delete.after",
+            name="stop_wait.cib.diff.delete",
+            stdout="stop_wait.cib.diff.delete",
+        )
+
+        self.config.runner.cib.push_diff(
+            name="stop_wait.cib.push.delete",
+            cib_diff="stop_wait.cib.diff.delete",
+        )
 
 
 def fixture_report_invalid_name(name):
