@@ -4,6 +4,7 @@ from unittest import (
 )
 
 from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.common.parse_args import InputModifiers
 from pcs.cli.resource import command
 from pcs.common import reports
 from pcs.lib.errors import LibraryError
@@ -232,6 +233,25 @@ class RemoveResourceBase:
         )
         self.resource.stop.assert_not_called()
         self.cluster.wait_for_pcmk_idle.assert_not_called()
+
+    def test_mutually_exclusive_options(
+        self, mock_process_library_reports, mock_reports
+    ):
+        with self.assertRaises(CmdLineInputError) as cm:
+            command.remove(
+                self.lib,
+                ["R1"],
+                InputModifiers({"-f": "foo", "--no-stop": True}),
+            )
+        self.assertEqual(
+            cm.exception.message, "Only one of '--no-stop', '-f' can be used"
+        )
+        self.resource.get_configured_resources.assert_not_called()
+        self.cib.remove_elements.assert_not_called()
+        self.resource.stop.assert_not_called()
+        self.cluster.wait_for_pcmk_idle.assert_not_called()
+        mock_reports.assert_not_called()
+        mock_process_library_reports.assert_not_called()
 
 
 @mock.patch(

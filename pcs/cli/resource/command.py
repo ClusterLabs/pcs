@@ -122,10 +122,11 @@ def remove(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
       * -f - CIB file
       * --force - turn validation errors into warnings, (derecated) skip
                   resource stopping
-      * --no-stop - don't stop resource before deletion
+      * --no-stop - don't stop resources before deletion
       * --future - specifying '--force' does not skip resource stopping
     """
     modifiers.ensure_only_supported("-f", "--force", FUTURE_OPTION, "--no-stop")
+    modifiers.ensure_not_mutually_exclusive("-f", "--no-stop")
 
     if not argv:
         raise CmdLineInputError()
