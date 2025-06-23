@@ -3046,15 +3046,22 @@ def stop(
     )
     env.report_processor.report_list(report_list)
 
-    all_resources = set(resource_elements)
+    resources_to_stop = []
     for el in resource_elements:
-        all_resources.update(resource.common.get_all_inner_resources(el))
+        resources_to_stop.extend(resource.common.find_primitives(el))
+        # we also need to disable bundle resources
+        if resource.common.is_bundle(el):
+            resources_to_stop.append(el)
 
-    stonith_resource_ids = [
-        str(resource_el.attrib["id"])
-        for resource_el in all_resources
-        if resource.stonith.is_stonith(resource_el)
-    ]
+    resource_ids = []
+    stonith_resource_ids = []
+    for resource_el in resources_to_stop:
+        resource_id = str(resource_el.attrib["id"])
+        resource_ids.append(resource_id)
+        if resource.stonith.is_stonith(resource_el):
+            stonith_resource_ids.append(resource_id)
+    resource_ids.sort()
+
     if stonith_resource_ids:
         env.report_processor.report_list(
             ensure_some_stonith_remains(
@@ -3065,7 +3072,6 @@ def stop(
                 force_flags=force_flags,
             )
         )
-    resource_ids = sorted([str(res.attrib["id"]) for res in all_resources])
     env.report_processor.report_list(
         _ensure_resources_managed(
             env.get_cluster_state(), resource_ids, force_flags
@@ -3080,9 +3086,8 @@ def stop(
             reports.messages.StoppingResources(resource_ids)
         )
     )
-    for el in all_resources:
-        if resource.primitive.is_primitive(el):
-            resource.common.disable(el, id_provider)
+    for el in resources_to_stop:
+        resource.common.disable(el, id_provider)
 
     env.push_cib()
 
@@ -3109,7 +3114,7 @@ def _ensure_resources_managed(
                 # status and we are unable to check state of such resources.
                 # This happens for e.g. bundle with primitive resource inside
                 # and no IP address for the bundle specified. We expect the
-                # resoure to be stopped since it is misconfigured. Stopping it
+                # resource to be stopped since it is misconfigured. Stopping it
                 # again even when it is unmanaged should not break anything.
                 report_list.append(
                     reports.ReportItem.debug(

@@ -2204,6 +2204,14 @@
         pcs commands: resource relations
       </description>
     </capability>
+    <capability id="pcmk.resource.stop" in-pcs="0" in-pcsd="1">
+      <description>
+        Stop resources by disabling all of the needed inner resources of the
+        specified resources or tags.
+
+        API v2: resource.stop
+      </description>
+    </capability>
 
 
 

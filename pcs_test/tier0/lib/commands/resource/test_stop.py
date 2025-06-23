@@ -189,7 +189,7 @@ class StopResources(TestCase):
             [
                 fixture.info(
                     reports.codes.STOPPING_RESOURCES,
-                    resource_id_list=["A", "B", "C", "G"],
+                    resource_id_list=["A", "B"],
                 )
             ]
         )
@@ -294,22 +294,18 @@ class StopResources(TestCase):
         )
 
     def test_bundle_with_clone_works(self):
-        cib_resources_template = """
-            <resources>
-                <bundle id="BUNDLE">
-                    <docker image="pcs:test" />
-                    {bundle_resource}
-                </bundle>
-                <clone>
-                    {clone_resource}
-                </clone>
-            </resources>
-        """
         self.config.runner.cib.load(
-            resources=cib_resources_template.format(
-                bundle_resource=fixture_primitive_cib_enabled("A"),
-                clone_resource=fixture_primitive_cib_enabled("B"),
-            )
+            resources=f"""
+                <resources>
+                    <bundle id="BUNDLE">
+                        <docker image="pcs:test" />
+                        {fixture_primitive_cib_enabled("A")}
+                    </bundle>
+                    <clone>
+                        {fixture_primitive_cib_enabled("B")}
+                    </clone>
+                </resources>
+            """
         )
         self.config.runner.pcmk.load_state(
             resources="""
@@ -338,10 +334,20 @@ class StopResources(TestCase):
             """
         )
         self.config.env.push_cib(
-            resources=cib_resources_template.format(
-                bundle_resource=fixture_primitive_cib_disabled("A"),
-                clone_resource=fixture_primitive_cib_enabled("B"),
-            )
+            resources=f"""
+                <resources>
+                    <bundle id="BUNDLE">
+                        <meta_attributes id="BUNDLE-meta_attributes">
+                            <nvpair id="BUNDLE-meta_attributes-target-role" name="target-role" value="Stopped"/>
+                        </meta_attributes>
+                        <docker image="pcs:test" />
+                        {fixture_primitive_cib_disabled("A")}
+                    </bundle>
+                    <clone>
+                        {fixture_primitive_cib_enabled("B")}
+                    </clone>
+                </resources>
+            """
         )
 
         resource.stop(self.env_assist.get_env(), ["BUNDLE"], set())
