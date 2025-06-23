@@ -74,7 +74,7 @@ class ReportProcessorToLog(ReportProcessor):
 class ReportProcessorInMemory(ReportProcessor):
     def __init__(self) -> None:
         super().__init__()
-        self._reports: list[ReportItem] = []
+        self._reports: ReportItemList = []
 
     def _do_report(self, report_item: ReportItem) -> None:
         self._reports.append(report_item)

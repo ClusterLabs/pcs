@@ -158,6 +158,14 @@ def remove(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     if modifiers.is_specified("--force"):
         force_flags.add(reports.codes.FORCE)
 
+    if modifiers.is_specified("-f"):
+        warn(
+            "Resources are not going to be stopped before deletion because the "
+            "command does not run on a live cluster"
+        )
+        lib.cib.remove_elements(resources_to_remove, force_flags)
+        return
+
     dont_stop_me_now = modifiers.is_specified("--no-stop")
     if (
         not modifiers.is_specified(FUTURE_OPTION)
@@ -173,14 +181,6 @@ def remove(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
         dont_stop_me_now = True
 
     if dont_stop_me_now:
-        lib.cib.remove_elements(resources_to_remove, force_flags)
-        return
-
-    if modifiers.is_specified("-f"):
-        warn(
-            "Resources are not going to be stopped before deletion because the "
-            "command does not run on a live cluster"
-        )
         lib.cib.remove_elements(resources_to_remove, force_flags)
         return
 

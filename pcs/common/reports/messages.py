@@ -6560,12 +6560,13 @@ class CannotRemoveResourcesNotStopped(ReportItemMessage):
     @property
     def message(self) -> str:
         return (
-            "Cannot remove unstopped {resource} {resource_list}. Stop the "
-            "{resource} before removing. Removing unstopped resources can "
-            "lead to orphaned resources being present in the cluster."
+            "{resources} {resource_list} {are} not stopped, removing unstopped "
+            "resources can lead to orphaned resources being present in the "
+            "cluster."
         ).format(
-            resource=format_plural(self.resource_id_list, "resource"),
+            resources=format_plural(self.resource_id_list, "Resource"),
             resource_list=format_list(self.resource_id_list),
+            are=format_plural(self.resource_id_list, "is"),
         )
 
 

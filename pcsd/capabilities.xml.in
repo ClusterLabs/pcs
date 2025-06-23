@@ -978,7 +978,8 @@
     </capability>
     <capability id="pcmk.cib.remove_elements.resources-not-stopping" in-pcs="0" in-pcsd="1">
       <description>
-        Remove resource by ids, the resources need to be stopped before they are removed.
+        Remove resource by ids, the resources need to be stopped before they are
+        removed. Stonith resources do not need to be stopped.
 
         API v2: cib.remove_elements
       </description>

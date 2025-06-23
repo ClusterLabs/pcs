@@ -149,7 +149,7 @@ class StopResources(TestCase):
             resources=f"""
                 <resources>
                     <clone id="C">
-                        <group id="G" number_resources="2">
+                        <group id="G">
                             {fixture_primitive_cib_enabled("A")}
                             {fixture_primitive_cib_enabled("B")}
                         </group>
@@ -174,7 +174,7 @@ class StopResources(TestCase):
             resources=f"""
                 <resources>
                     <clone id="C">
-                        <group id="G" number_resources="2">
+                        <group id="G">
                             {fixture_primitive_cib_disabled("A")}
                             {fixture_primitive_cib_disabled("B")}
                         </group>

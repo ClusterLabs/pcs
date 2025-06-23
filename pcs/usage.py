@@ -321,14 +321,15 @@ _RESOURCE_DELETE_DESC = (
     """,
     "",
     """
-    If --no-skip is specified, the resources will not be stopped before their
-    deletion.
+    If --no-stop is specified, the resources will not be stopped before their
+    deletion. This may result in orphaned resources being left behind in case
+    the deleted resources are not already stopped.
     """,
     "",
     """
     Using --force currently also means the resources will not be stopped before
     their deletion. If you need to use --force and still want to stop the
-    resources, you need to combine it with the --future flag
+    resources, you need to combine it with the --future flag.
     """,
 )
 

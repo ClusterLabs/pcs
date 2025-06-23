@@ -540,7 +540,7 @@ class RemoveElements(TestCase):
         )
 
     def test_remove_resources_stonith_state_check_skipped(self):
-        # adding extra stonith, so the last stonith check is skipped
+        # adding extra stonith, so the last stonith check passes
         self.config.runner.cib.load(
             resources="""
                 <resources>

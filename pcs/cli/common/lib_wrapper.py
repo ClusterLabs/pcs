@@ -434,9 +434,9 @@ def load_module(env, middleware_factory, name):  # noqa: PLR0911, PLR0912
                 "move": resource.move,
                 "move_autoclean": resource.move_autoclean,
                 "restart": resource.restart,
+                "stop": resource.stop,
                 "unmanage": resource.unmanage,
                 "unmove_unban": resource.unmove_unban,
-                "stop": resource.stop,
             },
         )
 

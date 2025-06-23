@@ -91,6 +91,7 @@ PCS_LONG_OPTIONS: Final = [
     "corosync_conf=",
     "booth-conf=",
     "booth-key=",
+    # do not stop resources in resource delete command
     "no-stop",
     "no-watchdog-validation",
     # pcs cluster setup

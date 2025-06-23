@@ -6201,9 +6201,9 @@ class CannotRemoveResourcesNotStopped(NameBuildTest):
     def test_one_resource(self) -> str:
         self.assert_message_from_report(
             (
-                "Cannot remove unstopped resource 'resourceId'. Stop the "
-                "resource before removing. Removing unstopped resources can "
-                "lead to orphaned resources being present in the cluster."
+                "Resource 'resourceId' is not stopped, removing unstopped "
+                "resources can lead to orphaned resources being present in the "
+                "cluster."
             ),
             reports.CannotRemoveResourcesNotStopped(["resourceId"]),
         )
@@ -6211,10 +6211,9 @@ class CannotRemoveResourcesNotStopped(NameBuildTest):
     def test_multiple_resources(self) -> str:
         self.assert_message_from_report(
             (
-                "Cannot remove unstopped resources 'resourceId1', 'resourceId2'."
-                " Stop the resources before removing. Removing unstopped "
-                "resources can lead to orphaned resources being present in the "
-                "cluster."
+                "Resources 'resourceId1', 'resourceId2' are not stopped, "
+                "removing unstopped resources can lead to orphaned resources "
+                "being present in the cluster."
             ),
             reports.CannotRemoveResourcesNotStopped(
                 ["resourceId1", "resourceId2"]

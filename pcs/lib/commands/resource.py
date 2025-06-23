@@ -3107,10 +3107,10 @@ def _ensure_resources_managed(
             if not status.exists(r_id, None):
                 # Pacemaker does not put misconfigured resources into cluster
                 # status and we are unable to check state of such resources.
-                # This happens for e.g. undle with primitive resource inside and
-                # no IP address for the bundle specified. We expect the resource
-                # to be stopped since it is misconfigured. Stopping it again
-                # even when it is unmanaged should not break anything.
+                # This happens for e.g. bundle with primitive resource inside
+                # and no IP address for the bundle specified. We expect the
+                # resoure to be stopped since it is misconfigured. Stopping it
+                # again even when it is unmanaged should not break anything.
                 report_list.append(
                     reports.ReportItem.debug(
                         reports.messages.ConfiguredResourceMissingInStatus(
