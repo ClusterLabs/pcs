@@ -67,6 +67,7 @@ class DuplicatesChecker:
         constraint_to_check -- search for duplicates of this constraint
         force_flags -- list of flags codes
         """
+        self._check_init(constraint_to_check)
         report_list: reports.ReportItemList = []
         duplication_allowed = reports.codes.FORCE in force_flags
 
@@ -94,6 +95,11 @@ class DuplicatesChecker:
             )
 
         return report_list
+
+    def _check_init(self, constraint_to_check: _Element) -> None:
+        """
+        For descendants to do their initialization for each check
+        """
 
     @abc.abstractmethod
     def _are_duplicate(

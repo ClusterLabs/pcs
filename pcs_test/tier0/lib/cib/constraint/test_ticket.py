@@ -6,6 +6,9 @@ from pcs.common import const, reports
 from pcs.lib.cib.constraint import ticket
 from pcs.lib.cib.tools import IdProvider, Version
 
+from pcs_test.tier0.lib.cib.constraint.test_common import (
+    DuplicatesCheckerTestBase,
+)
 from pcs_test.tools import fixture
 from pcs_test.tools.assertions import (
     assert_raise_library_error,
@@ -454,7 +457,7 @@ class PrepareOptionsWithSetTest(TestCase):
         )
 
 
-class DuplicatesCheckerTicketPlain(TestCase):
+class DuplicatesCheckerTicketPlain(DuplicatesCheckerTestBase):
     cib = etree.fromstring(
         """
         <constraints>
@@ -465,6 +468,11 @@ class DuplicatesCheckerTicketPlain(TestCase):
             <rsc_ticket id="C5" ticket="T1" rsc="R1" rsc-role="Unpromoted" />
             <rsc_ticket id="C6" ticket="T2" rsc="R1" />
             <rsc_ticket id="C7" ticket="T1" rsc="R2" />
+            <rsc_ticket id="C8" ticket="T1">
+                <resource_set id="C8_set">
+                    <resource_ref id="R1" />
+                </resource_set>
+            </rsc_ticket>
         </constraints>
         """
     )
@@ -480,34 +488,7 @@ class DuplicatesCheckerTicketPlain(TestCase):
             "C7": [],  # resource doesn't match
         }
         checker = ticket.DuplicatesCheckerTicketPlain()
-        for id_to_check, id_results in duplicates.items():
-            for forced in (False, True):
-                with self.subTest(id_to_check=id_to_check, forced=forced):
-                    real_reports = checker.check(
-                        self.cib,
-                        self.cib.xpath(".//*[@id=$id]", id=f"{id_to_check}")[0],
-                        force_flags=([reports.codes.FORCE] if forced else []),
-                    )
-                    expected_reports = []
-                    if id_results:
-                        if forced:
-                            expected_reports = [
-                                fixture.warn(
-                                    reports.codes.DUPLICATE_CONSTRAINTS_EXIST,
-                                    constraint_ids=id_results,
-                                )
-                            ]
-                        else:
-                            expected_reports = [
-                                fixture.error(
-                                    reports.codes.DUPLICATE_CONSTRAINTS_EXIST,
-                                    force_code=reports.codes.FORCE,
-                                    constraint_ids=id_results,
-                                )
-                            ]
-                    assert_report_item_list_equal(
-                        real_reports, expected_reports
-                    )
+        self.assert_success(self.cib, checker, duplicates)
 
 
 class Element:

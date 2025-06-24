@@ -110,7 +110,39 @@ class FindConstraintsOfSameType(TestCase):
                 )
 
 
-class DuplicatesCheckerTest(TestCase):
+class DuplicatesCheckerTestBase(TestCase):
+    def assert_success(self, cib, checker, duplicates):
+        for id_to_check, id_results in duplicates.items():
+            for forced in (False, True):
+                with self.subTest(id_to_check=id_to_check, forced=forced):
+                    real_reports = checker.check(
+                        cib,
+                        cib.xpath(".//*[@id=$id]", id=f"{id_to_check}")[0],
+                        force_flags=([reports.codes.FORCE] if forced else []),
+                    )
+                    expected_reports = []
+                    if id_results:
+                        if forced:
+                            expected_reports = [
+                                fixture.warn(
+                                    reports.codes.DUPLICATE_CONSTRAINTS_EXIST,
+                                    constraint_ids=id_results,
+                                )
+                            ]
+                        else:
+                            expected_reports = [
+                                fixture.error(
+                                    reports.codes.DUPLICATE_CONSTRAINTS_EXIST,
+                                    force_code=reports.codes.FORCE,
+                                    constraint_ids=id_results,
+                                )
+                            ]
+                    assert_report_item_list_equal(
+                        real_reports, expected_reports
+                    )
+
+
+class DuplicatesCheckerTest(DuplicatesCheckerTestBase):
     class MockChecker(DuplicatesChecker):
         def _are_duplicate(self, constraint_to_check, constraint_el):
             return (
@@ -147,34 +179,7 @@ class DuplicatesCheckerTest(TestCase):
             "TS3": ["TS1"],
         }
         checker = self.MockChecker()
-        for id_to_check, id_results in duplicates.items():
-            for forced in (False, True):
-                with self.subTest(id_to_check=id_to_check, forced=forced):
-                    real_reports = checker.check(
-                        cib,
-                        cib.xpath(".//*[@id=$id]", id=f"{id_to_check}")[0],
-                        force_flags=([reports.codes.FORCE] if forced else []),
-                    )
-                    expected_reports = []
-                    if id_results:
-                        if forced:
-                            expected_reports = [
-                                fixture.warn(
-                                    reports.codes.DUPLICATE_CONSTRAINTS_EXIST,
-                                    constraint_ids=id_results,
-                                )
-                            ]
-                        else:
-                            expected_reports = [
-                                fixture.error(
-                                    reports.codes.DUPLICATE_CONSTRAINTS_EXIST,
-                                    force_code=reports.codes.FORCE,
-                                    constraint_ids=id_results,
-                                )
-                            ]
-                    assert_report_item_list_equal(
-                        real_reports, expected_reports
-                    )
+        self.assert_success(cib, checker, duplicates)
 
 
 class ValidateConstrainableElement(TestCase):

@@ -14,6 +14,9 @@ from pcs.lib.cib.rule import parse_rule
 from pcs.lib.cib.tools import IdProvider
 from pcs.lib.xml_tools import etree_to_str
 
+from pcs_test.tier0.lib.cib.constraint.test_common import (
+    DuplicatesCheckerTestBase,
+)
 from pcs_test.tools import fixture
 from pcs_test.tools.assertions import (
     assert_report_item_list_equal,
@@ -77,7 +80,7 @@ class IsLocationRule(TestCase):
                 self.assertFalse(location.is_location_rule(element))
 
 
-class DuplicatesCheckerLocationRulePlainTest(TestCase):
+class DuplicatesCheckerLocationRulePlainTest(DuplicatesCheckerTestBase):
     cib = etree.fromstring(
         """
         <constraints>
@@ -150,34 +153,7 @@ class DuplicatesCheckerLocationRulePlainTest(TestCase):
             "L7": ["L6"],  # rsc-pattern matches, normalized rule matches
         }
         checker = location.DuplicatesCheckerLocationRulePlain()
-        for id_to_check, id_results in duplicates.items():
-            for forced in (False, True):
-                with self.subTest(id_to_check=id_to_check, forced=forced):
-                    real_reports = checker.check(
-                        self.cib,
-                        self.cib.xpath(".//*[@id=$id]", id=f"{id_to_check}")[0],
-                        force_flags=([reports.codes.FORCE] if forced else []),
-                    )
-                    expected_reports = []
-                    if id_results:
-                        if forced:
-                            expected_reports = [
-                                fixture.warn(
-                                    reports.codes.DUPLICATE_CONSTRAINTS_EXIST,
-                                    constraint_ids=id_results,
-                                )
-                            ]
-                        else:
-                            expected_reports = [
-                                fixture.error(
-                                    reports.codes.DUPLICATE_CONSTRAINTS_EXIST,
-                                    force_code=reports.codes.FORCE,
-                                    constraint_ids=id_results,
-                                )
-                            ]
-                    assert_report_item_list_equal(
-                        real_reports, expected_reports
-                    )
+        self.assert_success(self.cib, checker, duplicates)
 
 
 class ValidateCreatePlainWithRuleCommonMixin:

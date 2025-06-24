@@ -227,22 +227,7 @@ class DuplicatesCheckerTicketPlain(DuplicatesChecker):
     Searcher of duplicate plain ticket constraints
     """
 
-    def __init__(self) -> None:
-        super().__init__()
-        self._constraint_characteristics: Optional[
-            Mapping[str, Optional[str]]
-        ] = None
-
-    def check(
-        self,
-        constraint_section: _Element,
-        constraint_to_check: _Element,
-        force_flags: reports.types.ForceFlags = (),
-    ) -> reports.ReportItemList:
-        self._constraint_characteristics = None
-        return super().check(
-            constraint_section, constraint_to_check, force_flags
-        )
+    _constraint_characteristics: Mapping[str, Optional[str]]
 
     @staticmethod
     def _characteristics(constraint_el: _Element) -> dict[str, Optional[str]]:
@@ -254,15 +239,15 @@ class DuplicatesCheckerTicketPlain(DuplicatesChecker):
             ),
         }
 
+    def _check_init(self, constraint_to_check: _Element) -> None:
+        self._constraint_characteristics = self._characteristics(
+            constraint_to_check
+        )
+
     def _are_duplicate(
-        self,
-        constraint_to_check: _Element,
-        constraint_el: _Element,
+        self, constraint_to_check: _Element, constraint_el: _Element
     ) -> bool:
-        if self._constraint_characteristics is None:
-            self._constraint_characteristics = self._characteristics(
-                constraint_to_check
-            )
+        del constraint_to_check
         return (
             self._characteristics(constraint_el)
             == self._constraint_characteristics
