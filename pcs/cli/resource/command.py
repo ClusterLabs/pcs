@@ -125,6 +125,26 @@ def remove(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
       * --no-stop - don't stop resources before deletion
       * --future - specifying '--force' does not skip resource stopping
     """
+
+    def _process_reports(
+        report_list: reports.ReportItemList,
+        force_flags: reports.types.ForceFlags,
+    ) -> reports.ReportItemList:
+        filtered_reports = []
+        for report in report_list:
+            if (
+                report.message.code
+                == reports.codes.CANNOT_REMOVE_RESOURCES_NOT_STOPPED
+            ):
+                continue
+            if (
+                report.severity.level == reports.ReportItemSeverity.ERROR
+                and report.severity.force_code in force_flags
+            ):
+                report.severity = reports.ReportItemSeverity.warning()
+            filtered_reports.append(report)
+        return filtered_reports
+
     modifiers.ensure_only_supported("-f", "--force", FUTURE_OPTION, "--no-stop")
     modifiers.ensure_not_mutually_exclusive("-f", "--no-stop")
 
@@ -226,22 +246,3 @@ def remove(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     lib.cluster.wait_for_pcmk_idle(None)
 
     lib.cib.remove_elements(resources_to_remove, force_flags)
-
-
-def _process_reports(
-    report_list: reports.ReportItemList, force_flags: reports.types.ForceFlags
-) -> reports.ReportItemList:
-    filtered_reports = []
-    for report in report_list:
-        if (
-            report.message.code
-            == reports.codes.CANNOT_REMOVE_RESOURCES_NOT_STOPPED
-        ):
-            continue
-        if (
-            report.severity.level == reports.ReportItemSeverity.ERROR
-            and report.severity.force_code in force_flags
-        ):
-            report.severity = reports.ReportItemSeverity.warning()
-        filtered_reports.append(report)
-    return filtered_reports
