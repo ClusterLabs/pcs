@@ -1,4 +1,4 @@
-from unittest import TestCase, mock
+from unittest import TestCase
 
 from lxml import etree
 
@@ -11,7 +11,6 @@ from pcs_test.tier0.lib.cib.constraint.test_common import (
 )
 from pcs_test.tools import fixture
 from pcs_test.tools.assertions import (
-    assert_raise_library_error,
     assert_report_item_list_equal,
     assert_xml_equal,
 )
@@ -361,100 +360,326 @@ class CreatePlain(TestCase):
         )
 
 
-# Patch check_new_id_applicable is always desired when working with
-# prepare_options_with_set. Patched function raises when id not applicable
-# and do nothing when applicable - in this case tests do no actions with it
-@mock.patch("pcs.lib.cib.constraint.ticket.check_new_id_applicable")
-class PrepareOptionsWithSetTest(TestCase):
+class ValidateCreateWithSet(TestCase):
     def setUp(self):
-        self.cib = "cib"
-        self.resource_set_list = "resource_set_list"
-        self.prepare = lambda options: ticket.prepare_options_with_set(
-            self.cib,
-            options,
-            self.resource_set_list,
+        cib = str_to_etree("""
+            <resources>
+                <primitive id="R1">
+                    <meta_attributes id="R1-meta" />
+                </primitive>
+                <primitive id="R2">
+                    <meta_attributes id="R2-meta" />
+                </primitive>
+                <primitive id="R3" />
+                <primitive id="R4" />
+                <clone id="C">
+                    <primitive id="CR" />
+                </clone>
+            </resources>
+        """)
+        self.el_primitives = cib.xpath("./primitive")
+        self.el_metas = cib.xpath(".//meta_attributes")
+        self.el_clone = cib.xpath(".//*[@id='C']")[0]
+        self.el_cloned_primitive = cib.xpath(".//*[@id='CR']")[0]
+        self.id_provider = IdProvider(cib)
+
+    @staticmethod
+    def set(*args, **kwargs):
+        if "require_all" in kwargs:
+            kwargs["require-all"] = kwargs["require_all"]
+            del kwargs["require_all"]
+        return dict(constrained_elements=args, options=kwargs)
+
+    def test_empty_rsc_set_list(self):
+        assert_report_item_list_equal(
+            ticket.validate_create_with_set(
+                self.id_provider, [], {"ticket": "T"}, False
+            ),
+            [
+                fixture.error(reports.codes.EMPTY_RESOURCE_SET_LIST),
+            ],
         )
 
-    @mock.patch("pcs.lib.cib.constraint.ticket.create_id")
-    def test_complete_id(self, mock_create_id, _):
-        mock_create_id.return_value = "generated_id"
-        options = {"loss-policy": "freeze", "ticket": "T"}
-        expected_options = options.copy()
-        expected_options.update({"id": "generated_id"})
-        self.assertEqual(expected_options, self.prepare(options))
-        mock_create_id.assert_called_once_with(
-            self.cib, "ticket", self.resource_set_list
+    def test_empty_rsc_set(self):
+        assert_report_item_list_equal(
+            ticket.validate_create_with_set(
+                self.id_provider,
+                [self.set(*self.el_primitives[:2]), self.set()],
+                {"ticket": "T"},
+                False,
+            ),
+            [
+                fixture.error(reports.codes.EMPTY_RESOURCE_SET),
+            ],
         )
 
-    def test_refuse_invalid_id(self, mock_check_new_id_applicable):
-        class SomeException(Exception):
-            pass
-
-        mock_check_new_id_applicable.side_effect = SomeException()
-        invalid_id = "invalid_id"
-        self.assertRaises(
-            SomeException,
-            lambda: self.prepare(
-                {
-                    "loss-policy": "freeze",
-                    "ticket": "T",
-                    "id": invalid_id,
-                }
+    def test_resource_not_a_resource(self):
+        assert_report_item_list_equal(
+            ticket.validate_create_with_set(
+                self.id_provider,
+                [
+                    self.set(self.el_primitives[0], self.el_metas[0]),
+                    self.set(self.el_metas[1], self.el_primitives[1]),
+                ],
+                {"ticket": "T"},
+                False,
             ),
-        )
-        mock_check_new_id_applicable.assert_called_once_with(
-            self.cib, "constraint id", invalid_id
-        )
-
-    def test_refuse_unknown_lost_policy(self, _):
-        assert_raise_library_error(
-            lambda: self.prepare(
-                {
-                    "loss-policy": "unknown",
-                    "ticket": "T",
-                    "id": "id",
-                }
-            ),
-            fixture.error(
-                reports.codes.INVALID_OPTION_VALUE,
-                allowed_values=("fence", "stop", "freeze", "demote"),
-                option_value="unknown",
-                option_name="loss-policy",
-                cannot_be_empty=False,
-                forbidden_characters=None,
-            ),
-        )
-
-    def test_refuse_missing_ticket(self, _):
-        assert_raise_library_error(
-            lambda: self.prepare({"loss-policy": "stop", "id": "id"}),
-            fixture.error(
-                reports.codes.REQUIRED_OPTIONS_ARE_MISSING,
-                option_names=["ticket"],
-                option_type=None,
-            ),
+            [
+                fixture.error(
+                    reports.codes.ID_BELONGS_TO_UNEXPECTED_TYPE,
+                    id="R1-meta",
+                    expected_types=[
+                        "bundle",
+                        "clone",
+                        "group",
+                        "master",
+                        "primitive",
+                    ],
+                    current_type="meta_attributes",
+                ),
+                fixture.error(
+                    reports.codes.ID_BELONGS_TO_UNEXPECTED_TYPE,
+                    id="R2-meta",
+                    expected_types=[
+                        "bundle",
+                        "clone",
+                        "group",
+                        "master",
+                        "primitive",
+                    ],
+                    current_type="meta_attributes",
+                ),
+            ],
         )
 
-    def test_refuse_empty_ticket(self, _):
-        assert_raise_library_error(
-            lambda: self.prepare(
-                {"loss-policy": "stop", "id": "id", "ticket": " "}
+    def test_resource_in_a_clone(self):
+        assert_report_item_list_equal(
+            ticket.validate_create_with_set(
+                self.id_provider,
+                [self.set(self.el_cloned_primitive)],
+                {"ticket": "T"},
+                False,
             ),
-            fixture.error(
-                reports.codes.REQUIRED_OPTIONS_ARE_MISSING,
-                option_names=["ticket"],
-                option_type=None,
-            ),
+            [
+                fixture.error(
+                    reports.codes.RESOURCE_FOR_CONSTRAINT_IS_MULTIINSTANCE,
+                    force_code=reports.codes.FORCE,
+                    resource_id="CR",
+                    parent_type="clone",
+                    parent_id="C",
+                ),
+            ],
         )
 
-    def test_refuse_bad_ticket(self, _):
-        assert_raise_library_error(
-            lambda: self.prepare({"id": "id", "ticket": "bad_ticket"}),
-            fixture.error(
-                reports.codes.BOOTH_TICKET_NAME_INVALID,
-                ticket_name="bad_ticket",
+    def test_resource_in_a_clone_forced(self):
+        assert_report_item_list_equal(
+            ticket.validate_create_with_set(
+                self.id_provider,
+                [self.set(self.el_cloned_primitive)],
+                {"ticket": "T"},
+                True,
             ),
+            [
+                fixture.warn(
+                    reports.codes.RESOURCE_FOR_CONSTRAINT_IS_MULTIINSTANCE,
+                    resource_id="CR",
+                    parent_type="clone",
+                    parent_id="C",
+                ),
+            ],
         )
+
+    def test_clone(self):
+        assert_report_item_list_equal(
+            ticket.validate_create_with_set(
+                self.id_provider,
+                [self.set(self.el_clone)],
+                {"ticket": "T"},
+                False,
+            ),
+            [],
+        )
+
+    def test_ticket_missing(self):
+        assert_report_item_list_equal(
+            ticket.validate_create_with_set(
+                self.id_provider,
+                [self.set(self.el_primitives[0])],
+                {},
+                False,
+            ),
+            [
+                fixture.error(
+                    reports.codes.REQUIRED_OPTIONS_ARE_MISSING,
+                    option_names=["ticket"],
+                    option_type=None,
+                )
+            ],
+        )
+
+    def test_ticket_not_valid(self):
+        assert_report_item_list_equal(
+            ticket.validate_create_with_set(
+                self.id_provider,
+                [self.set(self.el_primitives[0])],
+                {"ticket": "my_ticket"},
+                False,
+            ),
+            [
+                fixture.error(
+                    reports.codes.BOOTH_TICKET_NAME_INVALID,
+                    ticket_name="my_ticket",
+                )
+            ],
+        )
+
+    def test_id_not_valid(self):
+        assert_report_item_list_equal(
+            ticket.validate_create_with_set(
+                self.id_provider,
+                [self.set(self.el_primitives[0])],
+                {"id": "123", "ticket": "ticket"},
+                False,
+            ),
+            [
+                fixture.error(
+                    reports.codes.INVALID_ID_BAD_CHAR,
+                    id="123",
+                    id_description="constraint id",
+                    invalid_character="1",
+                    is_first_char=True,
+                )
+            ],
+        )
+
+    def test_id_already_used(self):
+        assert_report_item_list_equal(
+            ticket.validate_create_with_set(
+                self.id_provider,
+                [self.set(self.el_primitives[0])],
+                {"id": "R1", "ticket": "ticket"},
+                False,
+            ),
+            [
+                fixture.error(
+                    reports.codes.ID_ALREADY_EXISTS,
+                    id="R1",
+                )
+            ],
+        )
+
+    def test_loss_policy_not_valid(self):
+        assert_report_item_list_equal(
+            ticket.validate_create_with_set(
+                self.id_provider,
+                [self.set(self.el_primitives[0])],
+                {"loss-policy": "bad", "ticket": "ticket"},
+                False,
+            ),
+            [
+                fixture.error(
+                    reports.codes.INVALID_OPTION_VALUE,
+                    option_name="loss-policy",
+                    option_value="bad",
+                    allowed_values=("fence", "stop", "freeze", "demote"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                )
+            ],
+        )
+
+    def test_option_names(self):
+        assert_report_item_list_equal(
+            ticket.validate_create_with_set(
+                self.id_provider,
+                [self.set(self.el_primitives[0])],
+                {"ticket": "ticket", "bad_option": "value"},
+                False,
+            ),
+            [
+                fixture.error(
+                    reports.codes.INVALID_OPTIONS,
+                    option_names=["bad_option"],
+                    allowed=["id", "loss-policy", "ticket"],
+                    option_type=None,
+                    allowed_patterns=[],
+                )
+            ],
+        )
+
+    def test_set_options(self):
+        pcmk_bool = (
+            "a pacemaker boolean value: '0', '1', 'false', 'n', 'no', 'off', "
+            "'on', 'true', 'y', 'yes'"
+        )
+        assert_report_item_list_equal(
+            ticket.validate_create_with_set(
+                self.id_provider,
+                [
+                    self.set(
+                        self.el_primitives[0],
+                        action="bad-action",
+                        require_all="bad-require",
+                        role=const.PCMK_ROLE_PROMOTED_LEGACY,
+                        sequential="bad-sequential",
+                        bad_option="value",
+                    )
+                ],
+                {"ticket": "ticket"},
+                False,
+            ),
+            [
+                fixture.error(
+                    reports.codes.INVALID_OPTIONS,
+                    option_names=["bad_option"],
+                    allowed=["action", "require-all", "role", "sequential"],
+                    option_type="set",
+                    allowed_patterns=[],
+                ),
+                fixture.error(
+                    reports.codes.INVALID_OPTION_VALUE,
+                    option_name="action",
+                    option_value="bad-action",
+                    allowed_values=("start", "stop", "promote", "demote"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    reports.codes.INVALID_OPTION_VALUE,
+                    option_name="require-all",
+                    option_value="bad-require",
+                    allowed_values=pcmk_bool,
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    reports.codes.INVALID_OPTION_VALUE,
+                    option_name="role",
+                    option_value=const.PCMK_ROLE_PROMOTED_LEGACY,
+                    allowed_values=(
+                        "Stopped",
+                        "Started",
+                        "Promoted",
+                        "Unpromoted",
+                    ),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    reports.codes.INVALID_OPTION_VALUE,
+                    option_name="sequential",
+                    option_value="bad-sequential",
+                    allowed_values=pcmk_bool,
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+            ],
+        )
+
+
+class CreateWithSet:
+    # pcs_test.tier0.lib.cib.constraint.test_common.CreateConstraintWithSetTest
+    pass
 
 
 class DuplicatesCheckerTicketPlain(DuplicatesCheckerTestBase):
@@ -491,38 +716,52 @@ class DuplicatesCheckerTicketPlain(DuplicatesCheckerTestBase):
         self.assert_success(self.cib, checker, duplicates)
 
 
-class Element:
-    def __init__(self, attrib):
-        self.attrib = attrib
+class DuplicatesCheckerTicketWithSet(DuplicatesCheckerTestBase):
+    cib = etree.fromstring(
+        """
+        <constraints>
+            <rsc_ticket id="C1" ticket="T1">
+                <resource_set id="C1_set">
+                    <resource_ref id="R1" /> <resource_ref id="R2" />
+                </resource_set>
+                <resource_set id="C1_set-1">
+                    <resource_ref id="R3" /> <resource_ref id="R4" />
+                </resource_set>
+            </rsc_ticket>
+            <rsc_ticket id="C2" ticket="T1">
+                <resource_set id="C2_set" role="Promoted">
+                    <resource_ref id="R1" /> <resource_ref id="R2" />
+                </resource_set>
+                <resource_set id="C2_set-1" role="Unpromoted">
+                    <resource_ref id="R3" /> <resource_ref id="R4" />
+                </resource_set>
+            </rsc_ticket>
+            <rsc_ticket id="C3" ticket="T2">
+                <resource_set id="C3_set">
+                    <resource_ref id="R1" /> <resource_ref id="R2" />
+                </resource_set>
+                <resource_set id="C3_set-1">
+                    <resource_ref id="R3" /> <resource_ref id="R4" />
+                </resource_set>
+            </rsc_ticket>
+            <rsc_ticket id="C4" ticket="T1">
+                <resource_set id="C4_set">
+                    <resource_ref id="R1" /> <resource_ref id="R2" />
+                </resource_set>
+            </rsc_ticket>
+        </constraints>
+        """
+    )
 
-    def update(self, attrib):
-        self.attrib.update(attrib)
-        return self
-
-
-@mock.patch("pcs.lib.cib.constraint.ticket.have_duplicate_resource_sets")
-class AreDuplicateWithResourceSet(TestCase):
-    def test_returns_true_for_duplicate_elements(
-        self, mock_have_duplicate_resource_sets
-    ):
-        mock_have_duplicate_resource_sets.return_value = True
-        self.assertTrue(
-            ticket.are_duplicate_with_resource_set(
-                Element({"ticket": "ticket-key"}),
-                Element({"ticket": "ticket-key"}),
-            )
-        )
-
-    def test_returns_false_for_different_elements(
-        self, mock_have_duplicate_resource_sets
-    ):
-        mock_have_duplicate_resource_sets.return_value = True
-        self.assertFalse(
-            ticket.are_duplicate_with_resource_set(
-                Element({"ticket": "ticket-key"}),
-                Element({"ticket": "X"}),
-            )
-        )
+    def test_success(self):
+        duplicates = {
+            "C1": ["C2"],  # same constraints, options don't matter
+            "C2": ["C1"],  # same constraints, options don't matter
+            "C3": [],  # same resources, different ticket
+            "C4": [],  # different resources, same ticket
+        }
+        checker = ticket.DuplicatesCheckerTicketWithSet()
+        self.assert_success(self.cib, checker, duplicates)
 
 
 class RemovePlainTest(TestCase):

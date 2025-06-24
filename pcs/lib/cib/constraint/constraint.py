@@ -21,6 +21,7 @@ from pcs.lib.xml_tools import get_root
 from .common import validate_constrainable_elements
 
 
+# DEPRECATED
 def _validate_attrib_names(attrib_names, options):
     invalid_names = [name for name in options if name not in attrib_names]
     if invalid_names:
@@ -52,6 +53,7 @@ def find_valid_resource_id(
     return _id
 
 
+# DEPRECATED
 def prepare_options(attrib_names, options, create_id_fn, validate_id):
     _validate_attrib_names(attrib_names + ("id",), options)
     options = options.copy()
@@ -63,6 +65,7 @@ def prepare_options(attrib_names, options, create_id_fn, validate_id):
     return options
 
 
+# DEPRECATED, use pcs.lib.cib.constraint.common._create_set_constraint_id
 def create_id(cib, type_prefix, resource_set_list):
     # Create a semi-random id. We need it to be predictable (for testing), short
     # and somehow different than other ids so that we don't spend much time in
@@ -78,6 +81,7 @@ def create_id(cib, type_prefix, resource_set_list):
     return find_unique_id(cib, f"{type_prefix}_set_{id_part}")
 
 
+# DEPRECATED, replace with pcs.lib.cib.constraint.common.DuplicatesChecker
 def have_duplicate_resource_sets(element, other_element):
     def get_id_set_list(element):
         return [
@@ -133,6 +137,7 @@ def check_is_without_duplication(
         raise LibraryError()
 
 
+# DEPRECATED use pcs.lib.cib.constraint.common.create_constraint_with_set
 def create_with_set(constraint_section, tag_name, options, resource_set_list):
     if not resource_set_list:
         raise LibraryError(
@@ -148,5 +153,5 @@ def create_with_set(constraint_section, tag_name, options, resource_set_list):
             get_root(constraint_section), all_resource_ids
         )
     for resource_set_item in resource_set_list:
-        resource_set.create(element, resource_set_item)
+        resource_set.create_old(element, resource_set_item)
     return element

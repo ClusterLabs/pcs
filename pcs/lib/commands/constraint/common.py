@@ -1,14 +1,13 @@
-"""
-Common functions used from specific constraint commands.
-Functions of this module are not intended to be used for direct call from
-client.
-"""
-
 from functools import partial
 
+from lxml.etree import _Element
+
+from pcs.common import reports
 from pcs.common.pacemaker.constraint import CibConstraintsDto
+from pcs.lib import validate
 from pcs.lib.cib.constraint import (
     colocation,
+    common,
     constraint,
     location,
     order,
@@ -16,10 +15,17 @@ from pcs.lib.cib.constraint import (
     ticket,
 )
 from pcs.lib.cib.rule.in_effect import get_rule_evaluator
-from pcs.lib.cib.tools import get_constraints
+from pcs.lib.cib.tools import (
+    ElementNotFound,
+    get_constraints,
+    get_element_by_id,
+)
 from pcs.lib.env import LibraryEnvironment
 
 
+# This is an extracted part of lib commands for creating set constraints for
+# the purposes of code deduplication. It is not meant to be part of API.
+# DEPRECATED
 def create_with_set(
     tag_name,
     prepare_options,
@@ -113,3 +119,60 @@ def get_config(
         ticket=ticket_constraints,
         ticket_set=ticket_set_constraints,
     )
+
+
+# This is an extracted part of lib commands for creating set constraints for
+# the purposes of code deduplication. It is not meant to be part of API.
+def _load_resource_set_list(
+    cib: _Element,
+    report_processor: reports.ReportProcessor,
+    rsc_set_list: common.CmdInputResourceSetList,
+    option_value_normalization: validate.TypeNormalizeFunc,
+) -> common.CmdInputResourceSetLoadedList:
+    """
+    Prepare resource sets definition for further processing in commands
+
+    cib -- loaded CIB
+    rsc_set_list -- resources set definition passed as a command input
+    option_value_normalization -- function for normalizing set options values
+    """
+    resource_set_el_list: common.CmdInputResourceSetLoadedList = []
+    for input_set_def in rsc_set_list:
+        el_list = []
+        for resource_id in input_set_def["ids"]:
+            try:
+                el_list.append(get_element_by_id(cib, resource_id))
+            except ElementNotFound:
+                report_processor.report(
+                    reports.ReportItem.error(
+                        reports.messages.IdNotFound(resource_id, [])
+                    )
+                )
+        resource_set_el_list.append(
+            dict(
+                constrained_elements=el_list,
+                options=validate.values_to_pairs(
+                    input_set_def["options"], option_value_normalization
+                ),
+            )
+        )
+    return resource_set_el_list
+
+
+# This is an extracted part of lib commands for creating set constraints for
+# the purposes of code deduplication. It is not meant to be part of API.
+def _primitive_resource_set_list(
+    rsc_set_list: common.CmdInputResourceSetLoadedList,
+) -> common.CmdInputResourceSetList:
+    """
+    Inverse transformation to _load_resource_set_list
+    """
+    return [
+        dict(
+            ids=[
+                str(el.attrib["id"]) for el in rsc_set["constrained_elements"]
+            ],
+            options=validate.pairs_to_values(rsc_set["options"]),
+        )
+        for rsc_set in rsc_set_list
+    ]

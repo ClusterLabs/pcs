@@ -2,18 +2,23 @@ from unittest import TestCase
 
 from lxml import etree
 
-from pcs.common import reports
+from pcs.common import const, reports
 from pcs.lib.cib.constraint.common import (
     DuplicatesChecker,
+    create_constraint_with_set,
     find_constraints_of_same_type,
     is_constraint,
     validate_constrainable_elements,
 )
+from pcs.lib.cib.tools import IdProvider, Version
 
 from pcs_test.tools import fixture
-from pcs_test.tools.assertions import assert_report_item_list_equal
+from pcs_test.tools.assertions import (
+    assert_report_item_list_equal,
+    assert_xml_equal,
+)
 from pcs_test.tools.fixture import ReportItemFixture
-from pcs_test.tools.xml import str_to_etree
+from pcs_test.tools.xml import etree_to_str, str_to_etree
 
 
 class IsConstraint(TestCase):
@@ -267,3 +272,123 @@ class ValidateConstrainableElement(TestCase):
 
     def test_warning(self):
         self._test_report(True, reports.ReportItemSeverity.WARNING, None)
+
+
+class CreateConstraintWithSet(TestCase):
+    def setUp(self):
+        cib = str_to_etree(
+            """
+            <cib>
+                <resources>
+                    <primitive id="resource1" />
+                    <primitive id="resource2" />
+                    <primitive id="resource3" />
+                    <primitive id="resource4" />
+                    <primitive id="resource5" />
+                    <primitive id="resource6" />
+                </resources>
+                <constraints />
+            </cib>
+            """
+        )
+        self.el_constraints = cib.find("constraints")
+        self.id_provider = IdProvider(cib)
+
+    @staticmethod
+    def set(*args, **kwargs):
+        return dict(ids=args, options=kwargs)
+
+    def test_no_options(self):
+        create_constraint_with_set(
+            self.el_constraints,
+            self.id_provider,
+            Version(3, 7, 0),
+            "rsc_constr",
+            "constr",
+            [
+                self.set("resource1"),
+                self.set("resource2", "resource3"),
+                self.set("resource4", "resource5", "resource6"),
+            ],
+            {},
+        )
+        assert_xml_equal(
+            """
+            <constraints>
+                <rsc_constr id="constr_set_r1r2r3">
+                    <resource_set id="constr_set_r1r2r3_set">
+                        <resource_ref id="resource1" />
+                    </resource_set>
+                    <resource_set id="constr_set_r1r2r3_set-1">
+                        <resource_ref id="resource2" />
+                        <resource_ref id="resource3" />
+                    </resource_set>
+                    <resource_set id="constr_set_r1r2r3_set-2">
+                        <resource_ref id="resource4" />
+                        <resource_ref id="resource5" />
+                        <resource_ref id="resource6" />
+                    </resource_set>
+                </rsc_constr>
+            </constraints>
+            """,
+            etree_to_str(self.el_constraints),
+        )
+
+    def test_options(self):
+        create_constraint_with_set(
+            self.el_constraints,
+            self.id_provider,
+            Version(3, 7, 0),
+            "rsc_constr",
+            "constr",
+            [
+                self.set("resource1", id="my-set"),
+                self.set(
+                    "resource2", "resource3", role=const.PCMK_ROLE_PROMOTED
+                ),
+            ],
+            {"id": "id-test", "opt1": "val1", "opt2": "val2", "empty": ""},
+        )
+        assert_xml_equal(
+            f"""
+            <constraints>
+                <rsc_constr id="id-test" opt1="val1" opt2="val2">
+                    <resource_set id="my-set">
+                        <resource_ref id="resource1" />
+                    </resource_set>
+                    <resource_set id="id-test_set"
+                        role="{const.PCMK_ROLE_PROMOTED}"
+                    >
+                        <resource_ref id="resource2" />
+                        <resource_ref id="resource3" />
+                    </resource_set>
+                </rsc_constr>
+            </constraints>
+            """,
+            etree_to_str(self.el_constraints),
+        )
+
+    def test_legacy_role(self):
+        create_constraint_with_set(
+            self.el_constraints,
+            self.id_provider,
+            Version(3, 6, 0),
+            "rsc_constr",
+            "constr",
+            [self.set("resource1", role=const.PCMK_ROLE_PROMOTED)],
+            {},
+        )
+        assert_xml_equal(
+            f"""
+            <constraints>
+                <rsc_constr id="constr_set_r1">
+                    <resource_set id="constr_set_r1_set"
+                        role="{const.PCMK_ROLE_PROMOTED_LEGACY}"
+                    >
+                        <resource_ref id="resource1" />
+                    </resource_set>
+                </rsc_constr>
+            </constraints>
+            """,
+            etree_to_str(self.el_constraints),
+        )

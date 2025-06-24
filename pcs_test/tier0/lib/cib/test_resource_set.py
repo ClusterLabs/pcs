@@ -1,15 +1,10 @@
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
 from lxml import etree
 
-from pcs.common import (
-    const,
-    reports,
-)
+from pcs.common import const, reports
 from pcs.lib.cib.constraint import resource_set
+from pcs.lib.cib.tools import IdProvider, Version
 
 from pcs_test.tools import fixture
 from pcs_test.tools.assertions import (
@@ -17,6 +12,7 @@ from pcs_test.tools.assertions import (
     assert_xml_equal,
 )
 from pcs_test.tools.custom_mock import MockLibraryReportProcessor
+from pcs_test.tools.xml import etree_to_str, str_to_etree
 
 
 class PrepareSetTest(TestCase):
@@ -79,10 +75,99 @@ class PrepareSetTest(TestCase):
 
 
 class CreateTest(TestCase):
+    def setUp(self):
+        cib = str_to_etree(
+            """
+            <cib>
+                <resources>
+                    <primitive id="resource1" />
+                    <primitive id="resource2" />
+                </resources>
+                <constraints>
+                    <rsc_ticket id="my-constraint" ticket="ticket1" />
+                </constraints>
+            </cib>
+            """
+        )
+        self.parent_el = cib.xpath(".//*[@id='my-constraint']")[0]
+        self.id_provider = IdProvider(cib)
+        self.rsc_list = ["resource1", "resource2"]
+
+    def test_no_options(self):
+        resource_set.create(
+            self.parent_el,
+            self.id_provider,
+            Version(3, 7, 0),
+            self.rsc_list,
+            {},
+        )
+        assert_xml_equal(
+            """
+            <rsc_ticket id="my-constraint" ticket="ticket1">
+                <resource_set id="my-constraint_set">
+                    <resource_ref id="resource1"/>
+                    <resource_ref id="resource2"/>
+                </resource_set>
+            </rsc_ticket>
+            """,
+            etree_to_str(self.parent_el),
+        )
+
+    def test_options(self):
+        resource_set.create(
+            self.parent_el,
+            self.id_provider,
+            Version(3, 7, 0),
+            self.rsc_list,
+            {
+                "id": "my-set",
+                "role": const.PCMK_ROLE_PROMOTED,
+                "option": "value",
+                "empty": "",
+            },
+        )
+        assert_xml_equal(
+            f"""
+            <rsc_ticket id="my-constraint" ticket="ticket1">
+                <resource_set id="my-set" option="value"
+                    role="{const.PCMK_ROLE_PROMOTED}"
+                >
+                    <resource_ref id="resource1"/>
+                    <resource_ref id="resource2"/>
+                </resource_set>
+            </rsc_ticket>
+            """,
+            etree_to_str(self.parent_el),
+        )
+
+    def test_legacy_role(self):
+        resource_set.create(
+            self.parent_el,
+            self.id_provider,
+            Version(3, 6, 0),
+            self.rsc_list,
+            {"role": const.PCMK_ROLE_PROMOTED},
+        )
+        assert_xml_equal(
+            f"""
+            <rsc_ticket id="my-constraint" ticket="ticket1">
+                <resource_set id="my-constraint_set"
+                    role="{const.PCMK_ROLE_PROMOTED_LEGACY}"
+                >
+                    <resource_ref id="resource1"/>
+                    <resource_ref id="resource2"/>
+                </resource_set>
+            </rsc_ticket>
+            """,
+            etree_to_str(self.parent_el),
+        )
+
+
+class CreateOldTest(TestCase):
     def test_resource_set_to_parent(self):
         # pylint: disable=no-self-use
         constraint_element = etree.Element("constraint")
-        resource_set.create(
+        resource_set.create_old(
             constraint_element,
             {"ids": ["A", "B"], "options": {"sequential": "true"}},
         )

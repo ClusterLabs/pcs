@@ -1,4 +1,3 @@
-from functools import partial
 from typing import Mapping, Optional
 
 from lxml.etree import SubElement, _Element
@@ -16,23 +15,20 @@ from pcs.common.pacemaker.types import CibTicketLossPolicy
 from pcs.lib import validate
 from pcs.lib.booth.config_validators import validate_ticket_name
 from pcs.lib.cib.const import TAG_CONSTRAINT_TICKET as TAG
-from pcs.lib.cib.tools import (
-    IdProvider,
-    Version,
-    check_new_id_applicable,
-    role_constructor,
-)
-from pcs.lib.errors import LibraryError
+from pcs.lib.cib.tools import IdProvider, Version, role_constructor
 from pcs.lib.pacemaker.values import sanitize_id
 from pcs.lib.tools import get_optional_value
 from pcs.lib.xml_tools import remove_when_pointless
 
 from .common import (
+    CmdInputResourceSetList,
+    CmdInputResourceSetLoadedList,
     DuplicatesChecker,
+    DuplicatesCheckerSetConstraint,
+    create_constraint_with_set,
     is_set_constraint,
     validate_constrainable_elements,
 )
-from .constraint import create_id, have_duplicate_resource_sets, prepare_options
 from .resource_set import constraint_element_to_resource_set_dto_list
 
 _LOSS_POLICY_VALUES = ("fence", "stop", "freeze", "demote")
@@ -42,40 +38,15 @@ def is_ticket_constraint(element: _Element) -> bool:
     return element.tag == TAG
 
 
-def prepare_options_with_set(cib, options, resource_set_list):
-    options = prepare_options(
-        ("loss-policy", "ticket"),
-        options,
-        create_id_fn=partial(create_id, cib, "ticket", resource_set_list),
-        validate_id=partial(check_new_id_applicable, cib, "constraint id"),
-    )
-
-    report_list = []
-    if "loss-policy" in options:
-        loss_policy = options["loss-policy"].lower()
-        if options["loss-policy"] not in _LOSS_POLICY_VALUES:
-            report_list.append(
-                reports.ReportItem.error(
-                    reports.messages.InvalidOptionValue(
-                        "loss-policy",
-                        options["loss-policy"],
-                        _LOSS_POLICY_VALUES,
-                    )
-                )
-            )
-        options["loss-policy"] = loss_policy
-
-    if "ticket" not in options or not options["ticket"].strip():
-        report_list.append(
+def _validate_ticket(ticket: Optional[str]) -> reports.ReportItemList:
+    # use a booth ticket validator for validating a ticket
+    if not ticket:
+        return [
             reports.ReportItem.error(
                 reports.messages.RequiredOptionsAreMissing(["ticket"])
             )
-        )
-    else:
-        report_list.extend(validate_ticket_name(options["ticket"]))
-    if report_list:
-        raise LibraryError(*report_list)
-    return options
+        ]
+    return validate_ticket_name(ticket)
 
 
 def validate_create_plain(
@@ -105,17 +76,8 @@ def validate_create_plain(
             )
         )
 
-    # use a booth ticket validator for validate a ticket
-    if not ticket:
-        report_list.append(
-            reports.ReportItem.error(
-                reports.messages.RequiredOptionsAreMissing(["ticket"])
-            )
-        )
-    else:
-        report_list += validate_ticket_name(ticket)
-
     # validate options
+    report_list += _validate_ticket(ticket)
     validators = [
         validate.NamesIn(
             # rsc and ticket are passed as parameters, not as items in the
@@ -186,6 +148,103 @@ def create_plain(
     return constraint_el
 
 
+def validate_create_with_set(
+    id_provider: IdProvider,
+    rsc_set_list: CmdInputResourceSetLoadedList,
+    options: validate.TypeOptionMap,
+    in_multiinstance_allowed: bool,
+) -> reports.ReportItemList:
+    """
+    Validator for creating new ticket constraint with resource sets
+
+    id_provider -- elements' ids generator
+    rsc_set_list -- definition of resource sets: resources and set options
+    options -- additional options for the constraint
+    in_multiinstance_allowed -- allow constraints for resources in clones/bundles
+    """
+    report_list: reports.ReportItemList = []
+
+    # TODO Set options validators were moved here during refactoring. No
+    # changes were done to the validators, as that would change pcs behavior,
+    # which we were avoiding during refactoring. It is, however, desired to put
+    # correct validators in place.
+    set_options_validators = [
+        validate.NamesIn(
+            ("action", "require-all", "role", "sequential"), option_type="set"
+        ),
+        validate.ValueIn("action", const.PCMK_ACTIONS),
+        validate.ValuePcmkBoolean("require-all"),
+        validate.ValueIn("role", const.PCMK_ROLES),
+        validate.ValuePcmkBoolean("sequential"),
+    ]
+    # validate resources specification and resource set options
+    # caller is responsible for handling the 'resource not found' case
+    if not rsc_set_list:
+        report_list.append(
+            reports.ReportItem.error(reports.messages.EmptyResourceSetList())
+        )
+    for rsc_set in rsc_set_list:
+        if rsc_set["constrained_elements"]:
+            report_list.extend(
+                validate_constrainable_elements(
+                    rsc_set["constrained_elements"], in_multiinstance_allowed
+                )
+            )
+        else:
+            report_list.append(
+                reports.ReportItem.error(reports.messages.EmptyResourceSet())
+            )
+        report_list.extend(
+            validate.ValidatorAll(set_options_validators).validate(
+                rsc_set["options"]
+            )
+        )
+
+    # validate options
+    ticket = validate.pairs_to_values(options).get("ticket")
+    report_list += _validate_ticket(ticket)
+    validators = [
+        validate.NamesIn({"id", "loss-policy", "ticket"}),
+        # with id_provider it validates that the id is available as well
+        validate.ValueId(
+            "id",
+            option_name_for_report="constraint id",
+            id_provider=id_provider,
+        ),
+        validate.ValueIn("loss-policy", _LOSS_POLICY_VALUES),
+    ]
+    report_list.extend(validate.ValidatorAll(validators).validate(options))
+
+    return report_list
+
+
+def create_with_set(
+    parent_element: _Element,
+    id_provider: IdProvider,
+    cib_schema_version: Version,
+    rsc_set_list: CmdInputResourceSetList,
+    options: Mapping[str, str],
+) -> _Element:
+    """
+    Create a ticket constraint with resource sets
+
+    parent_element -- where to place the constraint
+    id_provider -- elements' ids generator
+    cib_schema_version -- current CIB schema version
+    rsc_set_list -- definition of resource sets: resources and set options
+    options -- additional options for the constraint
+    """
+    return create_constraint_with_set(
+        parent_element,
+        id_provider,
+        cib_schema_version,
+        TAG,
+        "ticket",
+        rsc_set_list,
+        options,
+    )
+
+
 def remove_plain(constraint_section, ticket_key, resource_id):
     ticket_element_list = constraint_section.xpath(
         ".//rsc_ticket[@ticket=$ticket and @rsc=$resource]",
@@ -254,10 +313,19 @@ class DuplicatesCheckerTicketPlain(DuplicatesChecker):
         )
 
 
-def are_duplicate_with_resource_set(element, other_element):
-    return element.attrib["ticket"] == other_element.attrib[
-        "ticket"
-    ] and have_duplicate_resource_sets(element, other_element)
+class DuplicatesCheckerTicketWithSet(DuplicatesCheckerSetConstraint):
+    """
+    Searcher of duplicate ticket constraints with resource sets
+    """
+
+    def _are_duplicate(
+        self,
+        constraint_to_check: _Element,
+        constraint_el: _Element,
+    ) -> bool:
+        return constraint_to_check.get("ticket") == constraint_el.get(
+            "ticket"
+        ) and super()._are_duplicate(constraint_to_check, constraint_el)
 
 
 def _element_to_attributes_dto(

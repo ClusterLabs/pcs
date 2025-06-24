@@ -81,6 +81,14 @@ class DuplicateConstraintsExist(NameBuildTest):
         )
 
 
+class EmptyResourceSet(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "Resource set is empty",
+            reports.EmptyResourceSet(),
+        )
+
+
 class EmptyResourceSetList(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(

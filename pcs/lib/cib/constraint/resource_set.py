@@ -1,17 +1,25 @@
+from typing import Mapping
+
 from lxml.etree import SubElement, _Element
 
 from pcs.common import const, pacemaker, reports
 from pcs.common.const import PcmkAction
 from pcs.common.pacemaker.constraint import CibResourceSetDto
+from pcs.common.pacemaker.role import (
+    get_value_for_cib as get_role_value_for_cib,
+)
 from pcs.common.pacemaker.types import (
     CibResourceSetOrdering,
     CibResourceSetOrderType,
 )
+from pcs.common.types import StringIterable
 from pcs.lib import validate
 from pcs.lib.cib.const import TAG_RESOURCE_REF, TAG_RESOURCE_SET
 from pcs.lib.cib.resource import group
 from pcs.lib.cib.resource.common import get_parent_resource
 from pcs.lib.cib.tools import (
+    IdProvider,
+    Version,
     are_new_role_names_supported,
     find_unique_id,
     get_elements_by_ids,
@@ -24,6 +32,7 @@ from pcs.lib.tools import get_optional_value
 _ATTRIBUTES = ("action", "require-all", "role", "sequential")
 
 
+# DEPRECATED
 def prepare_set(
     find_valid_id, resource_set, report_processor: reports.ReportProcessor
 ):
@@ -38,6 +47,7 @@ def prepare_set(
     }
 
 
+# DEPRECATED pacemaker cares, thus the validation should be constraint specific
 def _validate_options(options) -> reports.ReportItemList:
     # Pacemaker does not care currently about meaningfulness for concrete
     # constraint, so we use all attribs.
@@ -51,7 +61,47 @@ def _validate_options(options) -> reports.ReportItemList:
     return validate.ValidatorAll(validators).validate(options)
 
 
-def create(parent, resource_set):
+def create(
+    parent_el: _Element,
+    id_provider: IdProvider,
+    cib_schema_version: Version,
+    rsc_list: StringIterable,
+    set_options: Mapping[str, str],
+) -> _Element:
+    """
+    Create a new resource set element
+
+    parent_el -- where to create the set
+    id_provider -- elements' ids generator
+    cib_schema_version -- current CIB schema version
+    rsc_list -- list of resources in the set
+    set_options -- set attributes
+    """
+    rsc_set_el = SubElement(parent_el, TAG_RESOURCE_SET)
+
+    if "id" not in set_options:
+        rsc_set_el.attrib["id"] = id_provider.allocate_id(
+            "{0}_set".format(parent_el.attrib.get("id", "constraint_set")),
+        )
+
+    for name, value in set_options.items():
+        if name == "role":
+            # noqa - for loop variable 'value' overwritten by assignment target
+            value = get_role_value_for_cib(  # noqa: PLW2901
+                const.PcmkRoleType(value),
+                cib_schema_version >= const.PCMK_NEW_ROLES_CIB_VERSION,
+            )
+        if value != "":
+            rsc_set_el.attrib[name] = value
+
+    for rsc_id in rsc_list:
+        SubElement(rsc_set_el, TAG_RESOURCE_REF).attrib["id"] = rsc_id
+
+    return rsc_set_el
+
+
+# DEPRECATED
+def create_old(parent, resource_set):
     """
     parent - lxml element for append new resource_set
     """
