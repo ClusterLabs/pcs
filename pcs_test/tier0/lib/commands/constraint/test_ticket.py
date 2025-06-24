@@ -81,9 +81,7 @@ class CreateTest(TestCase):
                 env_assist.get_env(),
                 "ticketA",
                 "resourceA",
-                {
-                    "rsc-role": role,
-                },
+                {"rsc-role": role},
             ),
         )
         env_assist.assert_reports(
@@ -107,7 +105,7 @@ class CreateTest(TestCase):
                 env_assist.get_env(),
                 "ticketA",
                 "resourceA",
-                {"loss-policy": "fence"},
+                {},
             ),
         )
         env_assist.assert_reports(

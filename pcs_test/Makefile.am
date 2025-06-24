@@ -203,6 +203,7 @@ EXTRA_DIST		= \
 			  tier0/lib/cib/__init__.py \
 			  tier0/lib/cib/constraint/__init__.py \
 			  tier0/lib/cib/constraint/test_common.py \
+			  tier0/lib/cib/constraint/test_ticket.py \
 			  tier0/lib/cib/resource/__init__.py \
 			  tier0/lib/cib/resource/test_agent.py \
 			  tier0/lib/cib/resource/test_hierarchy.py \
@@ -222,7 +223,6 @@ EXTRA_DIST		= \
 			  tier0/lib/cib/test_constraint_location.py \
 			  tier0/lib/cib/test_constraint_order.py \
 			  tier0/lib/cib/test_constraint.py \
-			  tier0/lib/cib/test_constraint_ticket.py \
 			  tier0/lib/cib/test_fencing_topology.py \
 			  tier0/lib/cib/test_node.py \
 			  tier0/lib/cib/test_nvpair_multi.py \
@@ -259,6 +259,7 @@ EXTRA_DIST		= \
 			  tier0/lib/commands/cluster/test_verify.py \
 			  tier0/lib/commands/constraint/__init__.py \
 			  tier0/lib/commands/constraint/test_location.py \
+			  tier0/lib/commands/constraint/test_ticket.py \
 			  tier0/lib/commands/dr/__init__.py \
 			  tier0/lib/commands/dr/test_destroy.py \
 			  tier0/lib/commands/dr/test_get_config.py \
@@ -322,7 +323,6 @@ EXTRA_DIST		= \
 			  tier0/lib/commands/test_stonith_agent.py \
 			  tier0/lib/commands/test_stonith_history.py \
 			  tier0/lib/commands/test_stonith_update_scsi_devices.py \
-			  tier0/lib/commands/test_ticket.py \
 			  tier0/lib/communication/__init__.py \
 			  tier0/lib/communication/test_booth.py \
 			  tier0/lib/communication/test_cfgsync.py \
