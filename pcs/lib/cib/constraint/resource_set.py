@@ -1,18 +1,14 @@
-from lxml import etree
+from lxml.etree import SubElement, _Element
 
-from pcs.common import (
-    const,
-    pacemaker,
-    reports,
-)
+from pcs.common import const, pacemaker, reports
 from pcs.common.const import PcmkAction
 from pcs.common.pacemaker.constraint import CibResourceSetDto
 from pcs.common.pacemaker.types import (
     CibResourceSetOrdering,
     CibResourceSetOrderType,
 )
-from pcs.common.reports.item import ReportItem
 from pcs.lib import validate
+from pcs.lib.cib.const import TAG_RESOURCE_REF, TAG_RESOURCE_SET
 from pcs.lib.cib.resource import group
 from pcs.lib.cib.resource.common import get_parent_resource
 from pcs.lib.cib.tools import (
@@ -59,7 +55,7 @@ def create(parent, resource_set):
     """
     parent - lxml element for append new resource_set
     """
-    element = etree.SubElement(parent, "resource_set")
+    element = SubElement(parent, "resource_set")
     if "role" in resource_set["options"]:
         resource_set["options"]["role"] = pacemaker.role.get_value_for_cib(
             resource_set["options"]["role"],
@@ -72,7 +68,7 @@ def create(parent, resource_set):
     )
 
     for _id in resource_set["ids"]:
-        etree.SubElement(element, "resource_ref").attrib["id"] = _id
+        SubElement(element, "resource_ref").attrib["id"] = _id
 
     return element
 
@@ -80,7 +76,7 @@ def create(parent, resource_set):
 def get_resource_id_set_list(element):
     return [
         resource_ref_element.attrib["id"]
-        for resource_ref_element in element.findall(".//resource_ref")
+        for resource_ref_element in element.findall(f".//{TAG_RESOURCE_REF}")
     ]
 
 
@@ -98,14 +94,14 @@ def is_resource_in_same_group(cib, resource_id_list):
 
     if len(set(parent_list)) != len(parent_list):
         raise LibraryError(
-            ReportItem.error(
+            reports.ReportItem.error(
                 reports.messages.CannotSetOrderConstraintsForResourcesInTheSameGroup()
             )
         )
 
 
 def _resource_set_element_to_dto(
-    resource_set_el: etree._Element,
+    resource_set_el: _Element,
 ) -> CibResourceSetDto:
     return CibResourceSetDto(
         set_id=resource_set_el.get("id", ""),
@@ -126,15 +122,15 @@ def _resource_set_element_to_dto(
         ),
         resources_ids=[
             str(rsc_ref.attrib["id"])
-            for rsc_ref in resource_set_el.findall("./resource_ref")
+            for rsc_ref in resource_set_el.findall(f"./{TAG_RESOURCE_REF}")
         ],
     )
 
 
 def constraint_element_to_resource_set_dto_list(
-    constraint_el: etree._Element,
+    constraint_el: _Element,
 ) -> list[CibResourceSetDto]:
     return [
         _resource_set_element_to_dto(set_el)
-        for set_el in constraint_el.findall("./resource_set")
+        for set_el in constraint_el.findall(f"./{TAG_RESOURCE_SET}")
     ]
