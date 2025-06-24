@@ -123,9 +123,9 @@ def create_old(parent, resource_set):
     return element
 
 
-def get_resource_id_set_list(element):
+def get_resource_id_set_list(element: _Element) -> list[str]:
     return [
-        resource_ref_element.attrib["id"]
+        str(resource_ref_element.attrib["id"])
         for resource_ref_element in element.findall(f".//{TAG_RESOURCE_REF}")
     ]
 

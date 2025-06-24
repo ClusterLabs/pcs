@@ -1,4 +1,4 @@
-from typing import Mapping, Optional
+from typing import Mapping, Optional, cast
 
 from lxml.etree import SubElement, _Element
 
@@ -18,7 +18,7 @@ from pcs.lib.cib.const import TAG_CONSTRAINT_TICKET as TAG
 from pcs.lib.cib.tools import IdProvider, Version, role_constructor
 from pcs.lib.pacemaker.values import sanitize_id
 from pcs.lib.tools import get_optional_value
-from pcs.lib.xml_tools import remove_when_pointless
+from pcs.lib.xml_tools import remove_one_element, remove_when_pointless
 
 from .common import (
     CmdInputResourceSetList,
@@ -245,33 +245,47 @@ def create_with_set(
     )
 
 
-def remove_plain(constraint_section, ticket_key, resource_id):
-    ticket_element_list = constraint_section.xpath(
-        ".//rsc_ticket[@ticket=$ticket and @rsc=$resource]",
-        ticket=ticket_key,
-        resource=resource_id,
+def remove_plain(
+    constraint_section: _Element, ticket_key: str, resource_id: str
+) -> bool:
+    ticket_element_list = cast(
+        list[_Element],
+        constraint_section.xpath(
+            ".//rsc_ticket[@ticket=$ticket and @rsc=$resource]",
+            ticket=ticket_key,
+            resource=resource_id,
+        ),
     )
 
     for ticket_element in ticket_element_list:
-        ticket_element.getparent().remove(ticket_element)
+        remove_one_element(ticket_element)
 
     return len(ticket_element_list) > 0
 
 
-def remove_with_resource_set(constraint_section, ticket_key, resource_id):
-    ref_element_list = constraint_section.xpath(
-        ".//rsc_ticket[@ticket=$ticket]/resource_set/resource_ref[@id=$resource]",
-        ticket=ticket_key,
-        resource=resource_id,
+def remove_with_resource_set(
+    constraint_section: _Element, ticket_key: str, resource_id: str
+) -> bool:
+    ref_element_list = cast(
+        list[_Element],
+        constraint_section.xpath(
+            ".//rsc_ticket[@ticket=$ticket]/resource_set/resource_ref[@id=$resource]",
+            ticket=ticket_key,
+            resource=resource_id,
+        ),
     )
 
     for ref_element in ref_element_list:
         set_element = ref_element.getparent()
+        if set_element is None:
+            continue
         set_element.remove(ref_element)
         # set_element is lxml element, therefore we have to use len() here
         # pylint: disable=len-as-condition
         if not len(set_element):
             ticket_element = set_element.getparent()
+            if ticket_element is None:
+                continue
             ticket_element.remove(set_element)
             # We do not care about attributes since without an attribute "rsc"
             # they are pointless. Attribute "rsc" is mutually exclusive with

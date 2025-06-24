@@ -183,7 +183,7 @@ def create_with_set(
     env.push_cib()
 
 
-def remove(env, ticket_key, resource_id):
+def remove(env: LibraryEnvironment, ticket_key: str, resource_id: str) -> bool:
     """
     remove all ticket constraint from resource
     If resource is in resource set with another resources then only resource
