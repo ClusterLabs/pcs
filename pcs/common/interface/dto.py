@@ -152,6 +152,20 @@ def from_dict(
                 permissions_types.PermissionAccessType,
                 permissions_types.PermissionTargetType,
             ],
+            type_hooks={
+                # JSON does not support tuples, only lists. However, tuples are
+                # used e.g. to express fixed-length structures. If a tuple is
+                # expected and a list is provided, we convert it to a tuple.
+                # Unfortunately, we cannot apply this rule generically to all
+                # tuples, so we must handle specific cases manually.
+                #
+                # Covered cases:
+                # * acl.create_role:
+                #   permission_info_list: list[tuple[str, str, str]]
+                tuple[str, str, str]: (
+                    lambda v: tuple(v) if isinstance(v, list) else v
+                ),
+            },
             strict=strict,
         ),
     )
