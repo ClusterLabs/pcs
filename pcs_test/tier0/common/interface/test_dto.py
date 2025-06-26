@@ -10,6 +10,8 @@ from typing import (
 )
 from unittest import TestCase
 
+from dacite.exceptions import WrongTypeError
+
 import pcs
 from pcs.common.interface.dto import (
     DataTransferObject,
@@ -64,6 +66,11 @@ class MyDto3(DataTransferObject):
     field_i: int = field(metadata=meta(name="field-i"))
 
 
+@dataclass
+class AclCreateLike(DataTransferObject):
+    permission_info_list: list[tuple[str, str, str]]
+
+
 class DictName(TestCase):
     maxDiff = None
     simple_dto = MyDto1(1, 2, 3)
@@ -114,6 +121,54 @@ class DictName(TestCase):
 
     def test_nested_from_dict(self):
         self.assertEqual(self.nested_dto, from_dict(MyDto3, self.nested_dict))
+
+
+class FromDictTupleConversion(TestCase):
+    def test_success(self):
+        self.assertEqual(
+            AclCreateLike([("read", "xpath", "/cib")]),
+            from_dict(
+                AclCreateLike,
+                dict(permission_info_list=[["read", "xpath", "/cib"]]),
+            ),
+        )
+
+    def test_fail_on_different_list_length(self):
+        # Not worth to test misleading exception message:
+        # wrong value type for field "permission_info_list" - should be "list"
+        # instead of value "[('read', 'xpath', '/cib', 'extra string')]" of type
+        # "list"
+        with self.assertRaises(WrongTypeError):
+            from_dict(
+                AclCreateLike,
+                dict(
+                    permission_info_list=[
+                        ["read", "xpath", "/cib", "extra string"]
+                    ]
+                ),
+            )
+
+    def test_fail_on_different_list_item_type(self):
+        # Not worth to test misleading exception message:
+        # wrong value type for field "permission_info_list" - should be "list"
+        # instead of value "[('read', 'id', 1)]" of type "list"
+        with self.assertRaises(WrongTypeError):
+            from_dict(
+                AclCreateLike,
+                dict(permission_info_list=[["read", "id", 1]]),
+            )
+
+    def test_fail_on_no_list(self):
+        # Not worth to test misleading exception message:
+        # wrong value type for field "permission_info_list" - should be "list"
+        # instead of value "['<generator object
+        # _build_value_for_collection.<locals>.<genexpr> at 0x7f7718f5b010>']"
+        # of type "list"
+        with self.assertRaises(WrongTypeError):
+            from_dict(
+                AclCreateLike,
+                dict(permission_info_list=["read xpath /cib"]),
+            )
 
 
 @dataclass
