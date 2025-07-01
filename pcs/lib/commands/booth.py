@@ -41,6 +41,7 @@ from pcs.lib.booth.cib import get_ticket_names as get_cib_ticket_names
 from pcs.lib.booth.env import BoothEnv
 from pcs.lib.cib.remove_elements import (
     ElementsToRemove,
+    ensure_resources_stopped,
     remove_specified_elements,
 )
 from pcs.lib.cib.resource import (
@@ -52,7 +53,6 @@ from pcs.lib.cib.tools import (
     IdProvider,
     get_resources,
 )
-from pcs.lib.commands.cib import _stop_resources_wait
 from pcs.lib.communication.booth import (
     BoothGetConfig,
     BoothSendConfig,
@@ -548,6 +548,29 @@ def create_in_cluster(
     env.push_cib()
 
 
+def get_resource_ids_from_cluster(
+    env: LibraryEnvironment, instance_name: Optional[str] = None
+) -> list[str]:
+    """
+    Return resource ids of booth related resources in cluster. This includes the
+    booth resource and the IP resource created by `create_in_cluster`.
+
+    env -- provides all for communication with externals
+    instance_name -- booth instance name
+    force_flags -- list of flags codes
+    """
+    booth_env = env.get_booth_env(instance_name)
+    _ensure_live_booth_env(booth_env)
+
+    booth_elements, _ = _find_resource_elements_for_operation(
+        get_resources(env.get_cib()), booth_env, allow_multiple=False
+    )
+    return [
+        str(element.attrib["id"])
+        for element in resource.find_elements_to_remove(booth_elements)
+    ]
+
+
 def remove_from_cluster(
     env: LibraryEnvironment,
     instance_name: Optional[str] = None,
@@ -567,14 +590,32 @@ def remove_from_cluster(
     _ensure_live_booth_env(booth_env)
 
     cib = env.get_cib()
-    booth_elements_to_remove = resource.find_elements_to_remove(
-        _find_resource_elements_for_operation(
-            report_processor,
-            get_resources(cib),
-            booth_env,
-            allow_multiple=reports.codes.FORCE in force_flags,
-        )
+    booth_elements, report_list = _find_resource_elements_for_operation(
+        get_resources(cib),
+        booth_env,
+        allow_multiple=reports.codes.FORCE in force_flags,
     )
+    if report_processor.report_list(report_list).has_errors:
+        raise LibraryError()
+    booth_elements_to_remove = resource.find_elements_to_remove(booth_elements)
+
+    resource_ids = [str(el.attrib["id"]) for el in booth_elements_to_remove]
+    if env.is_cib_live:
+        report_processor.report_list(
+            ensure_resources_stopped(
+                env.get_cluster_state(), resource_ids, force_flags
+            )
+        )
+    else:
+        report_processor.report(
+            reports.ReportItem.warning(
+                reports.messages.StoppedResourcesBeforeDeleteCheckSkipped(
+                    resource_ids, reports.const.REASON_NOT_LIVE_CIB
+                )
+            )
+        )
+    if report_processor.has_errors:
+        raise LibraryError()
 
     resource_ids = [str(el.attrib["id"]) for el in booth_elements_to_remove]
     elements_to_remove = ElementsToRemove(cib, resource_ids)
@@ -589,10 +630,6 @@ def remove_from_cluster(
     )
     report_processor.report_list(
         elements_to_remove.element_references.to_reports()
-    )
-
-    cib = _stop_resources_wait(
-        env, cib, elements_to_remove.resources_to_remove, force_flags
     )
 
     remove_specified_elements(cib, elements_to_remove)
@@ -614,13 +651,14 @@ def restart(
     booth_env = env.get_booth_env(instance_name)
     _ensure_live_env(env, booth_env)
 
-    for booth_element in _find_resource_elements_for_operation(
-        env.report_processor,
-        get_resources(env.get_cib()),
-        booth_env,
-        allow_multiple,
-    ):
-        resource_restart(env.cmd_runner(), str(booth_element.attrib["id"]))
+    booth_elements, report_list = _find_resource_elements_for_operation(
+        get_resources(env.get_cib()), booth_env, allow_multiple
+    )
+    if env.report_processor.report_list(report_list).has_errors:
+        raise LibraryError()
+
+    for element in booth_elements:
+        resource_restart(env.cmd_runner(), str(element.attrib["id"]))
 
 
 def ticket_grant(
@@ -1167,24 +1205,22 @@ def get_status(
 
 
 def _find_resource_elements_for_operation(
-    report_processor: ReportProcessor,
-    resources_section: _Element,
-    booth_env: BoothEnv,
-    allow_multiple: bool,
-) -> list[_Element]:
+    resources_section: _Element, booth_env: BoothEnv, allow_multiple: bool
+) -> tuple[list[_Element], reports.ReportItemList]:
+    report_list = []
     booth_element_list = resource.find_for_config(
         resources_section,
         booth_env.config_path,
     )
 
     if not booth_element_list:
-        report_processor.report(
+        report_list.append(
             ReportItem.error(
                 reports.messages.BoothNotExistsInCib(booth_env.instance_name)
             )
         )
     elif len(booth_element_list) > 1:
-        report_processor.report(
+        report_list.append(
             ReportItem(
                 severity=get_severity(
                     report_codes.FORCE,
@@ -1195,10 +1231,8 @@ def _find_resource_elements_for_operation(
                 ),
             )
         )
-    if report_processor.has_errors:
-        raise LibraryError()
 
-    return booth_element_list
+    return booth_element_list, report_list
 
 
 def _ensure_live_booth_env(booth_env: BoothEnv) -> None:

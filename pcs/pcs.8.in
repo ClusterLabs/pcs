@@ -1332,11 +1332,19 @@ Show booth configuration from the specified node or from the current node if nod
 create ip <address>
 Make the cluster run booth service on the specified ip address as a cluster resource.  Typically this is used to run booth site.@BOOTH_ENABLE_AUTHFILE_SET_DOC@@BOOTH_ENABLE_AUTHFILE_UNSET_DOC@
 .TP
-delete
+delete [\fB\-\-no\-stop\fR] [\fB\-\-future\fR]
 Remove booth resources created by the "pcs booth create" command.
+
+If \fB\-\-no\-stop\fR is specified, the resources will not be stopped before their deletion. This may result in orphaned resources being left behind in case the deleted resources are not already stopped.
+
+Using \fB\-\-force\fR currently also means the resources will not be stopped before their deletion. If you need to use \fB\-\-force\fR and still want to stop the resources, you need to combine it with the \fB\-\-future\fR flag.
 .TP
-remove
+remove [\fB\-\-no\-stop\fR] [\fB\-\-future\fR]
 Remove booth resources created by the "pcs booth create" command.
+
+If \fB\-\-no\-stop\fR is specified, the resources will not be stopped before their deletion. This may result in orphaned resources being left behind in case the deleted resources are not already stopped.
+
+Using \fB\-\-force\fR currently also means the resources will not be stopped before their deletion. If you need to use \fB\-\-force\fR and still want to stop the resources, you need to combine it with the \fB\-\-future\fR flag.
 .TP
 restart
 Restart booth resources created by the "pcs booth create" command.
