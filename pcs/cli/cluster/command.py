@@ -107,7 +107,6 @@ def node_remove_remote(
       * -f
     """
 
-    # TODO extract this to a separate function
     def _process_reports(
         report_list: reports.ReportItemList,
         force_flags: reports.types.ForceFlags,

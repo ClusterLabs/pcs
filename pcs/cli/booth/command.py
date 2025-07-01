@@ -270,7 +270,6 @@ def remove_from_cluster(
       * --future - specifying '--force' does not skip resource stopping
     """
 
-    # TODO extract
     def _process_reports(
         report_list: reports.ReportItemList,
         force_flags: reports.types.ForceFlags,

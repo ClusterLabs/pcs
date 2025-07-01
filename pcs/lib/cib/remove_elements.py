@@ -1,12 +1,7 @@
 from collections import defaultdict
 from dataclasses import dataclass
 from itertools import chain
-from typing import (
-    Iterable,
-    Mapping,
-    Sequence,
-    cast,
-)
+from typing import Iterable, Mapping, cast
 
 from lxml import etree
 from lxml.etree import _Element
@@ -36,16 +31,11 @@ from pcs.lib.cib.fencing_topology import (
     remove_device_from_level,
 )
 from pcs.lib.cib.resource.clone import is_any_clone
-from pcs.lib.cib.resource.common import (
-    disable,
-    get_inner_resources,
-    is_resource,
-)
+from pcs.lib.cib.resource.common import get_inner_resources, is_resource
 from pcs.lib.cib.resource.group import is_group
 from pcs.lib.cib.tag import is_tag
 from pcs.lib.cib.tools import (
     ElementNotFound,
-    IdProvider,
     find_elements_referencing_id,
     get_element_by_id,
     get_elements_by_ids,
@@ -54,10 +44,7 @@ from pcs.lib.cib.tools import (
     remove_one_element,
 )
 from pcs.lib.pacemaker.live import parse_cib_xml
-from pcs.lib.pacemaker.state import (
-    ensure_resource_state,
-    is_resource_managed,
-)
+from pcs.lib.pacemaker.state import ensure_resource_state
 from pcs.lib.pacemaker.status import (
     ClusterStatusParser,
     ClusterStatusParsingError,
@@ -229,76 +216,6 @@ class ElementsToRemove:
             # _validate_element_types function
             supported_element_types=["constraint", "location rule", "resource"],
         )
-
-
-# TODO remove
-def warn_resource_unmanaged(
-    state: _Element, resource_ids: StringSequence
-) -> reports.ReportItemList:
-    """
-    Warn about unmanaged resources
-
-    state -- state of the cluster
-    resource_ids -- ids of resources to be checked
-    """
-    report_list: reports.ReportItemList = []
-    try:
-        parser = ClusterStatusParser(state)
-        try:
-            status_dto = parser.status_xml_to_dto()
-        except ClusterStatusParsingError as e:
-            report_list.append(cluster_status_parsing_error_to_report(e))
-            return report_list
-        report_list.extend(parser.get_warnings())
-
-        status = ResourcesStatusFacade.from_resources_status_dto(status_dto)
-        for r_id in resource_ids:
-            if not status.exists(r_id, None):
-                # Pacemaker does not put misconfigured resources into cluster
-                # status and we are unable to check state of such resources.
-                # This happens for e.g. undle with primitive resource inside and
-                # no IP address for the bundle specified. We expect the resource
-                # to be stopped since it is misconfigured. Stopping it again
-                # even when it is unmanaged should not break anything.
-                report_list.append(
-                    reports.ReportItem.debug(
-                        reports.messages.ConfiguredResourceMissingInStatus(
-                            r_id, ResourceState.UNMANAGED
-                        )
-                    )
-                )
-            elif status.is_state(r_id, None, ResourceState.UNMANAGED):
-                report_list.append(
-                    reports.ReportItem.warning(
-                        reports.messages.ResourceIsUnmanaged(r_id)
-                    )
-                )
-    except NotImplementedError:
-        # TODO remove when issue with bundles in status is fixed
-        report_list.extend(
-            reports.ReportItem.warning(
-                reports.messages.ResourceIsUnmanaged(resource_id)
-            )
-            for resource_id in resource_ids
-            if not is_resource_managed(state, resource_id)
-        )
-
-    return report_list
-
-
-# TODO remove
-def stop_resources(
-    cib: _Element, resource_elements: Sequence[_Element]
-) -> None:
-    """
-    Stop all resources that are going to be removed.
-
-    cib -- the whole cib
-    resource_elements -- sequence of elements that should be stopped
-    """
-    provider = IdProvider(cib)
-    for el in resource_elements:
-        disable(el, provider)
 
 
 def ensure_resources_stopped(

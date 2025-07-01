@@ -1,20 +1,13 @@
-from typing import Iterable, Sequence
+from typing import Iterable
 
 from lxml.etree import _Element
 
 from pcs.common import reports
-from pcs.common.resource_status import (
-    MoreChildrenQuantifierType,
-    ResourcesStatusFacade,
-    ResourceState,
-)
-from pcs.common.types import StringCollection, StringSequence
+from pcs.common.types import StringCollection
 from pcs.lib.cib.remove_elements import (
     ElementsToRemove,
     ensure_resources_stopped,
     remove_specified_elements,
-    stop_resources,
-    warn_resource_unmanaged,
 )
 from pcs.lib.cib.resource.guest_node import is_guest_node
 from pcs.lib.cib.resource.remote_node import (
@@ -24,12 +17,6 @@ from pcs.lib.cib.resource.stonith import is_stonith
 from pcs.lib.cib.tools import get_resources
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
-from pcs.lib.pacemaker.state import ensure_resource_state
-from pcs.lib.pacemaker.status import (
-    ClusterStatusParser,
-    ClusterStatusParsingError,
-    cluster_status_parsing_error_to_report,
-)
 from pcs.lib.sbd_stonith import ensure_some_stonith_remains
 
 
@@ -144,129 +131,4 @@ def _ensure_not_guest_remote(
                     )
                 )
             )
-    return report_list
-
-
-# TODO: remove, since we want to handle resource stopping in clients instead
-# of this lib command
-def _stop_resources_wait(
-    env: LibraryEnvironment,
-    cib: _Element,
-    resource_elements: Sequence[_Element],
-    force_flags: reports.types.ForceFlags = (),
-) -> _Element:
-    """
-    Stop all resources that are going to be removed. Push cib, wait for the
-    cluster to settle down, and check if all resources were properly stopped.
-    If not, report errors. Return cib with the applied changes.
-
-    cib -- whole cib
-    resource_elements -- resources that should be stopped
-    force_flags -- list of flags codes
-    """
-    if not resource_elements:
-        return cib
-    if not env.is_cib_live:
-        return cib
-    if reports.codes.FORCE in force_flags:
-        env.report_processor.report(
-            reports.ReportItem.warning(
-                reports.messages.StoppingResourcesBeforeDeletingSkipped()
-            )
-        )
-        return cib
-
-    resource_ids = [str(el.attrib["id"]) for el in resource_elements]
-
-    env.report_processor.report(
-        reports.ReportItem.info(
-            reports.messages.StoppingResourcesBeforeDeleting(resource_ids)
-        )
-    )
-
-    if env.report_processor.report_list(
-        warn_resource_unmanaged(env.get_cluster_state(), resource_ids)
-    ).has_errors:
-        raise LibraryError()
-    stop_resources(cib, resource_elements)
-    env.push_cib()
-
-    env.wait_for_idle()
-    if env.report_processor.report_list(
-        _ensure_resources_stopped_after_stop(
-            env.get_cluster_state(), resource_ids
-        )
-    ).has_errors:
-        raise LibraryError()
-
-    return env.get_cib()
-
-
-# TODO: remove, since we want to handle resource stopping in clients instead
-# of this lib command. Also remove the report message that is used here
-def _ensure_resources_stopped_after_stop(
-    state: _Element, resource_ids: StringSequence
-) -> reports.ReportItemList:
-    """
-    Ensure that all resources that should be stopped are stopped.
-
-    state -- state of the cluster
-    elements -- elements planned to be removed
-    """
-    not_stopped_ids = []
-    report_list: reports.ReportItemList = []
-    try:
-        parser = ClusterStatusParser(state)
-        try:
-            status_dto = parser.status_xml_to_dto()
-        except ClusterStatusParsingError as e:
-            report_list.append(cluster_status_parsing_error_to_report(e))
-            return report_list
-        report_list.extend(parser.get_warnings())
-
-        status = ResourcesStatusFacade.from_resources_status_dto(status_dto)
-        for r_id in resource_ids:
-            if not status.exists(r_id, None):
-                # Pacemaker does not put misconfigured resources into cluster
-                # status and we are unable to check state of such resources.
-                # This happens for e.g. undle with primitive resource inside and
-                # no IP address for the bundle specified. We expect the resource
-                # to be stopped since it is misconfigured.
-                report_list.append(
-                    reports.ReportItem.debug(
-                        reports.messages.ConfiguredResourceMissingInStatus(
-                            r_id, ResourceState.STOPPED
-                        )
-                    )
-                )
-            elif not status.is_state(
-                r_id,
-                None,
-                ResourceState.STOPPED,
-                instances_quantifier=(
-                    MoreChildrenQuantifierType.ALL
-                    if status.can_have_multiple_instances(r_id)
-                    else None
-                ),
-            ):
-                not_stopped_ids.append(r_id)
-    except NotImplementedError:
-        # TODO remove when issue with bundles in status is fixed
-        not_stopped_ids = [
-            resource_id
-            for resource_id in resource_ids
-            if ensure_resource_state(False, state, resource_id).severity.level
-            == reports.item.ReportItemSeverity.ERROR
-        ]
-
-    if not_stopped_ids:
-        report_list.append(
-            reports.ReportItem.error(
-                reports.messages.CannotStopResourcesBeforeDeleting(
-                    not_stopped_ids
-                ),
-                force_code=reports.codes.FORCE,
-            )
-        )
-
     return report_list

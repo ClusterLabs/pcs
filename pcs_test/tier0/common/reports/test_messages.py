@@ -6105,44 +6105,17 @@ class ClusterOptionsMetadataNotSupported(NameBuildTest):
         )
 
 
-class StoppingResourcesBeforeDeleting(NameBuildTest):
-    def test_one_resource(self) -> str:
-        self.assert_message_from_report(
-            "Stopping resource 'resourceId' before deleting",
-            reports.StoppingResourcesBeforeDeleting(["resourceId"]),
-        )
-
-    def test_multiple_resources(self) -> str:
-        self.assert_message_from_report(
-            "Stopping resources 'resourceId1', 'resourceId2' before deleting",
-            reports.StoppingResourcesBeforeDeleting(
-                ["resourceId1", "resourceId2"]
-            ),
-        )
-
-
 class StoppingResources(NameBuildTest):
-    def test_one_resource(self) -> str:
+    def test_one_resource(self):
         self.assert_message_from_report(
             "Stopping resource 'resourceId'",
             reports.StoppingResources(["resourceId"]),
         )
 
-    def test_multiple_resources(self) -> str:
+    def test_multiple_resources(self):
         self.assert_message_from_report(
             "Stopping resources 'resourceId1', 'resourceId2'",
             reports.StoppingResources(["resourceId1", "resourceId2"]),
-        )
-
-
-class StoppingResourcesBeforeDeletingSkipped(NameBuildTest):
-    def test_success(self) -> str:
-        self.assert_message_from_report(
-            (
-                "Resources are not going to be stopped before deletion, this "
-                "may result in orphaned resources being present in the cluster"
-            ),
-            reports.StoppingResourcesBeforeDeletingSkipped(),
         )
 
 
@@ -6177,22 +6150,6 @@ class StoppedResourcesBeforeDeleteCheckSkipped(NameBuildTest):
             ),
             reports.StoppedResourcesBeforeDeleteCheckSkipped(
                 ["A"], reports.const.REASON_NOT_LIVE_CIB
-            ),
-        )
-
-
-class CannotStopResourcesBeforeDeleting(NameBuildTest):
-    def test_one_resource(self) -> str:
-        self.assert_message_from_report(
-            "Cannot stop resource 'resourceId' before deleting",
-            reports.CannotStopResourcesBeforeDeleting(["resourceId"]),
-        )
-
-    def test_multiple_resources(self) -> str:
-        self.assert_message_from_report(
-            "Cannot stop resources 'resourceId1', 'resourceId2' before deleting",
-            reports.CannotStopResourcesBeforeDeleting(
-                ["resourceId1", "resourceId2"]
             ),
         )
 
