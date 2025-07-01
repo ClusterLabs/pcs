@@ -12,6 +12,7 @@ from pcs.common.reports import (
 from pcs.lib import node_communication_format
 from pcs.lib.cib.remove_elements import (
     ElementsToRemove,
+    ensure_resources_stopped,
     remove_specified_elements,
 )
 from pcs.lib.cib.resource import (
@@ -24,7 +25,6 @@ from pcs.lib.cib.tools import (
     IdProvider,
     get_resources,
 )
-from pcs.lib.commands.cib import _stop_resources_wait
 
 # TODO lib.commands should never import each other. This is to be removed when
 # the 'resource create' commands are overhauled.
@@ -631,7 +631,7 @@ def _find_resources_to_remove(
     resource_element_list = find_resources(get_resources(cib), node_identifier)
 
     if not resource_element_list:
-        raise LibraryError(
+        report_processor.report(
             ReportItem.error(
                 reports.messages.NodeNotFound(node_identifier, [node_type])
             )
@@ -654,8 +654,8 @@ def _find_resources_to_remove(
                 ),
             )
         )
-        if report_processor.has_errors:
-            raise LibraryError()
+    if report_processor.has_errors:
+        raise LibraryError()
 
     return resource_element_list
 
@@ -715,6 +715,23 @@ def _report_skip_live_parts_in_remove(node_names_list):
     ]
 
 
+def get_resource_ids(
+    env: LibraryEnvironment, node_identifier: str
+) -> list[str]:
+    """
+    Return resource ids of resources that represent the given node_identifier
+
+    env -- provides all for communication with externals
+    node_identifier -- node name or hostname
+    """
+    return [
+        str(element.attrib["id"])
+        for element in remote_node.find_node_resources(
+            get_resources(env.get_cib()), node_identifier
+        )
+    ]
+
+
 def node_remove_remote(
     env: LibraryEnvironment,
     node_identifier: str,
@@ -733,7 +750,7 @@ def node_remove_remote(
 
     resource_element_list = _find_resources_to_remove(
         cib,
-        report_processor,
+        env.report_processor,
         "remote",
         node_identifier,
         allow_remove_multiple_nodes=force,
@@ -750,25 +767,22 @@ def node_remove_remote(
     resource_ids = [str(el.attrib["id"]) for el in resource_element_list]
     elements_to_remove = ElementsToRemove(cib, resource_ids)
 
-    # the user could have provided hostname, so we want to show them which
-    # resources are going to be removed
-    report_processor.report(
-        reports.ReportItem.info(
-            reports.messages.CibRemoveResources(resource_ids)
+    if env.is_cib_live:
+        report_processor.report_list(
+            ensure_resources_stopped(
+                env.get_cluster_state(), resource_ids, force_flags
+            )
         )
-    )
-
-    report_processor.report_list(
-        elements_to_remove.dependant_elements.to_reports()
-    )
-    report_processor.report_list(
-        elements_to_remove.element_references.to_reports()
-    )
-
-    # we use private function from lib.commands.cib to reduce code repetition
-    cib = _stop_resources_wait(
-        env, cib, elements_to_remove.resources_to_remove, force_flags
-    )
+    else:
+        report_processor.report(
+            reports.ReportItem.warning(
+                reports.messages.StoppedResourcesBeforeDeleteCheckSkipped(
+                    resource_ids, reports.const.REASON_NOT_LIVE_CIB
+                )
+            )
+        )
+    if env.report_processor.has_errors:
+        raise LibraryError()
 
     if not env.is_cib_live:
         report_processor.report_list(
@@ -782,8 +796,21 @@ def node_remove_remote(
             allow_fails=force,
         )
 
-    remove_specified_elements(cib, elements_to_remove)
+    # the user could have provided hostname, so we want to show them which
+    # resources are going to be removed
+    report_processor.report(
+        reports.ReportItem.info(
+            reports.messages.CibRemoveResources(resource_ids)
+        )
+    )
+    report_processor.report_list(
+        elements_to_remove.dependant_elements.to_reports()
+    )
+    report_processor.report_list(
+        elements_to_remove.element_references.to_reports()
+    )
 
+    remove_specified_elements(cib, elements_to_remove)
     env.push_cib()
 
     # remove node from pcmk caches
@@ -823,6 +850,8 @@ def node_remove_guest(
         allow_remove_multiple_nodes,
         guest_node.find_node_resources,
     )
+    if env.report_processor.has_errors:
+        raise LibraryError()
 
     node_names_list = sorted(
         {

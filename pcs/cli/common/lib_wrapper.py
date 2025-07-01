@@ -244,6 +244,7 @@ def load_module(env, middleware_factory, name):  # noqa: PLR0911, PLR0912
                 "node_add_guest": remote_node.node_add_guest,
                 "node_remove_remote": remote_node.node_remove_remote,
                 "node_remove_guest": remote_node.node_remove_guest,
+                "get_resource_ids": remote_node.get_resource_ids,
             },
         )
 

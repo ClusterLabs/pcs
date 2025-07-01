@@ -270,6 +270,7 @@ EXTRA_DIST		= \
 			  tier0/lib/commands/remote_node/fixtures_add.py \
 			  tier0/lib/commands/remote_node/fixtures_remove.py \
 			  tier0/lib/commands/remote_node/__init__.py \
+			  tier0/lib/commands/remote_node/test_get_resource_ids.py \
 			  tier0/lib/commands/remote_node/test_node_add_guest.py \
 			  tier0/lib/commands/remote_node/test_node_add_remote.py \
 			  tier0/lib/commands/remote_node/test_node_remove_guest.py \

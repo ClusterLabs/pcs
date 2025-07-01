@@ -1,6 +1,5 @@
 from functools import partial
-from typing import Optional
-from unittest import TestCase, mock
+from unittest import TestCase
 
 from pcs.common import reports
 from pcs.common.host import Destination
@@ -22,11 +21,7 @@ from pcs_test.tier0.lib.commands.remote_node.fixtures_remove import (
     report_remove_file_connection_failed,
 )
 from pcs_test.tools import fixture
-from pcs_test.tools.assertions import assert_xml_equal
 from pcs_test.tools.command_env import get_env_tools
-from pcs_test.tools.custom_mock import TmpFileCall, TmpFileMock
-from pcs_test.tools.fixture_cib import modify_cib
-from pcs_test.tools.misc import read_test_resource
 
 NODE_NAME = "node-name"
 NODE_DEST_LIST = [Destination("node-addr", 2224)]
@@ -40,98 +35,7 @@ def node_remove_remote(env, *args, node_identifier=REMOTE_HOST, **kwargs):
     node_remove_remote_orig(env, node_identifier, *args, **kwargs)
 
 
-class StopResourcesWaitMixin:
-    def fixture_init_tmp_file_mocker(self):
-        self.tmp_file_mock_obj = TmpFileMock(
-            file_content_checker=assert_xml_equal,
-        )
-        self.addCleanup(self.tmp_file_mock_obj.assert_all_done)
-        tmp_file_patcher = mock.patch("pcs.lib.tools.get_tmp_file")
-        self.addCleanup(tmp_file_patcher.stop)
-        tmp_file_mock = tmp_file_patcher.start()
-        tmp_file_mock.side_effect = (
-            self.tmp_file_mock_obj.get_mock_side_effect()
-        )
-
-    def fixture_stop_resources_wait_calls(
-        self,
-        initial_cib: str,
-        initial_state_modifiers: Optional[dict[str, str]] = None,
-        after_disable_cib_modifiers: Optional[dict[str, str]] = None,
-        after_disable_state_modifiers: Optional[dict[str, str]] = None,
-        successful_stop: bool = True,
-    ):
-        self.config.runner.pcmk.load_state(
-            name="stop_wait.load_state.before",
-            **(initial_state_modifiers or {}),
-        )
-
-        self.__disabled_cib = modify_cib(
-            initial_cib, **(after_disable_cib_modifiers or {})
-        )
-        self.tmp_file_mock_obj.set_calls(
-            [
-                TmpFileCall(
-                    "stop_wait.cib.disable.before", orig_content=initial_cib
-                ),
-                TmpFileCall(
-                    "stop_wait.cib.disable.after",
-                    orig_content=self.__disabled_cib,
-                ),
-            ]
-        )
-        self.config.runner.cib.diff(
-            "stop_wait.cib.disable.before",
-            "stop_wait.cib.disable.after",
-            name="stop_wait.cib.diff.disable",
-            stdout="stop_wait.cib.diff.disable",
-        )
-        self.config.runner.cib.push_diff(
-            name="stop_wait.cib.push.disable",
-            cib_diff="stop_wait.cib.diff.disable",
-        )
-
-        self.config.runner.pcmk.wait(timeout=0)
-        self.config.runner.pcmk.load_state(
-            name="stop_wait.state.after",
-            **(after_disable_state_modifiers or {}),
-        )
-
-        if successful_stop:
-            self.config.runner.cib.load_content(
-                self.__disabled_cib, name="stop_wait.cib.load.after"
-            )
-
-    def fixture_push_cib_after_stopping(self, **modifiers):
-        self.tmp_file_mock_obj.extend_calls(
-            [
-                TmpFileCall(
-                    "stop_wait.cib.delete.before",
-                    orig_content=self.__disabled_cib,
-                ),
-                TmpFileCall(
-                    "stop_wait.cib.delete.after",
-                    orig_content=modify_cib(
-                        read_test_resource("cib-empty.xml"), **modifiers
-                    ),
-                ),
-            ]
-        )
-
-        self.config.runner.cib.diff(
-            "stop_wait.cib.delete.before",
-            "stop_wait.cib.delete.after",
-            name="stop_wait.cib.diff.delete",
-            stdout="stop_wait.cib.diff.delete",
-        )
-
-        self.config.runner.cib.push_diff(
-            name="stop_wait.cib.push.delete",
-            cib_diff="stop_wait.cib.diff.delete",
-        )
-
-
-FIXTURE_RESOURCES = """
+FIXTURE_RESOURCES_CIB = """
     <resources>
         <primitive class="ocf" id="{0}" provider="pacemaker" type="remote">
             <instance_attributes id="node-name-instance_attributes">
@@ -147,42 +51,17 @@ FIXTURE_RESOURCES = """
     REMOTE_HOST,
 )
 
-FIXTURE_RESOURCES_DISABLED_MODIFIERS = {
-    "resources": """
-        <resources>
-            <primitive class="ocf" id="{0}" provider="pacemaker" type="remote">
-                <meta_attributes id="{0}-meta_attributes">
-                    <nvpair id="{0}-meta_attributes-target-role" name="target-role" value="Stopped"/>
-                </meta_attributes>
-                <instance_attributes id="node-name-instance_attributes">
-                    <nvpair
-                        id="node-name-instance_attributes-server"
-                        name="server" value="{1}"
-                    />
-                </instance_attributes>
-            </primitive>
-        </resources>
-    """.format(
-        NODE_NAME,
-        REMOTE_HOST,
-    )
-}
+FIXTURE_RESOURCES_STATE_STARTED = f"""
+    <resources>
+        <resource id="{NODE_NAME}" managed="true" role="Started"/>
+    </resources>
+"""
 
-FIXTURE_RESOURCES_STATE_BEFORE_MODIFIERS = {
-    "resources": """
-        <resources>
-            <resource id="{0}" managed="true" role="Started"/>
-        </resources>
-    """.format(NODE_NAME)
-}
-
-FIXTURE_RESOURCES_STATE_AFTER_MODIFIERS = {
-    "resources": """
-        <resources>
-            <resource id="{0}" managed="true" role="Stopped"/>
-        </resources>
-    """.format(NODE_NAME)
-}
+FIXTURE_RESOURCES_STATE_STOPPED = f"""
+    <resources>
+        <resource id="{NODE_NAME}" managed="true" role="Stopped"/>
+    </resources>
+"""
 
 
 REPORTS = fixture.ReportSequenceBuilder().info(
@@ -191,22 +70,13 @@ REPORTS = fixture.ReportSequenceBuilder().info(
     _name="cib_remove_resources",
 ).fixtures + base_reports_for_host(NODE_NAME)
 
-REPORTS_WITH_DISABLE = (
-    fixture.ReportSequenceBuilder()
-    .info(
-        report_codes.STOPPING_RESOURCES_BEFORE_DELETING,
-        resource_id_list=[NODE_NAME],
-    )
-    .info(report_codes.WAIT_FOR_IDLE_STARTED, timeout=0)
-).fixtures + REPORTS
-
 
 get_env_tools = partial(
     get_env_tools, local_extensions={"local": EnvConfigMixin}
 )
 
 
-class RemoveRemote(TestCase, StopResourcesWaitMixin):
+class RemoveRemote(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         self.config.env.set_known_hosts_dests(
@@ -214,17 +84,11 @@ class RemoveRemote(TestCase, StopResourcesWaitMixin):
                 NODE_NAME: NODE_DEST_LIST,
             }
         )
-        self.fixture_init_tmp_file_mocker()
 
     def find_by(self, identifier):
-        # Instance of 'Config' has no 'local' member
-        # pylint: disable=no-member
-        self.config.runner.cib.load(resources=FIXTURE_RESOURCES)
-        self.fixture_stop_resources_wait_calls(
-            self.config.calls.get("runner.cib.load").stdout,
-            FIXTURE_RESOURCES_STATE_BEFORE_MODIFIERS,
-            FIXTURE_RESOURCES_DISABLED_MODIFIERS,
-            FIXTURE_RESOURCES_STATE_AFTER_MODIFIERS,
+        self.config.runner.cib.load(resources=FIXTURE_RESOURCES_CIB)
+        self.config.runner.pcmk.load_state(
+            resources=FIXTURE_RESOURCES_STATE_STOPPED
         )
         self.config.local.destroy_pacemaker_remote(
             label=NODE_NAME, dest_list=NODE_DEST_LIST
@@ -234,13 +98,13 @@ class RemoveRemote(TestCase, StopResourcesWaitMixin):
                 dict(label=NODE_NAME, dest_list=NODE_DEST_LIST)
             ],
         )
-        self.fixture_push_cib_after_stopping(resources="<resources/>")
+        self.config.env.push_cib(resources="<resources/>")
         self.config.runner.pcmk.remove_node(NODE_NAME)
 
         node_remove_remote(
             self.env_assist.get_env(), node_identifier=identifier
         )
-        self.env_assist.assert_reports(REPORTS_WITH_DISABLE)
+        self.env_assist.assert_reports(REPORTS)
 
     def test_success_base(self):
         self.find_by(REMOTE_HOST)
@@ -249,7 +113,7 @@ class RemoveRemote(TestCase, StopResourcesWaitMixin):
         self.find_by(NODE_NAME)
 
 
-class RemoveRemoteOthers(TestCase, StopResourcesWaitMixin):
+class RemoveRemoteOthers(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         self.config.env.set_known_hosts_dests(
@@ -257,17 +121,11 @@ class RemoveRemoteOthers(TestCase, StopResourcesWaitMixin):
                 NODE_NAME: NODE_DEST_LIST,
             }
         )
-        self.fixture_init_tmp_file_mocker()
 
     def test_can_skip_all_offline(self):
-        # Instance of 'Config' has no 'local' member
-        # pylint: disable=no-member
-        self.config.runner.cib.load(resources=FIXTURE_RESOURCES)
-        self.fixture_stop_resources_wait_calls(
-            self.config.calls.get("runner.cib.load").stdout,
-            FIXTURE_RESOURCES_STATE_BEFORE_MODIFIERS,
-            FIXTURE_RESOURCES_DISABLED_MODIFIERS,
-            FIXTURE_RESOURCES_STATE_AFTER_MODIFIERS,
+        self.config.runner.cib.load(resources=FIXTURE_RESOURCES_CIB)
+        self.config.runner.pcmk.load_state(
+            resources=FIXTURE_RESOURCES_STATE_STOPPED
         )
         self.config.local.destroy_pacemaker_remote(
             label=NODE_NAME, dest_list=NODE_DEST_LIST, **FAIL_HTTP_KWARGS
@@ -278,13 +136,13 @@ class RemoveRemoteOthers(TestCase, StopResourcesWaitMixin):
             ],
             **FAIL_HTTP_KWARGS,
         )
-        self.fixture_push_cib_after_stopping(resources="<resources/>")
+        self.config.env.push_cib(resources="<resources/>")
         self.config.runner.pcmk.remove_node(NODE_NAME)
 
         node_remove_remote(
             self.env_assist.get_env(), [reports.codes.SKIP_OFFLINE_NODES]
         )
-        my_reports = REPORTS_WITH_DISABLE.copy()
+        my_reports = REPORTS.copy()
         my_reports.replace(
             "pcmk_remote_disable_success",
             report_manage_services_connection_failed(NODE_NAME).to_warn(),
@@ -297,19 +155,71 @@ class RemoveRemoteOthers(TestCase, StopResourcesWaitMixin):
         self.env_assist.assert_reports(my_reports)
 
     def test_fail_when_identifier_not_found(self):
-        self.config.runner.cib.load(resources=FIXTURE_RESOURCES)
+        self.config.runner.cib.load(resources=FIXTURE_RESOURCES_CIB)
         self.env_assist.assert_raise_library_error(
             lambda: node_remove_remote(
                 self.env_assist.get_env(), node_identifier="NOEXISTENT"
-            ),
+            )
+        )
+        self.env_assist.assert_reports(
             [
                 fixture.error(
                     report_codes.NODE_NOT_FOUND,
                     node="NOEXISTENT",
                     searched_types=["remote"],
                 )
+            ]
+        )
+
+    def test_fails_when_some_started(self):
+        self.config.runner.cib.load(resources=FIXTURE_RESOURCES_CIB)
+        self.config.runner.pcmk.load_state(
+            resources=FIXTURE_RESOURCES_STATE_STARTED
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: node_remove_remote(
+                self.env_assist.get_env(), node_identifier=REMOTE_HOST
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.CANNOT_REMOVE_RESOURCES_NOT_STOPPED,
+                    resource_id_list=[NODE_NAME],
+                    force_code=report_codes.FORCE,
+                )
+            ]
+        )
+
+    def test_some_started_force(self):
+        self.config.runner.cib.load(resources=FIXTURE_RESOURCES_CIB)
+        self.config.runner.pcmk.load_state(
+            resources=FIXTURE_RESOURCES_STATE_STARTED
+        )
+        self.config.local.destroy_pacemaker_remote(
+            label=NODE_NAME, dest_list=NODE_DEST_LIST
+        )
+        self.config.local.remove_authkey(
+            communication_list=[
+                dict(label=NODE_NAME, dest_list=NODE_DEST_LIST)
             ],
-            expected_in_processor=False,
+        )
+        self.config.env.push_cib(resources="<resources/>")
+        self.config.runner.pcmk.remove_node(NODE_NAME)
+        node_remove_remote(
+            self.env_assist.get_env(),
+            node_identifier=REMOTE_HOST,
+            force_flags=[reports.codes.FORCE],
+        )
+
+        self.env_assist.assert_reports(
+            fixture.ReportSequenceBuilder()
+            .warn(
+                reports.codes.CANNOT_REMOVE_RESOURCES_NOT_STOPPED,
+                resource_id_list=[NODE_NAME],
+            )
+            .fixtures
+            + REPORTS
         )
 
 
@@ -334,6 +244,13 @@ class MultipleResults(TestCase):
             </primitive>
         </resources>
     """.format(NODE_NAME, REMOTE_HOST, "OTHER-REMOTE")
+
+    fixture_multi_resources_state = f"""
+        <resources>
+            <resource id="{NODE_NAME}" managed="true" role="Stopped"/>
+            <resource id="{REMOTE_HOST}" managed="true" role="Stopped"/>
+        </resources>
+    """
 
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
@@ -364,8 +281,9 @@ class MultipleResults(TestCase):
         self.env_assist.assert_reports([self.report_multiple_results])
 
     def test_force(self):
-        # Instance of 'Config' has no 'local' member
-        # pylint: disable=no-member
+        self.config.runner.pcmk.load_state(
+            resources=self.fixture_multi_resources_state
+        )
         self.config.local.destroy_pacemaker_remote(
             communication_list=[
                 dict(label=NODE_NAME, dest_list=NODE_DEST_LIST),
@@ -420,36 +338,23 @@ class MultipleResults(TestCase):
             REPORTS["authkey_remove_success"].adapt(node=REMOTE_HOST)
         )
         my_reports.append(self.report_multiple_results.to_warn())
-        my_reports.append(
-            fixture.warn(
-                reports.codes.STOPPING_RESOURCES_BEFORE_DELETING_SKIPPED
-            )
-        )
         self.env_assist.assert_reports(my_reports)
 
 
-class AuthkeyRemove(TestCase, StopResourcesWaitMixin):
+class AuthkeyRemove(TestCase):
     def setUp(self):
-        # Instance of 'Config' has no 'local' member
-        # pylint: disable=no-member
         self.env_assist, self.config = get_env_tools(self)
         self.config.env.set_known_hosts_dests(
             {
                 NODE_NAME: NODE_DEST_LIST,
             }
         )
-        self.fixture_init_tmp_file_mocker()
-        self.config.runner.cib.load(resources=FIXTURE_RESOURCES)
+        self.config.runner.cib.load(resources=FIXTURE_RESOURCES_CIB)
+        self.config.runner.pcmk.load_state(
+            resources=FIXTURE_RESOURCES_STATE_STOPPED
+        )
 
     def test_fails_when_offline(self):
-        # Instance of 'Config' has no 'local' member
-        # pylint: disable=no-member
-        self.fixture_stop_resources_wait_calls(
-            self.config.calls.get("runner.cib.load").stdout,
-            FIXTURE_RESOURCES_STATE_BEFORE_MODIFIERS,
-            FIXTURE_RESOURCES_DISABLED_MODIFIERS,
-            FIXTURE_RESOURCES_STATE_AFTER_MODIFIERS,
-        )
         self.config.local.destroy_pacemaker_remote(
             label=NODE_NAME, dest_list=NODE_DEST_LIST
         )
@@ -462,7 +367,8 @@ class AuthkeyRemove(TestCase, StopResourcesWaitMixin):
         self.env_assist.assert_raise_library_error(
             lambda: node_remove_remote(self.env_assist.get_env())
         )
-        my_reports = REPORTS_WITH_DISABLE.copy()
+        my_reports = REPORTS.copy()
+        my_reports.remove("cib_remove_resources")
         my_reports.replace(
             "authkey_remove_success",
             report_remove_file_connection_failed(NODE_NAME),
@@ -470,14 +376,6 @@ class AuthkeyRemove(TestCase, StopResourcesWaitMixin):
         self.env_assist.assert_reports(my_reports)
 
     def test_fails_when_remotely_fails(self):
-        # Instance of 'Config' has no 'local' member
-        # pylint: disable=no-member
-        self.fixture_stop_resources_wait_calls(
-            self.config.calls.get("runner.cib.load").stdout,
-            FIXTURE_RESOURCES_STATE_BEFORE_MODIFIERS,
-            FIXTURE_RESOURCES_DISABLED_MODIFIERS,
-            FIXTURE_RESOURCES_STATE_AFTER_MODIFIERS,
-        )
         self.config.local.destroy_pacemaker_remote(
             label=NODE_NAME, dest_list=NODE_DEST_LIST
         )
@@ -493,7 +391,8 @@ class AuthkeyRemove(TestCase, StopResourcesWaitMixin):
         self.env_assist.assert_raise_library_error(
             lambda: node_remove_remote(self.env_assist.get_env())
         )
-        my_reports = REPORTS_WITH_DISABLE.copy()
+        my_reports = REPORTS.copy()
+        my_reports.remove("cib_remove_resources")
         my_reports.replace(
             "authkey_remove_success",
             report_authkey_remove_failed(NODE_NAME),
@@ -501,8 +400,6 @@ class AuthkeyRemove(TestCase, StopResourcesWaitMixin):
         self.env_assist.assert_reports(my_reports)
 
     def test_forceable_when_remotely_fail(self):
-        # Instance of 'Config' has no 'local' member
-        # pylint: disable=no-member
         self.config.local.destroy_pacemaker_remote(
             label=NODE_NAME, dest_list=NODE_DEST_LIST
         )
@@ -524,53 +421,35 @@ class AuthkeyRemove(TestCase, StopResourcesWaitMixin):
             "authkey_remove_success",
             report_authkey_remove_failed(NODE_NAME).to_warn(),
         )
-        my_reports.append(
-            fixture.warn(
-                reports.codes.STOPPING_RESOURCES_BEFORE_DELETING_SKIPPED
-            )
-        )
         self.env_assist.assert_reports(my_reports)
 
 
-class PcmkRemoteServiceDestroy(TestCase, StopResourcesWaitMixin):
+class PcmkRemoteServiceDestroy(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
-        self.config.runner.cib.load(resources=FIXTURE_RESOURCES)
+        self.config.runner.cib.load(resources=FIXTURE_RESOURCES_CIB)
+        self.config.runner.pcmk.load_state(
+            resources=FIXTURE_RESOURCES_STATE_STOPPED
+        )
         self.config.env.set_known_hosts_dests(
             {
                 NODE_NAME: NODE_DEST_LIST,
             }
         )
-        self.fixture_init_tmp_file_mocker()
 
     def test_fails_when_offline(self):
-        # Instance of 'Config' has no 'local' member
-        # pylint: disable=no-member
-        self.fixture_stop_resources_wait_calls(
-            self.config.calls.get("runner.cib.load").stdout,
-            FIXTURE_RESOURCES_STATE_BEFORE_MODIFIERS,
-            FIXTURE_RESOURCES_DISABLED_MODIFIERS,
-            FIXTURE_RESOURCES_STATE_AFTER_MODIFIERS,
-        )
         self.config.local.destroy_pacemaker_remote(
             label=NODE_NAME, dest_list=NODE_DEST_LIST, **FAIL_HTTP_KWARGS
         )
         self.env_assist.assert_raise_library_error(
             lambda: node_remove_remote(self.env_assist.get_env())
         )
-        my_reports = REPORTS_WITH_DISABLE[:"pcmk_remote_disable_success"]
+        my_reports = REPORTS[:"pcmk_remote_disable_success"]
+        my_reports.remove("cib_remove_resources")
         my_reports.append(report_manage_services_connection_failed(NODE_NAME))
         self.env_assist.assert_reports(my_reports)
 
     def test_fails_when_remotely_fails(self):
-        # Instance of 'Config' has no 'local' member
-        # pylint: disable=no-member
-        self.fixture_stop_resources_wait_calls(
-            self.config.calls.get("runner.cib.load").stdout,
-            FIXTURE_RESOURCES_STATE_BEFORE_MODIFIERS,
-            FIXTURE_RESOURCES_DISABLED_MODIFIERS,
-            FIXTURE_RESOURCES_STATE_AFTER_MODIFIERS,
-        )
         self.config.local.destroy_pacemaker_remote(
             label=NODE_NAME,
             dest_list=NODE_DEST_LIST,
@@ -582,14 +461,13 @@ class PcmkRemoteServiceDestroy(TestCase, StopResourcesWaitMixin):
         self.env_assist.assert_raise_library_error(
             lambda: node_remove_remote(self.env_assist.get_env())
         )
-        my_reports = REPORTS_WITH_DISABLE[:"pcmk_remote_disable_success"]
+        my_reports = REPORTS[:"pcmk_remote_disable_success"]
+        my_reports.remove("cib_remove_resources")
         my_reports.append(report_pcmk_remote_disable_failed(NODE_NAME))
         my_reports.append(report_pcmk_remote_stop_failed(NODE_NAME))
         self.env_assist.assert_reports(my_reports)
 
     def test_forceable_when_remotely_fail(self):
-        # Instance of 'Config' has no 'local' member
-        # pylint: disable=no-member
         self.config.local.destroy_pacemaker_remote(
             label=NODE_NAME,
             dest_list=NODE_DEST_LIST,
@@ -614,10 +492,5 @@ class PcmkRemoteServiceDestroy(TestCase, StopResourcesWaitMixin):
         my_reports.replace(
             "pcmk_remote_stop_success",
             report_pcmk_remote_stop_failed(NODE_NAME).to_warn(),
-        )
-        my_reports.append(
-            fixture.warn(
-                reports.codes.STOPPING_RESOURCES_BEFORE_DELETING_SKIPPED
-            )
         )
         self.env_assist.assert_reports(my_reports)

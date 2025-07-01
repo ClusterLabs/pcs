@@ -1799,15 +1799,33 @@ Commands:
         communicate with the node using the specified addresses.
         If --wait is specified, wait up to 'n' seconds for the node to start.
 
-    node delete-remote <node identifier>
+    node delete-remote <node identifier> [--no-stop] [--future]
         Shutdown specified remote node and remove it from the cluster.
         The node-identifier can be the name of the node or the address of the
         node.
 
-    node remove-remote <node identifier>
+        If --no-stop is specified, the resource representing the remote node
+        will not be stopped before its deletion. This may result in orphaned
+        resources being left behind in case the deleted resources are not
+        already stopped.
+
+        Using --force currently also means the resources will not be stopped
+        before their deletion. If you need to use --force and still want to stop
+        the resources, you need to combine it with the --future flag.
+
+    node remove-remote <node identifier> [--no-stop] [--future]
         Shutdown specified remote node and remove it from the cluster.
         The node-identifier can be the name of the node or the address of the
         node.
+
+        If --no-stop is specified, the resource representing the remote node
+        will not be stopped before its deletion. This may result in orphaned
+        resources being left behind in case the deleted resources are not
+        already stopped.
+
+        Using --force currently also means the resources will not be stopped
+        before their deletion. If you need to use --force and still want to stop
+        the resources, you need to combine it with the --future flag.
 
     node add-guest <node name> <resource id> [options] [--wait[=<n>]]
         Make the specified resource a guest node resource. Sync all relevant

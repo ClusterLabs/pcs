@@ -157,19 +157,20 @@ class RemoveGuestOthers(TestCase):
         self.env_assist.assert_reports(my_reports)
 
     def test_fail_when_identifier_not_found(self):
-        (self.config.runner.cib.load(resources=FIXTURE_RESOURCES))
+        self.config.runner.cib.load(resources=FIXTURE_RESOURCES)
         self.env_assist.assert_raise_library_error(
             lambda: node_remove_guest(
                 self.env_assist.get_env(), node_identifier="NOEXISTENT"
-            ),
+            )
+        )
+        self.env_assist.assert_reports(
             [
                 fixture.error(
                     report_codes.NODE_NOT_FOUND,
                     node="NOEXISTENT",
                     searched_types=["guest"],
                 )
-            ],
-            expected_in_processor=False,
+            ]
         )
 
 

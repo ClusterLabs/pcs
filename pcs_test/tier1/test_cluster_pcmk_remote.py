@@ -1,5 +1,7 @@
 from textwrap import dedent
 
+from pcs.common.str_tools import format_plural
+
 from pcs_test.tier1.cib_resource.common import ResourceTest
 from pcs_test.tools.bin_mock import get_mock_settings
 from pcs_test.tools.misc import ParametrizedTestMetaClass, write_data_to_tmpfile
@@ -7,6 +9,11 @@ from pcs_test.tools.misc import get_test_resource as rc
 
 ERRORS_HAVE_OCCURRED = (
     "Error: Errors have occurred, therefore pcs is unable to continue\n"
+)
+
+NOT_STOPPING_RESOURCE_NOT_LIVE_CLUSTER = (
+    "Warning: Resources are not going to be stopped before deletion because the"
+    " command does not run on a live cluster\n"
 )
 
 
@@ -20,13 +27,29 @@ def fixture_nolive_add_report(node_name):
     )
 
 
-def fixture_nolive_remove_report(host_list):
+def fixture_nolive_remove_remote_report(host_list):
+    return dedent(
+        """\
+        Warning: Not checking if {resources} {hosts} {are} stopped before deletion because the command does not run on a live cluster. Deleting unstopped resources may result in orphaned resources being present in the cluster.
+        Running action(s) 'pacemaker_remote disable', 'pacemaker_remote stop' on {hosts} was skipped because the command does not run on a live cluster (e.g. -f was used). Please, run the action(s) manually.
+        Removing 'pacemaker authkey' from {hosts} was skipped because the command does not run on a live cluster (e.g. -f was used). Please, remove the file(s) manually.
+        """
+    ).format(
+        resources=format_plural(host_list, "resource"),
+        hosts=", ".join("'{0}'".format(host) for host in host_list),
+        are=format_plural(host_list, "is"),
+    )
+
+
+def fixture_nolive_remove_guest_report(host_list):
     return dedent(
         """\
         Running action(s) 'pacemaker_remote disable', 'pacemaker_remote stop' on {hosts} was skipped because the command does not run on a live cluster (e.g. -f was used). Please, run the action(s) manually.
         Removing 'pacemaker authkey' from {hosts} was skipped because the command does not run on a live cluster (e.g. -f was used). Please, remove the file(s) manually.
         """
-    ).format(hosts=", ".join("'{0}'".format(host) for host in host_list))
+    ).format(
+        hosts=", ".join("'{0}'".format(host) for host in host_list),
+    )
 
 
 class RemoteTest(ResourceTest):
@@ -514,8 +537,9 @@ class NodeDeleteRemoveRemote(RemoteTest):
     def _test_fail_when_node_does_not_exists(self):
         self.assert_pcs_fail(
             ["cluster", "node", self.command, "not-existent"],
-            "Error: remote node 'not-existent' does not appear to exist in"
-            " configuration\n",
+            NOT_STOPPING_RESOURCE_NOT_LIVE_CLUSTER
+            + "Error: remote node 'not-existent' does not appear to exist in"
+            " configuration\n" + ERRORS_HAVE_OCCURRED,
         )
 
     def _test_success_remove_by_host(self):
@@ -524,8 +548,9 @@ class NodeDeleteRemoveRemote(RemoteTest):
             ["cluster", "node", self.command, "NODE-HOST"],
             "<resources/>",
             stderr_full=(
-                "Removing resource: 'NODE-NAME'\n"
-                + fixture_nolive_remove_report(["NODE-NAME"])
+                NOT_STOPPING_RESOURCE_NOT_LIVE_CLUSTER
+                + fixture_nolive_remove_remote_report(["NODE-NAME"])
+                + "Removing resource: 'NODE-NAME'\n"
             ),
         )
 
@@ -535,8 +560,9 @@ class NodeDeleteRemoveRemote(RemoteTest):
             ["cluster", "node", self.command, "NODE-NAME"],
             "<resources/>",
             stderr_full=(
-                "Removing resource: 'NODE-NAME'\n"
-                + fixture_nolive_remove_report(["NODE-NAME"])
+                NOT_STOPPING_RESOURCE_NOT_LIVE_CLUSTER
+                + fixture_nolive_remove_remote_report(["NODE-NAME"])
+                + "Removing resource: 'NODE-NAME'\n"
             ),
         )
 
@@ -544,7 +570,8 @@ class NodeDeleteRemoveRemote(RemoteTest):
         self.fixture_multiple_remote_nodes()
         self.assert_pcs_fail(
             ["cluster", "node", self.command, "HOST-A"],
-            "Error: more than one resource for 'HOST-A' found: "
+            NOT_STOPPING_RESOURCE_NOT_LIVE_CLUSTER
+            + "Error: more than one resource for 'HOST-A' found: "
             "'HOST-A', 'NODE-NAME', use --force to override\n"
             + ERRORS_HAVE_OCCURRED,
         )
@@ -555,10 +582,11 @@ class NodeDeleteRemoveRemote(RemoteTest):
             ["cluster", "node", self.command, "HOST-A", "--force"],
             "<resources/>",
             stderr_full=(
-                "Warning: more than one resource for 'HOST-A' found: "
+                NOT_STOPPING_RESOURCE_NOT_LIVE_CLUSTER
+                + "Warning: more than one resource for 'HOST-A' found: "
                 "'HOST-A', 'NODE-NAME'\n"
+                + fixture_nolive_remove_remote_report(["HOST-A", "NODE-NAME"])
                 + "Removing resources: 'HOST-A', 'NODE-NAME'\n"
-                + fixture_nolive_remove_report(["HOST-A", "NODE-NAME"])
             ),
         )
 
@@ -621,7 +649,7 @@ class NodeDeleteRemoveGuest(RemoteTest):
         self.assert_pcs_fail(
             ["cluster", "node", self.command, "not-existent", "--force"],
             "Error: guest node 'not-existent' does not appear to exist in"
-            " configuration\n",
+            " configuration\n" + ERRORS_HAVE_OCCURRED,
         )
 
     def assert_remove_by_identifier(self, identifier):
@@ -640,7 +668,7 @@ class NodeDeleteRemoveGuest(RemoteTest):
                     </operations>
                 </primitive>
             </resources>""",
-            stderr_full=fixture_nolive_remove_report(["NODE-NAME"]),
+            stderr_full=fixture_nolive_remove_guest_report(["NODE-NAME"]),
         )
 
     def _test_success_remove_by_node_name(self):
