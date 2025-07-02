@@ -21,6 +21,8 @@ from pcs.cli.resource.parse_args import (
 from pcs.common import reports
 from pcs.lib.errors import LibraryError
 
+from .report_processor import NodeRemoveRemoteReportProcessor
+
 
 def _node_add_remote_separate_name_and_addr(
     arg_list: Argv,
@@ -174,17 +176,16 @@ def node_remove_remote(
         return
 
     original_report_processor = lib.env.report_processor
-    # TODO we are catching the reports and printing them after the command
-    # finishes. This is problematic with lib.remote_node.node_remove_remote
-    # since it communicates with other nodes which can take a lot of time.
-    # This means that the user does not see any output and might think that
-    # the command is not doing anything.
-    # We can start printing the reports when first report about node
-    # communication was put into the processor, since we know the "validations"
-    # passed and any further fails in the lib command mean that this cli
-    # command fails as well
-    in_memory_report_processor = reports.processor.ReportProcessorInMemory()
-    lib.env.report_processor = in_memory_report_processor
+    # We cannot use the ReportProcessorInMemory, since we would catch all
+    # reports and print them after the command finishes:
+    # `remote_node.node_remove_remote` takes a long time (communication with
+    # other nodes) => the user would not see any output until the command is
+    # finished, possibly making them think the command is stuck and not doing
+    # anything.
+    temporary_report_processor = NodeRemoveRemoteReportProcessor(
+        modifiers.is_specified("--debug")
+    )
+    lib.env.report_processor = temporary_report_processor
 
     try:
         temp_force_flags = [
@@ -192,15 +193,23 @@ def node_remove_remote(
         ]
         lib.remote_node.node_remove_remote(node_identifier, temp_force_flags)
 
-        if in_memory_report_processor.reports:
+        if (
+            not temporary_report_processor.already_reported_to_console
+            and temporary_report_processor.reports
+        ):
             process_library_reports(
-                in_memory_report_processor.reports,
+                temporary_report_processor.reports,
                 include_debug=modifiers.is_specified("--debug"),
             )
         return
     except LibraryError as e:
+        # We already printed the errors that caused the LibraryError, so the
+        # error is really an error
+        if temporary_report_processor.already_reported_to_console:
+            raise e
+
         filtered_reports = _process_reports(
-            in_memory_report_processor.reports, force_flags
+            temporary_report_processor.reports, force_flags
         )
 
         if reports.has_errors(filtered_reports) or e.output or e.args:
@@ -210,7 +219,6 @@ def node_remove_remote(
                     include_debug=modifiers.is_specified("--debug"),
                     exit_on_error=False,
                 )
-
             raise e
 
     lib.env.report_processor = original_report_processor

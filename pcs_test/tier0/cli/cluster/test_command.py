@@ -61,22 +61,48 @@ class NodeRemoveRemoteBase:
         self.lib.resource = mock.Mock(spec_set=["stop"])
         self.resource = self.lib.resource
 
+        self.report_processor_patcher = mock.patch(
+            "pcs.cli.cluster.command.NodeRemoveRemoteReportProcessor",
+            new_callable=mock.Mock,
+            spec_set=["reports", "already_reported_to_console"],
+        )
+        self.report_processor = self.report_processor_patcher.start()
+        self.report_processor.reports = mock.PropertyMock(return_value=[])
+        self.report_processor.already_reported_to_console = mock.PropertyMock(
+            return_value=False
+        )
+        # https://docs.python.org/3/library/unittest.mock.html#unittest.mock.PropertyMock
+        # We need to attach PropertyMocks to the mock type objects
+        type(
+            self.report_processor.return_value
+        ).reports = self.report_processor.reports
+        type(
+            self.report_processor.return_value
+        ).already_reported_to_console = (
+            self.report_processor.already_reported_to_console
+        )
+
+    def tearDown(self):
+        self.report_processor_patcher.stop()
+
     def _call_cmd(self, argv, modifiers=None):
         command.node_remove_remote(
             self.lib, argv, dict_to_modifiers(modifiers or {})
         )
 
-    def test_no_args(self, mock_process_library_reports, mock_reports):
+    def test_no_args(self, mock_process_library_reports):
         with self.assertRaises(CmdLineInputError) as cm:
             self._call_cmd([])
         self.assertIsNone(cm.exception.message)
         self.remote_node.node_remove_remote.assert_not_called()
         self.resource.stop.assert_not_called()
         self.cluster.wait_for_pcmk_idle.assert_not_called()
-        mock_reports.assert_not_called()
+        self.report_processor.assert_not_called()
+        self.report_processor.reports.assert_not_called()
+        self.report_processor.already_reported_to_console.assert_not_called()
         mock_process_library_reports.assert_not_called()
 
-    def test_too_many_args(self, mock_process_library_reports, mock_reports):
+    def test_too_many_args(self, mock_process_library_reports):
         with self.assertRaises(CmdLineInputError) as cm:
             self._call_cmd(["A", "B"])
         self.assertIsNone(cm.exception.message)
@@ -84,13 +110,17 @@ class NodeRemoveRemoteBase:
         self.remote_node.get_resource_ids.assert_not_called()
         self.resource.stop.assert_not_called()
         self.cluster.wait_for_pcmk_idle.assert_not_called()
-        mock_reports.assert_not_called()
+        self.report_processor.assert_not_called()
+        self.report_processor.reports.assert_not_called()
+        self.report_processor.already_reported_to_console.assert_not_called()
         mock_process_library_reports.assert_not_called()
 
-    def test_success(self, mock_process_library_reports, mock_reports):
-        mock_reports.return_value = [INFO_REPORT]
+    def test_success_should_print_reports(self, mock_process_library_reports):
+        self.report_processor.reports.return_value = [INFO_REPORT]
+        self.report_processor.already_reported_to_console.return_value = False
         self._call_cmd(["A"])
 
+        self.report_processor.assert_called_once_with(False)
         self.remote_node.node_remove_remote.assert_called_once_with("A", [])
         mock_process_library_reports.assert_called_once_with(
             [INFO_REPORT], include_debug=False
@@ -99,12 +129,25 @@ class NodeRemoveRemoteBase:
         self.resource.stop.assert_not_called()
         self.cluster.wait_for_pcmk_idle.assert_not_called()
 
-    def test_success_with_debug(
-        self, mock_process_library_reports, mock_reports
+    def test_success_reports_already_reported(
+        self, mock_process_library_reports
     ):
-        mock_reports.return_value = [INFO_REPORT]
+        self.report_processor.already_reported_to_console.return_value = True
+        self._call_cmd(["A"])
+
+        self.report_processor.assert_called_once_with(False)
+        self.remote_node.node_remove_remote.assert_called_once_with("A", [])
+        mock_process_library_reports.assert_not_called()
+        self.remote_node.get_resource_ids.assert_not_called()
+        self.resource.stop.assert_not_called()
+        self.cluster.wait_for_pcmk_idle.assert_not_called()
+
+    def test_success_with_debug(self, mock_process_library_reports):
+        self.report_processor.reports.return_value = [INFO_REPORT]
+        self.report_processor.already_reported_to_console.return_value = False
         self._call_cmd(["A"], {"debug": True})
 
+        self.report_processor.assert_called_once_with(True)
         self.remote_node.node_remove_remote.assert_called_once_with("A", [])
         mock_process_library_reports.assert_called_once_with(
             [INFO_REPORT], include_debug=True
@@ -113,10 +156,12 @@ class NodeRemoveRemoteBase:
         self.resource.stop.assert_not_called()
         self.cluster.wait_for_pcmk_idle.assert_not_called()
 
-    def test_skip_offline(self, mock_process_library_reports, mock_reports):
-        mock_reports.return_value = [INFO_REPORT]
+    def test_skip_offline(self, mock_process_library_reports):
+        self.report_processor.reports.return_value = [INFO_REPORT]
+        self.report_processor.already_reported_to_console.return_value = False
         self._call_cmd(["A"], {"skip-offline": True})
 
+        self.report_processor.assert_called_once_with(False)
         self.remote_node.node_remove_remote.assert_called_once_with(
             "A", [reports.codes.SKIP_OFFLINE_NODES]
         )
@@ -127,19 +172,17 @@ class NodeRemoveRemoteBase:
         self.resource.stop.assert_not_called()
         self.cluster.wait_for_pcmk_idle.assert_not_called()
 
-    def test_dont_stop_me_now(self, mock_process_library_reports, mock_reports):
+    def test_dont_stop_me_now(self, mock_process_library_reports):
         self._call_cmd(["A"], {"no-stop": True})
 
         self.remote_node.node_remove_remote.assert_called_once_with("A", [])
         self.remote_node.get_resource_ids.assert_not_called()
         self.resource.stop.assert_not_called()
         self.cluster.wait_for_pcmk_idle.assert_not_called()
-        mock_reports.assert_not_called()
+        self.report_processor.assert_not_called()
         mock_process_library_reports.assert_not_called()
 
-    def test_no_stop_all_force_flags(
-        self, mock_process_library_reports, mock_reports
-    ):
+    def test_no_stop_all_force_flags(self, mock_process_library_reports):
         self._call_cmd(
             ["A"], {"force": True, "no-stop": True, "skip-offline": True}
         )
@@ -150,17 +193,19 @@ class NodeRemoveRemoteBase:
         self.remote_node.get_resource_ids.assert_not_called()
         self.resource.stop.assert_not_called()
         self.cluster.wait_for_pcmk_idle.assert_not_called()
-        mock_reports.assert_not_called()
+        self.report_processor.assert_not_called()
         mock_process_library_reports.assert_not_called()
 
-    def test_remove_not_stopped(
-        self, mock_process_library_reports, mock_reports
-    ):
+    def test_remove_not_stopped(self, mock_process_library_reports):
         self.remote_node.node_remove_remote.side_effect = [LibraryError(), None]
-        mock_reports.return_value = [UNSTOPPED_RESOURCES_ERROR_REPORT]
+        self.report_processor.reports.return_value = [
+            UNSTOPPED_RESOURCES_ERROR_REPORT
+        ]
         self.remote_node.get_resource_ids.return_value = ["A"]
 
         self._call_cmd(["A"])
+
+        self.report_processor.assert_called_once_with(False)
         self.remote_node.node_remove_remote.assert_has_calls(
             [mock.call("A", []), mock.call("A", [])]
         )
@@ -173,17 +218,18 @@ class NodeRemoveRemoteBase:
         self.cluster.wait_for_pcmk_idle.assert_called_once_with(None)
         mock_process_library_reports.assert_not_called()
 
-    def test_remove_more_errors(
-        self, mock_process_library_reports, mock_reports
+    def test_remove_more_errors_should_print_reports(
+        self, mock_process_library_reports
     ):
         self.remote_node.node_remove_remote.side_effect = [LibraryError(), None]
-        mock_reports.return_value = [
+        self.report_processor.reports.return_value = [
             UNSTOPPED_RESOURCES_ERROR_REPORT,
             NODE_NOT_FOUND_ERROR_REPORT,
         ]
 
         self.assertRaises(LibraryError, lambda: self._call_cmd(["A"]))
 
+        self.report_processor.assert_called_once_with(False)
         self.remote_node.node_remove_remote.assert_called_once_with("A", [])
         mock_process_library_reports.assert_called_once_with(
             [NODE_NOT_FOUND_ERROR_REPORT],
@@ -194,11 +240,24 @@ class NodeRemoveRemoteBase:
         self.resource.stop.assert_not_called()
         self.cluster.wait_for_pcmk_idle.assert_not_called()
 
-    def test_remove_more_errors_debug(
-        self, mock_process_library_reports, mock_reports
+    def test_remove_more_errors_reports_already_reported(
+        self, mock_process_library_reports
     ):
         self.remote_node.node_remove_remote.side_effect = [LibraryError(), None]
-        mock_reports.return_value = [
+        self.report_processor.already_reported_to_console.return_value = True
+
+        self.assertRaises(LibraryError, lambda: self._call_cmd(["A"]))
+
+        self.report_processor.assert_called_once_with(False)
+        self.remote_node.node_remove_remote.assert_called_once_with("A", [])
+        mock_process_library_reports.assert_not_called()
+        self.remote_node.get_resource_ids.assert_not_called()
+        self.resource.stop.assert_not_called()
+        self.cluster.wait_for_pcmk_idle.assert_not_called()
+
+    def test_remove_more_errors_debug(self, mock_process_library_reports):
+        self.remote_node.node_remove_remote.side_effect = [LibraryError(), None]
+        self.report_processor.reports.return_value = [
             UNSTOPPED_RESOURCES_ERROR_REPORT,
             NODE_NOT_FOUND_ERROR_REPORT,
         ]
@@ -207,6 +266,7 @@ class NodeRemoveRemoteBase:
             LibraryError, lambda: self._call_cmd(["A"], {"debug": True})
         )
 
+        self.report_processor.assert_called_once_with(True)
         self.remote_node.node_remove_remote.assert_called_once_with("A", [])
         mock_process_library_reports.assert_called_once_with(
             [NODE_NOT_FOUND_ERROR_REPORT],
@@ -217,9 +277,7 @@ class NodeRemoveRemoteBase:
         self.resource.stop.assert_not_called()
         self.cluster.wait_for_pcmk_idle.assert_not_called()
 
-    def test_mutually_exclusive_options(
-        self, mock_process_library_reports, mock_reports
-    ):
+    def test_mutually_exclusive_options(self, mock_process_library_reports):
         with self.assertRaises(CmdLineInputError) as cm:
             command.node_remove_remote(
                 self.lib,
@@ -233,24 +291,15 @@ class NodeRemoveRemoteBase:
         self.remote_node.get_resource_ids.assert_not_called()
         self.resource.stop.assert_not_called()
         self.cluster.wait_for_pcmk_idle.assert_not_called()
-        mock_reports.assert_not_called()
+        self.report_processor.assert_not_called()
         mock_process_library_reports.assert_not_called()
 
-    # future force skip-offline combo
 
-
-@mock.patch(
-    "pcs.common.reports.processor.ReportProcessorInMemory.reports",
-    new_callable=mock.PropertyMock,
-)
 @mock.patch("pcs.cli.cluster.command.process_library_reports")
 class NodeRemoveRemote(NodeRemoveRemoteBase, TestCase):
     @mock.patch("pcs.cli.cluster.command.deprecation_warning")
     def test_remove_force(
-        self,
-        mock_deprecation_warning,
-        mock_process_library_reports,
-        mock_reports,
+        self, mock_deprecation_warning, mock_process_library_reports
     ):
         self._call_cmd(["A"], {"force": True})
 
@@ -261,14 +310,10 @@ class NodeRemoveRemote(NodeRemoveRemoteBase, TestCase):
         self.remote_node.get_resource_ids.assert_not_called()
         self.resource.stop.assert_not_called()
         self.cluster.wait_for_pcmk_idle.assert_not_called()
-        mock_reports.assert_not_called()
+        self.report_processor.assert_not_called()
         mock_process_library_reports.assert_not_called()
 
 
-@mock.patch(
-    "pcs.common.reports.processor.ReportProcessorInMemory.reports",
-    new_callable=mock.PropertyMock,
-)
 @mock.patch("pcs.cli.cluster.command.process_library_reports")
 class NodeRemoveRemoteFuture(NodeRemoveRemoteBase, TestCase):
     def _call_cmd(self, argv, modifiers=None):
@@ -283,11 +328,9 @@ class NodeRemoveRemoteFuture(NodeRemoveRemoteBase, TestCase):
             ),
         )
 
-    def test_remove_force_forceable_error(
-        self, mock_process_library_reports, mock_reports
-    ):
+    def test_remove_force_forceable_error(self, mock_process_library_reports):
         self.remote_node.node_remove_remote.side_effect = [LibraryError(), None]
-        mock_reports.return_value = [FORCEABLE_ERROR_REPORT]
+        self.report_processor.reports.return_value = [FORCEABLE_ERROR_REPORT]
         self.remote_node.get_resource_ids.return_value = ["A"]
 
         self._call_cmd("A", {"force": True})
@@ -304,10 +347,10 @@ class NodeRemoveRemoteFuture(NodeRemoveRemoteBase, TestCase):
         mock_process_library_reports.assert_not_called()
 
     def test_remove_force_more_errors_not_forceable(
-        self, mock_process_library_reports, mock_reports
+        self, mock_process_library_reports
     ):
         self.remote_node.node_remove_remote.side_effect = [LibraryError(), None]
-        mock_reports.return_value = [
+        self.report_processor.reports.return_value = [
             FORCEABLE_ERROR_REPORT,
             NODE_NOT_FOUND_ERROR_REPORT,
         ]
@@ -331,9 +374,9 @@ class NodeRemoveRemoteFuture(NodeRemoveRemoteBase, TestCase):
         self.cluster.wait_for_pcmk_idle.assert_not_called()
 
     def test_remove_with_force_and_skip_offline(
-        self, mock_process_library_reports, mock_reports
+        self, mock_process_library_reports
     ):
-        mock_reports.return_value = [INFO_REPORT]
+        self.report_processor.reports.return_value = [INFO_REPORT]
         self._call_cmd(["A"], {"force": True, "skip-offline": True})
 
         self.remote_node.node_remove_remote.assert_called_once_with(

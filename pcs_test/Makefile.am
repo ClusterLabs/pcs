@@ -81,6 +81,7 @@ EXTRA_DIST		= \
 			  tier0/cli/cluster_property/test_command.py \
 			  tier0/cli/cluster_property/test_output.py \
 			  tier0/cli/cluster/test_command.py \
+			  tier0/cli/cluster/test_report_processor.py \
 			  tier0/cli/common/__init__.py \
 			  tier0/cli/common/test_completion.py \
 			  tier0/cli/common/test_lib_wrapper.py \
