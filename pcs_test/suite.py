@@ -1,10 +1,10 @@
 # ruff: noqa: PLC0415 `import` should be at the top-level of a file
+import multiprocessing as mp
 import os
 import sys
 import time
 import unittest
 from importlib import import_module
-from multiprocessing import Pool
 from threading import Thread
 from typing import Callable, Optional, Union
 
@@ -158,7 +158,7 @@ def parallel_run(tests: list[str], result_class, verbosity: int) -> bool:
 
     manager = ParallelTestManager(result_class, verbosity=verbosity)
 
-    with Pool() as pool:
+    with mp.Pool() as pool:
         start_time = time.perf_counter()
         results = pool.map(
             manager.run_test, tests, 10 if len(tests) > 99 else 1
@@ -189,6 +189,10 @@ def non_parallel_run(tests: list[str], result_class, verbosity: int) -> bool:
 def main() -> None:
     # pylint: disable=import-outside-toplevel
     # pylint: disable=too-many-locals
+
+    # explicitly set start method for multiprocessing to "fork"
+    # https://docs.python.org/3.14/whatsnew/3.14.html#incompatible-changes
+    mp.set_start_method(method="fork")
     if "BUNDLED_LIB_LOCATION" in os.environ:
         sys.path.insert(0, os.environ["BUNDLED_LIB_LOCATION"])
 
