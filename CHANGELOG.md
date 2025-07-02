@@ -51,6 +51,11 @@
 [RHEL-96074]: https://issues.redhat.com/browse/RHEL-96074
 
 
+## [0.12.0.2] - 2025-04-29
+### Fixed
+- Fixed failing test in the 0.12.0.1 tarball
+
+
 ## [0.12.0.1] - 2025-04-14
 
 ### Fixed
