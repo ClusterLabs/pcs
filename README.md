@@ -74,14 +74,18 @@ a standalone application.
 To install pcs and pcsd run the following in terminal:
 ```shell
 ./autogen.sh
-./configure
-# alternatively, './configure --enable-local-build' can be used to also download
-# missing dependencies
-# alternatively, './configure --enable-webui' to build support for web UI as
-# a standalone application
+./configure [--enable-local-build] [--enable-individual-bundling] [--enable-webui]
 make
 make install
 ```
+
+**Common configure options**:
+* `--enable-local-build` - downloads all Python dependencies which can be
+  bundled - see macros `PCS_CHECK_PYMOD` with 3rd argument `[yes]` in
+  `configure.ac`
+* `--enable-individual-bundling` - downloads only dependencies (both Python and
+  rubygems) which are not installed on the system
+* `--enable-webui` - build support for web UI as a standalone application
 
 If you are using GNU/Linux with systemd, it is now time to:
 ```shell
