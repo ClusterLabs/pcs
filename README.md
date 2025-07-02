@@ -41,6 +41,7 @@ These are the runtime dependencies of pcs and pcsd:
 * killall (package psmisc)
 * corosync 3.x
 * pacemaker 2.1
+* certutil (package nss-tools or mozilla-nss-tools)
 
 ## Installation from Source
 
