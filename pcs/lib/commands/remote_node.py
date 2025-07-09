@@ -817,6 +817,14 @@ def node_remove_remote(
     if env.is_cib_live:
         for node_name in node_names_list:
             remove_node(env.cmd_runner(), node_name)
+    else:
+        report_processor.report(
+            reports.ReportItem.warning(
+                reports.messages.NodeRemoveInPacemakerSkipped(
+                    reports.const.REASON_NOT_LIVE_CIB, node_names_list
+                )
+            )
+        )
 
 
 def node_remove_guest(
@@ -881,3 +889,11 @@ def node_remove_guest(
     if env.is_cib_live:
         for node_name in node_names_list:
             remove_node(env.cmd_runner(), node_name)
+    else:
+        env.report_processor.report(
+            reports.ReportItem.warning(
+                reports.messages.NodeRemoveInPacemakerSkipped(
+                    reports.const.REASON_NOT_LIVE_CIB, node_names_list
+                )
+            )
+        )

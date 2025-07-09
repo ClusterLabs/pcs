@@ -1,6 +1,6 @@
 from textwrap import dedent
 
-from pcs.common.str_tools import format_plural
+from pcs.common.str_tools import format_list, format_plural
 
 from pcs_test.tier1.cib_resource.common import ResourceTest
 from pcs_test.tools.bin_mock import get_mock_settings
@@ -49,6 +49,17 @@ def fixture_nolive_remove_guest_report(host_list):
         """
     ).format(
         hosts=", ".join("'{0}'".format(host) for host in host_list),
+    )
+
+
+def fixture_nolive_node_remove(host_list):
+    return dedent(
+        """\
+        Warning: Skipping removal of {node} {node_list} from pacemaker because the command does not run on a live cluster
+        """.format(
+            node=format_plural(host_list, "node"),
+            node_list=format_list(host_list),
+        )
     )
 
 
@@ -551,6 +562,7 @@ class NodeDeleteRemoveRemote(RemoteTest):
                 NOT_STOPPING_RESOURCE_NOT_LIVE_CLUSTER
                 + fixture_nolive_remove_remote_report(["NODE-NAME"])
                 + "Removing resource: 'NODE-NAME'\n"
+                + fixture_nolive_node_remove(["NODE-NAME"])
             ),
         )
 
@@ -563,6 +575,7 @@ class NodeDeleteRemoveRemote(RemoteTest):
                 NOT_STOPPING_RESOURCE_NOT_LIVE_CLUSTER
                 + fixture_nolive_remove_remote_report(["NODE-NAME"])
                 + "Removing resource: 'NODE-NAME'\n"
+                + fixture_nolive_node_remove(["NODE-NAME"])
             ),
         )
 
@@ -587,6 +600,7 @@ class NodeDeleteRemoveRemote(RemoteTest):
                 "'HOST-A', 'NODE-NAME'\n"
                 + fixture_nolive_remove_remote_report(["HOST-A", "NODE-NAME"])
                 + "Removing resources: 'HOST-A', 'NODE-NAME'\n"
+                + fixture_nolive_node_remove(["HOST-A", "NODE-NAME"])
             ),
         )
 
@@ -668,7 +682,8 @@ class NodeDeleteRemoveGuest(RemoteTest):
                     </operations>
                 </primitive>
             </resources>""",
-            stderr_full=fixture_nolive_remove_guest_report(["NODE-NAME"]),
+            stderr_full=fixture_nolive_remove_guest_report(["NODE-NAME"])
+            + fixture_nolive_node_remove(["NODE-NAME"]),
         )
 
     def _test_success_remove_by_node_name(self):

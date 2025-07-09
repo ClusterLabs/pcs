@@ -3690,6 +3690,32 @@ class NodeRemoveInPacemakerFailed(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class NodeRemoveInPacemakerSkipped(ReportItemMessage):
+    """
+    Removing nodes from pacemaker skipped.
+
+    node_list_to_remove -- nodes which should be removed
+    node -- node on which operation was performed
+    reason -- reason of failure
+    """
+
+    reason_type: types.ReasonType
+    node_list: list[str]
+    _code = codes.NODE_REMOVE_IN_PACEMAKER_SKIPPED
+
+    @property
+    def message(self) -> str:
+        return (
+            "Skipping removal of {node} {node_list} from pacemaker because "
+            "{reason}"
+        ).format(
+            node=format_plural(self.node_list, "node"),
+            node_list=format_list(self.node_list),
+            reason=_skip_reason_to_string(self.reason_type),
+        )
+
+
+@dataclass(frozen=True)
 class MultipleResultsFound(ReportItemMessage):
     """
     Multiple result was found when something was looked for. E.g. resource for

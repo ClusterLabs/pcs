@@ -2455,6 +2455,41 @@ class NodeRemoveInPacemakerFailed(NameBuildTest):
         )
 
 
+class NodeRemoveInPacemakerSkipped(NameBuildTest):
+    def test_one_node(self):
+        self.assert_message_from_report(
+            (
+                "Skipping removal of node 'NODE1' from pacemaker because the "
+                "command does not run on a live cluster"
+            ),
+            reports.NodeRemoveInPacemakerSkipped(
+                const.REASON_NOT_LIVE_CIB, ["NODE1"]
+            ),
+        )
+
+    def test_multiple_nodes(self):
+        self.assert_message_from_report(
+            (
+                "Skipping removal of nodes 'NODE1', 'NODE2' from pacemaker "
+                "because the command does not run on a live cluster"
+            ),
+            reports.NodeRemoveInPacemakerSkipped(
+                const.REASON_NOT_LIVE_CIB, ["NODE2", "NODE1"]
+            ),
+        )
+
+    def test_with_node(self):
+        self.assert_message_from_report(
+            (
+                "node-a: Unable to remove node(s) 'NODE1', 'NODE2' from "
+                "pacemaker: reason"
+            ),
+            reports.NodeRemoveInPacemakerFailed(
+                ["NODE1", "NODE2"], node="node-a", reason="reason"
+            ),
+        )
+
+
 class MultipleResultsFound(NameBuildTest):
     def test_minimal(self):
         self.assert_message_from_report(

@@ -22,6 +22,9 @@
   formats ([RHEL-21050])
 - Support for reading sate and logs directories from systemd environment
   variables `STATE_DIRECTORY` and `LOGS_DIRECTORY` ([RHEL-96074])
+- Commands `pcs resource|stonith|booth delete|remove` and 
+  `pcs cluster node delete-remote|remove-remote|delete-guest|remove-guest`
+  now warn about omitting live cluster actions when '-f' is used ([RHEL-76157])
 
 ### Fixed
 - Fixed a traceback when removing a resource fails in web UI
@@ -58,6 +61,7 @@
 [RHEL-44347]: https://issues.redhat.com/browse/RHEL-44347
 [RHEL-63186]: https://issues.redhat.com/browse/RHEL-63186
 [RHEL-66607]: https://issues.redhat.com/browse/RHEL-66607
+[RHEL-76157]: https://issues.redhat.com/browse/RHEL-76157
 [RHEL-76162]: https://issues.redhat.com/browse/RHEL-76162
 [RHEL-76176]: https://issues.redhat.com/browse/RHEL-76176
 [RHEL-81938]: https://issues.redhat.com/browse/RHEL-81938

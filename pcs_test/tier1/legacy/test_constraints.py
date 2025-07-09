@@ -2379,6 +2379,7 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
                 """\
             Running action(s) 'pacemaker_remote disable', 'pacemaker_remote stop' on 'guest1' was skipped because the command does not run on a live cluster (e.g. -f was used). Please, run the action(s) manually.
             Removing 'pacemaker authkey' from 'guest1' was skipped because the command does not run on a live cluster (e.g. -f was used). Please, remove the file(s) manually.
+            Warning: Skipping removal of node 'guest1' from pacemaker because the command does not run on a live cluster
             """
             ),
         )
