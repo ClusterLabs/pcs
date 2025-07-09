@@ -5,10 +5,7 @@ from lxml.etree import _Element
 from pcs import settings
 from pcs.common import reports
 from pcs.common.file import RawFileError
-from pcs.common.reports import (
-    ReportItem,
-    ReportProcessor,
-)
+from pcs.common.reports import ReportItem
 from pcs.lib import node_communication_format
 from pcs.lib.cib.remove_elements import (
     ElementsToRemove,
@@ -622,23 +619,22 @@ def node_add_guest(  # noqa: PLR0912, PLR0915
 
 def _find_resources_to_remove(
     cib: _Element,
-    report_processor: ReportProcessor,
     node_type: str,
     node_identifier: str,
     allow_remove_multiple_nodes: bool,
     find_resources: Callable[[_Element, str], list[_Element]],
-) -> list[_Element]:
+) -> tuple[list[_Element], reports.ReportItemList]:
     resource_element_list = find_resources(get_resources(cib), node_identifier)
 
+    report_list = []
     if not resource_element_list:
-        report_processor.report(
+        report_list.append(
             ReportItem.error(
                 reports.messages.NodeNotFound(node_identifier, [node_type])
             )
         )
-
     if len(resource_element_list) > 1:
-        report_processor.report(
+        report_list.append(
             ReportItem(
                 severity=reports.item.get_severity(
                     reports.codes.FORCE,
@@ -654,10 +650,8 @@ def _find_resources_to_remove(
                 ),
             )
         )
-    if report_processor.has_errors:
-        raise LibraryError()
 
-    return resource_element_list
+    return resource_element_list, report_list
 
 
 def _destroy_pcmk_remote_env(
@@ -748,14 +742,15 @@ def node_remove_remote(
     report_processor = env.report_processor
     force = reports.codes.FORCE in force_flags
 
-    resource_element_list = _find_resources_to_remove(
+    resource_element_list, report_list = _find_resources_to_remove(
         cib,
-        env.report_processor,
         "remote",
         node_identifier,
         allow_remove_multiple_nodes=force,
         find_resources=remote_node.find_node_resources,
     )
+    if report_processor.report_list(report_list).has_errors:
+        raise LibraryError()
 
     node_names_list = sorted(
         {
@@ -850,15 +845,14 @@ def node_remove_guest(
     wait_timeout = env.ensure_wait_satisfiable(wait)
     cib = env.get_cib()
 
-    resource_element_list = _find_resources_to_remove(
+    resource_element_list, report_list = _find_resources_to_remove(
         cib,
-        env.report_processor,
         "guest",
         node_identifier,
         allow_remove_multiple_nodes,
         guest_node.find_node_resources,
     )
-    if env.report_processor.has_errors:
+    if env.report_processor.report_list(report_list).has_errors:
         raise LibraryError()
 
     node_names_list = sorted(
