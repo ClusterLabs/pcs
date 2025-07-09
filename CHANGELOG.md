@@ -40,9 +40,13 @@
 ### Changed
 - Lib command `cib.remove_elements` does not stop resources before deletion.
   The resources should be stopped before calling this command
+- Commands `pcs resource|booth delete|remove` and
+  `pcs cluster node delete-remote|remove-remote` will now end with an error when
+  trying to delete unmanaged started resources ([RHEL-76162])
 
 ### Deprecated
-- Using `--force` in `pcs resource delete|remove` to skip resource stopping
+- Using `--force` in `pcs resource|booth delete|remove` and
+  `pcs cluster node delete-remote|remove-remote` to skip resource stopping
   before their deletion. Use the new `--no-stop` flag instead. You can use
   `--future` flag if you need to use `--force` and you do not wish to skip the
   resource stopping.
@@ -54,6 +58,7 @@
 [RHEL-44347]: https://issues.redhat.com/browse/RHEL-44347
 [RHEL-63186]: https://issues.redhat.com/browse/RHEL-63186
 [RHEL-66607]: https://issues.redhat.com/browse/RHEL-66607
+[RHEL-76162]: https://issues.redhat.com/browse/RHEL-76162
 [RHEL-76176]: https://issues.redhat.com/browse/RHEL-76176
 [RHEL-81938]: https://issues.redhat.com/browse/RHEL-81938
 [RHEL-90151]: https://issues.redhat.com/browse/RHEL-90151
