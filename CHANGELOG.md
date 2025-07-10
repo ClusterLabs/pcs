@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.11.10] - 2025-07-09
 
 ### Added
 - Commands `pcs cluster cib-push` and `pcs cluster edit` now print more info
