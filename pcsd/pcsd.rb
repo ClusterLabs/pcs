@@ -74,9 +74,11 @@ configure do
   CAPABILITIES_PCSD = capabilities_pcsd.freeze
 end
 
-error Rack::QueryParser::QueryLimitError do
-  $logger.warn(env['sinatra.error'].message)
-  return 400, env['sinatra.error'].message
+if Rack.const_defined?(:QueryParser) and Rack::QueryParser.const_defined?(:QueryLimitError)
+  error Rack::QueryParser::QueryLimitError do
+    $logger.warn(env['sinatra.error'].message)
+    return 400, env['sinatra.error'].message
+  end
 end
 
 def run_cfgsync
