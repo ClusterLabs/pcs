@@ -452,8 +452,8 @@ $(SPEC): $(SPEC).in .version config.status stamps/download_python_deps stamps/do
 	if [ "$$numcomm" = "0" ]; then \
 		sed \
 			-e "s#@version@#$$rpmver#g" \
-			-e "s#%glo.*alpha.*##g" \
-			-e "s#%glo.*numcomm.*##g" \
+			-e "s#%global\s\+alphatag.*##g" \
+			-e "s#%global\s\+numcomm.*##g" \
 			-e "s#@dirty@#$$dirty#g" \
 			-e "s#@date@#$$date#g" \
 			-e "s#@pcs_bundled_dir@#${PCS_BUNDLED_DIR_LOCAL}#g" \
