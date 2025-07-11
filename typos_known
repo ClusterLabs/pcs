@@ -22,6 +22,12 @@
 ./pcs/lib/commands/constraint/ticket.py: `alowed` -> `allowed`
 ./pcs/lib/commands/constraint/ticket.py: `alowed` -> `allowed`
 ./pcs/lib/commands/constraint/ticket.py: `alowed` -> `allowed`
+./pcs/lib/commands/constraint/ticket.py: `alowed` -> `allowed`
+./pcs/lib/commands/constraint/ticket.py: `alowed` -> `allowed`
+./pcs/lib/commands/constraint/ticket.py: `alowed` -> `allowed`
+./pcs/lib/commands/constraint/ticket.py: `alowed` -> `allowed`
+./pcs/lib/commands/constraint/ticket.py: `alowed` -> `allowed`
+./pcs/lib/commands/constraint/ticket.py: `alowed` -> `allowed`
 ./pcs/snmp/mibs/PCMK-PCS-V1-MIB.txt: `Resrouces` -> `Resources`
 ./pcs/snmp/mibs/PCMK-PCS-V1-MIB.txt: `Resrouces` -> `Resources`
 ./pcs/snmp/mibs/PCMK-PCS-V1-MIB.txt: `Resrouces` -> `Resources`
@@ -41,6 +47,10 @@
 ./pcs_test/tier0/lib/cib/test_tools.py: `ba` -> `by`, `be`
 ./pcs_test/tier0/lib/cib/test_tools.py: `ba` -> `by`, `be`
 ./pcs_test/tier0/lib/cib/test_tools.py: `ba` -> `by`, `be`
+./pcs_test/tier0/lib/commands/constraint/test_ticket.py: `alowed` -> `allowed`
+./pcs_test/tier0/lib/commands/constraint/test_ticket.py: `alowed` -> `allowed`
+./pcs_test/tier0/lib/commands/constraint/test_ticket.py: `alowed` -> `allowed`
+./pcs_test/tier0/lib/commands/constraint/test_ticket.py: `alowed` -> `allowed`
 ./pcs_test/tier0/lib/commands/test_constraint_common.py: `alowed` -> `allowed`
 ./pcs_test/tier0/lib/corosync/test_config_parser.py: `ue` -> `use`, `due`
 ./pcs_test/tier0/lib/corosync/test_config_parser.py: `ue` -> `use`, `due`

@@ -3147,16 +3147,20 @@ class TicketCreateWithSet(ConstraintBaseTest):
     def test_refuse_bad_loss_policy(self):
         self.assert_pcs_fail(
             "constraint ticket set A B setoptions ticket=T loss-policy=none".split(),
-            [
+            (
                 "Error: 'none' is not a valid loss-policy value, use 'demote', "
-                + "'fence', 'freeze', 'stop'",
-            ],
+                + "'fence', 'freeze', 'stop'\n"
+                + ERRORS_HAVE_OCCURRED
+            ),
         )
 
     def test_refuse_when_ticket_option_is_missing(self):
         self.assert_pcs_fail(
             "constraint ticket set A B setoptions loss-policy=fence".split(),
-            ["Error: required option 'ticket' is missing"],
+            (
+                "Error: required option 'ticket' is missing\n"
+                + ERRORS_HAVE_OCCURRED
+            ),
         )
 
     def test_refuse_when_option_is_invalid(self):

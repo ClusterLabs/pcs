@@ -124,20 +124,12 @@ class DuplicatesCheckerLocationRulePlain(DuplicatesChecker):
         self._rule_to_str = rule.RuleToStr(normalize=True)
         self._constraint_to_check_rule: Optional[str] = None
 
-    def check(
-        self,
-        constraint_section: _Element,
-        constraint_to_check: _Element,
-        force_flags: reports.types.ForceFlags = (),
-    ) -> reports.ReportItemList:
+    def _check_init(self, constraint_to_check: _Element) -> None:
         self._constraint_to_check_rule = None
         if len(constraint_to_check.findall(TAG_RULE)) != 1:
             raise RuntimeError(
                 "constraint_to_check must contain exactly one rule"
             )
-        return super().check(
-            constraint_section, constraint_to_check, force_flags
-        )
 
     def _are_duplicate(
         self,

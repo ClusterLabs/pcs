@@ -1,72 +1,189 @@
-from functools import partial
+from typing import Mapping
 
-from pcs.lib.cib.constraint import (
-    constraint,
-    ticket,
-)
+from pcs.common import reports
+from pcs.lib import validate
+from pcs.lib.cib.constraint import common, ticket
 from pcs.lib.cib.tools import (
-    are_new_role_names_supported,
+    ElementNotFound,
+    IdProvider,
     get_constraints,
+    get_element_by_id,
+    get_pacemaker_version_by_which_cib_was_validated,
 )
+from pcs.lib.env import LibraryEnvironment
+from pcs.lib.errors import LibraryError
 
-from . import common
-
-# configure common constraint command
-create_with_set = partial(
-    common.create_with_set,
-    ticket.TAG,
-    ticket.prepare_options_with_set,
-    duplicate_check=ticket.are_duplicate_with_resource_set,
-)
+from .common import _load_resource_set_list, _primitive_resource_set_list
 
 
 def create(
-    env,
-    ticket_key,
-    resource_id,
-    options,
-    resource_in_clone_alowed=False,
-    duplication_alowed=False,
-):
+    env: LibraryEnvironment,
+    ticket_key: str,
+    resource_id: str,
+    options: Mapping[str, str],
+    resource_in_clone_alowed: bool = False,
+    duplication_alowed: bool = False,
+) -> None:
     """
-    create ticket constraint
-    string ticket_key ticket for constraining resource
-    dict options desired constraint attributes
-    bool resource_in_clone_alowed flag for allowing to reference id which is
-        in tag clone or master
-    bool duplication_alowed flag for allowing create duplicate element
-    callable duplicate_check takes two elements and decide if they are
-        duplicates
+    create a plain ticket constraint
+
+    ticket_key -- ticket for constraining a resource
+    resource_id -- resource to be constrained
+    options -- desired constraint attributes
+    resource_in_clone_alowed -- allow to constrain a resource in a clone
+    duplication_alowed -- allow to create a duplicate constraint
     """
     cib = env.get_cib()
-
-    options = ticket.prepare_options_plain(
-        cib,
-        env.report_processor,
-        options,
-        ticket_key,
-        constraint.find_valid_resource_id(
-            env.report_processor, cib, resource_in_clone_alowed, resource_id
-        ),
-    )
-
+    id_provider = IdProvider(cib)
     constraint_section = get_constraints(cib)
-    constraint_element = ticket.create_plain(constraint_section, options)
 
-    constraint.check_is_without_duplication(
-        env.report_processor,
-        constraint_section,
-        constraint_element,
-        are_duplicate=ticket.get_duplicit_checker_callback(
-            are_new_role_names_supported(constraint_section)
+    # validation
+    constrained_el = None
+    try:
+        constrained_el = get_element_by_id(cib, resource_id)
+    except ElementNotFound:
+        env.report_processor.report(
+            reports.ReportItem.error(
+                reports.messages.IdNotFound(resource_id, [])
+            )
+        )
+
+    options_pairs = validate.values_to_pairs(
+        options,
+        validate.option_value_normalization(
+            {
+                "loss-policy": lambda value: value.lower(),
+                "rsc-role": lambda value: value.capitalize(),
+            }
         ),
-        duplication_allowed=duplication_alowed,
     )
 
+    env.report_processor.report_list(
+        ticket.validate_create_plain(
+            id_provider,
+            ticket_key,
+            constrained_el,
+            options_pairs,
+            in_multiinstance_allowed=resource_in_clone_alowed,
+        )
+    )
+
+    if env.report_processor.has_errors:
+        raise LibraryError()
+
+    # modify CIB
+    new_constraint = ticket.create_plain(
+        constraint_section,
+        id_provider,
+        get_pacemaker_version_by_which_cib_was_validated(cib),
+        ticket_key,
+        resource_id,
+        validate.pairs_to_values(options_pairs),
+    )
+
+    # Check whether the created constraint is a duplicate of an existing one
+    env.report_processor.report_list(
+        ticket.DuplicatesCheckerTicketPlain().check(
+            constraint_section,
+            new_constraint,
+            {reports.codes.FORCE} if duplication_alowed else set(),
+        )
+    )
+    if env.report_processor.has_errors:
+        raise LibraryError()
+
+    # push CIB
     env.push_cib()
 
 
-def remove(env, ticket_key, resource_id):
+def create_with_set(
+    env: LibraryEnvironment,
+    resource_set_list: common.CmdInputResourceSetList,
+    constraint_options: Mapping[str, str],
+    resource_in_clone_alowed: bool = False,
+    duplication_alowed: bool = False,
+) -> None:
+    """
+    create a set ticket constraint
+
+    resource_set_list -- description of resource sets, for example:
+        {"ids": ["A", "B"], "options": {"sequential": "true"}},
+    constraint_options -- desired constraint attributes
+    resource_in_clone_alowed -- allow to constrain resources in a clone
+    duplication_alowed -- allow to create a duplicate constraint
+    """
+    cib = env.get_cib()
+    id_provider = IdProvider(cib)
+    constraint_section = get_constraints(cib)
+
+    # find all specified constrained resources and transform set options to
+    # value pairs for normalization and validation
+    resource_set_loaded_list = _load_resource_set_list(
+        cib,
+        env.report_processor,
+        resource_set_list,
+        validate.option_value_normalization(
+            {
+                "role": lambda value: value.capitalize(),
+            }
+        ),
+    )
+    # Unlike in plain constraints, validation cannot continue if even a single
+    # resource could not be found. If such resources were omitted in their sets
+    # for purposes of validation, similarly to plain constraint commands, then
+    # those sets could become invalid, and thus validating such sets would
+    # provide false results.
+    if env.report_processor.has_errors:
+        raise LibraryError()
+
+    # transform constraint options to value pairs for normalization and
+    # validation
+    constraint_options_pairs = validate.values_to_pairs(
+        constraint_options,
+        validate.option_value_normalization(
+            {
+                "loss-policy": lambda value: value.lower(),
+            }
+        ),
+    )
+
+    # validation
+    env.report_processor.report_list(
+        ticket.validate_create_with_set(
+            id_provider,
+            resource_set_loaded_list,
+            constraint_options_pairs,
+            in_multiinstance_allowed=resource_in_clone_alowed,
+        )
+    )
+    if env.report_processor.has_errors:
+        raise LibraryError()
+
+    # modify CIB
+    new_constraint = ticket.create_with_set(
+        constraint_section,
+        id_provider,
+        get_pacemaker_version_by_which_cib_was_validated(cib),
+        _primitive_resource_set_list(resource_set_loaded_list),
+        validate.pairs_to_values(constraint_options_pairs),
+    )
+
+    # Check whether the created constraint is a duplicate of an existing one
+    env.report_processor.report_list(
+        ticket.DuplicatesCheckerTicketWithSet().check(
+            constraint_section,
+            new_constraint,
+            {reports.codes.FORCE} if duplication_alowed else set(),
+        )
+    )
+    if env.report_processor.has_errors:
+        raise LibraryError()
+
+    # push CIB
+    env.push_cib()
+
+
+def remove(env: LibraryEnvironment, ticket_key: str, resource_id: str) -> bool:
     """
     remove all ticket constraint from resource
     If resource is in resource set with another resources then only resource

@@ -328,9 +328,23 @@ class DuplicateConstraintsExist(ReportItemMessage):
 
 
 @dataclass(frozen=True)
-class EmptyResourceSetList(ReportItemMessage):
+class EmptyResourceSet(ReportItemMessage):
     """
     An empty resource set has been specified, which is not allowed by cib schema
+    """
+
+    _code = codes.EMPTY_RESOURCE_SET
+
+    @property
+    def message(self) -> str:
+        return "Resource set is empty"
+
+
+@dataclass(frozen=True)
+class EmptyResourceSetList(ReportItemMessage):
+    """
+    An empty resource set list has been specified, which is not allowed by cib
+    schema
     """
 
     _code = codes.EMPTY_RESOURCE_SET_LIST
