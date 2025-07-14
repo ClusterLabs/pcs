@@ -318,9 +318,9 @@ def remove_from_cluster(
     ):
         # deprecated after pcs-0.12.0
         deprecation_warning(
-            "Using '--force' to skip resource stopping is deprecated. Specify "
-            "'--future' to switch to the future behavior and use '--no-stop' "
-            "to skip resource stopping."
+            "Using '--force' to skip resource stopping is deprecated and will "
+            "be removed in a future release. Specify '--future' to switch to "
+            "the future behavior and use '--no-stop' to skip resource stopping."
         )
         dont_stop_me_now = True
 

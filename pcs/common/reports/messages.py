@@ -3694,9 +3694,8 @@ class NodeRemoveInPacemakerSkipped(ReportItemMessage):
     """
     Removing nodes from pacemaker skipped.
 
-    node_list_to_remove -- nodes which should be removed
-    node -- node on which operation was performed
-    reason -- reason of failure
+    reason_type -- why the action was skipped
+    node_list -- nodes which should be removed
     """
 
     reason_type: types.ReasonType

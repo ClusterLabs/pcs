@@ -557,13 +557,13 @@ def get_resource_ids_from_cluster(
 
     env -- provides all for communication with externals
     instance_name -- booth instance name
-    force_flags -- list of flags codes
     """
     booth_env = env.get_booth_env(instance_name)
     _ensure_live_booth_env(booth_env)
 
-    booth_elements, _ = _find_resource_elements_for_operation(
-        get_resources(env.get_cib()), booth_env, allow_multiple=False
+    booth_elements = resource.find_for_config(
+        get_resources(env.get_cib()),
+        booth_env.config_path,
     )
     return [
         str(element.attrib["id"])
@@ -617,7 +617,6 @@ def remove_from_cluster(
     if report_processor.has_errors:
         raise LibraryError()
 
-    resource_ids = [str(el.attrib["id"]) for el in booth_elements_to_remove]
     elements_to_remove = ElementsToRemove(cib, resource_ids)
 
     report_processor.report(

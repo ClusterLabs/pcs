@@ -5,7 +5,6 @@ from lxml.etree import _Element
 from pcs import settings
 from pcs.common import reports
 from pcs.common.file import RawFileError
-from pcs.common.reports import ReportItem
 from pcs.lib import node_communication_format
 from pcs.lib.cib.remove_elements import (
     ElementsToRemove,
@@ -61,12 +60,12 @@ if TYPE_CHECKING:
 def _reports_skip_new_node(new_node_name, reason_type):
     assert reason_type in {"unreachable", "not_live_cib"}
     return [
-        ReportItem.info(
+        reports.ReportItem.info(
             reports.messages.FilesDistributionSkipped(
                 reason_type, ["pacemaker authkey"], [new_node_name]
             )
         ),
-        ReportItem.info(
+        reports.ReportItem.info(
             reports.messages.ServiceCommandsOnNodesSkipped(
                 reason_type,
                 ["pacemaker_remote start", "pacemaker_remote enable"],
@@ -125,7 +124,7 @@ def _host_check_remote_node(host_info_dict):
             ]
             if missing_service_list:
                 report_list.append(
-                    ReportItem.error(
+                    reports.ReportItem.error(
                         reports.messages.ServiceNotInstalled(
                             host_name, sorted(missing_service_list)
                         )
@@ -138,7 +137,7 @@ def _host_check_remote_node(host_info_dict):
             ]
             if cannot_be_running_service_list:
                 report_list.append(
-                    ReportItem.error(
+                    reports.ReportItem.error(
                         reports.messages.HostAlreadyInClusterServices(
                             host_name,
                             sorted(cannot_be_running_service_list),
@@ -147,13 +146,13 @@ def _host_check_remote_node(host_info_dict):
                 )
             if host_info["cluster_configuration_exists"]:
                 report_list.append(
-                    ReportItem.error(
+                    reports.ReportItem.error(
                         reports.messages.HostAlreadyInClusterConfig(host_name)
                     )
                 )
         except (KeyError, TypeError):
             report_list.append(
-                ReportItem.error(
+                reports.ReportItem.error(
                     reports.messages.InvalidResponseFormat(host_name)
                 )
             )
@@ -313,7 +312,7 @@ def node_add_remote(  # noqa: PLR0912, PLR0913, PLR0915
     else:
         corosync_conf = None
         report_processor.report(
-            ReportItem.info(
+            reports.ReportItem.info(
                 reports.messages.CorosyncNodeConflictCheckSkipped(
                     reports.const.REASON_NOT_LIVE_CIB,
                 )
@@ -361,7 +360,7 @@ def node_add_remote(  # noqa: PLR0912, PLR0913, PLR0915
                     reports.const.DEFAULT_ADDRESS_SOURCE_HOST_NAME
                 )
             report_processor.report(
-                ReportItem.info(
+                reports.ReportItem.info(
                     reports.messages.UsingDefaultAddressForHost(
                         node_name, node_addr, node_addr_source
                     )
@@ -377,7 +376,7 @@ def node_add_remote(  # noqa: PLR0912, PLR0913, PLR0915
             node_addr = node_name
             node_addr_source = reports.const.DEFAULT_ADDRESS_SOURCE_HOST_NAME
         report_processor.report(
-            ReportItem.info(
+            reports.ReportItem.info(
                 reports.messages.UsingDefaultAddressForHost(
                     node_name, node_addr, node_addr_source
                 )
@@ -508,7 +507,7 @@ def node_add_guest(  # noqa: PLR0912, PLR0915
     else:
         corosync_conf = None
         report_processor.report(
-            ReportItem.info(
+            reports.ReportItem.info(
                 reports.messages.CorosyncNodeConflictCheckSkipped(
                     reports.const.REASON_NOT_LIVE_CIB,
                 )
@@ -547,7 +546,7 @@ def node_add_guest(  # noqa: PLR0912, PLR0915
                 new_addr_source = reports.const.DEFAULT_ADDRESS_SOURCE_HOST_NAME
             options["remote-addr"] = new_addr
             report_processor.report(
-                ReportItem.info(
+                reports.ReportItem.info(
                     reports.messages.UsingDefaultAddressForHost(
                         node_name, new_addr, new_addr_source
                     )
@@ -564,7 +563,7 @@ def node_add_guest(  # noqa: PLR0912, PLR0915
             new_addr_source = reports.const.DEFAULT_ADDRESS_SOURCE_HOST_NAME
         options["remote-addr"] = new_addr
         report_processor.report(
-            ReportItem.info(
+            reports.ReportItem.info(
                 reports.messages.UsingDefaultAddressForHost(
                     node_name, new_addr, new_addr_source
                 )
@@ -629,13 +628,13 @@ def _find_resources_to_remove(
     report_list = []
     if not resource_element_list:
         report_list.append(
-            ReportItem.error(
+            reports.ReportItem.error(
                 reports.messages.NodeNotFound(node_identifier, [node_type])
             )
         )
     if len(resource_element_list) > 1:
         report_list.append(
-            ReportItem(
+            reports.ReportItem(
                 severity=reports.item.get_severity(
                     reports.codes.FORCE,
                     allow_remove_multiple_nodes,
@@ -692,14 +691,14 @@ def _destroy_pcmk_remote_env(
 
 def _report_skip_live_parts_in_remove(node_names_list):
     return [
-        ReportItem.info(
+        reports.ReportItem.info(
             reports.messages.ServiceCommandsOnNodesSkipped(
                 reports.const.REASON_NOT_LIVE_CIB,
                 ["pacemaker_remote stop", "pacemaker_remote disable"],
                 node_names_list,
             )
         ),
-        ReportItem.info(
+        reports.ReportItem.info(
             reports.messages.FilesRemoveFromNodesSkipped(
                 reports.const.REASON_NOT_LIVE_CIB,
                 ["pacemaker authkey"],
