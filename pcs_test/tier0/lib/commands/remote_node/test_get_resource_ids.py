@@ -52,3 +52,25 @@ class GetResourceIdsFromRemoteNodeIdentfier(TestCase):
             self.env_assist.get_env(), self.NODE_NAME_MULTIPLE
         )
         self.assertEqual(resource_ids, [self.NODE_NAME_MULTIPLE, "X"])
+
+    def test_non_remote_resource(self):
+        self.config.runner.cib.load(
+            instead="runner.cib.load",
+            resources=f"""
+                <resources>
+                    <primitive class="ocf" id="{self.NODE_NAME_MULTIPLE}" provider="pacemaker" type="Dummy" />
+                    <primitive class="ocf" id="X" provider="pacemaker" type="Dummy">
+                        <instance_attributes id="node-name-instance_attributes">
+                            <nvpair
+                                id="node-name-instance_attributes-server"
+                                name="server" value="{self.NODE_NAME_MULTIPLE}"
+                            />
+                        </instance_attributes>
+                    </primitive>
+                </resources>
+            """,
+        )
+        resource_ids = get_resource_ids(
+            self.env_assist.get_env(), self.NODE_NAME_MULTIPLE
+        )
+        self.assertEqual(resource_ids, [])
