@@ -255,7 +255,7 @@ class CorosyncOption(TestCase):
         bad_names = [f"na{char}me" for char in ".: {}#č"]
         assert_report_item_list_equal(
             validate.CorosyncOption().validate(
-                {name: "value" for name in bad_names}
+                dict.fromkeys(bad_names, "value")
             ),
             [
                 fixture.error(
@@ -271,7 +271,7 @@ class CorosyncOption(TestCase):
         bad_names = [f"na{char}me" for char in ".: {}#č"]
         assert_report_item_list_equal(
             validate.CorosyncOption(option_type="type").validate(
-                {name: "value" for name in bad_names}
+                dict.fromkeys(bad_names, "value")
             ),
             [
                 fixture.error(

@@ -85,6 +85,7 @@ ignore = [
   "ARG005", # https://docs.astral.sh/ruff/rules/unused-lambda-argument/
   "C408", # https://docs.astral.sh/ruff/rules/unnecessary-collection-call/
   "SIM102", # https://docs.astral.sh/ruff/rules/collapsible-if/
+  "TC006", # https://docs.astral.sh/ruff/rules/runtime-cast-value/
 ]
 
 [tool.ruff.lint.flake8-builtins]
@@ -113,7 +114,8 @@ section-order = ["future", "standard-library", "third-party", "first-party", "te
 "__init__.py" = ["F401"]
 "pcs/entry_points/*.py" = ["F401"]
 # Ignore `SLF001` https://docs.astral.sh/ruff/rules/private-member-access/
-"pcs_test/**.py" = ["SLF001"]
+# Ignore `SIM905` https://docs.astral.sh/ruff/rules/split-static-string/
+"pcs_test/**.py" = ["SLF001", "SIM905"]
 
 [tool.ruff.lint.pylint]
 allow-magic-value-types = ["str", "bytes", "int"]

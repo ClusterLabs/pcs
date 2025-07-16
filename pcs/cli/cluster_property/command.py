@@ -26,10 +26,7 @@ from pcs.common import reports
 from pcs.common.interface import dto
 from pcs.common.pacemaker.cluster_property import ClusterPropertyMetadataDto
 from pcs.common.pacemaker.nvset import ListCibNvsetDto
-from pcs.common.str_tools import (
-    format_list,
-    format_plural,
-)
+from pcs.common.str_tools import format_list, format_plural
 
 
 def set_property(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
@@ -63,9 +60,7 @@ def unset_property(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     else:
         ensure_unique_args(argv)
 
-    lib.cluster_property.set_properties(
-        {name: "" for name in argv}, force_flags
-    )
+    lib.cluster_property.set_properties(dict.fromkeys(argv, ""), force_flags)
 
 
 def config(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:

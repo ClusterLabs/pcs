@@ -1,7 +1,4 @@
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
 from lxml import etree
 
@@ -701,7 +698,7 @@ class TestValidateSetClusterProperties(TestCase):
     def test_remove_forbidden_options(self):
         self.assert_validate_set(
             FORBIDDEN_OPTIONS_LIST,
-            {key: "" for key in FORBIDDEN_OPTIONS_LIST},
+            dict.fromkeys(FORBIDDEN_OPTIONS_LIST, ""),
             [
                 fixture.error(
                     reports.codes.INVALID_OPTIONS,
@@ -716,7 +713,7 @@ class TestValidateSetClusterProperties(TestCase):
     def test_remove_forbidden_options_forced(self):
         self.assert_validate_set(
             FORBIDDEN_OPTIONS_LIST,
-            {key: "" for key in FORBIDDEN_OPTIONS_LIST},
+            dict.fromkeys(FORBIDDEN_OPTIONS_LIST, ""),
             [
                 fixture.error(
                     reports.codes.INVALID_OPTIONS,

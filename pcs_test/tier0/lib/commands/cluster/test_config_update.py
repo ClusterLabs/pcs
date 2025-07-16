@@ -184,10 +184,10 @@ class UpdateConfig(TestCase):
         )
         cluster.config_update(
             self.env_assist.get_env(),
-            {option: "" for option in ALLOWED_KNET_TRANSPORT_OPTIONS},
-            {option: "" for option in ALLOWED_COMPRESSION_OPTIONS},
-            {option: "" for option in ALLOWED_CRYPTO_OPTIONS},
-            {option: "" for option in ALLOWED_TOTEM_OPTIONS},
+            dict.fromkeys(ALLOWED_KNET_TRANSPORT_OPTIONS, ""),
+            dict.fromkeys(ALLOWED_COMPRESSION_OPTIONS, ""),
+            dict.fromkeys(ALLOWED_CRYPTO_OPTIONS, ""),
+            dict.fromkeys(ALLOWED_TOTEM_OPTIONS, ""),
         )
         self.env_assist.assert_reports([])
 

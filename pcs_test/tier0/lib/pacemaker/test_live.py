@@ -1727,7 +1727,7 @@ class GetResourceDigests(TestCase):
         runner.run.assert_called_once_with(call_args)
 
     def fixture_result_dict(self, digest_types=()):
-        result_dict = {k: None for k in self.DIGESTS}
+        result_dict = dict.fromkeys(self.DIGESTS)
         for digest_type in digest_types:
             result_dict[digest_type] = self.DIGESTS[digest_type]
         return result_dict

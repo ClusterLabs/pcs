@@ -1,8 +1,5 @@
 # pylint: disable=too-many-lines
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
 from lxml import etree
 
@@ -170,7 +167,7 @@ class ValidateResourceInstanceAttributesCreate(TestCase):
             primitive.validate_resource_instance_attributes_create(
                 self.cmd_runner,
                 _fixture_agent(),
-                {name: "" for name in options},
+                dict.fromkeys(options, ""),
                 etree.Element("resources"),
             ),
             [

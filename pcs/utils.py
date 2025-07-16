@@ -1,49 +1,39 @@
 # pylint: disable=too-many-lines
 import base64
+import fcntl
 import getpass
 import json
 import logging
 import os
 import re
 import signal
+import struct
 import subprocess
 import sys
 import tarfile
 import tempfile
+import termios
 import threading
 import time
 import xml.dom.minidom
 from functools import lru_cache
 from io import BytesIO
 from textwrap import dedent
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Dict,
-    Optional,
-    Tuple,
-    cast,
-)
+from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, cast
 from urllib.parse import urlencode
 from xml.dom.minidom import Document as DomDocument
 from xml.dom.minidom import parseString
 
 import pcs.cli.booth.env
 import pcs.lib.corosync.config_parser as corosync_conf_parser
-from pcs import (
-    settings,
-    usage,
-)
+from pcs import settings, usage
 from pcs.cli.cluster_property.output import PropertyConfigurationFacade
 from pcs.cli.common import middleware
 from pcs.cli.common.env_cli import Env
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.lib_wrapper import Library
 from pcs.cli.common.parse_args import InputModifiers
-from pcs.cli.common.tools import (
-    print_to_stderr,
-    timeout_to_seconds_legacy,
-)
+from pcs.cli.common.tools import print_to_stderr, timeout_to_seconds_legacy
 from pcs.cli.file import metadata as cli_file_metadata
 from pcs.cli.reports import ReportProcessorToConsole, process_library_reports
 from pcs.cli.reports import output as reports_output
@@ -60,18 +50,12 @@ from pcs.common.reports.messages import CibUpgradeFailedToMinimalRequiredVersion
 from pcs.common.services.errors import ManageServiceError
 from pcs.common.services.interfaces import ServiceManagerInterface
 from pcs.common.str_tools import format_list
-from pcs.common.tools import (
-    Version,
-    timeout_to_seconds,
-)
+from pcs.common.tools import Version, timeout_to_seconds
 from pcs.common.types import StringSequence
 from pcs.lib.corosync.config_facade import ConfigFacade as corosync_conf_facade
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
-from pcs.lib.external import (
-    CommandRunner,
-    is_proxy_set,
-)
+from pcs.lib.external import CommandRunner, is_proxy_set
 from pcs.lib.file.instance import FileInstance as LibFileInstance
 from pcs.lib.host.config.facade import Facade as KnownHostsFacade
 from pcs.lib.interface.config import ParserErrorException
@@ -1871,11 +1855,6 @@ def getTerminalSize(fd=1):
     Commandline options: no options
     """
     try:
-        # pylint: disable=import-outside-toplevel
-        import fcntl
-        import struct
-        import termios
-
         hw = struct.unpack(
             str("hh"), fcntl.ioctl(fd, termios.TIOCGWINSZ, "1234")
         )

@@ -1,15 +1,9 @@
 from typing import Optional
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
 from pcs.cli.resource import command
 from pcs.common import const
-from pcs.common.const import (
-    PcmkRoleType,
-    PcmkStatusRoleType,
-)
+from pcs.common.const import PcmkRoleType, PcmkStatusRoleType
 from pcs.common.status_dto import (
     BundleReplicaStatusDto,
     BundleStatusDto,
@@ -241,14 +235,14 @@ class GetResourceMessage(TestCase):
             const.PCMK_STATUS_ROLE_STARTED: "Resource 'R1' is running on node 'node1'"
         }
         status_expected_msg.update(
-            {
-                status: "Resource 'R1' is not running on any nodes"
-                for status in [
+            dict.fromkeys(
+                [
                     const.PCMK_STATUS_ROLE_STARTING,
                     const.PCMK_STATUS_ROLE_STOPPING,
                     const.PCMK_STATUS_ROLE_STOPPED,
-                ]
-            }
+                ],
+                "Resource 'R1' is not running on any nodes",
+            )
         )
         for status, expected_msg in status_expected_msg.items():
             with self.subTest(status=status, expected_msg=expected_msg):

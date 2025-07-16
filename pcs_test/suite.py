@@ -1,3 +1,4 @@
+# ruff: noqa: PLC0415 `import` should be at the top-level of a file
 import multiprocessing as mp
 import os
 import sys
@@ -5,11 +6,7 @@ import time
 import unittest
 from importlib import import_module
 from threading import Thread
-from typing import (
-    Callable,
-    Optional,
-    Union,
-)
+from typing import Callable, Optional, Union
 
 PACKAGE_DIR = os.path.realpath(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
