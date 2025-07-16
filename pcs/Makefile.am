@@ -28,6 +28,7 @@ EXTRA_DIST		= \
 			  cli/booth/__init__.py \
 			  cli/cluster/__init__.py \
 			  cli/cluster/command.py \
+			  cli/cluster/report_processor.py \
 			  cli/cluster_property/__init__.py \
 			  cli/cluster_property/command.py \
 			  cli/cluster_property/output.py \

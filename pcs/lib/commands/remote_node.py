@@ -5,13 +5,10 @@ from lxml.etree import _Element
 from pcs import settings
 from pcs.common import reports
 from pcs.common.file import RawFileError
-from pcs.common.reports import (
-    ReportItem,
-    ReportProcessor,
-)
 from pcs.lib import node_communication_format
 from pcs.lib.cib.remove_elements import (
     ElementsToRemove,
+    ensure_resources_stopped,
     remove_specified_elements,
 )
 from pcs.lib.cib.resource import (
@@ -24,7 +21,6 @@ from pcs.lib.cib.tools import (
     IdProvider,
     get_resources,
 )
-from pcs.lib.commands.cib import _stop_resources_wait
 
 # TODO lib.commands should never import each other. This is to be removed when
 # the 'resource create' commands are overhauled.
@@ -64,12 +60,12 @@ if TYPE_CHECKING:
 def _reports_skip_new_node(new_node_name, reason_type):
     assert reason_type in {"unreachable", "not_live_cib"}
     return [
-        ReportItem.info(
+        reports.ReportItem.info(
             reports.messages.FilesDistributionSkipped(
                 reason_type, ["pacemaker authkey"], [new_node_name]
             )
         ),
-        ReportItem.info(
+        reports.ReportItem.info(
             reports.messages.ServiceCommandsOnNodesSkipped(
                 reason_type,
                 ["pacemaker_remote start", "pacemaker_remote enable"],
@@ -128,7 +124,7 @@ def _host_check_remote_node(host_info_dict):
             ]
             if missing_service_list:
                 report_list.append(
-                    ReportItem.error(
+                    reports.ReportItem.error(
                         reports.messages.ServiceNotInstalled(
                             host_name, sorted(missing_service_list)
                         )
@@ -141,7 +137,7 @@ def _host_check_remote_node(host_info_dict):
             ]
             if cannot_be_running_service_list:
                 report_list.append(
-                    ReportItem.error(
+                    reports.ReportItem.error(
                         reports.messages.HostAlreadyInClusterServices(
                             host_name,
                             sorted(cannot_be_running_service_list),
@@ -150,13 +146,13 @@ def _host_check_remote_node(host_info_dict):
                 )
             if host_info["cluster_configuration_exists"]:
                 report_list.append(
-                    ReportItem.error(
+                    reports.ReportItem.error(
                         reports.messages.HostAlreadyInClusterConfig(host_name)
                     )
                 )
         except (KeyError, TypeError):
             report_list.append(
-                ReportItem.error(
+                reports.ReportItem.error(
                     reports.messages.InvalidResponseFormat(host_name)
                 )
             )
@@ -316,7 +312,7 @@ def node_add_remote(  # noqa: PLR0912, PLR0913, PLR0915
     else:
         corosync_conf = None
         report_processor.report(
-            ReportItem.info(
+            reports.ReportItem.info(
                 reports.messages.CorosyncNodeConflictCheckSkipped(
                     reports.const.REASON_NOT_LIVE_CIB,
                 )
@@ -364,7 +360,7 @@ def node_add_remote(  # noqa: PLR0912, PLR0913, PLR0915
                     reports.const.DEFAULT_ADDRESS_SOURCE_HOST_NAME
                 )
             report_processor.report(
-                ReportItem.info(
+                reports.ReportItem.info(
                     reports.messages.UsingDefaultAddressForHost(
                         node_name, node_addr, node_addr_source
                     )
@@ -380,7 +376,7 @@ def node_add_remote(  # noqa: PLR0912, PLR0913, PLR0915
             node_addr = node_name
             node_addr_source = reports.const.DEFAULT_ADDRESS_SOURCE_HOST_NAME
         report_processor.report(
-            ReportItem.info(
+            reports.ReportItem.info(
                 reports.messages.UsingDefaultAddressForHost(
                     node_name, node_addr, node_addr_source
                 )
@@ -511,7 +507,7 @@ def node_add_guest(  # noqa: PLR0912, PLR0915
     else:
         corosync_conf = None
         report_processor.report(
-            ReportItem.info(
+            reports.ReportItem.info(
                 reports.messages.CorosyncNodeConflictCheckSkipped(
                     reports.const.REASON_NOT_LIVE_CIB,
                 )
@@ -550,7 +546,7 @@ def node_add_guest(  # noqa: PLR0912, PLR0915
                 new_addr_source = reports.const.DEFAULT_ADDRESS_SOURCE_HOST_NAME
             options["remote-addr"] = new_addr
             report_processor.report(
-                ReportItem.info(
+                reports.ReportItem.info(
                     reports.messages.UsingDefaultAddressForHost(
                         node_name, new_addr, new_addr_source
                     )
@@ -567,7 +563,7 @@ def node_add_guest(  # noqa: PLR0912, PLR0915
             new_addr_source = reports.const.DEFAULT_ADDRESS_SOURCE_HOST_NAME
         options["remote-addr"] = new_addr
         report_processor.report(
-            ReportItem.info(
+            reports.ReportItem.info(
                 reports.messages.UsingDefaultAddressForHost(
                     node_name, new_addr, new_addr_source
                 )
@@ -622,24 +618,23 @@ def node_add_guest(  # noqa: PLR0912, PLR0915
 
 def _find_resources_to_remove(
     cib: _Element,
-    report_processor: ReportProcessor,
     node_type: str,
     node_identifier: str,
     allow_remove_multiple_nodes: bool,
     find_resources: Callable[[_Element, str], list[_Element]],
-) -> list[_Element]:
+) -> tuple[list[_Element], reports.ReportItemList]:
     resource_element_list = find_resources(get_resources(cib), node_identifier)
 
+    report_list = []
     if not resource_element_list:
-        raise LibraryError(
-            ReportItem.error(
+        report_list.append(
+            reports.ReportItem.error(
                 reports.messages.NodeNotFound(node_identifier, [node_type])
             )
         )
-
     if len(resource_element_list) > 1:
-        report_processor.report(
-            ReportItem(
+        report_list.append(
+            reports.ReportItem(
                 severity=reports.item.get_severity(
                     reports.codes.FORCE,
                     allow_remove_multiple_nodes,
@@ -654,10 +649,8 @@ def _find_resources_to_remove(
                 ),
             )
         )
-        if report_processor.has_errors:
-            raise LibraryError()
 
-    return resource_element_list
+    return resource_element_list, report_list
 
 
 def _destroy_pcmk_remote_env(
@@ -698,20 +691,37 @@ def _destroy_pcmk_remote_env(
 
 def _report_skip_live_parts_in_remove(node_names_list):
     return [
-        ReportItem.info(
+        reports.ReportItem.info(
             reports.messages.ServiceCommandsOnNodesSkipped(
                 reports.const.REASON_NOT_LIVE_CIB,
                 ["pacemaker_remote stop", "pacemaker_remote disable"],
                 node_names_list,
             )
         ),
-        ReportItem.info(
+        reports.ReportItem.info(
             reports.messages.FilesRemoveFromNodesSkipped(
                 reports.const.REASON_NOT_LIVE_CIB,
                 ["pacemaker authkey"],
                 node_names_list,
             )
         ),
+    ]
+
+
+def get_resource_ids(
+    env: LibraryEnvironment, node_identifier: str
+) -> list[str]:
+    """
+    Return resource ids of resources that represent the given node_identifier
+
+    env -- provides all for communication with externals
+    node_identifier -- node name or hostname
+    """
+    return [
+        str(element.attrib["id"])
+        for element in remote_node.find_node_resources(
+            get_resources(env.get_cib()), node_identifier
+        )
     ]
 
 
@@ -731,14 +741,15 @@ def node_remove_remote(
     report_processor = env.report_processor
     force = reports.codes.FORCE in force_flags
 
-    resource_element_list = _find_resources_to_remove(
+    resource_element_list, report_list = _find_resources_to_remove(
         cib,
-        report_processor,
         "remote",
         node_identifier,
         allow_remove_multiple_nodes=force,
         find_resources=remote_node.find_node_resources,
     )
+    if report_processor.report_list(report_list).has_errors:
+        raise LibraryError()
 
     node_names_list = sorted(
         {
@@ -750,25 +761,22 @@ def node_remove_remote(
     resource_ids = [str(el.attrib["id"]) for el in resource_element_list]
     elements_to_remove = ElementsToRemove(cib, resource_ids)
 
-    # the user could have provided hostname, so we want to show them which
-    # resources are going to be removed
-    report_processor.report(
-        reports.ReportItem.info(
-            reports.messages.CibRemoveResources(resource_ids)
+    if env.is_cib_live:
+        report_processor.report_list(
+            ensure_resources_stopped(
+                env.get_cluster_state(), resource_ids, force_flags
+            )
         )
-    )
-
-    report_processor.report_list(
-        elements_to_remove.dependant_elements.to_reports()
-    )
-    report_processor.report_list(
-        elements_to_remove.element_references.to_reports()
-    )
-
-    # we use private function from lib.commands.cib to reduce code repetition
-    cib = _stop_resources_wait(
-        env, cib, elements_to_remove.resources_to_remove, force_flags
-    )
+    else:
+        report_processor.report(
+            reports.ReportItem.warning(
+                reports.messages.StoppedResourcesBeforeDeleteCheckSkipped(
+                    resource_ids, reports.const.REASON_NOT_LIVE_CIB
+                )
+            )
+        )
+    if env.report_processor.has_errors:
+        raise LibraryError()
 
     if not env.is_cib_live:
         report_processor.report_list(
@@ -782,14 +790,35 @@ def node_remove_remote(
             allow_fails=force,
         )
 
-    remove_specified_elements(cib, elements_to_remove)
+    # the user could have provided hostname, so we want to show them which
+    # resources are going to be removed
+    report_processor.report(
+        reports.ReportItem.info(
+            reports.messages.CibRemoveResources(resource_ids)
+        )
+    )
+    report_processor.report_list(
+        elements_to_remove.dependant_elements.to_reports()
+    )
+    report_processor.report_list(
+        elements_to_remove.element_references.to_reports()
+    )
 
+    remove_specified_elements(cib, elements_to_remove)
     env.push_cib()
 
     # remove node from pcmk caches
     if env.is_cib_live:
         for node_name in node_names_list:
             remove_node(env.cmd_runner(), node_name)
+    else:
+        report_processor.report(
+            reports.ReportItem.warning(
+                reports.messages.NodeRemoveInPacemakerSkipped(
+                    reports.const.REASON_NOT_LIVE_CIB, node_names_list
+                )
+            )
+        )
 
 
 def node_remove_guest(
@@ -815,14 +844,15 @@ def node_remove_guest(
     wait_timeout = env.ensure_wait_satisfiable(wait)
     cib = env.get_cib()
 
-    resource_element_list = _find_resources_to_remove(
+    resource_element_list, report_list = _find_resources_to_remove(
         cib,
-        env.report_processor,
         "guest",
         node_identifier,
         allow_remove_multiple_nodes,
         guest_node.find_node_resources,
     )
+    if env.report_processor.report_list(report_list).has_errors:
+        raise LibraryError()
 
     node_names_list = sorted(
         {
@@ -852,3 +882,11 @@ def node_remove_guest(
     if env.is_cib_live:
         for node_name in node_names_list:
             remove_node(env.cmd_runner(), node_name)
+    else:
+        env.report_processor.report(
+            reports.ReportItem.warning(
+                reports.messages.NodeRemoveInPacemakerSkipped(
+                    reports.const.REASON_NOT_LIVE_CIB, node_names_list
+                )
+            )
+        )

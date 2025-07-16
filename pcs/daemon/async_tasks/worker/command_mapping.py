@@ -392,6 +392,10 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
         cmd=resource.restart,
         required_permission=p.WRITE,
     ),
+    "resource.stop": _Cmd(
+        cmd=resource.stop,
+        required_permission=p.WRITE,
+    ),
     "resource.unmanage": _Cmd(
         cmd=resource.unmanage,
         required_permission=p.WRITE,

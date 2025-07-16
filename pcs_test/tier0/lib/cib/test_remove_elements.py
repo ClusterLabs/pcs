@@ -1208,215 +1208,7 @@ class RemoveSpecifiedElements(TestCase, GetCibMixin):
         assert_xml_equal(initial_cib, etree_to_str(cib))
 
 
-class WarnResourcesUnmanaged(TestCase):
-    def setUp(self):
-        self.state = read_test_resource("crm_mon.minimal.xml")
-
-    def test_no_reports(self):
-        state = complete_state(
-            self.state,
-            resources_xml="""
-                <resources>
-                    <resource id="A" managed="true" role="Stopped"/>
-                    <resource id="B" managed="true" role="Stopped"/>
-                    <resource id="C" managed="true" role="Stopped"/>
-                    <resource id="D" managed="false" role="Stopped"/>
-                </resources>
-            """,
-        )
-
-        assert_report_item_list_equal(
-            lib.warn_resource_unmanaged(state, ["A", "B", "C"]), []
-        )
-
-    def test_unmanaged(self):
-        state = complete_state(
-            self.state,
-            resources_xml="""
-                <resources>
-                    <resource id="A" managed="true" role="Stopped"/>
-                    <resource id="B" managed="false" role="Stopped"/>
-                    <resource id="C" managed="false" role="Stopped"/>
-                    <resource id="D" managed="false" role="Stopped"/>
-                </resources>
-            """,
-        )
-
-        assert_report_item_list_equal(
-            lib.warn_resource_unmanaged(state, ["A", "B", "C"]),
-            [
-                fixture.warn(
-                    reports.codes.RESOURCE_IS_UNMANAGED, resource_id="B"
-                ),
-                fixture.warn(
-                    reports.codes.RESOURCE_IS_UNMANAGED, resource_id="C"
-                ),
-            ],
-        )
-
-    def test_works_with_bundle_in_status(self):
-        state = complete_state(
-            self.state,
-            resources_xml="""
-            <resources>
-                <bundle id="BUNDLE" type="podman" image="localhost/pcmktest:http" unique="false" maintenance="false" managed="true" failed="false">
-                    <replica id="0">
-                        <resource id="BUNDLE-ip-192.168.122.250" resource_agent="ocf:heartbeat:IPaddr2" role="Stopped"/>
-                        <resource id="A" role="Stopped"/>
-                        <resource id="BUNDLE-podman-0" resource_agent="ocf:heartbeat:podman" role="Stopped"/>
-                        <resource id="BUNDLE-0" resource_agent="ocf:pacemaker:remote" role="Stopped"/>
-                    </replica>
-                </bundle>
-                <clone id="C" multi_state="false" unique="false" maintenance="false" managed="true" disabled="false" failed="false" failure_ignored="false">
-                    <resource id="B" role="Stopped" managed="true"/>
-                </clone>
-            </resources>
-        """,
-        )
-
-        assert_report_item_list_equal(
-            lib.warn_resource_unmanaged(state, ["A", "B"]), []
-        )
-
-
-class StopResources(TestCase, GetCibMixin):
-    def setUp(self):
-        self.cib = read_test_resource("cib-empty.xml")
-
-    def test_nothing_to_stop(self):
-        cib = self.get_cib(
-            resources="""
-                <resources>
-                    <primitive id="A"/>
-                </resources>
-            """
-        )
-        initial_cib = etree_to_str(cib)
-
-        lib.stop_resources(cib, [])
-        assert_xml_equal(initial_cib, etree_to_str(cib))
-
-    def test_one_resource(self):
-        cib = self.get_cib(
-            resources="""
-                <resources>
-                    <primitive id="A"/>
-                    <primitive id="B"/>
-                </resources>
-            """
-        )
-
-        lib.stop_resources(
-            cib, [cib.find("./configuration/resources/primitive[@id='A']")]
-        )
-
-        assert_xml_equal(
-            modify_cib(
-                self.cib,
-                resources="""
-                    <resources>
-                        <primitive id="A">
-                            <meta_attributes id="A-meta_attributes">
-                                <nvpair id="A-meta_attributes-target-role" name="target-role" value="Stopped"/>
-                            </meta_attributes>
-                        </primitive>
-                        <primitive id="B"/>
-                    </resources>
-                """,
-            ),
-            etree_to_str(cib),
-        )
-
-    def test_multiple_resources(self):
-        cib = self.get_cib(
-            resources="""
-                <resources>
-                    <primitive id="A"/>
-                    <primitive id="B"/>
-                    <primitive id="C"/>
-                </resources>
-            """
-        )
-
-        lib.stop_resources(
-            cib,
-            [
-                cib.find("./configuration/resources/primitive[@id='A']"),
-                cib.find("./configuration/resources/primitive[@id='B']"),
-            ],
-        )
-
-        assert_xml_equal(
-            modify_cib(
-                self.cib,
-                resources="""
-                    <resources>
-                        <primitive id="A">
-                            <meta_attributes id="A-meta_attributes">
-                                <nvpair id="A-meta_attributes-target-role" name="target-role" value="Stopped"/>
-                            </meta_attributes>
-                        </primitive>
-                        <primitive id="B">
-                            <meta_attributes id="B-meta_attributes">
-                                <nvpair id="B-meta_attributes-target-role" name="target-role" value="Stopped"/>
-                            </meta_attributes>
-                        </primitive>
-                        <primitive id="C"/>
-                    </resources>
-                """,
-            ),
-            etree_to_str(cib),
-        )
-
-    def test_stop_elements_in_subtree(self):
-        cib = self.get_cib(
-            resources="""
-                <resources>
-                    <clone id="C">
-                        <group id="G">
-                            <primitive id="A"/>
-                            <primitive id="B"/>
-                        </group>
-                    </clone>
-                </resources>
-            """
-        )
-
-        lib.stop_resources(
-            cib,
-            [
-                cib.find(
-                    "./configuration/resources/clone/group/primitive[@id='A']"
-                ),
-                cib.find("./configuration/resources/clone/group[@id='G']"),
-            ],
-        )
-        assert_xml_equal(
-            modify_cib(
-                self.cib,
-                resources="""
-                <resources>
-                    <clone id="C">
-                        <group id="G">
-                            <meta_attributes id="G-meta_attributes">
-                                <nvpair id="G-meta_attributes-target-role" name="target-role" value="Stopped"/>
-                            </meta_attributes>
-                            <primitive id="A">
-                                <meta_attributes id="A-meta_attributes">
-                                    <nvpair id="A-meta_attributes-target-role" name="target-role" value="Stopped"/>
-                                </meta_attributes>
-                            </primitive>
-                            <primitive id="B"/>
-                        </group>
-                    </clone>
-                </resources>
-            """,
-            ),
-            etree_to_str(cib),
-        )
-
-
-class EnsureStoppedAfterDisable(TestCase):
+class EnsureResourcesStopped(TestCase):
     def setUp(self):
         self.state_xml = read_test_resource("crm_mon.minimal.xml")
 
@@ -1436,7 +1228,7 @@ class EnsureStoppedAfterDisable(TestCase):
             """,
         )
 
-        report_list = lib.ensure_resources_stopped(state, ["A", "B", "C"])
+        report_list = lib.ensure_resources_stopped(state, ["A", "B", "C"], [])
         self.assertEqual(report_list, [])
 
     def test_some_not_stopped(self):
@@ -1455,13 +1247,35 @@ class EnsureStoppedAfterDisable(TestCase):
             """,
         )
 
-        report_list = lib.ensure_resources_stopped(state, ["A", "B", "C"])
+        report_list = lib.ensure_resources_stopped(state, ["A", "B", "C"], [])
         self.assertEqual(
             report_list,
             [
                 reports.ReportItem.error(
-                    reports.messages.CannotStopResourcesBeforeDeleting(["B"]),
+                    reports.messages.CannotRemoveResourcesNotStopped(["B"]),
                     force_code=reports.codes.FORCE,
+                )
+            ],
+        )
+
+    def test_not_stopped_forced(self):
+        state = complete_state(
+            self.state_xml,
+            """
+                <resources>
+                    <resource id="A" managed="true" role="Started"/>
+                </resources>
+            """,
+        )
+
+        report_list = lib.ensure_resources_stopped(
+            state, ["A"], [reports.codes.FORCE]
+        )
+        self.assertEqual(
+            report_list,
+            [
+                reports.ReportItem.warning(
+                    reports.messages.CannotRemoveResourcesNotStopped(["A"])
                 )
             ],
         )
@@ -1479,12 +1293,12 @@ class EnsureStoppedAfterDisable(TestCase):
             """,
         )
 
-        report_list = lib.ensure_resources_stopped(state, ["C"])
+        report_list = lib.ensure_resources_stopped(state, ["C"], [])
         self.assertEqual(
             report_list,
             [
                 reports.ReportItem.error(
-                    reports.messages.CannotStopResourcesBeforeDeleting(["C"]),
+                    reports.messages.CannotRemoveResourcesNotStopped(["C"]),
                     force_code=reports.codes.FORCE,
                 )
             ],
@@ -1503,12 +1317,12 @@ class EnsureStoppedAfterDisable(TestCase):
             """,
         )
 
-        report_list = lib.ensure_resources_stopped(state, ["A"])
+        report_list = lib.ensure_resources_stopped(state, ["A"], [])
         self.assertEqual(
             report_list,
             [
                 reports.ReportItem.error(
-                    reports.messages.CannotStopResourcesBeforeDeleting(["A"]),
+                    reports.messages.CannotRemoveResourcesNotStopped(["A"]),
                     force_code=reports.codes.FORCE,
                 )
             ],
@@ -1534,7 +1348,7 @@ class EnsureStoppedAfterDisable(TestCase):
         """,
         )
 
-        report_list = lib.ensure_resources_stopped(state, ["C"])
+        report_list = lib.ensure_resources_stopped(state, ["C"], [])
         self.assertEqual(report_list, [])
 
 

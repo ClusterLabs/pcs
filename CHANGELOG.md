@@ -1,5 +1,30 @@
 # Change Log
 
+## [Unreleased]
+
+### Added
+- Commands `pcs resource|stonith|booth delete|remove` and
+  `pcs cluster node delete-remote|remove-remote|delete-guest|remove-guest`
+  now warn about omitting live cluster actions when '-f' is used ([RHEL-76157])
+
+### Changed
+- Lib command `cib.remove_elements` does not stop resources before deletion.
+  The resources should be stopped before calling this command
+- Commands `pcs resource|booth delete|remove` and
+  `pcs cluster node delete-remote|remove-remote` will now end with an error when
+  trying to delete unmanaged started resources ([RHEL-76162])
+
+### Deprecated
+- Using `--force` in `pcs resource|booth delete|remove` and
+  `pcs cluster node delete-remote|remove-remote` to skip resource stopping
+  before their deletion. Use the new `--no-stop` flag instead. You can use
+  `--future` flag if you need to use `--force` and you do not wish to skip the
+  resource stopping.
+
+[RHEL-76157]: https://issues.redhat.com/browse/RHEL-76157
+[RHEL-76162]: https://issues.redhat.com/browse/RHEL-76162
+
+
 ## [0.12.1] - 2025-07-08
 
 ### Added
@@ -36,6 +61,7 @@
       ([RHEL-92043])
     - `pcs status query resource` (broken since 0.12.0)
 - Handle query limit errors coming from rubygem-rack ([RHEL-90151])
+
 
 [RHEL-7681]: https://issues.redhat.com/browse/RHEL-7681
 [RHEL-21050]: https://issues.redhat.com/browse/RHEL-21050

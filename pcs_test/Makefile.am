@@ -81,6 +81,7 @@ EXTRA_DIST		= \
 			  tier0/cli/cluster_property/test_command.py \
 			  tier0/cli/cluster_property/test_output.py \
 			  tier0/cli/cluster/test_command.py \
+			  tier0/cli/cluster/test_report_processor.py \
 			  tier0/cli/common/__init__.py \
 			  tier0/cli/common/test_completion.py \
 			  tier0/cli/common/test_lib_wrapper.py \
@@ -107,6 +108,7 @@ EXTRA_DIST		= \
 			  tier0/cli/query/test_resource.py \
 			  tier0/cli/reports/__init__.py \
 			  tier0/cli/reports/test_messages.py \
+			  tier0/cli/reports/test_output.py \
 			  tier0/cli/resource/__init__.py \
 			  tier0/cli/resource/test_common.py \
 			  tier0/cli/resource/test_defaults.py \
@@ -269,6 +271,7 @@ EXTRA_DIST		= \
 			  tier0/lib/commands/remote_node/fixtures_add.py \
 			  tier0/lib/commands/remote_node/fixtures_remove.py \
 			  tier0/lib/commands/remote_node/__init__.py \
+			  tier0/lib/commands/remote_node/test_get_resource_ids.py \
 			  tier0/lib/commands/remote_node/test_node_add_guest.py \
 			  tier0/lib/commands/remote_node/test_node_add_remote.py \
 			  tier0/lib/commands/remote_node/test_node_remove_guest.py \
@@ -289,6 +292,7 @@ EXTRA_DIST		= \
 			  tier0/lib/commands/resource/test_resource_relations.py \
 			  tier0/lib/commands/resource/test_resource_update.py \
 			  tier0/lib/commands/resource/test_restart.py \
+			  tier0/lib/commands/resource/test_stop.py \
 			  tier0/lib/commands/sbd/__init__.py \
 			  tier0/lib/commands/sbd/test_disable_sbd.py \
 			  tier0/lib/commands/sbd/test_enable_sbd.py \

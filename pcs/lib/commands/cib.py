@@ -1,7 +1,4 @@
-from typing import (
-    Iterable,
-    Sequence,
-)
+from typing import Iterable
 
 from lxml.etree import _Element
 
@@ -11,8 +8,6 @@ from pcs.lib.cib.remove_elements import (
     ElementsToRemove,
     ensure_resources_stopped,
     remove_specified_elements,
-    stop_resources,
-    warn_resource_unmanaged,
 )
 from pcs.lib.cib.resource.guest_node import is_guest_node
 from pcs.lib.cib.resource.remote_node import (
@@ -43,21 +38,45 @@ def remove_elements(
 
     elements_to_remove = ElementsToRemove(cib, ids)
 
-    if report_processor.report_list(
+    stonith_ids = []
+    non_stonith_ids = []
+    for res_el in elements_to_remove.resources_to_remove:
+        if is_stonith(res_el):
+            stonith_ids.append(str(res_el.attrib["id"]))
+        else:
+            non_stonith_ids.append(str(res_el.attrib["id"]))
+
+    report_processor.report_list(
         _validate_elements_to_remove(elements_to_remove)
         + _ensure_not_guest_remote(elements_to_remove.resources_to_remove)
         + ensure_some_stonith_remains(
             env,
             get_resources(cib),
-            stonith_resources_to_ignore=[
-                str(res_el.attrib["id"])
-                for res_el in elements_to_remove.resources_to_remove
-                if is_stonith(res_el)
-            ],
+            stonith_resources_to_ignore=stonith_ids,
             sbd_being_disabled=False,
             force_flags=force_flags,
         )
-    ).has_errors:
+    )
+
+    # stonith resources do not need to be stopped, because they do not left
+    # orphaned resources behind, so we check only the state of non-stonith
+    # resources
+    if non_stonith_ids:
+        if env.is_cib_live:
+            report_processor.report_list(
+                ensure_resources_stopped(
+                    env.get_cluster_state(), non_stonith_ids, force_flags
+                )
+            )
+        else:
+            report_processor.report(
+                reports.ReportItem.warning(
+                    reports.messages.StoppedResourcesBeforeDeleteCheckSkipped(
+                        non_stonith_ids, reports.const.REASON_NOT_LIVE_CIB
+                    )
+                )
+            )
+    if report_processor.has_errors:
         raise LibraryError()
 
     report_processor.report_list(
@@ -66,64 +85,8 @@ def remove_elements(
     report_processor.report_list(
         elements_to_remove.element_references.to_reports()
     )
-
-    cib = _stop_resources_wait(
-        env, cib, elements_to_remove.resources_to_remove, force_flags
-    )
-
     remove_specified_elements(cib, elements_to_remove)
     env.push_cib()
-
-
-def _stop_resources_wait(
-    env: LibraryEnvironment,
-    cib: _Element,
-    resource_elements: Sequence[_Element],
-    force_flags: reports.types.ForceFlags = (),
-) -> _Element:
-    """
-    Stop all resources that are going to be removed. Push cib, wait for the
-    cluster to settle down, and check if all resources were properly stopped.
-    If not, report errors. Return cib with the applied changes.
-
-    cib -- whole cib
-    resource_elements -- resources that should be stopped
-    force_flags -- list of flags codes
-    """
-    if not resource_elements:
-        return cib
-    if not env.is_cib_live:
-        return cib
-    if reports.codes.FORCE in force_flags:
-        env.report_processor.report(
-            reports.ReportItem.warning(
-                reports.messages.StoppingResourcesBeforeDeletingSkipped()
-            )
-        )
-        return cib
-
-    resource_ids = [str(el.attrib["id"]) for el in resource_elements]
-
-    env.report_processor.report(
-        reports.ReportItem.info(
-            reports.messages.StoppingResourcesBeforeDeleting(resource_ids)
-        )
-    )
-
-    if env.report_processor.report_list(
-        warn_resource_unmanaged(env.get_cluster_state(), resource_ids)
-    ).has_errors:
-        raise LibraryError()
-    stop_resources(cib, resource_elements)
-    env.push_cib()
-
-    env.wait_for_idle()
-    if env.report_processor.report_list(
-        ensure_resources_stopped(env.get_cluster_state(), resource_ids)
-    ).has_errors:
-        raise LibraryError()
-
-    return env.get_cib()
 
 
 def _validate_elements_to_remove(

@@ -3690,6 +3690,31 @@ class NodeRemoveInPacemakerFailed(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class NodeRemoveInPacemakerSkipped(ReportItemMessage):
+    """
+    Removing nodes from pacemaker skipped.
+
+    reason_type -- why the action was skipped
+    node_list -- nodes which should be removed
+    """
+
+    reason_type: types.ReasonType
+    node_list: list[str]
+    _code = codes.NODE_REMOVE_IN_PACEMAKER_SKIPPED
+
+    @property
+    def message(self) -> str:
+        return (
+            "Skipping removal of {node} {node_list} from pacemaker because "
+            "{reason}"
+        ).format(
+            node=format_plural(self.node_list, "node"),
+            node_list=format_list(self.node_list),
+            reason=_skip_reason_to_string(self.reason_type),
+        )
+
+
+@dataclass(frozen=True)
 class MultipleResultsFound(ReportItemMessage):
     """
     Multiple result was found when something was looked for. E.g. resource for
@@ -6442,56 +6467,77 @@ class CannotBanResourceStoppedNoNodeSpecified(ReportItemMessage):
 
 
 @dataclass(frozen=True)
-class StoppingResourcesBeforeDeleting(ReportItemMessage):
+class StoppingResources(ReportItemMessage):
     """
-    Resources are going to be stopped before deletion
+    Resources are going to be stopped
 
     resource_id_list -- ids of resources that are going to be stopped
     """
 
     resource_id_list: list[str]
-    _code = codes.STOPPING_RESOURCES_BEFORE_DELETING
+    _code = codes.STOPPING_RESOURCES
 
     @property
     def message(self) -> str:
-        return "Stopping {resource} {resource_list} before deleting".format(
+        return "Stopping {resource} {resource_list}".format(
             resource=format_plural(self.resource_id_list, "resource"),
             resource_list=format_list(self.resource_id_list),
         )
 
 
 @dataclass(frozen=True)
-class StoppingResourcesBeforeDeletingSkipped(ReportItemMessage):
+class StoppedResourcesBeforeDeleteCheckSkipped(ReportItemMessage):
     """
-    Resources are not going to be stopped before deletion.
+    Not checking that resources are stopped before delete.
+
+    resource_id_list -- ids of resources
+    reason_type -- why was the action skipped
     """
 
-    _code = codes.STOPPING_RESOURCES_BEFORE_DELETING_SKIPPED
+    resource_id_list: list[str]
+    reason_type: Optional[types.ReasonType] = None
+    _code = codes.STOPPED_RESOURCES_BEFORE_DELETE_CHECK_SKIPPED
 
     @property
     def message(self) -> str:
         return (
-            "Resources are not going to be stopped before deletion, this may "
-            "result in orphaned resources being present in the cluster"
+            "Not checking if {resources} {resource_list} {are} stopped before "
+            "deletion{reason}. Deleting unstopped resources may result in "
+            "orphaned resources being present in the cluster."
+        ).format(
+            resources=format_plural(self.resource_id_list, "resource"),
+            resource_list=format_list(self.resource_id_list),
+            are=format_plural(self.resource_id_list, "is"),
+            reason=format_optional(
+                _skip_reason_to_string(self.reason_type)
+                if self.reason_type
+                else None,
+                template=" because {}",
+            ),
         )
 
 
 @dataclass(frozen=True)
-class CannotStopResourcesBeforeDeleting(ReportItemMessage):
+class CannotRemoveResourcesNotStopped(ReportItemMessage):
     """
-    Cannot stop resources that are being removed
+    Cannot remove resources that are not stopped
 
-    resource_id_list -- ids of resources that cannot be stopped
+    resource_id_list -- ids of resources
     """
 
     resource_id_list: list[str]
-    _code = codes.CANNOT_STOP_RESOURCES_BEFORE_DELETING
+    _code = codes.CANNOT_REMOVE_RESOURCES_NOT_STOPPED
 
     @property
     def message(self) -> str:
-        return "Cannot stop {resource} {resource_list} before deleting".format(
-            resource=format_plural(self.resource_id_list, "resource"),
+        return (
+            "{resources} {resource_list} {are} not stopped, removing unstopped "
+            "resources can lead to orphaned resources being present in the "
+            "cluster."
+        ).format(
+            resources=format_plural(self.resource_id_list, "Resource"),
             resource_list=format_list(self.resource_id_list),
+            are=format_plural(self.resource_id_list, "is"),
         )
 
 

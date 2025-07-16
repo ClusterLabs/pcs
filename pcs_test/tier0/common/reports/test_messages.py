@@ -2455,6 +2455,41 @@ class NodeRemoveInPacemakerFailed(NameBuildTest):
         )
 
 
+class NodeRemoveInPacemakerSkipped(NameBuildTest):
+    def test_one_node(self):
+        self.assert_message_from_report(
+            (
+                "Skipping removal of node 'NODE1' from pacemaker because the "
+                "command does not run on a live cluster"
+            ),
+            reports.NodeRemoveInPacemakerSkipped(
+                const.REASON_NOT_LIVE_CIB, ["NODE1"]
+            ),
+        )
+
+    def test_multiple_nodes(self):
+        self.assert_message_from_report(
+            (
+                "Skipping removal of nodes 'NODE1', 'NODE2' from pacemaker "
+                "because the command does not run on a live cluster"
+            ),
+            reports.NodeRemoveInPacemakerSkipped(
+                const.REASON_NOT_LIVE_CIB, ["NODE2", "NODE1"]
+            ),
+        )
+
+    def test_with_node(self):
+        self.assert_message_from_report(
+            (
+                "node-a: Unable to remove node(s) 'NODE1', 'NODE2' from "
+                "pacemaker: reason"
+            ),
+            reports.NodeRemoveInPacemakerFailed(
+                ["NODE1", "NODE2"], node="node-a", reason="reason"
+            ),
+        )
+
+
 class MultipleResultsFound(NameBuildTest):
     def test_minimal(self):
         self.assert_message_from_report(
@@ -6105,44 +6140,74 @@ class ClusterOptionsMetadataNotSupported(NameBuildTest):
         )
 
 
-class StoppingResourcesBeforeDeleting(NameBuildTest):
-    def test_one_resource(self) -> str:
+class StoppingResources(NameBuildTest):
+    def test_one_resource(self):
         self.assert_message_from_report(
-            "Stopping resource 'resourceId' before deleting",
-            reports.StoppingResourcesBeforeDeleting(["resourceId"]),
+            "Stopping resource 'resourceId'",
+            reports.StoppingResources(["resourceId"]),
         )
 
-    def test_multiple_resources(self) -> str:
+    def test_multiple_resources(self):
         self.assert_message_from_report(
-            "Stopping resources 'resourceId1', 'resourceId2' before deleting",
-            reports.StoppingResourcesBeforeDeleting(
-                ["resourceId1", "resourceId2"]
-            ),
+            "Stopping resources 'resourceId1', 'resourceId2'",
+            reports.StoppingResources(["resourceId1", "resourceId2"]),
         )
 
 
-class StoppingResourcesBeforeDeletingSkipped(NameBuildTest):
-    def test_success(self) -> str:
+class StoppedResourcesBeforeDeleteCheckSkipped(NameBuildTest):
+    def test_one_resource(self):
         self.assert_message_from_report(
             (
-                "Resources are not going to be stopped before deletion, this "
-                "may result in orphaned resources being present in the cluster"
+                "Not checking if resource 'A' is stopped before deletion. "
+                "Deleting unstopped resources may result in orphaned resources "
+                "being present in the cluster."
             ),
-            reports.StoppingResourcesBeforeDeletingSkipped(),
+            reports.StoppedResourcesBeforeDeleteCheckSkipped(["A"]),
+        )
+
+    def test_multiple_resources(self):
+        self.assert_message_from_report(
+            (
+                "Not checking if resources 'A', 'B' are stopped before "
+                "deletion. Deleting unstopped resources may result in orphaned "
+                "resources being present in the cluster."
+            ),
+            reports.StoppedResourcesBeforeDeleteCheckSkipped(["A", "B"]),
+        )
+
+    def test_with_reason(self):
+        self.assert_message_from_report(
+            (
+                "Not checking if resource 'A' is stopped before deletion "
+                "because the command does not run on a live cluster. Deleting "
+                "unstopped resources may result in orphaned resources being "
+                "present in the cluster."
+            ),
+            reports.StoppedResourcesBeforeDeleteCheckSkipped(
+                ["A"], reports.const.REASON_NOT_LIVE_CIB
+            ),
         )
 
 
-class CannotStopResourcesBeforeDeleting(NameBuildTest):
+class CannotRemoveResourcesNotStopped(NameBuildTest):
     def test_one_resource(self) -> str:
         self.assert_message_from_report(
-            "Cannot stop resource 'resourceId' before deleting",
-            reports.CannotStopResourcesBeforeDeleting(["resourceId"]),
+            (
+                "Resource 'resourceId' is not stopped, removing unstopped "
+                "resources can lead to orphaned resources being present in the "
+                "cluster."
+            ),
+            reports.CannotRemoveResourcesNotStopped(["resourceId"]),
         )
 
     def test_multiple_resources(self) -> str:
         self.assert_message_from_report(
-            "Cannot stop resources 'resourceId1', 'resourceId2' before deleting",
-            reports.CannotStopResourcesBeforeDeleting(
+            (
+                "Resources 'resourceId1', 'resourceId2' are not stopped, "
+                "removing unstopped resources can lead to orphaned resources "
+                "being present in the cluster."
+            ),
+            reports.CannotRemoveResourcesNotStopped(
                 ["resourceId1", "resourceId2"]
             ),
         )

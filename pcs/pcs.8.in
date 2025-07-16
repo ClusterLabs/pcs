@@ -120,11 +120,19 @@ Example: Create a new resource called 'VirtualIP' with IP address 192.168.0.99, 
 .br
 pcs resource create VirtualIP ocf:heartbeat:IPaddr2 ip=192.168.0.99 cidr_netmask=32 nic=eth2 op monitor interval=30s
 .TP
-delete <resource id|group id|bundle id|clone id>...
+delete <resource id|group id|bundle id|clone id>... [\fB\-\-no\-stop\fR] [\fB\-\-future\fR]
 Deletes the specified resources, groups, bundles or clones (and all resources within the groups/bundles/clones).
+
+If \fB\-\-no\-stop\fR is specified, the resources will not be stopped before their deletion. This may result in orphaned resources being left behind in case the deleted resources are not already stopped.
+
+Using \fB\-\-force\fR currently also means the resources will not be stopped before their deletion. If you need to use \fB\-\-force\fR and still want to stop the resources, you need to combine it with the \fB\-\-future\fR flag.
 .TP
-remove <resource id|group id|bundle id|clone id>...
+remove <resource id|group id|bundle id|clone id>... [\fB\-\-no\-stop\fR] [\fB\-\-future\fR]
 Deletes the specified resources, groups, bundles or clones (and all resources within the groups/bundles/clones).
+
+If \fB\-\-no\-stop\fR is specified, the resources will not be stopped before their deletion. This may result in orphaned resources being left behind in case the deleted resources are not already stopped.
+
+Using \fB\-\-force\fR currently also means the resources will not be stopped before their deletion. If you need to use \fB\-\-force\fR and still want to stop the resources, you need to combine it with the \fB\-\-future\fR flag.
 .TP
 enable <resource id | tag id>... [\fB\-\-wait\fR[=n]]
 Allow the cluster to start the resources. Depending on the rest of the configuration (constraints, options, failures, etc), the resources may remain stopped. If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the resources to start and then return 0 if the resources are started, or 1 if the resources have not yet started. If 'n' is not specified it defaults to 60 minutes.
@@ -644,11 +652,19 @@ Shutdown specified nodes and remove them from the cluster.
 node add\-remote <node name> [<node address>] [options] [op <operation action> <operation options> [<operation action> <operation options>]...] [meta <meta options>] [\fB\-\-wait\fR[=<n>]]
 Add the node to the cluster as a remote node. Sync all relevant configuration files to the new node. Start the node and configure it to start the cluster on boot. Options are port and reconnect_interval. Operations and meta belong to an underlying connection resource (ocf:pacemaker:remote). If node address is not specified for the node, pcs will configure pacemaker to communicate with the node using an address provided in 'pcs host auth' command. Otherwise, pcs will configure pacemaker to communicate with the node using the specified addresses. If \fB\-\-wait\fR is specified, wait up to 'n' seconds for the node to start.
 .TP
-node delete\-remote <node identifier>
+node delete\-remote <node identifier> [\fB\-\-no\-stop\fR] [\fB\-\-future\fR]
 Shutdown specified remote node and remove it from the cluster. The node\-identifier can be the name of the node or the address of the node.
+
+If \fB\-\-no\-stop\fR is specified, the resource representing the remote node will not be stopped before its deletion. This may result in orphaned resources being left behind in case the deleted resources are not already stopped.
+
+Using \fB\-\-force\fR currently also means the resources will not be stopped before their deletion. If you need to use \fB\-\-force\fR and still want to stop the resources, you need to combine it with the \fB\-\-future\fR flag.
 .TP
-node remove\-remote <node identifier>
+node remove\-remote <node identifier> [\fB\-\-no\-stop\fR] [\fB\-\-future\fR]
 Shutdown specified remote node and remove it from the cluster. The node\-identifier can be the name of the node or the address of the node.
+
+If \fB\-\-no\-stop\fR is specified, the resource representing the remote node will not be stopped before its deletion. This may result in orphaned resources being left behind in case the deleted resources are not already stopped.
+
+Using \fB\-\-force\fR currently also means the resources will not be stopped before their deletion. If you need to use \fB\-\-force\fR and still want to stop the resources, you need to combine it with the \fB\-\-future\fR flag.
 .TP
 node add\-guest <node name> <resource id> [options] [\fB\-\-wait\fR[=<n>]]
 Make the specified resource a guest node resource. Sync all relevant configuration files to the new node. Start the node and configure it to start the cluster on boot. Options are remote\-addr, remote\-port and remote\-connect\-timeout. If remote\-addr is not specified for the node, pcs will configure pacemaker to communicate with the node using an address provided in 'pcs host auth' command. Otherwise, pcs will configure pacemaker to communicate with the node using the specified addresses. If \fB\-\-wait\fR is specified, wait up to 'n' seconds for the node to start.
@@ -1324,11 +1340,19 @@ Show booth configuration from the specified node or from the current node if nod
 create ip <address>
 Make the cluster run booth service on the specified ip address as a cluster resource.  Typically this is used to run booth site.@BOOTH_ENABLE_AUTHFILE_SET_DOC@@BOOTH_ENABLE_AUTHFILE_UNSET_DOC@
 .TP
-delete
+delete [\fB\-\-no\-stop\fR] [\fB\-\-future\fR]
 Remove booth resources created by the "pcs booth create" command.
+
+If \fB\-\-no\-stop\fR is specified, the resources will not be stopped before their deletion. This may result in orphaned resources being left behind in case the deleted resources are not already stopped.
+
+Using \fB\-\-force\fR currently also means the resources will not be stopped before their deletion. If you need to use \fB\-\-force\fR and still want to stop the resources, you need to combine it with the \fB\-\-future\fR flag.
 .TP
-remove
+remove [\fB\-\-no\-stop\fR] [\fB\-\-future\fR]
 Remove booth resources created by the "pcs booth create" command.
+
+If \fB\-\-no\-stop\fR is specified, the resources will not be stopped before their deletion. This may result in orphaned resources being left behind in case the deleted resources are not already stopped.
+
+Using \fB\-\-force\fR currently also means the resources will not be stopped before their deletion. If you need to use \fB\-\-force\fR and still want to stop the resources, you need to combine it with the \fB\-\-future\fR flag.
 .TP
 restart
 Restart booth resources created by the "pcs booth create" command.

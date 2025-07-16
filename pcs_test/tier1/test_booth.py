@@ -408,7 +408,7 @@ class DeleteRemoveTestMixin(AssertPcsMixin):
             stderr_start=outdent(
                 f"""
                 Usage: pcs booth <command>
-                    {self.command}
+                    {self.command} [--no-stop] [--future]
                 """
             ),
         )
@@ -420,6 +420,11 @@ class DeleteRemoveTestMixin(AssertPcsMixin):
         self.assert_pcs_fail(
             ["booth", self.command],
             [
+                (
+                    "Warning: Resources are not going to be stopped before "
+                    "deletion because the command does not run on a live "
+                    "cluster"
+                ),
                 "Error: booth instance 'booth' not found in cib",
                 "Error: Errors have occurred, therefore pcs is unable to continue",
             ],

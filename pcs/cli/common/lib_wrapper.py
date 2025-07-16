@@ -155,6 +155,7 @@ def load_module(env, middleware_factory, name):  # noqa: PLR0911, PLR0912
             "create_in_cluster": booth.create_in_cluster,
             "disable_booth": booth.disable_booth,
             "enable_booth": booth.enable_booth,
+            "get_resource_ids_from_cluster": booth.get_resource_ids_from_cluster,
             "get_status": booth.get_status,
             "pull_config": booth.pull_config,
             "remove_from_cluster": booth.remove_from_cluster,
@@ -243,6 +244,7 @@ def load_module(env, middleware_factory, name):  # noqa: PLR0911, PLR0912
                 "node_add_guest": remote_node.node_add_guest,
                 "node_remove_remote": remote_node.node_remove_remote,
                 "node_remove_guest": remote_node.node_remove_guest,
+                "get_resource_ids": remote_node.get_resource_ids,
             },
         )
 
@@ -434,6 +436,7 @@ def load_module(env, middleware_factory, name):  # noqa: PLR0911, PLR0912
                 "move": resource.move,
                 "move_autoclean": resource.move_autoclean,
                 "restart": resource.restart,
+                "stop": resource.stop,
                 "unmanage": resource.unmanage,
                 "unmove_unban": resource.unmove_unban,
             },

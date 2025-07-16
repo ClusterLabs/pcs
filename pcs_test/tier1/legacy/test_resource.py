@@ -13,7 +13,11 @@ from pcs import (
     utils,
 )
 from pcs.common import const
-from pcs.common.str_tools import format_list_custom_last_separator
+from pcs.common.str_tools import (
+    format_list,
+    format_list_custom_last_separator,
+    format_plural,
+)
 from pcs.constraint import LOCATION_NODE_VALIDATION_SKIP_MSG
 
 from pcs_test.tier1.cib_resource.common import ResourceTest
@@ -61,6 +65,20 @@ DEPRECATED_DASH_DASH_GROUP = (
     "with 'group' in a future release. Specify --future to switch to the future "
     "behavior.\n"
 )
+
+
+def fixture_message_not_deleting_resources_not_live(resource_ids):
+    resources = format_plural(resource_ids, "resource")
+    are = format_plural(resource_ids, "is")
+    return (
+        "Warning: Resources are not going to be stopped before deletion "
+        "because the command does not run on a live cluster\n"
+        f"Warning: Not checking if {resources} {format_list(resource_ids)} "
+        f"{are} stopped before deletion because the command does not run on a "
+        "live cluster. Deleting unstopped resources may result in orphaned "
+        "resources being present in the cluster.\n"
+    )
+
 
 empty_cib = rc("cib-empty.xml")
 large_cib = rc("cib-large.xml")
@@ -2719,7 +2737,8 @@ class Resource(TestCase, AssertPcsMixin):
 
         self.assert_pcs_success(
             "resource delete B".split(),
-            stderr_full=dedent(
+            stderr_full=fixture_message_not_deleting_resources_not_live(["B"])
+            + dedent(
                 """\
                 Removing references:
                   Resource 'B' from:
@@ -2729,7 +2748,8 @@ class Resource(TestCase, AssertPcsMixin):
         )
         self.assert_pcs_success(
             "resource delete C".split(),
-            stderr_full=dedent(
+            stderr_full=fixture_message_not_deleting_resources_not_live(["C"])
+            + dedent(
                 """\
                 Removing references:
                   Resource 'C' from:
@@ -3044,7 +3064,10 @@ class Resource(TestCase, AssertPcsMixin):
 
         self.assert_pcs_success(
             "resource delete dummies-clone".split(),
-            stderr_full=dedent(
+            stderr_full=fixture_message_not_deleting_resources_not_live(
+                ["dummy1", "dummy2", "dummy3", "dummies", "dummies-clone"]
+            )
+            + dedent(
                 """\
                 Removing dependant elements:
                   Group: 'dummies'
@@ -3170,7 +3193,10 @@ class Resource(TestCase, AssertPcsMixin):
 
         self.assert_pcs_success(
             "resource delete dummies-master".split(),
-            stderr_full=dedent(
+            stderr_full=fixture_message_not_deleting_resources_not_live(
+                ["dummy1", "dummy2", "dummy3", "dummies", "dummies-master"]
+            )
+            + dedent(
                 """\
                 Removing dependant elements:
                   Group: 'dummies'

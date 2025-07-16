@@ -28,11 +28,12 @@ from pcs.common.interface import dto
 from pcs.common.pacemaker.resource.list import CibResourcesDto
 from pcs.common.reports import ReportItemList, ReportProcessor
 from pcs.common.reports.item import ReportItem
+from pcs.common.resource_status import ResourcesStatusFacade, ResourceState
 from pcs.common.tools import (
     Version,
     timeout_to_seconds,
 )
-from pcs.common.types import StringCollection
+from pcs.common.types import StringCollection, StringSequence
 from pcs.lib.cib import const as cib_const
 from pcs.lib.cib import resource
 from pcs.lib.cib import status as cib_status
@@ -85,6 +86,11 @@ from pcs.lib.pacemaker.state import (
     get_resource_state,
     info_resource_state,
     is_resource_managed,
+)
+from pcs.lib.pacemaker.status import (
+    ClusterStatusParser,
+    ClusterStatusParsingError,
+    cluster_status_parsing_error_to_report,
 )
 from pcs.lib.pacemaker.values import (
     is_true,
@@ -3015,3 +3021,130 @@ def update_meta(
             cmd_runner,
             existing_meta_attrs[resource.guest_node.OPTION_REMOTE_NODE],
         )
+
+
+def stop(
+    env: LibraryEnvironment,
+    resource_or_tag_ids: StringCollection,
+    force_flags: reports.types.ForceFlags = (),
+) -> None:
+    """
+    Stop the specified resources similarly to 'disable'. Unlike disable,
+    this command finds all resources including inner resources and then
+    disables all of the found primitives, making it more probable that
+    the resources will really be stopped by pacemaker.
+
+    env -- provides all for communication with externals
+    resource_or_tag_ids -- ids of the resources to become stopped, or in case
+        of tag ids, all resources in tags are to be stopped
+    force_flags -- force flags
+    """
+    cib = env.get_cib()
+    id_provider = IdProvider(cib)
+    resource_elements, report_list = _find_resources_expand_tags(
+        cib, resource_or_tag_ids
+    )
+    env.report_processor.report_list(report_list)
+
+    resources_to_stop = []
+    for el in resource_elements:
+        resources_to_stop.extend(resource.common.find_primitives(el))
+        # we also need to disable bundle resources
+        if resource.common.is_bundle(el):
+            resources_to_stop.append(el)
+
+    resource_ids = []
+    stonith_resource_ids = []
+    for resource_el in resources_to_stop:
+        resource_id = str(resource_el.attrib["id"])
+        resource_ids.append(resource_id)
+        if resource.stonith.is_stonith(resource_el):
+            stonith_resource_ids.append(resource_id)
+    resource_ids.sort()
+
+    if stonith_resource_ids:
+        env.report_processor.report_list(
+            ensure_some_stonith_remains(
+                env,
+                get_resources(cib),
+                stonith_resources_to_ignore=stonith_resource_ids,
+                sbd_being_disabled=False,
+                force_flags=force_flags,
+            )
+        )
+    env.report_processor.report_list(
+        _ensure_resources_managed(
+            env.get_cluster_state(), resource_ids, force_flags
+        )
+    )
+
+    if env.report_processor.has_errors:
+        raise LibraryError()
+
+    env.report_processor.report(
+        reports.ReportItem.info(
+            reports.messages.StoppingResources(resource_ids)
+        )
+    )
+    for el in resources_to_stop:
+        resource.common.disable(el, id_provider)
+
+    env.push_cib()
+
+
+def _ensure_resources_managed(
+    state: _Element,
+    resource_ids: StringSequence,
+    force_flags: reports.types.ForceFlags,
+) -> reports.ReportItemList:
+    report_list: reports.ReportItemList = []
+    try:
+        parser = ClusterStatusParser(state)
+        try:
+            status_dto = parser.status_xml_to_dto()
+        except ClusterStatusParsingError as e:
+            report_list.append(cluster_status_parsing_error_to_report(e))
+            return report_list
+        report_list.extend(parser.get_warnings())
+
+        status = ResourcesStatusFacade.from_resources_status_dto(status_dto)
+        for r_id in resource_ids:
+            if not status.exists(r_id, None):
+                # Pacemaker does not put misconfigured resources into cluster
+                # status and we are unable to check state of such resources.
+                # This happens for e.g. bundle with primitive resource inside
+                # and no IP address for the bundle specified. We expect the
+                # resource to be stopped since it is misconfigured. Stopping it
+                # again even when it is unmanaged should not break anything.
+                report_list.append(
+                    reports.ReportItem.debug(
+                        reports.messages.ConfiguredResourceMissingInStatus(
+                            r_id, ResourceState.UNMANAGED
+                        )
+                    )
+                )
+            elif status.is_state(r_id, None, ResourceState.UNMANAGED):
+                report_list.append(
+                    reports.ReportItem(
+                        reports.get_severity(
+                            reports.codes.FORCE,
+                            reports.codes.FORCE in force_flags,
+                        ),
+                        reports.messages.ResourceIsUnmanaged(r_id),
+                    )
+                )
+    except NotImplementedError:
+        # TODO remove when issue with bundles in status is fixed
+        report_list.extend(
+            reports.ReportItem(
+                reports.get_severity(
+                    reports.codes.FORCE,
+                    reports.codes.FORCE in force_flags,
+                ),
+                reports.messages.ResourceIsUnmanaged(resource_id),
+            )
+            for resource_id in resource_ids
+            if not is_resource_managed(state, resource_id)
+        )
+
+    return report_list

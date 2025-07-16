@@ -5,12 +5,20 @@ from typing import (
 
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import (
+    FUTURE_OPTION,
     Argv,
     InputModifiers,
     KeyValueParser,
     group_by_keywords,
 )
+from pcs.cli.reports.output import (
+    deprecation_warning,
+    process_library_reports,
+    warn,
+)
+from pcs.common import reports
 from pcs.common.reports import codes as report_codes
+from pcs.lib.errors import LibraryError
 
 
 def config_setup(lib: Any, arg_list: Argv, modifiers: InputModifiers) -> None:
@@ -255,11 +263,36 @@ def remove_from_cluster(
 ) -> None:
     """
     Options:
-      * --force - allow remove of multiple
+      * --force - allow remove of multiple, (deprecated) don't stop resources
       * -f - CIB file
       * --name - name of a booth instance
+      * --no-stop - don't stop resources before deletion
+      * --future - specifying '--force' does not skip resource stopping
     """
-    modifiers.ensure_only_supported("--force", "-f", "--name")
+
+    def _process_reports(
+        report_list: reports.ReportItemList,
+        force_flags: reports.types.ForceFlags,
+    ) -> reports.ReportItemList:
+        filtered_reports = []
+        for report in report_list:
+            if (
+                report.message.code
+                == reports.codes.CANNOT_REMOVE_RESOURCES_NOT_STOPPED
+            ):
+                continue
+            if (
+                report.severity.level == reports.ReportItemSeverity.ERROR
+                and report.severity.force_code in force_flags
+            ):
+                report.severity = reports.ReportItemSeverity.warning()
+            filtered_reports.append(report)
+        return filtered_reports
+
+    modifiers.ensure_only_supported(
+        "-f", "--force", FUTURE_OPTION, "--name", "--no-stop"
+    )
+    modifiers.ensure_not_mutually_exclusive("-f", "--no-stop")
     if arg_list:
         raise CmdLineInputError()
 
@@ -267,9 +300,69 @@ def remove_from_cluster(
     if modifiers.get("--force"):
         force_flags.append(report_codes.FORCE)
 
-    lib.booth.remove_from_cluster(
-        instance_name=modifiers.get("--name"), force_flags=force_flags
-    )
+    instance_name = modifiers.get("--name")
+
+    if modifiers.is_specified("-f"):
+        warn(
+            "Resources are not going to be stopped before deletion because the "
+            "command does not run on a live cluster"
+        )
+        lib.booth.remove_from_cluster(instance_name, force_flags)
+        return
+
+    dont_stop_me_now = modifiers.is_specified("--no-stop")
+    if (
+        not modifiers.is_specified(FUTURE_OPTION)
+        and modifiers.is_specified("--force")
+        and not dont_stop_me_now
+    ):
+        # deprecated after pcs-0.12.0
+        deprecation_warning(
+            "Using '--force' to skip resource stopping is deprecated and will "
+            "be removed in a future release. Specify '--future' to switch to "
+            "the future behavior and use '--no-stop' to skip resource stopping."
+        )
+        dont_stop_me_now = True
+
+    if dont_stop_me_now:
+        lib.booth.remove_from_cluster(instance_name, force_flags)
+        return
+
+    original_report_processor = lib.env.report_processor
+    in_memory_report_processor = reports.processor.ReportProcessorInMemory()
+    lib.env.report_processor = in_memory_report_processor
+
+    try:
+        lib.booth.remove_from_cluster(instance_name)
+
+        if in_memory_report_processor.reports:
+            process_library_reports(
+                in_memory_report_processor.reports,
+                include_debug=modifiers.is_specified("--debug"),
+            )
+        return
+    except LibraryError as e:
+        filtered_reports = _process_reports(
+            in_memory_report_processor.reports, force_flags
+        )
+
+        if reports.has_errors(filtered_reports) or e.output or e.args:
+            if filtered_reports:
+                process_library_reports(
+                    filtered_reports,
+                    include_debug=modifiers.is_specified("--debug"),
+                    exit_on_error=False,
+                )
+
+            raise e
+
+    lib.env.report_processor = original_report_processor
+
+    resource_ids = lib.booth.get_resource_ids_from_cluster(instance_name)
+    lib.resource.stop(resource_ids, force_flags)
+    lib.cluster.wait_for_pcmk_idle(None)
+
+    lib.booth.remove_from_cluster(instance_name, force_flags)
 
 
 def restart(lib: Any, arg_list: Argv, modifiers: InputModifiers) -> None:

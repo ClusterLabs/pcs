@@ -9,7 +9,7 @@ from lxml import etree
 
 from pcs import settings
 from pcs.common import const
-from pcs.common.str_tools import format_list
+from pcs.common.str_tools import format_list, format_plural
 from pcs.constraint import LOCATION_NODE_VALIDATION_SKIP_MSG
 
 from pcs_test.tools.assertions import (
@@ -65,6 +65,19 @@ DEPRECATED_STANDALONE_SCORE = (
 
 empty_cib = rc("cib-empty-3.7.xml")
 large_cib = rc("cib-large.xml")
+
+
+def fixture_message_not_deleting_resources_not_live(resource_ids):
+    resources = format_plural(resource_ids, "resource")
+    are = format_plural(resource_ids, "is")
+    return (
+        "Warning: Resources are not going to be stopped before deletion "
+        "because the command does not run on a live cluster\n"
+        f"Warning: Not checking if {resources} {format_list(resource_ids)} "
+        f"{are} stopped before deletion because the command does not run on a "
+        "live cluster. Deleting unstopped resources may result in orphaned "
+        "resources being present in the cluster.\n"
+    )
 
 
 class ConstraintTestCibFixture(CachedCibFixture):
@@ -991,7 +1004,8 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
         )
         ac(
             stderr,
-            outdent(
+            fixture_message_not_deleting_resources_not_live(["D5"])
+            + outdent(
                 """\
             Removing references:
               Resource 'D5' from:
@@ -1008,7 +1022,8 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
         self.assertEqual(stdout, "")
         ac(
             stderr,
-            outdent(
+            fixture_message_not_deleting_resources_not_live(["D6"])
+            + outdent(
                 """\
             Removing dependant element:
               Resource set: 'colocation_set_D5D6D7-1_set'
@@ -1497,7 +1512,8 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
         self.assertEqual(stdout, "")
         ac(
             stderr,
-            outdent(
+            fixture_message_not_deleting_resources_not_live(["D5"])
+            + outdent(
                 """\
             Removing references:
               Resource 'D5' from:
@@ -1513,7 +1529,8 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
         self.assertEqual(stdout, "")
         ac(
             stderr,
-            outdent(
+            fixture_message_not_deleting_resources_not_live(["D6"])
+            + outdent(
                 """\
             Removing dependant element:
               Resource set: 'order_set_D5D6D7-1_set'
@@ -2362,6 +2379,7 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
                 """\
             Running action(s) 'pacemaker_remote disable', 'pacemaker_remote stop' on 'guest1' was skipped because the command does not run on a live cluster (e.g. -f was used). Please, run the action(s) manually.
             Removing 'pacemaker authkey' from 'guest1' was skipped because the command does not run on a live cluster (e.g. -f was used). Please, remove the file(s) manually.
+            Warning: Skipping removal of node 'guest1' from pacemaker because the command does not run on a live cluster
             """
             ),
         )
