@@ -31,7 +31,11 @@ def get_unique_uuid(already_used: StringCollection) -> str:
 
 
 def format_os_error(e: OSError) -> str:
-    return f"{e.strerror}: '{e.filename}'" if e.filename else e.strerror
+    if e.filename:
+        return f"{e.strerror}: '{e.filename}'"
+    if e.strerror:
+        return e.strerror
+    return (f"{e.__class__.__name__} {e}").strip()
 
 
 def xml_fromstring(xml: str) -> _Element:

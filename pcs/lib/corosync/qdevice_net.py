@@ -2,11 +2,7 @@ import os
 import os.path
 import re
 import shutil
-from typing import (
-    Callable,
-    Optional,
-    Sequence,
-)
+from typing import Callable, Optional, Sequence
 
 from pcs import settings
 from pcs.common import reports
@@ -15,6 +11,7 @@ from pcs.common.node_communicator import (
     RequestTarget,
 )
 from pcs.common.str_tools import join_multilines
+from pcs.common.tools import format_os_error
 from pcs.common.types import StringSequence
 from pcs.lib.communication import qdevice_net as qdevice_net_com
 from pcs.lib.communication.tools import run_and_raise
@@ -142,10 +139,12 @@ def qdevice_destroy() -> None:
     try:
         if qdevice_initialized():
             shutil.rmtree(settings.corosync_qdevice_net_server_certs_dir)
-    except EnvironmentError as e:
+    except OSError as e:
         raise LibraryError(
             reports.ReportItem.error(
-                reports.messages.QdeviceDestroyError(__model, e.strerror)
+                reports.messages.QdeviceDestroyError(
+                    __model, format_os_error(e)
+                )
             )
         ) from e
 
@@ -261,10 +260,10 @@ def qdevice_sign_certificate_request(
                     cluster_name,
                 ]
             )
-    except EnvironmentError as e:
+    except OSError as e:
         raise LibraryError(
             reports.ReportItem.error(
-                reports.messages.QdeviceCertificateSignError(e.strerror)
+                reports.messages.QdeviceCertificateSignError(format_os_error(e))
             )
         ) from e
     if retval != 0:
@@ -301,12 +300,11 @@ def client_setup(runner: CommandRunner, ca_certificate: bytes) -> None:
         )
         with open(ca_file_path, "wb") as ca_file:
             ca_file.write(ca_certificate)
-    except EnvironmentError as e:
+    except OSError as e:
         raise LibraryError(
             reports.ReportItem.error(
                 reports.messages.QdeviceInitializationError(
-                    __model,
-                    e.strerror,
+                    __model, format_os_error(e)
                 )
             )
         ) from e
@@ -346,10 +344,12 @@ def client_destroy() -> None:
     try:
         if client_initialized():
             shutil.rmtree(settings.corosync_qdevice_net_client_certs_dir)
-    except EnvironmentError as e:
+    except OSError as e:
         raise LibraryError(
             reports.ReportItem.error(
-                reports.messages.QdeviceDestroyError(__model, e.strerror)
+                reports.messages.QdeviceDestroyError(
+                    __model, format_os_error(e)
+                )
             )
         ) from e
 
@@ -421,10 +421,12 @@ def client_cert_request_to_pk12(
                     tmpfile.name,
                 ]
             )
-    except EnvironmentError as e:
+    except OSError as e:
         raise LibraryError(
             reports.ReportItem.error(
-                reports.messages.QdeviceCertificateImportError(e.strerror)
+                reports.messages.QdeviceCertificateImportError(
+                    format_os_error(e)
+                )
             )
         ) from e
     if retval != 0:
@@ -464,10 +466,12 @@ def client_import_certificate_and_key(
                     tmpfile.name,
                 ]
             )
-    except EnvironmentError as e:
+    except OSError as e:
         raise LibraryError(
             reports.ReportItem.error(
-                reports.messages.QdeviceCertificateImportError(e.strerror)
+                reports.messages.QdeviceCertificateImportError(
+                    format_os_error(e)
+                )
             )
         ) from e
     if retval != 0:
@@ -504,9 +508,7 @@ def _get_output_certificate(
     try:
         with open(filename, "rb") as cert_file:
             return cert_file.read()
-    except EnvironmentError as e:
+    except OSError as e:
         raise LibraryError(
-            reports.ReportItem.error(
-                report_message_func(f"{filename}: {e.strerror}")
-            )
+            reports.ReportItem.error(report_message_func(format_os_error(e)))
         ) from e

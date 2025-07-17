@@ -9,21 +9,11 @@ import sys
 import tempfile
 import time
 import xml.dom.minidom
-from typing import (
-    Any,
-    Callable,
-    Iterable,
-    Mapping,
-    Optional,
-    Union,
-    cast,
-)
+from typing import Any, Callable, Iterable, Mapping, Optional, Union, cast
+from xml.parsers.expat import ExpatError
 
 import pcs.lib.pacemaker.live as lib_pacemaker
-from pcs import (
-    settings,
-    utils,
-)
+from pcs import settings, utils
 from pcs.cli.common import parse_args
 from pcs.cli.common.errors import (
     ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE,
@@ -40,45 +30,22 @@ from pcs.cli.common.tools import print_to_stderr
 from pcs.cli.file import metadata as file_metadata
 from pcs.cli.reports import process_library_reports
 from pcs.cli.reports.messages import report_item_msg_from_dto
-from pcs.cli.reports.output import (
-    deprecation_warning,
-    warn,
-)
+from pcs.cli.reports.output import deprecation_warning, warn
 from pcs.common import file as pcs_file
-from pcs.common import (
-    file_type_codes,
-    reports,
-)
-from pcs.common.corosync_conf import (
-    CorosyncConfDto,
-    CorosyncNodeDto,
-)
+from pcs.common import file_type_codes, reports
+from pcs.common.corosync_conf import CorosyncConfDto, CorosyncNodeDto
 from pcs.common.interface import dto
-from pcs.common.node_communicator import (
-    HostNotFound,
-    Request,
-    RequestData,
-)
-from pcs.common.str_tools import (
-    format_list,
-    indent,
-    join_multilines,
-)
+from pcs.common.node_communicator import HostNotFound, Request, RequestData
+from pcs.common.str_tools import format_list, indent, join_multilines
 from pcs.common.tools import format_os_error
-from pcs.common.types import (
-    StringCollection,
-    StringIterable,
-)
+from pcs.common.types import StringCollection, StringIterable
 from pcs.lib import sbd as lib_sbd
 from pcs.lib.commands.remote_node import _destroy_pcmk_remote_env
 from pcs.lib.communication.nodes import CheckAuth
 from pcs.lib.communication.tools import RunRemotelyBase, run_and_raise
 from pcs.lib.communication.tools import run as run_com_cmd
 from pcs.lib.corosync import qdevice_net
-from pcs.lib.corosync.live import (
-    QuorumStatusException,
-    QuorumStatusFacade,
-)
+from pcs.lib.corosync.live import QuorumStatusException, QuorumStatusFacade
 from pcs.lib.errors import LibraryError
 from pcs.lib.node import get_existing_nodes_names
 from pcs.utils import parallel_for_nodes
@@ -865,7 +832,7 @@ def cluster_push(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  # no
             utils.err(
                 "unable to push cib, scope '%s' not present in new cib" % scope
             )
-    except (EnvironmentError, xml.parsers.expat.ExpatError) as e:
+    except (OSError, ExpatError) as e:
         utils.err("unable to parse new cib: %s" % e)
 
     EXITCODE_INVALID_CIB = 78
@@ -1063,7 +1030,7 @@ def get_cib(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  # noqa: P
         try:
             with open(filename, "w") as cib_file:
                 cib_file.write(output)
-        except EnvironmentError as e:
+        except OSError as e:
             utils.err(
                 "Unable to write to file '%s', %s" % (filename, e.strerror)
             )
@@ -1507,7 +1474,7 @@ def cluster_report(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  # 
         try:
             os.remove(dest_outfile)
         except OSError as e:
-            utils.err("Unable to remove " + dest_outfile + ": " + e.strerror)
+            utils.err(f"Unable to remove {dest_outfile}: {format_os_error(e)}")
     crm_report_opts = []
 
     crm_report_opts.append("-f")

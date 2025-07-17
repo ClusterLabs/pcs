@@ -5,16 +5,10 @@ import os.path
 import re
 from textwrap import dedent
 from typing import NamedTuple
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
 from pcs import settings
-from pcs.common import (
-    file_type_codes,
-    reports,
-)
+from pcs.common import file_type_codes, reports
 from pcs.lib.commands import quorum as lib
 from pcs.lib.corosync.config_facade import ConfigFacade
 from pcs.lib.env import LibraryEnvironment
@@ -2183,7 +2177,7 @@ class DeviceNetCertificateSetupLocal(DeviceNetCertsMixin, TestCase):
                     reports.codes.QDEVICE_INITIALIZATION_ERROR,
                     force_code=None,
                     model="net",
-                    reason="an error",
+                    reason=f"an error: '{self.ca_file_path}'",
                 ),
             ],
             expected_in_processor=False,
@@ -2267,7 +2261,7 @@ class DeviceNetCertificateSetupLocal(DeviceNetCertsMixin, TestCase):
                     reports.codes.QDEVICE_INITIALIZATION_ERROR,
                     force_code=None,
                     model="net",
-                    reason=f"{self.config.runner.corosync.qdevice_generated_cert_path}: an error",
+                    reason=f"an error: '{self.config.runner.corosync.qdevice_generated_cert_path}'",
                 ),
             ],
             expected_in_processor=False,
@@ -2328,7 +2322,7 @@ class DeviceNetCertificateSetupLocal(DeviceNetCertsMixin, TestCase):
                 fixture.error(
                     reports.codes.QDEVICE_CERTIFICATE_IMPORT_ERROR,
                     force_code=None,
-                    reason="an error",
+                    reason=f"an error: '{self.signed_cert_tmp_file_name}'",
                 ),
             ],
             expected_in_processor=False,
@@ -2384,7 +2378,7 @@ class DeviceNetCertificateSetupLocal(DeviceNetCertsMixin, TestCase):
                 fixture.error(
                     reports.codes.QDEVICE_CERTIFICATE_IMPORT_ERROR,
                     force_code=None,
-                    reason=f"{self.config.runner.corosync.qdevice_pk12_cert_path}: an error",
+                    reason=f"an error: '{self.config.runner.corosync.qdevice_pk12_cert_path}'",
                 ),
             ],
             expected_in_processor=False,
@@ -2415,7 +2409,7 @@ class DeviceNetCertificateSetupLocal(DeviceNetCertsMixin, TestCase):
                 fixture.error(
                     reports.codes.QDEVICE_CERTIFICATE_IMPORT_ERROR,
                     force_code=None,
-                    reason="an error",
+                    reason=f"an error: '{self.pk12_cert_tmp_file_name}'",
                 ),
             ],
             expected_in_processor=False,

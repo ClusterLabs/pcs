@@ -4,21 +4,12 @@ import re
 import sys
 import textwrap
 from functools import partial
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Mapping,
-    Optional,
-)
+from typing import TYPE_CHECKING, Any, Callable, Mapping, Optional
 from xml.dom.minidom import parseString
 
 import pcs.lib.pacemaker.live as lib_pacemaker
 import pcs.lib.resource_agent as lib_ra
-from pcs import (
-    constraint,
-    utils,
-)
+from pcs import constraint, utils
 from pcs.cli.cluster_property.output import PropertyConfigurationFacade
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.output import smart_wrap_text
@@ -34,19 +25,10 @@ from pcs.cli.common.parse_args import (
     group_by_keywords,
     wait_to_timeout,
 )
-from pcs.cli.common.tools import (
-    print_to_stderr,
-    timeout_to_seconds_legacy,
-)
-from pcs.cli.nvset import (
-    filter_out_expired_nvset,
-    nvset_dto_list_to_lines,
-)
+from pcs.cli.common.tools import print_to_stderr, timeout_to_seconds_legacy
+from pcs.cli.nvset import filter_out_expired_nvset, nvset_dto_list_to_lines
 from pcs.cli.reports import process_library_reports
-from pcs.cli.reports.output import (
-    error,
-    warn,
-)
+from pcs.cli.reports.output import error, warn
 from pcs.cli.resource.common import check_is_not_stonith
 from pcs.cli.resource.output import (
     operation_defaults_to_cmd,
@@ -62,31 +44,21 @@ from pcs.cli.resource.parse_args import (
     parse_create_old,
 )
 from pcs.cli.resource_agent import find_single_agent
-from pcs.common import (
-    const,
-    pacemaker,
-    reports,
-)
+from pcs.common import const, pacemaker, reports
 from pcs.common.interface import dto
 from pcs.common.pacemaker.defaults import CibDefaultsDto
 from pcs.common.pacemaker.resource.operations import (
     OCF_CHECK_LEVEL_INSTANCE_ATTRIBUTE_NAME,
 )
 from pcs.common.str_tools import format_list_custom_last_separator
-from pcs.lib.cib.resource import (
-    guest_node,
-    primitive,
-)
+from pcs.lib.cib.resource import guest_node, primitive
 from pcs.lib.cib.tools import get_resources
 from pcs.lib.commands.resource import (
     _get_nodes_to_validate_against,
     _validate_guest_change,
 )
 from pcs.lib.errors import LibraryError
-from pcs.lib.pacemaker.values import (
-    is_true,
-    validate_id,
-)
+from pcs.lib.pacemaker.values import is_true, validate_id
 from pcs.settings import (
     pacemaker_wait_timeout_status as PACEMAKER_WAIT_TIMEOUT_STATUS,
 )
@@ -2000,8 +1972,10 @@ def resource_group_list(
     element = parseString(group_xml).documentElement
     # If there is more than one group returned it's wrapped in an xpath-query
     # element
-    if element.tagName == "xpath-query":
-        elements = element.getElementsByTagName("group")
+    # Ignoring mypy errors in this very old code. So far, nobody reported a bug
+    # related to these lines.
+    if element.tagName == "xpath-query":  # type: ignore
+        elements = element.getElementsByTagName("group")  # type: ignore
     else:
         elements = [element]
 

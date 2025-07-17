@@ -1,10 +1,7 @@
 # pylint: disable=too-many-lines
 import json
 from textwrap import dedent
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
 from pcs import cluster
 from pcs.cli.common.errors import CmdLineInputError
@@ -18,10 +15,7 @@ from pcs.common.interface import dto
 from pcs.common.reports import codes as report_codes
 from pcs.common.types import CorosyncTransportType
 
-from pcs_test.tools.misc import (
-    dict_to_modifiers,
-    get_tmp_file,
-)
+from pcs_test.tools.misc import dict_to_modifiers, get_tmp_file
 
 
 def _node(name, **kwargs):
@@ -1677,12 +1671,13 @@ class ClusterAuthkeyCorosync(TestCase):
     )
     @mock.patch("pcs.utils.err")
     def test_key_path_nonexistent_file(self, mock_err, mock_open):
-        mock_open.side_effect = EnvironmentError()
-        self.call_cmd(["/tmp/nonexistent"])
+        filepath = "/tmp/nonexistent"
+        mock_open.side_effect = OSError(1, "an error", filepath)
+        self.call_cmd([filepath])
         mock_err.assert_called_once_with(
-            "Unable to read file '/tmp/nonexistent': None"
+            f"Unable to read file '{filepath}': an error: '{filepath}'"
         )
-        mock_open.assert_called_once_with("/tmp/nonexistent", "rb")
+        mock_open.assert_called_once_with(filepath, "rb")
 
     def test_more_args(self):
         with self.assertRaises(CmdLineInputError) as cm:

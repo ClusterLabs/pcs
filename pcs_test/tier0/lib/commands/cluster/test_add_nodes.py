@@ -5,16 +5,10 @@ import json
 import os.path
 from functools import partial
 from textwrap import dedent
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
 from pcs import settings
-from pcs.common import (
-    file_type_codes,
-    reports,
-)
+from pcs.common import file_type_codes, reports
 from pcs.common.file import RawFileError
 from pcs.lib.commands import cluster
 
@@ -3860,7 +3854,7 @@ class FailureQdevice(TestCase):
             [
                 fixture.error(
                     reports.codes.QDEVICE_CERTIFICATE_IMPORT_ERROR,
-                    reason=f"{pk12_cert_path}: {self.err_msg}",
+                    reason=f"{self.err_msg}: '{pk12_cert_path}'",
                 ),
             ]
         )
@@ -3974,7 +3968,7 @@ class FailureQdevice(TestCase):
                 fixture.error(
                     reports.codes.QDEVICE_INITIALIZATION_ERROR,
                     model="net",
-                    reason=f"{cert_req_path}: {self.err_msg}",
+                    reason=f"{self.err_msg}: '{cert_req_path}'",
                 ),
             ]
         )

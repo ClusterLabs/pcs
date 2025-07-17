@@ -1,18 +1,7 @@
 from collections import defaultdict
 from dataclasses import dataclass
-from enum import (
-    Enum,
-    auto,
-)
-from typing import (
-    Final,
-    Iterable,
-    Literal,
-    Optional,
-    Sequence,
-    Union,
-    cast,
-)
+from enum import Enum, auto
+from typing import Final, Iterable, Literal, Optional, Sequence, Union, cast
 
 from pcs.common.const import (
     PCMK_ROLE_STOPPED,
@@ -64,31 +53,31 @@ class ResourceState(Enum):
     possible values for checking the state of the resource
     """
 
-    STARTED: AttributeTuple = ("role", PCMK_STATUS_ROLE_STARTED)
-    STOPPED: AttributeTuple = ("role", PCMK_STATUS_ROLE_STOPPED)
-    PROMOTED: AttributeTuple = ("role", PCMK_STATUS_ROLE_PROMOTED)
-    UNPROMOTED: AttributeTuple = ("role", PCMK_STATUS_ROLE_UNPROMOTED)
-    STARTING: AttributeTuple = ("role", PCMK_STATUS_ROLE_STARTING)
-    STOPPING: AttributeTuple = ("role", PCMK_STATUS_ROLE_STOPPING)
-    MIGRATING: AttributeTuple = ("role", PCMK_STATUS_ROLE_MIGRATING)
-    PROMOTING: AttributeTuple = ("role", PCMK_STATUS_ROLE_PROMOTING)
-    DEMOTING: AttributeTuple = ("role", PCMK_STATUS_ROLE_DEMOTING)
-    MONITORING: AttributeTuple = ("pending", "Monitoring")
-    DISABLED: AttributeTuple = ("disabled", True)
-    ENABLED: AttributeTuple = ("disabled", False)
-    MANAGED: AttributeTuple = ("managed", True)
-    UNMANAGED: AttributeTuple = ("managed", False)
-    MAINTENANCE: AttributeTuple = ("maintenance", True)
-    FAILED: AttributeTuple = ("failed", True)
-    ACTIVE: AttributeTuple = ("active", True)
-    ORPHANED: AttributeTuple = ("orphaned", True)
-    BLOCKED: AttributeTuple = ("blocked", True)
-    FAILURE_IGNORED: AttributeTuple = ("failure_ignored", True)
-    PENDING: list[AttributeTuple] = [
+    STARTED = ("role", PCMK_STATUS_ROLE_STARTED)
+    STOPPED = ("role", PCMK_STATUS_ROLE_STOPPED)
+    PROMOTED = ("role", PCMK_STATUS_ROLE_PROMOTED)
+    UNPROMOTED = ("role", PCMK_STATUS_ROLE_UNPROMOTED)
+    STARTING = ("role", PCMK_STATUS_ROLE_STARTING)
+    STOPPING = ("role", PCMK_STATUS_ROLE_STOPPING)
+    MIGRATING = ("role", PCMK_STATUS_ROLE_MIGRATING)
+    PROMOTING = ("role", PCMK_STATUS_ROLE_PROMOTING)
+    DEMOTING = ("role", PCMK_STATUS_ROLE_DEMOTING)
+    MONITORING = ("pending", "Monitoring")
+    DISABLED = ("disabled", True)
+    ENABLED = ("disabled", False)
+    MANAGED = ("managed", True)
+    UNMANAGED = ("managed", False)
+    MAINTENANCE = ("maintenance", True)
+    FAILED = ("failed", True)
+    ACTIVE = ("active", True)
+    ORPHANED = ("orphaned", True)
+    BLOCKED = ("blocked", True)
+    FAILURE_IGNORED = ("failure_ignored", True)
+    PENDING = [
         ("role", set(PCMK_STATUS_ROLES_PENDING)),
         ("pending", "Monitoring"),
     ]
-    LOCKED_TO: AttributeTuple = ("locked_to", NOT_NONE)
+    LOCKED_TO = ("locked_to", NOT_NONE)
 
 
 ResourceStateExactCheck = Literal[ResourceState.LOCKED_TO]

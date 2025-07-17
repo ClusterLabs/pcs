@@ -2,18 +2,14 @@ import signal
 import subprocess
 from logging import Logger
 from shlex import quote as shell_quote
-from typing import (
-    Dict,
-    Mapping,
-    Optional,
-    Tuple,
-)
+from typing import Dict, Mapping, Optional, Tuple
 
 from pcs import settings
 from pcs.common import reports
 from pcs.common.reports import ReportProcessor
 from pcs.common.reports.item import ReportItem
 from pcs.common.str_tools import join_multilines
+from pcs.common.tools import format_os_error
 from pcs.common.types import StringSequence
 from pcs.lib.errors import LibraryError
 
@@ -121,8 +117,7 @@ class CommandRunner:
             raise LibraryError(
                 ReportItem.error(
                     reports.messages.RunExternalProcessError(
-                        log_args,
-                        e.strerror,
+                        log_args, format_os_error(e)
                     )
                 )
             ) from e
