@@ -1,24 +1,13 @@
 # pylint: disable=too-many-lines
 import json
 from copy import deepcopy
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
 from pcs import settings
-from pcs.common import (
-    file_type_codes,
-    reports,
-)
+from pcs.common import file_type_codes, reports
 from pcs.common.file import RawFileError
 from pcs.common.host import Destination
-from pcs.common.ssl import (
-    dump_cert,
-    dump_key,
-    generate_cert,
-    generate_key,
-)
+from pcs.common.ssl import dump_cert, dump_key, generate_cert, generate_key
 from pcs.lib.commands import cluster
 from pcs.lib.corosync import constants
 
@@ -29,10 +18,7 @@ from pcs_test.tools.command_env.mock_node_communicator import (
 )
 from pcs_test.tools.custom_mock import patch_getaddrinfo
 
-from .common import (
-    CLUSTER_NAME,
-    CLUSTER_UUID,
-)
+from .common import CLUSTER_NAME, CLUSTER_UUID
 
 PCSD_SSL_KEY = generate_key()
 PCSD_SSL_CERT = generate_cert(PCSD_SSL_KEY, "servername")
@@ -1577,10 +1563,9 @@ class Validation(TestCase):
             )
         )
         self.resolvable_hosts.extend(nodelist)
-        host_version = {
-            node: "1.0"
-            for node in ["node1", "node3", "node4", "node5", "node6"]
-        }
+        host_version = dict.fromkeys(
+            ["node1", "node3", "node4", "node5", "node6"], "1.0"
+        )
         host_version["node7"] = "1.1"
 
         self.env_assist.assert_raise_library_error(
@@ -1705,7 +1690,7 @@ class Validation(TestCase):
             )
         )
         self.resolvable_hosts.extend(nodelist)
-        host_version = {node: "1.0" for node in ["node1", "node3"]}
+        host_version = dict.fromkeys(["node1", "node3"], "1.0")
         host_version["node4"] = "1.1"
 
         self.env_assist.assert_raise_library_error(

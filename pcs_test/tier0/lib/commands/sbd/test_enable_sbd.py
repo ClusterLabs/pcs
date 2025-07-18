@@ -14,10 +14,7 @@ from pcs.lib.corosync.config_parser import Parser
 
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
-from pcs_test.tools.misc import (
-    get_test_resource,
-    outdent,
-)
+from pcs_test.tools.misc import get_test_resource, outdent
 
 
 def _get_corosync_conf_text_with_atb(orig_cfg_file):
@@ -689,10 +686,9 @@ class Validations(TestCase):
             lambda: enable_sbd(
                 self.env_assist.get_env(),
                 default_watchdog=None,
-                watchdog_dict={
-                    node: "/dev/watchdog"
-                    for node in (self.node_list + [unknown_node])
-                },
+                watchdog_dict=dict.fromkeys(
+                    self.node_list + [unknown_node], "/dev/watchdog"
+                ),
                 sbd_options={},
             )
         )

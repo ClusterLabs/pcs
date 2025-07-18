@@ -1,15 +1,6 @@
 import uuid
-from dataclasses import (
-    astuple,
-    dataclass,
-)
-from typing import (
-    Generator,
-    MutableSet,
-    Optional,
-    TypeVar,
-    Union,
-)
+from dataclasses import astuple, dataclass
+from typing import Generator, MutableSet, Optional, TypeVar, Union
 
 from lxml import etree
 from lxml.etree import _Element
@@ -122,6 +113,12 @@ class Version:
 
     def __le__(self, other: "Version") -> bool:
         return self.as_full_tuple <= other.as_full_tuple
+
+    def __hash__(self) -> int:
+        # https://docs.astral.sh/ruff/rules/eq-without-hash/
+        # used self.as_full_tuple because __eq__ and __hash__ should be in sync,
+        # objects which compare equal must have the same hash value
+        return hash(self.as_full_tuple)
 
     # See, https://stackoverflow.com/questions/37557411/why-does-defining-the-argument-types-for-eq-throw-a-mypy-type-error
     def __eq__(self, other: object) -> bool:

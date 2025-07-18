@@ -21,6 +21,7 @@ class VersionTest(TestCase):
         self.assertTrue(a <= b)
         self.assertFalse(a > b)
         self.assertTrue(a >= b)
+        self.assertEqual(hash(a), hash(b))
 
     def assert_lt(self, a, b):
         self.assertFalse(a == b)
@@ -29,6 +30,7 @@ class VersionTest(TestCase):
         self.assertTrue(a <= b)
         self.assertFalse(a > b)
         self.assertFalse(a >= b)
+        self.assertNotEqual(hash(a), hash(b))
 
     def test_major(self):
         ver = tools.Version(2)

@@ -681,7 +681,7 @@ class TotemBase:
 
     def test_invalid_all_values(self):
         assert_report_item_list_equal(
-            self.call_function({name: "x" for name in self.allowed_options}),
+            self.call_function(dict.fromkeys(self.allowed_options, "x")),
             [
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,

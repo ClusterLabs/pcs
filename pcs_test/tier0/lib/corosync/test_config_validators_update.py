@@ -16,7 +16,7 @@ class UpdateTotem(TotemBase, TestCase):
 
     def test_empty_values_allowed(self):
         assert_report_item_list_equal(
-            self.call_function({name: "" for name in self.allowed_options}),
+            self.call_function(dict.fromkeys(self.allowed_options, "")),
             [],
         )
 

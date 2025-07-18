@@ -11,16 +11,10 @@ from typing import (
 from pcs import settings
 from pcs.common import reports
 from pcs.common.reports.item import ReportItem
-from pcs.common.types import (
-    StringCollection,
-    StringSequence,
-)
+from pcs.common.types import StringCollection, StringSequence
 from pcs.lib.corosync import constants
 from pcs.lib.corosync.config_parser import Section
-from pcs.lib.corosync.node import (
-    CorosyncNode,
-    CorosyncNodeAddress,
-)
+from pcs.lib.corosync.node import CorosyncNode, CorosyncNodeAddress
 from pcs.lib.errors import LibraryError
 from pcs.lib.interface.config import FacadeInterface
 
@@ -751,10 +745,9 @@ class ConfigFacade(FacadeInterface):
             )
 
         # configuration cleanup
-        remove_need_stopped_cluster = {
-            name: ""
-            for name in constants.QUORUM_OPTIONS_INCOMPATIBLE_WITH_QDEVICE
-        }
+        remove_need_stopped_cluster = dict.fromkeys(
+            constants.QUORUM_OPTIONS_INCOMPATIBLE_WITH_QDEVICE, ""
+        )
         # remove old device settings
         quorum_section_list = self.__ensure_section(self.config, "quorum")
         for quorum in quorum_section_list:

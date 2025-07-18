@@ -1,9 +1,7 @@
+# ruff: noqa: PLC0415 `import` should be at the top-level of a file
 import sys
 import unittest
-from dataclasses import (
-    dataclass,
-    field,
-)
+from dataclasses import dataclass, field
 from io import StringIO
 
 
