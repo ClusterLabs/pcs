@@ -1,10 +1,7 @@
 import base64
 import os.path
 from textwrap import dedent
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
 import pcs.lib.corosync.qdevice_net as lib
 from pcs import settings
@@ -834,7 +831,7 @@ class GetOutputCertificateTest(TestCase):
             some other line
             """
         )
-        self.mock_open.side_effect = OSError(1, "an error")
+        self.mock_open.side_effect = OSError(1, "an error", self.file_path)
 
         assert_raise_library_error(
             lambda: lib._get_output_certificate(
@@ -844,7 +841,7 @@ class GetOutputCertificateTest(TestCase):
                 reports.ReportItemSeverity.ERROR,
                 reports.codes.QDEVICE_CERTIFICATE_IMPORT_ERROR,
                 {
-                    "reason": f"{self.file_path}: an error",
+                    "reason": f"an error: '{self.file_path}'",
                 },
             ),
         )
