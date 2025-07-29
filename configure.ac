@@ -347,12 +347,15 @@ AC_SUBST([PYAGENTX_VERSION])
 
 # pip 19.0 required for PEP517 support
 PCS_CHECK_PYMOD([pip], [>= 23.0])
-# pip builds a wheel first
-PCS_CHECK_PYMOD([wheel])
 
 if test "x$tests_only" != "xyes"; then
 	# setuptools 61.0.0 required for PEP621 support
 	PCS_CHECK_PYMOD([setuptools], [>= 66.1])
+	# wheel is required if setuptools < 71
+	AC_PIP_MODULE([setuptools], [>= 71], [], [], [need_wheel=yes])
+	if test "x$need_wheel" = "xyes"; then
+		PCS_CHECK_PYMOD([wheel])
+	fi
 	PCS_CHECK_PYMOD([cryptography])
 	PCS_CHECK_PYMOD([lxml])
 	PCS_CHECK_PYMOD([pyparsing], [>= 3.0.0])

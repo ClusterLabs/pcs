@@ -86,7 +86,7 @@ BuildRequires: python%{python3_version}-pip >= 23
 BuildRequires: python%{python3_version}-setuptools >= 66.1
 
 # for building wheel during make install
-BuildRequires: python%{python3_version}-wheel
+BuildRequires: (python%{python3_version}-wheel if python%{python3_version}-setuptools < 71)
 
 # for bundling dateutil
 %if "@cirpmworkarounds@" != "yes"

@@ -47,7 +47,7 @@ Apart from the dependencies listed above, these are also required for
 installation:
 
 * python development files (packages python3-devel, python3-setuptools 66.1+,
-  python3-pip, python3-wheel)
+  python3-pip, python3-wheel if python3-setuptools < 71)
 * ruby development files (package ruby-devel)
 * rubygems
 * rubygem bundler (package rubygem-bundler or ruby-bundler or bundler)
