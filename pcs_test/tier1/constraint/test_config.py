@@ -266,19 +266,19 @@ class ConstraintConfigCmdUnsupported(TestCase):
             ["constraint", "config", "--output-format=cmd"]
         )
         self.assertEqual(retval, 0)
-        sufix = "not supported by this command. Command for creating the constraint is omitted.\n"
+        suffix = "not supported by this command. Command for creating the constraint is omitted.\n"
         self.assertEqual(
             stderr,
             (
-                f"Warning: Location set constraint with id 'location-set' configured but it's {sufix}"
-                f"Warning: Resource role detected in constraint 'location-role' but {sufix}"
-                f"Warning: Lifetime configuration detected in constraint 'location-lifetime' but {sufix}"
-                f"Warning: Option 'influence' detected in constraint 'colocation-influence' but {sufix}"
-                f"Warning: Lifetime configuration detected in constraint 'colocation-lifetime' but {sufix}"
-                f"Warning: Option 'node-attribute' detected in constraint 'colocation-node-attribute' but {sufix}"
-                f"Warning: Option 'ordering' detected in resource set 'colocation-set-ordering-set' but {sufix}"
-                f"Warning: Option 'require-all' detected in constraint 'order-set-require-all' but {sufix}"
-                f"Warning: Option 'ordering' detected in resource set 'order-set-ordering-set' but {sufix}"
+                f"Warning: Location set constraint with id 'location-set' configured but it's {suffix}"
+                f"Warning: Resource role detected in constraint 'location-role' but {suffix}"
+                f"Warning: Lifetime configuration detected in constraint 'location-lifetime' but {suffix}"
+                f"Warning: Option 'influence' detected in constraint 'colocation-influence' but {suffix}"
+                f"Warning: Lifetime configuration detected in constraint 'colocation-lifetime' but {suffix}"
+                f"Warning: Option 'node-attribute' detected in constraint 'colocation-node-attribute' but {suffix}"
+                f"Warning: Option 'ordering' detected in resource set 'colocation-set-ordering-set' but {suffix}"
+                f"Warning: Option 'require-all' detected in constraint 'order-set-require-all' but {suffix}"
+                f"Warning: Option 'ordering' detected in resource set 'order-set-ordering-set' but {suffix}"
             ),
         )
         self.assertEqual(

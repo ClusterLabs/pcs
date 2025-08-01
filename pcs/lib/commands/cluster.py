@@ -398,7 +398,7 @@ def setup(  # noqa:  PLR0913, PLR0915
                 )
             )
             # Local certificate and key cannot be used because the local node
-            # may not be a part of the new cluter at all.
+            # may not be a part of the new cluster at all.
             ssl_key_raw = ssl.generate_key()
             ssl_key = ssl.dump_key(ssl_key_raw)
             ssl_cert = ssl.dump_cert(

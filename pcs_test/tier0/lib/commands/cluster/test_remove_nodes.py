@@ -106,8 +106,8 @@ def corosync_node_fixture(node_id, node, addrs):
     ]
 
 
-def node_fixture(node, node_id, addr_sufix=""):
-    return corosync_node_fixture(node_id, node, [f"{node}{addr_sufix}"])
+def node_fixture(node, node_id, addr_suffix=""):
+    return corosync_node_fixture(node_id, node, [f"{node}{addr_suffix}"])
 
 
 class LocalConfig:

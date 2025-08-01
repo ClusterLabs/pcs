@@ -1262,7 +1262,7 @@ class ResourceRestart(TestCase):
     def test_more_args(self, mock_print):
         with self.assertRaises(CmdLineInputError) as cm:
             resource.resource_restart_cmd(
-                self.lib, ["ono", "two", "three"], dict_to_modifiers({})
+                self.lib, ["one", "two", "three"], dict_to_modifiers({})
             )
         self.assertEqual(cm.exception.message, None)
         self.resource.restart.assert_not_called()

@@ -249,7 +249,7 @@ def _param_to_field_tuple(
             param.name,
             field_type,
             # pylint: disable=invalid-field-call
-            # this is actually used whitin make_dataclass function
+            # this is actually used within make_dataclass function
             dataclasses.field(default=param.default),
         )
     return (param.name, field_type)

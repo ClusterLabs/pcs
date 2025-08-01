@@ -95,7 +95,7 @@ class SplitListTest(TestCase):
     def test_returns_list_with_original_when_separator_not_in_original(self):
         self.assertEqual([["a", "b"]], split_list(["a", "b"], "c"))
 
-    def test_returns_splited_list(self):
+    def test_returns_split_list(self):
         self.assertEqual(
             [["a", "b"], ["c", "d"]], split_list(["a", "b", "|", "c", "d"], "|")
         )

@@ -762,30 +762,30 @@ def create_in_group(  # noqa: PLR0913
     # pylint: disable=too-many-arguments
     # pylint: disable=too-many-locals
     """
-    Create resource in a cib and put it into defined group
+    Create a resource in a cib and put it into a defined group
 
     env -- provides all for communication with externals
-    resource_id -- is identifier of resource
-    resource_agent_name -- contains name for the identification of agent
-    group_id -- is identificator for group to put primitive resource inside
+    resource_id -- new primitive resource identifier
+    resource_agent_name -- primitive resource agent name
+    group_id -- name of a group to put the primitive resource inside
     operation_list -- contains attributes for each entered operation
     meta_attributes -- contains attributes for primitive/meta_attributes
     instance_attributes -- contains attributes for primitive/instance_attributes
     allow_absent_agent -- is a flag for allowing agent that is not installed
         in a system
     allow_invalid_operation -- is a flag for allowing to use operations that
-        are not listed in a resource agent metadata
+        are not listed in the resource agent metadata
     allow_invalid_instance_attributes -- is a flag for allowing to use
-        instance attributes that are not listed in a resource agent metadata
+        instance attributes that are not listed in the resource agent metadata
         or for allowing to not use the instance_attributes that are required in
         resource agent metadata
-    use_default_operations -- is a flag for stopping stopping of adding
-        default cib operations (specified in a resource agent)
+    use_default_operations -- is a flag for stopping of adding default cib
+        operations (specified in the resource agent)
     ensure_disabled -- is flag that keeps resource in target-role "Stopped"
-    adjacent_resource_id -- identify neighbor of a newly created resource
-    put_after_adjacent -- is flag to put a newly create resource befor/after
-        adjacent resource
-    wait -- is flag for controlling waiting for pacemaker idle mechanism
+    adjacent_resource_id -- identify neighbor of the newly created resource
+    put_after_adjacent -- flag to put the newly create resource before / after
+        the adjacent resource
+    wait -- flag for controlling waiting for pacemaker idle mechanism
     allow_not_suitable_command -- turn forceable errors into warnings
     enable_agent_self_validation -- if True, use agent self-validation feature
         to validate instance attributes

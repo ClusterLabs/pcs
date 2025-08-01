@@ -24,7 +24,7 @@ def create_with_set(
 ) -> None:
     """
     callable create_with_set_library_call create constraint with set
-    argv -- part of comandline args
+    argv -- part of commandline args
     modifiers -- can contain "force" allowing resources in clone/promotable and
         constraint duplicity
 

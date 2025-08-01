@@ -272,8 +272,8 @@ class DefaultsConfigMixin(TestDefaultsMixin, AssertPcsMixin):
                         />
                     </rule>
                 </rule>
-                <nvpair id="{tag}-set1-nam1" name="nam1" value="val1"/>
-                <nvpair id="{tag}-set1-nam2" name="nam2" value="val2"/>
+                <nvpair id="{tag}-set1-name1" name="name1" value="value1"/>
+                <nvpair id="{tag}-set1-name2" name="name2" value="value2"/>
             </meta_attributes>
         </{tag}_defaults>"""
         self._prepare_cib_data(xml_template, empty_cib_rules)
@@ -283,8 +283,8 @@ class DefaultsConfigMixin(TestDefaultsMixin, AssertPcsMixin):
             stdout_full=dedent(
                 f"""\
                 Meta Attrs: {self.prefix}-set1
-                  nam1=val1
-                  nam2=val2
+                  name1=value1
+                  name2=value2
                   Rule: boolean-op=and
                     Rule: boolean-op=or
                       Expression: defined attr1
@@ -491,7 +491,7 @@ class RscDefaultsConfig(
                     <rule id="X-rule" boolean-op="and">
                         <rsc_expression id="X-rule-rsc-Dummy" type="Dummy"/>
                     </rule>
-                    <nvpair id="X-nam1" name="nam1" value="val1"/>
+                    <nvpair id="X-name1" name="name1" value="value1"/>
                 </meta_attributes>
             </rsc_defaults>
         """
@@ -504,7 +504,7 @@ class RscDefaultsConfig(
             stdout_full=dedent(
                 """\
                 Meta Attrs: X
-                  nam1=val1
+                  name1=value1
                   Rule: boolean-op=and
                     Expression: resource ::Dummy
             """
@@ -528,7 +528,7 @@ class OpDefaultsConfig(
                         <rsc_expression id="X-rule-rsc-Dummy" type="Dummy"/>
                         <op_expression id="X-rule-op-monitor" name="monitor"/>
                     </rule>
-                    <nvpair id="X-nam1" name="nam1" value="val1"/>
+                    <nvpair id="X-name1" name="name1" value="value1"/>
                 </meta_attributes>
             </op_defaults>
         """
@@ -541,7 +541,7 @@ class OpDefaultsConfig(
             stdout_full=dedent(
                 """\
                 Meta Attrs: X
-                  nam1=val1
+                  name1=value1
                   Rule: boolean-op=and
                     Expression: resource ::Dummy
                     Expression: op monitor
@@ -574,13 +574,13 @@ class DefaultsSetCreateMixin(TestDefaultsMixin, AssertPcsMixin):
     def test_success(self):
         self.assert_effect(
             self.cli_command
-            + "set create id=mine score=10 meta nam1=val1 nam2=val2 --force".split(),
+            + "set create id=mine score=10 meta name1=value1 name2=value2 --force".split(),
             dedent(
                 f"""\
                 <{self.cib_tag}>
                     <meta_attributes id="mine" score="10">
-                        <nvpair id="mine-nam1" name="nam1" value="val1"/>
-                        <nvpair id="mine-nam2" name="nam2" value="val2"/>
+                        <nvpair id="mine-name1" name="name1" value="value1"/>
+                        <nvpair id="mine-name2" name="name2" value="value2"/>
                     </meta_attributes>
                 </{self.cib_tag}>
             """
@@ -591,7 +591,7 @@ class DefaultsSetCreateMixin(TestDefaultsMixin, AssertPcsMixin):
     def _assert_success_rule(self, deprecated_rule_form):
         command = (
             self.cli_command
-            + "-- set create id=mine score=10 meta nam1=val1 nam2=val2 rule".split()
+            + "-- set create id=mine score=10 meta name1=value1 name2=value2 rule".split()
         )
         rule_str = (
             "(date gt 2018-05-17T13:28:19 or "
@@ -638,8 +638,8 @@ class DefaultsSetCreateMixin(TestDefaultsMixin, AssertPcsMixin):
                                   operation="in_range" end="2019-12-15"
                             />
                         </rule>
-                        <nvpair id="mine-nam1" name="nam1" value="val1"/>
-                        <nvpair id="mine-nam2" name="nam2" value="val2"/>
+                        <nvpair id="mine-name1" name="name1" value="value1"/>
+                        <nvpair id="mine-name2" name="name2" value="value2"/>
                     </meta_attributes>
                 </{self.cib_tag}>
             """
@@ -660,7 +660,7 @@ class DefaultsSetCreateMixin(TestDefaultsMixin, AssertPcsMixin):
     def test_rule_error_messages(self):
         self.assert_pcs_fail(
             self.cli_command
-            + "set create id=mine score=10 meta nam1=val1 nam2=val2 rule".split()
+            + "set create id=mine score=10 meta name1=value1 name2=value2 rule".split()
             + [
                 "(date gt 2018-05-1X or "
                 "date in_range 2019-03-05 to 2019-01-11 or "
@@ -708,7 +708,7 @@ class RscDefaultsSetCreate(
         self.assert_effect(
             (
                 self.cli_command
-                + "set create id=X meta nam1=val1 rule".split()
+                + "set create id=X meta name1=value1 rule".split()
                 + ["resource ::Dummy"]
             ),
             f"""\
@@ -719,7 +719,7 @@ class RscDefaultsSetCreate(
                     >
                         <rsc_expression id="X-rule-rsc-Dummy" type="Dummy"/>
                     </rule>
-                    <nvpair id="X-nam1" name="nam1" value="val1"/>
+                    <nvpair id="X-name1" name="name1" value="value1"/>
                 </meta_attributes>
             </{self.cib_tag}>
             """,
@@ -775,7 +775,7 @@ class OpDefaultsSetCreate(
         score_present = not is_minimum_cib_schema_version(3, 9, 0)
         self.assert_effect(
             self.cli_command
-            + "-- set create id=X meta nam1=val1 rule".split()
+            + "-- set create id=X meta name1=value1 rule".split()
             + [
                 "resource ::Dummy and (op start or op stop) and "
                 "(defined attr1 or attr2 gte number -1.2 or "
@@ -821,7 +821,7 @@ class OpDefaultsSetCreate(
                             />
                         </rule>
                     </rule>
-                    <nvpair id="X-nam1" name="nam1" value="val1"/>
+                    <nvpair id="X-name1" name="name1" value="value1"/>
                 </meta_attributes>
             </{self.cib_tag}>
             """,

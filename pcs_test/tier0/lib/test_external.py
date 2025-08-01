@@ -131,7 +131,7 @@ class CommandRunnerTest(TestCase):
         real_stdout, real_stderr, real_retval = runner.run(
             command, env_extend={"b": "B", "c": "{C}"}
         )
-        # check that env_exted did not affect initial env of runner
+        # check that env_extend did not affect initial env of runner
         # pylint: disable=protected-access
         self.assertEqual(runner._env_vars, global_env)
 

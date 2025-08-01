@@ -160,14 +160,14 @@ class RemoveGuestOthers(TestCase):
         self.config.runner.cib.load(resources=FIXTURE_RESOURCES)
         self.env_assist.assert_raise_library_error(
             lambda: node_remove_guest(
-                self.env_assist.get_env(), node_identifier="NOEXISTENT"
+                self.env_assist.get_env(), node_identifier="NONEXISTENT"
             )
         )
         self.env_assist.assert_reports(
             [
                 fixture.error(
                     report_codes.NODE_NOT_FOUND,
-                    node="NOEXISTENT",
+                    node="NONEXISTENT",
                     searched_types=["guest"],
                 )
             ]

@@ -1052,7 +1052,7 @@ def resource_update(args: Argv, modifiers: InputModifiers) -> None:  # noqa: PLR
 
     # The "remote-node" meta attribute makes sense (and causes creation of
     # inner pacemaker resource) only for primitive. The meta attribute
-    # "remote-node" has no special meaining for clone/master. So there is no
+    # "remote-node" has no special meaning for clone/master. So there is no
     # need for checking this attribute in clone/master.
     #
     # It is ok to not to check it until this point in this function:

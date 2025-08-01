@@ -18,14 +18,14 @@ def xml_format(xml_string):
             last_space = new_line[:max_line_len].rfind(" ")
             if last_space:
                 closing = "/>" if new_line.endswith("/>") else ">"
-                splited_line = [
+                split_line = [
                     new_line[:last_space],
                     indent + "   " + new_line[last_space : -1 * len(closing)],
                     indent + closing,
                 ]
-                reindented_lines.extend(splited_line)
+                reindented_lines.extend(split_line)
                 continue
-        # append not splited line
+        # append not split line
         reindented_lines.append(new_line)
 
     return "\n".join(reindented_lines)

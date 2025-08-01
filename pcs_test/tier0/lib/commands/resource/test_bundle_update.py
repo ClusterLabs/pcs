@@ -209,7 +209,7 @@ class ContainerParametrized(TestCase):
             ]
         )
 
-    def _test_unknow_option(self):
+    def _test_unknown_option(self):
         self.config.runner.cib.load(
             resources=fixture_resources_minimal(self.container_type)
         )
@@ -240,7 +240,7 @@ class ContainerParametrized(TestCase):
             ]
         )
 
-    def _test_unknow_option_forced(self):
+    def _test_unknown_option_forced(self):
         (
             self.config.runner.cib.load(
                 resources=fixture_resources_minimal(self.container_type)
@@ -714,7 +714,7 @@ class Network(TestCase):
             },
         )
 
-    def test_unknow_option(self):
+    def test_unknown_option(self):
         (self.config.runner.cib.load(resources=self.fixture_cib_interface))
         self.env_assist.assert_raise_library_error(
             lambda: resource.bundle_update(
@@ -743,7 +743,7 @@ class Network(TestCase):
             ]
         )
 
-    def test_unknow_option_forced(self):
+    def test_unknown_option_forced(self):
         (
             self.config.runner.cib.load(
                 resources=self.fixture_cib_interface

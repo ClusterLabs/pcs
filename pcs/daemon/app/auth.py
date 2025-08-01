@@ -67,8 +67,8 @@ class _BaseLibAuthProvider:
         if not self.is_unix_socket_used():
             return None
 
-        # It is not cached to prevent inapropriate cache when handler is (in
-        # hypotetical future) somehow reused. The responsibility for cache is
+        # It is not cached to prevent inappropriate cache when handler is (in
+        # hypothetical future) somehow reused. The responsibility for cache is
         # left to the place, that uses it.
         # For whatever reason, handler.request.connection is typed as
         # HTTPConnection in tornado. That class, however, doesn't have stream

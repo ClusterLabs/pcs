@@ -17,7 +17,7 @@ def from_external_source(level, created: float, usecs: int, message, group_id):
     record = pcsd.makeRecord(
         name=pcsd.name,
         level=level,
-        # Information about stack fram is not needed here. Values are
+        # Information about stack frame is not needed here. Values are
         # inspired by the code of the logging module.
         fn="(external)",
         lno=0,

@@ -179,7 +179,7 @@ class Prepare(TestCase, create_setup_patch_mixin(env)):
             specific_env_values={"has_errors": True},
             errors=[
                 f"Webui assets directory '{settings.pcsd_webui_dir}' or"
-                + f" falback html '{webui_fallback(settings.pcsd_public_dir)}'"
+                + f" fallback html '{webui_fallback(settings.pcsd_public_dir)}'"
                 + " does not exist",
             ],
         )

@@ -401,7 +401,7 @@ class AddGuest(TestCase):
             )
         )
 
-    def test_noexistent_resource(self):
+    def test_nonexistent_resource(self):
         # Instance of 'Config' has no 'local' member
         # pylint: disable=no-member
         self.config.local.load_cib()
@@ -409,7 +409,7 @@ class AddGuest(TestCase):
 
         self.env_assist.assert_raise_library_error(
             lambda: node_add_guest(
-                self.env_assist.get_env(), resource_id="NOEXISTENT"
+                self.env_assist.get_env(), resource_id="NONEXISTENT"
             ),
         )
         self.env_assist.assert_reports(
@@ -418,7 +418,7 @@ class AddGuest(TestCase):
                     reports.codes.ID_NOT_FOUND,
                     expected_types=["primitive"],
                     context_type="resources",
-                    id="NOEXISTENT",
+                    id="NONEXISTENT",
                     context_id="",
                 )
             ],

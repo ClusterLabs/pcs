@@ -16,7 +16,7 @@ from pcs_test.tools.misc import (
 from pcs_test.tools.pcs_runner import PcsRunner
 
 
-def fixture_primtive_xml(resource_id: str) -> str:
+def fixture_primitive_xml(resource_id: str) -> str:
     return f"""
         <primitive id="{resource_id}" class="ocf" provider="pcsmock" type="minimal"/>
     """
@@ -25,14 +25,14 @@ def fixture_primtive_xml(resource_id: str) -> str:
 FIXTURE_CLONED_GROUP_XML = f"""
     <clone id="R2-clone">
         <group id="R2-group">
-            {fixture_primtive_xml("R2")}
+            {fixture_primitive_xml("R2")}
         </group>
     </clone>
 """
 FIXTURE_GROUP_XML = f"""
     <group id="R3R4-group">
-        {fixture_primtive_xml("R3")}
-        {fixture_primtive_xml("R4")}
+        {fixture_primitive_xml("R3")}
+        {fixture_primitive_xml("R4")}
     </group>
 """
 FIXTURE_TAG_XML = """
@@ -95,7 +95,7 @@ class ResourceRemoveDeleteBase(
             get_test_resource("cib-empty.xml"),
             resources=f"""
                 <resources>
-                    {fixture_primtive_xml("R1")}
+                    {fixture_primitive_xml("R1")}
                     {FIXTURE_GROUP_XML}
                     {FIXTURE_CLONED_GROUP_XML}
                 </resources>
@@ -172,7 +172,7 @@ class ResourceRemoveDeleteBase(
             ["resource", self.command, "R2"],
             f"""
             <resources>
-                {fixture_primtive_xml("R1")}
+                {fixture_primitive_xml("R1")}
                 {FIXTURE_GROUP_XML}
             </resources>
             """,
@@ -201,9 +201,9 @@ class ResourceRemoveDeleteBase(
             ["resource", self.command, "R3"],
             f"""
             <resources>
-                {fixture_primtive_xml("R1")}
+                {fixture_primitive_xml("R1")}
                 <group id="R3R4-group">
-                    {fixture_primtive_xml("R4")}
+                    {fixture_primitive_xml("R4")}
                 </group>
                 {FIXTURE_CLONED_GROUP_XML}
             </resources>
@@ -279,7 +279,7 @@ class ResourceReferencedInAcl(AssertPcsMixin, TestCase):
             get_test_resource("cib-empty.xml"),
             resources=f"""
                 <resources>
-                    {fixture_primtive_xml("R1")}
+                    {fixture_primitive_xml("R1")}
                 </resources>
             """,
             optional_in_conf="""

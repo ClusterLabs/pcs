@@ -356,7 +356,7 @@ class TestParsingErrorToReport(TestCase):
             ),
         )
 
-    def test_unknow_pcmk_role(self):
+    def test_unknown_pcmk_role(self):
         report = status.cluster_status_parsing_error_to_report(
             status.UnknownPcmkRoleError("resource", "NotPcmkRole")
         )

@@ -142,7 +142,7 @@ def validate_set_cluster_properties(  # noqa: PLR0912
     validators: list[validate.ValidatorInterface] = []
     for property_name in to_be_set_properties:
         if property_name not in possible_properties_dict:
-            # unknow properties are reported by NamesIn validator
+            # unknown properties are reported by NamesIn validator
             continue
         property_metadata = possible_properties_dict[property_name]
         if property_metadata.type == "boolean":

@@ -115,7 +115,7 @@ class DisableTest(Base, BaseTestMixin):
         self.driver._available_services = [self.service]
         self.driver_callback = self.driver.disable
 
-    def test_not_intalled(self):
+    def test_not_installed(self):
         # pylint: disable=protected-access
         self.driver._available_services = [f"not_{self.service}"]
         self.driver_callback(self.service)

@@ -5,7 +5,7 @@ from pcs.lib.commands.remote_node import get_resource_ids
 from pcs_test.tools.command_env import get_env_tools
 
 
-class GetResourceIdsFromRemoteNodeIdentfier(TestCase):
+class GetResourceIdsFromRemoteNodeIdentifier(TestCase):
     NODE_NAME = "A"
     NODE_NAME_MULTIPLE = "B"
 

@@ -1178,7 +1178,7 @@ class FailOrWarn(ResourceTest):
             ),
         )
 
-    def test_warn_when_forcing_noexistent_agent(self):
+    def test_warn_when_forcing_nonexistent_agent(self):
         self.assert_effect(
             "resource create R ocf:heartbeat:NoExisting --force".split(),
             """<resources>
