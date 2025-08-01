@@ -71,7 +71,7 @@ class MinimalMixin(BaseMixin, SetUpMixin):
             container_options={"image": new_image},
         )
 
-    def test_noexistent_id(self):
+    def test_nonexistent_id(self):
         self.env_assist.assert_raise_library_error(
             lambda: self.bundle_reset(bundle_id="B0"),
             [

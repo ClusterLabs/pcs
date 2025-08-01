@@ -3915,7 +3915,7 @@ class TicketAdd(ConstraintBaseTest):
             ),
         )
 
-    def test_refuse_noexistent_resource_id(self):
+    def test_refuse_nonexistent_resource_id(self):
         self.assert_pcs_fail(
             "constraint ticket add T master AA loss-policy=fence".split(),
             "Error: 'AA' does not exist\n" + ERRORS_HAVE_OCCURRED,

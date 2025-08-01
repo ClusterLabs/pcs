@@ -2367,7 +2367,7 @@ class DomRuleAddTest(TestCase, AssertPcsMixin):
         )
 
     @skip_unless_crm_rule()
-    def test_ivalid_options(self):
+    def test_invalid_options(self):
         self.assert_pcs_fail(
             "constraint location dummy1 rule role=foo #uname eq node1".split(),
             "Error: invalid role 'foo', use {}\n".format(

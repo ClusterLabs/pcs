@@ -28,12 +28,12 @@ class Oid(
     tree model for translating string (human friendly) oid into numbered oid
     used in SNMP.
 
-    oid int -- unique oid identificator on a given layer
-    str_oid string -- string oid identificator in a given layer
+    oid int -- unique oid identifier on a given layer
+    str_oid string -- string oid identifier in a given layer
     data_type BaseType -- class inherited from BaseType, data type of entity
       this class represents
     member_list list of Oid -- list of members/descendants of this entity.
-      If set, this entity is threated as object identifier in MIB  and data_type
+      If set, this entity is treated as object identifier in MIB  and data_type
       is ignored.
     """
 

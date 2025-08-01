@@ -94,7 +94,7 @@ def remove(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
             # deprecated since pcs-0.11.7
             deprecation_warning(
                 "Removing colocation constraint with interchanged source "
-                "resource id and targert resource id. This behavior is "
+                "resource id and target resource id. This behavior is "
                 "deprecated and will be removed."
             )
             constraint_ids_to_remove.append(

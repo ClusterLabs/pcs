@@ -76,7 +76,7 @@ def _wait_type_to_int(wait: WaitType) -> int:
         is returned. If None, wait is enabled without timeout, therefore 0
         is returned. If string representing timeout or positive integer,
         wait is enabled with timeout, therefore number of seconds is
-        retuned. Otherwise a LibraryError is raised.
+        returned. Otherwise a LibraryError is raised.
     """
     if wait is False:
         return -1

@@ -1462,25 +1462,30 @@ def remove_constraints_containing(
             # is empty, then we remove the set, if the parent of the set
             # is empty then we remove it
             if set_c.getAttribute("id") == resource_id:
-                pn = set_c.parentNode
-                pn.removeChild(set_c)
+                parent_node = set_c.parentNode
+                parent_node.removeChild(set_c)
                 if output:
                     print_to_stderr(
                         "Removing {} from set {}".format(
-                            resource_id, pn.getAttribute("id")
+                            resource_id, parent_node.getAttribute("id")
                         )
                     )
-                if pn.getElementsByTagName("resource_ref").length == 0:
+                if parent_node.getElementsByTagName("resource_ref").length == 0:
                     print_to_stderr(
-                        "Removing set {}".format(pn.getAttribute("id"))
+                        "Removing set {}".format(parent_node.getAttribute("id"))
                     )
-                    pn2 = pn.parentNode
-                    pn2.removeChild(pn)
-                    if pn2.getElementsByTagName("resource_set").length == 0:
-                        pn2.parentNode.removeChild(pn2)
+                    parent_node_2 = parent_node.parentNode
+                    parent_node_2.removeChild(parent_node)
+                    if (
+                        parent_node_2.getElementsByTagName(
+                            "resource_set"
+                        ).length
+                        == 0
+                    ):
+                        parent_node_2.parentNode.removeChild(parent_node_2)
                         print_to_stderr(
                             "Removing constraint {}".format(
-                                pn2.getAttribute("id")
+                                parent_node_2.getAttribute("id")
                             )
                         )
         if passed_dom:

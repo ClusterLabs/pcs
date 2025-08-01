@@ -1133,13 +1133,13 @@ class ClusterStatus(TestCase):
                 )
             )
             .runner.cib.load()
-            .local.read_sbd_config(name_sufix="_1")
+            .local.read_sbd_config(name_suffix="_1")
             .http.host.check_auth(node_labels=existing_nodes)
             .services.is_installed("sbd", return_value=True)
             .services.is_enabled(
                 "sbd", return_value=True, name="is_enabled_sbd_2"
             )
-            .local.read_sbd_config(name_sufix="_2")
+            .local.read_sbd_config(name_suffix="_2")
             .http.corosync.check_corosync_offline(
                 communication_list=[
                     {

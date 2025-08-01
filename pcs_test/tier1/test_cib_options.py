@@ -261,8 +261,8 @@ class DefaultsConfigMixin(TestDefaultsMixin, AssertPcsMixin):
                         />
                     </rule>
                 </rule>
-                <nvpair id="{tag}-set1-nam1" name="nam1" value="val1"/>
-                <nvpair id="{tag}-set1-nam2" name="nam2" value="val2"/>
+                <nvpair id="{tag}-set1-name1" name="name1" value="value1"/>
+                <nvpair id="{tag}-set1-name2" name="name2" value="value2"/>
             </meta_attributes>
         </{tag}_defaults>"""
         self._prepare_cib_data(xml_template)
@@ -272,8 +272,8 @@ class DefaultsConfigMixin(TestDefaultsMixin, AssertPcsMixin):
             stdout_full=dedent(
                 f"""\
                 Meta Attrs: {self.prefix}-set1
-                  nam1=val1
-                  nam2=val2
+                  name1=value1
+                  name2=value2
                   Rule: boolean-op=and score=INFINITY
                     Rule: boolean-op=or score=0
                       Expression: defined attr1
@@ -480,7 +480,7 @@ class RscDefaultsConfig(
                     <rule id="X-rule" boolean-op="and" score="INFINITY">
                         <rsc_expression id="X-rule-rsc-Dummy" type="Dummy"/>
                     </rule>
-                    <nvpair id="X-nam1" name="nam1" value="val1"/>
+                    <nvpair id="X-name1" name="name1" value="value1"/>
                 </meta_attributes>
             </rsc_defaults>
         """
@@ -493,7 +493,7 @@ class RscDefaultsConfig(
             stdout_full=dedent(
                 """\
                 Meta Attrs: X
-                  nam1=val1
+                  name1=value1
                   Rule: boolean-op=and score=INFINITY
                     Expression: resource ::Dummy
             """
@@ -517,7 +517,7 @@ class OpDefaultsConfig(
                         <rsc_expression id="X-rule-rsc-Dummy" type="Dummy"/>
                         <op_expression id="X-rule-op-monitor" name="monitor"/>
                     </rule>
-                    <nvpair id="X-nam1" name="nam1" value="val1"/>
+                    <nvpair id="X-name1" name="name1" value="value1"/>
                 </meta_attributes>
             </op_defaults>
         """
@@ -530,7 +530,7 @@ class OpDefaultsConfig(
             stdout_full=dedent(
                 """\
                 Meta Attrs: X
-                  nam1=val1
+                  name1=value1
                   Rule: boolean-op=and score=INFINITY
                     Expression: resource ::Dummy
                     Expression: op monitor
@@ -566,13 +566,13 @@ class DefaultsSetCreateMixin(TestDefaultsMixin, AssertPcsMixin):
     def test_success(self):
         self.assert_effect(
             self.cli_command
-            + "set create id=mine score=10 meta nam1=val1 nam2=val2 --force".split(),
+            + "set create id=mine score=10 meta name1=value1 name2=value2 --force".split(),
             dedent(
                 f"""\
                 <{self.cib_tag}>
                     <meta_attributes id="mine" score="10">
-                        <nvpair id="mine-nam1" name="nam1" value="val1"/>
-                        <nvpair id="mine-nam2" name="nam2" value="val2"/>
+                        <nvpair id="mine-name1" name="name1" value="value1"/>
+                        <nvpair id="mine-name2" name="name2" value="value2"/>
                     </meta_attributes>
                 </{self.cib_tag}>
             """
@@ -587,7 +587,7 @@ class DefaultsSetCreateMixin(TestDefaultsMixin, AssertPcsMixin):
         self.assert_effect(
             self.cli_command
             + (
-                "-- set create id=mine score=10 meta nam1=val1 nam2=val2 "
+                "-- set create id=mine score=10 meta name1=value1 name2=value2 "
                 "rule (date gt 2018-05-17T13:28:19 or "
                 "date in_range 2019-01-01 to 2019-03-15 or "
                 "date in_range 2019-05-01 to duration months=2 or "
@@ -625,8 +625,8 @@ class DefaultsSetCreateMixin(TestDefaultsMixin, AssertPcsMixin):
                                   operation="in_range" end="2019-12-15"
                             />
                         </rule>
-                        <nvpair id="mine-nam1" name="nam1" value="val1"/>
-                        <nvpair id="mine-nam2" name="nam2" value="val2"/>
+                        <nvpair id="mine-name1" name="name1" value="value1"/>
+                        <nvpair id="mine-name2" name="name2" value="value2"/>
                     </meta_attributes>
                 </{self.cib_tag}>
             """
@@ -641,7 +641,7 @@ class DefaultsSetCreateMixin(TestDefaultsMixin, AssertPcsMixin):
         self.assert_pcs_fail(
             self.cli_command
             + (
-                "set create id=mine score=10 meta nam1=val1 nam2=val2 "
+                "set create id=mine score=10 meta name1=value1 name2=value2 "
                 "rule (date gt 2018-05-1X or "
                 "date in_range 2019-03-05 to 2019-01-11 or "
                 "date in_range 2019-05-0X to duration months=2 months=3a x=y or "
@@ -685,14 +685,14 @@ class RscDefaultsSetCreate(
     def test_success_rules_rsc_op(self):
         self.assert_effect(
             self.cli_command
-            + "set create id=X meta nam1=val1 rule resource ::Dummy".split(),
+            + "set create id=X meta name1=value1 rule resource ::Dummy".split(),
             f"""\
             <{self.cib_tag}>
                 <meta_attributes id="X">
                     <rule id="X-rule" boolean-op="and" score="INFINITY">
                         <rsc_expression id="X-rule-rsc-Dummy" type="Dummy"/>
                     </rule>
-                    <nvpair id="X-nam1" name="nam1" value="val1"/>
+                    <nvpair id="X-name1" name="name1" value="value1"/>
                 </meta_attributes>
             </{self.cib_tag}>
             """,
@@ -747,7 +747,7 @@ class OpDefaultsSetCreate(
         self.assert_effect(
             self.cli_command
             + (
-                "-- set create id=X meta nam1=val1 "
+                "-- set create id=X meta name1=value1 "
                 "rule resource ::Dummy and (op start or op stop) and "
                 "(defined attr1 or attr2 gte number -1.2 or "
                 "attr3 lt version 3.2.1 or attr4 ne string test or attr5 lt 3) "
@@ -786,7 +786,7 @@ class OpDefaultsSetCreate(
                             />
                         </rule>
                     </rule>
-                    <nvpair id="X-nam1" name="nam1" value="val1"/>
+                    <nvpair id="X-name1" name="name1" value="value1"/>
                 </meta_attributes>
             </{self.cib_tag}>
             """,

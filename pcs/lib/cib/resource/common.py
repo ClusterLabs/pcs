@@ -314,8 +314,8 @@ def find_resources_to_unmanage(resource_el: _Element) -> List[_Element]:
     # a bundled primitive - the bundle - the bundle and the primitive
     #  We need to unmanage implicit resources create by pacemaker and there is
     #  no other way to do it than unmanage the bundle itself.
-    #  Since it is not possible to unbundle a resource, the concers described
-    #  at unclone don't apply here. However to prevent future bugs, in case
+    #  Since it is not possible to unbundle a resource, the concerns described
+    #  at unclone don't apply here. However, to prevent future bugs in case
     #  unbundling becomes possible, we unmanage the primitive as well.
     # an empty bundle - the bundle - the bundle
     #  There is nothing else to unmanage.

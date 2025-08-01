@@ -1053,7 +1053,7 @@ def pcs_auth(auth_user, nodes)
   # Only tokens used in pcsd-to-pcsd communication can and need to be synced.
   # Those are accessible only when running under root account.
   if Process.uid != 0
-    # Other tokens just need to be stored localy for a user.
+    # Other tokens just need to be stored locally for a user.
     sync_successful, sync_responses = Cfgsync::save_sync_new_known_hosts(
       new_hosts, [], [], nil
     )
@@ -1094,7 +1094,7 @@ def pcs_deauth(auth_user, host_names)
   # Only tokens used in pcsd-to-pcsd communication can and need to be synced.
   # Those are accessible only when running under root account.
   if Process.uid != 0
-    # Other tokens just need to be stored localy for a user.
+    # Other tokens just need to be stored locally for a user.
     sync_successful, sync_responses = Cfgsync::save_sync_new_known_hosts(
       [], host_names, [], nil
     )

@@ -4018,7 +4018,7 @@ class AgentImplementsUnsupportedOcfVersion(ReportItemMessage):
 @dataclass(frozen=True)
 class AgentGenericError(ReportItemMessage):
     """
-    Unspecifed error related to resource / fence agent
+    Unspecified error related to resource / fence agent
 
     agent -- name of the agent
     """

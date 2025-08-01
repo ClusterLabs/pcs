@@ -206,7 +206,7 @@ def create_in_group(  # noqa: PLR0913
     env -- provides all for communication with externals
     stonith_id --an identifier of stonith resource
     stonith_agent_name -- contains name for the identification of agent
-    group_id -- identificator for group to put stonith inside
+    group_id -- identifier for group to put stonith inside
     operations -- contains attributes for each entered operation
     meta_attributes -- contains attributes for primitive/meta_attributes
     instance_attributes -- contains attributes for primitive/instance_attributes

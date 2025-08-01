@@ -270,7 +270,7 @@ class ArgsByKeywords:
 
     def allow_repetition_only_for(self, keyword_set: StringCollection) -> None:
         """
-        Raise CmdLineInputError if a keyword has been repetead when not allowed
+        Raise CmdLineInputError if a keyword has been repeated when not allowed
 
         keyword_set -- repetition is allowed for these keywords
         """
@@ -282,7 +282,7 @@ class ArgsByKeywords:
 
     def ensure_unique_keywords(self) -> None:
         """
-        Raise CmdLineInputError if any keyword has been repetead
+        Raise CmdLineInputError if any keyword has been repeated
         """
         return self.allow_repetition_only_for(set())
 

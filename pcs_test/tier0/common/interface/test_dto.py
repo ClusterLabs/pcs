@@ -23,7 +23,7 @@ from pcs.common.types import CorosyncNodeAddressType
 
 
 def _import_all(_path):
-    # arbitrary prefix so it doesn't iteract with real import in real tests
+    # arbitrary prefix so it doesn't interact with real import in real tests
     for module_finder, module_name, is_pkg in pkgutil.walk_packages(
         _path, prefix="_pcs."
     ):

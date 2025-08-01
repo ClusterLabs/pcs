@@ -255,7 +255,7 @@ class ParametrizedContainerMixin(SetUpMixin):
             ]
         )
 
-    def test_unknow_container_option(self):
+    def test_unknown_container_option(self):
         self.env_assist.assert_raise_library_error(
             lambda: self.run_bundle_cmd(
                 container_options={
@@ -282,7 +282,7 @@ class ParametrizedContainerMixin(SetUpMixin):
             ]
         )
 
-    def test_unknow_container_option_forced(self):
+    def test_unknown_container_option_forced(self):
         self.config.env.push_cib(
             resources="""
                 <resources>

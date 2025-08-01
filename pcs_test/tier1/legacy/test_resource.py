@@ -1523,7 +1523,7 @@ class Resource(TestCase, AssertPcsMixin):
         )
 
     def test_group_order(self):
-        # This was cosidered for removing during 'resource group add' command
+        # This was considered for removing during 'resource group add' command
         # and tests overhaul. However, this is the only test where "resource
         # group list" is called. Due to that this test was not deleted.
         self.assert_pcs_success(

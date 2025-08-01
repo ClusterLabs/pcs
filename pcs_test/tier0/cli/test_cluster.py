@@ -221,7 +221,7 @@ class ClusterSetup(TestCase):
             ],
         )
 
-    def test_knet_links_repetable_correctly(self):
+    def test_knet_links_repeatable_correctly(self):
         node = "node"
         self.call_cmd(
             [

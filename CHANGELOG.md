@@ -783,7 +783,7 @@
 
 ### Added
 - New section in pcs man page summarizing changes in pcs-0.10. Commands removed
-  or changed in pcs-0.10 print errors poiting to that section. ([rhbz#1728890])
+  or changed in pcs-0.10 print errors pointing to that section. ([rhbz#1728890])
 - `pcs resource disable` can show effects of disabling resources and prevent
   disabling resources if any other resources would be affected ([rhbz#1631519])
 - `pcs resource relations` command shows relations between resources such as
@@ -878,7 +878,7 @@
 - Removed command `pcs resource show` dropped from usage and man page
   ([rhbz#1656953])
 - Put proper link options' names to corosync.conf ([rhbz#1659051])
-- Fixed issuses in configuring links in the 'create cluster' form in web UI
+- Fixed issues in configuring links in the 'create cluster' form in web UI
   ([rhbz#1664057])
 - Pcs no longer removes empty `meta_attributes`, `instance_attributes` and other
   nvsets and similar elements from CIB. Such behavior was causing problems when

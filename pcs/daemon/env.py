@@ -199,7 +199,7 @@ class EnvLoader:
         ):
             self.errors.append(
                 f"Webui assets directory '{self.webui_dir()}'"
-                + f" or falback html '{self.webui_fallback()}' does not exist"
+                + f" or fallback html '{self.webui_fallback()}' does not exist"
             )
 
     @lru_cache(maxsize=5)

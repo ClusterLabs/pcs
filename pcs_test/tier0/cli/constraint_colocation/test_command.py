@@ -142,6 +142,6 @@ class TestRemoveColocationConstraint(TestCase):
         )
         mock_warn.assert_called_once_with(
             "Removing colocation constraint with interchanged source resource "
-            "id and targert resource id. This behavior is deprecated and will "
+            "id and target resource id. This behavior is deprecated and will "
             "be removed."
         )

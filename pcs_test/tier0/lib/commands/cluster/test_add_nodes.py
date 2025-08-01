@@ -198,7 +198,7 @@ class LocalConfig:
                 return_value=True,
                 name=f"{local_prefix}services.is_enabled.sbd",
             )
-            .local.read_sbd_config(name_sufix="-atb_needed")
+            .local.read_sbd_config(name_suffix="-atb_needed")
             .http.corosync.check_corosync_offline(
                 node_labels=node_labels,
                 name=f"{local_prefix}http.corosync.check_corosync_offline",
@@ -220,17 +220,17 @@ class LocalConfig:
             ]
         )
 
-    def read_sbd_config(self, config_content="", name_sufix=""):
+    def read_sbd_config(self, config_content="", name_suffix=""):
         local_prefix = "local.read_sbd_config."
         (
             self.config.fs.exists(
                 settings.sbd_config,
                 return_value=True,
-                name=f"{local_prefix}fs.exists.sbd_config{name_sufix}",
+                name=f"{local_prefix}fs.exists.sbd_config{name_suffix}",
             ).fs.open(
                 settings.sbd_config,
                 return_value=mock.mock_open(read_data=config_content)(),
-                name=f"{local_prefix}fs.open.sbd_config_read{name_sufix}",
+                name=f"{local_prefix}fs.open.sbd_config_read{name_suffix}",
             )
         )
 

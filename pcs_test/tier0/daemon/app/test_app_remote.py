@@ -57,7 +57,7 @@ class SetCerts(AppTest):
     def test_it_asks_for_cert_reload_if_ruby_succeeds(self):
         self.wrapper.status_code = 200
         self.wrapper.body = b"success"
-        # body is irelevant
+        # body is irrelevant
         self.assert_wrappers_response(
             self.post("/remote/set_certs", body={}, headers=self.headers)
         )
@@ -66,7 +66,7 @@ class SetCerts(AppTest):
     def test_it_not_asks_for_cert_reload_if_ruby_fail(self):
         self.wrapper.status_code = 400
         self.wrapper.body = b"cannot save ssl certificate without ssl key"
-        # body is irelevant
+        # body is irrelevant
         self.assert_wrappers_response(
             self.post("/remote/set_certs", body={}, headers=self.headers)
         )

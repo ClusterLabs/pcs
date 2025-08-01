@@ -88,7 +88,7 @@ class RunRuby(AsyncTestCase):
 
     @patch_ruby_pcsd("now", return_value=0)
     @gen_test
-    def test_sync_config_shorcut_fail(self, now):
+    def test_sync_config_shortcut_fail(self, now):
         del now
         result = yield self.wrapper.sync_configs()
         self.assertEqual(result, ruby_pcsd.DEFAULT_SYNC_CONFIG_DELAY)
