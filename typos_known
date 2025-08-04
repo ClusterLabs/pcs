@@ -9,6 +9,7 @@
 ./pcs/common/reports/deprecated_codes.py: `OVERRIDEN` -> `OVERRIDDEN`
 ./pcs/common/reports/messages.py: `disabl` -> `disable`
 ./pcs/common/reports/messages.py: `stopp` -> `stop`
+./pcsd/conf/pcsd: `sesions` -> `sessions`
 ./pcsd/test/test_cluster_entity.rb: `primitve` -> `primitive`
 ./pcs/lib/commands/constraint/common.py: `alowed` -> `allowed`
 ./pcs/lib/commands/constraint/common.py: `alowed` -> `allowed`
@@ -110,3 +111,4 @@
 ./pcs_test/tier1/legacy/test_utils.py: `dum` -> `dumb`
 ./pcs_test/tier1/legacy/test_utils.py: `ue` -> `use`, `due`
 ./pcs_test/tier1/legacy/test_utils.py: `ue` -> `use`, `due`
+./README.md: `derivates` -> `derivate`

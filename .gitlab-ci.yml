@@ -50,8 +50,9 @@ typos:
   extends: .parallel
   stage: stage1
   script:
+    - python3 -m pip install --upgrade -r dev_requirements.txt
     - ./autogen.sh
-    - ./configure --enable-local-build --enable-typos-check
+    - ./configure --enable-local-build --enable-dev-tests --enable-individual-bundling
     - make
     - make typos_check
 

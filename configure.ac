@@ -143,11 +143,6 @@ AC_ARG_ENABLE([concise-tests],
 	      [concise_tests="yes"])
 AM_CONDITIONAL([CONCISE_TESTS], [test "x$concise_tests" = "xyes"])
 
-AC_ARG_ENABLE([typos-check],
-	      [AS_HELP_STRING([--enable-typos-check], [Enable checking source code for typos (needs https://github.com/crate-ci/typos to be installed) (default: no)])],
-	      [typos_check="yes"])
-AM_CONDITIONAL([TYPOS_CHECK], [test "x$typos_check" = "xyes"])
-
 AC_ARG_ENABLE([local-build],
 	      [AS_HELP_STRING([--enable-local-build], [Download and install all dependencies as user / bundles])],
 	      [local_build="yes"])
@@ -194,7 +189,8 @@ if test "x$cache_only" != "xyes"; then
 	fi
 fi
 
-if test "x$typos_check" = "xyes"; then
+if test "x$dev_tests" = "xyes"; then
+	# diff and sort is used in 'make typos_check' and 'make typos_known'
 	AC_PATH_PROG([DIFF], [diff])
 	if test "x$DIFF" = "x"; then
 		AC_MSG_ERROR([Unable to find diff in $PATH])
@@ -202,10 +198,6 @@ if test "x$typos_check" = "xyes"; then
 	AC_PATH_PROG([SORT], [sort])
 	if test "x$SORT" = "x"; then
 		AC_MSG_ERROR([Unable to find sort in $PATH])
-	fi
-	AC_PATH_PROG([TYPOS], [typos])
-	if test "x$TYPOS" = "x"; then
-		AC_MSG_ERROR([Unable to find typos in $PATH])
 	fi
 fi
 

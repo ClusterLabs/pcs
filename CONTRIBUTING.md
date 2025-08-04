@@ -49,6 +49,7 @@ Pull request must comply with the following policies:
     * `make ruff_isort_check`
     * `make mypy`
     * `make ruff_lint`
+    * `make typos_check`
     * `make tests_tier0`
     * `make tests_tier1`
     * `make pcsd-tests`

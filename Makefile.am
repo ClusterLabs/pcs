@@ -224,17 +224,17 @@ if DEV_TESTS
 		$(TIME) $(PYTHON) -m mypy --config-file mypy.ini --package pcs --package pcs_test
 endif
 
-RUN_TYPOS=$(TYPOS) --color never --format brief | sed -e 's/:[0-9]\+:[0-9]\+:/:/' | $(SORT)
+RUN_TYPOS=typos --color never --format brief | sed -e 's/:[0-9]\+:[0-9]\+:/:/' | $(SORT)
 .PHONY: typos_check
 typos_check:
-if TYPOS_CHECK
+if DEV_TESTS
 	$(RUN_TYPOS) > typos_new
 	$(DIFF) typos_known typos_new
 endif
 
 .PHONY: typos_known
 typos_known:
-if TYPOS_CHECK
+if DEV_TESTS
 	$(RUN_TYPOS) > typos_known
 endif
 
