@@ -1,29 +1,96 @@
 ---
+# Keep the previos behavior when jobs are not run in merge request pipelines.
+# https://docs.gitlab.com/ci/jobs/job_rules/#avoid-duplicate-pipelines
+# https://docs.gitlab.com/ci/yaml/workflow/
+# https://docs.gitlab.com/ci/pipelines/merge_request_pipelines/
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+    - when: always
+
 variables:
-  # override these by CI variables
-  # set to empty in order to disable FIPS
-  ENABLE_FIPS: '--insert --order 0 --how feature --fips enabled'
-  TFCLI_TMT_PREPARE: $ENABLE_FIPS
-  # e.g. 'name:.*linters\|.*tier0'
+  # override these by CI variables if needed
+  ENABLE_FIPS:
+    description: Enable FIPS mode in testing farm. Set to empty to disable FIPS
+    value: --insert --order 0 --how feature --fips enabled
+    options:
+      - --insert --order 0 --how feature --fips enabled
+      - ""
+  PLAN_FILTER:
+    description: Predefined plan filters for testing farm. Default is empty
+      which means run all plans.
+    value: ""
+    options:
+      - ""
+      - "name:.*linters"
+      - "name:.*tier0"
+      - "name:.*tier1"
+      - 'name:.*linters\|.*tier0'
+  TEST_FILTER:
+    description: Predefined test filters for testing farm. Default is empty
+      which means run all test.
+    value: ""
+    options:
+      - ""
+      - 'name:(?!.*python_tier1_tests).*'  # skip python_tier1_tests
+      - "tag:distcheck"
+      - "tag:lint"
+      - "tag:python"
+      - "tag:rpm_build"
+      - "tag:ruby"
+      - "tag:smoke"
+      - "tag:tier0"
+      - "tag:tier1"
   TFCLI_PLAN_FILTER:
-  # e.g. to skip python_tier1_tests: 'name:(?!.*python_tier1_tests).*'
+    description: Set to $PLAN_FILTER to use a predefined plan filter or specify
+      a custom one.
+    value: $PLAN_FILTER
   TFCLI_TEST_FILTER:
+    description: Set to $TEST_FILTER to use a predefined test filter or specify
+      a custom one.
+    value: $TEST_FILTER
+  TFCLI_TMT_PREPARE: $ENABLE_FIPS
 
 
+# https://docs.gitlab.com/ci/yaml/#parallelmatrix
+# COPMOSE_NAME
+#   * values must use only letters and numbers because they are used as part
+#     of rpm name
+#   * must be kept short because they are used in job names
+#   * other pipelines use a job name to download the job's artifacts
+# TF_COMPOSE
+#   * name of a testing farm compose
+#   * list of composes:
+#     https://api.testing-farm.io/v0.1/composes/public
+#     https://api.testing-farm.io/v0.1/composes/redhat
+# TMT_DISTRO
+#   * value for the tmt context variable distro:
+#     https://tmt.readthedocs.io/en/stable/spec/context.html
+#     https://fmf.readthedocs.io/en/latest/context.html
+#
 .parallel:
   parallel:
     matrix:
-      - BASE_IMAGE_NAME: [
-        # "PcsFedoraCurrentRelease",
-        "PcsRhel10Next",
-        # "PcsRhelCurrentRelease",
-      ]
-        OS_TAG: "shared-podman"
-  tags:
-    - ${OS_TAG}
-
-stages:
-  - stage1
+      - COMPOSE_NAME:
+          - Rhel10Next
+          - Rhel10CurrentRelease
+          - FedoraCurrentRelease
+  rules:
+    - if: $COMPOSE_NAME == "Rhel10Next"
+      variables:
+        TF_COMPOSE: RHEL-10-Nightly
+        TMT_DISTRO: rhel-10.1
+    - if: $COMPOSE_NAME == "Rhel10CurrentRelease"
+      variables:
+        TF_COMPOSE: RHEL-10.0-Nightly
+        TMT_DISTRO: rhel-10.0
+    - if: $COMPOSE_NAME == "FedoraCurrentRelease"
+      variables:
+        TF_COMPOSE: Fedora-42
+        TMT_DISTRO: fedora-42
+        # FIPS is not supported on Fedora
+        TFCLI_TMT_PREPARE: ""
 
 .download_artifacts_from_tf: &download_artifacts_from_tf
   - UUID_REGEX="[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}"
@@ -35,7 +102,7 @@ stages:
     curl --insecure --location --remote-name \
       "https://artifacts.osci.redhat.com/testing-farm/$REQUEST_ID/results.xml"
   - >
-    for ARTIFACT_DIR in rpms dist; do
+    for ARTIFACT_DIR in rpms dist var/log/pcsd; do
       for ARTIFACT_URL in $(
         xmllint \
           --xpath "//log[starts-with(@name, 'data/$ARTIFACT_DIR')]/@href" \
@@ -49,26 +116,28 @@ stages:
     done
   - exit $EXIT_CODE
 
-testing_farm_tmt_tests:
+tf_tests:
   extends: .parallel
-  stage: stage1
   image: $SHARED_RUNNER_CONTAINER_IMAGE
   script:
     - testing-farm request
       --git-url
       https://gitlab-ci-token:$CI_JOB_TOKEN@$CI_SERVER_HOST/$CI_PROJECT_PATH
       --git-ref $CI_COMMIT_REF_NAME
-      --compose $(eval echo \$$BASE_IMAGE_NAME)
-      --context distro=$(eval echo \$${BASE_IMAGE_NAME}_distro)
-      --environment BASE_IMAGE_NAME=$BASE_IMAGE_NAME
+      --compose $TF_COMPOSE
+      --context distro=$TMT_DISTRO
+      --environment COMPOSE_NAME=$COMPOSE_NAME
       --plan-filter "$TFCLI_PLAN_FILTER"
       --test-filter "$TFCLI_TEST_FILTER"
       --tmt-prepare "$TFCLI_TMT_PREPARE"
       --no-wait
       | tee output.txt
     - *download_artifacts_from_tf
+  tags:
+    - "shared-podman"
   artifacts:
     expire_in: 1 week
     paths:
       - rpms
       - dist
+      - var/log/pcsd
