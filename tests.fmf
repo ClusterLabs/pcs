@@ -3,45 +3,30 @@ component: pcs
 duration: 30m
 path: /
 environment:
-  CONFIGURE_OPTIONS_LINTERS: >-
-    --enable-local-build
-    --enable-individual-bundling
-    --enable-dev-tests
-    --enable-tests-only
-    --enable-typos-check
-  CONFIGURE_OPTIONS_TIER0: >-
-    --enable-local-build
-    --enable-individual-bundling
-  CONFIGURE_OPTIONS_DISTCHECK_RPMBUILD: >-
-    --enable-local-build
-    --enable-individual-bundling
-    --enable-webui
-  CONFIGURE_OPTIONS_TIER1: >-
-    --enable-local-build
-    --enable-individual-bundling
-    --enable-webui
-    --enable-destructive-tests
-    --enable-tests-only
-adjust:
-  - environment+:
-    CONFIGURE_OPTIONS_DISTCHECK_RPMBUILD: >-
+  CONFIGURE_OPTIONS: >-
       --enable-local-build
-    when: distro == rhel-9
+      --enable-individual-bundling
+      --enable-dev-tests
+      --enable-webui
+      --enable-destructive-tests
+  CONFIGURE_OPTIONS_DISTCHECK: >-
+      --enable-local-build
+      --enable-individual-bundling
 
-
-/autotools_linters:
-  summary: Run autotools to prepare pcs source code
-  tag: [autotools, lint]
+/autotools:
+  summary: Build pcs to run tests
+  tag: [
+    autotools, distcheck, lint, python, rpm_build, ruby, smoke, tier0, tier1,
+  ]
   test: |
     ./autogen.sh &&
-    ./configure $CONFIGURE_OPTIONS_LINTERS &&
+    ./configure $CONFIGURE_OPTIONS &&
     make
 
 /ruff_lint:
   summary: Run ruff linter
   tag: [lint]
   test: make ruff_lint
-
 
 /ruff_format_check:
   summary: Run ruff format check
@@ -58,14 +43,6 @@ adjust:
   tag: [lint]
   test: make typos_check
 
-/autotools_tier0:
-  summary: Run autotools to prepare pcs source code
-  tag: [autotools, tier0]
-  test: |
-    ./autogen.sh &&
-    ./configure $CONFIGURE_OPTIONS_TIER0 &&
-    make
-
 /python_tier0_tests:
   summary: Run python tier0 tests
   tag: [tier0, python]
@@ -76,61 +53,53 @@ adjust:
   tag: [tier0, ruby]
   test: make pcsd-tests
 
-
-/autotools_archive:
-  summary: Run autotools to prepare pcs source code for distcheck and rpm_build
-  tag: [autotools, distcheck, rpm_build]
-  test: |
-    ./autogen.sh &&
-    ./configure $CONFIGURE_OPTIONS_DISTCHECK_RPMBUILD
-
-
 /distcheck:
   summary: Run make distcheck
   tag: [distcheck]
   test: |
-    make distcheck DISTCHECK_CONFIGURE_FLAGS="$CONFIGURE_OPTIONS_DISTCHECK_RPMBUILD" &&
-    rename --verbose .tar. ".${BASE_IMAGE_NAME}.tar." pcs*.tar.* &&
+    make distcheck DISTCHECK_CONFIGURE_FLAGS="$CONFIGURE_OPTIONS_DISTCHECK" &&
+    rename --verbose .tar. ".${COMPOSE_ALIAS}.tar." pcs*.tar.* &&
     mkdir -p dist &&
     cp -v pcs*.tar.* dist/ &&
-    cp -rv dist $TMT_PLAN_DATA && ls -ld $TMT_PLAN_DATA &&
-    cp -rv dist $TMT_TEST_DATA && ls -ld $TMT_TEST_DATA
+    cp -rv dist $TMT_PLAN_DATA &&
+    cp -rv dist $TMT_TEST_DATA
 
 /rpm_build:
   summary: Run make rpm to build a pcs package
-  tag: [rpm_build]
+  tag: [rpm_build, smoke, tier1]
   test: |
-    make CI_BRANCH=${BASE_IMAGE_NAME} rpm/pcs.spec &&
-    dnf builddep -y --enablerepo='rhel-buildroot' rpm/pcs.spec &&
-    make CI_BRANCH=${BASE_IMAGE_NAME} rpm &&
+    make CI_BRANCH=${COMPOSE_ALIAS} rpm/pcs.spec &&
+    dnf builddep -y rpm/pcs.spec &&
+    make CI_BRANCH=${COMPOSE_ALIAS} rpm &&
     mkdir -p rpms &&
     cp -v $(find rpm  -type f -name '*.rpm' -not -name '*.src.rpm') rpms &&
-    cp -rv rpms $TMT_PLAN_DATA && ls -ld $TMT_PLAN_DATA &&
-    cp -rv rpms $TMT_TEST_DATA && ls -ld $TMT_TEST_DATA
-
-/autotools_tier1:
-  summary: Run autotools to prepare pcs source code for tier1 tests
-  tag: [autotools, tier1]
-  test: |
-    ./autogen.sh &&
-    ./configure $CONFIGURE_OPTIONS_TIER1 &&
-    make
+    cp -rv rpms $TMT_PLAN_DATA &&
+    cp -rv rpms $TMT_TEST_DATA
 
 /python_tier1_tests:
-  summary: Run pcs python tier1 tests
+  summary: Install pcs rpm and run pcs python tier1 tests
   tag: [tier1]
   duration: 1h
+  # installing built pcs.rpm installs pacemaker, corosync, etc. as dependencies
+  # rm -rf pcs - to make sure we are testing installed packages and not sources
   test: |
-    dnf install -y $TMT_PLAN_DATA/rpms/pcs-*${BASE_IMAGE_NAME}*$(rpm -E %{dist}).*.rpm &&
+    dnf install -y \
+      $TMT_PLAN_DATA/rpms/pcs-*${COMPOSE_ALIAS}*$(rpm -E %{dist}).*.rpm &&
     rm -rf pcs pcsd pcs_bundled &&
     pcs_test/suite -v --installed --tier1
 
 /python_smoke_tests:
-  summary: Run pcs smoke tests
+  summary: Install pcs rpm and run pcs smoke tests
   tag: [smoke]
+   # installing built pcs.rpm installs pacemaker, corosync, etc. as dependencies
+   # rm -rf pcs - to make sure we are testing installed packages and not sources
   test: |
-    dnf install -y $TMT_PLAN_DATA/rpms/pcs-*${BASE_IMAGE_NAME}*$(rpm -E %{dist}).*.rpm &&
+    dnf install -y \
+      $TMT_PLAN_DATA/rpms/pcs-*${COMPOSE_ALIAS}*$(rpm -E %{dist}).*.rpm &&
+    rm -rf pcs pcsd pcs_bundled &&
     systemctl start pcsd &&
     sleep 2 &&
-    rm -rf pcs &&
-    pcs_test/smoke.sh
+    pcs_test/smoke.sh &&
+    mkdir -p {$TMT_PLAN_DATA,$TMT_TEST_DATA}/var/log/ &&
+    cp -rv /var/log/pcsd $TMT_PLAN_DATA/var/log &&
+    cp -rv /var/log/pcsd $TMT_TEST_DATA/var/log
