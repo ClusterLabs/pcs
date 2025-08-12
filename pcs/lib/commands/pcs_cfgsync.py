@@ -1,10 +1,10 @@
 from pcs.common import reports
-from pcs.common.cfgsync_dto import SyncConfigsDto
 from pcs.common.file import RawFileError
-from pcs.lib.cfgsync.const import SYNCED_CONFIGS
+from pcs.common.pcs_cfgsync_dto import SyncConfigsDto
 from pcs.lib.env import LibraryEnvironment, LibraryError
 from pcs.lib.file.instance import FileInstance
 from pcs.lib.file.raw_file import raw_file_error_report
+from pcs.lib.pcs_cfgsync.const import SYNCED_CONFIGS
 
 
 def get_configs(env: LibraryEnvironment, cluster_name: str) -> SyncConfigsDto:

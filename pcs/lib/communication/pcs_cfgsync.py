@@ -5,7 +5,6 @@ from dataclasses import dataclass
 from dacite import DaciteError
 
 from pcs.common import reports
-from pcs.common.cfgsync_dto import SyncConfigsDto
 from pcs.common.communication.const import (
     COM_STATUS_SUCCESS,
     COM_STATUS_UNKNOWN_CMD,
@@ -23,6 +22,7 @@ from pcs.common.node_communicator import (
     RequestTarget,
     Response,
 )
+from pcs.common.pcs_cfgsync_dto import SyncConfigsDto
 from pcs.common.reports import ReportProcessor
 from pcs.common.reports.processor import has_errors
 from pcs.lib.communication.tools import (
@@ -73,7 +73,7 @@ class GetConfigs(
 
     def _get_request_data(self) -> RequestData:
         return RequestData(
-            "api/v1/cfgsync-get-configs/v1",
+            "api/v1/pcs-cfgsync-get-configs/v1",
             data=json.dumps({"cluster_name": self._cluster_name}),
         )
 

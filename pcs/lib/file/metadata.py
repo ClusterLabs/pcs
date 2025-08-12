@@ -34,8 +34,8 @@ def _for_booth_key(filename: str) -> FileMetadata:
 
 def _for_cfgsync_ctl() -> FileMetadata:
     return FileMetadata(
-        file_type_code=code.CFGSYNC_CTL,
-        path=settings.cfgsync_ctl_location,
+        file_type_code=code.PCS_CFGSYNC_CTL,
+        path=settings.pcs_cfgsync_ctl_location,
         owner_user_name="root",
         owner_group_name="root",
         permissions=0o600,
@@ -135,7 +135,7 @@ def for_file_type(  # noqa: PLR0911
         if not filename:
             raise AssertionError("filename must be set")
         return _for_booth_key(filename)
-    if file_type_code == code.CFGSYNC_CTL:
+    if file_type_code == code.PCS_CFGSYNC_CTL:
         return _for_cfgsync_ctl()
     if file_type_code == code.COROSYNC_CONF:
         return _for_corosync_conf()

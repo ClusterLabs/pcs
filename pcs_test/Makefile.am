@@ -180,9 +180,9 @@ EXTRA_DIST		= \
 			  tier0/daemon/async_tasks/test_worker.py \
 			  tier0/daemon/async_tasks/test_command_mapping.py \
 			  tier0/daemon/__init__.py \
-			  tier0/daemon/test_cfgsync.py \
 			  tier0/daemon/test_env.py \
 			  tier0/daemon/test_http_server.py \
+			  tier0/daemon/test_pcs_cfgsync.py \
 			  tier0/daemon/test_ruby_pcsd.py \
 			  tier0/daemon/test_session.py \
 			  tier0/daemon/test_ssl.py \
@@ -202,10 +202,6 @@ EXTRA_DIST		= \
 			  tier0/lib/booth/test_resource.py \
 			  tier0/lib/booth/test_status.py \
 			  tier0/lib/booth/test_sync.py \
-			  tier0/lib/cfgsync/config/__init__.py \
-			  tier0/lib/cfgsync/config/test_facade.py \
-			  tier0/lib/cfgsync/__init__.py \
-			  tier0/lib/cfgsync/test_fetcher.py \
 			  tier0/lib/cib/__init__.py \
 			  tier0/lib/cib/constraint/__init__.py \
 			  tier0/lib/cib/constraint/test_common.py \
@@ -312,7 +308,6 @@ EXTRA_DIST		= \
 			  tier0/lib/commands/test_acl.py \
 			  tier0/lib/commands/test_alert.py \
 			  tier0/lib/commands/test_booth.py \
-			  tier0/lib/commands/test_cfgsync.py \
 			  tier0/lib/commands/test_cib_options.py \
 			  tier0/lib/commands/test_cib.py \
 			  tier0/lib/commands/test_cluster_property.py \
@@ -320,6 +315,7 @@ EXTRA_DIST		= \
 			  tier0/lib/commands/test_constraint_order.py \
 			  tier0/lib/commands/test_fencing_topology.py \
 			  tier0/lib/commands/test_node.py \
+			  tier0/lib/commands/test_pcs_cfgsync.py \
 			  tier0/lib/commands/test_pcsd.py \
 			  tier0/lib/commands/test_qdevice.py \
 			  tier0/lib/commands/test_quorum.py \
@@ -333,10 +329,10 @@ EXTRA_DIST		= \
 			  tier0/lib/commands/test_stonith_update_scsi_devices.py \
 			  tier0/lib/communication/__init__.py \
 			  tier0/lib/communication/test_booth.py \
-			  tier0/lib/communication/test_cfgsync.py \
 			  tier0/lib/communication/test_cluster.py \
 			  tier0/lib/communication/test_corosync.py \
 			  tier0/lib/communication/test_nodes.py \
+			  tier0/lib/communication/test_pcs_cfgsync.py \
 			  tier0/lib/communication/test_qdevice_net.py \
 			  tier0/lib/communication/test_qdevice.py \
 			  tier0/lib/communication/test_sbd.py \
@@ -379,6 +375,10 @@ EXTRA_DIST		= \
 			  tier0/lib/pacemaker/test_state.py \
 			  tier0/lib/pacemaker/test_status.py \
 			  tier0/lib/pacemaker/test_values.py \
+			  tier0/lib/pcs_cfgsync/config/__init__.py \
+			  tier0/lib/pcs_cfgsync/config/test_facade.py \
+			  tier0/lib/pcs_cfgsync/__init__.py \
+			  tier0/lib/pcs_cfgsync/test_fetcher.py \
 			  tier0/lib/permissions/__init__.py \
 			  tier0/lib/permissions/config/__init__.py \
 			  tier0/lib/permissions/config/test_facade.py \

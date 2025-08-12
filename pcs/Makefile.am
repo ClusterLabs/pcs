@@ -131,7 +131,6 @@ EXTRA_DIST		= \
 			  common/async_tasks/dto.py \
 			  common/async_tasks/types.py \
 			  common/capabilities.py \
-			  common/cfgsync_dto.py \
 			  common/communication/__init__.py \
 			  common/communication/const.py \
 			  common/communication/dto.py \
@@ -167,6 +166,7 @@ EXTRA_DIST		= \
 			  common/pacemaker/tag.py \
 			  common/pacemaker/tools.py \
 			  common/pacemaker/types.py \
+			  common/pcs_cfgsync_dto.py \
 			  common/permissions/__init__.py \
 			  common/permissions/types.py \
 			  common/pcs_pycurl.py \
@@ -231,11 +231,11 @@ EXTRA_DIST		= \
 			  daemon/async_tasks/worker/logging.py \
 			  daemon/async_tasks/worker/report_processor.py \
 			  daemon/async_tasks/worker/types.py \
-			  daemon/cfgsync.py \
 			  daemon/env.py \
 			  daemon/http_server.py \
 			  daemon/__init__.py \
 			  daemon/log.py \
+			  daemon/pcs_cfgsync.py \
 			  daemon/ruby_pcsd.py \
 			  daemon/run.py \
 			  daemon/ssl.py \
@@ -270,11 +270,6 @@ EXTRA_DIST		= \
 			  lib/booth/resource.py \
 			  lib/booth/status.py \
 			  lib/booth/sync.py \
-			  lib/cfgsync/config/facade.py \
-			  lib/cfgsync/config/__init__.py \
-			  lib/cfgsync/const.py \
-			  lib/cfgsync/fetcher.py \
-			  lib/cfgsync/__init__.py \
 			  lib/cib/acl.py \
 			  lib/cib/alert.py \
 			  lib/cib/const.py \
@@ -324,7 +319,6 @@ EXTRA_DIST		= \
 			  lib/commands/acl.py \
 			  lib/commands/alert.py \
 			  lib/commands/booth.py \
-			  lib/commands/cfgsync.py \
 			  lib/commands/cib.py \
 			  lib/commands/cib_options.py \
 			  lib/commands/cluster.py \
@@ -339,6 +333,7 @@ EXTRA_DIST		= \
 			  lib/commands/fencing_topology.py \
 			  lib/commands/__init__.py \
 			  lib/commands/node.py \
+			  lib/commands/pcs_cfgsync.py \
 			  lib/commands/pcsd.py \
 			  lib/commands/qdevice.py \
 			  lib/commands/quorum.py \
@@ -353,11 +348,11 @@ EXTRA_DIST		= \
 			  lib/commands/stonith.py \
 			  lib/commands/tag.py \
 			  lib/communication/booth.py \
-			  lib/communication/cfgsync.py \
 			  lib/communication/cluster.py \
 			  lib/communication/corosync.py \
 			  lib/communication/__init__.py \
 			  lib/communication/nodes.py \
+			  lib/communication/pcs_cfgsync.py \
 			  lib/communication/qdevice_net.py \
 			  lib/communication/qdevice.py \
 			  lib/communication/sbd.py \
@@ -406,6 +401,11 @@ EXTRA_DIST		= \
 			  lib/pacemaker/state.py \
 			  lib/pacemaker/status.py \
 			  lib/pacemaker/values.py \
+			  lib/pcs_cfgsync/config/facade.py \
+			  lib/pcs_cfgsync/config/__init__.py \
+			  lib/pcs_cfgsync/const.py \
+			  lib/pcs_cfgsync/fetcher.py \
+			  lib/pcs_cfgsync/__init__.py \
 			  lib/permissions/__init__.py \
 			  lib/permissions/checker.py \
 			  lib/permissions/config/__init__.py \

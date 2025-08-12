@@ -9,7 +9,6 @@ from pcs.lib.commands import (  # services,
     acl,
     alert,
     booth,
-    cfgsync,
     cib,
     cib_options,
     cluster,
@@ -17,6 +16,7 @@ from pcs.lib.commands import (  # services,
     constraint,
     fencing_topology,
     node,
+    pcs_cfgsync,
     qdevice,
     quorum,
     resource,
@@ -129,10 +129,6 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
     "booth.ticket_unstandby": _Cmd(
         cmd=booth.ticket_unstandby,
         required_permission=p.WRITE,
-    ),
-    "cfgsync.get_configs": _Cmd(
-        cmd=cfgsync.get_configs,
-        required_permission=p.FULL,
     ),
     "cluster.add_nodes": _Cmd(
         cmd=cluster.add_nodes,
@@ -257,6 +253,10 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
     "node.standby_unstandby_list": _Cmd(
         cmd=node.standby_unstandby_list,
         required_permission=p.WRITE,
+    ),
+    "pcs_cfgsync.get_configs": _Cmd(
+        cmd=pcs_cfgsync.get_configs,
+        required_permission=p.FULL,
     ),
     "qdevice.client_net_destroy": _Cmd(
         cmd=qdevice.client_net_destroy,

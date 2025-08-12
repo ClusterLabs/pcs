@@ -125,8 +125,8 @@ class FileInstance:
         return cls.for_common(file_type_codes.PCS_SETTINGS_CONF)
 
     @classmethod
-    def for_cfgsync_ctl(cls) -> "FileInstance":
-        return cls.for_common(file_type_codes.CFGSYNC_CTL)
+    def for_pcs_cfgsync_ctl(cls) -> "FileInstance":
+        return cls.for_common(file_type_codes.PCS_CFGSYNC_CTL)
 
     @classmethod
     def for_common(

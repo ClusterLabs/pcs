@@ -5,7 +5,6 @@ from unittest import TestCase
 import pycurl
 
 from pcs.common import file_type_codes, reports
-from pcs.common.cfgsync_dto import SyncConfigsDto
 from pcs.common.communication.const import (
     COM_STATUS_ERROR,
     COM_STATUS_SUCCESS,
@@ -20,7 +19,8 @@ from pcs.common.node_communicator import (
     RequestTarget,
     Response,
 )
-from pcs.lib.communication.cfgsync import (
+from pcs.common.pcs_cfgsync_dto import SyncConfigsDto
+from pcs.lib.communication.pcs_cfgsync import (
     ConfigInfo,
     GetConfigs,
 )

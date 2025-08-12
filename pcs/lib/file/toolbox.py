@@ -10,7 +10,6 @@ from pcs.lib.auth import config as auth_config
 from pcs.lib.booth.config_facade import ConfigFacade as BoothConfigFacade
 from pcs.lib.booth.config_parser import Exporter as BoothConfigExporter
 from pcs.lib.booth.config_parser import Parser as BoothConfigParser
-from pcs.lib.cfgsync.config.facade import Facade as CfgsyncCtlFacade
 from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfigFacade
 from pcs.lib.corosync.config_parser import Exporter as CorosyncConfigExporter
 from pcs.lib.corosync.config_parser import Parser as CorosyncConfigParser
@@ -24,6 +23,7 @@ from pcs.lib.interface.config import (
     ParserErrorException,
     ParserInterface,
 )
+from pcs.lib.pcs_cfgsync.config.facade import Facade as CfgsyncCtlFacade
 from pcs.lib.permissions import config as pcs_settings_conf
 
 from .json import (
@@ -100,8 +100,8 @@ _toolboxes = {
         validator=None,  # TODO needed for files syncing
         version_controller=None,  # TODO needed for files syncing
     ),
-    code.CFGSYNC_CTL: FileToolbox(
-        file_type_code=code.CFGSYNC_CTL,
+    code.PCS_CFGSYNC_CTL: FileToolbox(
+        file_type_code=code.PCS_CFGSYNC_CTL,
         facade=CfgsyncCtlFacade,
         parser=JsonParser,
         exporter=JsonExporter,

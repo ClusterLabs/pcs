@@ -7,7 +7,7 @@ from pcs.common.file_type_codes import FileTypeCode
 from pcs.common.node_communicator import Communicator, RequestTarget
 from pcs.common.reports import ReportItemContext
 from pcs.common.reports.processor import ReportProcessor
-from pcs.lib.communication.cfgsync import ConfigInfo, GetConfigs
+from pcs.lib.communication.pcs_cfgsync import ConfigInfo, GetConfigs
 from pcs.lib.communication.tools import run
 from pcs.lib.file.instance import FileInstance
 from pcs.lib.file.raw_file import RawFileError, raw_file_error_report

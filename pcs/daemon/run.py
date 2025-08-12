@@ -53,9 +53,9 @@ from pcs.daemon.async_tasks.scheduler import (
     SchedulerConfig,
 )
 from pcs.daemon.async_tasks.task import TaskConfig
-from pcs.daemon.cfgsync import CfgSyncPullManager
 from pcs.daemon.env import prepare_env
 from pcs.daemon.http_server import HttpsServerManage
+from pcs.daemon.pcs_cfgsync import CfgSyncPullManager
 from pcs.lib.auth.provider import AuthProvider
 
 

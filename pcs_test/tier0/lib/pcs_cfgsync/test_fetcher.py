@@ -5,14 +5,14 @@ from pcs.common import file_type_codes, reports
 from pcs.common.file import RawFileError
 from pcs.common.host import PcsKnownHost
 from pcs.common.node_communicator import RequestTarget
-from pcs.lib.cfgsync.fetcher import ConfigFetcher, _find_newest_config
-from pcs.lib.communication.cfgsync import ConfigInfo, GetConfigsResult
+from pcs.lib.communication.pcs_cfgsync import ConfigInfo, GetConfigsResult
 from pcs.lib.file import metadata
 from pcs.lib.file.instance import FileInstance
 from pcs.lib.host.config.exporter import Exporter as KnownHostsExporter
 from pcs.lib.host.config.facade import Facade as KnownHostsFacade
 from pcs.lib.host.config.parser import InvalidFileStructureException
 from pcs.lib.host.config.types import KnownHosts
+from pcs.lib.pcs_cfgsync.fetcher import ConfigFetcher, _find_newest_config
 from pcs.lib.permissions.config.exporter import ExporterV2
 from pcs.lib.permissions.config.facade import FacadeV2
 from pcs.lib.permissions.config.parser import ParserError
@@ -126,8 +126,8 @@ def fixture_pcs_settings_file_content(data_version=1):
     ).decode("utf-8")
 
 
-@mock.patch("pcs.lib.cfgsync.fetcher.run")
-@mock.patch("pcs.lib.cfgsync.fetcher.FileInstance.raw_file")
+@mock.patch("pcs.lib.pcs_cfgsync.fetcher.run")
+@mock.patch("pcs.lib.pcs_cfgsync.fetcher.FileInstance.raw_file")
 class ConfigFetcherTest(TestCase):
     def setUp(self):
         self.report_processor = MockLibraryReportProcessor()
@@ -177,7 +177,7 @@ class ConfigFetcherTest(TestCase):
             self.report_processor.report_item_list, []
         )
 
-    @mock.patch("pcs.lib.cfgsync.fetcher.FileInstance.read_to_facade")
+    @mock.patch("pcs.lib.pcs_cfgsync.fetcher.FileInstance.read_to_facade")
     def test_not_newer_than_local(
         self,
         mock_read_to_facade: mock.Mock,
@@ -212,7 +212,7 @@ class ConfigFetcherTest(TestCase):
             self.report_processor.report_item_list, []
         )
 
-    @mock.patch("pcs.lib.cfgsync.fetcher.FileInstance.read_to_facade")
+    @mock.patch("pcs.lib.pcs_cfgsync.fetcher.FileInstance.read_to_facade")
     def test_newer_than_local(
         self,
         mock_read_to_facade: mock.Mock,
@@ -253,7 +253,7 @@ class ConfigFetcherTest(TestCase):
             self.report_processor.report_item_list, []
         )
 
-    @mock.patch("pcs.lib.cfgsync.fetcher.FileInstance.read_to_facade")
+    @mock.patch("pcs.lib.pcs_cfgsync.fetcher.FileInstance.read_to_facade")
     def test_multiple_nodes_chooses_newest(
         self,
         mock_read_to_facade: mock.Mock,
@@ -295,7 +295,7 @@ class ConfigFetcherTest(TestCase):
             self.report_processor.report_item_list, []
         )
 
-    @mock.patch("pcs.lib.cfgsync.fetcher.FileInstance.read_to_facade")
+    @mock.patch("pcs.lib.pcs_cfgsync.fetcher.FileInstance.read_to_facade")
     def test_multiple_files(
         self,
         mock_read_to_facade: mock.Mock,
@@ -406,7 +406,7 @@ class ConfigFetcherTest(TestCase):
             ],
         )
 
-    @mock.patch("pcs.lib.cfgsync.fetcher.FileInstance.read_to_facade")
+    @mock.patch("pcs.lib.pcs_cfgsync.fetcher.FileInstance.read_to_facade")
     def test_local_raw_file_error(
         self,
         mock_read_to_facade: mock.Mock,
@@ -452,7 +452,7 @@ class ConfigFetcherTest(TestCase):
             ],
         )
 
-    @mock.patch("pcs.lib.cfgsync.fetcher.FileInstance.read_to_facade")
+    @mock.patch("pcs.lib.pcs_cfgsync.fetcher.FileInstance.read_to_facade")
     def test_local_file_parse_error(
         self,
         mock_read_to_facade: mock.Mock,
@@ -493,7 +493,7 @@ class ConfigFetcherTest(TestCase):
             ],
         )
 
-    @mock.patch("pcs.lib.cfgsync.fetcher.FileInstance.read_to_facade")
+    @mock.patch("pcs.lib.pcs_cfgsync.fetcher.FileInstance.read_to_facade")
     def test_multiple_files_skip_error_local(
         self,
         mock_read_to_facade: mock.Mock,

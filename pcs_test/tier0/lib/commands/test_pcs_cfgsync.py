@@ -2,13 +2,13 @@ from unittest import TestCase
 
 from pcs import settings
 from pcs.common import reports
-from pcs.common.cfgsync_dto import SyncConfigsDto
 from pcs.common.file_type_codes import (
     COROSYNC_CONF,
     PCS_KNOWN_HOSTS,
     PCS_SETTINGS_CONF,
 )
-from pcs.lib.commands.cfgsync import get_configs
+from pcs.common.pcs_cfgsync_dto import SyncConfigsDto
+from pcs.lib.commands.pcs_cfgsync import get_configs
 
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
