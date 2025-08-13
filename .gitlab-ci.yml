@@ -51,6 +51,8 @@ variables:
       a custom one.
     value: $TEST_FILTER
   TFCLI_TMT_PREPARE: $ENABLE_FIPS
+  TF_REQUEST_ID_FILE: /tmp/tf_request_id-$CI_JOB_ID
+  TF_EXIT_CODE_FILE: /tmp/tf_exit_code-$CI_JOB_ID
 
 
 # https://docs.gitlab.com/ci/yaml/#parallelmatrix
@@ -95,9 +97,11 @@ variables:
 .download_artifacts_from_tf: &download_artifacts_from_tf
   - UUID_REGEX="[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}"
   - REQUEST_ID=$(sed -n -E "s/.*($UUID_REGEX).*/\1/p" output.txt | head -n 1)
+  - echo "$REQUEST_ID" > "$TF_REQUEST_ID_FILE"
   - echo "Testing Farm request id is $REQUEST_ID"
   - EXIT_CODE=0
-  - testing-farm watch --id $REQUEST_ID || EXIT_CODE=$?
+  - testing-farm watch --id "$REQUEST_ID" || EXIT_CODE=$?
+  - echo $EXIT_CODE > "$TF_EXIT_CODE_FILE"
   - >
     curl --insecure --location --remote-name \
       "https://artifacts.osci.redhat.com/testing-farm/$REQUEST_ID/results.xml"
@@ -133,6 +137,15 @@ tf_tests:
       --no-wait
       | tee output.txt
     - *download_artifacts_from_tf
+  after_script:
+    - REQUEST_ID=$(<"$TF_REQUEST_ID_FILE")
+    - EXIT_CODE=$(<"$TF_EXIT_CODE_FILE")
+    - echo "CI_JOB_STATUS=$CI_JOB_STATUS EXIT_CODE=$EXIT_CODE"
+    - >
+      if [[ "$CI_JOB_STATUS" != "success" && "$EXIT_CODE" != "1" ]]; then \
+        echo "Canceling testing farm request $REQUEST_ID"; \
+        testing-farm cancel "$REQUEST_ID"; \
+      fi
   tags:
     - "shared-podman"
   artifacts:
