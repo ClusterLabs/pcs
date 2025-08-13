@@ -393,7 +393,10 @@ AC_DEFUN([PCS_BUNDLE_GEM], [
 # PCS_CHECK_GEM([module], [version])
 AC_DEFUN([PCS_CHECK_GEM], [
 	if test "x$local_build" = "xyes"; then
-		AC_RUBY_GEM([$1], [$2], [], [PCS_BUNDLE_GEM([$1])])
+		AC_RUBY_GEM([$1], [$2], [bundle_module=no], [bundle_module=yes])
+		if test "x$bundle_module" = "xyes" || test "x$individual_bundling" != "xyes"; then
+			PCS_BUNDLE_GEM([$1])
+		fi
 	else
 		AC_RUBY_GEM([$1], [$2], [], [AC_MSG_ERROR([ruby gem $1 not found])])
 	fi
