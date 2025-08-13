@@ -12,12 +12,14 @@ environment:
   CONFIGURE_OPTIONS_DISTCHECK: >-
       --enable-local-build
       --enable-individual-bundling
+  CONFIGURE_OPTIONS_RPM_BUILD: >-
+      --enable-local-build
+      --enable-webui
+      --enable-destructive-tests
 
 /autotools:
   summary: Build pcs to run tests
-  tag: [
-    autotools, distcheck, lint, python, rpm_build, ruby, smoke, tier0, tier1,
-  ]
+  tag: [autotools, distcheck, lint, python, ruby, tier0]
   test: |
     ./autogen.sh &&
     ./configure $CONFIGURE_OPTIONS &&
@@ -63,6 +65,14 @@ environment:
     cp -v pcs*.tar.* dist/ &&
     cp -rv dist $TMT_PLAN_DATA &&
     cp -rv dist $TMT_TEST_DATA
+
+/autotools_rpmbuild:
+  summary: Configure pcs to run rpm_build, tier1 and smoke tests
+  tag: [autotools_rpmbuild, rpm_build, smoke, tier1]
+  test: |
+    ./autogen.sh &&
+    ./configure $CONFIGURE_OPTIONS_RPM_BUILD &&
+    make
 
 /rpm_build:
   summary: Run make rpm to build a pcs package

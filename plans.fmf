@@ -89,7 +89,8 @@ prepare:
       - python3-pycurl
 
   - name: Install dependencies for bundled python3-pycurl
-    when: distro >= rhel-10
+    # autotools_rpmbuild also bundles pycurl on fedora
+    when: distro >= rhel-10, fedora
     how: install
     package:
       - libcurl
@@ -147,7 +148,7 @@ finish:
 
   discover+:
     test:
-      - autotools
+      - autotools$
       - ruff_lint
       - ruff_format_check
       - mypy
@@ -158,7 +159,7 @@ finish:
 
   discover+:
     test:
-      - autotools
+      - autotools$
       - python_tier0_tests
       - ruby_tests
 
@@ -175,8 +176,9 @@ finish:
 
   discover+:
     test:
-      - autotools
+      - autotools$
       - distcheck
+      - autotools_rpmbuild
       - rpm_build
       - python_tier1_tests
       - python_smoke_tests
