@@ -14,7 +14,7 @@ This includes code that is directly used, or heavily adapted from AI suggestions
 At the time of writing, pcs project does NOT accept any AI-Generated Code.
 
 ## Rationale
-The AI world is moving extremely fast. There are several concerns related to Copyright, Quality, Patents and Ethical.
+The AI world is moving extremely fast. There are several concerns related to intellectual property, quality, and ethics.
 
 The pcs maintainers are in the process of evaluating safe use cases where AI-Generated Code might be admissible.
 
@@ -28,4 +28,4 @@ This policy is a living document and will be updated as AI technology evolves an
 
 The current policy is maintained here: https://github.com/ClusterLabs/ai-policies
 
-Last update: 2025-06-10
+Last update: 2025-08-14
