@@ -5,22 +5,28 @@ discover:
 
 # https://tmt.readthedocs.io/en/stable/spec/plans.html#prepare
 prepare:
+  # https://docs.testing-farm.io/Testing%20Farm/0.1/test-environment.html#_tag_repository
   - name: Disable testing-farm RHEL repos that may contain packages of
           different versions than we want
     when: distro == rhel
     how: shell
     script:
       - |
-        if dnf repolist --enabled | grep testing-farm-tag-repository; then
-          dnf config-manager --set-disabled testing-farm-tag-repository
-        fi
+        for repo in testing-farm-tag-repository \
+            testing-farm-tag-repository-mainline \
+            testing-farm-tag-repository-z-stream; do
+          if dnf repolist --enabled -v | grep "^Repo-id\s*:\s*${repo}$"; then
+            dnf config-manager --set-disabled "${repo}"
+          fi;
+        done
 
   - name: Enable testing-farm HighAvailability RHEL repo
     when: distro == rhel
     how: shell
     script:
       - |
-        if dnf repolist --disabled | grep rhel-HighAvailability; then
+        if dnf repolist --disabled -v |
+            grep "^Repo-id\s*:\s*rhel-HighAvailability$"; then
           dnf config-manager --set-enabled rhel-HighAvailability
         fi
 
