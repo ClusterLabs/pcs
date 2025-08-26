@@ -200,8 +200,7 @@ rubyver=`pkg-config --variable=ruby_version $rubymod`
 %build
 %define debug_package %{nil}
 ./autogen.sh
-%{configure} --enable-local-build --enable-use-local-cache-only \
-  --enable-individual-bundling
+%{configure} --enable-local-build --enable-use-local-cache-only
 make all
 
 %install
