@@ -136,7 +136,7 @@ if ENABLE_DOWNLOAD
 	echo 'BUNDLE_RETRY: 30' >> .bundle/config
 	echo 'BUNDLE_JOBS: 1' >> .bundle/config
 	echo 'BUNDLE_FORCE_RUBY_PLATFORM: "true"' >> .bundle/config
-	$(BUNDLE)
+	$(BUNDLE) --redownload
 	cp -rp $(PCSD_BUNDLED_DIR_LOCAL)/* $(PCSD_BUNDLED_DIR_ROOT_LOCAL)/
 	rm -rf $$(realpath $(PCSD_BUNDLED_DIR_LOCAL)/../)
 	rm -rf .bundle Gemfile.lock

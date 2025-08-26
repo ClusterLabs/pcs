@@ -433,7 +433,7 @@ AC_DEFUN([PCS_CHECK_GEM], [
 
 # PCS_GEM_ACTION([curversion], [op], [cmpversion][, action-if-true] [, action-if-false])
 AC_DEFUN([PCS_GEM_ACTION], [
-	if test -n "$1"; then
+	if test "x$individual_bundling" = "xyes" || test "x$local_build" != "xyes" && test -n "$1"; then
 		AC_COMPARE_VERSIONS([$1], [$2], [$3], [$4], [$5])
 	else
 		true

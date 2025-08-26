@@ -256,7 +256,7 @@ rubyver=`pkg-config --variable=ruby_version $rubymod`
 %define debug_package %{nil}
 ./autogen.sh
 %{configure} --enable-local-build --enable-use-local-cache-only \
-  --enable-individual-bundling --enable-webui --with-python-version=@pyversion@
+  --enable-webui --with-python-version=@pyversion@
 make all
 
 %install
