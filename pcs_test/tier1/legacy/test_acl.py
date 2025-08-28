@@ -526,11 +526,17 @@ class ACLTest(TestCase, AssertPcsMixin):
         )
         self.assert_pcs_fail(
             "acl role create role0 readX xpath //resources".split(),
-            stderr_start="\nUsage: pcs acl role create...",
+            (
+                "Error: 'readx' is not a valid permission value, use 'deny', 'read', 'write'\n"
+                + ERRORS_HAVE_OCCURRED
+            ),
         )
         self.assert_pcs_fail(
             "acl role create role0 read xpathX //resources".split(),
-            stderr_start="\nUsage: pcs acl role create...",
+            (
+                "Error: 'xpathx' is not a valid scope type value, use 'id', 'xpath'\n"
+                + ERRORS_HAVE_OCCURRED
+            ),
         )
         self.assert_pcs_fail(
             "acl role create role0 description=test read".split(),
@@ -550,11 +556,17 @@ class ACLTest(TestCase, AssertPcsMixin):
         )
         self.assert_pcs_fail(
             "acl role create role0 description=test readX xpath //resources".split(),
-            stderr_start="\nUsage: pcs acl role create...",
+            (
+                "Error: 'readx' is not a valid permission value, use 'deny', 'read', 'write'\n"
+                + ERRORS_HAVE_OCCURRED
+            ),
         )
         self.assert_pcs_fail(
             "acl role create role0 description=test read xpathX //resources".split(),
-            stderr_start="\nUsage: pcs acl role create...",
+            (
+                "Error: 'xpathx' is not a valid scope type value, use 'id', 'xpath'\n"
+                + ERRORS_HAVE_OCCURRED
+            ),
         )
         self.assert_pcs_fail(
             "acl role create role0 desc=test read".split(),
@@ -562,15 +574,27 @@ class ACLTest(TestCase, AssertPcsMixin):
         )
         self.assert_pcs_fail(
             "acl role create role0 desc=test read //resources".split(),
-            stderr_start="\nUsage: pcs acl role create...",
+            (
+                "Error: 'desc=test' is not a valid permission value, use 'deny', 'read', 'write'\n"
+                "Error: 'read' is not a valid scope type value, use 'id', 'xpath'\n"
+                + ERRORS_HAVE_OCCURRED
+            ),
         )
         self.assert_pcs_fail(
             "acl role create role0 desc=test read xpath".split(),
-            stderr_start="\nUsage: pcs acl role create...",
+            (
+                "Error: 'desc=test' is not a valid permission value, use 'deny', 'read', 'write'\n"
+                "Error: 'read' is not a valid scope type value, use 'id', 'xpath'\n"
+                + ERRORS_HAVE_OCCURRED
+            ),
         )
         self.assert_pcs_fail(
             "acl role create role0 desc=test read id".split(),
-            stderr_start="\nUsage: pcs acl role create...",
+            (
+                "Error: 'desc=test' is not a valid permission value, use 'deny', 'read', 'write'\n"
+                "Error: 'read' is not a valid scope type value, use 'id', 'xpath'\n"
+                + ERRORS_HAVE_OCCURRED
+            ),
         )
         self.assert_pcs_fail(
             "acl role create role0 desc=test readX xpath //resources".split(),
@@ -806,11 +830,17 @@ class ACLTest(TestCase, AssertPcsMixin):
         )
         self.assert_pcs_fail(
             "acl permission add role1 readX xpath //resources".split(),
-            stderr_start="\nUsage: pcs acl permission add...",
+            (
+                "Error: 'readx' is not a valid permission value, use 'deny', 'read', 'write'\n"
+                + ERRORS_HAVE_OCCURRED
+            ),
         )
         self.assert_pcs_fail(
             "acl permission add role1 read xpathX //resources".split(),
-            stderr_start="\nUsage: pcs acl permission add...",
+            (
+                "Error: 'xpathx' is not a valid scope type value, use 'id', 'xpath'\n"
+                + ERRORS_HAVE_OCCURRED
+            ),
         )
         self.assert_pcs_fail(
             "acl permission add role1 read id dummy read".split(),
@@ -830,11 +860,19 @@ class ACLTest(TestCase, AssertPcsMixin):
         )
         self.assert_pcs_fail(
             "acl permission add role1 read id dummy readX xpath //resources".split(),
-            stderr_start="\nUsage: pcs acl permission add...",
+            (
+                "Error: id 'dummy' does not exist\n"
+                "Error: 'readx' is not a valid permission value, use 'deny', 'read', 'write'\n"
+                + ERRORS_HAVE_OCCURRED
+            ),
         )
         self.assert_pcs_fail(
             "acl permission add role1 read id dummy read xpathX //resources".split(),
-            stderr_start="\nUsage: pcs acl permission add...",
+            (
+                "Error: id 'dummy' does not exist\n"
+                "Error: 'xpathx' is not a valid scope type value, use 'id', 'xpath'\n"
+                + ERRORS_HAVE_OCCURRED
+            ),
         )
         self.assert_pcs_success(
             ["acl"],

@@ -7,6 +7,10 @@
   `pcs cluster node delete-remote|remove-remote|delete-guest|remove-guest`
   now warn about omitting live cluster actions when '-f' is used ([RHEL-76157])
 
+### Fixed
+- Commands `pcs acl role create` and `pcs acl permission add` now print
+  specific error messages in case of invalid input instead of command usage
+
 ### Changed
 - Lib command `cib.remove_elements` does not stop resources before deletion.
   The resources should be stopped before calling this command

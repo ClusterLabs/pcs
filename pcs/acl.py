@@ -121,8 +121,7 @@ def argv_to_permission_info_list(argv):
 
     # wrapping by list,
     # because in python3 zip() returns an iterator instead of a list
-    # and the loop below makes iteration over it
-    permission_info_list = list(
+    return list(
         zip(
             [permission.lower() for permission in argv[::3]],
             [scope_type.lower() for scope_type in argv[1::3]],
@@ -130,15 +129,6 @@ def argv_to_permission_info_list(argv):
             strict=False,
         )
     )
-
-    for permission, scope_type, _ in permission_info_list:
-        if permission not in ["read", "write", "deny"] or scope_type not in [
-            "xpath",
-            "id",
-        ]:
-            raise CmdLineInputError()
-
-    return permission_info_list
 
 
 def role_create(lib, argv, modifiers):
