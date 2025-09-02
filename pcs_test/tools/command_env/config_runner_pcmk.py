@@ -186,6 +186,11 @@ class PcmkShortcuts:
                 "Cannot specify resources or nodes when stdout, stderr or "
                 "returncode is specified"
             )
+        if "/share/pacemaker/" in settings.pacemaker_api_result_schema:
+            raise AssertionError(
+                "Path to pacemaker api schema seems not to be mocked. "
+                "This is a mistake as tier0 tests should be isolated."
+            )
 
         command = ["crm_mon", "--one-shot", "--inactive", "--output-as", "xml"]
 

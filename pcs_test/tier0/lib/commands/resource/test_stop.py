@@ -1,6 +1,7 @@
 import json
-from unittest import TestCase
+from unittest import TestCase, mock
 
+from pcs import settings
 from pcs.common import reports
 from pcs.lib.commands import resource
 
@@ -43,6 +44,9 @@ FIXTURE_MULTIPLE_PRIMITIVES_STATUS_UNMANAGED = """
 """
 
 
+@mock.patch.object(
+    settings, "pacemaker_api_result_schema", rc("pcmk_rng/api/api-result.rng")
+)
 class StopResources(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
@@ -361,6 +365,9 @@ class StopResources(TestCase):
         )
 
 
+@mock.patch.object(
+    settings, "pacemaker_api_result_schema", rc("pcmk_rng/api/api-result.rng")
+)
 class StopStonith(TestCase):
     resources_cib = """
         <resources>

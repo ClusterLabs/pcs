@@ -250,7 +250,7 @@ class EnsureNodeExists(TestCase):
     @mock.patch.object(
         settings,
         "pacemaker_api_result_schema",
-        rc("pcmk_api_rng/api-result.rng"),
+        rc("pcmk_rng/api/api-result.rng"),
     )
     def test_node_missing_not_in_state(self):
         assert_raise_library_error(
@@ -268,7 +268,7 @@ class EnsureNodeExists(TestCase):
     @mock.patch.object(
         settings,
         "pacemaker_api_result_schema",
-        rc("pcmk_api_rng/api-result.rng"),
+        rc("pcmk_rng/api/api-result.rng"),
     )
     def test_node_missing_and_gets_created(self):
         assert_xml_equal(

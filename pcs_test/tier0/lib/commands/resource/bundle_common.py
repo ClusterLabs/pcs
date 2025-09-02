@@ -1168,7 +1168,7 @@ class WaitMixin(FixturesMixin, SetUpMixin):
     @mock.patch.object(
         settings,
         "pacemaker_api_result_schema",
-        rc("pcmk_api_rng/api-result.rng"),
+        rc("pcmk_rng/api/api-result.rng"),
     )
     def test_wait_ok_run_ok(self):
         (
@@ -1189,7 +1189,7 @@ class WaitMixin(FixturesMixin, SetUpMixin):
     @mock.patch.object(
         settings,
         "pacemaker_api_result_schema",
-        rc("pcmk_api_rng/api-result.rng"),
+        rc("pcmk_rng/api/api-result.rng"),
     )
     def test_wait_ok_run_fail(self):
         (
@@ -1212,7 +1212,7 @@ class WaitMixin(FixturesMixin, SetUpMixin):
     @mock.patch.object(
         settings,
         "pacemaker_api_result_schema",
-        rc("pcmk_api_rng/api-result.rng"),
+        rc("pcmk_rng/api/api-result.rng"),
     )
     def test_disabled_wait_ok_run_ok(self):
         (
@@ -1239,7 +1239,7 @@ class WaitMixin(FixturesMixin, SetUpMixin):
     @mock.patch.object(
         settings,
         "pacemaker_api_result_schema",
-        rc("pcmk_api_rng/api-result.rng"),
+        rc("pcmk_rng/api/api-result.rng"),
     )
     def test_disabled_wait_ok_run_fail(self):
         (

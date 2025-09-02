@@ -1542,7 +1542,7 @@ class UpdateScsiDevicesDigestsBase(UpdateScsiDevicesMixin):
 @mock.patch.object(
     settings,
     "pacemaker_api_result_schema",
-    rc("pcmk_api_rng/api-result.rng"),
+    rc("pcmk_rng/api/api-result.rng"),
 )
 class TestUpdateScsiDevicesSetMpath(
     UpdateScsiDevicesSetBase, MpathMixin, TestCase
@@ -1553,7 +1553,7 @@ class TestUpdateScsiDevicesSetMpath(
 @mock.patch.object(
     settings,
     "pacemaker_api_result_schema",
-    rc("pcmk_api_rng/api-result.rng"),
+    rc("pcmk_rng/api/api-result.rng"),
 )
 class TestUpdateScsiDevicesSetScsi(
     UpdateScsiDevicesSetBase, ScsiMixin, TestCase
@@ -1564,7 +1564,7 @@ class TestUpdateScsiDevicesSetScsi(
 @mock.patch.object(
     settings,
     "pacemaker_api_result_schema",
-    rc("pcmk_api_rng/api-result.rng"),
+    rc("pcmk_rng/api/api-result.rng"),
 )
 class TestUpdateScsiDevicesAddRemoveMpath(
     UpdateScsiDevicesAddRemoveBase, MpathMixin, TestCase
@@ -1575,7 +1575,7 @@ class TestUpdateScsiDevicesAddRemoveMpath(
 @mock.patch.object(
     settings,
     "pacemaker_api_result_schema",
-    rc("pcmk_api_rng/api-result.rng"),
+    rc("pcmk_rng/api/api-result.rng"),
 )
 class TestUpdateScsiDevicesAddRemoveScsi(
     UpdateScsiDevicesAddRemoveBase, ScsiMixin, TestCase
@@ -1586,7 +1586,7 @@ class TestUpdateScsiDevicesAddRemoveScsi(
 @mock.patch.object(
     settings,
     "pacemaker_api_result_schema",
-    rc("pcmk_api_rng/api-result.rng"),
+    rc("pcmk_rng/api/api-result.rng"),
 )
 class TestUpdateScsiDevicesFailuresMpath(
     UpdateScsiDevicesSetFailuresBaseMixin,
@@ -1600,7 +1600,7 @@ class TestUpdateScsiDevicesFailuresMpath(
 @mock.patch.object(
     settings,
     "pacemaker_api_result_schema",
-    rc("pcmk_api_rng/api-result.rng"),
+    rc("pcmk_rng/api/api-result.rng"),
 )
 class TestUpdateScsiDevicesFailuresScsi(
     UpdateScsiDevicesSetFailuresBaseMixin, ScsiMixin, TestCase
@@ -1611,7 +1611,7 @@ class TestUpdateScsiDevicesFailuresScsi(
 @mock.patch.object(
     settings,
     "pacemaker_api_result_schema",
-    rc("pcmk_api_rng/api-result.rng"),
+    rc("pcmk_rng/api/api-result.rng"),
 )
 class TestUpdateScsiDevicesAddRemoveFailuresMpath(
     UpdateScsiDevicesAddRemoveFailuresBaseMixin,
@@ -1625,7 +1625,7 @@ class TestUpdateScsiDevicesAddRemoveFailuresMpath(
 @mock.patch.object(
     settings,
     "pacemaker_api_result_schema",
-    rc("pcmk_api_rng/api-result.rng"),
+    rc("pcmk_rng/api/api-result.rng"),
 )
 class TestUpdateScsiDevicesAddRemoveFailuresScsi(
     UpdateScsiDevicesAddRemoveFailuresBaseMixin, ScsiMixin, TestCase
@@ -1636,7 +1636,7 @@ class TestUpdateScsiDevicesAddRemoveFailuresScsi(
 @mock.patch.object(
     settings,
     "pacemaker_api_result_schema",
-    rc("pcmk_api_rng/api-result.rng"),
+    rc("pcmk_rng/api/api-result.rng"),
 )
 class TestUpdateScsiDevicesDigestsSetScsi(
     UpdateScsiDevicesDigestsBase, ScsiMixin, CommandSetMixin, TestCase
@@ -1647,7 +1647,7 @@ class TestUpdateScsiDevicesDigestsSetScsi(
 @mock.patch.object(
     settings,
     "pacemaker_api_result_schema",
-    rc("pcmk_api_rng/api-result.rng"),
+    rc("pcmk_rng/api/api-result.rng"),
 )
 class TestUpdateScsiDevicesDigestsAddRemoveScsi(
     UpdateScsiDevicesDigestsBase, ScsiMixin, CommandAddRemoveMixin, TestCase
@@ -1658,7 +1658,7 @@ class TestUpdateScsiDevicesDigestsAddRemoveScsi(
 @mock.patch.object(
     settings,
     "pacemaker_api_result_schema",
-    rc("pcmk_api_rng/api-result.rng"),
+    rc("pcmk_rng/api/api-result.rng"),
 )
 class TestUpdateScsiDevicesDigestsSetMpath(
     UpdateScsiDevicesDigestsBase, MpathMixin, CommandSetMixin, TestCase
@@ -1669,7 +1669,7 @@ class TestUpdateScsiDevicesDigestsSetMpath(
 @mock.patch.object(
     settings,
     "pacemaker_api_result_schema",
-    rc("pcmk_api_rng/api-result.rng"),
+    rc("pcmk_rng/api/api-result.rng"),
 )
 class TestUpdateScsiDevicesDigestsAddRemoveMpath(
     UpdateScsiDevicesDigestsBase, MpathMixin, CommandAddRemoveMixin, TestCase

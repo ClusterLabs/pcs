@@ -156,7 +156,7 @@ class MoveAutocleanCommonSetup(TestCase):
 @mock.patch.object(
     settings,
     "pacemaker_api_result_schema",
-    rc("pcmk_api_rng/api-result.rng"),
+    rc("pcmk_rng/api/api-result.rng"),
 )
 class MoveAutocleanSuccess(MoveAutocleanCommonSetup):
     # pylint: disable=too-many-instance-attributes
@@ -606,7 +606,7 @@ class MoveAutocleanSuccess(MoveAutocleanCommonSetup):
 @mock.patch.object(
     settings,
     "pacemaker_api_result_schema",
-    rc("pcmk_api_rng/api-result.rng"),
+    rc("pcmk_rng/api/api-result.rng"),
 )
 class MoveAutocleanValidations(MoveAutocleanCommonSetup):
     def test_cib_not_live(self):
@@ -944,7 +944,7 @@ class MoveAutocleanValidations(MoveAutocleanCommonSetup):
 @mock.patch.object(
     settings,
     "pacemaker_api_result_schema",
-    rc("pcmk_api_rng/api-result.rng"),
+    rc("pcmk_rng/api/api-result.rng"),
 )
 class MoveAutocleanFailures(MoveAutocleanCommonSetup):
     # pylint: disable=too-many-instance-attributes

@@ -820,7 +820,7 @@ class Verify(TestCase, CibMixin, StatusNodesMixin):
     @mock.patch.object(
         settings,
         "pacemaker_api_result_schema",
-        rc("pcmk_api_rng/api-result.rng"),
+        rc("pcmk_rng/api/api-result.rng"),
     )
     def test_empty(self):
         self.cib.find("configuration/fencing-topology").clear()
@@ -830,7 +830,7 @@ class Verify(TestCase, CibMixin, StatusNodesMixin):
     @mock.patch.object(
         settings,
         "pacemaker_api_result_schema",
-        rc("pcmk_api_rng/api-result.rng"),
+        rc("pcmk_rng/api/api-result.rng"),
     )
     def test_success(self):
         resources = self.cib.find("configuration/resources")
@@ -974,7 +974,7 @@ class ValidateTargetTypewise(TestCase):
 
 
 @mock.patch.object(
-    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+    settings, "pacemaker_api_result_schema", rc("pcmk_rng/api/api-result.rng")
 )
 class ValidateTargetValuewise(TestCase, StatusNodesMixin):
     def test_node_valid(self):

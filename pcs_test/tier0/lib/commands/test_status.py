@@ -41,6 +41,9 @@ def _booth_config_path_fixture(instance_name="booth"):
     return os.path.join(settings.booth_config_dir, f"{instance_name}.conf")
 
 
+@mock.patch.object(
+    settings, "pacemaker_api_result_schema", rc("pcmk_rng/api/api-result.rng")
+)
 class PacemakerStatusXml(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
@@ -244,7 +247,7 @@ class FullClusterStatusPlaintextBase(TestCase):
 @mock.patch("pcs.settings.booth_enable_authfile_set_enabled", False)
 @mock.patch("pcs.settings.booth_enable_authfile_unset_enabled", False)
 @mock.patch.object(
-    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+    settings, "pacemaker_api_result_schema", rc("pcmk_rng/api/api-result.rng")
 )
 class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
     # pylint: disable=too-many-public-methods
@@ -1273,7 +1276,7 @@ class FullClusterStatusPlaintextBoothWarning(FullClusterStatusPlaintextBase):
         super().setUp()
         self.settings_patcher = mock.patch(
             "pcs.settings.pacemaker_api_result_schema",
-            rc("pcmk_api_rng/api-result.rng"),
+            rc("pcmk_rng/api/api-result.rng"),
         )
         self.settings_patcher.start()
         self._fixture_config_live_minimal()
@@ -1466,7 +1469,7 @@ def _fixture_primitive_resource_dto(
 @mock.patch.object(
     settings,
     "pacemaker_api_result_schema",
-    rc("pcmk_api_rng/api-result.rng"),
+    rc("pcmk_rng/api/api-result.rng"),
 )
 class ResourcesStatus(TestCase):
     def setUp(self):

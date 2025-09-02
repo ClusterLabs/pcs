@@ -12,37 +12,37 @@
   <resources>
     <bundle id="B1" type="docker" image="pcs:test" unique="true" maintenance="false" managed="false" failed="false">
       <replica id="0">
-        <resource id="B1-ip-192.168.100.200" resource_agent="ocf:heartbeat:IPaddr2" role="Stopped" target_role="Stopped" active="false" orphaned="false" blocked="false" maintenance="false" managed="false" failed="false" failure_ignored="false" nodes_running_on="0"/>
-        <resource id="B1-docker-0" resource_agent="ocf:heartbeat:docker" role="Stopped" target_role="Stopped" active="false" orphaned="false" blocked="false" maintenance="false" managed="false" failed="false" failure_ignored="false" nodes_running_on="0"/>
+        <resource id="B1-ip-192.168.100.200" resource_agent="ocf:heartbeat:IPaddr2" role="Stopped" target_role="Stopped" active="false" orphaned="false" removed="false" blocked="false" maintenance="false" managed="false" failed="false" failure_ignored="false" nodes_running_on="0"/>
+        <resource id="B1-docker-0" resource_agent="ocf:heartbeat:docker" role="Stopped" target_role="Stopped" active="false" orphaned="false" removed="false" blocked="false" maintenance="false" managed="false" failed="false" failure_ignored="false" nodes_running_on="0"/>
       </replica>
       <replica id="1">
-        <resource id="B1-ip-192.168.100.201" resource_agent="ocf:heartbeat:IPaddr2" role="Stopped" target_role="Stopped" active="false" orphaned="false" blocked="false" maintenance="false" managed="false" failed="false" failure_ignored="false" nodes_running_on="0"/>
-        <resource id="B1-docker-1" resource_agent="ocf:heartbeat:docker" role="Stopped" target_role="Stopped" active="false" orphaned="false" blocked="false" maintenance="false" managed="false" failed="false" failure_ignored="false" nodes_running_on="0"/>
+        <resource id="B1-ip-192.168.100.201" resource_agent="ocf:heartbeat:IPaddr2" role="Stopped" target_role="Stopped" active="false" orphaned="false" removed="false" blocked="false" maintenance="false" managed="false" failed="false" failure_ignored="false" nodes_running_on="0"/>
+        <resource id="B1-docker-1" resource_agent="ocf:heartbeat:docker" role="Stopped" target_role="Stopped" active="false" orphaned="false" removed="false" blocked="false" maintenance="false" managed="false" failed="false" failure_ignored="false" nodes_running_on="0"/>
       </replica>
       <replica id="2">
-        <resource id="B1-ip-192.168.100.202" resource_agent="ocf:heartbeat:IPaddr2" role="Stopped" target_role="Stopped" active="false" orphaned="false" blocked="false" maintenance="false" managed="false" failed="false" failure_ignored="false" nodes_running_on="0"/>
-        <resource id="B1-docker-2" resource_agent="ocf:heartbeat:docker" role="Stopped" target_role="Stopped" active="false" orphaned="false" blocked="false" maintenance="false" managed="false" failed="false" failure_ignored="false" nodes_running_on="0"/>
+        <resource id="B1-ip-192.168.100.202" resource_agent="ocf:heartbeat:IPaddr2" role="Stopped" target_role="Stopped" active="false" orphaned="false" removed="false" blocked="false" maintenance="false" managed="false" failed="false" failure_ignored="false" nodes_running_on="0"/>
+        <resource id="B1-docker-2" resource_agent="ocf:heartbeat:docker" role="Stopped" target_role="Stopped" active="false" orphaned="false" removed="false" blocked="false" maintenance="false" managed="false" failed="false" failure_ignored="false" nodes_running_on="0"/>
       </replica>
       <replica id="3">
-        <resource id="B1-ip-192.168.100.203" resource_agent="ocf:heartbeat:IPaddr2" role="Stopped" target_role="Stopped" active="false" orphaned="false" blocked="false" maintenance="false" managed="false" failed="false" failure_ignored="false" nodes_running_on="0"/>
-        <resource id="B1-docker-3" resource_agent="ocf:heartbeat:docker" role="Stopped" target_role="Stopped" active="false" orphaned="false" blocked="false" maintenance="false" managed="false" failed="false" failure_ignored="false" nodes_running_on="0"/>
+        <resource id="B1-ip-192.168.100.203" resource_agent="ocf:heartbeat:IPaddr2" role="Stopped" target_role="Stopped" active="false" orphaned="false" removed="false" blocked="false" maintenance="false" managed="false" failed="false" failure_ignored="false" nodes_running_on="0"/>
+        <resource id="B1-docker-3" resource_agent="ocf:heartbeat:docker" role="Stopped" target_role="Stopped" active="false" orphaned="false" removed="false" blocked="false" maintenance="false" managed="false" failed="false" failure_ignored="false" nodes_running_on="0"/>
       </replica>
     </bundle>
-    <resource id="R7" resource_agent="ocf:pacemaker:Dummy" role="Stopped" active="false" orphaned="false" blocked="false" maintenance="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="0"/>
-    <resource id="S2" resource_agent="stonith:fence_kdump" role="Stopped" active="false" orphaned="false" blocked="false" maintenance="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="0"/>
+    <resource id="R7" resource_agent="ocf:pacemaker:Dummy" role="Stopped" active="false" orphaned="false" removed="false" blocked="false" maintenance="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="0"/>
+    <resource id="S2" resource_agent="stonith:fence_kdump" role="Stopped" active="false" orphaned="false" removed="false" blocked="false" maintenance="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="0"/>
     <group id="G2" number_resources="2" maintenance="false" managed="true" disabled="false">
-      <resource id="R5" resource_agent="ocf:pacemaker:Dummy" role="Stopped" active="false" orphaned="false" blocked="false" maintenance="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="0"/>
-      <resource id="S1" resource_agent="stonith:fence_kdump" role="Stopped" active="false" orphaned="false" blocked="false" maintenance="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="0"/>
+      <resource id="R5" resource_agent="ocf:pacemaker:Dummy" role="Stopped" active="false" orphaned="false" removed="false" blocked="false" maintenance="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="0"/>
+      <resource id="S1" resource_agent="stonith:fence_kdump" role="Stopped" active="false" orphaned="false" removed="false" blocked="false" maintenance="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="0"/>
     </group>
     <clone id="G1-clone" multi_state="true" unique="false" maintenance="false" managed="true" disabled="false" failed="false" failure_ignored="false">
       <group id="G1:0" number_resources="3" maintenance="false" managed="true" disabled="false">
-        <resource id="R2" resource_agent="ocf:pacemaker:Stateful" role="Stopped" active="false" orphaned="false" blocked="false" maintenance="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="0"/>
-        <resource id="R3" resource_agent="ocf:pacemaker:Stateful" role="Stopped" active="false" orphaned="false" blocked="false" maintenance="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="0"/>
-        <resource id="R4" resource_agent="ocf:pacemaker:Stateful" role="Stopped" active="false" orphaned="false" blocked="false" maintenance="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="0"/>
+        <resource id="R2" resource_agent="ocf:pacemaker:Stateful" role="Stopped" active="false" orphaned="false" removed="false" blocked="false" maintenance="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="0"/>
+        <resource id="R3" resource_agent="ocf:pacemaker:Stateful" role="Stopped" active="false" orphaned="false" removed="false" blocked="false" maintenance="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="0"/>
+        <resource id="R4" resource_agent="ocf:pacemaker:Stateful" role="Stopped" active="false" orphaned="false" removed="false" blocked="false" maintenance="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="0"/>
       </group>
     </clone>
     <clone id="R6-clone" multi_state="false" unique="false" maintenance="false" managed="true" disabled="false" failed="false" failure_ignored="false">
-      <resource id="R6" resource_agent="ocf:pacemaker:Dummy" role="Stopped" active="false" orphaned="false" blocked="false" maintenance="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="0"/>
+      <resource id="R6" resource_agent="ocf:pacemaker:Dummy" role="Stopped" active="false" orphaned="false" removed="false" blocked="false" maintenance="false" managed="true" failed="false" failure_ignored="false" nodes_running_on="0"/>
     </clone>
   </resources>
   <tickets>

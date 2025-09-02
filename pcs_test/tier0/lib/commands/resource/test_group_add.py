@@ -490,7 +490,7 @@ class GroupAdd(TestCase):
 
 
 @mock.patch.object(
-    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+    settings, "pacemaker_api_result_schema", rc("pcmk_rng/api/api-result.rng")
 )
 class GroupAddWait(TestCase):
     def setUp(self):

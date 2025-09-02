@@ -644,7 +644,7 @@ class Create(TestCase):
     @mock.patch.object(
         settings,
         "pacemaker_api_result_schema",
-        rc("pcmk_api_rng/api-result.rng"),
+        rc("pcmk_rng/api/api-result.rng"),
     )
     def test_minimal_wait_ok_run_ok(self):
         agent_name = "test_simple"

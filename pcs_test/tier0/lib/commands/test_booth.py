@@ -2209,6 +2209,9 @@ class GetResourceIdsFromCluster(TestCase, FixtureMixin):
         self.assertEqual(resource_ids, ["booth1", "booth2"])
 
 
+@mock.patch.object(
+    settings, "pacemaker_api_result_schema", rc("pcmk_rng/api/api-result.rng")
+)
 class RemoveFromCluster(TestCase, FixtureMixin):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)

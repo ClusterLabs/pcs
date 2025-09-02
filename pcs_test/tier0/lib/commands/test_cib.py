@@ -1,12 +1,14 @@
 import json
-from unittest import TestCase
+from unittest import TestCase, mock
 
+from pcs import settings
 from pcs.common import reports
 from pcs.lib.commands import cib as lib
 
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.fixture_cib import modify_cib
+from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import read_test_resource
 
 
@@ -60,6 +62,9 @@ def fixture_guest_resource(resource_id: str) -> str:
     """
 
 
+@mock.patch.object(
+    settings, "pacemaker_api_result_schema", rc("pcmk_rng/api/api-result.rng")
+)
 class RemoveElements(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)

@@ -391,7 +391,7 @@ class MoveBanWaitMixin:
     @mock.patch.object(
         settings,
         "pacemaker_api_result_schema",
-        rc("pcmk_api_rng/api-result.rng"),
+        rc("pcmk_rng/api/api-result.rng"),
     )
     def test_state_before_action_fail(self):
         self.config.runner.pcmk.load_state(
@@ -414,7 +414,7 @@ class MoveBanWaitMixin:
     @mock.patch.object(
         settings,
         "pacemaker_api_result_schema",
-        rc("pcmk_api_rng/api-result.rng"),
+        rc("pcmk_rng/api/api-result.rng"),
     )
     def test_state_before_action_not_xml(self):
         self.config.runner.pcmk.load_state(stdout="state stdout")
@@ -436,7 +436,7 @@ class MoveBanWaitMixin:
     @mock.patch.object(
         settings,
         "pacemaker_api_result_schema",
-        rc("pcmk_api_rng/api-result.rng"),
+        rc("pcmk_rng/api/api-result.rng"),
     )
     def test_pcmk_fail(self):
         self.config.runner.pcmk.load_state()
@@ -462,7 +462,7 @@ class MoveBanWaitMixin:
     @mock.patch.object(
         settings,
         "pacemaker_api_result_schema",
-        rc("pcmk_api_rng/api-result.rng"),
+        rc("pcmk_rng/api/api-result.rng"),
     )
     def test_wait_fail(self):
         self.config.runner.pcmk.load_state()
@@ -502,7 +502,7 @@ class MoveBanWaitMixin:
     @mock.patch.object(
         settings,
         "pacemaker_api_result_schema",
-        rc("pcmk_api_rng/api-result.rng"),
+        rc("pcmk_rng/api/api-result.rng"),
     )
     def test_state_after_action_fail(self):
         self.config.runner.pcmk.load_state()
@@ -545,7 +545,7 @@ class MoveBanWaitMixin:
     @mock.patch.object(
         settings,
         "pacemaker_api_result_schema",
-        rc("pcmk_api_rng/api-result.rng"),
+        rc("pcmk_rng/api/api-result.rng"),
     )
     def test_state_after_action_not_xml(self):
         self.config.runner.pcmk.load_state()
@@ -689,7 +689,7 @@ class MoveBanWaitMixin:
 
 
 @mock.patch.object(
-    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+    settings, "pacemaker_api_result_schema", rc("pcmk_rng/api/api-result.rng")
 )
 class MoveWait(MoveMixin, MoveBanWaitMixin, TestCase):
     def test_running_on_specified_node(self):
@@ -753,7 +753,7 @@ class MoveWait(MoveMixin, MoveBanWaitMixin, TestCase):
 
 
 @mock.patch.object(
-    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+    settings, "pacemaker_api_result_schema", rc("pcmk_rng/api/api-result.rng")
 )
 class BanWait(BanMixin, MoveBanWaitMixin, TestCase):
     def test_running_on_specified_node(self):
@@ -817,7 +817,7 @@ class BanWait(BanMixin, MoveBanWaitMixin, TestCase):
 
 
 @mock.patch.object(
-    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+    settings, "pacemaker_api_result_schema", rc("pcmk_rng/api/api-result.rng")
 )
 class UnmoveUnbanWait(UnmoveUnbanMixin, TestCase):
     def setUp(self):

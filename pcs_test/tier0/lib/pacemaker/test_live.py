@@ -47,7 +47,7 @@ class GetClusterStatusMixin(TestCase):
 
 
 @mock.patch.object(
-    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+    settings, "pacemaker_api_result_schema", rc("pcmk_rng/api/api-result.rng")
 )
 class GetClusterStatusXml(GetClusterStatusMixin, TestCase):
     # pylint: disable=protected-access
@@ -120,7 +120,7 @@ class GetClusterStatusXml(GetClusterStatusMixin, TestCase):
 
 
 @mock.patch.object(
-    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+    settings, "pacemaker_api_result_schema", rc("pcmk_rng/api/api-result.rng")
 )
 class GetClusterStatusDom(GetClusterStatusMixin, TestCase):
     def test_success(self):
@@ -551,7 +551,7 @@ class Verify(TestCase):
 
 
 @mock.patch.object(
-    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+    settings, "pacemaker_api_result_schema", rc("pcmk_rng/api/api-result.rng")
 )
 class GetCibVerificationErrors(TestCase):
     fixture_ok = """
@@ -1081,7 +1081,7 @@ class GetLocalNodeName(TestCase):
 
 
 @mock.patch.object(
-    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+    settings, "pacemaker_api_result_schema", rc("pcmk_rng/api/api-result.rng")
 )
 class GetLocalNodeStatusTest(TestCase):
     def setUp(self):
@@ -1370,7 +1370,7 @@ class ResourceCleanupTest(TestCase):
 
 
 @mock.patch.object(
-    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+    settings, "pacemaker_api_result_schema", rc("pcmk_rng/api/api-result.rng")
 )
 class ResourceRefreshTest(TestCase):
     def setUp(self):
@@ -1636,7 +1636,7 @@ class GetRulesInEffectStatus(TestCase):
 
 
 @mock.patch.object(
-    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+    settings, "pacemaker_api_result_schema", rc("pcmk_rng/api/api-result.rng")
 )
 class GetResourceDigests(TestCase):
     DIGESTS = {

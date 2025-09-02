@@ -1,6 +1,7 @@
 from functools import partial
-from unittest import TestCase
+from unittest import TestCase, mock
 
+from pcs import settings
 from pcs.common import reports
 from pcs.common.host import Destination
 from pcs.common.reports import codes as report_codes
@@ -22,6 +23,7 @@ from pcs_test.tier0.lib.commands.remote_node.fixtures_remove import (
 )
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
+from pcs_test.tools.misc import get_test_resource as rc
 
 NODE_NAME = "node-name"
 NODE_DEST_LIST = [Destination("node-addr", 2224)]
@@ -76,6 +78,9 @@ get_env_tools = partial(
 )
 
 
+@mock.patch.object(
+    settings, "pacemaker_api_result_schema", rc("pcmk_rng/api/api-result.rng")
+)
 class RemoveRemote(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
@@ -113,6 +118,9 @@ class RemoveRemote(TestCase):
         self.find_by(NODE_NAME)
 
 
+@mock.patch.object(
+    settings, "pacemaker_api_result_schema", rc("pcmk_rng/api/api-result.rng")
+)
 class RemoveRemoteOthers(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
@@ -223,6 +231,9 @@ class RemoveRemoteOthers(TestCase):
         )
 
 
+@mock.patch.object(
+    settings, "pacemaker_api_result_schema", rc("pcmk_rng/api/api-result.rng")
+)
 class MultipleResults(TestCase):
     fixture_multi_resources = """
         <resources>
@@ -343,6 +354,14 @@ class MultipleResults(TestCase):
 
 class AuthkeyRemove(TestCase):
     def setUp(self):
+        rng_path_patcher = mock.patch.object(
+            settings,
+            "pacemaker_api_result_schema",
+            rc("pcmk_rng/api/api-result.rng"),
+        )
+        self.addCleanup(rng_path_patcher.stop)
+        rng_path_patcher.start()
+
         self.env_assist, self.config = get_env_tools(self)
         self.config.env.set_known_hosts_dests(
             {
@@ -426,6 +445,14 @@ class AuthkeyRemove(TestCase):
 
 class PcmkRemoteServiceDestroy(TestCase):
     def setUp(self):
+        rng_path_patcher = mock.patch.object(
+            settings,
+            "pacemaker_api_result_schema",
+            rc("pcmk_rng/api/api-result.rng"),
+        )
+        self.addCleanup(rng_path_patcher.stop)
+        rng_path_patcher.start()
+
         self.env_assist, self.config = get_env_tools(self)
         self.config.runner.cib.load(resources=FIXTURE_RESOURCES_CIB)
         self.config.runner.pcmk.load_state(

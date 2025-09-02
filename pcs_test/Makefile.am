@@ -40,20 +40,24 @@ EXTRA_DIST		= \
 			  resources/crm_mon.all_resources.xml \
 			  resources/fenced_metadata.xml \
 			  resources/known-hosts \
-			  resources/pcmk_api_rng/api-result.rng \
-			  resources/pcmk_api_rng/crm_attribute-2.36.rng \
-			  resources/pcmk_api_rng/crm_mon-2.29.rng \
-			  resources/pcmk_api_rng/digests-2.9.rng \
-			  resources/pcmk_api_rng/failure-2.8.rng \
-			  resources/pcmk_api_rng/fence-event-2.15.rng \
-			  resources/pcmk_api_rng/node-attrs-2.8.rng \
-			  resources/pcmk_api_rng/node-history-2.12.rng \
-			  resources/pcmk_api_rng/nodes-2.29.rng \
-			  resources/pcmk_api_rng/ocf-ra-1.1.rng \
-			  resources/pcmk_api_rng/options-2.36.rng \
-			  resources/pcmk_api_rng/pacemakerd-health-2.25.rng \
-			  resources/pcmk_api_rng/resources-2.29.rng \
-			  resources/pcmk_api_rng/status-2.0.rng \
+			  resources/pcmk_rng/api/api-result.rng \
+			  resources/pcmk_rng/api/crm_attribute-2.36.rng \
+			  resources/pcmk_rng/api/crm_mon-2.41.rng \
+			  resources/pcmk_rng/api/digests-2.9.rng \
+			  resources/pcmk_rng/api/failure-2.8.rng \
+			  resources/pcmk_rng/api/fence-event-2.15.rng \
+			  resources/pcmk_rng/api/node-attrs-2.8.rng \
+			  resources/pcmk_rng/api/node-history-2.41.rng \
+			  resources/pcmk_rng/api/nodes-2.41.rng \
+			  resources/pcmk_rng/api/ocf-ra-1.1.rng \
+			  resources/pcmk_rng/api/options-2.36.rng \
+			  resources/pcmk_rng/api/pacemakerd-health-2.25.rng \
+			  resources/pcmk_rng/api/resources-2.41.rng \
+			  resources/pcmk_rng/api/status-2.0.rng \
+			  resources/pcmk_rng/api/ticket-2.35.rng \
+			  resources/pcmk_rng/constraints-3.9.rng \
+			  resources/pcmk_rng/rule-3.9.rng \
+			  resources/pcmk_rng/score.rng \
 			  resources/resource_agent_nagios_check_fping.xml \
 			  resources/resource_agent_ocf_heartbeat_dummy_insane_action.xml \
 			  resources/resource_agent_ocf_heartbeat_dummy_utf8.xml \

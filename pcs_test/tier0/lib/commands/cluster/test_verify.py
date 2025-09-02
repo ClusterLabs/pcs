@@ -75,7 +75,7 @@ class AssertInvalidCibMixin:
 
 
 @mock.patch.object(
-    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+    settings, "pacemaker_api_result_schema", rc("pcmk_rng/api/api-result.rng")
 )
 class CibAsWholeValid(TestCase):
     def setUp(self):
@@ -119,7 +119,7 @@ class CibAsWholeInvalid(TestCase, AssertInvalidCibMixin):
     @mock.patch.object(
         settings,
         "pacemaker_api_result_schema",
-        rc("pcmk_api_rng/api-result.rng"),
+        rc("pcmk_rng/api/api-result.rng"),
     )
     def test_continue_on_loadable_cib(self):
         self.config.runner.cib.load().runner.pcmk.load_state()
@@ -128,7 +128,7 @@ class CibAsWholeInvalid(TestCase, AssertInvalidCibMixin):
     @mock.patch.object(
         settings,
         "pacemaker_api_result_schema",
-        rc("pcmk_api_rng/api-result.rng"),
+        rc("pcmk_rng/api/api-result.rng"),
     )
     def test_add_following_errors(self):
         # More fencing topology tests are provided by tests of
@@ -143,7 +143,7 @@ class CibAsWholeInvalid(TestCase, AssertInvalidCibMixin):
 
 
 @mock.patch.object(
-    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+    settings, "pacemaker_api_result_schema", rc("pcmk_rng/api/api-result.rng")
 )
 class CibIsMocked(TestCase, AssertInvalidCibMixin):
     def setUp(self):
@@ -172,7 +172,7 @@ class CibIsMocked(TestCase, AssertInvalidCibMixin):
 
 
 @mock.patch.object(
-    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+    settings, "pacemaker_api_result_schema", rc("pcmk_rng/api/api-result.rng")
 )
 class VerboseMode(TestCase, AssertInvalidCibMixin):
     def setUp(self):

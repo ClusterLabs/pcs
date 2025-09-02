@@ -1353,7 +1353,7 @@ class Create(TestCase):
 
 
 @mock.patch.object(
-    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+    settings, "pacemaker_api_result_schema", rc("pcmk_rng/api/api-result.rng")
 )
 class CreateWait(TestCase):
     def setUp(self):
@@ -1653,7 +1653,7 @@ class CreateInGroup(TestCase):
     @mock.patch.object(
         settings,
         "pacemaker_api_result_schema",
-        rc("pcmk_api_rng/api-result.rng"),
+        rc("pcmk_rng/api/api-result.rng"),
     )
     def test_wait_ok_run_fail(self):
         self.config.runner.pcmk.resource_agent_self_validation({})
@@ -1678,7 +1678,7 @@ class CreateInGroup(TestCase):
     @mock.patch.object(
         settings,
         "pacemaker_api_result_schema",
-        rc("pcmk_api_rng/api-result.rng"),
+        rc("pcmk_rng/api/api-result.rng"),
     )
     def test_wait_ok_run_ok(self):
         self.config.runner.pcmk.resource_agent_self_validation({})
@@ -1703,7 +1703,7 @@ class CreateInGroup(TestCase):
     @mock.patch.object(
         settings,
         "pacemaker_api_result_schema",
-        rc("pcmk_api_rng/api-result.rng"),
+        rc("pcmk_rng/api/api-result.rng"),
     )
     def test_wait_ok_disable_fail(self):
         self.config.runner.pcmk.resource_agent_self_validation({})
@@ -1732,7 +1732,7 @@ class CreateInGroup(TestCase):
     @mock.patch.object(
         settings,
         "pacemaker_api_result_schema",
-        rc("pcmk_api_rng/api-result.rng"),
+        rc("pcmk_rng/api/api-result.rng"),
     )
     def test_wait_ok_disable_ok(self):
         self.config.runner.pcmk.resource_agent_self_validation({})
@@ -1757,7 +1757,7 @@ class CreateInGroup(TestCase):
     @mock.patch.object(
         settings,
         "pacemaker_api_result_schema",
-        rc("pcmk_api_rng/api-result.rng"),
+        rc("pcmk_rng/api/api-result.rng"),
     )
     def test_wait_ok_disable_ok_by_target_role(self):
         self.config.runner.pcmk.resource_agent_self_validation({})
@@ -1975,7 +1975,7 @@ class CreateAsClone(TestCase):
     @mock.patch.object(
         settings,
         "pacemaker_api_result_schema",
-        rc("pcmk_api_rng/api-result.rng"),
+        rc("pcmk_rng/api/api-result.rng"),
     )
     def test_wait_ok_run_fail(self):
         self.config.runner.pcmk.resource_agent_self_validation({})
@@ -2000,7 +2000,7 @@ class CreateAsClone(TestCase):
     @mock.patch.object(
         settings,
         "pacemaker_api_result_schema",
-        rc("pcmk_api_rng/api-result.rng"),
+        rc("pcmk_rng/api/api-result.rng"),
     )
     def test_wait_ok_run_ok(self):
         self.config.runner.pcmk.resource_agent_self_validation({})
@@ -2025,7 +2025,7 @@ class CreateAsClone(TestCase):
     @mock.patch.object(
         settings,
         "pacemaker_api_result_schema",
-        rc("pcmk_api_rng/api-result.rng"),
+        rc("pcmk_rng/api/api-result.rng"),
     )
     def test_wait_ok_disable_fail(self):
         self.config.runner.pcmk.resource_agent_self_validation({})
@@ -2054,7 +2054,7 @@ class CreateAsClone(TestCase):
     @mock.patch.object(
         settings,
         "pacemaker_api_result_schema",
-        rc("pcmk_api_rng/api-result.rng"),
+        rc("pcmk_rng/api/api-result.rng"),
     )
     def test_wait_ok_disable_ok(self):
         self.config.runner.pcmk.resource_agent_self_validation({})
@@ -2079,7 +2079,7 @@ class CreateAsClone(TestCase):
     @mock.patch.object(
         settings,
         "pacemaker_api_result_schema",
-        rc("pcmk_api_rng/api-result.rng"),
+        rc("pcmk_rng/api/api-result.rng"),
     )
     def test_wait_ok_disable_ok_by_target_role(self):
         self.config.runner.pcmk.resource_agent_self_validation({})
@@ -2144,7 +2144,7 @@ class CreateAsClone(TestCase):
     @mock.patch.object(
         settings,
         "pacemaker_api_result_schema",
-        rc("pcmk_api_rng/api-result.rng"),
+        rc("pcmk_rng/api/api-result.rng"),
     )
     def test_wait_ok_disable_ok_by_target_role_in_clone(self):
         self.config.runner.pcmk.resource_agent_self_validation({})
@@ -2207,7 +2207,7 @@ class CreateAsClone(TestCase):
     @mock.patch.object(
         settings,
         "pacemaker_api_result_schema",
-        rc("pcmk_api_rng/api-result.rng"),
+        rc("pcmk_rng/api/api-result.rng"),
     )
     def test_wait_ok_disable_ok_by_clone_max(self):
         self.config.runner.pcmk.resource_agent_self_validation({})
@@ -2270,7 +2270,7 @@ class CreateAsClone(TestCase):
     @mock.patch.object(
         settings,
         "pacemaker_api_result_schema",
-        rc("pcmk_api_rng/api-result.rng"),
+        rc("pcmk_rng/api/api-result.rng"),
     )
     def test_wait_ok_disable_ok_by_clone_node_max(self):
         self.config.runner.pcmk.resource_agent_self_validation({})
@@ -2698,7 +2698,7 @@ class CreateInToBundle(TestCase):
     @mock.patch.object(
         settings,
         "pacemaker_api_result_schema",
-        rc("pcmk_api_rng/api-result.rng"),
+        rc("pcmk_rng/api/api-result.rng"),
     )
     def test_wait_ok_run_ok(self):
         self.config.runner.cib.load(resources=self.fixture_resources_pre)
@@ -2720,7 +2720,7 @@ class CreateInToBundle(TestCase):
     @mock.patch.object(
         settings,
         "pacemaker_api_result_schema",
-        rc("pcmk_api_rng/api-result.rng"),
+        rc("pcmk_rng/api/api-result.rng"),
     )
     def test_wait_ok_run_fail(self):
         self.config.runner.cib.load(resources=self.fixture_resources_pre)
@@ -2746,7 +2746,7 @@ class CreateInToBundle(TestCase):
     @mock.patch.object(
         settings,
         "pacemaker_api_result_schema",
-        rc("pcmk_api_rng/api-result.rng"),
+        rc("pcmk_rng/api/api-result.rng"),
     )
     def test_disabled_wait_ok_not_running(self):
         self.config.runner.cib.load(resources=self.fixture_resources_pre)
@@ -2768,7 +2768,7 @@ class CreateInToBundle(TestCase):
     @mock.patch.object(
         settings,
         "pacemaker_api_result_schema",
-        rc("pcmk_api_rng/api-result.rng"),
+        rc("pcmk_rng/api/api-result.rng"),
     )
     def test_disabled_wait_ok_running(self):
         self.config.runner.cib.load(resources=self.fixture_resources_pre)

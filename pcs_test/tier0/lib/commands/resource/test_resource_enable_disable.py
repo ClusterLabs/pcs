@@ -605,7 +605,7 @@ def fixture_report_unmanaged(resource_id):
 
 
 @mock.patch.object(
-    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+    settings, "pacemaker_api_result_schema", rc("pcmk_rng/api/api-result.rng")
 )
 class DisablePrimitive(TestCase):
     def setUp(self):
@@ -668,7 +668,7 @@ class DisablePrimitive(TestCase):
 
 
 @mock.patch.object(
-    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+    settings, "pacemaker_api_result_schema", rc("pcmk_rng/api/api-result.rng")
 )
 class DisableStonith(TestCase):
     resources_cib = """
@@ -864,7 +864,7 @@ class DisableStonith(TestCase):
 
 
 @mock.patch.object(
-    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+    settings, "pacemaker_api_result_schema", rc("pcmk_rng/api/api-result.rng")
 )
 class EnablePrimitive(TestCase):
     def setUp(self):
@@ -925,7 +925,7 @@ class EnablePrimitive(TestCase):
 
 
 @mock.patch.object(
-    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+    settings, "pacemaker_api_result_schema", rc("pcmk_rng/api/api-result.rng")
 )
 class MoreResources(TestCase):
     fixture_cib_enabled = """
@@ -1087,7 +1087,7 @@ class MoreResources(TestCase):
 
 
 @mock.patch.object(
-    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+    settings, "pacemaker_api_result_schema", rc("pcmk_rng/api/api-result.rng")
 )
 class Wait(TestCase):
     fixture_status_running = """
@@ -1330,7 +1330,7 @@ class Wait(TestCase):
 
 
 @mock.patch.object(
-    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+    settings, "pacemaker_api_result_schema", rc("pcmk_rng/api/api-result.rng")
 )
 class WaitClone(TestCase):
     fixture_status_running = """
@@ -1421,7 +1421,7 @@ class WaitClone(TestCase):
 
 
 @mock.patch.object(
-    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+    settings, "pacemaker_api_result_schema", rc("pcmk_rng/api/api-result.rng")
 )
 class DisableGroup(TestCase):
     def setUp(self):
@@ -1472,7 +1472,7 @@ class DisableGroup(TestCase):
 
 
 @mock.patch.object(
-    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+    settings, "pacemaker_api_result_schema", rc("pcmk_rng/api/api-result.rng")
 )
 class EnableGroup(TestCase):
     def setUp(self):
@@ -1558,7 +1558,7 @@ class EnableGroup(TestCase):
 
 
 @mock.patch.object(
-    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+    settings, "pacemaker_api_result_schema", rc("pcmk_rng/api/api-result.rng")
 )
 class DisableClone(TestCase):
     def setUp(self):
@@ -1609,7 +1609,7 @@ class DisableClone(TestCase):
 
 
 @mock.patch.object(
-    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+    settings, "pacemaker_api_result_schema", rc("pcmk_rng/api/api-result.rng")
 )
 class EnableClone(TestCase):
     def setUp(self):
@@ -1692,17 +1692,21 @@ class EnableClone(TestCase):
         )
 
 
-@mock.patch.object(
-    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
-)
 class DisableMaster(TestCase):
     # same as clone, minimum tests in here
     def setUp(self):
+        rng_path_patcher = mock.patch.object(
+            settings,
+            "pacemaker_api_result_schema",
+            rc("pcmk_rng/api/api-result.rng"),
+        )
+        self.addCleanup(rng_path_patcher.stop)
+        rng_path_patcher.start()
+
         self.env_assist, self.config = get_env_tools(test_case=self)
-        (
-            self.config.runner.cib.load(
-                resources=fixture_master_cib_enabled
-            ).runner.pcmk.load_state(resources=fixture_master_status_managed)
+        self.config.runner.cib.load(resources=fixture_master_cib_enabled)
+        self.config.runner.pcmk.load_state(
+            resources=fixture_master_status_managed
         )
 
     def test_primitive(self):
@@ -1717,7 +1721,7 @@ class DisableMaster(TestCase):
 
 
 @mock.patch.object(
-    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+    settings, "pacemaker_api_result_schema", rc("pcmk_rng/api/api-result.rng")
 )
 class EnableMaster(TestCase):
     # same as clone, minimum tests in here
@@ -1768,7 +1772,7 @@ class EnableMaster(TestCase):
 
 
 @mock.patch.object(
-    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+    settings, "pacemaker_api_result_schema", rc("pcmk_rng/api/api-result.rng")
 )
 class DisableClonedGroup(TestCase):
     def setUp(self):
@@ -1863,7 +1867,7 @@ class DisableClonedGroup(TestCase):
 
 
 @mock.patch.object(
-    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+    settings, "pacemaker_api_result_schema", rc("pcmk_rng/api/api-result.rng")
 )
 class EnableClonedGroup(TestCase):
     def setUp(self):
@@ -2014,7 +2018,7 @@ class EnableClonedGroup(TestCase):
 
 
 @mock.patch.object(
-    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+    settings, "pacemaker_api_result_schema", rc("pcmk_rng/api/api-result.rng")
 )
 class DisableBundle(TestCase):
     def setUp(self):
@@ -2064,7 +2068,7 @@ class DisableBundle(TestCase):
 
 
 @mock.patch.object(
-    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+    settings, "pacemaker_api_result_schema", rc("pcmk_rng/api/api-result.rng")
 )
 class EnableBundle(TestCase):
     def setUp(self):
@@ -2354,7 +2358,7 @@ class DisableSafeFixturesMixin:
 
 
 @mock.patch.object(
-    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+    settings, "pacemaker_api_result_schema", rc("pcmk_rng/api/api-result.rng")
 )
 class DisableSimulate(DisableSafeFixturesMixin, TestCase):
     def test_not_live(self):
@@ -3008,7 +3012,7 @@ class DisableSafeMixin(DisableSafeFixturesMixin):
 
 
 @mock.patch.object(
-    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+    settings, "pacemaker_api_result_schema", rc("pcmk_rng/api/api-result.rng")
 )
 class DisableSafe(DisableSafeMixin, TestCase):
     strict = False
@@ -3064,7 +3068,7 @@ class DisableSafe(DisableSafeMixin, TestCase):
 
 
 @mock.patch.object(
-    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+    settings, "pacemaker_api_result_schema", rc("pcmk_rng/api/api-result.rng")
 )
 class DisableSafeStrict(DisableSafeMixin, TestCase):
     strict = True
@@ -3148,7 +3152,7 @@ class DisableSafeStrict(DisableSafeMixin, TestCase):
 
 
 @mock.patch.object(
-    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+    settings, "pacemaker_api_result_schema", rc("pcmk_rng/api/api-result.rng")
 )
 class DisableTags(TestCase):
     def setUp(self):
@@ -3169,7 +3173,7 @@ class DisableTags(TestCase):
 
 
 @mock.patch.object(
-    settings, "pacemaker_api_result_schema", rc("pcmk_api_rng/api-result.rng")
+    settings, "pacemaker_api_result_schema", rc("pcmk_rng/api/api-result.rng")
 )
 class EnableTags(TestCase):
     def setUp(self):

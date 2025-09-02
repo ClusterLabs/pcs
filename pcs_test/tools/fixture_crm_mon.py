@@ -85,6 +85,7 @@ def _complete_state_resources(resources_status):
                 "managed": "true",
                 "nodes_running_on": "1",
                 "orphaned": "false",
+                "removed": "false",
                 "resource_agent": "ocf::pacemaker:Dummy",
                 "role": "Started",
             },

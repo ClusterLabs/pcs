@@ -7,7 +7,7 @@
       <optional>
         <choice>
           <externalRef href="crm_attribute-2.36.rng"/>
-          <externalRef href="crm_mon-2.29.rng"/>
+          <externalRef href="crm_mon-2.41.rng"/>
           <externalRef href="digests-2.9.rng"/>
         </choice>
       </optional>

@@ -217,7 +217,7 @@ class SetStonithWatchdogTimeoutSBDIsDisabledMixin(StonithWatchdogTimeoutMixin):
 @mock.patch.object(
     settings,
     "pacemaker_api_result_schema",
-    rc("pcmk_api_rng/api-result.rng"),
+    rc("pcmk_rng/api/api-result.rng"),
 )
 class TestSetStonithWatchdogTimeoutSBDIsDisabledCrmAttributeMetadata(
     CrmAttributeLoadMetadataMixin,
@@ -435,7 +435,7 @@ class SetStonithWatchdogTimeoutSBDIsEnabledSharedDevicesMixin(
 @mock.patch.object(
     settings,
     "pacemaker_api_result_schema",
-    rc("pcmk_api_rng/api-result.rng"),
+    rc("pcmk_rng/api/api-result.rng"),
 )
 @mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: ["dev1", "dev2"])
 class TestSetStonithWatchdogTimeoutSBDIsEnabledSharedDevicesCrmAttributeMetadata(
@@ -853,7 +853,7 @@ class TestPropertySetMixin:
 @mock.patch.object(
     settings,
     "pacemaker_api_result_schema",
-    rc("pcmk_api_rng/api-result.rng"),
+    rc("pcmk_rng/api/api-result.rng"),
 )
 class TestPropertySetCrmAttribute(
     TestPropertySetMixin,
@@ -1100,7 +1100,7 @@ class TestGetPropertiesMetadataMixin:
 @mock.patch.object(
     settings,
     "pacemaker_api_result_schema",
-    rc("pcmk_api_rng/api-result.rng"),
+    rc("pcmk_rng/api/api-result.rng"),
 )
 class TestGetPropertiesMetadataCrmAttribute(
     TestGetPropertiesMetadataMixin, CrmAttributeMetadataErrorMixin, TestCase
