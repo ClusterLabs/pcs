@@ -1,4 +1,4 @@
-from typing import Mapping
+from typing import Any, Mapping, Sequence, cast
 
 from pcs.common import reports
 from pcs.lib import validate
@@ -98,7 +98,7 @@ def create(
 
 def create_with_set(
     env: LibraryEnvironment,
-    resource_set_list: common.CmdInputResourceSetList,
+    resource_set_list: Sequence[Mapping[str, Any]],
     constraint_options: Mapping[str, str],
     resource_in_clone_alowed: bool = False,
     duplication_alowed: bool = False,
@@ -121,7 +121,10 @@ def create_with_set(
     resource_set_loaded_list = _load_resource_set_list(
         cib,
         env.report_processor,
-        resource_set_list,
+        # dacite doesn't support TypedDicts (https://github.com/konradhalas/dacite/issues/125)
+        # and therefore this command fails when called from APIv2, so we had to
+        # use Mapping in the signature of the lib command
+        cast(common.CmdInputResourceSetList, resource_set_list),
         validate.option_value_normalization(
             {
                 "role": lambda value: value.capitalize(),
