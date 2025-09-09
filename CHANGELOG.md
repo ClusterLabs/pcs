@@ -17,6 +17,8 @@
 - Commands `pcs resource|booth delete|remove` and
   `pcs cluster node delete-remote|remove-remote` will now end with an error when
   trying to delete unmanaged started resources ([RHEL-76162])
+- Do not wrap resource and stonith agent description to preserve existing
+  formatting ([RHEL-111451])
 
 ### Deprecated
 - Using `--force` in `pcs resource|booth delete|remove` and
@@ -27,6 +29,7 @@
 
 [RHEL-76157]: https://issues.redhat.com/browse/RHEL-76157
 [RHEL-76162]: https://issues.redhat.com/browse/RHEL-76162
+[RHEL-111451]: https://issues.redhat.com/browse/RHEL-111451
 
 
 ## [0.12.1] - 2025-07-08
