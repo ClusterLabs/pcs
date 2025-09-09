@@ -1,5 +1,14 @@
 # Change Log
 
+## [Unreleased]
+
+### Changed
+- Do not wrap resource and stonith agent description to preserve existing
+  formatting ([RHEL-113763])
+
+[RHEL-113763]: https://issues.redhat.com/browse/RHEL-113763
+
+
 ## [0.11.10] - 2025-07-09
 
 ### Added

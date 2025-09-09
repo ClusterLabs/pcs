@@ -10,7 +10,6 @@ from pcs import (
 )
 from pcs.cli.common import parse_args
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.common.output import smart_wrap_text
 from pcs.cli.common.parse_args import (
     Argv,
     InputModifiers,
@@ -120,14 +119,12 @@ def stonith_list_options(
     agent_name = ResourceAgentNameDto("stonith", None, argv[0])
     print(
         "\n".join(
-            smart_wrap_text(
-                resource_agent_metadata_to_text(
-                    lib.resource_agent.get_agent_metadata(agent_name),
-                    lib.resource_agent.get_agent_default_operations(
-                        agent_name
-                    ).operations,
-                    verbose=modifiers.is_specified("--full"),
-                )
+            resource_agent_metadata_to_text(
+                lib.resource_agent.get_agent_metadata(agent_name),
+                lib.resource_agent.get_agent_default_operations(
+                    agent_name
+                ).operations,
+                verbose=modifiers.is_specified("--full"),
             )
         )
     )

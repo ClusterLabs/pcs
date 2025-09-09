@@ -19,6 +19,7 @@ from pcs.cli.common.output import (
     format_wrap_for_terminal,
     options_to_cmd,
     pairs_to_cmd,
+    smart_wrap_text,
 )
 from pcs.cli.nvset import nvset_dto_to_lines
 from pcs.cli.reports.output import warn
@@ -191,11 +192,17 @@ def resource_agent_metadata_to_text(
 
     if metadata.longdesc:
         output.append("")
-        output.extend(
-            format_wrap_for_terminal(
-                metadata.longdesc.replace("\n", " "), subsequent_indent=0
+        # Some agents provide longdesc as a single long line. Others provide
+        # formatted text with pagarpahs, indentation, lists, etc. Wrap only
+        # one-line longdesc to preserve such formatting. Agent authors are
+        # expected to wrap formatted longdesc appropriately. We cannot fix just
+        # some wrapping while keeping other formatting in place.
+        if "\n" in metadata.longdesc:
+            output.extend(metadata.longdesc.splitlines())
+        else:
+            output.extend(
+                format_wrap_for_terminal(metadata.longdesc, subsequent_indent=0)
             )
-        )
 
     params = []
     for param in metadata.parameters:
@@ -209,7 +216,7 @@ def resource_agent_metadata_to_text(
             output.append("Stonith options:")
         else:
             output.append("Resource options:")
-        output.extend(indent(params, indent_step=INDENT_STEP))
+        output.extend(smart_wrap_text(indent(params, indent_step=INDENT_STEP)))
 
     operations = []
     for operation in default_operations:
@@ -218,7 +225,9 @@ def resource_agent_metadata_to_text(
     if operations:
         output.append("")
         output.append("Default operations:")
-        output.extend(indent(operations, indent_step=INDENT_STEP))
+        output.extend(
+            smart_wrap_text(indent(operations, indent_step=INDENT_STEP))
+        )
 
     return output
 

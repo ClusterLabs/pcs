@@ -16,7 +16,6 @@ from pcs.cli.common.errors import (
     CmdLineInputError,
     raise_command_replaced,
 )
-from pcs.cli.common.output import smart_wrap_text
 from pcs.cli.common.parse_args import (
     FUTURE_OPTION,
     OUTPUT_FORMAT_VALUE_CMD,
@@ -575,14 +574,12 @@ def resource_list_options(
         )
     print(
         "\n".join(
-            smart_wrap_text(
-                resource_agent_metadata_to_text(
-                    lib.resource_agent.get_agent_metadata(agent_name),
-                    lib.resource_agent.get_agent_default_operations(
-                        agent_name
-                    ).operations,
-                    verbose=modifiers.is_specified("--full"),
-                )
+            resource_agent_metadata_to_text(
+                lib.resource_agent.get_agent_metadata(agent_name),
+                lib.resource_agent.get_agent_default_operations(
+                    agent_name
+                ).operations,
+                verbose=modifiers.is_specified("--full"),
             )
         )
     )
