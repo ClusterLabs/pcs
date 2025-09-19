@@ -1589,6 +1589,14 @@
         daemon urls: add_meta_attr_remote
       </description>
     </capability>
+    <capability id="pcmk.resource.update-meta.stonith" in-pcs="0" in-pcsd="1">
+      <description>
+        The add_meta_attr_remote url also supports stonith when called with
+        an explicit is-stonith flag.
+
+        daemon urls: add_meta_attr_remote
+      </description>
+    </capability>
     <capability id="pcmk.resource.update-meta.list" in-pcs="1" in-pcsd="0">
       <description>
         Update several meta attributes of a resource at once.
