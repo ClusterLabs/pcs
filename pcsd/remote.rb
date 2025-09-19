@@ -1135,7 +1135,11 @@ def add_meta_attr_remote(params, request, auth_user)
     return 403, 'Permission denied'
   end
   retval = add_meta_attr(
-    auth_user, params["res_id"], params["key"],params["value"]
+    auth_user,
+    params["res_id"],
+    params["key"],
+    params["value"],
+    params["is-stonith"] == "true"
   )
   if retval == 0
     return [200, "Successfully added meta attribute"]
