@@ -81,6 +81,12 @@ def get_all_node_isolating_resources(resources_el: _Element) -> list[_Element]:
     ]
 
 
+RESOURCE_TYPES_WITH_DEFAULT_CYCLE_METHOD = (
+    "fence_sbd",
+    "fence_heuristics_ping",
+)
+
+
 def get_misconfigured_resources(
     resources_el: _Element,
 ) -> tuple[list[_Element], list[_Element], list[_Element]]:
@@ -95,7 +101,8 @@ def get_misconfigured_resources(
             if nvpair.get("name") == "action" and nvpair.get("value"):
                 stonith_with_action.append(stonith)
             if (
-                stonith.get("type") != "fence_sbd"
+                stonith.get("type")
+                not in RESOURCE_TYPES_WITH_DEFAULT_CYCLE_METHOD
                 and nvpair.get("name") == "method"
                 and nvpair.get("value") == "cycle"
             ):

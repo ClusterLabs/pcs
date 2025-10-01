@@ -10,6 +10,8 @@
 ### Fixed
 - Commands `pcs acl role create` and `pcs acl permission add` now print
   specific error messages in case of invalid input instead of command usage
+- Do not display a warning in `pcs status` when a fence\_heuristics\_ping
+  stonith device has its `method` option set to `cycle` ([RHEL-73527])
 
 ### Changed
 - Lib command `cib.remove_elements` does not stop resources before deletion.
@@ -27,6 +29,7 @@
   `--future` flag if you need to use `--force` and you do not wish to skip the
   resource stopping.
 
+[RHEL-73527]: https://issues.redhat.com/browse/RHEL-73527
 [RHEL-76157]: https://issues.redhat.com/browse/RHEL-76157
 [RHEL-76162]: https://issues.redhat.com/browse/RHEL-76162
 [RHEL-111451]: https://issues.redhat.com/browse/RHEL-111451

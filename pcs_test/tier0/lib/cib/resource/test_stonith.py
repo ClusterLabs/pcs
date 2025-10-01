@@ -185,7 +185,37 @@ class GetMisconfiguredResources(TestCase):
                         <nvpair name="method" value="cycle" />
                     </instance_attributes>
                 </primitive>
-                <primitive id="S5" class="stonith" type="fence_sbd">
+            </resources>
+        """
+        )
+        stonith1 = resources.find("primitive[@id='S1']")
+        stonith2 = resources.find("primitive[@id='S2']")
+        stonith3 = resources.find("primitive[@id='S3']")
+        stonith4 = resources.find("primitive[@id='S4']")
+        self.assertEqual(
+            stonith.get_misconfigured_resources(resources),
+            (
+                [stonith1, stonith2, stonith3, stonith4],
+                [stonith2, stonith4],
+                [stonith3, stonith4],
+            ),
+        )
+
+    def test_method_cycle_warning_exceptions(self):
+        resources = etree.fromstring(
+            """
+            <resources>
+                <primitive id="S1" class="stonith" type="fence_something">
+                    <instance_attributes>
+                        <nvpair name="method" value="cycle" />
+                    </instance_attributes>
+                </primitive>
+                <primitive id="S2" class="stonith" type="fence_sbd">
+                    <instance_attributes>
+                        <nvpair name="method" value="cycle" />
+                    </instance_attributes>
+                </primitive>
+                <primitive id="S3" class="stonith" type="fence_heuristics_ping">
                     <instance_attributes>
                         <nvpair name="method" value="cycle" />
                     </instance_attributes>
@@ -196,15 +226,9 @@ class GetMisconfiguredResources(TestCase):
         stonith1 = resources.find("primitive[@id='S1']")
         stonith2 = resources.find("primitive[@id='S2']")
         stonith3 = resources.find("primitive[@id='S3']")
-        stonith4 = resources.find("primitive[@id='S4']")
-        stonith5 = resources.find("primitive[@id='S5']")
         self.assertEqual(
             stonith.get_misconfigured_resources(resources),
-            (
-                [stonith1, stonith2, stonith3, stonith4, stonith5],
-                [stonith2, stonith4],
-                [stonith3, stonith4],
-            ),
+            ([stonith1, stonith2, stonith3], [], [stonith1]),
         )
 
 

@@ -872,6 +872,11 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
                             <nvpair name="method" value="cycle" />
                         </instance_attributes>
                     </primitive>
+                    <primitive id="S5" class="stonith" type="fence_heuristics_ping">
+                        <instance_attributes>
+                            <nvpair name="method" value="cycle" />
+                        </instance_attributes>
+                    </primitive>
                 </resources>
             """
         )
