@@ -9,6 +9,7 @@ from pcs_test.tools.bin_mock import get_mock_settings
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import (
     get_tmp_file,
+    is_minimum_pacemaker_features,
     outdent,
     write_file_to_tmpfile,
 )
@@ -114,9 +115,22 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
 
     def test_warn_when_no_stonith(self):
         self.pcs_runner.corosync_conf_opt = self.corosync_conf
-        self.assert_pcs_success(
-            ["status"],
-            stdout_start=dedent(
+        if is_minimum_pacemaker_features(3, 20, 5):
+            stdout_start = dedent(
+                """\
+                Cluster name: test99
+
+                WARNINGS:
+                No stonith devices and stonith-enabled is not false
+                error: Resource start-up disabled since no fencing resources have been defined. Either configure some or disable fencing with the fencing-enabled option. NOTE: Clusters with shared data need fencing to ensure data integrity.
+                error: CIB did not pass schema validation
+                Configuration invalid
+
+                Cluster Summary:
+                """
+            )
+        else:
+            stdout_start = dedent(
                 """\
                 Cluster name: test99
 
@@ -130,21 +144,36 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
 
                 Cluster Summary:
                 """
-            ),
-        )
+            )
+        self.assert_pcs_success(["status"], stdout_start=stdout_start)
 
     def test_disabled_stonith_does_not_care_about_missing_devices(self):
-        self.assert_pcs_success("property set stonith-enabled=false".split())
-        self.pcs_runner.corosync_conf_opt = self.corosync_conf
-        self.assert_pcs_success(
-            ["status"],
-            stdout_start=dedent(
+        if is_minimum_pacemaker_features(3, 20, 5):
+            fencing_enabled_property = "fencing-enabled"
+            # TODO we need to handle the new propety to not output the warning
+            status_stdout_start = dedent(
+                """\
+                Cluster name: test99
+
+                WARNINGS:
+                No stonith devices and stonith-enabled is not false
+
+                Cluster Summary:
+                """
+            )
+        else:
+            fencing_enabled_property = "stonith-enabled"
+            status_stdout_start = dedent(
                 """\
                 Cluster name: test99
                 Cluster Summary:
                 """
-            ),
+            )
+        self.assert_pcs_success(
+            f"property set {fencing_enabled_property}=false".split()
         )
+        self.pcs_runner.corosync_conf_opt = self.corosync_conf
+        self.assert_pcs_success(["status"], stdout_start=status_stdout_start)
 
 
 class ResourceStonithStatusBase(AssertPcsMixin):
@@ -490,22 +519,40 @@ class StatusResources(ResourceStonithStatusBase, TestCase):
     active_resources_output = fixture_resources_status_output(inactive=False)
     active_resources_output_node = active_resources_output
     node_output = fixture_resources_status_output(nodes="rh-1")
-    no_resources_status = outdent(
-        """\
-        Cluster name: test99
+    no_resources_status = (
+        outdent(
+            """\
+            Cluster name: test99
 
-        WARNINGS:
-        No stonith devices and stonith-enabled is not false
-        error: Resource start-up disabled since no STONITH resources have been defined
-        error: Either configure some or disable STONITH with the stonith-enabled option
-        error: NOTE: Clusters with shared data need STONITH to ensure data integrity
-        error: CIB did not pass schema validation
-        Configuration invalid (with errors)
+            WARNINGS:
+            No stonith devices and stonith-enabled is not false
+            error: Resource start-up disabled since no fencing resources have been defined. Either configure some or disable fencing with the fencing-enabled option. NOTE: Clusters with shared data need fencing to ensure data integrity.
+            error: CIB did not pass schema validation
+            Configuration invalid
 
-        Cluster Summary:
-          * Stack: unknown
-          * Current DC: NONE
-        """
+            Cluster Summary:
+              * Stack: unknown
+              * Current DC: NONE
+            """
+        )
+        if is_minimum_pacemaker_features(3, 20, 5)
+        else outdent(
+            """\
+            Cluster name: test99
+
+            WARNINGS:
+            No stonith devices and stonith-enabled is not false
+            error: Resource start-up disabled since no STONITH resources have been defined
+            error: Either configure some or disable STONITH with the stonith-enabled option
+            error: NOTE: Clusters with shared data need STONITH to ensure data integrity
+            error: CIB did not pass schema validation
+            Configuration invalid (with errors)
+
+            Cluster Summary:
+              * Stack: unknown
+              * Current DC: NONE
+            """
+        )
     )
     resources_status = outdent(
         """\

@@ -488,16 +488,13 @@ FIXTURE_BATCH_LIMIT_DESC = (
     "  Default: 0\n"
 )
 
-FIXTURE_STONITH_ENABLED_DESC = (
-    "stonith-enabled (advanced use only)\n"
-    "  Description: Whether nodes may be fenced as part of "
-    "recovery. If false, unresponsive nodes are immediately "
-    "assumed to be harmless, and resources that were active on "
-    "them may be recovered elsewhere. This can result in a "
-    '"split-brain" situation, potentially leading to data loss '
-    "and/or service unavailability.\n"
-    "  Type: boolean\n"
-    "  Default: true\n"
+FIXTURE_CLUSTER_NAME_DESC = (
+    "cluster-name\n"
+    "  Description: An arbitrary name for the cluster. This optional value is "
+    "mostly for users' convenience as desired in administration, but may also "
+    "be used in Pacemaker configuration rules via the #cluster-name node "
+    "attribute, and by higher-level tools and resource agents.\n"
+    "  Type: string\n"
 )
 
 
@@ -525,8 +522,8 @@ class TestPropertyDescribe(TestCase, AssertPcsMixin):
 
     def test_success_specific(self):
         self.assert_pcs_success(
-            "property describe stonith-enabled batch-limit".split(),
-            stdout_full=FIXTURE_BATCH_LIMIT_DESC + FIXTURE_STONITH_ENABLED_DESC,
+            "property describe cluster-name batch-limit".split(),
+            stdout_full=FIXTURE_BATCH_LIMIT_DESC + FIXTURE_CLUSTER_NAME_DESC,
         )
 
     def test_notexistent(self):

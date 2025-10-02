@@ -2,7 +2,11 @@ from textwrap import dedent
 from unittest import TestCase
 
 from pcs_test.tools.assertions import AssertPcsMixin
-from pcs_test.tools.misc import get_tmp_file, write_data_to_tmpfile
+from pcs_test.tools.misc import (
+    get_tmp_file,
+    is_minimum_pacemaker_features,
+    write_data_to_tmpfile,
+)
 from pcs_test.tools.pcs_runner import PcsRunner
 
 CIB_EPOCH_TEMPLATE = """
@@ -125,14 +129,24 @@ class CibPush(AssertPcsMixin, TestCase):
 
     def test_cib_updated(self):
         write_data_to_tmpfile(CIB_EPOCH_NEWER, self.updated_cib)
-        self.assert_pcs_success(
-            self.cib_push_cmd,
-            stderr_full=dedent("""\
-                CIB updated
+        if is_minimum_pacemaker_features(3, 20, 5):
+            stonith_error = dedent(
+                """\
+                error: Resource start-up disabled since no fencing resources have been defined. Either configure some or disable fencing with the fencing-enabled option. NOTE: Clusters with shared data need fencing to ensure data integrity.
+                error: CIB did not pass schema validation
+                Configuration invalid
+                """
+            )
+        else:
+            stonith_error = dedent(
+                """\
                 error: Resource start-up disabled since no STONITH resources have been defined
                 error: Either configure some or disable STONITH with the stonith-enabled option
                 error: NOTE: Clusters with shared data need STONITH to ensure data integrity
                 error: CIB did not pass schema validation
                 Configuration invalid (with errors)
-                """),
+                """
+            )
+        self.assert_pcs_success(
+            self.cib_push_cmd, stderr_full="CIB updated\n" + stonith_error
         )
