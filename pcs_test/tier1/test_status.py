@@ -150,7 +150,7 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
     def test_disabled_stonith_does_not_care_about_missing_devices(self):
         if is_minimum_pacemaker_features(3, 20, 5):
             fencing_enabled_property = "fencing-enabled"
-            # TODO we need to handle the new propety to not output the warning
+            # TODO we need to handle the new property to not output the warning
             status_stdout_start = dedent(
                 """\
                 Cluster name: test99
