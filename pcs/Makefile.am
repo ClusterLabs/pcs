@@ -67,6 +67,7 @@ EXTRA_DIST		= \
 			  cli/fencing_topology.py \
 			  cli/file/__init__.py \
 			  cli/file/metadata.py \
+			  cli/host.py \
 			  cli/__init__.py \
 			  cli/node/__init__.py \
 			  cli/node/command.py \
@@ -247,7 +248,6 @@ EXTRA_DIST		= \
 			  entry_points/__init__.py \
 			  entry_points/internal.py \
 			  entry_points/snmp_agent.py \
-			  host.py \
 			  __init__.py \
 			  lib/auth/config/__init__.py \
 			  lib/auth/config/exporter.py \

@@ -126,6 +126,7 @@ EXTRA_DIST		= \
 			  tier0/cli/test_client.py \
 			  tier0/cli/test_cluster.py \
 			  tier0/cli/test_dr.py \
+			  tier0/cli/test_host.py \
 			  tier0/cli/test_nvset.py \
 			  tier0/cli/test_quorum.py \
 			  tier0/cli/test_resource.py \
@@ -408,7 +409,6 @@ EXTRA_DIST		= \
 			  tier0/lib/test_validate.py \
 			  tier0/lib/test_xml_tools.py \
 			  tier0/test_capabilities.py \
-			  tier0/test_host.py \
 			  tier1/cib_resource/common.py \
 			  tier1/cib_resource/__init__.py \
 			  tier1/cib_resource/test_bundle.py \

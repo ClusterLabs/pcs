@@ -1,10 +1,10 @@
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
-from pcs import host
+from pcs import settings
+from pcs.cli import host
 from pcs.cli.common.errors import CmdLineInputError
+from pcs.common.auth import HostAuthData, HostWithTokenAuthData
+from pcs.common.host import Destination
 
 from pcs_test.tools.misc import dict_to_modifiers
 
@@ -24,12 +24,10 @@ class HostAuth(TestCase):
     }
 
     def setUp(self):
-        self.lib = mock.Mock()
-        self.patch_get_user_and_pass = mock.patch(
-            "pcs.utils.get_user_and_pass",
-            return_value=("hacluster", "password"),
+        self.lib = mock.Mock(spec_set=["auth"])
+        self.lib.auth = mock.Mock(
+            spec_set=["auth_hosts_token_no_sync", "auth_hosts"]
         )
-        self.patch_auth_hosts = mock.patch("pcs.utils.auth_hosts")
 
     @staticmethod
     def _fixture_args(name_addr_port_tuple_list):
@@ -41,7 +39,6 @@ class HostAuth(TestCase):
 
     def _assert_invalid_port(self, name_addr_port_tuple_list):
         arg_list = self._fixture_args(name_addr_port_tuple_list)
-        mock_auth_hosts = self.patch_auth_hosts.start()
         with self.assertRaises(CmdLineInputError) as cm:
             host.auth_cmd(self.lib, arg_list, dict_to_modifiers({}))
         _, addr, port = name_addr_port_tuple_list[-1]
@@ -51,36 +48,30 @@ class HostAuth(TestCase):
             ).format(addr=addr, port=port),
             cm.exception.message,
         )
-        mock_auth_hosts.assert_not_called()
-        self.patch_auth_hosts.stop()
+        self.lib.auth.auth_hosts.assert_not_called()
+        self.lib.auth.auth_hosts_token_no_sync.assert_not_called()
 
     def _assert_valid_port(self, name_addr_port_tuple_list):
         arg_list = self._fixture_args(name_addr_port_tuple_list)
-        mock_get_user_and_pass = self.patch_get_user_and_pass.start()
-        mock_auth_hosts = self.patch_auth_hosts.start()
         host.auth_cmd(self.lib, arg_list, dict_to_modifiers({}))
-        mock_get_user_and_pass.assert_called_once_with()
-        mock_auth_hosts.assert_called_once_with(
+        self.lib.auth.auth_hosts.assert_called_once_with(
             {
-                name: {
-                    "dest_list": [
-                        dict(
-                            addr=(
-                                addr
-                                if addr.count(":") <= 1
-                                else addr.strip("[]")
-                            ),
+                name: HostAuthData(
+                    username="hacluster",
+                    password="password",
+                    dest_list=[
+                        Destination(
+                            addr=addr
+                            if addr.count(":") <= 1
+                            else addr.strip("[]"),
                             port=port,
                         )
                     ],
-                    "username": "hacluster",
-                    "password": "password",
-                }
+                )
                 for name, addr, port in name_addr_port_tuple_list
             }
         )
-        self.patch_get_user_and_pass.stop()
-        self.patch_auth_hosts.stop()
+        self.lib.auth.auth_hosts_token_no_sync.assert_not_called()
 
     def run_port_subtests(self, assert_function, port_list):
         for addr_type in ["hostname", "ipv4", "ipv6"]:
@@ -88,16 +79,15 @@ class HostAuth(TestCase):
             addr_list = [self.host_names[name][addr_type] for name in name_list]
 
             with self.subTest(addr_type=addr_type):
+                self.lib.reset_mock()
                 assert_function(
                     list(zip(name_list, addr_list, port_list, strict=False))
                 )
 
-    @mock.patch("pcs.utils.auth_hosts")
-    def test_no_args(self, mock_auth_hosts):
+    def test_no_args(self):
         with self.assertRaises(CmdLineInputError) as cm:
             host.auth_cmd(self.lib, [], dict_to_modifiers({}))
         self.assertEqual("No host specified", cm.exception.message)
-        mock_auth_hosts.assert_not_called()
 
     def test_invalid_port_notanumber(self):
         self.run_port_subtests(self._assert_invalid_port, ["notanumber"])
@@ -120,8 +110,70 @@ class HostAuth(TestCase):
     def test_invalid_port_higher_bound_hostname_multinode(self):
         self.run_port_subtests(self._assert_invalid_port, [65535, 65536])
 
-    def test_valid_port(self):
+    @mock.patch(
+        "pcs.utils.get_user_and_pass", return_value=("hacluster", "password")
+    )
+    def test_valid_port(self, _):
         self.run_port_subtests(self._assert_valid_port, [3000])
 
-    def test_valid_port_multinode(self):
+    @mock.patch(
+        "pcs.utils.get_user_and_pass", return_value=("hacluster", "password")
+    )
+    def test_valid_port_multinode(self, _):
         self.run_port_subtests(self._assert_valid_port, [3000, 5000])
+
+    @mock.patch("pcs.utils.get_token_from_file", return_value="TOKEN")
+    def test_token(self, mock_get_token):
+        host.auth_cmd(
+            self.lib, ["host1", "host2"], dict_to_modifiers({"token": "file"})
+        )
+
+        mock_get_token.assert_called_once_with("file")
+        self.lib.auth.auth_hosts_token_no_sync.assert_called_once_with(
+            {
+                "host1": HostWithTokenAuthData(
+                    token="TOKEN",
+                    dest_list=[
+                        Destination(
+                            addr="host1", port=settings.pcsd_default_port
+                        )
+                    ],
+                ),
+                "host2": HostWithTokenAuthData(
+                    token="TOKEN",
+                    dest_list=[
+                        Destination(
+                            addr="host2", port=settings.pcsd_default_port
+                        )
+                    ],
+                ),
+            }
+        )
+        self.lib.auth.auth_hosts.assert_not_called()
+
+
+class DeauthHosts(TestCase):
+    def setUp(self):
+        self.lib = mock.Mock(spec_set=["auth"])
+        self.lib.auth = mock.Mock(
+            spec_set=["deauth_hosts", "deauth_all_local_hosts"]
+        )
+
+    def test_success_no_args(self):
+        host.deauth_cmd(self.lib, [], dict_to_modifiers({}))
+
+        self.lib.auth.deauth_all_local_hosts.assert_called_once_with()
+        self.lib.auth.deauth_hosts.assert_not_called()
+
+    def test_success_args(self):
+        host.deauth_cmd(self.lib, ["node1", "node2"], dict_to_modifiers({}))
+
+        self.lib.auth.deauth_all_local_hosts.assert_not_called()
+        self.lib.auth.deauth_hosts.assert_called_once_with(["node1", "node2"])
+
+    def test_non_unique_args(self):
+        with self.assertRaises(CmdLineInputError):
+            host.deauth_cmd(self.lib, ["node1", "node1"], dict_to_modifiers({}))
+
+        self.lib.auth.deauth_all_local_hosts.assert_not_called()
+        self.lib.auth.deauth_hosts.assert_not_called()
