@@ -4066,6 +4066,28 @@ class HostAlreadyAuthorized(NameBuildTest):
         )
 
 
+class AuthorizationSuccessful(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "Authorized", reports.AuthorizationSuccessful()
+        )
+
+
+class IncorrectCredentials(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "Username and/or password is incorrect",
+            reports.IncorrectCredentials(),
+        )
+
+
+class NoHostSpecified(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "No host specified", reports.NoHostSpecified()
+        )
+
+
 class ClusterDestroyStarted(NameBuildTest):
     def test_multiple_hosts(self):
         self.assert_message_from_report(

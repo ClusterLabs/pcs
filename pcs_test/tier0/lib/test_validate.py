@@ -1393,6 +1393,84 @@ class ValueNotEmpty(TestCase):
         )
 
 
+class ValueStringLength(TestCase):
+    # The real code only calls ValuePredicateBase => only basic tests here.
+    def test_empty_report_on_valid_value(self):
+        for value in [
+            "aa",
+            "a" * 5,
+            "a" * 10,
+        ]:
+            with self.subTest(value=value):
+                assert_report_item_list_equal(
+                    validate.ValueStringLength("key", 2, 10).validate(
+                        {"key": value}
+                    ),
+                    [],
+                )
+
+    def test_empty_report_no_min_len(self):
+        for value in ["", "aaa"]:
+            with self.subTest(value=value):
+                assert_report_item_list_equal(
+                    validate.ValueStringLength("key", None, 10).validate(
+                        {"key": value}
+                    ),
+                    [],
+                )
+
+    def test_report_invalid_value_min_max(self):
+        for value in ["a", "aaaa"]:
+            with self.subTest(value=value):
+                assert_report_item_list_equal(
+                    validate.ValueStringLength("key", 2, 3).validate(
+                        {"key": value}
+                    ),
+                    [
+                        fixture.error(
+                            reports.codes.INVALID_OPTION_VALUE,
+                            option_name="key",
+                            option_value=value,
+                            allowed_values="a string (min length: 2) (max length: 3)",
+                            cannot_be_empty=True,
+                            forbidden_characters=None,
+                        ),
+                    ],
+                )
+
+    def test_report_invalid_value_only_min(self):
+        assert_report_item_list_equal(
+            validate.ValueStringLength("key", min_len=2).validate({"key": "a"}),
+            [
+                fixture.error(
+                    reports.codes.INVALID_OPTION_VALUE,
+                    option_name="key",
+                    option_value="a",
+                    allowed_values="a string (min length: 2)",
+                    cannot_be_empty=True,
+                    forbidden_characters=None,
+                ),
+            ],
+        )
+
+    def test_report_invalid_value_only_max(self):
+        assert_report_item_list_equal(
+            validate.ValueStringLength("key", max_len=2).validate(
+                {"key": "aaa"}
+            ),
+            [
+                fixture.error(
+                    reports.codes.INVALID_OPTION_VALUE,
+                    option_name="key",
+                    option_value="aaa",
+                    allowed_values="a string (max length: 2)",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+            ],
+        )
+
+
 class ValuePcmkBoolean(TestCase):
     # The real code only calls ValuePredicateBase => only basic tests here.
     def test_empty_report_on_valid_option(self):

@@ -67,7 +67,10 @@ default_ssl_options = ",".join(
 )
 default_request_timeout = 60
 gui_session_lifetime_seconds = 60 * 60
-pcsd_token_max_bytes = 256
+# replaced pcsd_token_max_bytes = 256. The bytes were always base64 encoded
+# - resulting in ~345 chars, we need to make this value at least 345 chars
+# to stay backwards compatible
+pcsd_token_max_chars = 512
 
 # pcsd task scheduler settings
 async_api_scheduler_interval_ms = 100

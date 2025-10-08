@@ -1,7 +1,14 @@
 import json
+from typing import Mapping
 
 from pcs.common import reports
-from pcs.common.node_communicator import RequestData
+from pcs.common.auth import HostAuthData
+from pcs.common.node_communicator import (
+    Request,
+    RequestData,
+    RequestTarget,
+    Response,
+)
 from pcs.common.reports import ReportItemSeverity
 from pcs.common.reports import codes as report_codes
 from pcs.common.reports.item import ReportItem
@@ -108,6 +115,58 @@ class CheckAuth(AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase):
 
     def on_complete(self):
         return self._not_authorized_host_name_list
+
+
+class Auth(AllAtOnceStrategyMixin, RunRemotelyBase):
+    def __init__(
+        self,
+        auth_data: Mapping[str, HostAuthData],
+        report_processor: reports.ReportProcessor,
+    ) -> None:
+        super().__init__(report_processor)
+        self._auth_data = auth_data
+        self._tokens: dict[str, str] = {}
+
+    def _prepare_initial_requests(self):
+        return [
+            Request(
+                RequestTarget(host_name, dest_list=auth_data.dest_list),
+                RequestData(
+                    action="remote/auth",
+                    structured_data=[
+                        ("username", auth_data.username),
+                        ("password", auth_data.password),
+                    ],
+                ),
+            )
+            for host_name, auth_data in self._auth_data.items()
+        ]
+
+    def _process_response(self, response: Response):
+        report = response_to_report_item(response)
+        if report:
+            self._report(report)
+            return
+
+        node_label = response.request.target.label
+        context = reports.ReportItemContext(node_label)
+        token = response.data.strip()
+        if token:
+            self._tokens[node_label] = token
+            self._report(
+                reports.ReportItem.info(
+                    reports.messages.AuthorizationSuccessful(), context=context
+                )
+            )
+        else:
+            self._report(
+                reports.ReportItem.error(
+                    reports.messages.IncorrectCredentials(), context=context
+                )
+            )
+
+    def on_complete(self) -> dict[str, str]:
+        return self._tokens
 
 
 class GetHostInfo(AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase):

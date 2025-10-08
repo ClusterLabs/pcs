@@ -2602,7 +2602,7 @@ def get_report_processor() -> ReportProcessor:
     return ReportProcessorToConsole(debug="--debug" in pcs_options)
 
 
-def get_user_and_pass():
+def get_user_and_pass() -> tuple[str, str]:
     """
     Commandline options:
       * -u - username
@@ -2626,7 +2626,8 @@ def get_input_modifiers() -> InputModifiers:
 def get_token_from_file(file_name: str) -> str:
     try:
         with open(file_name, "rb") as file:
-            max_size = settings.pcsd_token_max_bytes  # type: ignore
+            # 256 to stay backwards compatible
+            max_size = 256
             value_bytes = file.read(max_size + 1)
             if len(value_bytes) > max_size:
                 err(f"Maximal token size of {max_size} bytes exceeded")
