@@ -70,55 +70,6 @@ def pcsd_cli_main()
   # get params and run a command
   command = ARGV[0]
   allowed_commands = {
-    'remove_known_hosts' => {
-      # changes hosts of the user who runs pcsd-cli, thus no permission check
-      'only_superuser' => false,
-      'call' => lambda { |params, auth_user_|
-        sync_successful, sync_nodes_err, sync_responses, hosts_not_found = pcs_deauth(
-          auth_user_, params.fetch('host_names')
-        )
-        return {
-          'hosts_not_found' => hosts_not_found,
-          'sync_successful' => sync_successful,
-          'sync_nodes_err' => sync_nodes_err,
-          'sync_responses' => sync_responses,
-        }
-      },
-    },
-    'auth' => {
-      'only_superuser' => false,
-      'call' => lambda { |params, auth_user_|
-        auth_responses, sync_successful, sync_nodes_err, sync_responses = pcs_auth(
-          auth_user_, params.fetch('nodes')
-        )
-        return {
-          'auth_responses' => auth_responses,
-          'sync_successful' => sync_successful,
-          'sync_nodes_err' => sync_nodes_err,
-          'sync_responses' => sync_responses,
-        }
-      },
-    },
-    'auth_with_token' => {
-      'only_superuser' => false,
-      'call' => lambda { |params, auth_user_|
-        pcs_auth_token(params.fetch('nodes'))
-        return {}
-      },
-    },
-    'send_local_configs' => {
-      'only_superuser' => false,
-      'call' => lambda { |params, auth_user_|
-        send_local_configs_to_nodes(
-          # for a case when sending to a node which is being added to a cluster
-          # - the node doesn't have the config so it cannot check permissions
-          PCSAuth.getSuperuserAuth(),
-          params['nodes'] || [],
-          params['force'] || false,
-          params['clear_local_cluster_permissions'] || false
-        )
-      }
-    },
     'node_status' => {
       'only_superuser' => true,
       'call' => lambda { |params, auth_user_|
