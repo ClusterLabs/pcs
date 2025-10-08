@@ -46,9 +46,6 @@ class FacadeV2GetEntryTest(TestCase):
     def setUp(self):
         self.facade = FacadeV2(_CONFIG)
 
-    def test_data_version(self):
-        self.assertEqual(1, self.facade.data_version)
-
     def test_user_success(self):
         self.assertEqual(
             _USER1, self.facade.get_entry(_USER1.name, _USER1.type)
@@ -78,3 +75,12 @@ class FacadeV2GetEntryTest(TestCase):
         self.assertIsNone(
             self.facade.get_entry(_USER2.name, PermissionTargetType.GROUP)
         )
+
+
+class FacadeV2DataVersionTest(TestCase):
+    def test_success(self):
+        facade = FacadeV2(_CONFIG)
+
+        self.assertEqual(facade.data_version, 1)
+        facade.set_data_version(10)
+        self.assertEqual(facade.data_version, 10)

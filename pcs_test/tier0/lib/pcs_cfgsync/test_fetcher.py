@@ -551,3 +551,42 @@ class ConfigFetcherTest(TestCase):
                 )
             ],
         )
+
+    @mock.patch("pcs.lib.pcs_cfgsync.fetcher.FileInstance.read_to_facade")
+    def test_fetch_filtered(
+        self,
+        mock_read_to_facade: mock.Mock,
+        mock_raw_file: mock.Mock,
+        mock_run: mock.Mock,
+    ):
+        known_hosts = fixture_known_hosts_file_content(99)
+
+        mock_run.return_value = GetConfigsResult(
+            True,
+            {
+                file_type_codes.PCS_KNOWN_HOSTS: [
+                    ConfigInfo("NODE", known_hosts)
+                ],
+            },
+        )
+        mock_raw_file.exists.return_value = True
+        mock_read_to_facade.side_effect = [fixture_known_hosts_facade()]
+
+        configs, was_successful = self.fetcher.fetch(
+            "test", [RequestTarget("NODE")], [file_type_codes.PCS_KNOWN_HOSTS]
+        )
+
+        mock_run.assert_called_once()
+        mock_raw_file.exists.assert_called_once_with()
+        mock_read_to_facade.assert_called_once_with()
+        self.assertEqual(len(configs), 1)
+        self.assertEqual(
+            KnownHostsExporter.export(
+                configs[file_type_codes.PCS_KNOWN_HOSTS].config
+            ).decode("utf-8"),
+            known_hosts,
+        )
+        self.assertTrue(was_successful)
+        assert_report_item_list_equal(
+            self.report_processor.report_item_list, []
+        )

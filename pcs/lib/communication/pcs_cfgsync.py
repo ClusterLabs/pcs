@@ -1,6 +1,8 @@
 import json
 from collections import defaultdict
 from dataclasses import dataclass
+from enum import Enum
+from typing import Any
 
 from dacite import DaciteError
 
@@ -32,6 +34,15 @@ from pcs.lib.communication.tools import (
     SkipOfflineMixin,
 )
 
+_LEGACY_FILE_NAME_TO_FILETYPECODE_MAP = {
+    "known-hosts": PCS_KNOWN_HOSTS,
+    "pcs_settings.conf": PCS_SETTINGS_CONF,
+}
+_FILETYPECODE_TO_LEGACY_FILE_NAME_MAP = {
+    PCS_KNOWN_HOSTS: "known-hosts",
+    PCS_SETTINGS_CONF: "pcs_settings.conf",
+}
+
 
 @dataclass(frozen=True)
 class ConfigInfo:
@@ -52,10 +63,6 @@ class GetConfigs(
     RunRemotelyBase,
 ):
     _LEGACY_ENDPOINT = "remote/get_configs"
-    _LEGACY_FILE_NAME_TO_FILETYPECODE_MAP = {
-        "pcs_settings.conf": PCS_SETTINGS_CONF,
-        "known-hosts": PCS_KNOWN_HOSTS,
-    }
 
     def __init__(
         self,
@@ -73,7 +80,7 @@ class GetConfigs(
 
     def _get_request_data(self) -> RequestData:
         return RequestData(
-            "api/v1/pcs-cfgsync-get-configs/v1",
+            "api/v1/cfgsync-get-configs/v1",
             data=json.dumps({"cluster_name": self._cluster_name}),
         )
 
@@ -217,7 +224,7 @@ class GetConfigs(
                 return
 
             for cfg_name in parsed_data["configs"]:
-                if cfg_name not in self._LEGACY_FILE_NAME_TO_FILETYPECODE_MAP:
+                if cfg_name not in _LEGACY_FILE_NAME_TO_FILETYPECODE_MAP:
                     continue
                 cfg_file = parsed_data["configs"][cfg_name]["text"]
                 if (
@@ -225,7 +232,7 @@ class GetConfigs(
                     and cfg_file is not None
                 ):
                     self._received_configs[
-                        self._LEGACY_FILE_NAME_TO_FILETYPECODE_MAP[cfg_name]
+                        _LEGACY_FILE_NAME_TO_FILETYPECODE_MAP[cfg_name]
                     ].append(
                         ConfigInfo(response.request.target.label, cfg_file)
                     )
@@ -245,3 +252,143 @@ class GetConfigs(
             was_successful=self._successful_connections >= 2,
             config_files=self._received_configs,
         )
+
+
+class SetConfigsResult(Enum):
+    ACCEPTED = "accepted"
+    REJECTED = "rejected"
+    NOT_SUPPORTED = "not_supported"
+    ERROR = "error"
+
+
+class SetConfigs(
+    AllSameDataMixin,
+    AllAtOnceStrategyMixin,
+    RunRemotelyBase,
+):
+    def __init__(
+        self,
+        report_processor: ReportProcessor,
+        cluster_name: str,
+        configs: dict[FileTypeCode, str],
+        rejection_severity: reports.ReportItemSeverity,
+        force: bool = False,
+    ):
+        super().__init__(report_processor)
+        self._cluster_name = cluster_name
+        self._configs = configs
+        self._rejection_severity = rejection_severity
+        self._force = force
+        self._node_results: dict[str, dict[FileTypeCode, SetConfigsResult]] = {}
+
+    def before(self) -> None:
+        self._report(
+            reports.ReportItem.info(
+                reports.messages.PcsCfgsyncSendingConfigsToNodes(
+                    sorted(self._configs.keys()), self._target_label_list
+                )
+            )
+        )
+
+    def _get_request_data(self) -> RequestData:
+        data: dict[str, Any] = {}
+        data["cluster_name"] = self._cluster_name
+        data["force"] = self._force
+        data["configs"] = {
+            _FILETYPECODE_TO_LEGACY_FILE_NAME_MAP.get(
+                filetype_code, filetype_code
+            ): {
+                "type": "file",
+                "text": config_content,
+            }
+            for filetype_code, config_content in self._configs.items()
+        }
+        return RequestData(
+            "remote/set_configs", [("configs", json.dumps(data))]
+        )
+
+    def _process_response(self, response: Response) -> list[Request]:
+        report_item = self._get_response_report(response)
+        if report_item:
+            self._report(report_item)
+            return []
+
+        node_label = response.request.target.label
+        context = reports.ReportItemContext(node_label)
+
+        try:
+            parsed_data = json.loads(response.data)
+            if parsed_data["status"] == "wrong_cluster_name":
+                self._report(
+                    reports.ReportItem.error(
+                        reports.messages.NodeReportsUnexpectedClusterName(
+                            self._cluster_name or ""
+                        ),
+                        context=context,
+                    )
+                )
+                return []
+
+            parsed_result = parsed_data["result"]
+            results = {}
+            for cfg_name in parsed_result:
+                cfg_filetypecode = _LEGACY_FILE_NAME_TO_FILETYPECODE_MAP.get(
+                    cfg_name, cfg_name
+                )
+                normalized_cfg_result = SetConfigsResult(
+                    parsed_result[cfg_name]
+                )
+                match normalized_cfg_result:
+                    case SetConfigsResult.ACCEPTED:
+                        self._report(
+                            reports.ReportItem.info(
+                                reports.messages.PcsCfgsyncConfigAccepted(
+                                    cfg_filetypecode
+                                ),
+                                context=reports.ReportItemContext(node_label),
+                            )
+                        )
+                    case SetConfigsResult.REJECTED:
+                        self._report(
+                            reports.ReportItem(
+                                self._rejection_severity,
+                                reports.messages.PcsCfgsyncConfigRejected(
+                                    cfg_filetypecode
+                                ),
+                                context=reports.ReportItemContext(node_label),
+                            )
+                        )
+                    case SetConfigsResult.ERROR:
+                        # The api does not provide description of the error, so we
+                        # just provide some generic error message
+                        self._report(
+                            reports.ReportItem.error(
+                                reports.messages.PcsCfgsyncConfigSaveError(
+                                    cfg_filetypecode,
+                                ),
+                                context=reports.ReportItemContext(node_label),
+                            )
+                        )
+                    case SetConfigsResult.NOT_SUPPORTED:
+                        self._report(
+                            reports.ReportItem.error(
+                                reports.messages.PcsCfgsyncConfigUnsupported(
+                                    cfg_filetypecode
+                                ),
+                                context=reports.ReportItemContext(node_label),
+                            )
+                        )
+
+                results[cfg_filetypecode] = normalized_cfg_result
+            self._node_results[node_label] = results
+        except (json.JSONDecodeError, KeyError, ValueError, AttributeError):
+            self._report(
+                reports.ReportItem.error(
+                    reports.messages.InvalidResponseFormat(node_label)
+                )
+            )
+
+        return []
+
+    def on_complete(self) -> dict[str, dict[FileTypeCode, SetConfigsResult]]:
+        return self._node_results

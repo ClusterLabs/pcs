@@ -8506,3 +8506,150 @@ class NodeReportsUnexpectedClusterName(ReportItemMessage):
     @property
     def message(self) -> str:
         return f"The node is not in the cluster named '{self.cluster_name}'"
+
+
+@dataclass(frozen=True)
+class PcsCfgsyncSendingConfigsToNodes(ReportItemMessage):
+    """
+    Sending updated configs to specified nodes
+
+    file_type_code_list -- configs that are sent
+    node_name_list -- names of nodes
+    """
+
+    file_type_code_list: list[file_type_codes.FileTypeCode]
+    node_name_list: list[str]
+    _code = codes.PCS_CFGSYNC_SENDING_CONFIGS_TO_NODES
+
+    @property
+    def message(self) -> str:
+        return "Sending {files} {file_list} to {nodes} {node_list}".format(
+            files=format_plural(self.file_type_code_list, "file"),
+            file_list=format_list(
+                [format_file_role(role) for role in self.file_type_code_list]
+            ),
+            nodes=format_plural(self.node_name_list, "node"),
+            node_list=format_list(self.node_name_list),
+        )
+
+
+@dataclass(frozen=True)
+class PcsCfgsyncConfigAccepted(ReportItemMessage):
+    """
+    The config was saved
+
+    file_type_code -- file type
+    """
+
+    file_type_code: file_type_codes.FileTypeCode
+    _code = codes.PCS_CFGSYNC_CONFIG_ACCEPTED
+
+    @property
+    def message(self) -> str:
+        return "The {file_role} file saved successfully".format(
+            file_role=format_file_role(self.file_type_code),
+        )
+
+
+@dataclass(frozen=True)
+class PcsCfgsyncConfigRejected(ReportItemMessage):
+    """
+    The synced config was rejected, because there is newer version of the file
+    on the node
+
+    file_type_code -- file type
+    """
+
+    file_type_code: file_type_codes.FileTypeCode
+    _code = codes.PCS_CFGSYNC_CONFIG_REJECTED
+
+    @property
+    def message(self) -> str:
+        return (
+            "The {file_role} file not saved, a newer version of the file "
+            "exists on the node"
+        ).format(file_role=format_file_role(self.file_type_code))
+
+
+@dataclass(frozen=True)
+class PcsCfgsyncConfigSaveError(ReportItemMessage):
+    """
+    The config was not saved because of an error
+
+    file_type_code -- file type
+    """
+
+    file_type_code: file_type_codes.FileTypeCode
+    _code = codes.PCS_CFGSYNC_CONFIG_SAVE_ERROR
+
+    @property
+    def message(self) -> str:
+        return "The {file_role} file not saved".format(
+            file_role=format_file_role(self.file_type_code)
+        )
+
+
+@dataclass(frozen=True)
+class PcsCfgsyncConfigUnsupported(ReportItemMessage):
+    """
+    The config was not saved because the node does not support this file type
+
+    file_type_code -- file type
+    """
+
+    file_type_code: file_type_codes.FileTypeCode
+    _code = codes.PCS_CFGSYNC_CONFIG_UNSUPPORTED
+
+    @property
+    def message(self) -> str:
+        return (
+            "The {file_role} file synchronization is not supported on this node"
+        ).format(
+            file_role=format_file_role(self.file_type_code),
+        )
+
+
+@dataclass(frozen=True)
+class PcsCfgsyncFetchingNewestConfig(ReportItemMessage):
+    """
+    Fetching newest version of configs from among specified nodes
+
+    file_type_code_list -- list of file types
+    node_name_list -- names of nodes
+    """
+
+    file_type_code_list: list[file_type_codes.FileTypeCode]
+    node_name_list: list[str]
+    _code = codes.PCS_CFGSYNC_FETCHING_NEWEST_CONFIG
+
+    @property
+    def message(self) -> str:
+        return (
+            "Fetching the newest version of {files} {file_list} from {nodes} "
+            "{node_list}"
+        ).format(
+            files=format_plural(self.file_type_code_list, "file"),
+            file_list=format_list(
+                [format_file_role(role) for role in self.file_type_code_list]
+            ),
+            nodes=format_plural(self.node_name_list, "node"),
+            node_list=format_list(self.node_name_list),
+        )
+
+
+@dataclass(frozen=True)
+class PcsCfgsyncConflictRepeatAction(ReportItemMessage):
+    """
+    The synced config was rejected, because some nodes had a newer version of
+    the file than the local node. Repeat the action.
+    """
+
+    _code = codes.PCS_CFGSYNC_CONFLICT_REPEAT_ACTION
+
+    @property
+    def message(self) -> str:
+        return (
+            "Configuration conflict detected. Some nodes had a newer "
+            "configuration than the local node. Local node's configuration "
+            "was updated. Please repeat the last action if appropriate."
+        )

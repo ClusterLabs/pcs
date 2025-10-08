@@ -7,6 +7,7 @@ from pcs.common.file_type_codes import FileTypeCode
 from pcs.common.node_communicator import Communicator, RequestTarget
 from pcs.common.reports import ReportItemContext
 from pcs.common.reports.processor import ReportProcessor
+from pcs.common.str_tools import format_list
 from pcs.lib.communication.pcs_cfgsync import ConfigInfo, GetConfigs
 from pcs.lib.communication.tools import run
 from pcs.lib.file.instance import FileInstance
@@ -28,7 +29,10 @@ class ConfigFetcher:
         self._report_processor = report_processor
 
     def fetch(
-        self, cluster_name: str, target_list: Iterable[RequestTarget]
+        self,
+        cluster_name: str,
+        target_list: Iterable[RequestTarget],
+        file_type_codes_to_fetch: Iterable[FileTypeCode] = SYNCED_CONFIGS,
     ) -> tuple[dict[FileTypeCode, SyncVersionFacadeInterface], bool]:
         """
         Downloads configs from all nodes in the cluster, and find the newest
@@ -38,14 +42,20 @@ class ConfigFetcher:
 
         cluster_name -- name of the cluster
         target_list -- list of request targets
+        file_type_codes_to_fetch -- list of wanted file type codes
         """
+        if not set(file_type_codes_to_fetch) <= set(SYNCED_CONFIGS):
+            raise AssertionError(
+                f"This method only supports {format_list(list(SYNCED_CONFIGS))}"
+            )
+
         cmd = GetConfigs(self._report_processor, cluster_name, False)
         cmd.set_targets(target_list)  # type: ignore
         received_configs = run(self._node_communicator, cmd)  # type: ignore
 
         configs_to_update = {}
 
-        for file_type in SYNCED_CONFIGS:
+        for file_type in file_type_codes_to_fetch:
             if file_type not in received_configs.config_files:
                 continue
 
