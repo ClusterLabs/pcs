@@ -1,7 +1,7 @@
 from pcs import (
-    host,
     usage,
 )
+from pcs.cli import host
 from pcs.cli.common.routing import create_router
 
 host_cmd = create_router(

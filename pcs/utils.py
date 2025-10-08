@@ -974,65 +974,6 @@ def run_pcsdcli(command, data=None):
     return output_json, retval
 
 
-def auth_hosts_token(host_dict):
-    output, retval = run_pcsdcli("auth_with_token", dict(nodes=host_dict))
-    if retval == 0:
-        if output["status"] == "access_denied":
-            err("Access denied")
-        if output["status"] != "ok":
-            err("Unable to communicate with pcsd")
-    else:
-        err("Unable to communicate with pcsd")
-
-
-def auth_hosts(host_dict):
-    """
-    Commandline options:
-      * --request-timeout - timeout for HTTP request
-    """
-    output, retval = run_pcsdcli("auth", dict(nodes=host_dict))
-    if retval == 0 and output["status"] == "access_denied":
-        err("Access denied")
-    if retval == 0 and output["status"] == "ok" and output["data"]:
-        failed = False
-        try:
-            if not output["data"]["sync_successful"]:
-                err(
-                    "Some nodes had a newer known-hosts than the local node. "
-                    + "Local node's known-hosts were updated. "
-                    + "Please repeat the authentication if needed."
-                )
-            for node, result in output["data"]["auth_responses"].items():
-                if result["status"] == "ok":
-                    print_to_stderr(f"{node}: Authorized")
-                elif result["status"] == "bad_password":
-                    err(f"{node}: Username and/or password is incorrect", False)
-                    failed = True
-                elif result["status"] in ("noresponse", "error"):
-                    err("Unable to communicate with {0}".format(node), False)
-                    failed = True
-                else:
-                    err("Unexpected response from {0}".format(node), False)
-                    failed = True
-            if output["data"]["sync_nodes_err"]:
-                err(
-                    (
-                        "Unable to synchronize and save known-hosts on nodes: "
-                        + "{0}. Run 'pcs host auth {1}' to make sure the nodes "
-                        + "are authorized."
-                    ).format(
-                        ", ".join(output["data"]["sync_nodes_err"]),
-                        " ".join(output["data"]["sync_nodes_err"]),
-                    )
-                )
-        except (ValueError, KeyError):
-            err("Unable to communicate with pcsd")
-        if failed:
-            sys.exit(1)
-        return
-    err("Unable to communicate with pcsd")
-
-
 def call_local_pcsd(argv, options, std_in=None):  # noqa: PLR0911
     """
     Commandline options:
@@ -2602,7 +2543,7 @@ def get_report_processor() -> ReportProcessor:
     return ReportProcessorToConsole(debug="--debug" in pcs_options)
 
 
-def get_user_and_pass():
+def get_user_and_pass() -> tuple[str, str]:
     """
     Commandline options:
       * -u - username
@@ -2626,7 +2567,8 @@ def get_input_modifiers() -> InputModifiers:
 def get_token_from_file(file_name: str) -> str:
     try:
         with open(file_name, "rb") as file:
-            max_size = settings.pcsd_token_max_bytes  # type: ignore
+            # 256 to stay backwards compatible
+            max_size = 256
             value_bytes = file.read(max_size + 1)
             if len(value_bytes) > max_size:
                 err(f"Maximal token size of {max_size} bytes exceeded")

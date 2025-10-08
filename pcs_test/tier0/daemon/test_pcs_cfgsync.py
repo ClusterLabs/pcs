@@ -4,14 +4,14 @@ from unittest import TestCase, mock
 
 from pcs import settings
 from pcs.common import file_type_codes, reports
-from pcs.common.cfgsync_dto import SyncConfigsDto
 from pcs.common.communication.const import COM_STATUS_ERROR, COM_STATUS_SUCCESS
 from pcs.common.communication.dto import InternalCommunicationResultDto
 from pcs.common.communication.types import CommunicationResultStatus
 from pcs.common.host import Destination, PcsKnownHost
 from pcs.common.interface.dto import to_dict
+from pcs.common.pcs_cfgsync_dto import SyncConfigsDto
 from pcs.common.reports.processor import ReportProcessorToLog
-from pcs.daemon.cfgsync import CfgSyncPullManager
+from pcs.daemon.pcs_cfgsync import CfgSyncPullManager
 from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncFacade
 from pcs.lib.corosync.config_parser import Exporter as CorosyncExporter
 from pcs.lib.host.config.exporter import Exporter as KnownHostsExporter
@@ -125,15 +125,15 @@ class RunCfgSync(TestCase):
 
     def fixture_before_fetch_config_files_all_successful(self):
         self.config.raw_file.exists(
-            file_type_codes.CFGSYNC_CTL,
-            settings.cfgsync_ctl_location,
-            name="cfgsync_ctl.exists",
+            file_type_codes.PCS_CFGSYNC_CTL,
+            settings.pcs_cfgsync_ctl_location,
+            name="pcs_cfgsync_ctl.exists",
         )
         self.config.raw_file.read(
-            file_type_codes.CFGSYNC_CTL,
-            settings.cfgsync_ctl_location,
+            file_type_codes.PCS_CFGSYNC_CTL,
+            settings.pcs_cfgsync_ctl_location,
             content="{}",
-            name="cfgsync_ctl.read",
+            name="pcs_cfgsync_ctl.read",
         )
         self.config.raw_file.exists(
             file_type_codes.COROSYNC_CONF,
@@ -155,13 +155,13 @@ class RunCfgSync(TestCase):
 
     def test_no_corosync_conf(self):
         self.config.raw_file.exists(
-            file_type_codes.CFGSYNC_CTL,
-            settings.cfgsync_ctl_location,
-            name="cfgsync_ctl.exists",
+            file_type_codes.PCS_CFGSYNC_CTL,
+            settings.pcs_cfgsync_ctl_location,
+            name="pcs_cfgsync_ctl.exists",
         )
         self.config.raw_file.read(
-            file_type_codes.CFGSYNC_CTL,
-            settings.cfgsync_ctl_location,
+            file_type_codes.PCS_CFGSYNC_CTL,
+            settings.pcs_cfgsync_ctl_location,
             content="{}",
         )
         self.config.raw_file.exists(
@@ -181,14 +181,14 @@ class RunCfgSync(TestCase):
                 ),
             ]
         )
-        self.assertEqual(result, settings.cfgsync_thread_interval_default)
+        self.assertEqual(result, settings.pcs_cfgsync_thread_interval_default)
 
     def test_no_corosync_no_cfgsync_ctl(self):
         self.config.raw_file.exists(
-            file_type_codes.CFGSYNC_CTL,
-            settings.cfgsync_ctl_location,
+            file_type_codes.PCS_CFGSYNC_CTL,
+            settings.pcs_cfgsync_ctl_location,
             exists=False,
-            name="cfgsync_ctl.exists",
+            name="pcs_cfgsync_ctl.exists",
         )
         self.config.raw_file.exists(
             file_type_codes.COROSYNC_CONF,
@@ -204,24 +204,24 @@ class RunCfgSync(TestCase):
                 mock.call.info("Config files sync started"),
                 mock.call.debug(
                     "File '%s' does not exist, using default settings for config files sync",
-                    settings.cfgsync_ctl_location,
+                    settings.pcs_cfgsync_ctl_location,
                 ),
                 mock.call.info(
                     "Config files sync skipped, this host does not seem to be in a cluster of at least 2 nodes"
                 ),
             ]
         )
-        self.assertEqual(result, settings.cfgsync_thread_interval_default)
+        self.assertEqual(result, settings.pcs_cfgsync_thread_interval_default)
 
     def test_no_corosync_error_reading_cfgsync_ctl(self):
         self.config.raw_file.exists(
-            file_type_codes.CFGSYNC_CTL,
-            settings.cfgsync_ctl_location,
-            name="cfgsync_ctl.exists",
+            file_type_codes.PCS_CFGSYNC_CTL,
+            settings.pcs_cfgsync_ctl_location,
+            name="pcs_cfgsync_ctl.exists",
         )
         self.config.raw_file.read(
-            file_type_codes.CFGSYNC_CTL,
-            settings.cfgsync_ctl_location,
+            file_type_codes.PCS_CFGSYNC_CTL,
+            settings.pcs_cfgsync_ctl_location,
             exception_msg="Some error",
         )
         self.config.raw_file.exists(
@@ -237,30 +237,30 @@ class RunCfgSync(TestCase):
             [
                 mock.call.info("Config files sync started"),
                 mock.call.error(
-                    f"Unable to read Config synchronization configuration '{settings.cfgsync_ctl_location}': Some error"
+                    f"Unable to read Config synchronization configuration '{settings.pcs_cfgsync_ctl_location}': Some error"
                 ),
                 mock.call.info(
                     "Unable to read '%s', using default settings for config files sync",
-                    settings.cfgsync_ctl_location,
+                    settings.pcs_cfgsync_ctl_location,
                 ),
                 mock.call.info(
                     "Config files sync skipped, this host does not seem to be in a cluster of at least 2 nodes"
                 ),
             ]
         )
-        self.assertEqual(result, settings.cfgsync_thread_interval_default)
+        self.assertEqual(result, settings.pcs_cfgsync_thread_interval_default)
 
     def test_no_2_nodes_in_corosync_conf(self):
         self.config.raw_file.exists(
-            file_type_codes.CFGSYNC_CTL,
-            settings.cfgsync_ctl_location,
-            name="cfgsync_ctl.exists",
+            file_type_codes.PCS_CFGSYNC_CTL,
+            settings.pcs_cfgsync_ctl_location,
+            name="pcs_cfgsync_ctl.exists",
         )
         self.config.raw_file.read(
-            file_type_codes.CFGSYNC_CTL,
-            settings.cfgsync_ctl_location,
+            file_type_codes.PCS_CFGSYNC_CTL,
+            settings.pcs_cfgsync_ctl_location,
             content="{}",
-            name="cfgsync_ctl.read",
+            name="pcs_cfgsync_ctl.read",
         )
         self.config.raw_file.exists(
             file_type_codes.COROSYNC_CONF,
@@ -283,19 +283,19 @@ class RunCfgSync(TestCase):
                 ),
             ]
         )
-        self.assertEqual(result, settings.cfgsync_thread_interval_default)
+        self.assertEqual(result, settings.pcs_cfgsync_thread_interval_default)
 
     def test_error_reading_corosync_conf(self):
         self.config.raw_file.exists(
-            file_type_codes.CFGSYNC_CTL,
-            settings.cfgsync_ctl_location,
-            name="cfgsync_ctl.exists",
+            file_type_codes.PCS_CFGSYNC_CTL,
+            settings.pcs_cfgsync_ctl_location,
+            name="pcs_cfgsync_ctl.exists",
         )
         self.config.raw_file.read(
-            file_type_codes.CFGSYNC_CTL,
-            settings.cfgsync_ctl_location,
+            file_type_codes.PCS_CFGSYNC_CTL,
+            settings.pcs_cfgsync_ctl_location,
             content="{}",
-            name="cfgsync_ctl.read",
+            name="pcs_cfgsync_ctl.read",
         )
         self.config.raw_file.exists(
             file_type_codes.COROSYNC_CONF,
@@ -321,19 +321,19 @@ class RunCfgSync(TestCase):
                 ),
             ]
         )
-        self.assertEqual(result, settings.cfgsync_thread_interval_default)
+        self.assertEqual(result, settings.pcs_cfgsync_thread_interval_default)
 
     def test_no_known_hosts(self):
         self.config.raw_file.exists(
-            file_type_codes.CFGSYNC_CTL,
-            settings.cfgsync_ctl_location,
-            name="cfgsync_ctl.exists",
+            file_type_codes.PCS_CFGSYNC_CTL,
+            settings.pcs_cfgsync_ctl_location,
+            name="pcs_cfgsync_ctl.exists",
         )
         self.config.raw_file.read(
-            file_type_codes.CFGSYNC_CTL,
-            settings.cfgsync_ctl_location,
+            file_type_codes.PCS_CFGSYNC_CTL,
+            settings.pcs_cfgsync_ctl_location,
             content="{}",
-            name="cfgsync_ctl.read",
+            name="pcs_cfgsync_ctl.read",
         )
         self.config.raw_file.exists(
             file_type_codes.COROSYNC_CONF,
@@ -369,19 +369,19 @@ class RunCfgSync(TestCase):
                 ),
             ]
         )
-        self.assertEqual(result, settings.cfgsync_thread_interval_default)
+        self.assertEqual(result, settings.pcs_cfgsync_thread_interval_default)
 
     def test_hosts_from_corosync_not_in_known_hosts(self):
         self.config.raw_file.exists(
-            file_type_codes.CFGSYNC_CTL,
-            settings.cfgsync_ctl_location,
-            name="cfgsync_ctl.exists",
+            file_type_codes.PCS_CFGSYNC_CTL,
+            settings.pcs_cfgsync_ctl_location,
+            name="pcs_cfgsync_ctl.exists",
         )
         self.config.raw_file.read(
-            file_type_codes.CFGSYNC_CTL,
-            settings.cfgsync_ctl_location,
+            file_type_codes.PCS_CFGSYNC_CTL,
+            settings.pcs_cfgsync_ctl_location,
             content="{}",
-            name="cfgsync_ctl.read",
+            name="pcs_cfgsync_ctl.read",
         )
         self.config.raw_file.exists(
             file_type_codes.COROSYNC_CONF,
@@ -417,7 +417,7 @@ class RunCfgSync(TestCase):
                 ),
             ]
         )
-        self.assertEqual(result, settings.cfgsync_thread_interval_default)
+        self.assertEqual(result, settings.pcs_cfgsync_thread_interval_default)
 
     def test_fetch_known_hosts_not_newer_than_local(self):
         self.fixture_before_fetch_config_files_all_successful()
@@ -485,7 +485,7 @@ class RunCfgSync(TestCase):
                 mock.call.info("Config files sync finished"),
             ]
         )
-        self.assertEqual(result, settings.cfgsync_thread_interval_default)
+        self.assertEqual(result, settings.pcs_cfgsync_thread_interval_default)
 
     def test_fetch_known_hosts_newer_than_local(self):
         self.fixture_before_fetch_config_files_all_successful()
@@ -568,7 +568,7 @@ class RunCfgSync(TestCase):
                 mock.call.info("Config files sync finished"),
             ]
         )
-        self.assertEqual(result, settings.cfgsync_thread_interval_default)
+        self.assertEqual(result, settings.pcs_cfgsync_thread_interval_default)
 
     def test_fetch_hosts_communication_failure(self):
         self.fixture_before_fetch_config_files_all_successful()
@@ -629,7 +629,7 @@ class RunCfgSync(TestCase):
         )
         self.assertEqual(
             result,
-            settings.cfgsync_thread_interval_previous_not_connected_default,
+            settings.pcs_cfgsync_thread_interval_previous_not_connected_default,
         )
 
     def test_multiple_files(self):
@@ -742,4 +742,4 @@ class RunCfgSync(TestCase):
                 mock.call.info("Config files sync finished"),
             ]
         )
-        self.assertEqual(result, settings.cfgsync_thread_interval_default)
+        self.assertEqual(result, settings.pcs_cfgsync_thread_interval_default)

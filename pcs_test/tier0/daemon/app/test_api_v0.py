@@ -23,8 +23,8 @@ from pcs.common.async_tasks.types import (
     TaskKillReason,
     TaskState,
 )
-from pcs.common.cfgsync_dto import SyncConfigsDto
 from pcs.common.file import RawFileError
+from pcs.common.pcs_cfgsync_dto import SyncConfigsDto
 from pcs.common.tools import bin_to_str
 from pcs.daemon.app import api_v0
 from pcs.daemon.async_tasks.scheduler import (
@@ -536,7 +536,7 @@ class QdeviceNetClientDestroyHandler(ApiV0HandlerTest):
 class GetConfigsHandler(ApiV0HandlerTest):
     url = "/remote/get_configs"
     request_data = {"cluster_name": "test"}
-    command = "cfgsync.get_configs"
+    command = "pcs_cfgsync.get_configs"
 
     def test_success(self):
         file_contents = [

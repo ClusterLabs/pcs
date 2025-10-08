@@ -31,6 +31,9 @@ class FacadeV2(SyncVersionFacadeInterface):
     def data_version(self) -> int:
         return self.config.data_version
 
+    def set_data_version(self, new_version: int) -> None:
+        return self._set_config(replace(self.config, data_version=new_version))
+
     def _set_config(self, config: ConfigV2) -> None:
         super()._set_config(config)
 

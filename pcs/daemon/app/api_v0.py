@@ -10,7 +10,7 @@ from pcs.common.async_tasks.dto import (
     CommandDto,
     CommandOptionsDto,
 )
-from pcs.common.cfgsync_dto import SyncConfigsDto
+from pcs.common.pcs_cfgsync_dto import SyncConfigsDto
 from pcs.common.reports.dto import ReportItemDto
 from pcs.common.str_tools import format_list
 from pcs.daemon.app.auth import LegacyTokenAuthenticationHandler
@@ -20,7 +20,7 @@ from pcs.daemon.async_tasks.scheduler import (
 )
 from pcs.daemon.async_tasks.types import Command
 from pcs.lib.auth.provider import AuthProvider
-from pcs.lib.cfgsync.const import SYNCED_CONFIGS
+from pcs.lib.pcs_cfgsync.const import SYNCED_CONFIGS
 
 from .common import RoutesType
 
@@ -236,7 +236,7 @@ class GetConfigsHandler(_BaseApiV0Handler):
 
     async def _handle_request(self) -> None:
         result = await self._process_request(
-            "cfgsync.get_configs",
+            "pcs_cfgsync.get_configs",
             {"cluster_name": self.get_argument("cluster_name", "")},
         )
 

@@ -1,7 +1,7 @@
 from unittest import TestCase, mock
 
 from pcs import settings
-from pcs.lib.cfgsync.config.facade import Facade as CfgsyncFacade
+from pcs.lib.pcs_cfgsync.config.facade import Facade as CfgsyncFacade
 
 
 class Facade(TestCase):
@@ -9,14 +9,15 @@ class Facade(TestCase):
         self.assertTrue(facade.is_sync_allowed)
         self.assertFalse(facade.is_sync_paused)
         self.assertEqual(
-            settings.cfgsync_thread_interval_default, facade.sync_interval
+            settings.pcs_cfgsync_thread_interval_default, facade.sync_interval
         )
         self.assertEqual(
-            settings.cfgsync_thread_interval_previous_not_connected_default,
+            settings.pcs_cfgsync_thread_interval_previous_not_connected_default,
             facade.sync_interval_previous_not_connected,
         )
         self.assertEqual(
-            settings.cfgsync_file_backup_count_default, facade.file_backup_count
+            settings.pcs_cfgsync_file_backup_count_default,
+            facade.file_backup_count,
         )
 
     def test_create(self):
@@ -51,29 +52,30 @@ class Facade(TestCase):
             }
         )
         self.assertEqual(
-            settings.cfgsync_thread_interval_minimum, facade.sync_interval
+            settings.pcs_cfgsync_thread_interval_minimum, facade.sync_interval
         )
         self.assertEqual(
-            settings.cfgsync_thread_interval_previous_not_connected_minimum,
+            settings.pcs_cfgsync_thread_interval_previous_not_connected_minimum,
             facade.sync_interval_previous_not_connected,
         )
         self.assertEqual(
-            settings.cfgsync_file_backup_count_minimum, facade.file_backup_count
+            settings.pcs_cfgsync_file_backup_count_minimum,
+            facade.file_backup_count,
         )
 
-    @mock.patch("pcs.lib.cfgsync.config.facade.time.time", lambda: 1000)
+    @mock.patch("pcs.lib.pcs_cfgsync.config.facade.time.time", lambda: 1000)
     def test_paused_still_paused(self):
         facade = CfgsyncFacade({"thread_paused_until": 2000})
         self.assertFalse(facade.is_sync_allowed)
         self.assertTrue(facade.is_sync_paused)
 
-    @mock.patch("pcs.lib.cfgsync.config.facade.time.time", lambda: 1000)
+    @mock.patch("pcs.lib.pcs_cfgsync.config.facade.time.time", lambda: 1000)
     def test_paused_no_longer_paused(self):
         facade = CfgsyncFacade({"thread_paused_until": 500})
         self.assertTrue(facade.is_sync_allowed)
         self.assertFalse(facade.is_sync_paused)
 
-    @mock.patch("pcs.lib.cfgsync.config.facade.time.time", lambda: 1000)
+    @mock.patch("pcs.lib.pcs_cfgsync.config.facade.time.time", lambda: 1000)
     def test_file_with_incorrect_values(self):
         facade = CfgsyncFacade(
             {

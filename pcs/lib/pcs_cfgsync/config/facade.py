@@ -34,24 +34,24 @@ class Facade(FacadeInterface):
     def sync_interval(self) -> int:
         return self.__get_int(
             "thread_interval",
-            settings.cfgsync_thread_interval_default,
-            settings.cfgsync_thread_interval_minimum,
+            settings.pcs_cfgsync_thread_interval_default,
+            settings.pcs_cfgsync_thread_interval_minimum,
         )
 
     @property
     def sync_interval_previous_not_connected(self) -> int:
         return self.__get_int(
             "thread_interval_previous_not_connected",
-            settings.cfgsync_thread_interval_previous_not_connected_default,
-            settings.cfgsync_thread_interval_previous_not_connected_minimum,
+            settings.pcs_cfgsync_thread_interval_previous_not_connected_default,
+            settings.pcs_cfgsync_thread_interval_previous_not_connected_minimum,
         )
 
     @property
     def file_backup_count(self) -> int:
         return self.__get_int(
             "file_backup_count",
-            settings.cfgsync_file_backup_count_default,
-            settings.cfgsync_file_backup_count_minimum,
+            settings.pcs_cfgsync_file_backup_count_default,
+            settings.pcs_cfgsync_file_backup_count_minimum,
         )
 
     def __get_int(

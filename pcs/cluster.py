@@ -33,7 +33,10 @@ from pcs.cli.reports.messages import report_item_msg_from_dto
 from pcs.cli.reports.output import deprecation_warning, warn
 from pcs.common import file as pcs_file
 from pcs.common import file_type_codes, reports
+from pcs.common.auth import HostAuthData
 from pcs.common.corosync_conf import CorosyncConfDto, CorosyncNodeDto
+from pcs.common.file import RawFileError
+from pcs.common.host import Destination
 from pcs.common.interface import dto
 from pcs.common.node_communicator import HostNotFound, Request, RequestData
 from pcs.common.str_tools import format_list, indent, join_multilines
@@ -42,12 +45,16 @@ from pcs.common.types import StringCollection, StringIterable
 from pcs.lib import sbd as lib_sbd
 from pcs.lib.commands.remote_node import _destroy_pcmk_remote_env
 from pcs.lib.communication.nodes import CheckAuth
+from pcs.lib.communication.pcs_cfgsync import SetConfigs
 from pcs.lib.communication.tools import RunRemotelyBase, run_and_raise
 from pcs.lib.communication.tools import run as run_com_cmd
 from pcs.lib.corosync import qdevice_net
 from pcs.lib.corosync.live import QuorumStatusException, QuorumStatusFacade
 from pcs.lib.errors import LibraryError
+from pcs.lib.file.instance import FileInstance
+from pcs.lib.file.raw_file import raw_file_error_report
 from pcs.lib.node import get_existing_nodes_names
+from pcs.lib.pcs_cfgsync.const import SYNCED_CONFIGS
 from pcs.utils import parallel_for_nodes
 
 
@@ -1515,45 +1522,17 @@ def cluster_report(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  # 
     print_to_stderr(newoutput)
 
 
-def send_local_configs(
-    node_name_list: StringIterable,
-    clear_local_cluster_permissions: bool = False,
-    force: bool = False,
-) -> list[str]:
-    """
-    Commandline options:
-      * --request-timeout - timeout of HTTP requests
-    """
-    pcsd_data = {
-        "nodes": node_name_list,
-        "force": force,
-        "clear_local_cluster_permissions": clear_local_cluster_permissions,
-    }
-    err_msgs = []
-    output, retval = utils.run_pcsdcli("send_local_configs", pcsd_data)
-    if retval == 0 and output["status"] == "ok" and output["data"]:
-        try:
-            for node_name in node_name_list:
-                node_response = output["data"][node_name]
-                if node_response["status"] == "notauthorized":
-                    err_msgs.append(
-                        (
-                            "Unable to authenticate to {0}, try running 'pcs "
-                            "host auth {0}'"
-                        ).format(node_name)
-                    )
-                if node_response["status"] not in ["ok", "not_supported"]:
-                    err_msgs.append(
-                        "Unable to set pcsd configs on {0}".format(node_name)
-                    )
-        # pylint: disable=bare-except
-        except:  # noqa: E722
-            err_msgs.append("Unable to communicate with pcsd")
-    else:
-        err_msgs.append("Unable to set pcsd configs")
-    return err_msgs
-
-
+# TODO this should be implemented in multiple lib commands, and the cli should
+# only call these commands as needed
+# - lib command for checking auth, that returns not authorized nodes
+# - if any not authorized nodes
+#   - the cli asks for a username and pass
+#   - call lib command for authorizing hosts
+# - else:
+#   - call lib command to send the configs to other nodes
+#
+# This command itself is always run as root, see app.py (_non_root_run)
+# So we do not need to deal with the configs in .pcs for non-root run
 def cluster_auth_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  # noqa: PLR0912
     """
     Options:
@@ -1564,7 +1543,6 @@ def cluster_auth_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  
     """
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-locals
-    del lib
     modifiers.ensure_only_supported(
         "--corosync_conf", "--request-timeout", "-u", "-p"
     )
@@ -1572,7 +1550,8 @@ def cluster_auth_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  
         raise CmdLineInputError()
     lib_env = utils.get_lib_env()
     target_factory = lib_env.get_node_target_factory()
-    cluster_node_list = lib_env.get_corosync_conf().get_nodes()
+    corosync_conf = lib_env.get_corosync_conf()
+    cluster_node_list = corosync_conf.get_nodes()
     cluster_node_names = []
     missing_name = False
     for node in cluster_node_list:
@@ -1619,24 +1598,50 @@ def cluster_auth_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  
                             "authenticate the node"
                         )
         nodes_to_auth_data = {
-            node.name: dict(
-                username=username,
-                password=password,
-                dest_list=[
-                    dict(
-                        addr=node.addrs_plain()[0],
-                        port=settings.pcsd_default_port,
+            node.name: HostAuthData(
+                username,
+                password,
+                [
+                    Destination(
+                        node.addrs_plain()[0], settings.pcsd_default_port
                     )
                 ],
             )
             for node in not_auth_node_list
         }
-        utils.auth_hosts(nodes_to_auth_data)
+        lib.auth.auth_hosts(nodes_to_auth_data)
     else:
-        print_to_stderr("Sending cluster config files to the nodes...")
-        msgs = send_local_configs(cluster_node_names, force=True)
-        for msg in msgs:
-            warn(msg)
+        # TODO backwards compatibility
+        # The command overwrites known-hosts and pcsd_settings.conf on all
+        # cluster nodes with local version, only if all of the nodes are
+        # already authorized. We should investigate what is the reason why
+        # the command does this, and decide if we should drop/keep/change this
+        configs = {}
+        for file_type_code in SYNCED_CONFIGS:
+            file_instance = FileInstance.for_common(file_type_code)
+            if not file_instance.raw_file.exists():
+                # it's not an error if the file does not exist locally, we just
+                # wont send it
+                continue
+            try:
+                configs[file_type_code] = file_instance.read_raw().decode(
+                    "utf-8"
+                )
+            except RawFileError as e:
+                # in case of error when reading some file, we still might be able
+                # to read and send the others without issues
+                lib_env.report_processor.report(
+                    raw_file_error_report(e, is_forced_or_warning=True)
+                )
+        set_configs_cmd = SetConfigs(
+            lib_env.report_processor,
+            corosync_conf.get_cluster_name(),
+            configs,
+            force=True,
+            rejection_severity=reports.ReportItemSeverity.error(),
+        )
+        set_configs_cmd.set_targets(target_list)
+        run_and_raise(lib_env.get_node_communicator(), set_configs_cmd)
 
 
 def _parse_node_options(

@@ -6,12 +6,12 @@ from pcs.common.reports.processor import ReportProcessor
 from pcs.common.reports.utils import format_file_role
 from pcs.common.str_tools import format_list
 from pcs.common.types import StringIterable
-from pcs.lib.cfgsync.config.facade import Facade as CfgsyncCtlFacade
-from pcs.lib.cfgsync.fetcher import ConfigFetcher
 from pcs.lib.file.instance import FileInstance
 from pcs.lib.file.raw_file import RawFileError, raw_file_error_report
 from pcs.lib.interface.config import ParserErrorException
 from pcs.lib.node_communication import NodeTargetLibFactory
+from pcs.lib.pcs_cfgsync.config.facade import Facade as CfgsyncCtlFacade
+from pcs.lib.pcs_cfgsync.fetcher import ConfigFetcher
 
 if TYPE_CHECKING:
     from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncFacade
@@ -83,7 +83,7 @@ class CfgSyncPullManager:
         return ctl_facade.sync_interval_previous_not_connected
 
     def _read_cfgsync_ctl(self) -> CfgsyncCtlFacade:
-        ctl_instance = FileInstance.for_cfgsync_ctl()
+        ctl_instance = FileInstance.for_pcs_cfgsync_ctl()
         if not ctl_instance.raw_file.exists():
             self._logger.debug(
                 "File '%s' does not exist, using default settings for config "

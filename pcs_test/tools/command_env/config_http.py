@@ -6,6 +6,9 @@ from pcs_test.tools.command_env.config_http_corosync import CorosyncShortcuts
 from pcs_test.tools.command_env.config_http_files import FilesShortcuts
 from pcs_test.tools.command_env.config_http_host import HostShortcuts
 from pcs_test.tools.command_env.config_http_pcmk import PcmkShortcuts
+from pcs_test.tools.command_env.config_http_pcs_cfgsync import (
+    PcsCfgsyncShortcuts,
+)
 from pcs_test.tools.command_env.config_http_sbd import SbdShortcuts
 from pcs_test.tools.command_env.config_http_scsi import ScsiShortcuts
 from pcs_test.tools.command_env.config_http_status import StatusShortcuts
@@ -42,6 +45,7 @@ class HttpConfig:
         self.files = wrap_helper(FilesShortcuts(self.__calls))
         self.host = wrap_helper(HostShortcuts(self.__calls))
         self.pcmk = wrap_helper(PcmkShortcuts(self.__calls))
+        self.pcs_cfgsync = wrap_helper(PcsCfgsyncShortcuts(self.__calls))
         self.sbd = wrap_helper(SbdShortcuts(self.__calls))
         self.scsi = wrap_helper(ScsiShortcuts(self.__calls))
         self.status = wrap_helper(StatusShortcuts(self.__calls))

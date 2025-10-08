@@ -2,13 +2,13 @@ from unittest import TestCase
 
 from pcs import settings
 from pcs.common import reports
-from pcs.common.cfgsync_dto import SyncConfigsDto
 from pcs.common.file_type_codes import (
     COROSYNC_CONF,
     PCS_KNOWN_HOSTS,
     PCS_SETTINGS_CONF,
 )
-from pcs.lib.commands.cfgsync import get_configs
+from pcs.common.pcs_cfgsync_dto import SyncConfigsDto
+from pcs.lib.commands import pcs_cfgsync as lib
 
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
@@ -51,7 +51,7 @@ class GetConfigs(TestCase):
     def test_bad_cluster_name(self):
         self.config.corosync_conf.load()
         self.env_assist.assert_raise_library_error(
-            lambda: get_configs(
+            lambda: lib.get_configs(
                 self.env_assist.get_env(), "definitely not the right name"
             )
         )
@@ -60,7 +60,7 @@ class GetConfigs(TestCase):
                 fixture.error(
                     reports.codes.NODE_REPORTS_UNEXPECTED_CLUSTER_NAME,
                     cluster_name="definitely not the right name",
-                )
+                ),
             ]
         )
 
@@ -68,7 +68,7 @@ class GetConfigs(TestCase):
         # cant read corosync conf
         self.config.corosync_conf.load_content("", exception_msg="some error")
         self.env_assist.assert_raise_library_error(
-            lambda: get_configs(self.env_assist.get_env(), "test99"),
+            lambda: lib.get_configs(self.env_assist.get_env(), "test99"),
             reports=[
                 fixture.error(
                     reports.codes.FILE_IO_ERROR,
@@ -86,7 +86,7 @@ class GetConfigs(TestCase):
         self.fixture_files_operations(
             known_hosts_exists=False, pcs_settings_exists=False
         )
-        result = get_configs(self.env_assist.get_env(), "test99")
+        result = lib.get_configs(self.env_assist.get_env(), "test99")
         self.assertEqual(
             SyncConfigsDto(cluster_name="test99", configs={}), result
         )
@@ -96,7 +96,7 @@ class GetConfigs(TestCase):
         self.fixture_files_operations(
             known_hosts_exists=True, pcs_settings_exists=False
         )
-        result = get_configs(self.env_assist.get_env(), "test99")
+        result = lib.get_configs(self.env_assist.get_env(), "test99")
         self.assertEqual(
             SyncConfigsDto(
                 cluster_name="test99",
@@ -108,7 +108,7 @@ class GetConfigs(TestCase):
     def test_all_files_exist(self):
         self.config.corosync_conf.load()
         self.fixture_files_operations()
-        result = get_configs(self.env_assist.get_env(), "test99")
+        result = lib.get_configs(self.env_assist.get_env(), "test99")
         self.assertEqual(
             SyncConfigsDto(
                 cluster_name="test99",
@@ -145,7 +145,7 @@ class GetConfigs(TestCase):
             name="pcs_settings.read",
         )
 
-        result = get_configs(self.env_assist.get_env(), "test99")
+        result = lib.get_configs(self.env_assist.get_env(), "test99")
 
         self.assertEqual(
             SyncConfigsDto(

@@ -4066,6 +4066,28 @@ class HostAlreadyAuthorized(NameBuildTest):
         )
 
 
+class AuthorizationSuccessful(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "Authorized", reports.AuthorizationSuccessful()
+        )
+
+
+class IncorrectCredentials(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "Username and/or password is incorrect",
+            reports.IncorrectCredentials(),
+        )
+
+
+class NoHostSpecified(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "No host specified", reports.NoHostSpecified()
+        )
+
+
 class ClusterDestroyStarted(NameBuildTest):
     def test_multiple_hosts(self):
         self.assert_message_from_report(
@@ -6331,4 +6353,125 @@ class NodeReportsUnexpectedClusterName(NameBuildTest):
         self.assert_message_from_report(
             "The node is not in the cluster named 'name'",
             reports.NodeReportsUnexpectedClusterName("name"),
+        )
+
+
+class PcsCfgsyncSendingConfigsToNodes(NameBuildTest):
+    def test_one_node(self):
+        self.assert_message_from_report(
+            "Sending file 'known-hosts' to node 'node1'",
+            reports.PcsCfgsyncSendingConfigsToNodes(
+                [file_type_codes.PCS_KNOWN_HOSTS], ["node1"]
+            ),
+        )
+
+    def test_multiple_nodes(self):
+        self.assert_message_from_report(
+            "Sending file 'known-hosts' to nodes 'node1', 'node2'",
+            reports.PcsCfgsyncSendingConfigsToNodes(
+                [file_type_codes.PCS_KNOWN_HOSTS], ["node1", "node2"]
+            ),
+        )
+
+    def test_multiple_files(self):
+        self.assert_message_from_report(
+            "Sending files 'known-hosts', 'pcs configuration' to node 'node1'",
+            reports.PcsCfgsyncSendingConfigsToNodes(
+                [
+                    file_type_codes.PCS_KNOWN_HOSTS,
+                    file_type_codes.PCS_SETTINGS_CONF,
+                ],
+                ["node1"],
+            ),
+        )
+
+
+class PcsCfgsyncConfigAccepted(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "The known-hosts file saved successfully",
+            reports.PcsCfgsyncConfigAccepted(file_type_codes.PCS_KNOWN_HOSTS),
+        )
+
+
+class PcsCfgsyncConfigRejected(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "The known-hosts file not saved, a newer version of the file "
+                "exists on the node"
+            ),
+            reports.PcsCfgsyncConfigRejected(file_type_codes.PCS_KNOWN_HOSTS),
+        )
+
+
+class PcsCfgsyncConfigSaveError(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "The known-hosts file not saved",
+            reports.PcsCfgsyncConfigSaveError(file_type_codes.PCS_KNOWN_HOSTS),
+        )
+
+
+class PcsCfgsyncConfigUnsupported(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "The known-hosts file synchronization is not supported on this "
+                "node"
+            ),
+            reports.PcsCfgsyncConfigUnsupported(
+                file_type_codes.PCS_KNOWN_HOSTS
+            ),
+        )
+
+
+class PcsCfgsyncFetchingNewestConfig(NameBuildTest):
+    def test_one_node(self):
+        self.assert_message_from_report(
+            (
+                "Fetching the newest version of file 'known-hosts' from node "
+                "'node1'"
+            ),
+            reports.PcsCfgsyncFetchingNewestConfig(
+                [file_type_codes.PCS_KNOWN_HOSTS], ["node1"]
+            ),
+        )
+
+    def test_multiple_nodes(self):
+        self.assert_message_from_report(
+            (
+                "Fetching the newest version of file 'known-hosts' from nodes "
+                "'node1', 'node2'"
+            ),
+            reports.PcsCfgsyncFetchingNewestConfig(
+                [file_type_codes.PCS_KNOWN_HOSTS], ["node1", "node2"]
+            ),
+        )
+
+    def test_multiple_files(self):
+        self.assert_message_from_report(
+            (
+                "Fetching the newest version of files 'known-hosts', "
+                "'pcs configuration' from node 'node1'"
+            ),
+            reports.PcsCfgsyncFetchingNewestConfig(
+                [
+                    file_type_codes.PCS_KNOWN_HOSTS,
+                    file_type_codes.PCS_SETTINGS_CONF,
+                ],
+                ["node1"],
+            ),
+        )
+
+
+class PcsCfgsyncConflictRepeatAction(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "Configuration conflict detected. Some nodes had a newer "
+                "configuration than the local node. Local node's configuration "
+                "was updated. Please repeat the last action if appropriate."
+            ),
+            reports.PcsCfgsyncConflictRepeatAction(),
         )

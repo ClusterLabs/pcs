@@ -52,7 +52,7 @@ from pcs.common.reports import (
     ReportItemList,
     ReportItemSeverity,
 )
-from pcs.common.str_tools import format_list
+from pcs.common.str_tools import format_list, format_optional
 from pcs.common.tools import timeout_to_seconds
 from pcs.common.types import (
     StringCollection,
@@ -846,6 +846,41 @@ class ValueNotEmpty(ValuePredicateBase):
         return self._value_desc_or_enum
 
 
+class ValueStringLength(ValuePredicateBase):
+    """
+    Report INVALID_OPTION_VALUE when the value is longer than max len
+    """
+
+    def __init__(
+        self,
+        option_name: TypeOptionName,
+        min_len: Optional[int] = None,
+        max_len: Optional[int] = None,
+        option_name_for_report: Optional[str] = None,
+    ):
+        super().__init__(
+            option_name, option_name_for_report=option_name_for_report
+        )
+        self._min_len = min_len
+        self._max_len = max_len
+        self._value_cannot_be_empty = (
+            self._min_len is not None and self._min_len > 0
+        )
+
+    def _is_valid(self, value: TypeOptionValue) -> bool:
+        return is_string_length(value, self._min_len, self._max_len)
+
+    def _get_allowed_values(self) -> Any:
+        return "a string{min_len}{max_len}".format(
+            min_len=format_optional(
+                self._min_len, template=" (min length: {})"
+            ),
+            max_len=format_optional(
+                self._max_len, template=" (max length: {})"
+            ),
+        )
+
+
 class ValuePcmkBoolean(ValuePredicateBase):
     """
     Report INVALID_OPTION_VALUE when the value is not a pacemaker boolean value
@@ -1059,6 +1094,23 @@ def is_empty_string(value: TypeOptionValue) -> bool:
     value -- value to check
     """
     return isinstance(value, str) and not value
+
+
+def is_string_length(
+    value: TypeOptionValue, min_len: Optional[int], max_len: Optional[int]
+) -> bool:
+    """
+    Check if the specified value is string with specified length
+
+    value -- value to check
+    min_len -- minimal length
+    max_len -- maximal length
+    """
+    return (
+        isinstance(value, str)
+        and (min_len is None or len(value) >= min_len)
+        and (max_len is None or len(value) <= max_len)
+    )
 
 
 def is_float(
