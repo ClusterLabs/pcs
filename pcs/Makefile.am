@@ -26,6 +26,7 @@ EXTRA_DIST		= \
 			  cli/booth/command.py \
 			  cli/booth/env.py \
 			  cli/booth/__init__.py \
+			  cli/client.py \
 			  cli/cluster/__init__.py \
 			  cli/cluster/command.py \
 			  cli/cluster/report_processor.py \
@@ -63,7 +64,6 @@ EXTRA_DIST		= \
 			  cli/constraint_ticket/__init__.py \
 			  cli/constraint_ticket/parse_args.py \
 			  cli/dr.py \
-			  client.py \
 			  cli/fencing_topology.py \
 			  cli/file/__init__.py \
 			  cli/file/metadata.py \

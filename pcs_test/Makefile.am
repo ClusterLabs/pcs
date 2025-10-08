@@ -123,6 +123,7 @@ EXTRA_DIST		= \
 			  tier0/cli/tag/__init__.py \
 			  tier0/cli/tag/test_command.py \
 			  tier0/cli/test_booth.py \
+			  tier0/cli/test_client.py \
 			  tier0/cli/test_cluster.py \
 			  tier0/cli/test_dr.py \
 			  tier0/cli/test_nvset.py \

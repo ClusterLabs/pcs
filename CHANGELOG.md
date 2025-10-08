@@ -12,6 +12,8 @@
   specific error messages in case of invalid input instead of command usage
 - Do not display a warning in `pcs status` when a fence\_heuristics\_ping
   stonith device has its `method` option set to `cycle` ([RHEL-73527])
+- Add missing check to prevent the root user to run `pcs client local-auth`
+  command
 
 ### Changed
 - Lib command `cib.remove_elements` does not stop resources before deletion.
