@@ -182,6 +182,10 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
         cmd=cib.remove_elements,
         required_permission=p.WRITE,
     ),
+    "cib.set_description": _Cmd(
+        cmd=cib.set_description,
+        required_permission=p.WRITE,
+    ),
     "cib_options.operation_defaults_config": _Cmd(
         cmd=cib_options.operation_defaults_config,
         required_permission=p.READ,

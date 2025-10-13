@@ -6,6 +6,7 @@
 - Commands `pcs resource|stonith|booth delete|remove` and
   `pcs cluster node delete-remote|remove-remote|delete-guest|remove-guest`
   now warn about omitting live cluster actions when '-f' is used ([RHEL-76157])
+- Add lib command `cib.set_description` to API v1 and v2 ([RHEL-7670])
 
 ### Fixed
 - Commands `pcs acl role create` and `pcs acl permission add` now print
@@ -31,6 +32,7 @@
   `--future` flag if you need to use `--force` and you do not wish to skip the
   resource stopping.
 
+[RHEL-7670]: https://issues.redhat.com/browse/RHEL-7670
 [RHEL-73527]: https://issues.redhat.com/browse/RHEL-73527
 [RHEL-76157]: https://issues.redhat.com/browse/RHEL-76157
 [RHEL-76162]: https://issues.redhat.com/browse/RHEL-76162

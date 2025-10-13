@@ -3,6 +3,7 @@ from unittest import TestCase, mock
 
 from pcs import settings
 from pcs.common import reports
+from pcs.lib.cib.description import TAG_LIST_SUPPORTS_DESCRIPTION
 from pcs.lib.commands import cib as lib
 
 from pcs_test.tools import fixture
@@ -833,6 +834,100 @@ class StonithAndSbdCheck(TestCase):
                     reports.codes.UNABLE_TO_GET_SBD_STATUS,
                     node="node-2",
                     reason="",
+                ),
+            ]
+        )
+
+
+class SetDescription(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+        self.new_description = "I am a stick."
+        self.config.runner.cib.load(
+            resources="""
+                <resources>
+                    <primitive id="A"/>
+                    <primitive id="B" description="I am a description"/>
+                </resources>
+            """
+        )
+
+    def test_success_add_description(self):
+        self.config.env.push_cib(
+            resources=f"""
+                <resources>
+                    <primitive id="A" description="{self.new_description}"/>
+                    <primitive id="B" description="I am a description"/>
+                </resources>
+            """
+        )
+        lib.set_description(
+            self.env_assist.get_env(), "A", self.new_description
+        )
+
+    def test_success_update_description(self):
+        self.config.env.push_cib(
+            resources=f"""
+                <resources>
+                    <primitive id="A"/>
+                    <primitive id="B" description="{self.new_description}"/>
+                </resources>
+            """
+        )
+        lib.set_description(
+            self.env_assist.get_env(), "B", self.new_description
+        )
+
+    def test_success_remove_description(self):
+        self.config.env.push_cib(
+            resources="""
+                <resources>
+                    <primitive id="A"/>
+                    <primitive id="B"/>
+                </resources>
+            """
+        )
+        lib.set_description(self.env_assist.get_env(), "B", "")
+
+    def test_element_does_not_exist(self):
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.set_description(
+                self.env_assist.get_env(), "C", self.new_description
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.ID_NOT_FOUND,
+                    id="C",
+                    expected_types=sorted(TAG_LIST_SUPPORTS_DESCRIPTION),
+                    context_type="",
+                    context_id="",
+                )
+            ]
+        )
+
+    def test_element_does_not_support_description(self):
+        self.config.runner.cib.load(
+            instead="runner.cib.load",
+            constraints="""
+                <constraints>
+                    <rsc_location id="L1" rsc="A" node="node1" score="200"/>
+                </constraints>
+            """,
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.set_description(
+                self.env_assist.get_env(), "L1", self.new_description
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.ID_BELONGS_TO_UNEXPECTED_TYPE,
+                    id="L1",
+                    expected_types=sorted(TAG_LIST_SUPPORTS_DESCRIPTION),
+                    current_type="rsc_location",
                 ),
             ]
         )

@@ -283,6 +283,7 @@ EXTRA_DIST		= \
 			  lib/cib/constraint/order.py \
 			  lib/cib/constraint/resource_set.py \
 			  lib/cib/constraint/ticket.py \
+			  lib/cib/description.py \
 			  lib/cib/fencing_topology.py \
 			  lib/cib/__init__.py \
 			  lib/cib/node.py \

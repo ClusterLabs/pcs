@@ -228,6 +228,7 @@ EXTRA_DIST		= \
 			  tier0/lib/cib/test_constraint_location.py \
 			  tier0/lib/cib/test_constraint_order.py \
 			  tier0/lib/cib/test_constraint.py \
+			  tier0/lib/cib/test_description.py \
 			  tier0/lib/cib/test_fencing_topology.py \
 			  tier0/lib/cib/test_node.py \
 			  tier0/lib/cib/test_nvpair_multi.py \
