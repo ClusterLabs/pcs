@@ -24,6 +24,7 @@ from pcs.cli.routing import (
     acl,
     alert,
     booth,
+    cib,
     client,
     cluster,
     config,
@@ -263,6 +264,7 @@ def main(argv=None):  # noqa: PLR0912, PLR0915
         "client": client.client_cmd,
         "dr": dr.dr_cmd,
         "tag": tag.tag_cmd,
+        "cib": cib.cib_cmd,
         "help": lambda lib, argv, modifiers: print(usage.main()),
     }
     try:

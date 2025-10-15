@@ -81,6 +81,9 @@ dr
 .TP
 tag
  Manage pacemaker tags.
+.TP
+cib
+ Manage CIB (Cluster Information Base).
 .SS "resource"
 .TP
 [status [<resource id | tag id>] [node=<node>] [\fB\-\-hide\-inactive\fR]]
@@ -1638,6 +1641,10 @@ Delete specified tags.
 .TP
 update <tag id> [add <id> [<id>]... [\fB\-\-before\fR <id> | \fB\-\-after\fR <id>]] [remove <id> [<id>]...]
 Update a tag using the specified ids. Ids can be added, removed or moved in a tag. You can use \fB\-\-before\fR or \fB\-\-after\fR to specify the position of the added ids relatively to some id already existing in the tag. By adding ids to a tag they are already in and specifying \fB\-\-after\fR or \fB\-\-before\fR you can move the ids in the tag.
+.SS "cib"
+.TP
+element description <element-id> <description text>
+Set description to a CIB element. If you wish to remove a description, set it to empty string.
 .SH EXAMPLES
 .TP
 Show all resources

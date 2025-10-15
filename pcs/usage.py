@@ -99,6 +99,7 @@ def full_usage() -> None:
     out += strip_extras(client([]))
     out += strip_extras(dr([]))
     out += strip_extras(tag([]))
+    out += strip_extras(cib([]))
     print(out.strip())
     print("Examples:\n" + examples.replace(r" \ ", ""))
 
@@ -199,6 +200,7 @@ def generate_completion_tree_from_usage() -> CompletionTree:
     tree["client"] = generate_tree(client([]))
     tree["dr"] = generate_tree(dr([]))
     tree["tag"] = generate_tree(tag([]))
+    tree["cib"] = generate_tree(cib([]))
     return tree
 
 
@@ -273,6 +275,7 @@ Commands:
     client      Manage pcsd client configuration.
     dr          Manage disaster recovery configuration.
     tag         Manage pacemaker tags.
+    cib         Manage CIB (Cluster Information Base).
 """
     # Advanced usage to possibly add later
     #  --corosync_conf=<corosync file> Specify alternative corosync.conf file
@@ -3490,11 +3493,25 @@ Commands:
     return sub_usage(args, output)
 
 
+def cib(args: Argv) -> str:
+    output = """
+Usage: pcs cib <command>
+Manage CIB (Cluster Information Base).
+
+Commands:
+    element description <element-id> <description text>
+        Set description to a CIB element. If you wish to remove a description,
+        set it to empty string.
+"""
+    return sub_usage(args, output)
+
+
 def show(main_usage_name: str, rest_usage_names: Argv) -> None:
     usage_map: dict[str, Callable[[Argv], str]] = {
         "acl": acl,
         "alert": alert,
         "booth": booth,
+        "cib": cib,
         "client": client,
         "cluster": cluster,
         "config": config,

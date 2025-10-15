@@ -26,6 +26,9 @@ EXTRA_DIST		= \
 			  cli/booth/command.py \
 			  cli/booth/env.py \
 			  cli/booth/__init__.py \
+			  cli/cib/element/command.py \
+			  cli/cib/element/__init__.py \
+			  cli/cib/__init__.py \
 			  cli/client.py \
 			  cli/cluster/__init__.py \
 			  cli/cluster/command.py \
@@ -90,6 +93,7 @@ EXTRA_DIST		= \
 			  cli/routing/acl.py \
 			  cli/routing/alert.py \
 			  cli/routing/booth.py \
+			  cli/routing/cib.py \
 			  cli/routing/client.py \
 			  cli/routing/cluster.py \
 			  cli/routing/config.py \

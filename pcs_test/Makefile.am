@@ -80,6 +80,9 @@ EXTRA_DIST		= \
 			  tier0/cli/alert/test_output.py \
 			  tier0/cli/booth/__init__.py \
 			  tier0/cli/booth/test_env.py \
+			  tier0/cli/cib/element/__init__.py \
+			  tier0/cli/cib/element/test_command.py \
+			  tier0/cli/cib/__init__.py \
 			  tier0/cli/cluster/__init__.py \
 			  tier0/cli/cluster_property/__init__.py \
 			  tier0/cli/cluster_property/test_command.py \
@@ -457,6 +460,7 @@ EXTRA_DIST		= \
 			  tier1/test_alert.py \
 			  tier1/test_booth.py \
 			  tier1/test_cib_options.py \
+			  tier1/test_cib.py \
 			  tier1/test_cluster_pcmk_remote.py \
 			  tier1/test_cluster_property.py \
 			  tier1/test_misc.py \
