@@ -4,6 +4,7 @@ from pcs.common.resource_agent.dto import (
     ResourceAgentMetadataDto,
     ResourceAgentNameDto,
     ResourceAgentParameterDto,
+    ResourceMetaAttributesMetadataDto,
 )
 
 from .error import (
@@ -18,6 +19,7 @@ from .error import (
 from .facade import (
     ResourceAgentFacade,
     ResourceAgentFacadeFactory,
+    get_crm_resource_metadata,
 )
 from .list import (
     find_one_resource_agent_by_type,

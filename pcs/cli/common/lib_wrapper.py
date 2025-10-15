@@ -408,6 +408,7 @@ def load_module(env, middleware_factory, name):  # noqa: PLR0911, PLR0912
                 "get_agent_default_operations": resource_agent.get_agent_default_operations,
                 "get_agent_metadata": resource_agent.get_agent_metadata,
                 "get_agents_list": resource_agent.get_agents_list,
+                "get_resource_meta_attributes_metadata": resource_agent.get_resource_meta_attributes_metadata,
                 "get_structured_agent_name": resource_agent.get_structured_agent_name,
                 "list_agents_for_standard_and_provider": (
                     resource_agent.list_agents_for_standard_and_provider

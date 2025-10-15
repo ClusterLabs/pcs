@@ -320,6 +320,10 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
         cmd=resource_agent.get_agent_metadata,
         required_permission=p.READ,
     ),
+    "resource_agent.get_resource_meta_attributes_metadata": _Cmd(
+        cmd=resource_agent.get_resource_meta_attributes_metadata,
+        required_permission=p.READ,
+    ),
     # deprecated, API v1 compatibility
     "resource_agent.list_agents": _Cmd(
         cmd=resource_agent.list_agents,

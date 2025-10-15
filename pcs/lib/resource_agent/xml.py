@@ -25,6 +25,7 @@ from .error import (
 )
 from .types import (
     CrmAttrAgent,
+    CrmResourceAgent,
     FakeAgentName,
     ResourceAgentActionOcf1_0,
     ResourceAgentActionOcf1_1,
@@ -90,14 +91,35 @@ def _load_fake_agent_metadata_xml(
     return metadata
 
 
+def _get_resource_agent_xml_from_api_result(
+    agent_name: str, stdout: str, stderr: str, retval: int
+) -> str:
+    try:
+        dom = get_api_result_dom(stdout)
+    except (etree.XMLSyntaxError, etree.DocumentInvalid) as e:
+        raise UnableToGetAgentMetadata(
+            agent_name, join_multilines([stderr, stdout])
+        ) from e
+    if retval != 0:
+        status = get_status_from_api_result(dom)
+        raise UnableToGetAgentMetadata(
+            agent_name, join_multilines([status.message] + list(status.errors))
+        )
+    resource_agent_el = dom.find("./resource-agent")
+    if resource_agent_el is None:
+        raise UnableToGetAgentMetadata(
+            agent_name, join_multilines([stderr, stdout])
+        )
+    return etree_to_str(resource_agent_el)
+
+
 def _load_crm_attribute_metadata_xml(
     runner: CommandRunner, agent_name: CrmAttrAgent
 ) -> str:
     """
     Run pacemaker crm_attribute to get raw metadata from pacemaker in form of
     pacemaker api_result. Get the resource-agent element from the
-    pacemaker-result element and convert it to xml string. Other pacemaker
-    tools do not return metadata in api_result format.
+    pacemaker-result element and convert it to xml string.
 
     runner -- external processes runner
     agent_name -- name of pacemaker part whose metadata we want to get
@@ -116,23 +138,39 @@ def _load_crm_attribute_metadata_xml(
             "xml",
         ]
     )
-    try:
-        dom = get_api_result_dom(stdout)
-    except (etree.XMLSyntaxError, etree.DocumentInvalid) as e:
-        raise UnableToGetAgentMetadata(
-            agent_name, join_multilines([stderr, stdout])
-        ) from e
-    if retval != 0:
-        status = get_status_from_api_result(dom)
-        raise UnableToGetAgentMetadata(
-            agent_name, join_multilines([status.message] + list(status.errors))
-        )
-    resource_agent_el = dom.find("./resource-agent")
-    if resource_agent_el is None:
-        raise UnableToGetAgentMetadata(
-            agent_name, join_multilines([stderr, stdout])
-        )
-    return etree_to_str(resource_agent_el)
+    return _get_resource_agent_xml_from_api_result(
+        agent_name, stdout, stderr, retval
+    )
+
+
+def _load_crm_resource_metadata_xml(
+    runner: CommandRunner, agent_name: CrmResourceAgent
+) -> str:
+    """
+    Run pacemaker crm_resource to get raw metadata from pacemaker in form of
+    pacemaker api_result. Get the resource-agent element from the
+    pacemaker-result element and convert it to xml string.
+
+    runner -- external processes runner
+    agent_name -- name of pacemaker part whose metadata we want to get
+    """
+    name_to_list_options_type = {
+        const.PRIMITIVE_META: "primitive",
+    }
+    if agent_name not in name_to_list_options_type:
+        raise UnableToGetAgentMetadata(agent_name, "Unknown agent")
+    stdout, stderr, retval = runner.run(
+        [
+            settings.crm_resource_exec,
+            "--list-options",
+            name_to_list_options_type[agent_name],
+            "--output-as",
+            "xml",
+        ]
+    )
+    return _get_resource_agent_xml_from_api_result(
+        agent_name, stdout, stderr, retval
+    )
 
 
 def _get_ocf_version(metadata: _Element) -> str:
@@ -204,6 +242,23 @@ def load_crm_attribute_metadata(
     try:
         return _metadata_xml_to_dom(
             _load_crm_attribute_metadata_xml(runner, agent_name)
+        )
+    except (etree.XMLSyntaxError, etree.DocumentInvalid) as e:
+        raise UnableToGetAgentMetadata(agent_name, str(e)) from e
+
+
+def load_crm_resource_metadata(
+    runner: CommandRunner, agent_name: CrmResourceAgent
+) -> _Element:
+    """
+    Return pacemaker metadata as an XML document
+
+    runner -- external processes runner
+    agent_name -- name of pacemaker part whose metadata we want to get
+    """
+    try:
+        return _metadata_xml_to_dom(
+            _load_crm_resource_metadata_xml(runner, agent_name)
         )
     except (etree.XMLSyntaxError, etree.DocumentInvalid) as e:
         raise UnableToGetAgentMetadata(agent_name, str(e)) from e

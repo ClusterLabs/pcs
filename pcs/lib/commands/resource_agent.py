@@ -34,8 +34,10 @@ from pcs.lib.resource_agent import (
     ResourceAgentMetadataDto,
     ResourceAgentName,
     ResourceAgentNameDto,
+    ResourceMetaAttributesMetadataDto,
     StandardProviderTuple,
     find_one_resource_agent_by_type,
+    get_crm_resource_metadata,
     list_resource_agents,
     list_resource_agents_ocf_providers,
     list_resource_agents_standards,
@@ -43,6 +45,7 @@ from pcs.lib.resource_agent import (
     resource_agent_error_to_report_item,
     split_resource_agent_name,
 )
+from pcs.lib.resource_agent import const as ra_const
 from pcs.lib.resource_agent.name import name_to_void_metadata
 
 
@@ -325,3 +328,25 @@ def get_structured_agent_name(
     except ResourceAgentError as e:
         lib_env.report_processor.report(resource_agent_error_to_report_item(e))
         raise LibraryError() from e
+
+
+def get_resource_meta_attributes_metadata(
+    lib_env: LibraryEnvironment, is_fencing: bool
+) -> ResourceMetaAttributesMetadataDto:
+    """
+    Return meta-attributes metadata for a resource
+
+    is_fencing -- if True, get additional metadata for a fencing resource
+    """
+    try:
+        metadata = get_crm_resource_metadata(
+            lib_env.cmd_runner(), ra_const.PRIMITIVE_META, is_fencing=is_fencing
+        )
+    except ResourceAgentError as e:
+        lib_env.report_processor.report(resource_agent_error_to_report_item(e))
+        raise LibraryError() from e
+
+    return ResourceMetaAttributesMetadataDto(
+        metadata=[parameter.to_dto() for parameter in metadata.parameters],
+        is_fencing=is_fencing,
+    )
