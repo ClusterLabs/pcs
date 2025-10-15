@@ -55,6 +55,7 @@ API_V1_MAP: Mapping[str, str] = {
     "alert-update-recipient/v1": "alert.update_recipient",
     "alert-remove-recipient/v1": "alert.remove_recipient",
     "cfgsync-get-configs/v1": "pcs_cfgsync.get_configs",
+    "cib-get-description/v1": "cib.get_description",
     "cib-set-description/v1": "cib.set_description",
     "cluster-add-nodes/v1": "cluster.add_nodes",
     "cluster-node-clear/v1": "cluster.node_clear",

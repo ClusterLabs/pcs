@@ -53,3 +53,12 @@ def set_description(element: _Element, description: str) -> None:
     description -- new description for the element
     """
     update_attribute_remove_empty(element, DESCRIPTION_ATTRIBUTE, description)
+
+
+def get_description(element: _Element) -> str:
+    """
+    Get the description of an element
+
+    element -- specified element
+    """
+    return element.get(DESCRIPTION_ATTRIBUTE, "")

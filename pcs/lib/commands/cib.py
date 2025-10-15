@@ -121,6 +121,33 @@ def set_description(
     env.push_cib()
 
 
+def get_description(env: LibraryEnvironment, element_id: str) -> str:
+    """
+    Get description of specified element.
+
+    env -- LibraryEnvironment
+    element_id -- id of the element
+    """
+    try:
+        element = get_element_by_id(env.get_cib(), element_id)
+        env.report_processor.report_list(
+            cib_description.validate_description_support(element)
+        )
+    except ElementNotFound:
+        env.report_processor.report(
+            reports.ReportItem.error(
+                reports.messages.IdNotFound(
+                    element_id,
+                    sorted(cib_description.TAG_LIST_SUPPORTS_DESCRIPTION),
+                )
+            )
+        )
+    if env.report_processor.has_errors:
+        raise LibraryError()
+
+    return cib_description.get_description(element)
+
+
 def _validate_elements_to_remove(
     element_to_remove: ElementsToRemove,
 ) -> reports.ReportItemList:

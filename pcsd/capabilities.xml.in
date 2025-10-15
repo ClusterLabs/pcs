@@ -937,14 +937,17 @@
         pcs commands: cluster edit
       </description>
     </capability>
-    <capability id="pcmk.cib.element_description.set" in-pcs="0" in-pcsd="1">
+    <capability id="pcmk.cib.element_description" in-pcs="0" in-pcsd="1">
       <description>
-        Add, update, or delete description from supported CIB elements:
-        ACL permission, ACL role, alert, alert recipient, bundle, clone, group,
-        node, primitive
+        Manage descriptions of supported CIB elements: ACL permission, ACL role,
+        alert, alert recipient, bundle, clone, group, node, primitive
 
-        API v2: cib.set_description
-        daemon urls: /api/v1/cib-set-description/v1
+        API v2:
+          cib.get_description
+          cib.set_description
+        daemon urls:
+          /api/v1/cib-get-description/v1
+          /api/v1/cib-set-description/v1
       </description>
     </capability>
     <capability id="pcmk.cib.get" in-pcs="1" in-pcsd="1">

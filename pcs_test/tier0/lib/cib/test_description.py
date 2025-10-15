@@ -81,3 +81,19 @@ class SetDescription(TestCase):
         description.set_description(element, "")
 
         self.assertEqual(etree_to_str(element), '<primitive id="A"/>\n')
+
+
+class GetDescription(TestCase):
+    def test_read_description(self):
+        element = etree.fromstring('<primitive id="A" description="X"/>')
+
+        result = description.get_description(element)
+
+        self.assertEqual(result, "X")
+
+    def test_no_description(self):
+        element = etree.fromstring('<primitive id="A"/>')
+
+        result = description.get_description(element)
+
+        self.assertEqual(result, "")

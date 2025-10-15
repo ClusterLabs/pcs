@@ -931,3 +931,61 @@ class SetDescription(TestCase):
                 ),
             ]
         )
+
+
+class GetDescription(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+        self.description = "I am a stick."
+        self.config.runner.cib.load(
+            resources=f"""
+                <resources>
+                    <primitive id="A" description="{self.description}"/>
+                    <primitive id="B"/>
+                </resources>
+            """,
+            constraints="""
+                <constraints>
+                    <rsc_location id="L1" rsc="A" node="node1" score="200"/>
+                </constraints>
+            """,
+        )
+
+    def test_success_return_description(self):
+        result = lib.get_description(self.env_assist.get_env(), "A")
+        self.assertEqual(result, self.description)
+
+    def test_success_no_description(self):
+        result = lib.get_description(self.env_assist.get_env(), "B")
+        self.assertEqual(result, "")
+
+    def test_element_does_not_exist(self):
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.get_description(self.env_assist.get_env(), "C")
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.ID_NOT_FOUND,
+                    id="C",
+                    expected_types=sorted(TAG_LIST_SUPPORTS_DESCRIPTION),
+                    context_type="",
+                    context_id="",
+                )
+            ]
+        )
+
+    def test_element_does_not_support_description(self):
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.get_description(self.env_assist.get_env(), "L1")
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.ID_BELONGS_TO_UNEXPECTED_TYPE,
+                    id="L1",
+                    expected_types=sorted(TAG_LIST_SUPPORTS_DESCRIPTION),
+                    current_type="rsc_location",
+                ),
+            ]
+        )
