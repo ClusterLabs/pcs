@@ -388,3 +388,43 @@ class ResourceAgentFacadeFactory(TestCase):
             [param.name for param in facade.metadata.parameters],
             ["agent-param"],
         )
+
+
+class GetCrmResourceMetadata(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+
+    def _test_get_crm_resource_metadata(self, is_fencing):
+        agent_name = "primitive-meta"
+        fake_agent_name = ra.ResourceAgentName(
+            ra.const.FAKE_AGENT_STANDARD, None, agent_name
+        )
+        self.config.runner.pcmk.load_crm_resource_metadata(
+            agent_name=agent_name
+        )
+        env = self.env_assist.get_env()
+        metadata = ra.get_crm_resource_metadata(
+            env.cmd_runner(), agent_name, is_fencing
+        )
+        self.assertEqual(metadata.name, fake_agent_name)
+        self.assertTrue(metadata.agent_exists)
+        parameters_name_set = {param.name for param in metadata.parameters}
+        self.assertTrue(
+            {"priority", "critical", "target-role"}.issubset(
+                parameters_name_set
+            )
+        )
+        self.assertEqual("provides" in parameters_name_set, is_fencing)
+
+    def test_get_crm_resource_metadata_is_not_fencing(self):
+        self._test_get_crm_resource_metadata(False)
+
+    def test_get_crm_resource_metadata_is_fencing(self):
+        self._test_get_crm_resource_metadata(True)
+
+    def test_get_crm_resource_metadata_unknown_agent(self):
+        agent_name = "unknown"
+        env = self.env_assist.get_env()
+        with self.assertRaises(ra.UnableToGetAgentMetadata) as cm:
+            ra.get_crm_resource_metadata(env.cmd_runner(), agent_name, False)
+        self.assertEqual(cm.exception.agent_name, agent_name)

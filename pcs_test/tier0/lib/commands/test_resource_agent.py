@@ -16,10 +16,13 @@ from pcs.common.resource_agent.dto import (
     ResourceAgentParameterDto,
 )
 from pcs.lib.commands import resource_agent as lib
-from pcs.lib.resource_agent import ResourceAgentName
+from pcs.lib.resource_agent import (
+    ResourceAgentName,
+)
 
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
+from pcs_test.tools.metadata_dto import get_primitive_meta_attributes_dto
 
 
 def _operation_fixture(name, interval="", role=None, timeout=None):
@@ -1205,3 +1208,46 @@ class GetAgentDefaultOperations(TestCase):
 
     def test_stonith_only_necessary(self):
         self._test_stonith(True)
+
+
+class GetResourceMetaAttributesMetadata(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+        self.maxDiff = None
+
+    def test_success_not_fencing(self):
+        self.config.runner.pcmk.load_crm_resource_metadata()
+        self.assertEqual(
+            lib.get_resource_meta_attributes_metadata(
+                self.env_assist.get_env(), False
+            ).metadata,
+            get_primitive_meta_attributes_dto(is_fencing=False).metadata,
+        )
+
+    def test_success_is_fencing(self):
+        self.config.runner.pcmk.load_crm_resource_metadata()
+        self.assertEqual(
+            lib.get_resource_meta_attributes_metadata(
+                self.env_assist.get_env(), True
+            ).metadata,
+            get_primitive_meta_attributes_dto(is_fencing=True).metadata,
+        )
+
+    def test_metadata_load_error(self):
+        self.config.runner.pcmk.load_crm_resource_metadata(
+            stdout="stdout", stderr="stderr", returncode=1
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.get_resource_meta_attributes_metadata(
+                self.env_assist.get_env(), False
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.UNABLE_TO_GET_AGENT_METADATA,
+                    agent="primitive-meta",
+                    reason="stderr\nstdout",
+                )
+            ]
+        )

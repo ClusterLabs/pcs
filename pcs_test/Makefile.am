@@ -28,6 +28,7 @@ EXTRA_DIST		= \
 			  resources/cib-unexportable-constraints.xml \
 			  resources/cib-unsupported-stonith-config.xml \
 			  resources/cluster-options_metadata.xml \
+			  resources/primitive-meta_metadata.xml \
 			  resources/corosync-3nodes.conf \
 			  resources/corosync-3nodes-qdevice.conf \
 			  resources/corosync-3nodes-qdevice-heuristics.conf \
@@ -486,6 +487,7 @@ EXTRA_DIST		= \
 			  tools/bin_mock/pcmk/crm_resource.d/ocf__pcsmock__params_metadata.xml \
 			  tools/bin_mock/pcmk/crm_resource.d/ocf__pcsmock__stateful_metadata.xml \
 			  tools/bin_mock/pcmk/crm_resource.d/ocf__pcsmock__unique_metadata.xml \
+			  tools/bin_mock/pcmk/crm_resource.d/primitive-meta_metadata.xml \
 			  tools/bin_mock/pcmk/crm_resource.d/stonith__fence_pcsmock_action_metadata.xml \
 			  tools/bin_mock/pcmk/crm_resource.d/stonith__fence_pcsmock_method_metadata.xml \
 			  tools/bin_mock/pcmk/crm_resource.d/stonith__fence_pcsmock_minimal_metadata.xml \
@@ -548,6 +550,7 @@ EXTRA_DIST		= \
 			  tools/fixture_crm_mon.py \
 			  tools/fixture.py \
 			  tools/__init__.py \
+			  tools/metadata_dto.py \
 			  tools/misc.py \
 			  tools/nodes_dto.py \
 			  tools/pcs_runner.py \
