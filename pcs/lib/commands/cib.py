@@ -90,7 +90,7 @@ def remove_elements(
     env.push_cib()
 
 
-def set_description(
+def element_description_set(
     env: LibraryEnvironment, element_id: str, description: str
 ) -> None:
     """
@@ -121,7 +121,7 @@ def set_description(
     env.push_cib()
 
 
-def get_description(env: LibraryEnvironment, element_id: str) -> str:
+def element_description_get(env: LibraryEnvironment, element_id: str) -> str:
     """
     Get description of specified element.
 

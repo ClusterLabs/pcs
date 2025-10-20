@@ -943,11 +943,11 @@
         alert, alert recipient, bundle, clone, group, node, primitive
 
         API v2:
-          cib.get_description
-          cib.set_description
+          cib.element_description_get
+          cib.element_description_set
         daemon urls:
-          /api/v1/cib-get-description/v1
-          /api/v1/cib-set-description/v1
+          /api/v1/cib-element-description-get/v1
+          /api/v1/cib-element-description-set/v1
       </description>
     </capability>
     <capability id="pcmk.cib.get" in-pcs="1" in-pcsd="1">

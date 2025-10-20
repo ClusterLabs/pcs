@@ -14,4 +14,4 @@ def description(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
         raise CmdLineInputError()
 
     element_id, description = argv[0], argv[1]
-    lib.cib.set_description(element_id, description)
+    lib.cib.element_description_set(element_id, description)

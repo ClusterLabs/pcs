@@ -839,7 +839,7 @@ class StonithAndSbdCheck(TestCase):
         )
 
 
-class SetDescription(TestCase):
+class ElementDescriptionSet(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         self.new_description = "I am a stick."
@@ -861,7 +861,7 @@ class SetDescription(TestCase):
                 </resources>
             """
         )
-        lib.set_description(
+        lib.element_description_set(
             self.env_assist.get_env(), "A", self.new_description
         )
 
@@ -874,7 +874,7 @@ class SetDescription(TestCase):
                 </resources>
             """
         )
-        lib.set_description(
+        lib.element_description_set(
             self.env_assist.get_env(), "B", self.new_description
         )
 
@@ -887,11 +887,11 @@ class SetDescription(TestCase):
                 </resources>
             """
         )
-        lib.set_description(self.env_assist.get_env(), "B", "")
+        lib.element_description_set(self.env_assist.get_env(), "B", "")
 
     def test_element_does_not_exist(self):
         self.env_assist.assert_raise_library_error(
-            lambda: lib.set_description(
+            lambda: lib.element_description_set(
                 self.env_assist.get_env(), "C", self.new_description
             )
         )
@@ -917,7 +917,7 @@ class SetDescription(TestCase):
             """,
         )
         self.env_assist.assert_raise_library_error(
-            lambda: lib.set_description(
+            lambda: lib.element_description_set(
                 self.env_assist.get_env(), "L1", self.new_description
             )
         )
@@ -933,7 +933,7 @@ class SetDescription(TestCase):
         )
 
 
-class GetDescription(TestCase):
+class ElementDescriptionGet(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         self.description = "I am a stick."
@@ -952,16 +952,16 @@ class GetDescription(TestCase):
         )
 
     def test_success_return_description(self):
-        result = lib.get_description(self.env_assist.get_env(), "A")
+        result = lib.element_description_get(self.env_assist.get_env(), "A")
         self.assertEqual(result, self.description)
 
     def test_success_no_description(self):
-        result = lib.get_description(self.env_assist.get_env(), "B")
+        result = lib.element_description_get(self.env_assist.get_env(), "B")
         self.assertEqual(result, "")
 
     def test_element_does_not_exist(self):
         self.env_assist.assert_raise_library_error(
-            lambda: lib.get_description(self.env_assist.get_env(), "C")
+            lambda: lib.element_description_get(self.env_assist.get_env(), "C")
         )
         self.env_assist.assert_reports(
             [
@@ -977,7 +977,7 @@ class GetDescription(TestCase):
 
     def test_element_does_not_support_description(self):
         self.env_assist.assert_raise_library_error(
-            lambda: lib.get_description(self.env_assist.get_env(), "L1")
+            lambda: lib.element_description_get(self.env_assist.get_env(), "L1")
         )
         self.env_assist.assert_reports(
             [
