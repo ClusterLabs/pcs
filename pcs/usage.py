@@ -3500,8 +3500,8 @@ Manage CIB (Cluster Information Base).
 
 Commands:
     element description <element-id> <description text>
-        Set description to a CIB element. If you wish to remove a description,
-        set it to empty string.
+        Set a description to a CIB element. If you wish to remove a description,
+        set it to an empty string.
 """
     return sub_usage(args, output)
 
