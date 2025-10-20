@@ -97,7 +97,7 @@ class Move(
         self.assert_pcs_fail(
             "resource move-with-constraint NonExistent".split(),
             (
-                "Error: bundle/clone/group/resource 'NonExistent' does not "
+                "Error: bundle / clone / group / resource 'NonExistent' does not "
                 "exist\n"
                 "Error: Errors have occurred, therefore pcs is unable to "
                 "continue\n"

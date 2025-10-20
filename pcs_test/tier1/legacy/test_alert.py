@@ -532,7 +532,7 @@ class UpdateRecipientAlert(PcsAlertTest):
     def test_no_recipient(self):
         self.assert_pcs_fail(
             "alert recipient update rec description=desc".split(),
-            "Error: recipient 'rec' does not exist\n",
+            "Error: alert recipient 'rec' does not exist\n",
         )
 
     def test_empty_value(self):
@@ -649,8 +649,8 @@ class DeleteRemoveRecipientTest(PcsAlertTest):
         self.assert_pcs_fail(
             ["alert", "recipient", self.command, "rec1", "rec2", "rec3"],
             (
-                "Error: recipient 'rec2' does not exist\n"
-                "Error: recipient 'rec3' does not exist\n"
+                "Error: alert recipient 'rec2' does not exist\n"
+                "Error: alert recipient 'rec3' does not exist\n"
                 + ERRORS_HAVE_OCCURRED
             ),
         )

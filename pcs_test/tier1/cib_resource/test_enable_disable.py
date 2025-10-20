@@ -131,7 +131,7 @@ class EnableDisable(
         self.assert_pcs_fail(
             "resource enable A B".split(),
             (
-                "Error: bundle/clone/group/resource/tag 'B' does not exist\n"
+                "Error: bundle / clone / group / resource / tag 'B' does not exist\n"
                 "Error: Errors have occurred, therefore pcs is unable to continue\n"
             ),
         )
@@ -160,7 +160,7 @@ class EnableDisable(
         self.assert_pcs_fail(
             "resource disable A B".split(),
             (
-                "Error: bundle/clone/group/resource/tag 'B' does not exist\n"
+                "Error: bundle / clone / group / resource / tag 'B' does not exist\n"
                 "Error: Errors have occurred, therefore pcs is unable to continue\n"
             ),
         )
@@ -205,7 +205,7 @@ class EnableDisable(
         self.assert_pcs_fail(
             "resource disable A".split(),
             (
-                "Error: bundle/clone/group/resource/tag 'A' does not exist\n"
+                "Error: bundle / clone / group / resource / tag 'A' does not exist\n"
                 "Error: Errors have occurred, therefore pcs is unable to continue\n"
             ),
         )

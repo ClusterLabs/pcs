@@ -141,6 +141,7 @@ _type_translation = {
     # with a master, say we were doing it with a clone instead.
     "master": "clone",
     "primitive": "resource",
+    "recipient": "alert recipient",
     "resource_set": "resource set",
     "rsc_colocation": "colocation constraint",
     "rsc_location": "location constraint",
@@ -215,7 +216,7 @@ def _typelist_to_string(
             for type_name in type_list
         }
     )
-    res_types = "/".join(new_list)
+    res_types = " / ".join(new_list)
     if not article:
         return res_types
     return "{article} {types}".format(
