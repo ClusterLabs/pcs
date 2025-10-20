@@ -31,7 +31,7 @@ class ElementDescription(AssertPcsMixin, TestCase):
             ["cib", "element", "description"],
             stderr_start=dedent("""
                 Usage: pcs cib <command>
-                    element description <element-id> <description text>
+                    element description <element-id>
             """),
         )
 
@@ -61,3 +61,17 @@ class ElementDescription(AssertPcsMixin, TestCase):
         )
 
         self.assert_description_in_cib(xpath, None)
+
+    def test_show_description(self):
+        self.assert_pcs_success(
+            ["cib", "element", "description", "alert-all"],
+            stdout_full="alert all options\n",
+            stderr_full="",
+        )
+
+    def test_show_description_no_description(self):
+        self.assert_pcs_success(
+            ["cib", "element", "description", "R7"],
+            stdout_full="",
+            stderr_full="",
+        )

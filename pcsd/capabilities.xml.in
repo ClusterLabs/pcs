@@ -937,11 +937,13 @@
         pcs commands: cluster edit
       </description>
     </capability>
-    <capability id="pcmk.cib.element_description" in-pcs="0" in-pcsd="1">
+    <capability id="pcmk.cib.element_description" in-pcs="1" in-pcsd="1">
       <description>
         Manage descriptions of supported CIB elements: ACL permission, ACL role,
         alert, alert recipient, bundle, clone, group, node, primitive
 
+        pcs commands:
+          cib element description
         API v2:
           cib.element_description_get
           cib.element_description_set

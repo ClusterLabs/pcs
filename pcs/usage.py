@@ -3499,6 +3499,9 @@ Usage: pcs cib <command>
 Manage CIB (Cluster Information Base).
 
 Commands:
+    element description <element-id>
+        Get the description of a CIB element.
+
     element description <element-id> <description text>
         Set a description to a CIB element. If you wish to remove a description,
         set it to an empty string.
