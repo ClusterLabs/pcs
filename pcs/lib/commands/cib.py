@@ -4,7 +4,7 @@ from lxml.etree import _Element
 
 from pcs.common import reports
 from pcs.common.types import StringCollection
-from pcs.lib.cib import description as cib_description
+from pcs.lib.cib import element_description as cib_element_description
 from pcs.lib.cib.remove_elements import (
     ElementsToRemove,
     ensure_resources_stopped,
@@ -103,21 +103,23 @@ def element_description_set(
     try:
         element = get_element_by_id(env.get_cib(), element_id)
         env.report_processor.report_list(
-            cib_description.validate_description_support(element)
+            cib_element_description.validate_description_support(element)
         )
     except ElementNotFound:
         env.report_processor.report(
             reports.ReportItem.error(
                 reports.messages.IdNotFound(
                     element_id,
-                    sorted(cib_description.TAG_LIST_SUPPORTS_DESCRIPTION),
+                    sorted(
+                        cib_element_description.TAG_LIST_SUPPORTS_DESCRIPTION
+                    ),
                 )
             )
         )
     if env.report_processor.has_errors:
         raise LibraryError()
 
-    cib_description.set_description(element, description)
+    cib_element_description.set_description(element, description)
     env.push_cib()
 
 
@@ -131,21 +133,23 @@ def element_description_get(env: LibraryEnvironment, element_id: str) -> str:
     try:
         element = get_element_by_id(env.get_cib(), element_id)
         env.report_processor.report_list(
-            cib_description.validate_description_support(element)
+            cib_element_description.validate_description_support(element)
         )
     except ElementNotFound:
         env.report_processor.report(
             reports.ReportItem.error(
                 reports.messages.IdNotFound(
                     element_id,
-                    sorted(cib_description.TAG_LIST_SUPPORTS_DESCRIPTION),
+                    sorted(
+                        cib_element_description.TAG_LIST_SUPPORTS_DESCRIPTION
+                    ),
                 )
             )
         )
     if env.report_processor.has_errors:
         raise LibraryError()
 
-    return cib_description.get_description(element)
+    return cib_element_description.get_description(element)
 
 
 def _validate_elements_to_remove(

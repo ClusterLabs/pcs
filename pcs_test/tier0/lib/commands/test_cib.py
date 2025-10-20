@@ -3,7 +3,7 @@ from unittest import TestCase, mock
 
 from pcs import settings
 from pcs.common import reports
-from pcs.lib.cib.description import TAG_LIST_SUPPORTS_DESCRIPTION
+from pcs.lib.cib.element_description import TAG_LIST_SUPPORTS_DESCRIPTION
 from pcs.lib.commands import cib as lib
 
 from pcs_test.tools import fixture
