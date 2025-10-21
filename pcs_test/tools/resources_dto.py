@@ -37,11 +37,13 @@ STONITH_AGENT_PARAMS_NAME = ResourceAgentNameDto(
 )
 
 
-def _primitive_fixture(primitive_id, agent_name=DUMMY_AGENT_NAME):
+def _primitive_fixture(
+    primitive_id, agent_name=DUMMY_AGENT_NAME, description=None
+):
     return CibResourcePrimitiveDto(
         id=primitive_id,
         agent_name=agent_name,
-        description=None,
+        description=description,
         operations=[
             CibResourceOperationDto(
                 id=f"{primitive_id}-monitor-interval-10s",
@@ -65,7 +67,7 @@ def _primitive_fixture(primitive_id, agent_name=DUMMY_AGENT_NAME):
     )
 
 
-PRIMITIVE_R1 = _primitive_fixture("R1")
+PRIMITIVE_R1 = _primitive_fixture("R1", description="R1 description")
 PRIMITIVE_R2 = _primitive_fixture("R2", agent_name=STATEFUL_AGENT_NAME)
 PRIMITIVE_R3 = _primitive_fixture("R3", agent_name=STATEFUL_AGENT_NAME)
 PRIMITIVE_R4 = _primitive_fixture("R4", agent_name=STATEFUL_AGENT_NAME)
@@ -188,7 +190,7 @@ PRIMITIVE_R6 = CibResourcePrimitiveDto(
 PRIMITIVE_R7 = CibResourcePrimitiveDto(
     id="R7",
     agent_name=DUMMY_AGENT_NAME,
-    description=None,
+    description='R7 description is very long " & and special',
     operations=[
         CibResourceOperationDto(
             id="R7-custom_action-interval-10s",
@@ -435,7 +437,7 @@ STONITH_S1 = CibResourcePrimitiveDto(
 STONITH_S2 = CibResourcePrimitiveDto(
     id="S2",
     agent_name=STONITH_AGENT_NAME,
-    description=None,
+    description="S2 description",
     operations=[
         CibResourceOperationDto(
             id="S2-monitor-interval-60s",
@@ -459,7 +461,7 @@ STONITH_S2 = CibResourcePrimitiveDto(
 )
 CLONE_G1 = CibResourceCloneDto(
     id="G1-clone",
-    description=None,
+    description="G1-clone description",
     member_id="G1",
     meta_attributes=[
         CibNvsetDto(
@@ -486,7 +488,7 @@ CLONE_R6 = CibResourceCloneDto(
 )
 GROUP_G1 = CibResourceGroupDto(
     id="G1",
-    description=None,
+    description="G1 description",
     member_ids=["R2", "R3", "R4"],
     meta_attributes=[],
     instance_attributes=[],
@@ -518,7 +520,7 @@ GROUP_G2 = CibResourceGroupDto(
 )
 BUNDLE_B1 = CibResourceBundleDto(
     id="B1",
-    description=None,
+    description="B1 description",
     member_id=None,
     container_type=CONTAINER_TYPE_DOCKER,
     container_options=CibResourceBundleContainerRuntimeOptionsDto(

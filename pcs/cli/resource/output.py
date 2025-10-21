@@ -46,6 +46,8 @@ from pcs.common.str_tools import (
 )
 from pcs.common.types import StringIterable
 
+__description_cmd = ["pcs", "cib", "element", "description"]
+
 
 def _get_ocf_check_level_from_operation(
     operation_dto: CibResourceOperationDto,
@@ -770,6 +772,7 @@ def _resource_primitive_to_cmd(
         ]
         + indent(options, indent_step=INDENT_STEP)
     ]
+
     utilization_cmd_params = _nvset_to_cmd(None, primitive_dto.utilization)
     if utilization_cmd_params:
         output.append(
@@ -779,6 +782,16 @@ def _resource_primitive_to_cmd(
                 )
             ]
             + indent(utilization_cmd_params, indent_step=INDENT_STEP)
+        )
+
+    if primitive_dto.description:
+        output.append(
+            [
+                options_to_cmd(
+                    __description_cmd
+                    + [primitive_dto.id, primitive_dto.description]
+                )
+            ]
         )
 
     return output
@@ -823,10 +836,20 @@ def _resource_bundle_to_cmd(
             )
         )
     options.extend(_nvset_to_cmd("meta", bundle_dto.meta_attributes))
-    return [
+    output = []
+    output.append(
         [options_to_cmd(["pcs", "resource", "bundle", "create", bundle_dto.id])]
         + indent(options, indent_step=INDENT_STEP)
-    ]
+    )
+    if bundle_dto.description:
+        output.append(
+            [
+                options_to_cmd(
+                    __description_cmd + [bundle_dto.id, bundle_dto.description]
+                )
+            ]
+        )
+    return output
 
 
 def _resource_group_to_cmd(
@@ -852,6 +875,14 @@ def _resource_group_to_cmd(
         output.append(
             [options_to_cmd(["pcs", "resource", "meta", group_dto.id])]
             + indent(meta_options, indent_step=INDENT_STEP)
+        )
+    if group_dto.description:
+        output.append(
+            [
+                options_to_cmd(
+                    __description_cmd + [group_dto.id, group_dto.description]
+                )
+            ]
         )
     return output
 
@@ -879,7 +910,8 @@ def _resource_clone_to_cmd(
     if stonith_ids:
         _warn_stonith_unsupported(clone_dto, stonith_ids)
         return []
-    return [
+    output = []
+    output.append(
         [
             options_to_cmd(
                 ["pcs", "resource", "clone", clone_dto.member_id, clone_dto.id]
@@ -889,7 +921,16 @@ def _resource_clone_to_cmd(
             _nvset_to_cmd("meta", clone_dto.meta_attributes),
             indent_step=INDENT_STEP,
         )
-    ]
+    )
+    if clone_dto.description:
+        output.append(
+            [
+                options_to_cmd(
+                    __description_cmd + [clone_dto.id, clone_dto.description]
+                )
+            ]
+        )
+    return output
 
 
 def _get_stonith_ids_from_group_dto(

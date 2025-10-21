@@ -3,7 +3,7 @@
     <crm_config/>
     <nodes/>
     <resources>
-      <primitive id="R1" class="ocf" type="minimal" provider="pcsmock">
+      <primitive id="R1" class="ocf" type="minimal" provider="pcsmock" description="R1 description">
         <operations>
           <op name="monitor" interval="10s" timeout="20s" id="R1-monitor-interval-10s"/>
         </operations>

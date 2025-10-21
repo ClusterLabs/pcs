@@ -1,5 +1,6 @@
 import json
 import shlex
+from textwrap import dedent
 from unittest import TestCase
 
 from pcs.common.interface.dto import to_dict
@@ -86,6 +87,33 @@ class StonithConfigCmd(ResourceConfigCmdMixin, TestCase):
             self._get_as_json(self.pcs_runner_new),
             self._get_as_json(self.pcs_runner_orig),
         )
+
+    def test_plaintext(self):
+        stdout, stderr, retval = self.pcs_runner_orig.run(
+            [self.sub_command, "config"]
+        )
+        self.assertEqual(
+            stdout,
+            dedent(
+                """\
+                Resource: S1 (class=stonith type=fence_pcsmock_params)
+                  Attributes: S1-instance_attributes
+                    action=reboot
+                    ip=203.0.113.1
+                    username=testuser
+                  Operations:
+                    monitor: S1-monitor-interval-60s
+                      interval=60s
+                Resource: S2 (class=stonith type=fence_pcsmock_minimal)
+                  Description: S2 description
+                  Operations:
+                    monitor: S2-monitor-interval-60s
+                      interval=60s
+                """
+            ),
+        )
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
 
 
 class StonithConfigWithLevelsCmd(TestCase):

@@ -37,12 +37,12 @@ class ElementDescription(AssertPcsMixin, TestCase):
 
     def test_add_description(self):
         # primitive resource without description
-        xpath = "//primitive[@id='R7']/@description"
+        xpath = "//primitive[@id='R6']/@description"
         self.assert_description_in_cib(xpath, None)
 
         description = "My description"
         self.assert_pcs_success(
-            ["cib", "element", "description", "R7", description],
+            ["cib", "element", "description", "R6", description],
             stdout_full="",
             stderr_full="",
         )
@@ -71,7 +71,7 @@ class ElementDescription(AssertPcsMixin, TestCase):
 
     def test_show_description_no_description(self):
         self.assert_pcs_success(
-            ["cib", "element", "description", "R7"],
+            ["cib", "element", "description", "R6"],
             stdout_full="",
             stderr_full="",
         )
