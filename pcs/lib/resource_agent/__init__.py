@@ -30,6 +30,7 @@ from .list import (
 )
 from .name import split_resource_agent_name
 from .types import (
+    CrmResourceAgent,
     ResourceAgentAction,
     ResourceAgentMetadata,
     ResourceAgentName,

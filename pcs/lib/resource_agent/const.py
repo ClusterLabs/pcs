@@ -16,6 +16,7 @@ FAKE_AGENT_STANDARD = _FAKE_AGENT_STANDARD
 CLUSTER_OPTIONS = CrmAttrAgent("cluster-options")
 PACEMAKER_FENCED = FakeAgentName("pacemaker-fenced")
 PRIMITIVE_META = CrmResourceAgent("primitive-meta")
+STONITH_META = CrmResourceAgent("stonith-meta")
 
 
 STONITH_ACTION_REPLACED_BY = ["pcmk_off_action", "pcmk_reboot_action"]

@@ -1,18 +1,16 @@
 from dataclasses import replace as dc_replace
 
-from pcs.common.resource_agent.dto import ResourceAgentParameterDto
-from pcs.lib.resource_agent import (
+from pcs.common.resource_agent.dto import (
+    ResourceAgentParameterDto,
     ResourceMetaAttributesMetadataDto,
 )
+from pcs.lib.resource_agent import const as ra_const
 
 _ADDITIONAL_FENCING_META_ATTRIBUTES_DTO = [
     ResourceAgentParameterDto(
         name="provides",
         shortdesc=None,
-        longdesc=(
-            "Any special capability provided by the fence device. Currently, "
-            "only one such capability is meaningful: unfencing."
-        ),
+        longdesc="Any special capability provided by the fence device.",
         type="string",
         default=None,
         enum_values=None,
@@ -27,11 +25,12 @@ _ADDITIONAL_FENCING_META_ATTRIBUTES_DTO = [
 ]
 
 
-def get_primitive_meta_attributes_dto(
-    is_fencing=False,
+def get_fixture_meta_attributes_dto(
+    agent_name=ra_const.PRIMITIVE_META,
 ) -> ResourceMetaAttributesMetadataDto:
     metadata_dto = ResourceMetaAttributesMetadataDto(
-        metadata=[
+        name=agent_name,
+        parameters=[
             ResourceAgentParameterDto(
                 name="priority",
                 shortdesc="Resource assignment priority",
@@ -530,12 +529,13 @@ def get_primitive_meta_attributes_dto(
                 reloadable=False,
             ),
         ],
-        is_fencing=is_fencing,
     )
-    if is_fencing:
+    if agent_name == ra_const.STONITH_META:
         metadata_dto = dc_replace(
             metadata_dto,
-            metadata=list(metadata_dto.metadata)
-            + _ADDITIONAL_FENCING_META_ATTRIBUTES_DTO,
+            parameters=(
+                metadata_dto.parameters
+                + _ADDITIONAL_FENCING_META_ATTRIBUTES_DTO
+            ),
         )
     return metadata_dto

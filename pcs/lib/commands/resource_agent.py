@@ -26,6 +26,7 @@ from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
 from pcs.lib.resource_agent import (
+    CrmResourceAgent,
     ListResourceAgentNameDto,
     ResourceAgentActionDto,
     ResourceAgentError,
@@ -45,7 +46,6 @@ from pcs.lib.resource_agent import (
     resource_agent_error_to_report_item,
     split_resource_agent_name,
 )
-from pcs.lib.resource_agent import const as ra_const
 from pcs.lib.resource_agent.name import name_to_void_metadata
 
 
@@ -330,23 +330,24 @@ def get_structured_agent_name(
         raise LibraryError() from e
 
 
-def get_resource_meta_attributes_metadata(
-    lib_env: LibraryEnvironment, is_fencing: bool
+def get_meta_attributes_metadata(
+    lib_env: LibraryEnvironment, resource_type: CrmResourceAgent
 ) -> ResourceMetaAttributesMetadataDto:
     """
     Return meta-attributes metadata for a resource
 
-    is_fencing -- if True, get additional metadata for a fencing resource
+    resource_type -- resource type whose metadata we want to get
+        (primitive-meta, stonith-meta)
     """
     try:
-        metadata = get_crm_resource_metadata(
-            lib_env.cmd_runner(), ra_const.PRIMITIVE_META, is_fencing=is_fencing
+        parameters_metadata = get_crm_resource_metadata(
+            lib_env.cmd_runner(), resource_type
         )
     except ResourceAgentError as e:
         lib_env.report_processor.report(resource_agent_error_to_report_item(e))
         raise LibraryError() from e
 
     return ResourceMetaAttributesMetadataDto(
-        metadata=[parameter.to_dto() for parameter in metadata.parameters],
-        is_fencing=is_fencing,
+        name=resource_type,
+        parameters=[parameter.to_dto() for parameter in parameters_metadata],
     )

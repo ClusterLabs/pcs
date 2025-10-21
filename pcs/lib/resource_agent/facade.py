@@ -304,10 +304,7 @@ _ADDITIONAL_FENCING_META_ATTRIBUTES = [
     ResourceAgentParameter(
         name="provides",
         shortdesc=None,
-        longdesc=(
-            "Any special capability provided by the fence device. Currently, "
-            "only one such capability is meaningful: unfencing."
-        ),
+        longdesc="Any special capability provided by the fence device.",
         type="string",
         default=None,
         enum_values=None,
@@ -323,28 +320,27 @@ _ADDITIONAL_FENCING_META_ATTRIBUTES = [
 
 
 def get_crm_resource_metadata(
-    runner: CommandRunner, agent_name: CrmResourceAgent, is_fencing: bool
-) -> ResourceAgentMetadata:
+    runner: CommandRunner, agent_name: CrmResourceAgent
+) -> list[ResourceAgentParameter]:
     """
     Return parsed metadata from crm_resource --list-options=TYPE.
 
     runner -- external processes runner
     agent_name -- name of pacemaker part whose metadata we want to get
-    is_fencing -- if True, add additionl meta attributes for fencing resource
     """
-    pcs_metadata = ocf_unified_to_pcs(
+    load_agent_name = (
+        agent_name if agent_name != const.STONITH_META else const.PRIMITIVE_META
+    )
+    parameters_metadata = ocf_unified_to_pcs(
         ocf_version_to_ocf_unified(
             parse_metadata(
-                ResourceAgentName(const.FAKE_AGENT_STANDARD, None, agent_name),
-                load_crm_resource_metadata(runner, agent_name),
+                ResourceAgentName(
+                    const.FAKE_AGENT_STANDARD, None, load_agent_name
+                ),
+                load_crm_resource_metadata(runner, load_agent_name),
             )
         )
-    )
-    if is_fencing:
-        pcs_metadata = dc_replace(
-            pcs_metadata,
-            parameters=(
-                pcs_metadata.parameters + _ADDITIONAL_FENCING_META_ATTRIBUTES
-            ),
-        )
-    return pcs_metadata
+    ).parameters
+    if agent_name == const.STONITH_META:
+        parameters_metadata += _ADDITIONAL_FENCING_META_ATTRIBUTES
+    return parameters_metadata

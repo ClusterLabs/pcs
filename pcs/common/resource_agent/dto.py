@@ -5,7 +5,6 @@ from dataclasses import (
 from typing import (
     List,
     Optional,
-    Sequence,
 )
 
 from pcs.common.interface.dto import (
@@ -100,5 +99,5 @@ class ResourceAgentMetadataDto(DataTransferObject):
 
 @dataclass(frozen=True)
 class ResourceMetaAttributesMetadataDto(DataTransferObject):
-    metadata: Sequence[ResourceAgentParameterDto]
-    is_fencing: bool
+    name: str
+    parameters: list[ResourceAgentParameterDto]
