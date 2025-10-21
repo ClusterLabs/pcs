@@ -148,7 +148,7 @@ class UpdateMeta(TestCase):
         self.env_assist, self.config = get_env_tools(test_case=self)
 
     def test_update_nonexistent_resource(self):
-        self.config.runner.cib.load(filename="cib-resources.xml")
+        self.config.runner.cib.load(filename="cib-all.xml")
         self.env_assist.assert_raise_library_error(
             lambda: resource.update_meta(
                 self.env_assist.get_env(), "Rx", {"priority": "1"}, []

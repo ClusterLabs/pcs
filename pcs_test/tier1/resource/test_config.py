@@ -20,7 +20,7 @@ from pcs_test.tools.pcs_runner import PcsRunner
 class ResourceConfigJson(TestCase):
     def setUp(self):
         self.pcs_runner = PcsRunner(
-            cib_file=get_test_resource("cib-resources.xml"),
+            cib_file=get_test_resource("cib-all.xml"),
         )
         self.maxDiff = None
 
@@ -82,7 +82,7 @@ class ResourceConfigCmdMixin:
     def setUp(self):
         self.new_cib_file = get_tmp_file(self._get_tmp_file_name())
         self.pcs_runner_orig = PcsRunner(
-            cib_file=get_test_resource("cib-resources.xml")
+            cib_file=get_test_resource("cib-all.xml")
         )
         self.pcs_runner_orig.mock_settings = get_mock_settings()
         self.pcs_runner_new = PcsRunner(cib_file=self.new_cib_file.name)

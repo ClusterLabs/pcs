@@ -26,7 +26,7 @@ FIXTURE_JSON_WARNING = (
 class StonithConfigJson(AssertPcsMixin, TestCase):
     def setUp(self):
         self.pcs_runner = PcsRunner(
-            cib_file=get_test_resource("cib-resources.xml"),
+            cib_file=get_test_resource("cib-all.xml"),
         )
         self.maxDiff = None
 

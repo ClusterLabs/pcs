@@ -88,7 +88,7 @@ class GetResourceRelationsTree(TestCase):
 
     def test_success(self):
         self.maxDiff = None
-        self.config.runner.cib.load(filename="cib-resources.xml")
+        self.config.runner.cib.load(filename="cib-all.xml")
         self.assertEqual(
             pformat(ALL_RESOURCES),
             pformat(

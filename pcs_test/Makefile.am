@@ -21,7 +21,6 @@ EXTRA_DIST		= \
 			  resources/cib-large.xml \
 			  resources/cib-property.xml \
 			  resources/cib-remote.xml \
-			  resources/cib-resources.xml \
 			  resources/cib-rule-several-times-in-constraint.xml \
 			  resources/cib-rule-with-spaces-in-date.xml \
 			  resources/cib-status.xml \
