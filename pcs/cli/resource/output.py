@@ -1,16 +1,7 @@
 import shlex
 from collections import defaultdict
-from collections.abc import (
-    Container,
-    Sequence,
-)
-from typing import (
-    Dict,
-    List,
-    Optional,
-    Tuple,
-    Union,
-)
+from collections.abc import Container, Sequence
+from typing import Optional, Union
 
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.output import (
@@ -68,7 +59,7 @@ def _get_ocf_check_level_from_operation(
 
 def _resource_operation_to_pairs(
     operation_dto: CibResourceOperationDto,
-) -> List[Tuple[str, str]]:
+) -> list[tuple[str, str]]:
     pairs = [("interval", operation_dto.interval)]
     if operation_dto.id:
         pairs.append(("id", operation_dto.id))
@@ -96,7 +87,7 @@ def _resource_operation_to_pairs(
 
 def _resource_operation_to_str(
     operation_dto: CibResourceOperationDto,
-) -> List[str]:
+) -> list[str]:
     lines = []
     op_pairs = [
         pair
@@ -169,9 +160,9 @@ def resource_agent_parameter_metadata_to_text(  # noqa: PLR0912
 
 def resource_agent_metadata_to_text(
     metadata: resource_agent.dto.ResourceAgentMetadataDto,
-    default_operations: List[CibResourceOperationDto],
+    default_operations: list[CibResourceOperationDto],
     verbose: bool = False,
-) -> List[str]:
+) -> list[str]:
     output = []
     _is_stonith = is_stonith(metadata.name)
     agent_name = (
@@ -254,8 +245,8 @@ class ResourcesConfigurationFacade:
         self._bundles_map = {res.id: res for res in self._bundles}
         self._clones_map = {res.id: res for res in self._clones}
         self._groups_map = {res.id: res for res in self._groups}
-        self._child_parent_map: Dict[str, str] = {}
-        self._parent_child_map: Dict[str, List[str]] = defaultdict(list)
+        self._child_parent_map: dict[str, str] = {}
+        self._parent_child_map: dict[str, list[str]] = defaultdict(list)
         for bundle_dto in self._bundles:
             if bundle_dto.member_id:
                 self._set_parent(bundle_dto.member_id, bundle_dto.id)
@@ -279,7 +270,7 @@ class ResourcesConfigurationFacade:
     def get_parent_id(self, res_id: str) -> Optional[str]:
         return self._child_parent_map.get(res_id)
 
-    def _get_children_ids(self, res_id: str) -> List[str]:
+    def _get_children_ids(self, res_id: str) -> list[str]:
         return self._parent_child_map[res_id]
 
     def _set_parent(self, child_id: str, parent_id: str) -> None:
@@ -434,13 +425,13 @@ def _resource_agent_name_to_text(
     return output
 
 
-def _nvset_to_text(label: str, nvsets: Sequence[CibNvsetDto]) -> List[str]:
+def _nvset_to_text(label: str, nvsets: Sequence[CibNvsetDto]) -> list[str]:
     if nvsets and nvsets[0].nvpairs:
         return nvset_dto_to_lines(nvset=nvsets[0], nvset_label=label)
     return []
 
 
-def _resource_description_to_text(desc: Optional[str]) -> List[str]:
+def _resource_description_to_text(desc: Optional[str]) -> list[str]:
     if desc:
         return [f"Description: {desc}"]
     return []
@@ -448,7 +439,7 @@ def _resource_description_to_text(desc: Optional[str]) -> List[str]:
 
 def _resource_primitive_to_text(
     primitive_dto: CibResourcePrimitiveDto,
-) -> List[str]:
+) -> list[str]:
     output = (
         _resource_description_to_text(primitive_dto.description)
         + _nvset_to_text("Attributes", primitive_dto.instance_attributes)
@@ -456,7 +447,7 @@ def _resource_primitive_to_text(
         + _nvset_to_text("Utilization", primitive_dto.utilization)
     )
     if primitive_dto.operations:
-        operation_lines: List[str] = []
+        operation_lines: list[str] = []
         for operation_dto in primitive_dto.operations:
             operation_lines.extend(_resource_operation_to_str(operation_dto))
         output.extend(
@@ -474,7 +465,7 @@ def _resource_primitive_to_text(
 def _resource_group_to_text(
     group_dto: CibResourceGroupDto,
     resources_facade: ResourcesConfigurationFacade,
-) -> List[str]:
+) -> list[str]:
     output = (
         _resource_description_to_text(group_dto.description)
         + _nvset_to_text("Attributes", group_dto.instance_attributes)
@@ -493,7 +484,7 @@ def _resource_group_to_text(
 def _resource_clone_to_text(
     clone_dto: CibResourceCloneDto,
     resources_facade: ResourcesConfigurationFacade,
-) -> List[str]:
+) -> list[str]:
     output = (
         _resource_description_to_text(clone_dto.description)
         + _nvset_to_text("Attributes", clone_dto.instance_attributes)
@@ -514,7 +505,7 @@ def _resource_clone_to_text(
 
 def _resource_bundle_container_options_to_pairs(
     options: CibResourceBundleContainerRuntimeOptionsDto,
-) -> List[Tuple[str, str]]:
+) -> list[tuple[str, str]]:
     option_list = [("image", options.image)]
     if options.replicas is not None:
         option_list.append(("replicas", str(options.replicas)))
@@ -535,8 +526,8 @@ def _resource_bundle_container_options_to_pairs(
 
 def _resource_bundle_network_options_to_pairs(
     bundle_network_dto: Optional[CibResourceBundleNetworkOptionsDto],
-) -> List[Tuple[str, str]]:
-    network_options: List[Tuple[str, str]] = []
+) -> list[tuple[str, str]]:
+    network_options: list[tuple[str, str]] = []
     if not bundle_network_dto:
         return network_options
     if bundle_network_dto.ip_range_start:
@@ -564,7 +555,7 @@ def _resource_bundle_network_options_to_pairs(
 
 def _resource_bundle_port_mapping_to_pairs(
     bundle_net_port_mapping_dto: CibResourceBundlePortMappingDto,
-) -> List[Tuple[str, str]]:
+) -> list[tuple[str, str]]:
     mapping = []
     if bundle_net_port_mapping_dto.port is not None:
         mapping.append(("port", str(bundle_net_port_mapping_dto.port)))
@@ -579,7 +570,7 @@ def _resource_bundle_port_mapping_to_pairs(
 
 def _resource_bundle_network_port_mapping_to_str(
     bundle_net_port_mapping_dto: CibResourceBundlePortMappingDto,
-) -> List[str]:
+) -> list[str]:
     output = format_name_value_list(
         _resource_bundle_port_mapping_to_pairs(bundle_net_port_mapping_dto)
     )
@@ -590,7 +581,7 @@ def _resource_bundle_network_port_mapping_to_str(
 
 def _resource_bundle_network_to_text(
     bundle_network_dto: Optional[CibResourceBundleNetworkOptionsDto],
-) -> List[str]:
+) -> list[str]:
     network_options = _resource_bundle_network_options_to_pairs(
         bundle_network_dto
     )
@@ -603,7 +594,7 @@ def _resource_bundle_network_to_text(
 
 def _resource_bundle_port_mappings_to_text(
     bundle_port_mappings: Sequence[CibResourceBundlePortMappingDto],
-) -> List[str]:
+) -> list[str]:
     port_mappings = [
         " ".join(_resource_bundle_network_port_mapping_to_str(port_mapping_dto))
         for port_mapping_dto in bundle_port_mappings
@@ -617,7 +608,7 @@ def _resource_bundle_port_mappings_to_text(
 
 def _resource_bundle_storage_mapping_to_pairs(
     storage_mapping: CibResourceBundleStorageMappingDto,
-) -> List[Tuple[str, str]]:
+) -> list[tuple[str, str]]:
     mapping = []
     if storage_mapping.source_dir:
         mapping.append(("source-dir", storage_mapping.source_dir))
@@ -631,7 +622,7 @@ def _resource_bundle_storage_mapping_to_pairs(
 
 def _resource_bundle_storage_mapping_to_str(
     storage_mapping: CibResourceBundleStorageMappingDto,
-) -> List[str]:
+) -> list[str]:
     return format_name_value_list(
         _resource_bundle_storage_mapping_to_pairs(storage_mapping)
     ) + [f"({storage_mapping.id})"]
@@ -639,7 +630,7 @@ def _resource_bundle_storage_mapping_to_str(
 
 def _resource_bundle_storage_to_text(
     storage_mappings: Sequence[CibResourceBundleStorageMappingDto],
-) -> List[str]:
+) -> list[str]:
     if not storage_mappings:
         return []
     output = [
@@ -653,7 +644,7 @@ def _resource_bundle_storage_to_text(
 def _resource_bundle_to_text(
     bundle_dto: CibResourceBundleDto,
     resources_facade: ResourcesConfigurationFacade,
-) -> List[str]:
+) -> list[str]:
     container_options = []
     if bundle_dto.container_type and bundle_dto.container_options:
         container_options.append(
@@ -689,7 +680,7 @@ def _resource_bundle_to_text(
 
 def resources_to_text(
     resources_facade: ResourcesConfigurationFacade,
-) -> List[str]:
+) -> list[str]:
     def _is_allowed_to_display_fn(res_id: str) -> bool:
         if resources_facade.filtered_ids:
             return res_id in resources_facade.filtered_ids
@@ -717,7 +708,7 @@ def resources_to_text(
 def _nvset_to_cmd(
     label: Optional[str],
     nvsets: Sequence[CibNvsetDto],
-) -> List[str]:
+) -> list[str]:
     if nvsets and nvsets[0].nvpairs:
         options = pairs_to_cmd(
             (nvpair.name, nvpair.value) for nvpair in nvsets[0].nvpairs
@@ -730,7 +721,7 @@ def _nvset_to_cmd(
 
 def _resource_operation_to_cmd(
     operations: Sequence[CibResourceOperationDto],
-) -> List[str]:
+) -> list[str]:
     if not operations:
         return []
     cmd = [
@@ -746,7 +737,7 @@ def _resource_operation_to_cmd(
 def _resource_primitive_to_cmd(
     primitive_dto: CibResourcePrimitiveDto,
     bundle_id: Optional[str],
-) -> List[List[str]]:
+) -> list[list[str]]:
     _is_stonith = is_stonith(primitive_dto.agent_name)
     options = (
         _nvset_to_cmd(None, primitive_dto.instance_attributes)
@@ -795,7 +786,7 @@ def _resource_primitive_to_cmd(
 
 def _resource_bundle_to_cmd(
     bundle_dto: CibResourceBundleDto,
-) -> List[List[str]]:
+) -> list[list[str]]:
     if not (bundle_dto.container_type and bundle_dto.container_options):
         return []
     options = [
@@ -841,7 +832,7 @@ def _resource_bundle_to_cmd(
 def _resource_group_to_cmd(
     group_dto: CibResourceGroupDto,
     resources_facade: ResourcesConfigurationFacade,
-) -> List[List[str]]:
+) -> list[list[str]]:
     stonith_ids = _get_stonith_ids_from_group_dto(group_dto, resources_facade)
     if stonith_ids:
         _warn_stonith_unsupported(group_dto, stonith_ids)
@@ -868,7 +859,7 @@ def _resource_group_to_cmd(
 def _resource_clone_to_cmd(
     clone_dto: CibResourceCloneDto,
     resources_facade: ResourcesConfigurationFacade,
-) -> List[List[str]]:
+) -> list[list[str]]:
     primitive_dto = resources_facade.get_primitive_dto(clone_dto.member_id)
     group_dto = resources_facade.get_group_dto(clone_dto.member_id)
     stonith_ids = []
@@ -945,9 +936,9 @@ def _warn_stonith_unsupported(
 
 def resources_to_cmd(
     resources_facade: ResourcesConfigurationFacade,
-) -> List[List[str]]:
+) -> list[list[str]]:
     # pylint: disable=too-many-branches
-    output: List[List[str]] = []
+    output: list[list[str]] = []
     primitives_created_with_bundle = set()
     for bundle_dto in resources_facade.bundles:
         if not (bundle_dto.container_type and bundle_dto.container_options):
