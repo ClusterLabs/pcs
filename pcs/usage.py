@@ -2034,7 +2034,6 @@ Commands:
     description <stonith id> <description text>
 {cib_element_description_set_desc}
 
-
 {op_add_syntax}
 {op_add_desc}
 
@@ -2260,7 +2259,6 @@ Commands:
 
         To prevent accidental running of this command, --yes or interactive
         user response is required in order to proceed.
-
 """.format(
         config_syntax=_format_syntax(_resource_config_syntax("stonith")),
         config_desc=_format_desc(_resource_config_desc(_STONITH_DEVICE)),
