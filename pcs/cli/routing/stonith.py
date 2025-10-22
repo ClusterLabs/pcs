@@ -5,6 +5,7 @@ from pcs import (
     stonith,
     usage,
 )
+from pcs.cli.cib.element import command as cib_element_cmd
 from pcs.cli.common.routing import create_router
 
 from .resource_stonith_common import (
@@ -17,6 +18,7 @@ stonith_cmd = create_router(
         "help": lambda lib, argv, modifiers: print(usage.stonith(argv)),
         "list": stonith.stonith_list_available,
         "describe": stonith.stonith_list_options,
+        "description": cib_element_cmd.description,
         "config": stonith_cli.config,
         "create": stonith.stonith_create,
         "update": stonith.update_cmd,

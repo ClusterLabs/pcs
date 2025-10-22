@@ -807,6 +807,23 @@ _UTILIZATION_PLACEMENT_STRATEGY_DESC = (
     """,
 )
 
+_CIB_ELEMENT_DESCRIPTION_CMD = "element description"
+_CIB_ELEMENT_DESCRIPTION_GET_DESC = ("Get the description of a CIB element.",)
+_CIB_ELEMENT_DESCRIPTION_SET_DESC = (
+    _unwrap(
+        """
+        Set a description to a CIB element. If you wish to remove a description,
+        set it to an empty string.
+        """
+    ),
+)
+_CIB_ELEMENT_DESCRIPTION_GET_ALIAS_DESC = (
+    _alias_of(f"cib {_CIB_ELEMENT_DESCRIPTION_CMD}"),
+) + _CIB_ELEMENT_DESCRIPTION_GET_DESC
+_CIB_ELEMENT_DESCRIPTION_SET_ALIAS_DESC = (
+    _alias_of(f"cib {_CIB_ELEMENT_DESCRIPTION_CMD}"),
+) + _CIB_ELEMENT_DESCRIPTION_SET_DESC
+
 
 def resource(args: Argv) -> str:
     output = """
@@ -945,6 +962,12 @@ Commands:
         specified. If --wait is specified, then we will wait up to 'n' seconds
         for the resource to be restarted and return 0 if the restart was
         successful or 1 if it was not.
+
+    description <resource id>
+{cib_element_description_get_desc}
+
+    description <resource id> <description text>
+{cib_element_description_set_desc}
 
     debug-start <resource id> [--full]
         This command will force the specified resource to start on this node
@@ -1469,6 +1492,12 @@ Notes:
         update_desc=_format_desc(_resource_update_desc_fn(is_stonith=False)),
         utilization_placement_strategy_desc=_format_desc(
             _UTILIZATION_PLACEMENT_STRATEGY_DESC
+        ),
+        cib_element_description_get_desc=_format_desc(
+            _CIB_ELEMENT_DESCRIPTION_GET_ALIAS_DESC
+        ),
+        cib_element_description_set_desc=_format_desc(
+            _CIB_ELEMENT_DESCRIPTION_SET_ALIAS_DESC
         ),
     )
     return sub_usage(args, output)
@@ -1999,6 +2028,13 @@ Commands:
 {remove_syntax}
 {delete_desc}
 
+    description <stonith id>
+{cib_element_description_get_desc}
+
+    description <stonith id> <description text>
+{cib_element_description_set_desc}
+
+
 {op_add_syntax}
 {op_add_desc}
 
@@ -2224,6 +2260,7 @@ Commands:
 
         To prevent accidental running of this command, --yes or interactive
         user response is required in order to proceed.
+
 """.format(
         config_syntax=_format_syntax(_resource_config_syntax("stonith")),
         config_desc=_format_desc(_resource_config_desc(_STONITH_DEVICE)),
@@ -2386,6 +2423,12 @@ Commands:
         update_desc=_format_desc(_resource_update_desc_fn(is_stonith=True)),
         output_format_syntax=_output_format_syntax(cmd=True),
         output_format_desc=_format_desc([_output_format_desc()]),
+        cib_element_description_get_desc=_format_desc(
+            _CIB_ELEMENT_DESCRIPTION_GET_ALIAS_DESC
+        ),
+        cib_element_description_set_desc=_format_desc(
+            _CIB_ELEMENT_DESCRIPTION_SET_ALIAS_DESC
+        ),
     )
     return sub_usage(args, output)
 
@@ -3499,13 +3542,21 @@ Usage: pcs cib <command>
 Manage CIB (Cluster Information Base).
 
 Commands:
-    element description <element-id>
-        Get the description of a CIB element.
+{description_get_syntax}
+{description_get_desc}
 
-    element description <element-id> <description text>
-        Set a description to a CIB element. If you wish to remove a description,
-        set it to an empty string.
-"""
+{description_set_syntax}
+{description_set_desc}
+""".format(
+        description_get_syntax=_format_syntax(
+            f"{_CIB_ELEMENT_DESCRIPTION_CMD} <element-id>"
+        ),
+        description_get_desc=_format_desc(_CIB_ELEMENT_DESCRIPTION_GET_DESC),
+        description_set_syntax=_format_syntax(
+            f"{_CIB_ELEMENT_DESCRIPTION_CMD} <element-id> <description text>"
+        ),
+        description_set_desc=_format_desc(_CIB_ELEMENT_DESCRIPTION_SET_DESC),
+    )
     return sub_usage(args, output)
 
 

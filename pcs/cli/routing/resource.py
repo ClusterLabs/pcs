@@ -5,6 +5,7 @@ from pcs import (
     resource,
     usage,
 )
+from pcs.cli.cib.element import command as cib_element_cmd
 from pcs.cli.common.routing import create_router
 from pcs.cli.resource.relations import show_resource_relations_cmd
 
@@ -18,6 +19,7 @@ resource_cmd = create_router(
         "help": lambda lib, argv, modifiers: print(usage.resource(argv)),
         "list": resource.resource_list_available,
         "describe": resource.resource_list_options,
+        "description": cib_element_cmd.description,
         "create": resource.resource_create,
         "move": resource.resource_move,
         "move-with-constraint": resource.resource_move_with_constraint,

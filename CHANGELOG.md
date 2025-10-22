@@ -6,8 +6,8 @@
 - Commands `pcs resource|stonith|booth delete|remove` and
   `pcs cluster node delete-remote|remove-remote|delete-guest|remove-guest`
   now warn about omitting live cluster actions when '-f' is used ([RHEL-76157])
-- Command `pcs cib element description` to manage descriptions of CIB elements
-  ([RHEL-7670])
+- Command `pcs cib element description` to manage descriptions of CIB elements,
+  and aliases `pcs resource|stonith description` ([RHEL-7670])
 
 ### Fixed
 - Commands `pcs acl role create` and `pcs acl permission add` now print
