@@ -2664,6 +2664,27 @@ class IdBelongsToUnexpectedType(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class IdDoesNotSupportElementDescriptions(ReportItemMessage):
+    """
+    Specified element does not support element descriptions
+    """
+
+    element_id: str
+    element_type: str
+    expected_types: list[str]
+    _code = codes.ID_DOES_NOT_SUPPORT_ELEMENT_DESCRIPTIONS
+
+    @property
+    def message(self) -> str:
+        element_type = _type_to_string(self.element_type, article=True)
+        expected_type = _typelist_to_string(self.expected_types)
+        return (
+            f"'{self.element_id}' is {element_type}, descriptions are only "
+            f"supported for {expected_type}"
+        )
+
+
+@dataclass(frozen=True)
 class ObjectWithIdInUnexpectedContext(ReportItemMessage):
     """
     Object specified by object_type (tag) and object_id exists but not inside

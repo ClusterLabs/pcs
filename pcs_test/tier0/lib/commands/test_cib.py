@@ -900,7 +900,7 @@ class ElementDescriptionSet(TestCase):
                 fixture.error(
                     reports.codes.ID_NOT_FOUND,
                     id="C",
-                    expected_types=sorted(TAG_LIST_SUPPORTS_DESCRIPTION),
+                    expected_types=[],
                     context_type="",
                     context_id="",
                 )
@@ -924,10 +924,10 @@ class ElementDescriptionSet(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    reports.codes.ID_BELONGS_TO_UNEXPECTED_TYPE,
-                    id="L1",
+                    reports.codes.ID_DOES_NOT_SUPPORT_ELEMENT_DESCRIPTIONS,
+                    element_id="L1",
+                    element_type="rsc_location",
                     expected_types=sorted(TAG_LIST_SUPPORTS_DESCRIPTION),
-                    current_type="rsc_location",
                 ),
             ]
         )
@@ -968,7 +968,7 @@ class ElementDescriptionGet(TestCase):
                 fixture.error(
                     reports.codes.ID_NOT_FOUND,
                     id="C",
-                    expected_types=sorted(TAG_LIST_SUPPORTS_DESCRIPTION),
+                    expected_types=[],
                     context_type="",
                     context_id="",
                 )
@@ -982,10 +982,10 @@ class ElementDescriptionGet(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    reports.codes.ID_BELONGS_TO_UNEXPECTED_TYPE,
-                    id="L1",
+                    reports.codes.ID_DOES_NOT_SUPPORT_ELEMENT_DESCRIPTIONS,
+                    element_id="L1",
+                    element_type="rsc_location",
                     expected_types=sorted(TAG_LIST_SUPPORTS_DESCRIPTION),
-                    current_type="rsc_location",
                 ),
             ]
         )

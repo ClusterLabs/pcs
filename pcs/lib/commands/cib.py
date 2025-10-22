@@ -108,12 +108,7 @@ def element_description_set(
     except ElementNotFound:
         env.report_processor.report(
             reports.ReportItem.error(
-                reports.messages.IdNotFound(
-                    element_id,
-                    sorted(
-                        cib_element_description.TAG_LIST_SUPPORTS_DESCRIPTION
-                    ),
-                )
+                reports.messages.IdNotFound(element_id, [])
             )
         )
     if env.report_processor.has_errors:
@@ -138,12 +133,7 @@ def element_description_get(env: LibraryEnvironment, element_id: str) -> str:
     except ElementNotFound:
         env.report_processor.report(
             reports.ReportItem.error(
-                reports.messages.IdNotFound(
-                    element_id,
-                    sorted(
-                        cib_element_description.TAG_LIST_SUPPORTS_DESCRIPTION
-                    ),
-                )
+                reports.messages.IdNotFound(element_id, [])
             )
         )
     if env.report_processor.has_errors:

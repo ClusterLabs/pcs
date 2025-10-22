@@ -1818,6 +1818,21 @@ class IdBelongsToUnexpectedType(NameBuildTest):
         )
 
 
+class IdDoesNotSupportElementDescriptions(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "'ID' is a location constraint, descriptions are only "
+                "supported for clone / resource"
+            ),
+            reports.IdDoesNotSupportElementDescriptions(
+                "ID",
+                "rsc_location",
+                ["primitive", "clone"],
+            ),
+        )
+
+
 class ObjectWithIdInUnexpectedContext(NameBuildTest):
     def test_with_context_id(self):
         self.assert_message_from_report(

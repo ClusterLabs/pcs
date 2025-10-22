@@ -34,10 +34,10 @@ def validate_description_support(element: _Element) -> reports.ReportItemList:
     if element.tag not in TAG_LIST_SUPPORTS_DESCRIPTION:
         return [
             reports.ReportItem.error(
-                reports.messages.IdBelongsToUnexpectedType(
+                reports.messages.IdDoesNotSupportElementDescriptions(
                     str(element.attrib["id"]),
+                    element.tag,
                     sorted(TAG_LIST_SUPPORTS_DESCRIPTION),
-                    current_type=element.tag,
                 )
             )
         ]

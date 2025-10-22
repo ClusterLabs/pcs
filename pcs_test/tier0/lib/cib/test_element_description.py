@@ -46,12 +46,12 @@ class ValidateDescriptionSupport(TestCase):
                     element_description.validate_description_support(element),
                     [
                         fixture.error(
-                            reports.codes.ID_BELONGS_TO_UNEXPECTED_TYPE,
-                            id="A",
+                            reports.codes.ID_DOES_NOT_SUPPORT_ELEMENT_DESCRIPTIONS,
+                            element_id="A",
                             expected_types=sorted(
                                 element_description.TAG_LIST_SUPPORTS_DESCRIPTION
                             ),
-                            current_type=element.tag,
+                            element_type=element.tag,
                         )
                     ],
                 )
