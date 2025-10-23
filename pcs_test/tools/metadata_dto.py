@@ -163,12 +163,11 @@ def get_fixture_meta_attributes_dto(
                 ),
                 longdesc=(
                     "Score to add to the current node when a resource is "
-                    "already active.\nScore to add to the current node when a "
-                    "resource is already active. This allows running resources "
-                    "to stay where they are, even if they would be placed "
-                    "elsewhere if they were being started from a stopped "
-                    "state. The default is 1 for individual clone instances, "
-                    "and 0 for all other resources."
+                    "already active. This allows running resources to stay "
+                    "where they are, even if they would be placed elsewhere if "
+                    "they were being started from a stopped state. The default "
+                    "is 1 for individual clone instances, and 0 for all other "
+                    "resources."
                 ),
                 type="score",
                 default=None,
@@ -185,8 +184,6 @@ def get_fixture_meta_attributes_dto(
                 name="requires",
                 shortdesc="Conditions under which the resource can be started",
                 longdesc=(
-                    "Conditions under which the resource can "
-                    "be started.\n"
                     "Conditions under which the resource can "
                     'be started. "nothing" means the cluster '
                     'can always start this resource. "quorum" '
@@ -295,8 +292,6 @@ def get_fixture_meta_attributes_dto(
                 ),
                 longdesc=(
                     "What to do if the cluster finds the "
-                    "resource active on more than one node.\n"
-                    "What to do if the cluster finds the "
                     "resource active on more than one node. "
                     '"block" means to mark the resource as '
                     'unmanaged. "stop_only" means to stop all '
@@ -340,9 +335,6 @@ def get_fixture_meta_attributes_dto(
                     "be moved"
                 ),
                 longdesc=(
-                    'Whether the cluster should try to "live '
-                    'migrate" this resource when it needs to '
-                    "be moved.\n"
                     'Whether the cluster should try to "live '
                     'migrate" this resource when it needs to '
                     "be moved. The default is true for "
@@ -417,9 +409,6 @@ def get_fixture_meta_attributes_dto(
                 ),
                 longdesc=(
                     "Name of the Pacemaker Remote guest node "
-                    "this resource is associated with, if "
-                    "any.\n"
-                    "Name of the Pacemaker Remote guest node "
                     "this resource is associated with, if any. "
                     "If specified, this both enables the "
                     "resource as a guest node and defines the "
@@ -448,8 +437,6 @@ def get_fixture_meta_attributes_dto(
                 ),
                 longdesc=(
                     "If remote-node is specified, the IP address or hostname "
-                    "used to connect to the guest via Pacemaker Remote.\nIf "
-                    "remote-node is specified, the IP address or hostname "
                     "used to connect to the guest via Pacemaker Remote. The "
                     "Pacemaker Remote daemon on the guest must be configured "
                     "to accept connections on this address. The default is "
