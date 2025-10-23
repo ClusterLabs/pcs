@@ -1,7 +1,12 @@
 from textwrap import dedent
 from unittest import TestCase
 
-from pcs_test.tier1.cib_resource.common import get_cib_resources
+from pcs.lib.resource_agent import const as ra_const
+
+from pcs_test.tier1.cib_resource.common import (
+    fixture_meta_attributes_warning,
+    get_cib_resources,
+)
 from pcs_test.tools.bin_mock import get_mock_settings
 from pcs_test.tools.cib import get_assert_pcs_effect_mixin
 from pcs_test.tools.fixture_cib import modify_cib_file
@@ -90,12 +95,7 @@ def fixture_meta_attrs(rsc_id, nvpairs_xml=""):
     )
 
 
-class ResourceMetaPrimitive(
-    TestCase, get_assert_pcs_effect_mixin(get_cib_resources)
-):
-    rsc_id = "R"
-    resource_fixture = staticmethod(fixture_primitive)
-
+class ResourceMetaBaseMixin(get_assert_pcs_effect_mixin(get_cib_resources)):
     def setUp(self):
         self.temp_cib = get_tmp_file("tier1_test_resource_meta")
         self.pcs_runner = PcsRunner(self.temp_cib.name)
@@ -188,17 +188,67 @@ class ResourceMetaPrimitive(
             ),
         )
 
+    def _invalid_attribute(self, warning_message):
+        write_data_to_tmpfile(
+            modify_cib_file(
+                get_test_resource("cib-empty.xml"),
+                resources=fixture_resources(self.resource_fixture(self.rsc_id)),
+            ),
+            self.temp_cib,
+        )
+        self.assert_effect(
+            ["resource", "meta", self.rsc_id, "name=value"],
+            fixture_resources(
+                self.resource_fixture(
+                    self.rsc_id,
+                    inner_xml=fixture_meta_attrs(
+                        self.rsc_id,
+                        nvpairs_xml=f"""
+                            <nvpair id="{self.rsc_id}-meta_attributes-name"
+                                name="name" value="value"
+                            />""",
+                    ),
+                ),
+            ),
+            stderr_full=warning_message,
+        )
 
-class ResourceMetaGroup(ResourceMetaPrimitive):
+
+class ResourceMetaPrimitive(ResourceMetaBaseMixin, TestCase):
+    rsc_id = "R"
+    resource_fixture = staticmethod(fixture_primitive)
+
+    def test_invalid_attribute(self):
+        self._invalid_attribute(
+            warning_message=fixture_meta_attributes_warning(
+                ["name"], ra_const.PRIMITIVE_META
+            )
+        )
+
+
+class ResourceMetaGroup(ResourceMetaBaseMixin, TestCase):
     rsc_id = "R-group"
     resource_fixture = staticmethod(fixture_group)
 
+    def test_invalid_attribute(self):
+        self._invalid_attribute(
+            warning_message=fixture_meta_attributes_warning(
+                ["name"], ra_const.PRIMITIVE_META
+            )
+        )
 
-class ResourceMetaClone(ResourceMetaPrimitive):
+
+class ResourceMetaClone(ResourceMetaBaseMixin, TestCase):
     rsc_id = "R-clone"
     resource_fixture = staticmethod(fixture_clone)
 
+    def test_invalid_attribute(self):
+        self._invalid_attribute(warning_message="")
 
-class ResourceMetaBundle(ResourceMetaPrimitive):
+
+class ResourceMetaBundle(ResourceMetaBaseMixin, TestCase):
     rsc_id = "B"
     resource_fixture = staticmethod(fixture_bundle)
+
+    def test_invalid_attribute(self):
+        self._invalid_attribute(warning_message="")

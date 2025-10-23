@@ -5,6 +5,7 @@ from . import (
     group,
     guest_node,
     hierarchy,
+    meta,
     operations,
     primitive,
     relations,

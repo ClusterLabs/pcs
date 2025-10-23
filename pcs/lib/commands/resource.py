@@ -97,6 +97,7 @@ from pcs.lib.pacemaker.values import (
     validate_id,
 )
 from pcs.lib.resource_agent import (
+    CrmResourceAgent,
     ResourceAgentError,
     ResourceAgentFacade,
     ResourceAgentFacadeFactory,
@@ -104,10 +105,11 @@ from pcs.lib.resource_agent import (
     UnableToGetAgentMetadata,
     UnsupportedOcfVersion,
     find_one_resource_agent_by_type,
+    get_crm_resource_metadata,
     resource_agent_error_to_report_item,
     split_resource_agent_name,
 )
-from pcs.lib.resource_agent.const import OCF_1_1
+from pcs.lib.resource_agent.const import OCF_1_1, PRIMITIVE_META, STONITH_META
 from pcs.lib.sbd_stonith import ensure_some_stonith_remains
 from pcs.lib.tools import get_tmp_cib
 from pcs.lib.validate import ValueTimeInterval
@@ -366,6 +368,35 @@ def _check_special_cases(
 
     if env.report_processor.report_list(report_list).has_errors:
         raise LibraryError()
+
+
+def _validate_meta_attributes(
+    cmd_runner: CommandRunner,
+    meta_attributes_type: CrmResourceAgent,
+    meta_attributes: Mapping[str, str],
+) -> reports.ReportItemList:
+    report_list = []
+    try:
+        meta_metadata_params = get_crm_resource_metadata(
+            cmd_runner, meta_attributes_type
+        )
+        report_list.extend(
+            resource.meta.validate_meta_attributes(
+                [meta_attributes_type], meta_metadata_params, meta_attributes
+            )
+        )
+    except ResourceAgentError as e:
+        # we do not want to end with an error in case we were unable to
+        # load the metadata, to keep backwards compatibility
+        report_list.append(
+            resource_agent_error_to_report_item(
+                e,
+                severity=reports.ReportItemSeverity.warning(),
+                is_stonith=meta_attributes_type == STONITH_META,
+            )
+        )
+        # TODO: warn that validation was skipped
+    return report_list
 
 
 def _validate_clone_meta_attributes(
@@ -2947,6 +2978,33 @@ def update_meta(
             id_provider, cib_validate_with, resource_el
         )
 
+    cmd_runner = env.cmd_runner()
+
+    if any(meta_attrs.values()):
+        # Pacemaker does not provide meta attrs definition for groups, but
+        # for now, the definition for groups is the same as for primitives.
+        # Once pcmk starts providing it, we need to update the code. If the
+        # definition for groups diverges from primitive meta, we need to update
+        # the code as well, similarly to what we have with STONITH_META now
+        if resource.primitive.is_primitive(
+            resource_el
+        ) or resource.group.is_group(resource_el):
+            meta_attributes_type = (
+                STONITH_META
+                if resource.stonith.is_stonith(resource_el)
+                else PRIMITIVE_META
+            )
+            env.report_processor.report_list(
+                _validate_meta_attributes(
+                    cmd_runner, meta_attributes_type, meta_attrs
+                )
+            )
+        else:
+            pass
+            # TODO: warn that validation was skipped
+            # we cannot validate meta attributes for clones and bundles, since
+            # pacemaker does not provide metadata for these
+
     meta_attrs_nvset_list = find_nvsets(resource_el, NVSET_META)
     meta_attrs_nvset = (
         meta_attrs_nvset_list[0] if meta_attrs_nvset_list else None
@@ -2978,8 +3036,6 @@ def update_meta(
                 force_flags,
             )
         )
-
-    cmd_runner = env.cmd_runner()
 
     if resource.clone.is_any_clone(resource_el):
         _validate_clone_meta_attributes(

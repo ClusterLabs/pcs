@@ -4040,10 +4040,18 @@ class MetaAttrs(
                 "interval=35 meta test7=test7a test6="
             ).split()
         )
-        self.assert_pcs_success("resource meta D1 d1meta=superd1meta".split())
+        self.assert_pcs_success(
+            "resource meta D1 d1meta=superd1meta".split(),
+            stderr_full=fixture_meta_attributes_warning(
+                ["d1meta"], ra_const.PRIMITIVE_META
+            ),
+        )
         self.assert_pcs_success("resource group add TestRG D1".split())
         self.assert_pcs_success(
             "resource meta TestRG testrgmeta=mymeta testrgmeta2=mymeta2".split(),
+            stderr_full=fixture_meta_attributes_warning(
+                ["testrgmeta", "testrgmeta2"], ra_const.PRIMITIVE_META
+            ),
         )
         self.assert_pcs_success(
             "resource config".split(),
