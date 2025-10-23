@@ -303,6 +303,7 @@ EXTRA_DIST		= \
 			  lib/cib/resource/guest_node.py \
 			  lib/cib/resource/hierarchy.py \
 			  lib/cib/resource/__init__.py \
+			  lib/cib/resource/meta.py \
 			  lib/cib/resource/operations.py \
 			  lib/cib/resource/primitive.py \
 			  lib/cib/resource/relations.py \
