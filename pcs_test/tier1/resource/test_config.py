@@ -1,5 +1,6 @@
 import json
 from shlex import split
+from textwrap import dedent
 from unittest import TestCase
 
 from pcs.common.interface.dto import to_dict
@@ -20,7 +21,7 @@ from pcs_test.tools.pcs_runner import PcsRunner
 class ResourceConfigJson(TestCase):
     def setUp(self):
         self.pcs_runner = PcsRunner(
-            cib_file=get_test_resource("cib-resources.xml"),
+            cib_file=get_test_resource("cib-all.xml"),
         )
         self.maxDiff = None
 
@@ -82,7 +83,7 @@ class ResourceConfigCmdMixin:
     def setUp(self):
         self.new_cib_file = get_tmp_file(self._get_tmp_file_name())
         self.pcs_runner_orig = PcsRunner(
-            cib_file=get_test_resource("cib-resources.xml")
+            cib_file=get_test_resource("cib-all.xml")
         )
         self.pcs_runner_orig.mock_settings = get_mock_settings()
         self.pcs_runner_new = PcsRunner(cib_file=self.new_cib_file.name)
@@ -206,3 +207,113 @@ class ResourceConfigCmd(ResourceConfigCmdMixin, TestCase):
             self._get_as_json(self.pcs_runner_new),
             expected_dict,
         )
+
+    def test_plaintext(self):
+        stdout, stderr, retval = self.pcs_runner_orig.run(
+            [self.sub_command, "config"]
+        )
+        self.assertEqual(
+            stdout,
+            dedent(
+                """\
+                Resource: R7 (class=ocf provider=pcsmock type=minimal)
+                  Description: R7 description is very long " & and special
+                  Attributes: R7-instance_attributes
+                    envfile=/dev/null
+                    fake=looool
+                  Meta Attributes: R7-meta_attributes
+                    "another one0"="a + b = c"
+                    anotherone=something'"special
+                    m1=value1
+                    m10=value1
+                    meta2=valueofmeta2isthisverylongstring
+                    meta20=valueofmeta2isthisverylongstring
+                  Operations:
+                    custom_action: R7-custom_action-interval-10s
+                      interval=10s OCF_CHECK_LEVEL=2
+                    migrate_from: R7-migrate_from-interval-0s
+                      interval=0s timeout=20s
+                    migrate_to: R7-migrate_to-interval-0s
+                      interval=0s timeout=20s enabled=0 record-pending=0
+                    monitor: R7-monitor-interval-10s
+                      interval=10s timeout=20s
+                    reload: R7-reload-interval-0s
+                      interval=0s timeout=20s
+                    reload-agent: R7-reload-agent-interval-0s
+                      interval=0s timeout=20s
+                    start: R7-start-interval-0s
+                      interval=0s timeout=20s
+                    stop: R7-stop-interval-0s
+                      interval=0s timeout=20s
+                Group: G2
+                  Meta Attributes: G2-meta_attributes
+                    meta1=metaval1
+                    meta2=metaval2
+                  Resource: R5 (class=ocf provider=pcsmock type=minimal)
+                    Operations:
+                      monitor: R5-monitor-interval-10s
+                        interval=10s timeout=20s
+                Clone: G1-clone
+                  Description: G1-clone description
+                  Meta Attributes: G1-clone-meta_attributes
+                    promotable=true
+                  Group: G1
+                    Description: G1 description
+                    Resource: R2 (class=ocf provider=pcsmock type=stateful)
+                      Operations:
+                        monitor: R2-monitor-interval-10s
+                          interval=10s timeout=20s
+                    Resource: R3 (class=ocf provider=pcsmock type=stateful)
+                      Operations:
+                        monitor: R3-monitor-interval-10s
+                          interval=10s timeout=20s
+                    Resource: R4 (class=ocf provider=pcsmock type=stateful)
+                      Operations:
+                        monitor: R4-monitor-interval-10s
+                          interval=10s timeout=20s
+                Clone: R6-clone
+                  Resource: R6 (class=ocf provider=pcsmock type=minimal)
+                    Operations:
+                      migrate_from: R6-migrate_from-interval-0s
+                        interval=0s timeout=20s
+                      migrate_to: R6-migrate_to-interval-0s
+                        interval=0s timeout=20s
+                      monitor: R6-monitor-interval-10s
+                        interval=10s timeout=20s
+                      reload: R6-reload-interval-0s
+                        interval=0s timeout=20s
+                      reload-agent: R6-reload-agent-interval-0s
+                        interval=0s timeout=20s
+                      start: R6-start-interval-0s
+                        interval=0s timeout=20s
+                      stop: R6-stop-interval-0s
+                        interval=0s timeout=20s
+                Bundle: B1
+                  Description: B1 description
+                  Docker: image=pcs:test replicas=4 replicas-per-host=2 run-command=/bin/true network=extra_network_settings options=extra_options
+                  Network: ip-range-start=192.168.100.200 control-port=12345 host-interface=eth0 host-netmask=24
+                  Port Mapping:
+                    port=1001 (B1-port-map-1001)
+                    port=2000 internal-port=2002 (B1-port-map-2000)
+                    range=3000-3300 (B1-port-map-3000-3300)
+                  Storage Mapping:
+                    source-dir=/tmp/docker1a target-dir=/tmp/docker1b (B1-storage-map)
+                    source-dir=/tmp/docker2a target-dir=/tmp/docker2b (B1-storage-map-1)
+                    source-dir-root=/tmp/docker3a target-dir=/tmp/docker3b (B1-storage-map-2)
+                    source-dir-root=/tmp/docker4a target-dir=/tmp/docker4b (B1-storage-map-3)
+                  Meta Attributes: B1-meta_attributes
+                    is-managed=false
+                    target-role=Stopped
+                Bundle: B2
+                  Docker: image=pcs:test
+                  Network: control-port=9000
+                  Resource: R1 (class=ocf provider=pcsmock type=minimal)
+                    Description: R1 description
+                    Operations:
+                      monitor: R1-monitor-interval-10s
+                        interval=10s timeout=20s
+                """
+            ),
+        )
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)

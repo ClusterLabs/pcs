@@ -915,12 +915,41 @@
 
 
 
+    <capability id="pcmk.cib.checkpoints" in-pcs="1" in-pcsd="0">
+      <description>
+        List, view (in a human-readable format) and restore CIB checkpoints.
+
+        pcs commands: config checkpoint [ view | restore ]
+      </description>
+    </capability>
+    <capability id="pcmk.cib.checkpoints.diff" in-pcs="1" in-pcsd="0">
+      <description>
+        Show differences between two specified checkpoints.
+
+        pcs commands: config checkpoint diff
+      </description>
+    </capability>
     <capability id="pcmk.cib.edit" in-pcs="1" in-pcsd="0">
       <description>
         Edit a CIB XML (as a plain text), support a CIB scope and editing the
         configuration section.
 
         pcs commands: cluster edit
+      </description>
+    </capability>
+    <capability id="pcmk.cib.element-description" in-pcs="1" in-pcsd="1">
+      <description>
+        Manage descriptions of supported CIB elements: ACL permission, ACL role,
+        alert, alert recipient, bundle, clone, group, node, primitive
+
+        pcs commands:
+          cib element description
+        API v2:
+          cib.element_description_get
+          cib.element_description_set
+        daemon urls:
+          /api/v1/cib-element-description-get/v1
+          /api/v1/cib-element-description-set/v1
       </description>
     </capability>
     <capability id="pcmk.cib.get" in-pcs="1" in-pcsd="1">
@@ -937,20 +966,6 @@
         configuration section.
 
         pcs commands: cluster cib
-      </description>
-    </capability>
-    <capability id="pcmk.cib.checkpoints" in-pcs="1" in-pcsd="0">
-      <description>
-        List, view (in a human-readable format) and restore CIB checkpoints.
-
-        pcs commands: config checkpoint [ view | restore ]
-      </description>
-    </capability>
-    <capability id="pcmk.cib.checkpoints.diff" in-pcs="1" in-pcsd="0">
-      <description>
-        Show differences between two specified checkpoints.
-
-        pcs commands: config checkpoint diff
       </description>
     </capability>
     <capability id="pcmk.cib.set" in-pcs="1" in-pcsd="0">

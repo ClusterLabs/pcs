@@ -120,8 +120,10 @@ class TagCreate(TestTagMixin, TestCase):
         self.assert_pcs_fail(
             "tag create tag noid-01 noid-02".split(),
             (
-                "Error: bundle/clone/group/resource 'noid-01' does not exist\n"
-                "Error: bundle/clone/group/resource 'noid-02' does not exist\n"
+                "Error: bundle / clone / group / resource 'noid-01' does not "
+                "exist\n"
+                "Error: bundle / clone / group / resource 'noid-02' does not "
+                "exist\n"
                 "Error: Errors have occurred, therefore pcs is unable to "
                 "continue\n"
             ),
@@ -167,8 +169,8 @@ class TagCreate(TestTagMixin, TestCase):
         self.assert_pcs_fail(
             "tag create tag cx1 cx2".split(),
             (
-                "Error: 'cx1' is not a bundle/clone/group/resource\n"
-                "Error: 'cx2' is not a bundle/clone/group/resource\n"
+                "Error: 'cx1' is not a bundle / clone / group / resource\n"
+                "Error: 'cx2' is not a bundle / clone / group / resource\n"
                 "Error: Errors have occurred, therefore pcs is unable to "
                 "continue\n"
             ),
@@ -659,8 +661,8 @@ class TagUpdate(TestTagMixin, TestCase):
             "tag update nonexisting_tag add nonexisting_resource".split(),
             (
                 "Error: tag 'nonexisting_tag' does not exist\n"
-                "Error: bundle/clone/group/resource 'nonexisting_resource' "
-                "does not exist\n"
+                "Error: bundle / clone / group / resource "
+                "'nonexisting_resource' does not exist\n"
                 "Error: Errors have occurred, therefore pcs is unable to "
                 "continue\n"
             ),
@@ -671,7 +673,7 @@ class TagUpdate(TestTagMixin, TestCase):
         self.assert_pcs_fail(
             "tag update tag1 add cx1".split(),
             (
-                "Error: 'cx1' is not a bundle/clone/group/resource\n"
+                "Error: 'cx1' is not a bundle / clone / group / resource\n"
                 "Error: Errors have occurred, therefore pcs is unable to "
                 "continue\n"
             ),

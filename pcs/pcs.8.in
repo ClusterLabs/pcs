@@ -81,6 +81,9 @@ dr
 .TP
 tag
  Manage pacemaker tags.
+.TP
+cib
+ Manage CIB (Cluster Information Base).
 .SS "resource"
 .TP
 [status [<resource id | tag id>] [node=<node>] [\fB\-\-hide\-inactive\fR]]
@@ -163,6 +166,16 @@ If \fB\-\-force\fR is specified, checks for safe disable will be skipped.
 .TP
 restart <resource id> [node] [\fB\-\-wait\fR=n]
 Restart the resource specified. If a node is specified and if the resource is a clone or bundle it will be restarted only on the node specified. If \fB\-\-wait\fR is specified, then we will wait up to 'n' seconds for the resource to be restarted and return 0 if the restart was successful or 1 if it was not.
+.TP
+description <resource id>
+This command is an alias of 'cib element description' command.
+
+Get the description of a CIB element.
+.TP
+description <resource id> <description text>
+This command is an alias of 'cib element description' command.
+
+Set a description to a CIB element. If you wish to remove a description, set it to an empty string.
 .TP
 debug\-start <resource id> [\fB\-\-full\fR]
 This command will force the specified resource to start on this node ignoring the cluster recommendations and print the output from starting the resource.  Using \fB\-\-full\fR will give more detailed output.  This is mainly used for debugging resources that fail to start.
@@ -776,6 +789,16 @@ Remove stonith resources from configuration.
 .TP
 remove <stonith id>...
 Remove stonith resources from configuration.
+.TP
+description <stonith id>
+This command is an alias of 'cib element description' command.
+
+Get the description of a CIB element.
+.TP
+description <stonith id> <description text>
+This command is an alias of 'cib element description' command.
+
+Set a description to a CIB element. If you wish to remove a description, set it to an empty string.
 .TP
 op add <stonith id> <operation action> [operation properties]
 Add operation for specified stonith device.
@@ -1638,6 +1661,13 @@ Delete specified tags.
 .TP
 update <tag id> [add <id> [<id>]... [\fB\-\-before\fR <id> | \fB\-\-after\fR <id>]] [remove <id> [<id>]...]
 Update a tag using the specified ids. Ids can be added, removed or moved in a tag. You can use \fB\-\-before\fR or \fB\-\-after\fR to specify the position of the added ids relatively to some id already existing in the tag. By adding ids to a tag they are already in and specifying \fB\-\-after\fR or \fB\-\-before\fR you can move the ids in the tag.
+.SS "cib"
+.TP
+element description <element\-id>
+Get the description of a CIB element.
+.TP
+element description <element\-id> <description text>
+Set a description to a CIB element. If you wish to remove a description, set it to an empty string.
 .SH EXAMPLES
 .TP
 Show all resources

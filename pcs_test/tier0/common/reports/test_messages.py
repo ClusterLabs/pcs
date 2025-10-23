@@ -1801,7 +1801,7 @@ class IdBelongsToUnexpectedType(NameBuildTest):
 
     def test_build_message_with_data(self):
         self.assert_message_from_report(
-            "'ID' is not a clone/resource",
+            "'ID' is not a clone / resource",
             reports.IdBelongsToUnexpectedType(
                 "ID", ["primitive", "clone"], "op"
             ),
@@ -1809,11 +1809,26 @@ class IdBelongsToUnexpectedType(NameBuildTest):
 
     def test_build_message_with_transformation_and_article(self):
         self.assert_message_from_report(
-            "'ID' is not an ACL group/ACL user",
+            "'ID' is not an ACL group / ACL user",
             reports.IdBelongsToUnexpectedType(
                 "ID",
                 ["acl_target", "acl_group"],
                 "op",
+            ),
+        )
+
+
+class IdDoesNotSupportElementDescriptions(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "'ID' is a location constraint, descriptions are only "
+                "supported for clone / resource"
+            ),
+            reports.IdDoesNotSupportElementDescriptions(
+                "ID",
+                "rsc_location",
+                ["primitive", "clone"],
             ),
         )
 
@@ -1844,7 +1859,7 @@ class IdNotFound(NameBuildTest):
 
     def test_id_and_type(self):
         self.assert_message_from_report(
-            "clone/resource 'ID' does not exist",
+            "clone / resource 'ID' does not exist",
             reports.IdNotFound("ID", ["primitive", "clone"]),
         )
 

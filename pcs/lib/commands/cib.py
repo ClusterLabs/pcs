@@ -4,6 +4,7 @@ from lxml.etree import _Element
 
 from pcs.common import reports
 from pcs.common.types import StringCollection
+from pcs.lib.cib import element_description as cib_element_description
 from pcs.lib.cib.remove_elements import (
     ElementsToRemove,
     ensure_resources_stopped,
@@ -14,7 +15,7 @@ from pcs.lib.cib.resource.remote_node import (
     get_node_name_from_resource as get_node_name_from_remote_resource,
 )
 from pcs.lib.cib.resource.stonith import is_stonith
-from pcs.lib.cib.tools import get_resources
+from pcs.lib.cib.tools import ElementNotFound, get_element_by_id, get_resources
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 from pcs.lib.sbd_stonith import ensure_some_stonith_remains
@@ -87,6 +88,58 @@ def remove_elements(
     )
     remove_specified_elements(cib, elements_to_remove)
     env.push_cib()
+
+
+def element_description_set(
+    env: LibraryEnvironment, element_id: str, description: str
+) -> None:
+    """
+    Set, update, or delete the description of specified element.
+
+    env -- LibraryEnvironment
+    element_id -- id of the element
+    description -- new description, if empty, delete existing description
+    """
+    try:
+        element = get_element_by_id(env.get_cib(), element_id)
+        env.report_processor.report_list(
+            cib_element_description.validate_description_support(element)
+        )
+    except ElementNotFound:
+        env.report_processor.report(
+            reports.ReportItem.error(
+                reports.messages.IdNotFound(element_id, [])
+            )
+        )
+    if env.report_processor.has_errors:
+        raise LibraryError()
+
+    cib_element_description.set_description(element, description)
+    env.push_cib()
+
+
+def element_description_get(env: LibraryEnvironment, element_id: str) -> str:
+    """
+    Get description of specified element.
+
+    env -- LibraryEnvironment
+    element_id -- id of the element
+    """
+    try:
+        element = get_element_by_id(env.get_cib(), element_id)
+        env.report_processor.report_list(
+            cib_element_description.validate_description_support(element)
+        )
+    except ElementNotFound:
+        env.report_processor.report(
+            reports.ReportItem.error(
+                reports.messages.IdNotFound(element_id, [])
+            )
+        )
+    if env.report_processor.has_errors:
+        raise LibraryError()
+
+    return cib_element_description.get_description(element)
 
 
 def _validate_elements_to_remove(

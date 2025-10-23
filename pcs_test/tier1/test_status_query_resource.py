@@ -10,7 +10,7 @@ from pcs_test.tools.pcs_runner import PcsRunner
 
 
 class QueryTestBase(TestCase, AssertPcsMixin):
-    cib = get_test_resource("cib-resources.xml")
+    cib = get_test_resource("cib-all.xml")
 
     def setUp(self):
         self.temp_cib = get_tmp_file("tier1_status_query_resource")

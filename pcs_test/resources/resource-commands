@@ -11,11 +11,13 @@ pcs resource bundle create B1 --force \
   storage-map source-dir-root=/tmp/docker3a target-dir=/tmp/docker3b \
   storage-map source-dir-root=/tmp/docker4a target-dir=/tmp/docker4b \
   meta is-managed=false target-role=Stopped;
+pcs cib element description B1 'B1 description';
 pcs resource bundle create B2 \
   container docker \
     image=pcs:test \
   network control-port=9000;
 pcs resource create R1 ocf:pacemaker:Dummy --no-default-ops bundle B2 --force;
+pcs cib element description R1 'R1 description';
 pcs resource create R2 ocf:pacemaker:Stateful --no-default-ops;
 pcs resource create R3 ocf:pacemaker:Stateful --no-default-ops;
 pcs resource create R4 ocf:pacemaker:Stateful --no-default-ops;
@@ -26,10 +28,14 @@ pcs resource create R7 ocf:pacemaker:Dummy --force \
   op custom_action interval=10s OCF_CHECK_LEVEL=2 \
     migrate_to interval=0s id=R7-migrate_to-interval-0s timeout=20s enabled=0 record-pending=0 \
   meta m1=value1 meta2=valueofmeta2isthisverylongstring "anotherone=something'\"special" m10=value1 meta20=valueofmeta2isthisverylongstring "another one0=a + b = c";
+pcs cib element description R7 'R7 description is very long " & and special';
 pcs stonith create S1 fence_kdump nodename=testnodename;
 pcs stonith create S2 fence_kdump;
+pcs cib element description S2 'S2 description';
 pcs resource group add G1 R2 R3 R4;
-pcs resource group add G2 R5 S1
+pcs cib element description G1 'G1 description';
+pcs resource group add G2 R5;
 pcs resource meta G2 meta1=metaval1 meta2=metaval2;
 pcs resource clone G1 meta promotable=true;
+pcs cib element description G1-clone 'G1-clone description';
 pcs resource clone R6;

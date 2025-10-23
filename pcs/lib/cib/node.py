@@ -8,6 +8,7 @@ from pcs.common import reports
 from pcs.common.pacemaker.node import CibNodeDto
 from pcs.common.reports.item import ReportItem
 from pcs.lib.cib import nvpair_multi, rule
+from pcs.lib.cib.const import TAG_NODE
 from pcs.lib.cib.nvpair import update_nvset
 from pcs.lib.cib.tools import get_nodes
 from pcs.lib.errors import LibraryError
@@ -15,8 +16,6 @@ from pcs.lib.xml_tools import (
     append_when_useful,
     get_root,
 )
-
-TAG_NODE = "node"
 
 
 def get_all_node_elements(nodes_section: _Element) -> list[_Element]:

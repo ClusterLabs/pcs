@@ -140,7 +140,7 @@ class ACLTest(TestCase, AssertPcsMixin):
             "acl role assign role1 to noexist".split(),
             (
                 AMBIGUOUS_ASSIGN_DEPRECATED
-                + "Error: ACL group/ACL user 'noexist' does not exist\n"
+                + "Error: ACL group / ACL user 'noexist' does not exist\n"
             ),
         )
         self.assert_pcs_fail(
@@ -187,7 +187,7 @@ class ACLTest(TestCase, AssertPcsMixin):
             "acl role unassign role3 from noexist".split(),
             (
                 AMBIGUOUS_ASSIGN_DEPRECATED
-                + "Error: ACL group/ACL user 'noexist' does not exist\n"
+                + "Error: ACL group / ACL user 'noexist' does not exist\n"
             ),
         )
         self.assert_pcs_success(

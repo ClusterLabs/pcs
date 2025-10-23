@@ -178,6 +178,14 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
         cmd=cluster.wait_for_pcmk_idle,
         required_permission=p.READ,
     ),
+    "cib.element_description_get": _Cmd(
+        cmd=cib.element_description_get,
+        required_permission=p.READ,
+    ),
+    "cib.element_description_set": _Cmd(
+        cmd=cib.element_description_set,
+        required_permission=p.WRITE,
+    ),
     "cib.remove_elements": _Cmd(
         cmd=cib.remove_elements,
         required_permission=p.WRITE,

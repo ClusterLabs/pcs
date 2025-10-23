@@ -141,6 +141,7 @@ _type_translation = {
     # with a master, say we were doing it with a clone instead.
     "master": "clone",
     "primitive": "resource",
+    "recipient": "alert recipient",
     "resource_set": "resource set",
     "rsc_colocation": "colocation constraint",
     "rsc_location": "location constraint",
@@ -215,7 +216,7 @@ def _typelist_to_string(
             for type_name in type_list
         }
     )
-    res_types = "/".join(new_list)
+    res_types = " / ".join(new_list)
     if not article:
         return res_types
     return "{article} {types}".format(
@@ -2660,6 +2661,27 @@ class IdBelongsToUnexpectedType(ReportItemMessage):
     def message(self) -> str:
         expected_type = _typelist_to_string(self.expected_types, article=True)
         return f"'{self.id}' is not {expected_type}"
+
+
+@dataclass(frozen=True)
+class IdDoesNotSupportElementDescriptions(ReportItemMessage):
+    """
+    Specified element does not support element descriptions
+    """
+
+    element_id: str
+    element_type: str
+    expected_types: list[str]
+    _code = codes.ID_DOES_NOT_SUPPORT_ELEMENT_DESCRIPTIONS
+
+    @property
+    def message(self) -> str:
+        element_type = _type_to_string(self.element_type, article=True)
+        expected_type = _typelist_to_string(self.expected_types)
+        return (
+            f"'{self.element_id}' is {element_type}, descriptions are only "
+            f"supported for {expected_type}"
+        )
 
 
 @dataclass(frozen=True)

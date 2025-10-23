@@ -99,6 +99,7 @@ def full_usage() -> None:
     out += strip_extras(client([]))
     out += strip_extras(dr([]))
     out += strip_extras(tag([]))
+    out += strip_extras(cib([]))
     print(out.strip())
     print("Examples:\n" + examples.replace(r" \ ", ""))
 
@@ -199,6 +200,7 @@ def generate_completion_tree_from_usage() -> CompletionTree:
     tree["client"] = generate_tree(client([]))
     tree["dr"] = generate_tree(dr([]))
     tree["tag"] = generate_tree(tag([]))
+    tree["cib"] = generate_tree(cib([]))
     return tree
 
 
@@ -273,6 +275,7 @@ Commands:
     client      Manage pcsd client configuration.
     dr          Manage disaster recovery configuration.
     tag         Manage pacemaker tags.
+    cib         Manage CIB (Cluster Information Base).
 """
     # Advanced usage to possibly add later
     #  --corosync_conf=<corosync file> Specify alternative corosync.conf file
@@ -804,6 +807,23 @@ _UTILIZATION_PLACEMENT_STRATEGY_DESC = (
     """,
 )
 
+_CIB_ELEMENT_DESCRIPTION_CMD = "element description"
+_CIB_ELEMENT_DESCRIPTION_GET_DESC = ("Get the description of a CIB element.",)
+_CIB_ELEMENT_DESCRIPTION_SET_DESC = (
+    _unwrap(
+        """
+        Set a description to a CIB element. If you wish to remove a description,
+        set it to an empty string.
+        """
+    ),
+)
+_CIB_ELEMENT_DESCRIPTION_GET_ALIAS_DESC = (
+    _alias_of(f"cib {_CIB_ELEMENT_DESCRIPTION_CMD}"),
+) + _CIB_ELEMENT_DESCRIPTION_GET_DESC
+_CIB_ELEMENT_DESCRIPTION_SET_ALIAS_DESC = (
+    _alias_of(f"cib {_CIB_ELEMENT_DESCRIPTION_CMD}"),
+) + _CIB_ELEMENT_DESCRIPTION_SET_DESC
+
 
 def resource(args: Argv) -> str:
     output = """
@@ -942,6 +962,12 @@ Commands:
         specified. If --wait is specified, then we will wait up to 'n' seconds
         for the resource to be restarted and return 0 if the restart was
         successful or 1 if it was not.
+
+    description <resource id>
+{cib_element_description_get_desc}
+
+    description <resource id> <description text>
+{cib_element_description_set_desc}
 
     debug-start <resource id> [--full]
         This command will force the specified resource to start on this node
@@ -1466,6 +1492,12 @@ Notes:
         update_desc=_format_desc(_resource_update_desc_fn(is_stonith=False)),
         utilization_placement_strategy_desc=_format_desc(
             _UTILIZATION_PLACEMENT_STRATEGY_DESC
+        ),
+        cib_element_description_get_desc=_format_desc(
+            _CIB_ELEMENT_DESCRIPTION_GET_ALIAS_DESC
+        ),
+        cib_element_description_set_desc=_format_desc(
+            _CIB_ELEMENT_DESCRIPTION_SET_ALIAS_DESC
         ),
     )
     return sub_usage(args, output)
@@ -1996,6 +2028,12 @@ Commands:
 {remove_syntax}
 {delete_desc}
 
+    description <stonith id>
+{cib_element_description_get_desc}
+
+    description <stonith id> <description text>
+{cib_element_description_set_desc}
+
 {op_add_syntax}
 {op_add_desc}
 
@@ -2383,6 +2421,12 @@ Commands:
         update_desc=_format_desc(_resource_update_desc_fn(is_stonith=True)),
         output_format_syntax=_output_format_syntax(cmd=True),
         output_format_desc=_format_desc([_output_format_desc()]),
+        cib_element_description_get_desc=_format_desc(
+            _CIB_ELEMENT_DESCRIPTION_GET_ALIAS_DESC
+        ),
+        cib_element_description_set_desc=_format_desc(
+            _CIB_ELEMENT_DESCRIPTION_SET_ALIAS_DESC
+        ),
     )
     return sub_usage(args, output)
 
@@ -3490,11 +3534,36 @@ Commands:
     return sub_usage(args, output)
 
 
+def cib(args: Argv) -> str:
+    output = """
+Usage: pcs cib <command>
+Manage CIB (Cluster Information Base).
+
+Commands:
+{description_get_syntax}
+{description_get_desc}
+
+{description_set_syntax}
+{description_set_desc}
+""".format(
+        description_get_syntax=_format_syntax(
+            f"{_CIB_ELEMENT_DESCRIPTION_CMD} <element-id>"
+        ),
+        description_get_desc=_format_desc(_CIB_ELEMENT_DESCRIPTION_GET_DESC),
+        description_set_syntax=_format_syntax(
+            f"{_CIB_ELEMENT_DESCRIPTION_CMD} <element-id> <description text>"
+        ),
+        description_set_desc=_format_desc(_CIB_ELEMENT_DESCRIPTION_SET_DESC),
+    )
+    return sub_usage(args, output)
+
+
 def show(main_usage_name: str, rest_usage_names: Argv) -> None:
     usage_map: dict[str, Callable[[Argv], str]] = {
         "acl": acl,
         "alert": alert,
         "booth": booth,
+        "cib": cib,
         "client": client,
         "cluster": cluster,
         "config": config,

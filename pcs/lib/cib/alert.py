@@ -11,6 +11,7 @@ from pcs.common.pacemaker.alert import (
     CibAlertSelectDto,
 )
 from pcs.lib.cib import nvpair_multi, rule
+from pcs.lib.cib.const import TAG_ALERT, TAG_RECIPIENT
 from pcs.lib.cib.nvpair import get_nvset
 from pcs.lib.cib.tools import (
     ElementSearcher,
@@ -25,9 +26,6 @@ from pcs.lib.xml_tools import (
     remove_one_element,
     update_attribute_remove_empty,
 )
-
-TAG_ALERT = "alert"
-TAG_RECIPIENT = "recipient"
 
 
 def get_all_alert_elements(tree: _Element) -> list[_Element]:
