@@ -506,6 +506,39 @@ class NamesIn(KeyValidator):
         return report_list
 
 
+class PcmkMetaAttributeNamesIn(KeyValidator):
+    """
+    Report warning META_ATTRS_UNKNOWN_TO_PCMK for option_dict keys not in
+    option_name_list
+    """
+
+    def __init__(
+        self,
+        option_name_list: Iterable[TypeOptionName],
+        # TODO: resolve cycle dependency and change to
+        # Iterable[CrmResourceAgent]
+        option_type_list: StringIterable,
+    ):
+        super().__init__(option_name_list)
+        self._option_type_list = option_type_list
+
+    def validate(self, option_dict: TypeOptionMap) -> ReportItemList:
+        unknown_meta = set(option_dict.keys()) - set(self._option_name_list)
+        report_list = []
+        if unknown_meta:
+            report_list.append(
+                ReportItem(
+                    severity=reports.ReportItemSeverity.warning(),
+                    message=reports.messages.MetaAttrsUnknownToPcmk(
+                        sorted(unknown_meta),
+                        sorted(self._option_name_list),
+                        sorted(self._option_type_list),
+                    ),
+                )
+            )
+        return report_list
+
+
 ### values validators
 
 

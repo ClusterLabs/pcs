@@ -6490,3 +6490,30 @@ class PcsCfgsyncConflictRepeatAction(NameBuildTest):
             ),
             reports.PcsCfgsyncConflictRepeatAction(),
         )
+
+
+class MetaAttrsUnknownToPcmk(NameBuildTest):
+    def test_single_option(self):
+        self.assert_message_from_report(
+            (
+                "Resource meta attribute 'unknown' does not influence "
+                "pacemaker behavior, meta known to pacemaker: 'known'"
+            ),
+            reports.MetaAttrsUnknownToPcmk(
+                ["unknown"], ["known"], ["primitive-meta"]
+            ),
+        )
+
+    def test_multiple_options(self):
+        self.assert_message_from_report(
+            (
+                "Resource / stonith meta attributes 'unknown1', 'unknown2' "
+                "do not influence pacemaker behavior, "
+                "meta known to pacemaker: 'known1', 'known2'"
+            ),
+            reports.MetaAttrsUnknownToPcmk(
+                ["unknown1", "unknown2"],
+                ["known1", "known2"],
+                ["primitive-meta", "stonith-meta"],
+            ),
+        )

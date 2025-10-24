@@ -148,12 +148,16 @@ _type_translation = {
     "rsc_order": "order constraint",
     "rsc_ticket": "ticket constraint",
 }
-_type_articles = {
+_articles_map = {
     "ACL group": "an",
     "ACL user": "an",
     "ACL role": "an",
     "ACL permission": "an",
     "options set": "an",
+}
+_meta_type_translation = {
+    "primitive-meta": "resource",
+    "stonith-meta": "stonith",
 }
 
 
@@ -200,8 +204,10 @@ def _skip_reason_to_string(reason: types.ReasonType) -> str:
     }.get(reason, reason)
 
 
-def _typelist_to_string(
-    type_list: StringIterable, article: bool = False
+def _translate_list_to_string(
+    translate_map: Mapping[str, str],
+    type_list: StringIterable,
+    article: bool = False,
 ) -> str:
     if not type_list:
         return ""
@@ -212,7 +218,7 @@ def _typelist_to_string(
     new_list = sorted(
         {
             # get a translation or make a type_name a string
-            _type_translation.get(type_name, f"{type_name}")
+            translate_map.get(type_name, f"{type_name}")
             for type_name in type_list
         }
     )
@@ -220,22 +226,40 @@ def _typelist_to_string(
     if not article:
         return res_types
     return "{article} {types}".format(
-        article=_type_articles.get(new_list[0], "a"),
+        article=_articles_map.get(new_list[0], "a"),
         types=res_types,
     )
 
 
-def _type_to_string(type_name: str, article: bool = False) -> str:
+def _translate_to_string(
+    translate_map: Mapping[str, str],
+    type_name: str,
+    article: bool = False,
+) -> str:
     if not type_name:
         return ""
     # get a translation or make a type_name a string
-    translated = _type_translation.get(type_name, f"{type_name}")
+    translated = translate_map.get(type_name, f"{type_name}")
     if not article:
         return translated
     return "{article} {type}".format(
-        article=_type_articles.get(translated, "a"),
+        article=_articles_map.get(translated, "a"),
         type=translated,
     )
+
+
+def _typelist_to_string(
+    type_list: StringIterable, article: bool = False
+) -> str:
+    return _translate_list_to_string(_type_translation, type_list, article)
+
+
+def _type_to_string(type_name: str, article: bool = False) -> str:
+    return _translate_to_string(_type_translation, type_name, article)
+
+
+def _metatypes_to_string(type_list: StringIterable) -> str:
+    return _translate_list_to_string(_meta_type_translation, type_list)
 
 
 def _build_node_description(node_types: List[str]) -> str:
@@ -8713,4 +8737,35 @@ class PcsCfgsyncConflictRepeatAction(ReportItemMessage):
             "Configuration conflict detected. Some nodes had a newer "
             "configuration than the local node. Local node's configuration "
             "was updated. Please repeat the last action if appropriate."
+        )
+
+
+@dataclass(frozen=True)
+class MetaAttrsUnknownToPcmk(ReportItemMessage):
+    """
+    Specified meta attribute names will not be processed by pacemaker
+
+    unknown_meta -- specified meta attributes not processed by pacemaker
+    known_meta -- meta attributes known to pacemaker
+    meta_types -- resource type of the meta attributes
+    """
+
+    unknown_meta: list[str]
+    known_meta: list[str]
+    # TODO: resolve cycle dependency and change to list[CrmResourceAgent]
+    meta_types: list[str]
+    _code = codes.META_ATTRS_UNKNOWN_TO_PCMK
+
+    @property
+    def message(self) -> str:
+        meta_types_desc = _metatypes_to_string(self.meta_types).capitalize()
+        plural_attributes = format_plural(self.unknown_meta, "attribute")
+        unknown_meta_list = format_list(self.unknown_meta)
+        plural_do = format_plural(self.unknown_meta, "does")
+        known_meta_list = format_list(self.known_meta)
+
+        return (
+            f"{meta_types_desc} meta {plural_attributes} {unknown_meta_list} "
+            f"{plural_do} not influence pacemaker behavior, meta known to "
+            f"pacemaker: {known_meta_list}"
         )
