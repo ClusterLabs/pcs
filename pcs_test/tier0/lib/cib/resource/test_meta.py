@@ -7,7 +7,10 @@ from pcs.lib.resource_agent import const as ra_const
 
 from pcs_test.tools import fixture
 from pcs_test.tools.assertions import assert_report_item_list_equal
-from pcs_test.tools.metadata_dto import get_fixture_meta_attributes_dto
+from pcs_test.tools.metadata_dto import (
+    FIXTURE_KNOWN_META_NAMES_PRIMITIVE_META,
+    get_fixture_meta_attributes_dto,
+)
 
 FIXTURE_METADATA_PARAMETERS = [
     ResourceAgentParameter(
@@ -27,10 +30,6 @@ FIXTURE_METADATA_PARAMETERS = [
     )
     for parameter_dto in get_fixture_meta_attributes_dto().parameters
 ]
-
-FIXTURE_DEFINED_NAMES = sorted(
-    parameter.name for parameter in FIXTURE_METADATA_PARAMETERS
-)
 
 
 class TestValidateMetaAttributes(TestCase):
@@ -76,7 +75,7 @@ class TestValidateMetaAttributes(TestCase):
                 fixture.warn(
                     reports.codes.META_ATTRS_UNKNOWN_TO_PCMK,
                     unknown_meta=unknown_meta,
-                    known_meta=FIXTURE_DEFINED_NAMES,
+                    known_meta=FIXTURE_KNOWN_META_NAMES_PRIMITIVE_META,
                     meta_types=sorted(self.meta_types),
                 )
             ],
@@ -97,7 +96,7 @@ class TestValidateMetaAttributes(TestCase):
                 fixture.warn(
                     reports.codes.META_ATTRS_UNKNOWN_TO_PCMK,
                     unknown_meta=unknown_meta,
-                    known_meta=FIXTURE_DEFINED_NAMES,
+                    known_meta=FIXTURE_KNOWN_META_NAMES_PRIMITIVE_META,
                     meta_types=sorted(self.meta_types),
                 )
             ],

@@ -27,6 +27,7 @@ from pcs.lib.cib.nvpair import (
     get_value,
 )
 from pcs.lib.cib.resource.agent import get_default_operations
+from pcs.lib.cib.resource.meta import validate_meta_attributes
 from pcs.lib.cib.resource.operations import (
     create_operations,
     op_element_to_dto,
@@ -46,11 +47,19 @@ from pcs.lib.pacemaker.live import (
 )
 from pcs.lib.pacemaker.values import validate_id
 from pcs.lib.resource_agent import (
+    CrmResourceAgent,
+    ResourceAgentError,
     ResourceAgentFacade,
     ResourceAgentMetadata,
     ResourceAgentName,
+    get_crm_resource_metadata,
+    resource_agent_error_to_report_item,
 )
-from pcs.lib.resource_agent.const import STONITH_ACTION_REPLACED_BY
+from pcs.lib.resource_agent.const import (
+    PRIMITIVE_META,
+    STONITH_ACTION_REPLACED_BY,
+    STONITH_META,
+)
 
 
 def is_primitive(resource_el: _Element) -> bool:
@@ -235,6 +244,15 @@ def create(  # noqa: PLR0913
                     report_msg.option_type,
                     report_msg.allowed_patterns,
                 )
+    if any(meta_attributes.values()):
+        meta_attributes_type = (
+            STONITH_META
+            if resource_agent_facade.metadata.name.is_stonith
+            else PRIMITIVE_META
+        )
+        report_items += _validate_meta_attributes(
+            cmd_runner, meta_attributes_type, meta_attributes
+        )
     report_processor.report_list(report_items)
 
     if report_processor.has_errors:
@@ -251,6 +269,37 @@ def create(  # noqa: PLR0913
         meta_attributes=meta_attributes,
         operation_list=operation_list,
     )
+
+
+# TODO: implementation from the lib.command.resource should have been used. It
+# cannot be used now, because it would create a cyclic imports. The whole
+# resource create command must be refactored first to resolve it.
+def _validate_meta_attributes(
+    cmd_runner: CommandRunner,
+    meta_attributes_type: CrmResourceAgent,
+    meta_attributes: Mapping[str, str],
+) -> reports.ReportItemList:
+    report_list = []
+    try:
+        meta_metadata_params = get_crm_resource_metadata(
+            cmd_runner, meta_attributes_type
+        )
+        report_list.extend(
+            validate_meta_attributes(
+                [meta_attributes_type], meta_metadata_params, meta_attributes
+            )
+        )
+
+    except ResourceAgentError as e:
+        # we do not want to end with an error in case we were unable to
+        # load the metadata, to keep backwards compatibility
+        report_list.append(
+            resource_agent_error_to_report_item(
+                e, severity=reports.ReportItemSeverity.warning()
+            )
+        )
+        # TODO: warn that validation was skipped
+    return report_list
 
 
 def append_new(  # noqa: PLR0913

@@ -526,3 +526,18 @@ def get_fixture_meta_attributes_dto(
             ),
         )
     return metadata_dto
+
+
+FIXTURE_KNOWN_META_NAMES_PRIMITIVE_META = sorted(
+    parameter.name
+    for parameter in get_fixture_meta_attributes_dto(
+        ra_const.PRIMITIVE_META
+    ).parameters
+)
+
+FIXTURE_KNOWN_META_NAMES_STONITH_META = sorted(
+    parameter.name
+    for parameter in get_fixture_meta_attributes_dto(
+        ra_const.STONITH_META
+    ).parameters
+)

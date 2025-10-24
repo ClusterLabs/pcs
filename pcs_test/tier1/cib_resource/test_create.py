@@ -7,8 +7,12 @@ from pcs import resource
 from pcs.cli.common.parse_args import InputModifiers
 from pcs.common import const
 from pcs.common.str_tools import format_list
+from pcs.lib.resource_agent import const as ra_const
 
-from pcs_test.tier1.cib_resource.common import ResourceTest
+from pcs_test.tier1.cib_resource.common import (
+    ResourceTest,
+    fixture_meta_attributes_warning,
+)
 from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.bin_mock import get_mock_settings
 from pcs_test.tools.pcs_runner import PcsRunner
@@ -290,6 +294,30 @@ class Success(ResourceTest):
                     </operations>
                 </primitive>
             </resources>""",
+        )
+
+    def test_create_with_unknown_meta(self):
+        self.assert_effect(
+            (
+                "resource create R ocf:pcsmock:minimal --no-default-ops meta "
+                "unknown_meta=unknown_value"
+            ).split(),
+            """<resources>
+                <primitive class="ocf" id="R" provider="pcsmock" type="minimal">
+                    <meta_attributes id="R-meta_attributes">
+                        <nvpair id="R-meta_attributes-unknown_meta"
+                            name="unknown_meta" value="unknown_value"></nvpair>
+                    </meta_attributes>
+                    <operations>
+                        <op id="R-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
+                        />
+                    </operations>
+                </primitive>
+            </resources>""",
+            stderr_full=fixture_meta_attributes_warning(
+                ["unknown_meta"], ra_const.PRIMITIVE_META
+            ),
         )
 
 
@@ -581,6 +609,9 @@ class SuccessNewParser(ResourceTest):
                     </operations>
                 </primitive>
             </resources>""",
+            stderr_full=fixture_meta_attributes_warning(
+                ["a"], ra_const.PRIMITIVE_META
+            ),
         )
 
     def test_clone_meta(self):
@@ -622,6 +653,9 @@ class SuccessNewParser(ResourceTest):
                     </meta_attributes>
                 </clone>
             </resources>""",
+            stderr_full=fixture_meta_attributes_warning(
+                ["a"], ra_const.PRIMITIVE_META
+            ),
         )
 
 
@@ -1623,6 +1657,9 @@ class FailOrWarnGroup(ResourceTest):
                     </operations>
                 </primitive>
             </resources>""",
+            stderr_full=fixture_meta_attributes_warning(
+                ["a"], ra_const.PRIMITIVE_META
+            ),
         )
         self.assert_pcs_fail(
             (
