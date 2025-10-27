@@ -677,6 +677,31 @@ class NamesIn(TestCase):
         )
 
 
+class PcmkMetaAttributeNamesIn(TestCase):
+    def test_return_empty_report_on_known_meta(self):
+        assert_report_item_list_equal(
+            validate.PcmkMetaAttributeNamesIn(
+                ["a", "b", "c"], ["type1", "type2"]
+            ).validate({"a": "A", "b": "B"}),
+            [],
+        )
+
+    def test_return_warning_on_unknown_meta(self):
+        assert_report_item_list_equal(
+            validate.PcmkMetaAttributeNamesIn(
+                ["a", "b", "c"], ["type2", "type1"]
+            ).validate({"c": "C", "d": "", "e": "E"}),
+            [
+                fixture.warn(
+                    reports.codes.META_ATTRS_UNKNOWN_TO_PCMK,
+                    unknown_meta=["d", "e"],
+                    known_meta=["a", "b", "c"],
+                    meta_types=["type1", "type2"],
+                ),
+            ],
+        )
+
+
 ### values validators
 
 
