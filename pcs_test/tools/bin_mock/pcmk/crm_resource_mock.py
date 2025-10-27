@@ -25,7 +25,7 @@ def get_arg_values(argv, name):
     return values
 
 
-def main():  # noqa: PLR0912
+def main():  # noqa: PLR0912,PLR0915
     # pylint: disable=too-many-branches
     argv = sys.argv[1:]
     if not argv:
@@ -37,6 +37,7 @@ def main():  # noqa: PLR0912
         "--list-standards": "list_standards",
         "--list-ocf-providers": "list_ocf_providers",
     }
+    list_options_type_to_file_map = {"primitive": "primitive-meta_metadata.xml"}
 
     if arg == "--show-metadata":
         if len(argv) != 1:
@@ -88,6 +89,20 @@ def main():  # noqa: PLR0912
             )
         else:
             raise AssertionError()
+    elif arg == "--list-options":
+        if not len(argv) or get_arg_values(argv, "--output-as")[0] != "xml":
+            raise AssertionError()
+        option_type = argv[0]
+        if option_type in list_options_type_to_file_map:
+            write_local_file_to_stdout(
+                list_options_type_to_file_map[option_type]
+            )
+        else:
+            sys.stderr.write(
+                "pcs mock error message: unable to load metadata for option "
+                f"'{option_type}'"
+            )
+            raise SystemExit(1)
     elif arg == "--validate":
         if get_arg_values(argv, "--output-as")[0] != "xml":
             raise AssertionError()
