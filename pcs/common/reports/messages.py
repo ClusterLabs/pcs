@@ -8760,12 +8760,13 @@ class MetaAttrsUnknownToPcmk(ReportItemMessage):
     def message(self) -> str:
         meta_types_desc = _metatypes_to_string(self.meta_types).capitalize()
         plural_attributes = format_plural(self.unknown_meta, "attribute")
+        plural_attributes_known = format_plural(self.known_meta, "attribute")
         unknown_meta_list = format_list(self.unknown_meta)
-        plural_do = format_plural(self.unknown_meta, "does")
+        plural_have = format_plural(self.unknown_meta, "has")
         known_meta_list = format_list(self.known_meta)
 
         return (
             f"{meta_types_desc} meta {plural_attributes} {unknown_meta_list} "
-            f"{plural_do} not influence pacemaker behavior, meta known to "
-            f"pacemaker: {known_meta_list}"
+            f"{plural_have} no effect on cluster resource handling, meta "
+            f"{plural_attributes_known} with effect: {known_meta_list}"
         )

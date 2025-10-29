@@ -51,10 +51,11 @@ def fixture_meta_attributes_warning(meta_attrs, agent_type):
 
     rsc_desc = type_to_rsc_desc[agent_type].capitalize()
     attributes = format_plural(meta_attrs, "attribute")
-    do = format_plural(meta_attrs, "does")
+    have = format_plural(meta_attrs, "has")
     known_meta = format_list(type_to_name_list[agent_type])
+    attributes_known = format_plural(type_to_name_list[agent_type], "attribute")
     return (
-        f"Warning: {rsc_desc} meta {attributes} {format_list(meta_attrs)} {do} "
-        f"not influence pacemaker behavior, meta known to pacemaker: "
-        f"{known_meta}\n"
+        f"Warning: {rsc_desc} meta {attributes} {format_list(meta_attrs)} "
+        f"{have} no effect on cluster resource handling, meta "
+        f"{attributes_known} with effect: {known_meta}\n"
     )

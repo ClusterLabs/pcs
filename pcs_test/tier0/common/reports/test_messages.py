@@ -6496,8 +6496,8 @@ class MetaAttrsUnknownToPcmk(NameBuildTest):
     def test_single_option(self):
         self.assert_message_from_report(
             (
-                "Resource meta attribute 'unknown' does not influence "
-                "pacemaker behavior, meta known to pacemaker: 'known'"
+                "Resource meta attribute 'unknown' has no effect on cluster "
+                "resource handling, meta attribute with effect: 'known'"
             ),
             reports.MetaAttrsUnknownToPcmk(
                 ["unknown"], ["known"], ["primitive-meta"]
@@ -6508,8 +6508,8 @@ class MetaAttrsUnknownToPcmk(NameBuildTest):
         self.assert_message_from_report(
             (
                 "Resource / stonith meta attributes 'unknown1', 'unknown2' "
-                "do not influence pacemaker behavior, "
-                "meta known to pacemaker: 'known1', 'known2'"
+                "have no effect on cluster resource handling, meta attributes "
+                "with effect: 'known1', 'known2'"
             ),
             reports.MetaAttrsUnknownToPcmk(
                 ["unknown1", "unknown2"],
