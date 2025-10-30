@@ -1721,6 +1721,16 @@
         API v2: resource.update_meta
       </description>
     </capability>
+    <capability id="pcmk.resource.update-meta.describe.primitive" in-pcs="0" in-pcsd="1">
+      <description>
+        Show primitive and stonith resource meta attributes definition and
+        description (meta data).
+
+        daemon urls:
+          /api/v1/resource-agent-get-meta-attributes-metadata/v1
+        API v2: resource_agent.get_meta_attributes_metadata
+      </description>
+    </capability>
     <capability id="pcmk.resource.update-operations" in-pcs="1" in-pcsd="0">
       <description>
         Create and delete an operation of an existing resource. An operation can

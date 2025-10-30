@@ -8,6 +8,9 @@
   now warn about omitting live cluster actions when '-f' is used ([RHEL-76157])
 - Command `pcs cib element description` to manage descriptions of CIB elements,
   and aliases `pcs resource|stonith description` ([RHEL-7670])
+- Commands `pcs resource|stonith create`, `pcs resource|stonith meta` and `pcs
+  resource|stonith defaults` print warning about primitive resource meta
+  attributes which have no effect on cluster resource handling.
 
 ### Fixed
 - Commands `pcs acl role create` and `pcs acl permission add` now print
