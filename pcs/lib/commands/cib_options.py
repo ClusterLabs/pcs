@@ -1,27 +1,30 @@
-from typing import Any, Mapping, Optional
+from typing import Any, Mapping, Optional, Union
 
 from lxml.etree import _Element
 
-from pcs.common import (
-    const,
-    reports,
-)
+from pcs.common import const, reports
 from pcs.common.pacemaker.defaults import CibDefaultsDto
 from pcs.common.pacemaker.nvset import CibNvsetDto
+from pcs.common.pacemaker.rule import CibRuleExpressionDto
 from pcs.common.reports.item import ReportItem
 from pcs.common.types import StringCollection
-from pcs.lib.cib import (
-    nvpair_multi,
-    sections,
+from pcs.lib.cib import nvpair_multi, sections
+from pcs.lib.cib.rule import (
+    RuleInEffectEval,
+    RuleRoot,
+    get_rule_evaluator,
+    is_rsc_expressions_only,
+    is_rsc_expressions_only_dto,
 )
-from pcs.lib.cib.rule import RuleInEffectEval
-from pcs.lib.cib.rule.in_effect import get_rule_evaluator
 from pcs.lib.cib.tools import (
     IdProvider,
     get_pacemaker_version_by_which_cib_was_validated,
 )
+from pcs.lib.commands.resource import _validate_meta_attributes
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
+from pcs.lib.external import CommandRunner
+from pcs.lib.resource_agent import const as ra_const
 
 
 def resource_defaults_create(
@@ -103,6 +106,7 @@ def _defaults_create(
 
     cib = env.get_cib(minimal_version=required_cib_version)
     id_provider = IdProvider(cib)
+    cmd_runner = env.cmd_runner()
 
     validator = nvpair_multi.ValidateNvsetAppendNew(
         id_provider,
@@ -111,9 +115,19 @@ def _defaults_create(
         nvset_rule=nvset_rule,
         **validator_options,
     )
-    if env.report_processor.report_list(
+    env.report_processor.report_list(
         validator.validate(force_options=reports.codes.FORCE in force_flags)
-    ).has_errors:
+    )
+
+    # meta-attrs validation - only for resource meta attributes
+    if cib_section_name == sections.RSC_DEFAULTS:
+        env.report_processor.report_list(
+            __validate_meta_attrs_based_on_rule(
+                cmd_runner, validator.get_parsed_rule(), nvpairs
+            )
+        )
+
+    if env.report_processor.has_errors:
         raise LibraryError()
 
     nvpair_multi.nvset_append_new(
@@ -293,8 +307,10 @@ def _defaults_update(
     nvpairs: Mapping[str, str],
     pcs_command: reports.types.PcsCommand,
 ) -> None:
+    # ruff: noqa: PLR0912 Too many branches
     cib = env.get_cib()
     id_provider = IdProvider(cib)
+    cmd_runner = env.cmd_runner()
 
     if nvset_id is None:
         # Backward compatibility code to support an old use case where no id
@@ -340,12 +356,41 @@ def _defaults_update(
             ReportItem.warning(reports.messages.DefaultsCanBeOverridden())
         )
         if len(nvset_elements) == 1:
+            # meta-attrs validation - only for resource meta attributes
+            if cib_section_name == sections.RSC_DEFAULTS:
+                nvset_dto = nvpair_multi.nvset_element_to_dto(
+                    nvset_elements[0],
+                    get_rule_evaluator(
+                        cib,
+                        cmd_runner,
+                        env.report_processor,
+                        evaluate_expired=False,
+                    ),
+                )
+                env.report_processor.report_list(
+                    __validate_meta_attrs_based_on_rule(
+                        cmd_runner, nvset_dto.rule, nvpairs
+                    )
+                )
+                if env.report_processor.has_errors:
+                    raise LibraryError()
+
             nvpair_multi.nvset_update(nvset_elements[0], id_provider, nvpairs)
         elif only_removing:
             # do not create new nvset if there is none and we are only removing
             # nvpairs
             return
         else:
+            # meta-attrs validation - only for resource meta attributes
+            if cib_section_name == sections.RSC_DEFAULTS:
+                env.report_processor.report_list(
+                    __validate_meta_attrs_based_on_rule(
+                        cmd_runner, None, nvpairs
+                    )
+                )
+                if env.report_processor.has_errors:
+                    raise LibraryError()
+
             nvpair_multi.nvset_append_new(
                 sections.get(cib, cib_section_name),
                 id_provider,
@@ -357,14 +402,68 @@ def _defaults_update(
         env.push_cib()
         return
 
-    nvset_elements, report_list = nvpair_multi.find_nvsets_by_ids(
+    nvset_element_list, report_list = nvpair_multi.find_nvsets_by_ids(
         sections.get(cib, cib_section_name), [nvset_id]
     )
     if env.report_processor.report_list(report_list).has_errors:
         raise LibraryError()
 
-    nvpair_multi.nvset_update(nvset_elements[0], id_provider, nvpairs)
+    nvset_element = nvset_element_list[0]
+
+    # meta-attrs validation - only for resource meta attributes
+    if cib_section_name == sections.RSC_DEFAULTS:
+        nvset_dto = nvpair_multi.nvset_element_to_dto(
+            nvset_element,
+            get_rule_evaluator(
+                cib, cmd_runner, env.report_processor, evaluate_expired=False
+            ),
+        )
+        env.report_processor.report_list(
+            __validate_meta_attrs_based_on_rule(
+                cmd_runner, nvset_dto.rule, nvpairs
+            )
+        )
+
+    if env.report_processor.has_errors:
+        raise LibraryError()
+
+    nvpair_multi.nvset_update(nvset_element, id_provider, nvpairs)
     env.report_processor.report(
         ReportItem.warning(reports.messages.DefaultsCanBeOverridden())
     )
     env.push_cib()
+
+
+def __validate_meta_attrs_based_on_rule(
+    cmd_runner: CommandRunner,
+    rule: Union[None, RuleRoot, CibRuleExpressionDto],
+    meta_attrs: Mapping[str, str],
+) -> reports.ReportItemList:
+    # Currently, pcmk provides meta-attrs definition for primitive and stonith
+    # only. That is not sufficient - meta-attrs valid for other resource types
+    # would be rejected by pcs. So we only validate when we are sure the
+    # defaults apply only to a primitive or a stonith.
+    # TODO Once pcmk provides meta-attrs definition for all resource types, run
+    # the validation in all cases.
+    if not meta_attrs:
+        return []
+
+    if rule and (
+        (isinstance(rule, RuleRoot) and is_rsc_expressions_only(rule))
+        or (
+            isinstance(rule, CibRuleExpressionDto)
+            and is_rsc_expressions_only_dto(rule)
+        )
+    ):
+        # Rules with resource expressions only are easily detectable and they
+        # apply to primitive resources only.
+        return _validate_meta_attributes(
+            cmd_runner,
+            [ra_const.PRIMITIVE_META, ra_const.STONITH_META],
+            meta_attrs,
+        )
+    # Meta-attrs in nvset with other rules or no rules cannot be validated,
+    # they may apply to all resource types and we don't have meta-attrs
+    # definition for those.
+    # TODO: Report a warning that no validation happened.
+    return []

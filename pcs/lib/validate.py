@@ -526,6 +526,10 @@ class PcmkMetaAttributeNamesIn(KeyValidator):
         unknown_meta = set(option_dict.keys()) - set(self._option_name_list)
         report_list = []
         if unknown_meta:
+            # Meta attributes are meant for storing values in arbitrary keys -
+            # users can put any keys into meta attributes. Some of those keys
+            # are recognized and processed by pacemaker. But we ALWAYS want to
+            # ALLOW ANY KEYS. So this must never be an error.
             report_list.append(
                 ReportItem(
                     severity=reports.ReportItemSeverity.warning(),

@@ -225,6 +225,7 @@ EXTRA_DIST		= \
 			  tier0/lib/cib/rule/test_cib_to_str.py \
 			  tier0/lib/cib/rule/test_parsed_to_cib.py \
 			  tier0/lib/cib/rule/test_parser.py \
+			  tier0/lib/cib/rule/test_tools.py \
 			  tier0/lib/cib/rule/test_validator.py \
 			  tier0/lib/cib/test_acl.py \
 			  tier0/lib/cib/test_alert.py \

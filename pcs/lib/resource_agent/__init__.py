@@ -20,6 +20,7 @@ from .facade import (
     ResourceAgentFacade,
     ResourceAgentFacadeFactory,
     get_crm_resource_metadata,
+    unique_resource_agent_parameters,
 )
 from .list import (
     find_one_resource_agent_by_type,

@@ -19,20 +19,13 @@ from typing import (
 
 from lxml.etree import _Element
 
-from pcs.common import (
-    const,
-    file_type_codes,
-    reports,
-)
+from pcs.common import const, file_type_codes, reports
 from pcs.common.interface import dto
 from pcs.common.pacemaker.resource.list import CibResourcesDto
 from pcs.common.reports import ReportItemList, ReportProcessor
 from pcs.common.reports.item import ReportItem
 from pcs.common.resource_status import ResourcesStatusFacade, ResourceState
-from pcs.common.tools import (
-    Version,
-    timeout_to_seconds,
-)
+from pcs.common.tools import Version, timeout_to_seconds
 from pcs.common.types import StringCollection, StringSequence
 from pcs.lib.cib import const as cib_const
 from pcs.lib.cib import resource
@@ -55,10 +48,7 @@ from pcs.lib.cib.tools import (
     get_resources,
     get_status,
 )
-from pcs.lib.env import (
-    LibraryEnvironment,
-    WaitType,
-)
+from pcs.lib.env import LibraryEnvironment, WaitType
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
 from pcs.lib.node import (
@@ -92,10 +82,7 @@ from pcs.lib.pacemaker.status import (
     ClusterStatusParsingError,
     cluster_status_parsing_error_to_report,
 )
-from pcs.lib.pacemaker.values import (
-    is_true,
-    validate_id,
-)
+from pcs.lib.pacemaker.values import is_true, validate_id
 from pcs.lib.resource_agent import (
     CrmResourceAgent,
     ResourceAgentError,
@@ -108,15 +95,13 @@ from pcs.lib.resource_agent import (
     get_crm_resource_metadata,
     resource_agent_error_to_report_item,
     split_resource_agent_name,
+    unique_resource_agent_parameters,
 )
 from pcs.lib.resource_agent.const import OCF_1_1, PRIMITIVE_META, STONITH_META
 from pcs.lib.sbd_stonith import ensure_some_stonith_remains
 from pcs.lib.tools import get_tmp_cib
 from pcs.lib.validate import ValueTimeInterval
-from pcs.lib.xml_tools import (
-    etree_to_str,
-    get_root,
-)
+from pcs.lib.xml_tools import etree_to_str, get_root
 
 
 @contextmanager
@@ -372,17 +357,22 @@ def _check_special_cases(
 
 def _validate_meta_attributes(
     cmd_runner: CommandRunner,
-    meta_attributes_type: CrmResourceAgent,
-    meta_attributes: Mapping[str, str],
+    meta_attrs_type_list: Iterable[CrmResourceAgent],
+    meta_attrs: Mapping[str, str],
 ) -> reports.ReportItemList:
     report_list = []
     try:
-        meta_metadata_params = get_crm_resource_metadata(
-            cmd_runner, meta_attributes_type
-        )
+        meta_attrs_definition = []
+        for meta_attrs_type in meta_attrs_type_list:
+            meta_attrs_definition.extend(
+                get_crm_resource_metadata(cmd_runner, meta_attrs_type)
+            )
+
         report_list.extend(
             resource.meta.validate_meta_attributes(
-                [meta_attributes_type], meta_metadata_params, meta_attributes
+                meta_attrs_type_list,
+                unique_resource_agent_parameters(meta_attrs_definition),
+                meta_attrs,
             )
         )
     except ResourceAgentError as e:
@@ -390,9 +380,7 @@ def _validate_meta_attributes(
         # load the metadata, to keep backwards compatibility
         report_list.append(
             resource_agent_error_to_report_item(
-                e,
-                severity=reports.ReportItemSeverity.warning(),
-                is_stonith=meta_attributes_type == STONITH_META,
+                e, severity=reports.ReportItemSeverity.warning()
             )
         )
         # TODO: warn that validation was skipped
@@ -2996,7 +2984,7 @@ def update_meta(
             )
             env.report_processor.report_list(
                 _validate_meta_attributes(
-                    cmd_runner, meta_attributes_type, meta_attrs
+                    cmd_runner, [meta_attributes_type], meta_attrs
                 )
             )
         else:

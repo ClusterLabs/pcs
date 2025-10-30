@@ -432,3 +432,35 @@ class GetCrmResourceMetadata(TestCase):
                 env.cmd_runner(), agent_name
             ).facade_from_crm_attribute(agent_name)
         self.assertEqual(cm.exception.agent_name, agent_name)
+
+
+class UniqueResourceAgentParameters(TestCase):
+    @staticmethod
+    def _fixture_parameter(name, shortdesc):
+        return ra.ResourceAgentParameter(
+            name,
+            shortdesc=shortdesc,
+            longdesc=None,
+            type="string",
+            default=None,
+            enum_values=None,
+            required=False,
+            advanced=False,
+            deprecated=False,
+            deprecated_by=[],
+            deprecated_desc=None,
+            unique_group=None,
+            reloadable=False,
+        )
+
+    def test_empty(self):
+        self.assertEqual(ra.unique_resource_agent_parameters([]), [])
+
+    def test_unique(self):
+        param_a1 = self._fixture_parameter("a", "a1")
+        param_a2 = self._fixture_parameter("a", "a2")
+        param_b1 = self._fixture_parameter("b", "b1")
+        self.assertEqual(
+            ra.unique_resource_agent_parameters([param_a1, param_b1, param_a2]),
+            [param_a2, param_b1],
+        )

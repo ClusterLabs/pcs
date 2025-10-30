@@ -596,8 +596,11 @@ class PcmkShortcuts:
         }
         name_to_list_options_type = {"primitive-meta": "primitive"}
         if stdout is None:
-            with open(rc(name_to_metadata_file[agent_name])) as a_file:
-                stdout = a_file.read()
+            if returncode == 0:
+                with open(rc(name_to_metadata_file[agent_name])) as a_file:
+                    stdout = a_file.read()
+            else:
+                stdout = ""
         self.__calls.place(
             name,
             RunnerCall(

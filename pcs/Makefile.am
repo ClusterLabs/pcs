@@ -318,6 +318,7 @@ EXTRA_DIST		= \
 			  lib/cib/rule/__init__.py \
 			  lib/cib/rule/parsed_to_cib.py \
 			  lib/cib/rule/parser.py \
+			  lib/cib/rule/tools.py \
 			  lib/cib/rule/validator.py \
 			  lib/cib/sections.py \
 			  lib/cib/status.py \

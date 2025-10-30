@@ -344,3 +344,14 @@ def get_crm_resource_metadata(
     if agent_name == const.STONITH_META:
         parameters_metadata += _ADDITIONAL_FENCING_META_ATTRIBUTES
     return parameters_metadata
+
+
+def unique_resource_agent_parameters(
+    param_list: list[ResourceAgentParameter],
+) -> list[ResourceAgentParameter]:
+    """
+    Unique resource agent parameters based on their name
+
+    param_list -- resource agent parameters
+    """
+    return list({param.name: param for param in param_list}.values())
