@@ -12,10 +12,12 @@ from pcs.common import (
 from pcs.lib.commands import resource
 from pcs.lib.errors import LibraryError
 from pcs.lib.resource_agent import ResourceAgentName
+from pcs.lib.resource_agent import const as ra_const
 
 from pcs_test.tools import fixture
 from pcs_test.tools.assertions import assert_raise_library_error
 from pcs_test.tools.command_env import get_env_tools
+from pcs_test.tools.metadata_dto import FIXTURE_KNOWN_META_NAMES_PRIMITIVE_META
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import outdent
 
@@ -1351,6 +1353,81 @@ class Create(TestCase):
             [fixture.info(reports.codes.CIB_UPGRADE_SUCCESSFUL)]
         )
 
+    def _fixture_primitive_meta_attrs(self, meta):
+        return f"""
+            <resources>
+                <primitive class="ocf" id="A" provider="heartbeat"
+                    type="Dummy">
+                    {meta}
+                    <operations>
+                        <op id="A-migrate_from-interval-0s" interval="0s"
+                            name="migrate_from" timeout="20"></op>
+                        <op id="A-migrate_to-interval-0s" interval="0s"
+                            name="migrate_to" timeout="20"></op>
+                        <op id="A-monitor-interval-10" interval="10"
+                            name="monitor" timeout="20"></op>
+                        <op id="A-reload-interval-0s" interval="0s"
+                            name="reload" timeout="20"></op>
+                        <op id="A-start-interval-0s" interval="0s"
+                            name="start" timeout="20"></op>
+                        <op id="A-stop-interval-0s" interval="0s"
+                            name="stop" timeout="20"></op>
+                    </operations>
+                </primitive>
+            </resources>
+        """
+
+    def test_known_meta_attributes(self):
+        self.config.runner.pcmk.load_agent()
+        self.config.runner.cib.load()
+        self.config.runner.pcmk.resource_agent_self_validation({})
+        self.config.runner.pcmk.load_crm_resource_metadata()
+        self.config.env.push_cib(
+            resources=self._fixture_primitive_meta_attrs(
+                """
+                <meta_attributes id="A-meta_attributes">
+                    <nvpair id="A-meta_attributes-target-role"
+                        name="target-role" value="Stopped"/>
+                </meta_attributes>
+                """
+            ),
+        )
+        create(
+            self.env_assist.get_env(),
+            meta_attributes={"target-role": "Stopped"},
+        )
+        self.env_assist.assert_reports([])
+
+    def test_unknown_meta_attributes(self):
+        self.config.runner.pcmk.load_agent()
+        self.config.runner.cib.load()
+        self.config.runner.pcmk.resource_agent_self_validation({})
+        self.config.runner.pcmk.load_crm_resource_metadata()
+        self.config.env.push_cib(
+            resources=self._fixture_primitive_meta_attrs(
+                """
+                <meta_attributes id="A-meta_attributes">
+                    <nvpair id="A-meta_attributes-unknown_meta"
+                        name="unknown_meta" value="unknown_value"/>
+                </meta_attributes>
+                """
+            )
+        )
+        create(
+            self.env_assist.get_env(),
+            meta_attributes={"unknown_meta": "unknown_value"},
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.META_ATTRS_UNKNOWN_TO_PCMK,
+                    unknown_meta=["unknown_meta"],
+                    known_meta=FIXTURE_KNOWN_META_NAMES_PRIMITIVE_META,
+                    meta_types=[ra_const.PRIMITIVE_META],
+                )
+            ]
+        )
+
 
 @mock.patch.object(
     settings, "pacemaker_api_result_schema", rc("pcmk_rng/api/api-result.rng")
@@ -1470,14 +1547,16 @@ class CreateWait(TestCase):
         )
 
     def test_wait_ok_disable_ok_by_target_role(self):
-        (
-            self.config.runner.pcmk.load_state(
-                resources=fixture_state_resources_xml(role="Stopped")
-            ).env.push_cib(
-                resources=fixture_cib_resources_xml_simplest_disabled,
-                wait=TIMEOUT,
-                instead="env.push_cib",
-            )
+        self.config.runner.pcmk.load_state(
+            resources=fixture_state_resources_xml(role="Stopped")
+        )
+        self.config.runner.pcmk.load_crm_resource_metadata(
+            before="env.push_cib"
+        )
+        self.config.env.push_cib(
+            resources=fixture_cib_resources_xml_simplest_disabled,
+            wait=TIMEOUT,
+            instead="env.push_cib",
         )
         create(
             self.env_assist.get_env(),
@@ -1761,6 +1840,7 @@ class CreateInGroup(TestCase):
     )
     def test_wait_ok_disable_ok_by_target_role(self):
         self.config.runner.pcmk.resource_agent_self_validation({})
+        self.config.runner.pcmk.load_crm_resource_metadata()
         self.config.env.push_cib(
             resources=fixture_cib_resources_xml_group_simplest_disabled,
             wait=TIMEOUT,
@@ -2083,6 +2163,7 @@ class CreateAsClone(TestCase):
     )
     def test_wait_ok_disable_ok_by_target_role(self):
         self.config.runner.pcmk.resource_agent_self_validation({})
+        self.config.runner.pcmk.load_crm_resource_metadata()
         self.config.env.push_cib(
             resources="""
                 <resources>

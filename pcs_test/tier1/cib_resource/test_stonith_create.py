@@ -1,4 +1,9 @@
-from pcs_test.tier1.cib_resource.common import ResourceTest
+from pcs.lib.resource_agent import const as ra_const
+
+from pcs_test.tier1.cib_resource.common import (
+    ResourceTest,
+    fixture_meta_attributes_warning,
+)
 from pcs_test.tools.bin_mock import get_mock_settings
 from pcs_test.tools.misc import is_minimum_pacemaker_version
 
@@ -216,6 +221,31 @@ class WithMeta(ResourceTest):
                     </operations>
                 </primitive>
             </resources>""",
+        )
+
+    def test_simplest_with_unknown_meta_attributes(self):
+        self.assert_effect(
+            (
+                "stonith create S fence_pcsmock_minimal meta "
+                "unknown_meta=unknown_value"
+            ).split(),
+            """<resources>
+                <primitive class="stonith" id="S" type="fence_pcsmock_minimal">
+                    <meta_attributes id="S-meta_attributes">
+                        <nvpair id="S-meta_attributes-unknown_meta"
+                            name="unknown_meta" value="unknown_value"
+                        />
+                    </meta_attributes>
+                    <operations>
+                        <op id="S-monitor-interval-60s" interval="60s"
+                            name="monitor"
+                        />
+                    </operations>
+                </primitive>
+            </resources>""",
+            stderr_full=fixture_meta_attributes_warning(
+                ["unknown_meta"], ra_const.STONITH_META
+            ),
         )
 
 

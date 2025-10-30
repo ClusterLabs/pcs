@@ -19,20 +19,13 @@ from typing import (
 
 from lxml.etree import _Element
 
-from pcs.common import (
-    const,
-    file_type_codes,
-    reports,
-)
+from pcs.common import const, file_type_codes, reports
 from pcs.common.interface import dto
 from pcs.common.pacemaker.resource.list import CibResourcesDto
 from pcs.common.reports import ReportItemList, ReportProcessor
 from pcs.common.reports.item import ReportItem
 from pcs.common.resource_status import ResourcesStatusFacade, ResourceState
-from pcs.common.tools import (
-    Version,
-    timeout_to_seconds,
-)
+from pcs.common.tools import Version, timeout_to_seconds
 from pcs.common.types import StringCollection, StringSequence
 from pcs.lib.cib import const as cib_const
 from pcs.lib.cib import resource
@@ -55,10 +48,7 @@ from pcs.lib.cib.tools import (
     get_resources,
     get_status,
 )
-from pcs.lib.env import (
-    LibraryEnvironment,
-    WaitType,
-)
+from pcs.lib.env import LibraryEnvironment, WaitType
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
 from pcs.lib.node import (
@@ -92,11 +82,9 @@ from pcs.lib.pacemaker.status import (
     ClusterStatusParsingError,
     cluster_status_parsing_error_to_report,
 )
-from pcs.lib.pacemaker.values import (
-    is_true,
-    validate_id,
-)
+from pcs.lib.pacemaker.values import is_true, validate_id
 from pcs.lib.resource_agent import (
+    CrmResourceAgent,
     ResourceAgentError,
     ResourceAgentFacade,
     ResourceAgentFacadeFactory,
@@ -104,17 +92,16 @@ from pcs.lib.resource_agent import (
     UnableToGetAgentMetadata,
     UnsupportedOcfVersion,
     find_one_resource_agent_by_type,
+    get_crm_resource_metadata,
     resource_agent_error_to_report_item,
     split_resource_agent_name,
+    unique_resource_agent_parameters,
 )
-from pcs.lib.resource_agent.const import OCF_1_1
+from pcs.lib.resource_agent.const import OCF_1_1, PRIMITIVE_META, STONITH_META
 from pcs.lib.sbd_stonith import ensure_some_stonith_remains
 from pcs.lib.tools import get_tmp_cib
 from pcs.lib.validate import ValueTimeInterval
-from pcs.lib.xml_tools import (
-    etree_to_str,
-    get_root,
-)
+from pcs.lib.xml_tools import etree_to_str, get_root
 
 
 @contextmanager
@@ -366,6 +353,38 @@ def _check_special_cases(
 
     if env.report_processor.report_list(report_list).has_errors:
         raise LibraryError()
+
+
+def _validate_meta_attributes(
+    cmd_runner: CommandRunner,
+    meta_attrs_type_list: Iterable[CrmResourceAgent],
+    meta_attrs: Mapping[str, str],
+) -> reports.ReportItemList:
+    report_list = []
+    try:
+        meta_attrs_definition = []
+        for meta_attrs_type in meta_attrs_type_list:
+            meta_attrs_definition.extend(
+                get_crm_resource_metadata(cmd_runner, meta_attrs_type)
+            )
+
+        report_list.extend(
+            resource.meta.validate_meta_attributes(
+                meta_attrs_type_list,
+                unique_resource_agent_parameters(meta_attrs_definition),
+                meta_attrs,
+            )
+        )
+    except ResourceAgentError as e:
+        # we do not want to end with an error in case we were unable to
+        # load the metadata, to keep backwards compatibility
+        report_list.append(
+            resource_agent_error_to_report_item(
+                e, severity=reports.ReportItemSeverity.warning()
+            )
+        )
+        # TODO: warn that validation was skipped
+    return report_list
 
 
 def _validate_clone_meta_attributes(
@@ -2947,6 +2966,33 @@ def update_meta(
             id_provider, cib_validate_with, resource_el
         )
 
+    cmd_runner = env.cmd_runner()
+
+    if any(meta_attrs.values()):
+        # Pacemaker does not provide meta attrs definition for groups, but
+        # for now, the definition for groups is the same as for primitives.
+        # Once pcmk starts providing it, we need to update the code. If the
+        # definition for groups diverges from primitive meta, we need to update
+        # the code as well, similarly to what we have with STONITH_META now
+        if resource.primitive.is_primitive(
+            resource_el
+        ) or resource.group.is_group(resource_el):
+            meta_attributes_type = (
+                STONITH_META
+                if resource.stonith.is_stonith(resource_el)
+                else PRIMITIVE_META
+            )
+            env.report_processor.report_list(
+                _validate_meta_attributes(
+                    cmd_runner, [meta_attributes_type], meta_attrs
+                )
+            )
+        else:
+            pass
+            # TODO: warn that validation was skipped
+            # we cannot validate meta attributes for clones and bundles, since
+            # pacemaker does not provide metadata for these
+
     meta_attrs_nvset_list = find_nvsets(resource_el, NVSET_META)
     meta_attrs_nvset = (
         meta_attrs_nvset_list[0] if meta_attrs_nvset_list else None
@@ -2978,8 +3024,6 @@ def update_meta(
                 force_flags,
             )
         )
-
-    cmd_runner = env.cmd_runner()
 
     if resource.clone.is_any_clone(resource_el):
         _validate_clone_meta_attributes(

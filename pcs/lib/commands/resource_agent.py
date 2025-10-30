@@ -26,6 +26,7 @@ from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
 from pcs.lib.resource_agent import (
+    CrmResourceAgent,
     ListResourceAgentNameDto,
     ResourceAgentActionDto,
     ResourceAgentError,
@@ -34,8 +35,10 @@ from pcs.lib.resource_agent import (
     ResourceAgentMetadataDto,
     ResourceAgentName,
     ResourceAgentNameDto,
+    ResourceMetaAttributesMetadataDto,
     StandardProviderTuple,
     find_one_resource_agent_by_type,
+    get_crm_resource_metadata,
     list_resource_agents,
     list_resource_agents_ocf_providers,
     list_resource_agents_standards,
@@ -325,3 +328,26 @@ def get_structured_agent_name(
     except ResourceAgentError as e:
         lib_env.report_processor.report(resource_agent_error_to_report_item(e))
         raise LibraryError() from e
+
+
+def get_meta_attributes_metadata(
+    lib_env: LibraryEnvironment, resource_type: CrmResourceAgent
+) -> ResourceMetaAttributesMetadataDto:
+    """
+    Return meta-attributes metadata for a resource
+
+    resource_type -- resource type whose metadata we want to get
+        (primitive-meta, stonith-meta)
+    """
+    try:
+        parameters_metadata = get_crm_resource_metadata(
+            lib_env.cmd_runner(), resource_type
+        )
+    except ResourceAgentError as e:
+        lib_env.report_processor.report(resource_agent_error_to_report_item(e))
+        raise LibraryError() from e
+
+    return ResourceMetaAttributesMetadataDto(
+        name=resource_type,
+        parameters=[parameter.to_dto() for parameter in parameters_metadata],
+    )

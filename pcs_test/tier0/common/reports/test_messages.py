@@ -6490,3 +6490,30 @@ class PcsCfgsyncConflictRepeatAction(NameBuildTest):
             ),
             reports.PcsCfgsyncConflictRepeatAction(),
         )
+
+
+class MetaAttrsUnknownToPcmk(NameBuildTest):
+    def test_single_option(self):
+        self.assert_message_from_report(
+            (
+                "Resource meta attribute 'unknown' has no effect on cluster "
+                "resource handling, meta attribute with effect: 'known'"
+            ),
+            reports.MetaAttrsUnknownToPcmk(
+                ["unknown"], ["known"], ["primitive-meta"]
+            ),
+        )
+
+    def test_multiple_options(self):
+        self.assert_message_from_report(
+            (
+                "Resource / stonith meta attributes 'unknown1', 'unknown2' "
+                "have no effect on cluster resource handling, meta attributes "
+                "with effect: 'known1', 'known2'"
+            ),
+            reports.MetaAttrsUnknownToPcmk(
+                ["unknown1", "unknown2"],
+                ["known1", "known2"],
+                ["primitive-meta", "stonith-meta"],
+            ),
+        )

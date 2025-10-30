@@ -914,6 +914,27 @@ class MetadataParameterJoinShortLongDesc(TestCase):
             metadata_out,
         )
 
+    def test_shortdesc_already_in_longdesc(self):
+        metadata_in = self._fixture_metadata(
+            [
+                self._fixture_parameter("shortdesc", "shortdesc. longdesc"),
+                self._fixture_parameter("shortdesc.", "shortdesc. longdesc"),
+            ]
+        )
+        metadata_out = self._fixture_metadata(
+            [
+                self._fixture_parameter("shortdesc", "shortdesc. longdesc"),
+                self._fixture_parameter("shortdesc.", "shortdesc. longdesc"),
+            ]
+        )
+        self.assertEqual(
+            # pylint: disable=protected-access
+            ra.pcs_transform._metadata_parameter_join_short_long_desc(
+                metadata_in
+            ),
+            metadata_out,
+        )
+
 
 class MetadataRemoveUnwantedStonithParameters(TestCase):
     @staticmethod

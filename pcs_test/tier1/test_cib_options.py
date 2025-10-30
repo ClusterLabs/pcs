@@ -7,17 +7,14 @@ from lxml import etree
 
 from pcs.common.interface.dto import to_dict
 from pcs.common.pacemaker.defaults import CibDefaultsDto
-from pcs.common.pacemaker.nvset import (
-    CibNvpairDto,
-    CibNvsetDto,
-)
+from pcs.common.pacemaker.nvset import CibNvpairDto, CibNvsetDto
 from pcs.common.pacemaker.rule import CibRuleExpressionDto
-from pcs.common.types import (
-    CibRuleExpressionType,
-    CibRuleInEffectStatus,
-)
+from pcs.common.str_tools import format_list, format_plural
+from pcs.common.types import CibRuleExpressionType, CibRuleInEffectStatus
 
+from pcs_test.tools import metadata_dto
 from pcs_test.tools.assertions import AssertPcsMixin
+from pcs_test.tools.bin_mock import get_mock_settings
 from pcs_test.tools.cib import get_assert_pcs_effect_mixin
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import (
@@ -43,6 +40,24 @@ DEFAULTS_MAY_BE_OVERRIDDEN = (
     "with their own defined values\n"
 )
 CIB_HAS_BEEN_UPGRADED = "CIB has been upgraded to the latest schema version.\n"
+
+
+def fixture_warning_unknown_meta_primitive(unknown_meta):
+    known_meta = format_list(
+        sorted(
+            set(
+                metadata_dto.FIXTURE_KNOWN_META_NAMES_PRIMITIVE_META
+                + metadata_dto.FIXTURE_KNOWN_META_NAMES_STONITH_META
+            )
+        )
+    )
+    attributes = format_plural(unknown_meta, "attribute")
+    have = format_plural(unknown_meta, "has")
+    return (
+        f"Warning: Resource / stonith meta {attributes} "
+        f"{format_list(unknown_meta)} {have} no effect on cluster resource "
+        f"handling, meta attributes with effect: {known_meta}\n"
+    )
 
 
 def fixture_defaults_dto(prefix, include_expired):
@@ -161,6 +176,7 @@ class TestDefaultsMixin:
     def setUp(self):
         self.temp_cib = get_tmp_file("tier1_cib_options")
         self.pcs_runner = PcsRunner(self.temp_cib.name)
+        self.pcs_runner.mock_settings = get_mock_settings("crm_resource_exec")
         self.maxDiff = None
 
     def tearDown(self):
@@ -723,7 +739,11 @@ class RscDefaultsSetCreate(
                 </meta_attributes>
             </{self.cib_tag}>
             """,
-            stderr_full=(CIB_HAS_BEEN_UPGRADED + DEFAULTS_MAY_BE_OVERRIDDEN),
+            stderr_full=(
+                CIB_HAS_BEEN_UPGRADED
+                + fixture_warning_unknown_meta_primitive(["name1"])
+                + DEFAULTS_MAY_BE_OVERRIDDEN
+            ),
         )
 
     def test_node_attr_expressions(self):
@@ -964,6 +984,45 @@ class RscDefaultsSetUpdate(
     prefix = "rsc"
     cib_tag = "rsc_defaults"
 
+    @skip_unless_pacemaker_supports_rsc_and_op_rules()
+    def test_validate_meta_for_primitive(self):
+        xml = f"""
+            <{self.cib_tag}>
+                <meta_attributes id="X">
+                    <rule id="X-rule" boolean-op="and">
+                        <rsc_expression id="X-rule-rsc-Dummy" type="Dummy"/>
+                    </rule>
+                    <nvpair id="X-name1" name="name1" value="value1" />
+                    <nvpair id="X-name2" name="name2" value="value2" />
+                    <nvpair id="X-name3" name="name3" value="value3" />
+                </meta_attributes>
+            </{self.cib_tag}>
+        """
+        xml_manip = XmlManipulation.from_file(empty_cib_rules)
+        xml_manip.append_to_first_tag_name("configuration", xml)
+        write_data_to_tmpfile(str(xml_manip), self.temp_cib)
+
+        self.assert_effect(
+            self.cli_command + "set update X meta name2=value2A name3=".split(),
+            dedent(
+                f"""\
+                <{self.cib_tag}>
+                    <meta_attributes id="X">
+                        <rule id="X-rule" boolean-op="and">
+                            <rsc_expression id="X-rule-rsc-Dummy" type="Dummy"/>
+                        </rule>
+                        <nvpair id="X-name1" name="name1" value="value1" />
+                        <nvpair id="X-name2" name="name2" value="value2A" />
+                    </meta_attributes>
+                </{self.cib_tag}>
+            """
+            ),
+            stderr_full=(
+                fixture_warning_unknown_meta_primitive(["name2"])
+                + DEFAULTS_MAY_BE_OVERRIDDEN
+            ),
+        )
+
 
 class OpDefaultsSetUpdate(
     get_assert_pcs_effect_mixin(
@@ -1086,6 +1145,45 @@ class RscDefaultsUpdate(
     cli_command = ["resource", "defaults"]
     prefix = "rsc"
     cib_tag = "rsc_defaults"
+
+    @skip_unless_pacemaker_supports_rsc_and_op_rules()
+    def test_legacy_validate_meta_for_primitive(self):
+        xml = f"""
+            <{self.cib_tag}>
+                <meta_attributes id="X">
+                    <rule id="X-rule" boolean-op="and">
+                        <rsc_expression id="X-rule-rsc-Dummy" type="Dummy"/>
+                    </rule>
+                    <nvpair id="X-name1" name="name1" value="value1" />
+                    <nvpair id="X-name2" name="name2" value="value2" />
+                    <nvpair id="X-name3" name="name3" value="value3" />
+                </meta_attributes>
+            </{self.cib_tag}>
+        """
+        xml_manip = XmlManipulation.from_file(empty_cib_rules)
+        xml_manip.append_to_first_tag_name("configuration", xml)
+        write_data_to_tmpfile(str(xml_manip), self.temp_cib)
+
+        self.assert_effect(
+            self.cli_command + "update name2=value2A name3=".split(),
+            dedent(
+                f"""\
+                <{self.cib_tag}>
+                    <meta_attributes id="X">
+                        <rule id="X-rule" boolean-op="and">
+                            <rsc_expression id="X-rule-rsc-Dummy" type="Dummy"/>
+                        </rule>
+                        <nvpair id="X-name1" name="name1" value="value1" />
+                        <nvpair id="X-name2" name="name2" value="value2A" />
+                    </meta_attributes>
+                </{self.cib_tag}>
+            """
+            ),
+            stderr_full=(
+                DEFAULTS_MAY_BE_OVERRIDDEN
+                + fixture_warning_unknown_meta_primitive(["name2"])
+            ),
+        )
 
 
 class OpDefaultsUpdate(

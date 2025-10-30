@@ -178,6 +178,8 @@ def _parameter_join_short_long_desc(
         return parameter
     if shortdesc and not shortdesc.endswith("."):
         shortdesc = f"{shortdesc}."
+    if longdesc.startswith(shortdesc):
+        return parameter
     return replace(parameter, longdesc=f"{shortdesc}\n{longdesc}".strip())
 
 

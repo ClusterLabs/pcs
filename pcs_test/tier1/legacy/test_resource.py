@@ -19,8 +19,12 @@ from pcs.common.str_tools import (
     format_plural,
 )
 from pcs.constraint import LOCATION_NODE_VALIDATION_SKIP_MSG
+from pcs.lib.resource_agent import const as ra_const
 
-from pcs_test.tier1.cib_resource.common import ResourceTest
+from pcs_test.tier1.cib_resource.common import (
+    ResourceTest,
+    fixture_meta_attributes_warning,
+)
 from pcs_test.tier1.legacy.common import FIXTURE_UTILIZATION_WARNING
 from pcs_test.tools.assertions import (
     AssertPcsMixin,
@@ -4007,6 +4011,9 @@ class MetaAttrs(
         self.assert_effect(
             "resource create --no-default-ops R ocf:pcsmock:minimal meta a=b".split(),
             self.fixture_xml_resource_with_meta(),
+            stderr_full=fixture_meta_attributes_warning(
+                ["a"], ra_const.PRIMITIVE_META
+            ),
         )
 
     def test_meta_attrs(self):
@@ -4017,6 +4024,9 @@ class MetaAttrs(
                 " mandatory=test1a optional=test2a op monitor interval=30 meta"
                 " test5=test5a test6=test6a"
             ).split(),
+            stderr_full=fixture_meta_attributes_warning(
+                ["test5", "test6"], ra_const.PRIMITIVE_META
+            ),
         )
         self.assert_pcs_success(
             (
@@ -4030,10 +4040,18 @@ class MetaAttrs(
                 "interval=35 meta test7=test7a test6="
             ).split()
         )
-        self.assert_pcs_success("resource meta D1 d1meta=superd1meta".split())
+        self.assert_pcs_success(
+            "resource meta D1 d1meta=superd1meta".split(),
+            stderr_full=fixture_meta_attributes_warning(
+                ["d1meta"], ra_const.PRIMITIVE_META
+            ),
+        )
         self.assert_pcs_success("resource group add TestRG D1".split())
         self.assert_pcs_success(
             "resource meta TestRG testrgmeta=mymeta testrgmeta2=mymeta2".split(),
+            stderr_full=fixture_meta_attributes_warning(
+                ["testrgmeta", "testrgmeta2"], ra_const.PRIMITIVE_META
+            ),
         )
         self.assert_pcs_success(
             "resource config".split(),
@@ -4208,7 +4226,11 @@ class UpdateInstanceAttrs(
                 "allowed options are: 'advanced', 'enum', 'mandatory', "
                 "'optional', 'unique1', 'unique2', use --force to override\n"
                 "Error: required resource option 'mandatory' is missing, "
-                "use --force to override\n" + ERRORS_HAVE_OCCURRED
+                "use --force to override\n"
+                + fixture_meta_attributes_warning(
+                    ["test7"], ra_const.PRIMITIVE_META
+                )
+                + ERRORS_HAVE_OCCURRED
             ),
         )
 
@@ -4223,6 +4245,9 @@ class UpdateInstanceAttrs(
                 " allowed options are: 'advanced', 'enum', 'mandatory', "
                 "'optional', 'unique1', 'unique2'\n"
                 "Warning: required resource option 'mandatory' is missing\n"
+                + fixture_meta_attributes_warning(
+                    ["test7"], ra_const.PRIMITIVE_META
+                )
             ),
         )
 

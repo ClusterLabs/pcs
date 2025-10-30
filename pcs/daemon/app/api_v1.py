@@ -82,6 +82,7 @@ API_V1_MAP: Mapping[str, str] = {
     "resource-agent-describe-agent/v1": "resource_agent.describe_agent",
     "resource-agent-get-agents-list/v1": "resource_agent.get_agents_list",
     "resource-agent-get-agent-metadata/v1": "resource_agent.get_agent_metadata",
+    "resource-agent-get-meta-attributes-metadata/v1": "resource_agent.get_meta_attributes_metadata",
     # deprecated, use resource-agent-get-agents-list/v1 instead
     "resource-agent-list-agents/v1": "resource_agent.list_agents",
     "resource-agent-list-agents-for-standard-and-provider/v1": "resource_agent.list_agents_for_standard_and_provider",

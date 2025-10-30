@@ -6,13 +6,19 @@ from pcs.common import (
     reports,
 )
 from pcs.lib.commands import resource
+from pcs.lib.resource_agent.const import PRIMITIVE_META, STONITH_META
 from pcs.lib.resource_agent.types import ResourceAgentName
 
 from pcs_test.tools import fixture
 from pcs_test.tools.assertions import assert_raise_library_error
 from pcs_test.tools.command_env import get_env_tools
+from pcs_test.tools.metadata_dto import (
+    FIXTURE_KNOWN_META_NAMES_PRIMITIVE_META,
+    FIXTURE_KNOWN_META_NAMES_STONITH_META,
+)
 
 _AGENT_NAME_PCMK_DUMMY = ResourceAgentName("ocf", "pacemaker", "Dummy")
+_AGENT_NAME_STONITH = ResourceAgentName("stonith", None, "Dummy")
 _AGENT_NAME_PCMK_STATEFUL = ResourceAgentName("ocf", "pacemaker", "Stateful")
 
 
@@ -193,6 +199,7 @@ class UpdateMeta(TestCase):
 
     def test_meta_attr_elem_missing(self):
         self.config.runner.cib.load(resources=fixture_primitive())
+        self.config.runner.pcmk.load_crm_resource_metadata()
         self.config.corosync_conf.load()
         self.config.env.push_cib(
             resources=fixture_primitive(
@@ -228,6 +235,7 @@ class UpdateMeta(TestCase):
                 """,
             )
         )
+        self.config.runner.pcmk.load_crm_resource_metadata()
         self.config.corosync_conf.load()
         self.config.env.push_cib(
             resources=fixture_primitive(
@@ -252,6 +260,7 @@ class UpdateMeta(TestCase):
         self.config.runner.cib.load(
             resources=fixture_primitive(),
         )
+        self.config.runner.pcmk.load_crm_resource_metadata()
         self.config.corosync_conf.load(node_name_list=["node1"])
         self.env_assist.assert_raise_library_error(
             lambda: resource.update_meta(
@@ -278,6 +287,7 @@ class UpdateMeta(TestCase):
         self.config.runner.cib.load(
             resources=fixture_primitive(),
         )
+        self.config.runner.pcmk.load_crm_resource_metadata()
         self.config.corosync_conf.load()
         self.config.env.push_cib(
             resources=fixture_primitive(
@@ -608,6 +618,10 @@ class UpdateMetaRemoveUpdatedGuestNode(TestCase):
                 else "",
             )
         )
+        # we do not want to read the metadata when we are not adding any new
+        # attributes
+        if new_node_addr:
+            self.config.runner.pcmk.load_crm_resource_metadata()
         self.config.corosync_conf.load()
         self.config.env.push_cib(
             resources=fixture_primitive(
@@ -647,6 +661,8 @@ class UpdateMetaRemoveUpdatedGuestNode(TestCase):
                 else "",
             )
         )
+        if new_node_addr:
+            self.config.runner.pcmk.load_crm_resource_metadata()
         self.config.corosync_conf.load()
         env = self.env_assist.get_env()
         assert_raise_library_error(
@@ -755,4 +771,158 @@ class UpdateMetaRemoveUpdatedGuestNode(TestCase):
                     resource_id=None,
                 ),
             ],
+        )
+
+
+class UpdateMetaValidateMetaAttributes(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+
+    def test_primitive_invalid_meta_attribute_name(self):
+        self.config.runner.cib.load(resources=fixture_primitive())
+        self.config.runner.pcmk.load_crm_resource_metadata()
+        self.config.corosync_conf.load()
+        self.config.env.push_cib(
+            resources=fixture_primitive(
+                meta_nvpairs_xml="""
+                    <nvpair id="A-meta_attributes-name"
+                        name="name" value="value"
+                    />
+                """,
+            )
+        )
+
+        resource.update_meta(
+            self.env_assist.get_env(), "A", {"name": "value"}, []
+        )
+
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.META_ATTRS_UNKNOWN_TO_PCMK,
+                    unknown_meta=["name"],
+                    known_meta=FIXTURE_KNOWN_META_NAMES_PRIMITIVE_META,
+                    meta_types=[PRIMITIVE_META],
+                )
+            ]
+        )
+
+    def test_primitive_invalid_stonith_meta_attribute_name(self):
+        self.config.runner.cib.load(resources=fixture_primitive())
+        self.config.runner.pcmk.load_crm_resource_metadata()
+        self.config.corosync_conf.load()
+        self.config.env.push_cib(
+            resources=fixture_primitive(
+                meta_nvpairs_xml="""
+                    <nvpair id="A-meta_attributes-provides"
+                        name="provides" value="everything"
+                    />
+                """,
+            )
+        )
+
+        resource.update_meta(
+            self.env_assist.get_env(), "A", {"provides": "everything"}, []
+        )
+
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.META_ATTRS_UNKNOWN_TO_PCMK,
+                    unknown_meta=["provides"],
+                    known_meta=FIXTURE_KNOWN_META_NAMES_PRIMITIVE_META,
+                    meta_types=[PRIMITIVE_META],
+                )
+            ]
+        )
+
+    def test_group_invalid_stonith_meta_attribute_name(self):
+        self.config.runner.cib.load(resources=fixture_primitive())
+        self.config.runner.pcmk.load_crm_resource_metadata()
+        self.config.corosync_conf.load()
+        self.config.env.push_cib(
+            resources=fixture_primitive(
+                meta_nvpairs_xml="""
+                    <nvpair id="A-meta_attributes-provides"
+                        name="provides" value="everything"
+                    />
+                """,
+            )
+        )
+
+        resource.update_meta(
+            self.env_assist.get_env(), "A", {"provides": "everything"}, []
+        )
+
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.META_ATTRS_UNKNOWN_TO_PCMK,
+                    unknown_meta=["provides"],
+                    known_meta=FIXTURE_KNOWN_META_NAMES_PRIMITIVE_META,
+                    meta_types=[PRIMITIVE_META],
+                )
+            ]
+        )
+
+    def test_stonith_invalid_meta_attribute_name(self):
+        self.config.runner.cib.load(
+            resources=fixture_primitive(resource_agent=_AGENT_NAME_STONITH)
+        )
+        self.config.runner.pcmk.load_crm_resource_metadata()
+        self.config.corosync_conf.load()
+        self.config.env.push_cib(
+            resources=fixture_primitive(
+                resource_agent=_AGENT_NAME_STONITH,
+                meta_nvpairs_xml="""
+                    <nvpair id="A-meta_attributes-name"
+                        name="name" value="value"
+                    />
+                """,
+            )
+        )
+
+        resource.update_meta(
+            self.env_assist.get_env(), "A", {"name": "value"}, []
+        )
+
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.META_ATTRS_UNKNOWN_TO_PCMK,
+                    unknown_meta=["name"],
+                    known_meta=FIXTURE_KNOWN_META_NAMES_STONITH_META,
+                    meta_types=[STONITH_META],
+                )
+            ]
+        )
+
+    def test_primitive_error_loading_metadata(self):
+        self.config.runner.cib.load(resources=fixture_primitive())
+        self.config.runner.pcmk.load_crm_resource_metadata(
+            stdout="output", returncode=1
+        )
+        self.config.corosync_conf.load()
+        self.config.env.push_cib(
+            resources=fixture_primitive(
+                meta_nvpairs_xml="""
+                    <nvpair id="A-meta_attributes-name"
+                        name="name" value="value"
+                    />
+                """,
+            )
+        )
+
+        resource.update_meta(
+            self.env_assist.get_env(), "A", {"name": "value"}, []
+        )
+
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.UNABLE_TO_GET_AGENT_METADATA,
+                    agent="primitive-meta",
+                    reason="output",
+                )
+            ]
         )

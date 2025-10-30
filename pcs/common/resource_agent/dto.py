@@ -95,3 +95,9 @@ class ResourceAgentMetadataDto(DataTransferObject):
     longdesc: Optional[str]
     parameters: List[ResourceAgentParameterDto]
     actions: List[ResourceAgentActionDto]
+
+
+@dataclass(frozen=True)
+class ResourceMetaAttributesMetadataDto(DataTransferObject):
+    name: str
+    parameters: list[ResourceAgentParameterDto]

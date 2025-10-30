@@ -16,14 +16,29 @@ from pcs.common.types import (
     CibRuleInEffectStatus,
 )
 from pcs.lib.commands import cib_options
+from pcs.lib.resource_agent import const as ra_const
 
-from pcs_test.tools import fixture
+from pcs_test.tools import fixture, metadata_dto
 from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.command_env.config_runner_pcmk import (
     RULE_EXPIRED_RETURNCODE,
     RULE_IN_EFFECT_RETURNCODE,
     RULE_NOT_YET_IN_EFFECT_RETURNCODE,
 )
+
+
+def fixture_report_unknown_meta_primitive(unknown_meta):
+    return fixture.warn(
+        reports.codes.META_ATTRS_UNKNOWN_TO_PCMK,
+        meta_types=[ra_const.PRIMITIVE_META, ra_const.STONITH_META],
+        known_meta=sorted(
+            set(
+                metadata_dto.FIXTURE_KNOWN_META_NAMES_PRIMITIVE_META
+                + metadata_dto.FIXTURE_KNOWN_META_NAMES_STONITH_META
+            )
+        ),
+        unknown_meta=unknown_meta,
+    )
 
 
 class DefaultsCreateMixin:
@@ -286,6 +301,141 @@ class ResourceDefaultsCreate(DefaultsCreateMixin, TestCase):
 
         self.env_assist.assert_reports(
             [fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDDEN)]
+        )
+
+    def test_validate_meta_for_primitive(self):
+        defaults_xml = f"""
+            <{self.tag}>
+                <meta_attributes id="my-id">
+                  <rule boolean-op="or" id="my-id-rule">
+                    <rsc_expression id="my-id-rule-rsc-ocf-pacemaker-Dummy"
+                        class="ocf" provider="pacemaker" type="Dummy"
+                    />
+                    <rsc_expression id="my-id-rule-rsc-ocf-pacemaker-Stateful"
+                        class="ocf" provider="pacemaker" type="Stateful"
+                    />
+                  </rule>
+                  <nvpair id="my-id-custom1" name="custom1" value="value1" />
+                  <nvpair id="my-id-resource-stickiness"
+                    name="resource-stickiness" value="10"
+                  />
+                  <nvpair id="my-id-custom2" name="custom2" value="value2" />
+                </meta_attributes>
+            </{self.tag}>
+        """
+        self.config.runner.cib.load(
+            filename="cib-empty-3.9.xml", instead="runner.cib.load"
+        )
+        self.config.runner.pcmk.load_crm_resource_metadata(
+            agent_name=ra_const.PRIMITIVE_META,
+            name="runner.pcmk.load_crm_resource_metadata.primitive",
+        )
+        self.config.runner.pcmk.load_crm_resource_metadata(
+            agent_name=ra_const.PRIMITIVE_META,
+            name="runner.pcmk.load_crm_resource_metadata.stonith",
+        )
+        self.config.env.push_cib(optional_in_conf=defaults_xml)
+
+        self.command(
+            self.env_assist.get_env(),
+            {
+                "custom1": "value1",
+                "resource-stickiness": "10",
+                "custom2": "value2",
+            },
+            {"id": "my-id"},
+            nvset_rule=(
+                "resource ocf:pacemaker:Dummy or resource ocf:pacemaker:Stateful"
+            ),
+        )
+
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDDEN),
+                fixture_report_unknown_meta_primitive(["custom1", "custom2"]),
+            ]
+        )
+
+    def test_validate_meta_for_others(self):
+        defaults_xml = f"""
+            <{self.tag}>
+                <meta_attributes id="my-id">
+                  <rule boolean-op="or" id="my-id-rule">
+                    <rsc_expression id="my-id-rule-rsc-ocf-pacemaker-Dummy"
+                        class="ocf" provider="pacemaker" type="Dummy"
+                    />
+                    <date_expression id="my-id-rule-expr"
+                        operation="gt" start="2020-08-07"
+                    />
+                  </rule>
+                  <nvpair id="my-id-custom1" name="custom1" value="value1" />
+                  <nvpair id="my-id-resource-stickiness"
+                    name="resource-stickiness" value="10"
+                  />
+                  <nvpair id="my-id-custom2" name="custom2" value="value2" />
+                </meta_attributes>
+            </{self.tag}>
+        """
+        self.config.runner.cib.load(
+            filename="cib-empty-3.9.xml", instead="runner.cib.load"
+        )
+        self.config.env.push_cib(optional_in_conf=defaults_xml)
+
+        self.command(
+            self.env_assist.get_env(),
+            {
+                "custom1": "value1",
+                "resource-stickiness": "10",
+                "custom2": "value2",
+            },
+            {"id": "my-id"},
+            nvset_rule="resource ocf:pacemaker:Dummy or date gt 2020-08-07",
+        )
+
+        self.env_assist.assert_reports(
+            [fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDDEN)]
+        )
+
+    def test_validate_meta_error_loading_definition(self):
+        defaults_xml = f"""
+            <{self.tag}>
+                <meta_attributes id="my-id">
+                  <rule boolean-op="and" id="my-id-rule">
+                    <rsc_expression id="my-id-rule-rsc-ocf-pacemaker-Dummy"
+                        class="ocf" provider="pacemaker" type="Dummy"
+                    />
+                  </rule>
+                  <nvpair id="my-id-custom1" name="custom1" value="value1" />
+                </meta_attributes>
+            </{self.tag}>
+        """
+        self.config.runner.cib.load(
+            filename="cib-empty-3.9.xml", instead="runner.cib.load"
+        )
+        self.config.runner.pcmk.load_crm_resource_metadata(
+            agent_name=ra_const.PRIMITIVE_META,
+            returncode=1,
+            stderr="error loading definitions",
+            name="runner.pcmk.load_crm_resource_metadata.primitive",
+        )
+        self.config.env.push_cib(optional_in_conf=defaults_xml)
+
+        self.command(
+            self.env_assist.get_env(),
+            {"custom1": "value1"},
+            {"id": "my-id"},
+            nvset_rule="resource ocf:pacemaker:Dummy",
+        )
+
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.UNABLE_TO_GET_AGENT_METADATA,
+                    agent=ra_const.PRIMITIVE_META,
+                    reason="error loading definitions",
+                ),
+                fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDDEN),
+            ]
         )
 
 
@@ -962,10 +1112,6 @@ class DefaultsUpdateLegacyMixin:
 
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
-        self.reports = [fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDDEN)]
-
-    def tearDown(self):
-        self.env_assist.assert_reports(self.reports)
 
     def fixture_initial_defaults(self):
         return f"""
@@ -992,6 +1138,9 @@ class DefaultsUpdateLegacyMixin:
         """
         )
         self.command(self.env_assist.get_env(), None, {"a": "B", "b": "C"})
+        self.env_assist.assert_reports(
+            [fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDDEN)]
+        )
 
     def test_add(self):
         self.config.runner.cib.load(
@@ -1009,6 +1158,9 @@ class DefaultsUpdateLegacyMixin:
         """
         )
         self.command(self.env_assist.get_env(), None, {"c": "d"})
+        self.env_assist.assert_reports(
+            [fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDDEN)]
+        )
 
     def test_remove(self):
         self.config.runner.cib.load(
@@ -1020,6 +1172,9 @@ class DefaultsUpdateLegacyMixin:
             )
         )
         self.command(self.env_assist.get_env(), None, {"a": ""})
+        self.env_assist.assert_reports(
+            [fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDDEN)]
+        )
 
     def test_add_section_if_missing(self):
         self.config.runner.cib.load()
@@ -1033,6 +1188,9 @@ class DefaultsUpdateLegacyMixin:
         """
         )
         self.command(self.env_assist.get_env(), None, {"a": "A"})
+        self.env_assist.assert_reports(
+            [fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDDEN)]
+        )
 
     def test_add_meta_if_missing(self):
         self.config.runner.cib.load(optional_in_conf=f"<{self.tag} />")
@@ -1046,14 +1204,23 @@ class DefaultsUpdateLegacyMixin:
         """
         )
         self.command(self.env_assist.get_env(), None, {"a": "A"})
+        self.env_assist.assert_reports(
+            [fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDDEN)]
+        )
 
     def test_dont_add_section_if_only_removing(self):
         self.config.runner.cib.load()
         self.command(self.env_assist.get_env(), None, {"a": "", "b": ""})
+        self.env_assist.assert_reports(
+            [fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDDEN)]
+        )
 
     def test_dont_add_meta_if_only_removing(self):
         self.config.runner.cib.load(optional_in_conf=f"<{self.tag} />")
         self.command(self.env_assist.get_env(), None, {"a": "", "b": ""})
+        self.env_assist.assert_reports(
+            [fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDDEN)]
+        )
 
     def test_keep_section_when_empty(self):
         self.config.runner.cib.load(
@@ -1061,6 +1228,9 @@ class DefaultsUpdateLegacyMixin:
         )
         self.config.env.push_cib(remove=f"./configuration/{self.tag}//nvpair")
         self.command(self.env_assist.get_env(), None, {"a": "", "b": ""})
+        self.env_assist.assert_reports(
+            [fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDDEN)]
+        )
 
     def test_ambiguous(self):
         self.config.runner.cib.load(
@@ -1079,12 +1249,14 @@ class DefaultsUpdateLegacyMixin:
         self.env_assist.assert_raise_library_error(
             lambda: self.command(self.env_assist.get_env(), None, {"x": "y"})
         )
-        self.reports = [
-            fixture.error(
-                reports.codes.CIB_NVSET_AMBIGUOUS_PROVIDE_NVSET_ID,
-                pcs_command=self.command_for_report,
-            )
-        ]
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.CIB_NVSET_AMBIGUOUS_PROVIDE_NVSET_ID,
+                    pcs_command=self.command_for_report,
+                )
+            ]
+        )
 
 
 class DefaultsUpdateMixin:
@@ -1168,10 +1340,197 @@ class DefaultsUpdateMixin:
         )
 
 
-class ResourceDefaultsUpdateLegacy(DefaultsUpdateLegacyMixin, TestCase):
+class ResourceDefaultsUpdateMetaValidationMixin:
+    def test_validate_meta_for_primitive(self):
+        self.config.runner.cib.load(
+            optional_in_conf=f"""
+            <{self.tag}>
+                <meta_attributes id="my-id">
+                    <rule boolean-op="or" id="my-id-rule">
+                      <rsc_expression id="my-id-rule-rsc-ocf-pacemaker-Dummy"
+                          class="ocf" provider="pacemaker" type="Dummy"
+                      />
+                      <rsc_expression id="my-id-rule-rsc-ocf-pacemaker-Stateful"
+                          class="ocf" provider="pacemaker" type="Stateful"
+                      />
+                    </rule>
+                    <nvpair id="my-id-custom1" name="custom1" value="value1" />
+                    <nvpair id="my-id-custom2" name="custom2" value="value2" />
+                </meta_attributes>
+            </{self.tag}>
+            """
+        )
+        self.config.runner.pcmk.load_crm_resource_metadata(
+            agent_name=ra_const.PRIMITIVE_META,
+            name="runner.pcmk.load_crm_resource_metadata.primitive",
+        )
+        self.config.runner.pcmk.load_crm_resource_metadata(
+            agent_name=ra_const.PRIMITIVE_META,
+            name="runner.pcmk.load_crm_resource_metadata.stonith",
+        )
+        self.config.env.push_cib(
+            optional_in_conf=f"""
+            <{self.tag}>
+                <meta_attributes id="my-id">
+                    <rule boolean-op="or" id="my-id-rule">
+                      <rsc_expression id="my-id-rule-rsc-ocf-pacemaker-Dummy"
+                          class="ocf" provider="pacemaker" type="Dummy"
+                      />
+                      <rsc_expression id="my-id-rule-rsc-ocf-pacemaker-Stateful"
+                          class="ocf" provider="pacemaker" type="Stateful"
+                      />
+                    </rule>
+                    <nvpair id="my-id-custom1" name="custom1" value="value1" />
+                    <nvpair id="my-id-resource-stickiness"
+                      name="resource-stickiness" value="10"
+                    />
+                    <nvpair id="my-id-custom3" name="custom3" value="value3" />
+                </meta_attributes>
+            </{self.tag}>
+        """
+        )
+
+        self.command(
+            self.env_assist.get_env(),
+            self.nvset_id_for_meta_validation_test,
+            {
+                "custom2": "",
+                "resource-stickiness": "10",
+                "custom3": "value3",
+            },
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDDEN),
+                fixture_report_unknown_meta_primitive(["custom3"]),
+            ]
+        )
+
+    def test_validate_meta_for_others(self):
+        self.config.runner.cib.load(
+            optional_in_conf=f"""
+            <{self.tag}>
+                <meta_attributes id="my-id">
+                    <rule boolean-op="or" id="my-id-rule">
+                      <rsc_expression id="my-id-rule-rsc-ocf-pacemaker-Dummy"
+                          class="ocf" provider="pacemaker" type="Dummy"
+                      />
+                      <date_expression id="my-id-rule-expr"
+                          operation="gt" start="2020-08-07"
+                      />
+                    </rule>
+                    <nvpair id="my-id-custom1" name="custom1" value="value1" />
+                    <nvpair id="my-id-custom2" name="custom2" value="value2" />
+                </meta_attributes>
+            </{self.tag}>
+            """
+        )
+        self.config.env.push_cib(
+            optional_in_conf=f"""
+            <{self.tag}>
+                <meta_attributes id="my-id">
+                    <rule boolean-op="or" id="my-id-rule">
+                      <rsc_expression id="my-id-rule-rsc-ocf-pacemaker-Dummy"
+                          class="ocf" provider="pacemaker" type="Dummy"
+                      />
+                      <date_expression id="my-id-rule-expr"
+                          operation="gt" start="2020-08-07"
+                      />
+                    </rule>
+                    <nvpair id="my-id-custom1" name="custom1" value="value1" />
+                    <nvpair id="my-id-resource-stickiness"
+                      name="resource-stickiness" value="10"
+                    />
+                    <nvpair id="my-id-custom3" name="custom3" value="value3" />
+                </meta_attributes>
+            </{self.tag}>
+        """
+        )
+
+        self.command(
+            self.env_assist.get_env(),
+            self.nvset_id_for_meta_validation_test,
+            {
+                "custom2": "",
+                "resource-stickiness": "10",
+                "custom3": "value3",
+            },
+        )
+        self.env_assist.assert_reports(
+            [fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDDEN)]
+        )
+
+    def test_validate_meta_error_loading_definition(self):
+        self.config.runner.cib.load(
+            optional_in_conf=f"""
+            <{self.tag}>
+                <meta_attributes id="my-id">
+                    <rule boolean-op="and" id="my-id-rule">
+                      <rsc_expression id="my-id-rule-rsc-ocf-pacemaker-Dummy"
+                          class="ocf" provider="pacemaker" type="Dummy"
+                      />
+                    </rule>
+                    <nvpair id="my-id-custom1" name="custom1" value="value1" />
+                    <nvpair id="my-id-custom2" name="custom2" value="value2" />
+                </meta_attributes>
+            </{self.tag}>
+            """
+        )
+        self.config.runner.pcmk.load_crm_resource_metadata(
+            agent_name=ra_const.PRIMITIVE_META,
+            returncode=1,
+            stderr="error loading definitions",
+            name="runner.pcmk.load_crm_resource_metadata.primitive",
+        )
+        self.config.env.push_cib(
+            optional_in_conf=f"""
+            <{self.tag}>
+                <meta_attributes id="my-id">
+                    <rule boolean-op="and" id="my-id-rule">
+                      <rsc_expression id="my-id-rule-rsc-ocf-pacemaker-Dummy"
+                          class="ocf" provider="pacemaker" type="Dummy"
+                      />
+                    </rule>
+                    <nvpair id="my-id-custom1" name="custom1" value="value1" />
+                    <nvpair id="my-id-resource-stickiness"
+                      name="resource-stickiness" value="10"
+                    />
+                    <nvpair id="my-id-custom3" name="custom3" value="value3" />
+                </meta_attributes>
+            </{self.tag}>
+        """
+        )
+
+        self.command(
+            self.env_assist.get_env(),
+            self.nvset_id_for_meta_validation_test,
+            {
+                "custom2": "",
+                "resource-stickiness": "10",
+                "custom3": "value3",
+            },
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.UNABLE_TO_GET_AGENT_METADATA,
+                    agent=ra_const.PRIMITIVE_META,
+                    reason="error loading definitions",
+                ),
+                fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDDEN),
+            ]
+        )
+
+
+class ResourceDefaultsUpdateLegacy(
+    DefaultsUpdateLegacyMixin,
+    ResourceDefaultsUpdateMetaValidationMixin,
+    TestCase,
+):
     command = staticmethod(cib_options.resource_defaults_update)
     tag = "rsc_defaults"
     command_for_report = reports.const.PCS_COMMAND_RESOURCE_DEFAULTS_UPDATE
+    nvset_id_for_meta_validation_test = None
 
 
 class OperationDefaultsUpdateLegacy(DefaultsUpdateLegacyMixin, TestCase):
@@ -1180,9 +1539,12 @@ class OperationDefaultsUpdateLegacy(DefaultsUpdateLegacyMixin, TestCase):
     command_for_report = reports.const.PCS_COMMAND_OPERATION_DEFAULTS_UPDATE
 
 
-class ResourceDefaultsUpdate(DefaultsUpdateMixin, TestCase):
+class ResourceDefaultsUpdate(
+    DefaultsUpdateMixin, ResourceDefaultsUpdateMetaValidationMixin, TestCase
+):
     command = staticmethod(cib_options.resource_defaults_update)
     tag = "rsc_defaults"
+    nvset_id_for_meta_validation_test = "my-id"
 
 
 class OperationDefaultsUpdate(DefaultsUpdateMixin, TestCase):

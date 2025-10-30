@@ -26,6 +26,7 @@ from .pcs_transform import (
 )
 from .types import (
     CrmAttrAgent,
+    CrmResourceAgent,
     FakeAgentName,
     ResourceAgentMetadata,
     ResourceAgentName,
@@ -33,6 +34,7 @@ from .types import (
 )
 from .xml import (
     load_crm_attribute_metadata,
+    load_crm_resource_metadata,
     load_fake_agent_metadata,
     load_metadata,
     parse_metadata,
@@ -295,3 +297,61 @@ class ResourceAgentFacadeFactory:
                     )
                 )
         return self._fenced_metadata.parameters
+
+
+# definition is no provided by pacemaker yet
+_ADDITIONAL_FENCING_META_ATTRIBUTES = [
+    ResourceAgentParameter(
+        name="provides",
+        shortdesc=None,
+        longdesc="Any special capability provided by the fence device.",
+        type="string",
+        default=None,
+        enum_values=None,
+        required=False,
+        advanced=False,
+        deprecated=False,
+        deprecated_by=[],
+        deprecated_desc=None,
+        unique_group=None,
+        reloadable=False,
+    )
+]
+
+
+def get_crm_resource_metadata(
+    runner: CommandRunner, agent_name: CrmResourceAgent
+) -> list[ResourceAgentParameter]:
+    """
+    Return parsed metadata from crm_resource --list-options=TYPE.
+
+    runner -- external processes runner
+    agent_name -- name of pacemaker part whose metadata we want to get
+    """
+    load_agent_name = (
+        agent_name if agent_name != const.STONITH_META else const.PRIMITIVE_META
+    )
+    parameters_metadata = ocf_unified_to_pcs(
+        ocf_version_to_ocf_unified(
+            parse_metadata(
+                ResourceAgentName(
+                    const.FAKE_AGENT_STANDARD, None, load_agent_name
+                ),
+                load_crm_resource_metadata(runner, load_agent_name),
+            )
+        )
+    ).parameters
+    if agent_name == const.STONITH_META:
+        parameters_metadata += _ADDITIONAL_FENCING_META_ATTRIBUTES
+    return parameters_metadata
+
+
+def unique_resource_agent_parameters(
+    param_list: list[ResourceAgentParameter],
+) -> list[ResourceAgentParameter]:
+    """
+    Unique resource agent parameters based on their name
+
+    param_list -- resource agent parameters
+    """
+    return list({param.name: param for param in param_list}.values())

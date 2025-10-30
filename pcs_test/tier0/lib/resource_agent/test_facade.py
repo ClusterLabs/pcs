@@ -388,3 +388,79 @@ class ResourceAgentFacadeFactory(TestCase):
             [param.name for param in facade.metadata.parameters],
             ["agent-param"],
         )
+
+
+class GetCrmResourceMetadata(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(test_case=self)
+
+    def _test_get_crm_resource_metadata(self, agent_name):
+        load_agent_name = (
+            agent_name
+            if agent_name != ra.const.STONITH_META
+            else ra.const.PRIMITIVE_META
+        )
+        self.config.runner.pcmk.load_crm_resource_metadata(
+            agent_name=load_agent_name
+        )
+        env = self.env_assist.get_env()
+        parameters_metadata = ra.get_crm_resource_metadata(
+            env.cmd_runner(), agent_name
+        )
+        parameters_name_set = {param.name for param in parameters_metadata}
+        self.assertTrue(
+            {"priority", "critical", "target-role"}.issubset(
+                parameters_name_set
+            )
+        )
+        if agent_name == ra.const.STONITH_META:
+            self.assertTrue("provides" in parameters_name_set)
+        else:
+            self.assertFalse("provides" in parameters_name_set)
+
+    def test_get_crm_resource_metadata_primitive_meta(self):
+        self._test_get_crm_resource_metadata(ra.const.PRIMITIVE_META)
+
+    def test_get_crm_resource_metadata_stonith_meta(self):
+        self._test_get_crm_resource_metadata(ra.const.STONITH_META)
+
+    def test_get_crm_attribute_unknown_agent(self):
+        agent_name = "unknown"
+        env = self.env_assist.get_env()
+        with self.assertRaises(ra.UnableToGetAgentMetadata) as cm:
+            ra.get_crm_resource_metadata(
+                env.cmd_runner(), agent_name
+            ).facade_from_crm_attribute(agent_name)
+        self.assertEqual(cm.exception.agent_name, agent_name)
+
+
+class UniqueResourceAgentParameters(TestCase):
+    @staticmethod
+    def _fixture_parameter(name, shortdesc):
+        return ra.ResourceAgentParameter(
+            name,
+            shortdesc=shortdesc,
+            longdesc=None,
+            type="string",
+            default=None,
+            enum_values=None,
+            required=False,
+            advanced=False,
+            deprecated=False,
+            deprecated_by=[],
+            deprecated_desc=None,
+            unique_group=None,
+            reloadable=False,
+        )
+
+    def test_empty(self):
+        self.assertEqual(ra.unique_resource_agent_parameters([]), [])
+
+    def test_unique(self):
+        param_a1 = self._fixture_parameter("a", "a1")
+        param_a2 = self._fixture_parameter("a", "a2")
+        param_b1 = self._fixture_parameter("b", "b1")
+        self.assertEqual(
+            ra.unique_resource_agent_parameters([param_a1, param_b1, param_a2]),
+            [param_a2, param_b1],
+        )

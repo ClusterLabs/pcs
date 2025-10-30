@@ -6,9 +6,11 @@ from unittest import (
 from pcs import settings
 from pcs.common import reports
 from pcs.lib.commands import stonith
+from pcs.lib.resource_agent import const as ra_const
 
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
+from pcs_test.tools.metadata_dto import FIXTURE_KNOWN_META_NAMES_STONITH_META
 from pcs_test.tools.misc import get_test_resource as rc
 
 expected_cib_simple = """
@@ -335,6 +337,7 @@ class Create(TestCase):
         self.config.runner.pcmk.stonith_agent_self_validation(
             instance_attributes, agent_name
         )
+        self.config.runner.pcmk.load_crm_resource_metadata()
         self.config.env.push_cib(
             resources=self._expected_cib(expected_cib_unfencing)
         )
@@ -465,6 +468,7 @@ class Create(TestCase):
         self.config.runner.pcmk.stonith_agent_self_validation(
             instance_attributes, agent_name
         )
+        self.config.runner.pcmk.load_crm_resource_metadata()
         self.config.env.push_cib(
             resources=self._expected_cib(expected_cib_simple_forced)
         )
@@ -547,6 +551,12 @@ class Create(TestCase):
                     option_names=["must-set-new", "must-set-old"],
                     deprecated_names=["must-set-old"],
                     option_type="stonith",
+                ),
+                fixture.warn(
+                    reports.codes.META_ATTRS_UNKNOWN_TO_PCMK,
+                    unknown_meta=["metaname"],
+                    known_meta=FIXTURE_KNOWN_META_NAMES_STONITH_META,
+                    meta_types=["stonith-meta"],
                 ),
             ]
         )
@@ -700,5 +710,89 @@ class Create(TestCase):
                     resource_id=instance_name,
                 ),
                 fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
+            ]
+        )
+
+    def test_known_meta_attributes(self):
+        agent_name = "test_simple"
+        instance_attributes = {
+            "must-set": "value",
+            "must-set-new": "B",
+        }
+        meta_attributes = {"target-role": "Stopped"}
+        expected_cib = expected_cib_simple.replace(
+            "<operations>",
+            """
+            <meta_attributes id="stonith-test-meta_attributes">
+                <nvpair id="stonith-test-meta_attributes-target-role"
+                    name="target-role" value="Stopped"></nvpair>
+            </meta_attributes>
+            <operations>
+            """,
+        )
+        self.config.runner.pcmk.load_agent(
+            agent_name=f"stonith:{agent_name}",
+            agent_filename="stonith_agent_fence_simple.xml",
+        )
+        self.config.runner.pcmk.load_fake_agent_metadata()
+        self.config.runner.cib.load()
+        self.config.runner.pcmk.stonith_agent_self_validation(
+            instance_attributes, agent_name
+        )
+        self.config.runner.pcmk.load_crm_resource_metadata()
+        self.config.env.push_cib(resources=self._expected_cib(expected_cib))
+        self._create(
+            self.env_assist.get_env(),
+            "stonith-test",
+            agent_name,
+            operations=[],
+            meta_attributes=meta_attributes,
+            instance_attributes=instance_attributes,
+        )
+
+    def test_unknown_meta_attributes(self):
+        agent_name = "test_simple"
+        instance_attributes = {
+            "must-set": "value",
+            "must-set-new": "B",
+        }
+        meta_attributes = {"unknown_meta": "unknown_value"}
+        expected_cib = expected_cib_simple.replace(
+            "<operations>",
+            """
+            <meta_attributes id="stonith-test-meta_attributes">
+                <nvpair id="stonith-test-meta_attributes-unknown_meta"
+                    name="unknown_meta" value="unknown_value"></nvpair>
+            </meta_attributes>
+            <operations>
+            """,
+        )
+        self.config.runner.pcmk.load_agent(
+            agent_name=f"stonith:{agent_name}",
+            agent_filename="stonith_agent_fence_simple.xml",
+        )
+        self.config.runner.pcmk.load_fake_agent_metadata()
+        self.config.runner.cib.load()
+        self.config.runner.pcmk.stonith_agent_self_validation(
+            instance_attributes, agent_name
+        )
+        self.config.runner.pcmk.load_crm_resource_metadata()
+        self.config.env.push_cib(resources=self._expected_cib(expected_cib))
+        self._create(
+            self.env_assist.get_env(),
+            "stonith-test",
+            agent_name,
+            operations=[],
+            meta_attributes=meta_attributes,
+            instance_attributes=instance_attributes,
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.META_ATTRS_UNKNOWN_TO_PCMK,
+                    unknown_meta=["unknown_meta"],
+                    known_meta=FIXTURE_KNOWN_META_NAMES_STONITH_META,
+                    meta_types=[ra_const.STONITH_META],
+                )
             ]
         )

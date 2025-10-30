@@ -568,6 +568,57 @@ class PcmkShortcuts:
             instead=instead,
         )
 
+    def load_crm_resource_metadata(
+        self,
+        name: str = "runner.pcmk.load_crm_resource_metadata",
+        agent_name: str = "primitive-meta",
+        stdout: Optional[str] = None,
+        stderr: str = "",
+        returncode: int = 0,
+        instead: Optional[str] = None,
+        before: Optional[str] = None,
+    ) -> None:
+        """
+        Create a call for loading crm_resource metadata - metadata provided by
+        `crm_resource --list-options=TYPE`
+
+        name -- the key of this call
+        agent_name -- name of the crm_resource agent
+        stdout -- crm_resource agent stdout, default metadata if None
+        stderr -- crm_resource agent stderr
+        returncode -- crm_resource agent returncode
+        instead -- the key of a call instead of which this new call is to
+            be placed
+        before -- the key of a call before which this new call is to be placed
+        """
+        name_to_metadata_file = {
+            "primitive-meta": "primitive-meta_metadata.xml"
+        }
+        name_to_list_options_type = {"primitive-meta": "primitive"}
+        if stdout is None:
+            if returncode == 0:
+                with open(rc(name_to_metadata_file[agent_name])) as a_file:
+                    stdout = a_file.read()
+            else:
+                stdout = ""
+        self.__calls.place(
+            name,
+            RunnerCall(
+                [
+                    settings.crm_resource_exec,
+                    "--list-options",
+                    (name_to_list_options_type.get(agent_name, agent_name)),
+                    "--output-as",
+                    "xml",
+                ],
+                stdout=stdout,
+                stderr=stderr,
+                returncode=returncode,
+            ),
+            before=before,
+            instead=instead,
+        )
+
     def local_node_name(
         self,
         name="runner.pcmk.local_node_name",

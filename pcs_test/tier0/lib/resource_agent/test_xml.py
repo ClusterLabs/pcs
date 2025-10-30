@@ -111,15 +111,23 @@ class LoadFakeAgentMetadataXml(TestCase):
     "pacemaker_api_result_schema",
     rc("pcmk_rng/api/api-result.rng"),
 )
-class LoadCrmAttributeMetadataXml(TestCase):
+class LoadCrmMetadataXmlBaseMixin:
+    agent_name = None
+    request_cmd = None
+
+    def load_metadata(self, agent_name, stdout="", stderr="", returncode=0):
+        raise NotImplementedError
+
+    def call_function(self, cmd_runner, agent_name):
+        raise NotImplementedError()
+
     def setUp(self):
         self.maxDiff = None
         self.env_assist, self.config = get_env_tools(test_case=self)
 
     def test_success(self):
-        agent_name = ra.const.CLUSTER_OPTIONS
-        metadata = """
-            <resource-agent name="cluster-options">
+        metadata = f"""
+            <resource-agent name="{self.agent_name}">
               <version>1.1</version>
               <parameters>
                 <parameter name="parameter-name" advanced="0" generated="0">
@@ -131,60 +139,44 @@ class LoadCrmAttributeMetadataXml(TestCase):
             </resource-agent>
         """
         api_result = f"""
-            <pacemaker-result api-version="2.38" request="crm_attribute">
+            <pacemaker-result api-version="2.38" request="{self.request_cmd}">
                 {metadata}
                 <status code="0" message="OK" />
             </pacemaker-result>
         """
 
-        self.config.runner.pcmk.load_crm_attribute_metadata(
-            agent_name="cluster-options", stdout=api_result.strip()
-        )
-
+        self.load_metadata(self.agent_name, api_result.strip())
         env = self.env_assist.get_env()
         assert_xml_equal(
             metadata,
-            # pylint: disable=protected-access
-            ra.xml._load_crm_attribute_metadata_xml(
-                env.cmd_runner(), agent_name
-            ),
+            self.call_function(env.cmd_runner(), self.agent_name),
         )
 
     def test_unknown_agent(self):
         agent_name = "unknown"
         env = self.env_assist.get_env()
         with self.assertRaises(ra.UnableToGetAgentMetadata) as cm:
-            # pylint: disable=protected-access
-            ra.xml._load_crm_attribute_metadata_xml(
-                env.cmd_runner(), agent_name
-            )
+            self.call_function(env.cmd_runner(), agent_name)
         self.assertEqual(cm.exception.agent_name, agent_name)
         self.assertEqual(cm.exception.message, "Unknown agent")
 
     def test_unable_to_get_api_result_dom(self):
-        agent_name = ra.const.CLUSTER_OPTIONS
         api_result = """
             <pacemaker-result api-version="2.38" request="crm_attribute">
                 <resource-agent> bad metadata </resource-agent>
                 <status code="0" message="OK" />
             </pacemaker-result>
         """
-        self.config.runner.pcmk.load_crm_attribute_metadata(
-            agent_name=agent_name, stdout=api_result, stderr="stderr"
-        )
+        self.load_metadata(self.agent_name, api_result, stderr="stderr")
         env = self.env_assist.get_env()
         with self.assertRaises(ra.UnableToGetAgentMetadata) as cm:
-            # pylint: disable=protected-access
-            ra.xml._load_crm_attribute_metadata_xml(
-                env.cmd_runner(), agent_name
-            )
-        self.assertEqual(cm.exception.agent_name, agent_name)
+            self.call_function(env.cmd_runner(), self.agent_name)
+        self.assertEqual(cm.exception.agent_name, self.agent_name)
         self.assertEqual(
             cm.exception.message, "\n".join(["stderr", api_result.strip()])
         )
 
     def test_api_result_errors(self):
-        agent_name = ra.const.CLUSTER_OPTIONS
         api_result = """
             <pacemaker-result api-version="2.38" request="crm_attribute">
                 <status code="1" message="ERROR">
@@ -195,41 +187,62 @@ class LoadCrmAttributeMetadataXml(TestCase):
                 </status>
             </pacemaker-result>
         """
-        self.config.runner.pcmk.load_crm_attribute_metadata(
-            agent_name=agent_name,
+        self.load_metadata(
+            self.agent_name,
             stdout=api_result,
-            returncode=1,
             stderr="stderr output",
+            returncode=1,
         )
         env = self.env_assist.get_env()
         with self.assertRaises(ra.UnableToGetAgentMetadata) as cm:
-            # pylint: disable=protected-access
-            ra.xml._load_crm_attribute_metadata_xml(
-                env.cmd_runner(), agent_name
-            )
-        self.assertEqual(cm.exception.agent_name, agent_name)
+            self.call_function(env.cmd_runner(), self.agent_name)
+        self.assertEqual(cm.exception.agent_name, self.agent_name)
         self.assertEqual(cm.exception.message, "ERROR\nerror 1\nerror 2")
 
     def test_missing_resource_agent_element(self):
-        agent_name = ra.const.CLUSTER_OPTIONS
         api_result = """
             <pacemaker-result api-version="2.38" request="crm_attribute">
                 <status code="0" message="OK" />
             </pacemaker-result>
         """
-
-        self.config.runner.pcmk.load_crm_attribute_metadata(
-            agent_name="cluster-options", stdout=api_result
-        )
-
+        self.load_metadata(self.agent_name, stdout=api_result)
         env = self.env_assist.get_env()
         with self.assertRaises(ra.UnableToGetAgentMetadata) as cm:
-            # pylint: disable=protected-access
-            ra.xml._load_crm_attribute_metadata_xml(
-                env.cmd_runner(), agent_name
-            )
-        self.assertEqual(cm.exception.agent_name, agent_name)
+            self.call_function(env.cmd_runner(), self.agent_name)
+        self.assertEqual(cm.exception.agent_name, self.agent_name)
         self.assertEqual(cm.exception.message, api_result.strip())
+
+
+class LoadCrmResourceMetadataXml(LoadCrmMetadataXmlBaseMixin, TestCase):
+    agent_name = ra.const.PRIMITIVE_META
+    request_cmd = "crm_resource"
+
+    def load_metadata(self, agent_name, stdout="", stderr="", returncode=0):
+        self.config.runner.pcmk.load_crm_resource_metadata(
+            agent_name=agent_name,
+            stdout=stdout,
+            stderr=stderr,
+            returncode=returncode,
+        )
+
+    def call_function(self, cmd_runner, agent_name):
+        return ra.xml._load_crm_resource_metadata_xml(cmd_runner, agent_name)
+
+
+class LoadCrmAttributeMetadataXml(LoadCrmMetadataXmlBaseMixin, TestCase):
+    agent_name = ra.const.CLUSTER_OPTIONS
+    request_cmd = "crm_attribute"
+
+    def load_metadata(self, agent_name, stdout="", stderr="", returncode=0):
+        self.config.runner.pcmk.load_crm_attribute_metadata(
+            agent_name=agent_name,
+            stdout=stdout,
+            stderr=stderr,
+            returncode=returncode,
+        )
+
+    def call_function(self, cmd_runner, agent_name):
+        return ra.xml._load_crm_attribute_metadata_xml(cmd_runner, agent_name)
 
 
 class GetOcfVersion(TestCase):
