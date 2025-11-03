@@ -1072,6 +1072,11 @@ def _handle_instance_attributes_validation_via_pcmk(
     data_xpath: str,
     instance_attributes: Mapping[str, str],
 ) -> tuple[Optional[bool], str]:
+    def _format_output_line(xml_text: str) -> str:
+        return "\n".join(
+            line.strip() for line in xml_text.split("\n") if line.strip()
+        )
+
     full_cmd = list(cmd)
     for key, value in sorted(instance_attributes.items()):
         full_cmd.extend(["--option", f"{key}={value}"])
@@ -1081,14 +1086,24 @@ def _handle_instance_attributes_validation_via_pcmk(
         dom = xml_fromstring(stdout)
     except (etree.XMLSyntaxError, etree.DocumentInvalid) as e:
         return None, str(e)
-    result = "\n".join(
-        "\n".join(
-            line.strip() for line in item.text.split("\n") if line.strip()
-        )
-        for item in dom.iterfind(data_xpath)
-        if item.get("source") == "stderr" and item.text
-    ).strip()
-    return return_value == 0, result
+
+    stderr_messages, stdout_messages = [], []
+    for item in dom.iterfind(data_xpath):
+        if not item.text:
+            continue
+        if item.get("source") == "stderr":
+            stderr_messages.append(_format_output_line(item.text))
+        elif item.get("source") == "stdout":
+            stdout_messages.append(_format_output_line(item.text))
+
+    if return_value == 0:
+        return True, "\n".join(stderr_messages)
+    return False, "\n".join(
+        # The fence agent fence_xvm outputs validation error messages to stdout
+        # instead of stderr. This is a workaround to display validation errors
+        # when validation fails in fence_xvm.
+        stderr_messages if stderr_messages else stdout_messages
+    )
 
 
 def validate_resource_instance_attributes_via_pcmk(

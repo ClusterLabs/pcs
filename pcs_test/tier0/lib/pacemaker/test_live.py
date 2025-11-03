@@ -1864,12 +1864,13 @@ class HandleInstanceAttributesValidateViaPcmkTest(TestCase):
             base_cmd + ["--option", "attr1=val1", "--option", "attr2=val2"]
         )
 
-    def test_failure_empty_result(self):
+    def test_failure_empty_result_reads_from_stdout(self):
+        # workaround for fence_xvm outputting the validation errors to stdout
         runner = get_runner(
             stdout="""
             <api>
               <result>
-                <output source="stdout">this is ignored</output>
+                <output source="stdout">this is not ignored</output>
               </result>
             </api>
             """,
@@ -1886,7 +1887,7 @@ class HandleInstanceAttributesValidateViaPcmkTest(TestCase):
             {"attr1": "val1", "attr2": "val2"},
         )
         self.assertFalse(is_valid)
-        self.assertEqual(reason, "")
+        self.assertEqual(reason, "this is not ignored")
         runner.run.assert_called_once_with(
             base_cmd + ["--option", "attr1=val1", "--option", "attr2=val2"]
         )
