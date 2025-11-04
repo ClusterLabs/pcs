@@ -272,11 +272,6 @@ Remove the specified operation id.
 op defaults [config] [\fB\-\-all\fR | \fB\-\-no\-expire\-check\fR] [\fB\-\-full\fR] [@OUTPUT_FORMAT_SYNTAX_DOC@]
 List currently configured default values for operations. If \fB\-\-all\fR is specified, also list expired sets of values. If \fB\-\-full\fR is specified, also list ids. If \fB\-\-no\-expire\-check\fR is specified, do not evaluate whether sets of values are expired. @OUTPUT_FORMAT_DESC_DOC@
 .TP
-op defaults <name>=<value>...
-Set default values for operations.
-.br
-NOTE: Defaults do not apply to resources / stonith devices which override them with their own defined values.
-.TP
 op defaults set create [<set options>] [meta [<name>=<value>]...] [rule [<expression>]]
 Create a new set of default values for resource / stonith device operations. You may specify a rule describing resources / stonith devices and / or operations to which the set applies.
 
@@ -384,11 +379,6 @@ Set resources listed to unmanaged mode. When a resource is in unmanaged mode, th
 .TP
 defaults [config] [\fB\-\-all\fR | \fB\-\-no\-expire\-check\fR] [\fB\-\-full\fR] [@OUTPUT_FORMAT_SYNTAX_DOC@]
 List currently configured default values for resources / stonith devices. If \fB\-\-all\fR is specified, also list expired sets of values. If \fB\-\-full\fR is specified, also list ids. If \fB\-\-no\-expire\-check\fR is specified, do not evaluate whether sets of values are expired. @OUTPUT_FORMAT_DESC_DOC@
-.TP
-defaults <name>=<value>...
-Set default values for resources / stonith devices.
-.br
-NOTE: Defaults do not apply to resources / stonith devices which override them with their own defined values.
 .TP
 defaults set create [<set options>] [meta [<name>=<value>]...] [rule [<expression>]]
 Create a new set of default values for resources / stonith devices. You may specify a rule describing resources / stonith devices to which the set applies.
@@ -820,13 +810,6 @@ This command is an alias of 'resource op defaults [config]' command.
 
 List currently configured default values for operations. If \fB\-\-all\fR is specified, also list expired sets of values. If \fB\-\-full\fR is specified, also list ids. If \fB\-\-no\-expire\-check\fR is specified, do not evaluate whether sets of values are expired. @OUTPUT_FORMAT_DESC_DOC@
 .TP
-op defaults <name>=<value>...
-This command is an alias of 'resource op defaults' command.
-
-Set default values for operations.
-.br
-NOTE: Defaults do not apply to resources / stonith devices which override them with their own defined values.
-.TP
 op defaults set create [<set options>] [meta [<name>=<value>]...] [rule [<expression>]]
 This command is an alias of 'resource op defaults set create' command.
 
@@ -899,13 +882,6 @@ defaults [config] [\fB\-\-all\fR | \fB\-\-no\-expire\-check\fR] [\fB\-\-full\fR]
 This command is an alias of 'resource defaults [config]' command.
 
 List currently configured default values for resources / stonith devices. If \fB\-\-all\fR is specified, also list expired sets of values. If \fB\-\-full\fR is specified, also list ids. If \fB\-\-no\-expire\-check\fR is specified, do not evaluate whether sets of values are expired. @OUTPUT_FORMAT_DESC_DOC@
-.TP
-defaults <name>=<value>...
-This command is an alias of 'resource defaults' command.
-
-Set default values for resources / stonith devices.
-.br
-NOTE: Defaults do not apply to resources / stonith devices which override them with their own defined values.
 .TP
 defaults set create [<set options>] [meta [<name>=<value>]...] [rule [<expression>]]
 This command is an alias of 'resource defaults set create' command.

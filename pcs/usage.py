@@ -1,18 +1,11 @@
 import re
-from typing import (
-    Callable,
-    Final,
-)
+from typing import Callable, Final
 
 from pcs import settings
 from pcs.cli.common.output import format_wrap
 from pcs.cli.common.parse_args import Argv
 from pcs.cli.reports.output import print_to_stderr
-from pcs.common.str_tools import (
-    format_optional,
-    indent,
-    outdent,
-)
+from pcs.common.str_tools import format_optional, indent, outdent
 from pcs.common.types import StringIterable
 
 # pylint: disable=too-many-lines
@@ -459,10 +452,6 @@ _RESOURCE_DEFAULTS_MAY_BE_OVERRIDDEN = _unwrap(
 )
 _SYNTAX_NAME_VALUE_REPEATED = "<name>=<value>..."
 _RESOURCE_OP_DEFAULTS_CMD = f"{_RESOURCE_OP_CMD} defaults"
-_RESOURCE_OP_DEFAULTS_DESC = (
-    "Set default values for operations.",
-    _RESOURCE_DEFAULTS_MAY_BE_OVERRIDDEN,
-)
 
 _RESOURCE_OP_DEFAULTS_CONFIG_CMD = f"{_RESOURCE_OP_DEFAULTS_CMD} [config]"
 _RESOURCE_OP_DEFAULTS_CONFIG_SYNTAX = (
@@ -613,11 +602,6 @@ _RESOURCE_DEFAULTS_CONFIG_DESC = (
     """,
     "",
     _output_format_desc(),
-)
-
-_RESOURCE_DEFAULTS_DESC = (
-    "Set default values for resources / stonith devices.",
-    _RESOURCE_DEFAULTS_MAY_BE_OVERRIDDEN,
 )
 
 _RESOURCE_DEFAULTS_SET_CMD = f"{_RESOURCE_DEFAULTS_CMD} set"
@@ -1123,9 +1107,6 @@ Commands:
 {op_defaults_config_syntax}
 {op_defaults_config_desc}
 
-{op_defaults_syntax}
-{op_defaults_desc}
-
 {op_defaults_set_create_syntax}
 {op_defaults_set_create_desc}
 
@@ -1251,9 +1232,6 @@ Commands:
 
 {defaults_config_syntax}
 {defaults_config_desc}
-
-{defaults_syntax}
-{defaults_desc}
 
 {defaults_set_create_syntax}
 {defaults_set_create_desc}
@@ -1381,10 +1359,6 @@ Notes:
             f"{_RESOURCE_FAILCOUNT_CMD} {_RESOURCE_FAILCOUNT_SHOW_SYNTAX}"
         ),
         failcount_show_desc=_format_desc(_RESOURCE_FAILCOUNT_SHOW_DESC),
-        op_defaults_syntax=_format_syntax(
-            f"{_RESOURCE_OP_DEFAULTS_CMD} {_SYNTAX_NAME_VALUE_REPEATED}"
-        ),
-        op_defaults_desc=_format_desc(_RESOURCE_OP_DEFAULTS_DESC),
         op_defaults_config_syntax=_format_syntax(
             f"{_RESOURCE_OP_DEFAULTS_CONFIG_CMD} {_RESOURCE_OP_DEFAULTS_CONFIG_SYNTAX}"
         ),
@@ -1454,10 +1428,6 @@ Notes:
             f"{_RESOURCE_DEFAULTS_CONFIG_CMD} {_RESOURCE_DEFAULTS_CONFIG_SYNTAX}"
         ),
         defaults_config_desc=_format_desc(_RESOURCE_DEFAULTS_CONFIG_DESC),
-        defaults_syntax=_format_syntax(
-            f"{_RESOURCE_DEFAULTS_CMD} {_SYNTAX_NAME_VALUE_REPEATED}"
-        ),
-        defaults_desc=_format_desc(_RESOURCE_DEFAULTS_DESC),
         defaults_set_create_syntax=_format_syntax(
             f"{_RESOURCE_DEFAULTS_SET_CREATE_CMD} {_RESOURCE_DEFAULTS_SET_CREATE_SYNTAX}"
         ),
@@ -2052,9 +2022,6 @@ Commands:
 {op_defaults_config_syntax}
 {op_defaults_config_desc}
 
-{op_defaults_syntax}
-{op_defaults_desc}
-
 {op_defaults_set_create_syntax}
 {op_defaults_set_create_desc}
 
@@ -2075,9 +2042,6 @@ Commands:
 
 {defaults_config_syntax}
 {defaults_config_desc}
-
-{defaults_syntax}
-{defaults_desc}
 
 {defaults_set_create_syntax}
 {defaults_set_create_desc}
@@ -2286,13 +2250,6 @@ Commands:
             (_alias_of("resource failcount show"),)
             + _RESOURCE_FAILCOUNT_SHOW_DESC
         ),
-        op_defaults_syntax=_format_syntax(
-            f"{_RESOURCE_OP_DEFAULTS_CMD} {_SYNTAX_NAME_VALUE_REPEATED}"
-        ),
-        op_defaults_desc=_format_desc(
-            (_alias_of(f"resource {_RESOURCE_OP_DEFAULTS_CMD}"),)
-            + _RESOURCE_OP_DEFAULTS_DESC
-        ),
         op_defaults_config_syntax=_format_syntax(
             f"{_RESOURCE_OP_DEFAULTS_CONFIG_CMD} {_RESOURCE_OP_DEFAULTS_CONFIG_SYNTAX}"
         ),
@@ -2373,13 +2330,6 @@ Commands:
         defaults_config_desc=_format_desc(
             (_alias_of(f"resource {_RESOURCE_DEFAULTS_CONFIG_CMD}"),)
             + _RESOURCE_DEFAULTS_CONFIG_DESC
-        ),
-        defaults_syntax=_format_syntax(
-            f"{_RESOURCE_DEFAULTS_CMD} {_SYNTAX_NAME_VALUE_REPEATED}"
-        ),
-        defaults_desc=_format_desc(
-            (_alias_of(f"resource {_RESOURCE_DEFAULTS_CMD}"),)
-            + _RESOURCE_DEFAULTS_DESC
         ),
         defaults_set_create_syntax=_format_syntax(
             f"{_RESOURCE_DEFAULTS_SET_CREATE_CMD} {_RESOURCE_DEFAULTS_SET_CREATE_SYNTAX}"
