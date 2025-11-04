@@ -362,7 +362,7 @@ bundle create <bundle id> container <container type> [<container options>] [netw
 Create a new bundle encapsulating no resources. The bundle can be used either as it is or a resource may be put into it at any time. If \fB\-\-disabled\fR is specified, the bundle is not started automatically. If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the bundle to start and then return 0 on success or 1 on error. If 'n' is not specified it defaults to 60 minutes.
 .TP
 bundle reset <bundle id> [container <container options>] [network <network options>] [port\-map <port options>]... [storage\-map <storage options>]... [meta <meta options>] [\fB\-\-disabled\fR] [\fB\-\-wait\fR[=n]]
-Configure specified bundle with given options. Unlike bundle update, this command resets the bundle according given options - no previous options are kept. Resources inside the bundle are kept as they are. If \fB\-\-disabled\fR is specified, the bundle is not started automatically. If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the bundle to start and then return 0 on success or 1 on error. If 'n' is not specified it defaults to 60 minutes.
+Configure specified bundle with given options. Unlike bundle update, this command resets the bundle according given options \- no previous options are kept. Resources inside the bundle are kept as they are. If \fB\-\-disabled\fR is specified, the bundle is not started automatically. If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the bundle to start and then return 0 on success or 1 on error. If 'n' is not specified it defaults to 60 minutes.
 .TP
 bundle update <bundle id> [container <container options>] [network <network options>] [port\-map (add <port options>) | (delete | remove <id>...)]... [storage\-map (add <storage options>) | (delete | remove <id>...)]... [meta <meta options>] [\fB\-\-wait\fR[=n]]
 Add, remove or change options of specified bundle. Unspecified options will be kept unchanged. If you wish to remove an option, set it to empty value, i.e. 'option_name='.
@@ -461,7 +461,7 @@ relocate clear
 Remove all constraints created by the 'relocate run' command.
 .TP
 utilization [<resource id> [<name>=<value> ...]]
-Add specified utilization options to specified resource. If resource is not specified, shows utilization of all resources. If utilization options are not specified, shows utilization of specified resource. Utilization option should be in format name=value, value has to be integer. Options may be removed by setting an option without a value. Example: pcs resource utilization TestResource cpu= ram=20  For the utilization configuration to be in effect, cluster property 'placement-strategy' must be configured accordingly.
+Add specified utilization options to specified resource. If resource is not specified, shows utilization of all resources. If utilization options are not specified, shows utilization of specified resource. Utilization option should be in format name=value, value has to be integer. Options may be removed by setting an option without a value. Example: pcs resource utilization TestResource cpu= ram=20  For the utilization configuration to be in effect, cluster property 'placement\-strategy' must be configured accordingly.
 .TP
 relations <resource id> [\fB\-\-full\fR]
 Display relations of a resource specified by its id with other resources in a tree structure. Supported types of resource relations are: ordering constraints, ordering set constraints, relations defined by resource hierarchy (clones, groups, bundles). If \fB\-\-full\fR is used, more verbose output will be printed.
@@ -536,7 +536,7 @@ Set link options for all links. Link options are matched to the links in order. 
 Set link options for the second and fourth links only. Link options are matched to the links based on the linknumber option (the first link is link 0):
     pcs cluster setup newcluster node1 addr=10.0.1.11 addr=10.0.2.11 addr=10.0.3.11 addr=10.0.4.11 node2 addr=10.0.1.12 addr=10.0.2.12 addr=10.0.3.12 addr=10.0.4.12 transport knet link linknumber=3 mcastport=55405 link linknumber=1 transport=sctp
 .br
-Create a cluster using udp transport with a non-default port:
+Create a cluster using udp transport with a non\-default port:
     pcs cluster setup newcluster node1 node2 transport udp link mcastport=55405
 .TP
 config [show] [@OUTPUT_FORMAT_SYNTAX_DOC@] [\fB\-\-corosync_conf\fR <path>]
@@ -560,7 +560,7 @@ Crypto options are: cipher, hash, model
 Totem options are: block_unlisted_ips, consensus, downcheck, fail_recv_const, heartbeat_failures_allowed, hold, join, max_messages, max_network_delay, merge, miss_count_const, send_join, seqno_unchanged_const, token, token_coefficient, token_retransmit, token_retransmits_before_loss_const, window_size
 .TP
 config uuid generate [\fB\-\-corosync_conf\fR <path>] [\fB\-\-force\fR]
-Generate a new cluster UUID and distribute it to all cluster nodes. Cluster UUID is not used by the cluster stack in any way, it is provided to easily distinguish between multiple clusters in a multi-cluster environment since the cluster name does not have to be unique.
+Generate a new cluster UUID and distribute it to all cluster nodes. Cluster UUID is not used by the cluster stack in any way, it is provided to easily distinguish between multiple clusters in a multi\-cluster environment since the cluster name does not have to be unique.
 
 If \fB\-\-corosync_conf\fR is specified, update cluster configuration in file specified by <path>.
 
@@ -610,14 +610,14 @@ sync corosync
 Sync corosync configuration to all nodes found from current corosync.conf file.
 .TP
 cib [filename] [scope=<scope> | \fB\-\-config\fR]
-Get the raw xml from the CIB (Cluster Information Base). If a filename is provided, we save the CIB to that file, otherwise the CIB is printed. Specify scope to get a specific section of the CIB. Valid values of the scope are: acls, alerts, configuration, constraints, crm_config, fencing-topology, nodes, op_defaults, resources, rsc_defaults, tags. \fB\-\-config\fR is the same as scope=configuration. Do not specify a scope if you want to edit the saved CIB using pcs (pcs \fB\-f\fR <command>).
+Get the raw xml from the CIB (Cluster Information Base). If a filename is provided, we save the CIB to that file, otherwise the CIB is printed. Specify scope to get a specific section of the CIB. Valid values of the scope are: acls, alerts, configuration, constraints, crm_config, fencing\-topology, nodes, op_defaults, resources, rsc_defaults, tags. \fB\-\-config\fR is the same as scope=configuration. Do not specify a scope if you want to edit the saved CIB using pcs (pcs \fB\-f\fR <command>).
 .TP
 cib\-push <filename> [\fB\-\-wait\fR[=<n>]] [diff\-against=<filename_original> | scope=<scope> | \fB\-\-config\fR]
 Push the raw xml from <filename> to the CIB (Cluster Information Base). You can obtain the CIB by running the 'pcs cluster cib' command, which is recommended first step when you want to perform desired modifications (pcs \fB\-f\fR <command>) for the one\-off push.
 .br
 If diff\-against is specified, pcs diffs contents of filename against contents of filename_original and pushes the result to the CIB.
 .br
-Specify scope to push a specific section of the CIB. Valid values of the scope are: acls, alerts, configuration, constraints, crm_config, fencing-topology, nodes, op_defaults, resources, rsc_defaults, tags. \fB\-\-config\fR is the same as scope=configuration. Use of \fB\-\-config\fR is recommended. Do not specify a scope if you need to push the whole CIB or be warned in the case of outdated CIB.
+Specify scope to push a specific section of the CIB. Valid values of the scope are: acls, alerts, configuration, constraints, crm_config, fencing\-topology, nodes, op_defaults, resources, rsc_defaults, tags. \fB\-\-config\fR is the same as scope=configuration. Use of \fB\-\-config\fR is recommended. Do not specify a scope if you need to push the whole CIB or be warned in the case of outdated CIB.
 .br
 If \fB\-\-wait\fR is specified wait up to 'n' seconds for changes to be applied.
 .br
@@ -633,7 +633,7 @@ cib\-upgrade
 Upgrade the CIB to conform to the latest version of the document schema.
 .TP
 edit [scope=<scope> | \fB\-\-config\fR]
-Edit the cib in the editor specified by the $EDITOR environment variable and push out any changes upon saving. Specify scope to edit a specific section of the CIB. Valid values of the scope are: acls, alerts, configuration, constraints, crm_config, fencing-topology, nodes, op_defaults, resources, rsc_defaults, tags. \fB\-\-config\fR is the same as scope=configuration. Use of \fB\-\-config\fR is recommended. Do not specify a scope if you need to edit the whole CIB or be warned in the case of outdated CIB.
+Edit the cib in the editor specified by the $EDITOR environment variable and push out any changes upon saving. Specify scope to edit a specific section of the CIB. Valid values of the scope are: acls, alerts, configuration, constraints, crm_config, fencing\-topology, nodes, op_defaults, resources, rsc_defaults, tags. \fB\-\-config\fR is the same as scope=configuration. Use of \fB\-\-config\fR is recommended. Do not specify a scope if you need to edit the whole CIB or be warned in the case of outdated CIB.
 .TP
 node add <node name> [addr=<node address>]... [watchdog=<watchdog path>] [device=<SBD device path>]... [\fB\-\-start\fR [\fB\-\-wait\fR[=<n>]]] [\fB\-\-enable\fB] [\fB\-\-no\-watchdog\-validation\fR]
 Add the node to the cluster and synchronize all relevant configuration files to the new node. This command can only be run on an existing cluster node.
@@ -1122,7 +1122,7 @@ defaults [<property>...] | [\fB\-\-full\fR]
 List all property defaults or only defaults for specified properties. If \fB\-\-full\fR is specified, all properties defaults including advanced are shown.
 
 .TP
-describe [<property>...] [\fB\-\-output-format text|json\fR] [\fB\-\-full\fR]
+describe [<property>...] [\fB\-\-output\-format text|json\fR] [\fB\-\-full\fR]
 Show cluster properties. There are 2 formats of output available: 'json' and 'text', default is 'text'. Format 'text' is a human friendly output. Format 'json' is a machine oriented output of the configuration. If \fB\-\-full\fR is specified, all properties descriptions including advanced are shown.
 .TP
 set <property>=[<value>] ... [\fB\-\-force\fR]
@@ -1359,7 +1359,7 @@ Restart booth resources created by the "pcs booth create" command.
 ticket grant <ticket> [<site address>]
 Grant the ticket to the site specified by the address, hence to the booth formation this site is a member of. When this specification is omitted, site address that has been specified with 'pcs booth create' command is used. Specifying site address is therefore mandatory when running this command at a host in an arbitrator role.
 .br
-Note that the ticket must not be already granted in given booth formation; for an ad-hoc (and, in the worst case, abrupt, for a lack of a direct atomicity) change of this preference baring direct interventions at the sites, the ticket needs to be revoked first, only then it can be granted at another site again.
+Note that the ticket must not be already granted in given booth formation; for an ad\-hoc (and, in the worst case, abrupt, for a lack of a direct atomicity) change of this preference baring direct interventions at the sites, the ticket needs to be revoked first, only then it can be granted at another site again.
 .TP
 ticket revoke <ticket> [<site address>]
 Revoke the ticket in the booth formation as identified with one of its member sites specified by the address. When this specification is omitted, site address that has been specified with a prior 'pcs booth create' command is used. Specifying site address is therefore mandatory when running this command at a host in an arbitrator role.
@@ -1457,7 +1457,7 @@ With groups, the state is read and evaluated on the group first. If the state ca
 
 With clones and bundles, the state is read and evaluated on the clone or bundle first. If the state cannot be determined from only the clone or bundle, evaluate the state on the instances and return true if the query is true for ANY of the instances. 'instances' can be used to specify how to evaluate the state of the instances. If 'instances' is specified, then always evaluate the query only on the instances without looking at the clone or bundle themselves. This means that for example queries for 'started' and 'stopped' on a clone with one started and one stopped instance will both evaluate as true at the same time if 'instances' is not specified or it is set to 'any'.
 
-\&'on-node' can be used to test whether the resource is in given state on the node with the given name. If 'on-node' is used, then always check only the member resources for groups and instances for clones or bundles.
+\&'on\-node' can be used to test whether the resource is in given state on the node with the given name. If 'on\-node' is used, then always check only the member resources for groups and instances for clones or bundles.
 
 Queries on the state of cloned or bundled resources are evaluated similarly to queries on clones or bundles. Evaluate the state of every instance and return true if the query is true for ANY of the instances. 'instances' can be used to specify how the query should be evaluated. It is possible to query single specific instance of unique clones or bundles by using resource id together with the suffix that distinguishes instances for unique clones and bundles.
 .br
@@ -1467,7 +1467,7 @@ Example: Query if any instance of resource is started
 .br
 Example: Query if one specific instance is started
 .br
-    pcs status query resource resource_id:0 is-state started
+    pcs status query resource resource_id:0 is\-state started
 
 Print 'True' and exit with 0 if the query evaluates to true. Exit with 1 if an error occurs while performing the query. Print 'False' and exit with 2 otherwise.
 .br
@@ -1553,7 +1553,7 @@ auth (<host name> [addr=<address>[:<port>]])... [\fB\-u\fR <username>] [\fB\-p\f
 Authenticate local pcs/pcsd against pcsd on specified hosts. It is possible to specify an address and a port via which pcs/pcsd will communicate with each host. If an address is not specified a host name will be used. If a port is not specified 2224 will be used.
 .TP
 deauth [<host name>]...
-Delete authentication tokens which allow pcs/pcsd on the current system to connect to remote pcsd instances on specified host names. If the current system is a member of a cluster, the tokens will be deleted from all nodes in the cluster. If no host names are specified all tokens will be deleted. After this command is run this node will need to re-authenticate against other nodes to be able to connect to them.
+Delete authentication tokens which allow pcs/pcsd on the current system to connect to remote pcsd instances on specified host names. If the current system is a member of a cluster, the tokens will be deleted from all nodes in the cluster. If no host names are specified all tokens will be deleted. After this command is run this node will need to re\-authenticate against other nodes to be able to connect to them.
 .SS "node"
 .TP
 attribute [[<node>] [\fB\-\-name\fR <name>] | (@OUTPUT_FORMAT_SYNTAX_DOC@) | <node> <name>=<value> ...]
@@ -1575,7 +1575,7 @@ Remove node(s) from standby mode (the node specified will now be able to host re
 utilization [[<node>] [\fB\-\-name\fR <name>] | (@OUTPUT_FORMAT_SYNTAX_DOC@) | <node> <name>=<value> ...]
 Add specified utilization options to specified node.  If node is not specified, shows utilization of all nodes.  If \fB\-\-name\fR is specified, shows specified utilization value from all nodes. If utilization options are not specified, shows utilization of specified node.  Utilization option should be in format name=value, value has to be integer.  Options may be removed by setting an option without a value. @OUTPUT_FORMAT_DESC_DOC@
 
-Example: pcs node utilization node1 cpu=4 ram=  For the utilization configuration to be in effect, cluster property 'placement-strategy' must be configured accordingly.
+Example: pcs node utilization node1 cpu=4 ram=  For the utilization configuration to be in effect, cluster property 'placement\-strategy' must be configured accordingly.
 .SS "alert"
 .TP
 [config] [@OUTPUT_FORMAT_SYNTAX_DOC@]
@@ -1606,12 +1606,12 @@ recipient remove <recipient\-id> ...
 Remove specified recipients.
 .SS "client"
 .TP
-local-auth [<pcsd\-port>] [\-u <username>] [\-p <password>]
+local\-auth [<pcsd\-port>] [\-u <username>] [\-p <password>]
 Authenticate current user to local pcsd. This is required to run some pcs commands which may require permissions of root user such as 'pcs cluster start'.
 .SS "dr"
 .TP
 config
-Display disaster-recovery configuration from the local node.
+Display disaster\-recovery configuration from the local node.
 .TP
 status [\fB\-\-full\fR] [\fB\-\-hide\-inactive\fR]
 Display status of the local and the remote site cluster (\fB\-\-full\fR provides more details, \fB\-\-hide\-inactive\fR hides inactive resources).
@@ -1620,7 +1620,7 @@ set\-recovery\-site <recovery site node>
 Set up disaster\-recovery with the local cluster being the primary site. The recovery site is defined by a name of one of its nodes.
 .TP
 destroy
-Permanently destroy disaster-recovery configuration on all sites.
+Permanently destroy disaster\-recovery configuration on all sites.
 .SS "tag"
 .TP
 [config [<tag id>...]] [@OUTPUT_FORMAT_SYNTAX_DOC@]
@@ -1678,8 +1678,8 @@ EDITOR
 .TP
 no_proxy, https_proxy, all_proxy, NO_PROXY, HTTPS_PROXY, ALL_PROXY
  These environment variables (listed according to their priorities) control how pcs handles proxy servers when connecting to cluster nodes. See curl(1) man page for details.
-.SH CHANGES IN PCS-0.12
-This section summarizes the most important changes in commands done in pcs-0.12.x compared to pcs-0.11.x. For detailed description of current commands see above.
+.SH CHANGES IN PCS\-0.12
+This section summarizes the most important changes in commands done in pcs\-0.12.x compared to pcs\-0.11.x. For detailed description of current commands see above.
 .SS "Pacemaker 3 changes"
 .TP
 Following pacemaker 3, pcs has dropped support for:
@@ -1691,11 +1691,11 @@ rkt containers in bundle resources
 multiple rules in a single location constraint
 .SS "Legacy role names"
 .TP
-Legacy role names and derived options and keywords are no longer accepted, use 'Promoted', 'Unpromoted', \fB\-\-promoted\fR, 'promotable', 'promoted-max'.
+Legacy role names and derived options and keywords are no longer accepted, use 'Promoted', 'Unpromoted', \fB\-\-promoted\fR, 'promotable', 'promoted\-max'.
 .SS "Mixing resources and stonith resources"
  Using stonith resources in 'pcs resource' commands and resources in 'pcs stonith' commands is no longer allowed.
 .SS "Resources validation"
-When creating or updating a resource or stonith, its options are now validated by the resource or stonith agent. Unless \fB\-\-agent\-validation\fR is specified, this does not prevent misconfiguring the resource or stonith by exiting with an error. In pcs-0.11, the validation was done only when \fB\-\-agent\-validation\fR was specified.
+When creating or updating a resource or stonith, its options are now validated by the resource or stonith agent. Unless \fB\-\-agent\-validation\fR is specified, this does not prevent misconfiguring the resource or stonith by exiting with an error. In pcs\-0.11, the validation was done only when \fB\-\-agent\-validation\fR was specified.
 .SS "Pacemaker rules"
 Several date\-spec and duration options have been removed in pacemaker 3. Therefore, pcs no longer supports them either. Previously supported date\-spec and duration options were: hours, monthdays, weekdays, yearsdays, months, weeks, years, weekyears, moon. New date\-spec options are: seconds, minutes, hours, monthdays, weekdays, yeardays, months, weeks, years, weekyears. New duration options are: seconds, minutes, hours, days, weeks, months, years.
 .br
@@ -1703,7 +1703,7 @@ Using spaces in dates in location constraint rules is no longer allowed.
 .br
 Rules are supposed to be specified as a single string argument. Specifying rules as multiple arguments has been deprecated and might be removed in a future release.
 .SS "\-\-yes instead of \-\-force as an alternative to interactive confirmation"
-Some pcs commands require interactive confirmation to proceed. Previously, this could be overridden by specifying \fB\-\-force\fR. Since pcs-0.12, using \fB\-\-force\fR for this purpose is deprecated in favor of \fB\-\-yes\fR. The \fB\-\-force\fR flag is kept to override validation errors, which was its originally intended use. Affected commands are: 'pcs cluster destroy', 'pcs quorum unblock', 'pcs stonith confirm', 'pcs stonith sbd device setup' and 'pcs stonith sbd watchdog test'.
+Some pcs commands require interactive confirmation to proceed. Previously, this could be overridden by specifying \fB\-\-force\fR. Since pcs\-0.12, using \fB\-\-force\fR for this purpose is deprecated in favor of \fB\-\-yes\fR. The \fB\-\-force\fR flag is kept to override validation errors, which was its originally intended use. Affected commands are: 'pcs cluster destroy', 'pcs quorum unblock', 'pcs stonith confirm', 'pcs stonith sbd device setup' and 'pcs stonith sbd watchdog test'.
 .SS "acl"
 .TP
 role assign | unassign
@@ -1726,7 +1726,7 @@ node add\-remote | add\-guest
 node remove\-remote | delete\-remote
 These commands no longer remove location constraints referencing the node name of the removed remote node.
 .TP
-pcsd-status
+pcsd\-status
 This deprecated command has been removed. Use 'pcs status pcsd' or 'pcs pcsd status' instead.
 .SS "constraint"
 .TP
@@ -1760,7 +1760,7 @@ defaults <name>=<value>...
 This deprecated command has been removed. Use 'pcs resource defaults update <name>=<value>...' if you only manage one set of defaults, or 'pcs resource defaults set' if you manage several sets of defaults.
 .TP
 move
-Since pcs-0.11, this command automatically deletes location constraints used for moving a resource. Therefore, its deprecated flag \fB\-\-autodelete\fR has been removed.
+Since pcs\-0.11, this command automatically deletes location constraints used for moving a resource. Therefore, its deprecated flag \fB\-\-autodelete\fR has been removed.
 .TP
 op defaults <name>=<value>...
 This deprecated command has been removed. Use 'pcs resource op defaults update <name>=<value>...' if you only manage one set of defaults, or 'pcs resource op defaults set' if you manage several sets of defaults.
@@ -1789,8 +1789,8 @@ This deprecated command has been removed. Use 'pcs stonith op defaults update <n
 .TP
 list
 This deprecated command has been removed. Use 'pcs tag config' instead.
-.SH CHANGES IN PCS-0.11
-This section summarizes the most important changes in commands done in pcs-0.11.x compared to pcs-0.10.x. For detailed description of current commands see above.
+.SH CHANGES IN PCS\-0.11
+This section summarizes the most important changes in commands done in pcs\-0.11.x compared to pcs\-0.10.x. For detailed description of current commands see above.
 .SS "Legacy role names"
 .TP
 Roles 'Master' and 'Slave' are deprecated and should not be used anymore. Instead, use 'Promoted' and 'Unpromoted', respectively. Similarly, \fB\-\-master\fR has been deprecated and replaced with \fB\-\-promoted\fR.
@@ -1801,7 +1801,7 @@ This command has been replaced with 'pcs cluster uidgid delete' and 'pcs cluster
 .SS "resource"
 .TP
 move
-The 'pcs resource move' now automatically removes location constraint used for moving a resource. It is equivalent of 'pcs resource move \fB\-\-autodelete\fR' from pcs-0.10.9. Legacy functionality of the 'resource move' command is still available as 'resource move\-with\-constraint <resource id>'.
+The 'pcs resource move' now automatically removes location constraint used for moving a resource. It is equivalent of 'pcs resource move \fB\-\-autodelete\fR' from pcs\-0.10.9. Legacy functionality of the 'resource move' command is still available as 'resource move\-with\-constraint <resource id>'.
 .TP
 show \fB\-\-full\fR
 This command has been replaced with 'pcs resource config'.
@@ -1818,16 +1818,16 @@ This command has been replaced with 'pcs stonith config'.
 .TP
 show
 This command has been replaced with 'pcs stonith status'.
-.SH CHANGES IN PCS-0.10
-This section summarizes the most important changes in commands done in pcs-0.10.x compared to pcs-0.9.x. For detailed description of current commands see above.
+.SH CHANGES IN PCS\-0.10
+This section summarizes the most important changes in commands done in pcs\-0.10.x compared to pcs\-0.9.x. For detailed description of current commands see above.
 .SS "acl"
 .TP
 show
-The 'pcs acl show' command has been deprecated and will be removed. Please use 'pcs acl config' instead. Applicable in pcs-0.10.9 and newer.
+The 'pcs acl show' command has been deprecated and will be removed. Please use 'pcs acl config' instead. Applicable in pcs\-0.10.9 and newer.
 .SS "alert"
 .TP
 show
-The 'pcs alert show' command has been deprecated and will be removed. Please use 'pcs alert config' instead. Applicable in pcs-0.10.9 and newer.
+The 'pcs alert show' command has been deprecated and will be removed. Please use 'pcs alert config' instead. Applicable in pcs\-0.10.9 and newer.
 .SS "cluster"
 .TP
 auth
@@ -1839,7 +1839,7 @@ Custom node names and Corosync 3.x with knet are fully supported now, therefore 
 The \fB\-\-device\fR and \fB\-\-watchdog\fR options have been replaced with 'device' and 'watchdog' options, respectively.
 .TP
 pcsd\-status
-The 'pcs cluster pcsd\-status' command has been deprecated and will be removed. Please use 'pcs pcsd status' or 'pcs status pcsd' instead. Applicable in pcs-0.10.9 and newer.
+The 'pcs cluster pcsd\-status' command has been deprecated and will be removed. Please use 'pcs pcsd status' or 'pcs status pcsd' instead. Applicable in pcs\-0.10.9 and newer.
 .TP
 quorum
 This command has been replaced with 'pcs quorum'.
@@ -1873,10 +1873,10 @@ To specify a filename, use the \fB\-f\fR option.
 .SS "constraint"
 .TP
 list
-The 'pcs constraint list' command, as well as its variants 'pcs constraint [location | colocation | order | ticket] list', has been deprecated and will be removed. Please use 'pcs constraint [location | colocation | order | ticket] config' instead. Applicable in pcs-0.10.9 and newer.
+The 'pcs constraint list' command, as well as its variants 'pcs constraint [location | colocation | order | ticket] list', has been deprecated and will be removed. Please use 'pcs constraint [location | colocation | order | ticket] config' instead. Applicable in pcs\-0.10.9 and newer.
 .TP
 show
-The 'pcs constraint show' command, as well as its variants 'pcs constraint [location | colocation | order | ticket] show', has been deprecated and will be removed. Please use 'pcs constraint [location | colocation | order | ticket] config' instead. Applicable in pcs-0.10.9 and newer.
+The 'pcs constraint show' command, as well as its variants 'pcs constraint [location | colocation | order | ticket] show', has been deprecated and will be removed. Please use 'pcs constraint [location | colocation | order | ticket] config' instead. Applicable in pcs\-0.10.9 and newer.
 .SS "pcsd"
 .TP
 clear\-auth
@@ -1884,7 +1884,7 @@ This command has been replaced with 'pcs host deauth' and 'pcs pcsd deauth'.
 .SS "property"
 .TP
 list
-The 'pcs property list' command has been deprecated and will be removed. Please use 'pcs property config' instead. Applicable in pcs-0.10.9 and newer.
+The 'pcs property list' command has been deprecated and will be removed. Please use 'pcs property config' instead. Applicable in pcs\-0.10.9 and newer.
 .TP
 set
 The \fB\-\-node\fR option is no longer supported. Use the 'pcs node attribute' command to set node attributes.
@@ -1892,7 +1892,7 @@ The \fB\-\-node\fR option is no longer supported. Use the 'pcs node attribute' c
 show
 The \fB\-\-node\fR option is no longer supported. Use the 'pcs node attribute' command to view node attributes.
 .br
-The 'pcs property show' command has been deprecated and will be removed. Please use 'pcs property config' instead. Applicable in pcs-0.10.9 and newer.
+The 'pcs property show' command has been deprecated and will be removed. Please use 'pcs property config' instead. Applicable in pcs\-0.10.9 and newer.
 .TP
 unset
 The \fB\-\-node\fR option is no longer supported. Use the 'pcs node attribute' command to unset node attributes.
@@ -1916,13 +1916,13 @@ This command has been replaced with 'pcs resource group list'.
 .SS "stonith"
 .TP
 level add | clear | delete | remove
-Delimiting stonith devices with a comma is deprecated, use a space instead. Applicable in pcs-0.10.9 and newer.
+Delimiting stonith devices with a comma is deprecated, use a space instead. Applicable in pcs\-0.10.9 and newer.
 .TP
 level clear
-Syntax of the command has been fixed so that it is not ambiguous any more. New syntax is 'pcs stonith level clear [target <target> | stonith <stonith id>...]'. Old syntax 'pcs stonith level clear [<target> | <stonith ids>]' is deprecated but still functional in pcs-0.10.x. Applicable in pcs-0.10.9 and newer.
+Syntax of the command has been fixed so that it is not ambiguous any more. New syntax is 'pcs stonith level clear [target <target> | stonith <stonith id>...]'. Old syntax 'pcs stonith level clear [<target> | <stonith ids>]' is deprecated but still functional in pcs\-0.10.x. Applicable in pcs\-0.10.9 and newer.
 .TP
 level delete | remove
-Syntax of the command has been fixed so that it is not ambiguous any more. New syntax is 'pcs stonith level delete | remove [target <target>] [stonith <stonith id>]...'. Old syntax 'pcs stonith level delete | remove [<target>] [<stonith id>]...' is deprecated but still functional in pcs-0.10.x. Applicable in pcs-0.10.9 and newer.
+Syntax of the command has been fixed so that it is not ambiguous any more. New syntax is 'pcs stonith level delete | remove [target <target>] [stonith <stonith id>]...'. Old syntax 'pcs stonith level delete | remove [<target>] [<stonith id>]...' is deprecated but still functional in pcs\-0.10.x. Applicable in pcs\-0.10.9 and newer.
 .TP
 sbd device setup
 The \fB\-\-device\fR option has been replaced with the 'device' option.
@@ -1935,7 +1935,7 @@ Previously, this command displayed either status or configuration of stonith res
 .SS "tag"
 .TP
 list
-The 'pcs tag list' command has been deprecated and will be removed. Please use 'pcs tag config' instead. Applicable in pcs-0.10.9 and newer.
+The 'pcs tag list' command has been deprecated and will be removed. Please use 'pcs tag config' instead. Applicable in pcs\-0.10.9 and newer.
 .SH SEE ALSO
 http://clusterlabs.org/doc/
 

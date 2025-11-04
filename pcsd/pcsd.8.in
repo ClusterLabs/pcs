@@ -25,7 +25,7 @@ List of IP addresses pcsd should bind to delimited by ',' character.
 Port on which pcsd should be available.
 .TP
 .B PCSD_SSL_OPTIONS=<string>
-SSL/TLS options delimited by ',' character. This is usually used to set SSL/TLS protocols accepted by pcsd. List of valid options can be obtained by running: ruby -e 'require "openssl"; puts OpenSSL::SSL.constants.grep /^OP_/'
+SSL/TLS options delimited by ',' character. This is usually used to set SSL/TLS protocols accepted by pcsd. List of valid options can be obtained by running: ruby \-e 'require "openssl"; puts OpenSSL::SSL.constants.grep /^OP_/'
 .TP
 .B PCSD_SSL_CIPHERS=<string>
 SSL/TLS ciphers accepted by pcsd.
@@ -93,7 +93,7 @@ How often in seconds should pcsd ask other nodes if the synchronized files have 
 .B thread_paused_until
 Disable the synchronization until the set unix timestamp.
 
-.SS known-hosts
+.SS known\-hosts
 This JSON file stores information about hosts known to the local pcsd which are used to login to remote instances of pcsd. Stored information include host addresses, pcsd ports and authentication tokens.
 
 .SS pcs_settings.conf
