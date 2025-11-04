@@ -434,6 +434,9 @@ class ResourceDefaultsCreate(DefaultsCreateMixin, TestCase):
                     agent=ra_const.PRIMITIVE_META,
                     reason="error loading definitions",
                 ),
+                fixture.warn(
+                    reports.codes.META_ATTRS_NOT_VALIDATED_LOADING_ERROR
+                ),
                 fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDDEN),
             ]
         )
@@ -1516,6 +1519,9 @@ class ResourceDefaultsUpdateMetaValidationMixin:
                     reports.codes.UNABLE_TO_GET_AGENT_METADATA,
                     agent=ra_const.PRIMITIVE_META,
                     reason="error loading definitions",
+                ),
+                fixture.warn(
+                    reports.codes.META_ATTRS_NOT_VALIDATED_LOADING_ERROR
                 ),
                 fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDDEN),
             ]

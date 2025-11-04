@@ -6517,3 +6517,39 @@ class MetaAttrsUnknownToPcmk(NameBuildTest):
                 ["primitive-meta", "stonith-meta"],
             ),
         )
+
+
+class MetaAttrsNotValidatedUnsupportedType(NameBuildTest):
+    def test_empty_options(self):
+        self.assert_message_from_report(
+            "Meta attributes are not validated",
+            reports.MetaAttrsNotValidatedUnsupportedType([]),
+        )
+
+    def test_single_option(self):
+        self.assert_message_from_report(
+            "Meta attributes of clone are not validated",
+            reports.MetaAttrsNotValidatedUnsupportedType(["clone"]),
+        )
+
+    def test_multiple_options(self):
+        self.assert_message_from_report(
+            (
+                "Meta attributes of bundle / clone / group / resource are not "
+                "validated"
+            ),
+            reports.MetaAttrsNotValidatedUnsupportedType(
+                ["clone", "bundle", "group", "primitive"]
+            ),
+        )
+
+
+class MetaAttrsNotValidatedLoadingError(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "Meta attribute validation is skipped due to an error loading "
+                "meta attributes definition."
+            ),
+            reports.MetaAttrsNotValidatedLoadingError(),
+        )

@@ -410,7 +410,7 @@ class BundleUpdate(BundleCreateCommon):
                 "priority=15",
                 "resource-stickiness=100",
                 "is-managed=false",
-            ]
+            ],
         )
 
     def test_fail_when_missing_args_1(self):
@@ -790,7 +790,7 @@ class BundleShow(TestCase, AssertPcsMixin):
                 "meta",
                 "target-role=Stopped",
                 "is-managed=false",
-            ]
+            ],
         )
         self.assert_pcs_success(
             "resource create A ocf:pcsmock:minimal bundle B1 --no-default-ops".split()

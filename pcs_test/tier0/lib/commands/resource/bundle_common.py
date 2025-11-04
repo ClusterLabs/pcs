@@ -914,6 +914,7 @@ class MetaMixin(SetUpMixin):
                 "is-managed": "false",
             }
         )
+        self.env_assist.assert_reports([])
 
     def test_disabled(self):
         self.config.env.push_cib(

@@ -11,6 +11,7 @@ from pcs.lib.resource_agent import const as ra_const
 
 from pcs_test.tier1.cib_resource.common import (
     ResourceTest,
+    fixture_meta_attributes_not_validated_warning,
     fixture_meta_attributes_warning,
 )
 from pcs_test.tools.assertions import AssertPcsMixin
@@ -263,7 +264,8 @@ class Success(ResourceTest):
                     </meta_attributes>
                 </clone>
             </resources>""",
-            stderr_full=self.msg_clone_without_meta,
+            stderr_full=self.msg_clone_without_meta
+            + fixture_meta_attributes_not_validated_warning(["clone"]),
         )
 
     def test_create_with_options_and_meta(self):
@@ -631,6 +633,9 @@ class SuccessNewParser(ResourceTest):
                     </meta_attributes>
                 </clone>
             </resources>""",
+            stderr_full=fixture_meta_attributes_not_validated_warning(
+                ["clone"]
+            ),
         )
 
     def test_primitive_and_clone_meta(self):
@@ -653,9 +658,8 @@ class SuccessNewParser(ResourceTest):
                     </meta_attributes>
                 </clone>
             </resources>""",
-            stderr_full=fixture_meta_attributes_warning(
-                ["a"], ra_const.PRIMITIVE_META
-            ),
+            stderr_full=fixture_meta_attributes_not_validated_warning(["clone"])
+            + fixture_meta_attributes_warning(["a"], ra_const.PRIMITIVE_META),
         )
 
 

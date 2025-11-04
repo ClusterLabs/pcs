@@ -383,7 +383,11 @@ def _validate_meta_attributes(
                 e, severity=reports.ReportItemSeverity.warning()
             )
         )
-        # TODO: warn that validation was skipped
+        report_list.append(
+            reports.ReportItem.warning(
+                reports.messages.MetaAttrsNotValidatedLoadingError()
+            )
+        )
     return report_list
 
 
@@ -727,6 +731,14 @@ def create_as_clone(  # noqa: PLR0913
         if clone_id is not None:
             env.report_processor.report_list(
                 resource.clone.validate_clone_id(clone_id, id_provider),
+            )
+        if any(clone_meta_options.values()):
+            env.report_processor.report(
+                reports.ReportItem.warning(
+                    reports.messages.MetaAttrsNotValidatedUnsupportedType(
+                        [cib_const.TAG_RESOURCE_CLONE]
+                    )
+                )
             )
         if env.report_processor.has_errors:
             raise LibraryError()
@@ -2988,10 +3000,18 @@ def update_meta(
                 )
             )
         else:
-            pass
-            # TODO: warn that validation was skipped
             # we cannot validate meta attributes for clones and bundles, since
             # pacemaker does not provide metadata for these
+            env.report_processor.report(
+                reports.ReportItem.warning(
+                    reports.messages.MetaAttrsNotValidatedUnsupportedType(
+                        [
+                            cib_const.TAG_RESOURCE_BUNDLE,
+                            cib_const.TAG_RESOURCE_CLONE,
+                        ]
+                    )
+                )
+            )
 
     meta_attrs_nvset_list = find_nvsets(resource_el, NVSET_META)
     meta_attrs_nvset = (

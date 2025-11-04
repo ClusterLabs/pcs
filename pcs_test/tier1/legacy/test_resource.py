@@ -23,6 +23,7 @@ from pcs.lib.resource_agent import const as ra_const
 
 from pcs_test.tier1.cib_resource.common import (
     ResourceTest,
+    fixture_meta_attributes_not_validated_warning,
     fixture_meta_attributes_warning,
 )
 from pcs_test.tier1.legacy.common import FIXTURE_UTILIZATION_WARNING
@@ -2613,6 +2614,9 @@ class Resource(TestCase, AssertPcsMixin):
         )
         self.assert_pcs_success(
             "resource create --no-default-ops dummy ocf:pcsmock:stateful promotable".split(),
+            stderr_full=fixture_meta_attributes_not_validated_warning(
+                ["clone"]
+            ),
         )
         self.assert_pcs_success(
             "resource config".split(),
