@@ -834,12 +834,16 @@ def _get_link_options_validators_knet(
 ) -> list[validate.ValidatorInterface]:
     # This only returns validators checking single values. Add checks for
     # intervalues relationships as needed.
+
+    # default value used in knet 1.0. Might be configurable in knet 2.0
+    knet_thread_timer_res_ms = 200
+
     validators = [
         validate.ValueInteger("link_priority", 0, 255),
         validate.ValuePortNumber("mcastport"),
-        validate.ValueNonnegativeInteger("ping_interval"),
+        validate.ValueInteger("ping_interval", knet_thread_timer_res_ms, None),
         validate.ValueNonnegativeInteger("ping_precision"),
-        validate.ValueNonnegativeInteger("ping_timeout"),
+        validate.ValueInteger("ping_timeout", knet_thread_timer_res_ms, None),
         validate.ValueNonnegativeInteger("pong_count"),
         validate.ValueIn("transport", ("sctp", "udp")),
     ]

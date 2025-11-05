@@ -21,6 +21,10 @@ forbidden_characters_kwargs = dict(
     forbidden_characters=r"{}\n\r",
 )
 
+_FIXTURE_KNET_PING_INTERVAL_TIMEOUT_EXPECTED = (
+    "an integer greater than or equal to 200"
+)
+
 
 class Create(TestCase):
     # pylint: disable=too-many-public-methods
@@ -1218,9 +1222,9 @@ class CreateLinkListKnet(CreateLinkListCommonMixin, TestCase):
                         "transport": "tcp",
                     },
                     {
-                        "ping_interval": "-250",
+                        "ping_interval": "100",
                         "ping_precision": "-15",
-                        "ping_timeout": "-750",
+                        "ping_timeout": "100",
                         "pong_count": "-10",
                         "transport": "udpu",
                     },
@@ -1262,9 +1266,9 @@ class CreateLinkListKnet(CreateLinkListCommonMixin, TestCase):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    option_value="-250",
+                    option_value="100",
                     option_name="ping_interval",
-                    allowed_values="a non-negative integer",
+                    allowed_values=_FIXTURE_KNET_PING_INTERVAL_TIMEOUT_EXPECTED,
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),
@@ -1278,9 +1282,9 @@ class CreateLinkListKnet(CreateLinkListCommonMixin, TestCase):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    option_value="-750",
+                    option_value="100",
                     option_name="ping_timeout",
-                    allowed_values="a non-negative integer",
+                    allowed_values=_FIXTURE_KNET_PING_INTERVAL_TIMEOUT_EXPECTED,
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),
@@ -1420,7 +1424,7 @@ class CreateLinkListKnet(CreateLinkListCommonMixin, TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="",
                     option_name="ping_interval",
-                    allowed_values="a non-negative integer",
+                    allowed_values=_FIXTURE_KNET_PING_INTERVAL_TIMEOUT_EXPECTED,
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),
@@ -1428,7 +1432,7 @@ class CreateLinkListKnet(CreateLinkListCommonMixin, TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="",
                     option_name="ping_timeout",
-                    allowed_values="a non-negative integer",
+                    allowed_values=_FIXTURE_KNET_PING_INTERVAL_TIMEOUT_EXPECTED,
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),
@@ -1601,7 +1605,7 @@ class CreateLinkListKnet(CreateLinkListCommonMixin, TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="250\n",
                     option_name="ping_interval",
-                    allowed_values="a non-negative integer",
+                    allowed_values=_FIXTURE_KNET_PING_INTERVAL_TIMEOUT_EXPECTED,
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),
@@ -1617,7 +1621,7 @@ class CreateLinkListKnet(CreateLinkListCommonMixin, TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="\r\n750",
                     option_name="ping_timeout",
-                    allowed_values="a non-negative integer",
+                    allowed_values=_FIXTURE_KNET_PING_INTERVAL_TIMEOUT_EXPECTED,
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),

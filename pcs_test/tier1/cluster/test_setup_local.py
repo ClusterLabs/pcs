@@ -163,7 +163,7 @@ class SetupLocal(AssertPcsMixin, TestCase):
                 "node3 addr=127.0.0.3 addr=127.0.1.3 addr=127.0.2.1 "
                 "transport knet ip_version=ipv4 link_mode=passive "
                 "link linknumber=2 link_priority=100 mcastport=12345 "
-                "ping_interval=1 ping_precision=2 ping_timeout=3 pong_count=4 "
+                "ping_interval=201 ping_precision=2 ping_timeout=203 pong_count=4 "
                 "transport=sctp "
                 "link linknumber=1 transport=udp "
                 "compression level=2 model=zlib threshold=10 "
@@ -200,9 +200,9 @@ class SetupLocal(AssertPcsMixin, TestCase):
 
                     interface {
                         knet_link_priority: 100
-                        knet_ping_interval: 1
+                        knet_ping_interval: 201
                         knet_ping_precision: 2
-                        knet_ping_timeout: 3
+                        knet_ping_timeout: 203
                         knet_pong_count: 4
                         knet_transport: sctp
                         linknumber: 2
@@ -264,7 +264,7 @@ class SetupLocal(AssertPcsMixin, TestCase):
                 "node3 addr=127.0.0.3 addr=127.0.1.3 addr=127.0.2.1 "
                 "transport knet ip_version=ipv4 link_mode=passive "
                 "link linknumber=2 link_priority=100 mcastport=123450 "
-                "ping_interval=1 ping_precision=2 ping_timeout=3 pong__count=4 "
+                "ping_interval=201 ping_precision=2 ping_timeout=203 pong__count=4 "
                 "transport=sctp "
                 "link linknumber=3 transport=udp "
                 "compression level=2 model=zlib threshold=10 "

@@ -21,6 +21,11 @@ forbidden_characters_kwargs = dict(
 )
 
 
+_FIXTURE_KNET_PING_INTERVAL_TIMEOUT_EXPECTED = (
+    "an integer greater than or equal to 200"
+)
+
+
 class AddLink(TestCase):
     # pylint: disable=too-many-public-methods
     def setUp(self):
@@ -53,9 +58,9 @@ class AddLink(TestCase):
                     "linknumber": "2",
                     "link_priority": "2",
                     "mcastport": "5405",
-                    "ping_interval": "100",
+                    "ping_interval": "300",
                     "ping_precision": "10",
-                    "ping_timeout": "50",
+                    "ping_timeout": "250",
                     "pong_count": "5",
                     "transport": "udp",
                 },
@@ -115,7 +120,7 @@ class AddLink(TestCase):
                 self.new_addrs,
                 {
                     "linknumber": "2",
-                    "ping_interval": "100",
+                    "ping_interval": "300",
                 },
                 self.coro_nodes,
                 self.pcmk_nodes,
@@ -140,7 +145,7 @@ class AddLink(TestCase):
                 self.new_addrs,
                 {
                     "linknumber": "2",
-                    "ping_timeout": "50",
+                    "ping_timeout": "250",
                 },
                 self.coro_nodes,
                 self.pcmk_nodes,
@@ -524,7 +529,7 @@ class AddLink(TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_name="ping_interval",
                     option_value="pi",
-                    allowed_values="a non-negative integer",
+                    allowed_values=_FIXTURE_KNET_PING_INTERVAL_TIMEOUT_EXPECTED,
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),
@@ -540,7 +545,7 @@ class AddLink(TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_name="ping_timeout",
                     option_value="pt",
-                    allowed_values="a non-negative integer",
+                    allowed_values=_FIXTURE_KNET_PING_INTERVAL_TIMEOUT_EXPECTED,
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),
@@ -591,9 +596,9 @@ class AddLink(TestCase):
                     "linknumber": "\n2",
                     "link_priority": "2\r",
                     "mcastport": "}5405",
-                    "ping_interval": "100{",
+                    "ping_interval": "300{",
                     "ping_precision": "\r10\n",
-                    "ping_timeout": "{50}",
+                    "ping_timeout": "{250}",
                     "pong_count": "5\n",
                     "transport": "udp}",
                     "op:.tion": "va}l{ue",
@@ -664,7 +669,7 @@ class AddLink(TestCase):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    option_value="100{",
+                    option_value="300{",
                     option_name="ping_interval",
                     **forbidden_characters_kwargs,
                 ),
@@ -676,7 +681,7 @@ class AddLink(TestCase):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    option_value="{50}",
+                    option_value="{250}",
                     option_name="ping_timeout",
                     **forbidden_characters_kwargs,
                 ),
@@ -716,9 +721,9 @@ class AddLink(TestCase):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    option_value="100{",
+                    option_value="300{",
                     option_name="ping_interval",
-                    allowed_values="a non-negative integer",
+                    allowed_values=_FIXTURE_KNET_PING_INTERVAL_TIMEOUT_EXPECTED,
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),
@@ -732,9 +737,9 @@ class AddLink(TestCase):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    option_value="{50}",
+                    option_value="{250}",
                     option_name="ping_timeout",
-                    allowed_values="a non-negative integer",
+                    allowed_values=_FIXTURE_KNET_PING_INTERVAL_TIMEOUT_EXPECTED,
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),
@@ -1473,7 +1478,7 @@ class UpdateLinkKnet(TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_name="ping_interval",
                     option_value="pi",
-                    allowed_values="a non-negative integer",
+                    allowed_values=_FIXTURE_KNET_PING_INTERVAL_TIMEOUT_EXPECTED,
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),
@@ -1489,7 +1494,7 @@ class UpdateLinkKnet(TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_name="ping_timeout",
                     option_value="pt",
-                    allowed_values="a non-negative integer",
+                    allowed_values=_FIXTURE_KNET_PING_INTERVAL_TIMEOUT_EXPECTED,
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),
@@ -1577,7 +1582,7 @@ class UpdateLinkKnet(TestCase):
         if set_unset is False:
             options[option_name] = ""
         elif set_unset is True:
-            options[option_name] = "20"
+            options[option_name] = "200"
 
     def test_ping_interval_ping_timeout_dependencies(self):
         test_matrix = (
@@ -1692,9 +1697,9 @@ class UpdateLinkKnet(TestCase):
                 {
                     "link_priority": "2\r",
                     "mcastport": "}5405",
-                    "ping_interval": "100{",
+                    "ping_interval": "300{",
                     "ping_precision": "\r10\n",
-                    "ping_timeout": "{50}",
+                    "ping_timeout": "{250}",
                     "pong_count": "5\n",
                     "transport": "udp}",
                     "op:.tion": "va}l{ue",
@@ -1744,7 +1749,7 @@ class UpdateLinkKnet(TestCase):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    option_value="100{",
+                    option_value="300{",
                     option_name="ping_interval",
                     **forbidden_characters_kwargs,
                 ),
@@ -1756,7 +1761,7 @@ class UpdateLinkKnet(TestCase):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    option_value="{50}",
+                    option_value="{250}",
                     option_name="ping_timeout",
                     **forbidden_characters_kwargs,
                 ),
@@ -1796,9 +1801,9 @@ class UpdateLinkKnet(TestCase):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    option_value="100{",
+                    option_value="300{",
                     option_name="ping_interval",
-                    allowed_values="a non-negative integer",
+                    allowed_values=_FIXTURE_KNET_PING_INTERVAL_TIMEOUT_EXPECTED,
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),
@@ -1812,9 +1817,9 @@ class UpdateLinkKnet(TestCase):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    option_value="{50}",
+                    option_value="{250}",
                     option_name="ping_timeout",
-                    allowed_values="a non-negative integer",
+                    allowed_values=_FIXTURE_KNET_PING_INTERVAL_TIMEOUT_EXPECTED,
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),
