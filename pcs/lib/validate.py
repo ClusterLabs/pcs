@@ -786,30 +786,19 @@ class ValueInteger(ValuePredicateBase):
     Report INVALID_OPTION_VALUE when the value is not an integer
     """
 
-    def _is_valid(self, value: TypeOptionValue) -> bool:
-        return is_integer(value, None, None)
-
-    def _get_allowed_values(self) -> Any:
-        return "an integer"
-
-
-class ValueIntegerInRange(ValuePredicateBase):
-    """
-    Report INVALID_OPTION_VALUE when the value is not an integer such that
-    at_least <= value <= at_most
-    """
-
     def __init__(
         self,
         option_name: TypeOptionName,
-        at_least: int,
-        at_most: int,
+        at_least: Optional[int] = None,
+        at_most: Optional[int] = None,
         option_name_for_report: Optional[str] = None,
         severity: Optional[ReportItemSeverity] = None,
     ):
         """
-        at_least -- minimal allowed value
-        at_most -- maximal allowed value
+        at_least -- minimal allowed value, do not check the lower bound when
+            set to None
+        at_most -- maximal allowed value, do not check the upper bound when set
+            to None
         severity -- severity of produced reports, defaults to error
         """
         super().__init__(
@@ -824,6 +813,12 @@ class ValueIntegerInRange(ValuePredicateBase):
         return is_integer(value, self._at_least, self._at_most)
 
     def _get_allowed_values(self) -> Any:
+        if self._at_least is None and self._at_most is None:
+            return "an integer"
+        if self._at_most is None:
+            return f"an integer greater than or equal to {self._at_least}"
+        if self._at_least is None:
+            return f"an integer smaller than or equal to {self._at_most}"
         return f"{self._at_least}..{self._at_most}"
 
 

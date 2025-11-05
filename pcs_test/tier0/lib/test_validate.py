@@ -1282,9 +1282,23 @@ class ValueInteger(TestCase):
     def fixture_validator(self):
         return validate.ValueInteger("key")
 
+    def fixture_validator_bounds(self):
+        return validate.ValueInteger("key", -5, 5)
+
+    def fixture_validator_at_least(self):
+        return validate.ValueInteger("key", -5, None)
+
+    def fixture_validator_at_most(self):
+        return validate.ValueInteger("key", None, 5)
+
     def test_empty_report_on_valid_option(self):
         assert_report_item_list_equal(
             self.fixture_validator().validate({"key": "2"}), []
+        )
+
+    def test_empty_report_on_valid_option_bounds(self):
+        assert_report_item_list_equal(
+            self.fixture_validator_bounds().validate({"key": "2"}), []
         )
 
     def test_report_invalid_value(self):
@@ -1302,27 +1316,45 @@ class ValueInteger(TestCase):
             ],
         )
 
-
-class ValueIntegerInRange(TestCase):
-    # The real code only calls ValuePredicateBase and is_integer which are both
-    # heavily tested on their own => only basic tests here.
-    def fixture_validator(self):
-        return validate.ValueIntegerInRange("key", -5, 5)
-
-    def test_empty_report_on_valid_option(self):
+    def test_report_invalid_value_bounds(self):
         assert_report_item_list_equal(
-            self.fixture_validator().validate({"key": "2"}), []
-        )
-
-    def test_report_invalid_value(self):
-        assert_report_item_list_equal(
-            self.fixture_validator().validate({"key": "6"}),
+            self.fixture_validator_bounds().validate({"key": "6"}),
             [
                 fixture.error(
                     reports.codes.INVALID_OPTION_VALUE,
                     option_name="key",
                     option_value="6",
                     allowed_values="-5..5",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+            ],
+        )
+
+    def test_report_invalid_value_at_least(self):
+        assert_report_item_list_equal(
+            self.fixture_validator_at_least().validate({"key": "-6"}),
+            [
+                fixture.error(
+                    reports.codes.INVALID_OPTION_VALUE,
+                    option_name="key",
+                    option_value="-6",
+                    allowed_values="an integer greater than or equal to -5",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+            ],
+        )
+
+    def test_report_invalid_value_at_most(self):
+        assert_report_item_list_equal(
+            self.fixture_validator_at_most().validate({"key": "6"}),
+            [
+                fixture.error(
+                    reports.codes.INVALID_OPTION_VALUE,
+                    option_name="key",
+                    option_value="6",
+                    allowed_values="an integer smaller than or equal to 5",
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),

@@ -693,7 +693,7 @@ def _get_link_options_validators_udp(
         validate.ValueIn("broadcast", ("0", "1")),
         validate.ValueIpAddress("mcastaddr"),
         validate.ValuePortNumber("mcastport"),
-        validate.ValueIntegerInRange("ttl", 0, 255),
+        validate.ValueInteger("ttl", 0, 255),
     ]
     if allow_empty_values:
         for val in validators:
@@ -835,7 +835,7 @@ def _get_link_options_validators_knet(
     # This only returns validators checking single values. Add checks for
     # intervalues relationships as needed.
     validators = [
-        validate.ValueIntegerInRange("link_priority", 0, 255),
+        validate.ValueInteger("link_priority", 0, 255),
         validate.ValuePortNumber("mcastport"),
         validate.ValueNonnegativeInteger("ping_interval"),
         validate.ValueNonnegativeInteger("ping_precision"),
@@ -846,9 +846,7 @@ def _get_link_options_validators_knet(
 
     if including_linknumber:
         validators.append(
-            validate.ValueIntegerInRange(
-                "linknumber", 0, constants.LINKS_KNET_MAX - 1
-            )
+            validate.ValueInteger("linknumber", 0, constants.LINKS_KNET_MAX - 1)
         )
         allowed_options = constants.LINK_OPTIONS_KNET_USER
     else:
@@ -2109,7 +2107,7 @@ def _get_qdevice_model_net_options_validators(
         validate.ValueNotEmpty("host", "a qdevice host address"),
     ]
     validators_optional_options = [
-        validate.ValueIntegerInRange(
+        validate.ValueInteger(
             "connect_timeout", 1000, 2 * 60 * 1000, severity=severity
         ),
         validate.ValueIn(
