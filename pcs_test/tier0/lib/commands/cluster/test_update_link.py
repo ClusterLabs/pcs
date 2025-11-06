@@ -256,6 +256,88 @@ class UpdateLinkKnet(TestCase):
         # hidden in self.config.env.push_corosync_conf.
         self.env_assist.assert_reports([])
 
+    def test_success_deprecated_sctp(self):
+        before = dedent(
+            """\
+            totem {
+                transport: knet
+
+                interface {
+                    linknumber: 2
+                    knet_transport: udp
+                }
+            }
+
+            nodelist {
+                node {
+                    ring0_addr: node1-addr0
+                    ring2_addr: node1-addr2
+                    name: node1
+                    nodeid: 1
+                }
+
+                node {
+                    ring0_addr: node2-addr0
+                    ring2_addr: node2-addr2a
+                    name: node2
+                    nodeid: 2
+                }
+            }
+            """
+        )
+        after = dedent(
+            """\
+            totem {
+                transport: knet
+
+                interface {
+                    linknumber: 2
+                    knet_transport: sctp
+                }
+            }
+
+            nodelist {
+                node {
+                    ring0_addr: node1-addr0
+                    ring2_addr: node1-addr2
+                    name: node1
+                    nodeid: 1
+                }
+
+                node {
+                    ring0_addr: node2-addr0
+                    ring2_addr: node2-addr2a
+                    name: node2
+                    nodeid: 2
+                }
+            }
+            """
+        )
+        patch_getaddrinfo(self, self.existing_addrs + ["node2-addr2a"])
+        self.config.corosync_conf.load_content(before)
+        self.config.env.push_corosync_conf(
+            corosync_conf_text=after, need_stopped_cluster=True
+        )
+
+        cluster.update_link(
+            self.env_assist.get_env(),
+            "2",
+            {"node2": "node2-addr2a"},
+            {"transport": "sctp"},
+        )
+        # Reports from pushing corosync.conf are produced in env. That code is
+        # hidden in self.config.env.push_corosync_conf.
+        self.env_assist.assert_reports(
+            [
+                fixture.deprecation(
+                    report_codes.DEPRECATED_OPTION_VALUE,
+                    option_name="transport",
+                    deprecated_value="sctp",
+                    replaced_by=None,
+                )
+            ]
+        )
+
     def test_validation(self):
         patch_getaddrinfo(self, self.existing_addrs + ["node2-addr0"])
         self.config.corosync_conf.load_content(self.before)

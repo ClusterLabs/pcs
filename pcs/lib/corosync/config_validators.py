@@ -840,6 +840,8 @@ def _get_link_options_validators_knet(
         validate.ValueNonnegativeInteger("ping_timeout"),
         validate.ValueNonnegativeInteger("pong_count"),
         validate.ValueIn("transport", ("sctp", "udp")),
+        # DEPRECATED in knet 1, to be removed in knet 2.0
+        validate.ValueDeprecated("transport", {"sctp": None}),
     ]
 
     if including_linknumber:
