@@ -1208,7 +1208,14 @@ class CreateLinkListKnet(CreateLinkListCommonMixin, TestCase):
                 ],
                 2,
             ),
-            [],
+            [
+                fixture.deprecation(
+                    report_codes.DEPRECATED_OPTION_VALUE,
+                    option_name="transport",
+                    deprecated_value="sctp",
+                    replaced_by=None,
+                )
+            ],
         )
 
     def test_invalid_all_values(self):

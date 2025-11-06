@@ -100,6 +100,32 @@ class AddLink(TestCase):
         # hidden in self.config.env.push_corosync_conf.
         self.env_assist.assert_reports([])
 
+    def test_success_deprecated_sctp(self):
+        after = self.after.replace(
+            "knet_transport: udp", "knet_transport: sctp"
+        )
+        self.config.corosync_conf.load_content(self.before)
+        self.config.runner.cib.load()
+        self.config.env.push_corosync_conf(corosync_conf_text=after)
+
+        cluster.add_link(
+            self.env_assist.get_env(),
+            self.node_addr_map,
+            {"transport": "sctp"},
+        )
+        # Reports from pushing corosync.conf are produced in env. That code is
+        # hidden in self.config.env.push_corosync_conf.
+        self.env_assist.assert_reports(
+            [
+                fixture.deprecation(
+                    report_codes.DEPRECATED_OPTION_VALUE,
+                    option_name="transport",
+                    deprecated_value="sctp",
+                    replaced_by=None,
+                )
+            ]
+        )
+
     def test_not_live(self):
         self.config.env.set_corosync_conf_data(self.before)
 

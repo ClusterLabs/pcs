@@ -171,7 +171,12 @@ class SetupLocal(AssertPcsMixin, TestCase):
                 "totem consensus=0 downcheck=1 token=12 "
                 "quorum last_man_standing=1 last_man_standing_window=10 "
                 "--overwrite --no-cluster-uuid"
-            ).split()
+            ).split(),
+            stderr_full=(
+                "Deprecation Warning: Value 'sctp' of option transport is "
+                "deprecated and might be removed in a future release, "
+                "therefore it should not be used\n"
+            ),
         )
         self.assertEqual(
             self.corosync_conf_file.read(),
@@ -279,6 +284,7 @@ class SetupLocal(AssertPcsMixin, TestCase):
                 Error: All nodes must have the same number of addresses; nodes 'node1', 'node3' have 3 addresses; node 'node2' has 2 addresses
                 Error: invalid link option 'pong__count', allowed options are: 'link_priority', 'linknumber', 'mcastport', 'ping_interval', 'ping_precision', 'ping_timeout', 'pong_count', 'transport'
                 Error: '123450' is not a valid mcastport value, use a port number (1..65535)
+                Deprecation Warning: Value 'sctp' of option transport is deprecated and might be removed in a future release, therefore it should not be used
                 Error: Cannot set options for non-existent link '3', existing links: '0', '1', '2'
                 Error: invalid quorum option 'lst_man_standing', allowed options are: 'auto_tie_breaker', 'last_man_standing', 'last_man_standing_window', 'wait_for_all'
                 Error: If quorum option 'last_man_standing_window' is enabled, quorum option 'last_man_standing' must be enabled as well

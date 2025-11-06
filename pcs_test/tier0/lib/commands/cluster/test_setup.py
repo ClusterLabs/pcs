@@ -2096,7 +2096,21 @@ class TransportKnetSuccess(TestCase):
             quorum_options=QUORUM_OPTIONS,
         )
         self.env_assist.assert_reports(
-            reports_success_minimal_fixture(using_known_hosts_addresses=False)
+            [
+                fixture.deprecation(
+                    reports.codes.DEPRECATED_OPTION_VALUE,
+                    option_name="transport",
+                    deprecated_value="sctp",
+                    replaced_by=None,
+                ),
+                fixture.deprecation(
+                    reports.codes.DEPRECATED_OPTION_VALUE,
+                    option_name="transport",
+                    deprecated_value="sctp",
+                    replaced_by=None,
+                ),
+            ]
+            + reports_success_minimal_fixture(using_known_hosts_addresses=False)
         )
 
     def test_disable_crypto(self):

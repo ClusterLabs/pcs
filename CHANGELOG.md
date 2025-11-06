@@ -37,6 +37,8 @@
   before their deletion. Use the new `--no-stop` flag instead. You can use
   `--future` flag if you need to use `--force` and you do not wish to skip the
   resource stopping.
+- Value `sctp` of the knet link option `transport` is deprecated in
+  corosync / knet and might be removed in a future release ([RHEL-126839])
 
 [RHEL-7670]: https://issues.redhat.com/browse/RHEL-7670
 [RHEL-21879]: https://issues.redhat.com/browse/RHEL-21879
@@ -44,6 +46,7 @@
 [RHEL-76157]: https://issues.redhat.com/browse/RHEL-76157
 [RHEL-76162]: https://issues.redhat.com/browse/RHEL-76162
 [RHEL-111451]: https://issues.redhat.com/browse/RHEL-111451
+[RHEL-126839]: https://issues.redhat.com/browse/RHEL-126839
 
 
 ## [0.12.1] - 2025-07-08
