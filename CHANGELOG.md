@@ -19,6 +19,8 @@
   stonith device has its `method` option set to `cycle` ([RHEL-73527])
 - Add missing check to prevent the root user to run `pcs client local-auth`
   command
+- Setting ping\_interval and ping\_timeout knet options to less than 200ms is
+  no longer allowed to prevent cluster misconfiguration ([RHEL-21879])
 
 ### Changed
 - Lib command `cib.remove_elements` does not stop resources before deletion.
@@ -37,6 +39,7 @@
   resource stopping.
 
 [RHEL-7670]: https://issues.redhat.com/browse/RHEL-7670
+[RHEL-21879]: https://issues.redhat.com/browse/RHEL-21879
 [RHEL-73527]: https://issues.redhat.com/browse/RHEL-73527
 [RHEL-76157]: https://issues.redhat.com/browse/RHEL-76157
 [RHEL-76162]: https://issues.redhat.com/browse/RHEL-76162
