@@ -7,7 +7,11 @@ from pcs.common.services.interfaces import ServiceManagerInterface
 from pcs.lib import cluster_property as lib_cluster_property
 from pcs.lib.cib.tools import IdProvider
 from pcs.lib.pacemaker import values as packemaker_values
+from pcs.lib.resource_agent import const as ra_const
+from pcs.lib.resource_agent.facade import ResourceAgentFacade
 from pcs.lib.resource_agent.types import (
+    ResourceAgentMetadata,
+    ResourceAgentName,
     ResourceAgentParameter,
 )
 from pcs.lib.xml_tools import etree_to_str
@@ -264,6 +268,22 @@ class TestValidateSetClusterProperties(TestCase):
     # pylint: disable=too-many-public-methods
     def setUp(self):
         self.mock_service_manager = mock.Mock(spec=ServiceManagerInterface)
+        self.facade = ResourceAgentFacade(
+            ResourceAgentMetadata(
+                ResourceAgentName(
+                    standard=ra_const.FAKE_AGENT_STANDARD,
+                    provider=None,
+                    type=ra_const.CLUSTER_OPTIONS,
+                ),
+                True,
+                ra_const.OCF_1_1,
+                "shortdesc",
+                "longdesc",
+                FIXTURE_PARAMETER_LIST,
+                [],
+            )
+        )
+
         self.patcher_is_sbd_enabled = mock.patch("pcs.lib.sbd.is_sbd_enabled")
         self.patcher_sbd_devices = mock.patch(
             "pcs.lib.sbd.get_local_sbd_device_list"
@@ -299,7 +319,7 @@ class TestValidateSetClusterProperties(TestCase):
         assert_report_item_list_equal(
             lib_cluster_property.validate_set_cluster_properties(
                 get_runner_mock(returncode=returncode),
-                FIXTURE_PARAMETER_LIST,
+                self.facade,
                 "property-set-id",
                 configured_properties,
                 new_properties,

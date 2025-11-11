@@ -7,15 +7,9 @@ from pcs.common.pacemaker.nvset import ListCibNvsetDto
 from pcs.common.str_tools import join_multilines
 from pcs.common.types import StringSequence
 from pcs.lib import cluster_property
-from pcs.lib.cib import (
-    nvpair_multi,
-    rule,
-)
+from pcs.lib.cib import nvpair_multi, rule
 from pcs.lib.cib.rule.in_effect import get_rule_evaluator
-from pcs.lib.cib.tools import (
-    IdProvider,
-    get_crm_config,
-)
+from pcs.lib.cib.tools import IdProvider, get_crm_config
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
@@ -26,17 +20,18 @@ from pcs.lib.pacemaker.live import (
 )
 from pcs.lib.resource_agent import (
     ResourceAgentError,
+    ResourceAgentFacade,
+    ResourceAgentFacadeFactory,
     ResourceAgentMetadata,
     resource_agent_error_to_report_item,
 )
 from pcs.lib.resource_agent import const as ra_const
-from pcs.lib.resource_agent.facade import ResourceAgentFacadeFactory
 
 
-def _get_properties_metadata(
+def _get_properties_facade(
     report_processor: reports.ReportProcessor,
     runner: CommandRunner,
-) -> ResourceAgentMetadata:
+) -> ResourceAgentFacade:
     if not is_crm_attribute_list_options_supported(runner):
         report_processor.report(
             reports.ReportItem.error(
@@ -47,9 +42,7 @@ def _get_properties_metadata(
 
     try:
         factory = ResourceAgentFacadeFactory(runner, report_processor)
-        return factory.facade_from_crm_attribute(
-            ra_const.CLUSTER_OPTIONS
-        ).metadata
+        return factory.facade_from_crm_attribute(ra_const.CLUSTER_OPTIONS)
     except ResourceAgentError as e:
         report_processor.report_list(
             [
@@ -113,7 +106,7 @@ def get_cluster_properties_definition_legacy(
     env -- provides communication with externals
     """
     return _cluster_property_metadata_to_dict(
-        _get_properties_metadata(env.report_processor, env.cmd_runner())
+        _get_properties_facade(env.report_processor, env.cmd_runner()).metadata
     )
 
 
@@ -151,7 +144,7 @@ def set_properties(
     env.report_processor.report_list(
         cluster_property.validate_set_cluster_properties(
             runner,
-            _get_properties_metadata(env.report_processor, runner).parameters,
+            _get_properties_facade(env.report_processor, runner),
             set_id,
             configured_properties,
             cluster_properties,
@@ -206,11 +199,11 @@ def get_properties_metadata(
 
     env -- provides communication with externals
     """
-    metadata = _get_properties_metadata(env.report_processor, env.cmd_runner())
+    facade = _get_properties_facade(env.report_processor, env.cmd_runner())
     return ClusterPropertyMetadataDto(
         properties_metadata=[
             property_definition.to_dto()
-            for property_definition in metadata.parameters
+            for property_definition in facade.metadata.parameters
         ],
         readonly_properties=cluster_property.READONLY_CLUSTER_PROPERTY_LIST,
     )

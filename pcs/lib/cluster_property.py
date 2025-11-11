@@ -1,8 +1,4 @@
-from typing import (
-    Iterable,
-    List,
-    Mapping,
-)
+from typing import Mapping
 
 from lxml.etree import _Element
 
@@ -10,10 +6,7 @@ from pcs.common import reports
 from pcs.common.services.interfaces import ServiceManagerInterface
 from pcs.common.tools import timeout_to_seconds
 from pcs.common.types import StringSequence
-from pcs.lib import (
-    sbd,
-    validate,
-)
+from pcs.lib import sbd, validate
 from pcs.lib.cib import nvpair_multi
 from pcs.lib.cib.tools import (
     IdProvider,
@@ -23,7 +16,7 @@ from pcs.lib.cib.tools import (
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
 from pcs.lib.pacemaker.values import is_false
-from pcs.lib.resource_agent import ResourceAgentParameter
+from pcs.lib.resource_agent import ResourceAgentFacade
 
 READONLY_CLUSTER_PROPERTY_LIST = [
     "cluster-infrastructure",
@@ -69,7 +62,7 @@ def _validate_stonith_watchdog_timeout_property(
 
 def _validate_not_disabling_fencing(
     to_be_set_properties: Mapping[str, str],
-) -> List[reports.ReportItem]:
+) -> reports.ReportItemList:
     problematic_properties_setting = {
         key: to_be_set_properties[key]
         for key in ["stonith-enabled", "fencing-enabled"]
@@ -90,7 +83,7 @@ def _validate_not_disabling_fencing(
 
 def validate_set_cluster_properties(  # noqa: PLR0912
     runner: CommandRunner,
-    params_spec: Iterable[ResourceAgentParameter],
+    cluster_properties_facade: ResourceAgentFacade,
     properties_set_id: str,
     configured_properties: StringSequence,
     new_properties: Mapping[str, str],
@@ -100,7 +93,7 @@ def validate_set_cluster_properties(  # noqa: PLR0912
     """
     Validate that cluster properties and their values can be set.
 
-    params_spec -- params specified by agent "cluster-options"
+    cluster_properties_facade -- facade for cluster properties metadata
     properties_set_id -- id of the properties set to be updated
     configured_properties -- names of currently configured cluster properties
     new_properties -- dictionary of properties and their values to be set
@@ -111,7 +104,7 @@ def validate_set_cluster_properties(  # noqa: PLR0912
     # pylint: disable=too-many-locals
     possible_properties_dict = {
         parameter.name: parameter
-        for parameter in params_spec
+        for parameter in cluster_properties_facade.metadata.parameters
         if parameter.name not in READONLY_CLUSTER_PROPERTY_LIST
     }
     severity = reports.get_severity(reports.codes.FORCE, force)
