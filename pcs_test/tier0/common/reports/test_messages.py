@@ -6359,6 +6359,21 @@ class NoStonithMeansWouldBeLeft(NameBuildTest):
         )
 
 
+class NoStonithMeansWouldBeLeftDueToProperties(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "Setting property stonith-enabled to false or fencing-enabled"
+                " to 0 lefts the cluster with no enabled means to fence nodes,"
+                " resulting in the cluster not being able to recover from"
+                " certain failure conditions"
+            ),
+            reports.NoStonithMeansWouldBeLeftDueToProperties(
+                {"stonith-enabled": "false", "fencing-enabled": "0"}
+            ),
+        )
+
+
 class ParseErrorInvalidFileStructure(NameBuildTest):
     def test_no_path(self):
         self.assert_message_from_report(

@@ -8598,6 +8598,28 @@ class NoStonithMeansWouldBeLeft(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class NoStonithMeansWouldBeLeftDueToProperties(ReportItemMessage):
+    """
+    The requested cluster properties would left the cluster with no stonith
+    configured
+    """
+
+    property_map: Dict[str, str]
+    _code = codes.NO_STONITH_MEANS_WOULD_BE_LEFT_DUE_TO_PROPERTIES
+
+    @property
+    def message(self) -> str:
+        property_setting_msgs = [
+            f"{key} to {value}" for key, value in self.property_map.items()
+        ]
+        return (
+            f"Setting property {' or '.join(property_setting_msgs)} lefts the"
+            " cluster with no enabled means to fence nodes, resulting in the"
+            " cluster not being able to recover from certain failure conditions"
+        )
+
+
+@dataclass(frozen=True)
 class NodeReportsUnexpectedClusterName(ReportItemMessage):
     """
     The node is not in a cluster with the expected name

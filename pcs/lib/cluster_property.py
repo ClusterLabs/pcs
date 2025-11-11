@@ -1,6 +1,7 @@
 from typing import (
     Iterable,
     Mapping,
+    Optional,
 )
 
 from lxml.etree import _Element
@@ -21,6 +22,7 @@ from pcs.lib.cib.tools import (
 )
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
+from pcs.lib.pacemaker.values import is_false
 from pcs.lib.resource_agent import ResourceAgentParameter
 
 READONLY_CLUSTER_PROPERTY_LIST = [
@@ -63,6 +65,25 @@ def _validate_stonith_watchdog_timeout_property(
             )
         )
     return report_list
+
+
+def _validate_not_disabling_fencing(
+    to_be_set_properties: Mapping[str, str],
+) -> Optional[reports.ReportItem]:
+    problematic_properties_setting = {
+        key: to_be_set_properties[key]
+        for key in ["stonith-enabled", "fencing-enabled"]
+        if key in to_be_set_properties and is_false(to_be_set_properties[key])
+    }
+
+    if problematic_properties_setting:
+        return reports.ReportItem.warning(
+            reports.messages.NoStonithMeansWouldBeLeftDueToProperties(
+                problematic_properties_setting
+            ),
+        )
+
+    return None
 
 
 def validate_set_cluster_properties(  # noqa: PLR0912
@@ -227,6 +248,10 @@ def validate_set_cluster_properties(  # noqa: PLR0912
                 force=force,
             )
         )
+
+    no_fencing_report = _validate_not_disabling_fencing(to_be_set_properties)
+    if no_fencing_report:
+        report_list.append(no_fencing_report)
 
     return report_list
 
