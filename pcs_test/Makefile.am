@@ -264,6 +264,14 @@ EXTRA_DIST		= \
 			  tier0/lib/commands/cluster/test_remove_links.py \
 			  tier0/lib/commands/cluster/test_remove_nodes_from_cib.py \
 			  tier0/lib/commands/cluster/test_remove_nodes.py \
+			  tier0/lib/commands/cluster_property/crm_attribute_mixins.py \
+			  tier0/lib/commands/cluster_property/fixtures.py \
+			  tier0/lib/commands/cluster_property/__init__.py \
+			  tier0/lib/commands/cluster_property/test_get_properties_meta_crm_attribute.py \
+			  tier0/lib/commands/cluster_property/test_get_properties.py \
+			  tier0/lib/commands/cluster_property/test_remove_cluster_name.py \
+			  tier0/lib/commands/cluster_property/test_set_properties.py \
+			  tier0/lib/commands/cluster_property/test_set_properties_stonith_watchdog_timeout.py \
 			  tier0/lib/commands/cluster/test_rename.py \
 			  tier0/lib/commands/cluster/test_setup.py \
 			  tier0/lib/commands/cluster/test_update_link.py \
@@ -320,7 +328,6 @@ EXTRA_DIST		= \
 			  tier0/lib/commands/test_booth.py \
 			  tier0/lib/commands/test_cib_options.py \
 			  tier0/lib/commands/test_cib.py \
-			  tier0/lib/commands/test_cluster_property.py \
 			  tier0/lib/commands/test_constraint_common.py \
 			  tier0/lib/commands/test_constraint_order.py \
 			  tier0/lib/commands/test_fencing_topology.py \
