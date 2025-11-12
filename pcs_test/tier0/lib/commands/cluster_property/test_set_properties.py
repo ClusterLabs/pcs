@@ -62,7 +62,16 @@ ALLOWED_PROPERTIES = [
 ]
 
 
-class TestPropertySetMixin:
+@mock.patch.object(
+    settings,
+    "pacemaker_api_result_schema",
+    rc("pcmk_rng/api/api-result.rng"),
+)
+class TestPropertySetCrmAttribute(
+    CrmAttributeLoadMetadataMixin,
+    CrmAttributeMetadataErrorMixin,
+    TestCase,
+):
     _load_cib_when_metadata_error = True
 
     def setUp(self):
@@ -363,17 +372,3 @@ class TestPropertySetMixin:
                 ),
             ]
         )
-
-
-@mock.patch.object(
-    settings,
-    "pacemaker_api_result_schema",
-    rc("pcmk_rng/api/api-result.rng"),
-)
-class TestPropertySetCrmAttribute(
-    TestPropertySetMixin,
-    CrmAttributeLoadMetadataMixin,
-    CrmAttributeMetadataErrorMixin,
-    TestCase,
-):
-    pass

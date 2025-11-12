@@ -12,7 +12,7 @@ from .crm_attribute_mixins import CrmAttributeLoadMetadataMixin
 from .fixtures import fixture_crm_config_properties
 
 
-class StonithWatchdogTimeoutMixin:
+class StonithWatchdogTimeoutTestCase(CrmAttributeLoadMetadataMixin):
     sbd_enabled = None
 
     def setUp(self):
@@ -65,8 +65,8 @@ class StonithWatchdogTimeoutMixin:
         self._set_invalid_value(forced=True)
 
 
-class SetStonithWatchdogTimeoutSBDIsDisabledMixin(StonithWatchdogTimeoutMixin):
-    sbd_enabled = False
+class CannotSetNoemptyProperty(StonithWatchdogTimeoutTestCase):
+    not_forced_reports = []
 
     def test_set_empty(self):
         self._set_success({"stonith-watchdog-timeout": ""})
@@ -74,8 +74,8 @@ class SetStonithWatchdogTimeoutSBDIsDisabledMixin(StonithWatchdogTimeoutMixin):
     def test_set_zero(self):
         self._set_success({"stonith-watchdog-timeout": "0"})
 
-    def test_set_zero_time_suffix(self):
-        self._set_success({"stonith-watchdog-timeout": "0s"})
+    def test_set_to_zero_time_suffix(self):
+        self._set_success({"stonith-watchdog-timeout": "0min"})
 
     def test_set_not_zero_or_empty(self):
         self.env_assist.assert_raise_library_error(
@@ -85,14 +85,24 @@ class SetStonithWatchdogTimeoutSBDIsDisabledMixin(StonithWatchdogTimeoutMixin):
                 [],
             )
         )
-        self.env_assist.assert_reports(
-            [
-                fixture.error(
-                    reports.codes.STONITH_WATCHDOG_TIMEOUT_CANNOT_BE_SET,
-                    reason="sbd_not_set_up",
-                ),
-            ]
-        )
+        self.env_assist.assert_reports(self.not_forced_reports)
+
+
+@mock.patch.object(
+    settings,
+    "pacemaker_api_result_schema",
+    rc("pcmk_rng/api/api-result.rng"),
+)
+class TestSetStonithWatchdogTimeoutSBDDisabled(
+    CannotSetNoemptyProperty, TestCase
+):
+    sbd_enabled = False
+    not_forced_reports = [
+        fixture.error(
+            reports.codes.STONITH_WATCHDOG_TIMEOUT_CANNOT_BE_SET,
+            reason="sbd_not_set_up",
+        ),
+    ]
 
     def test_set_not_zero_or_empty_forced(self):
         self.env_assist.assert_raise_library_error(
@@ -102,31 +112,13 @@ class SetStonithWatchdogTimeoutSBDIsDisabledMixin(StonithWatchdogTimeoutMixin):
                 [reports.codes.FORCE],
             )
         )
-        self.env_assist.assert_reports(
-            [
-                fixture.error(
-                    reports.codes.STONITH_WATCHDOG_TIMEOUT_CANNOT_BE_SET,
-                    reason="sbd_not_set_up",
-                ),
-            ]
-        )
+        self.env_assist.assert_reports(self.not_forced_reports)
 
 
-@mock.patch.object(
-    settings,
-    "pacemaker_api_result_schema",
-    rc("pcmk_rng/api/api-result.rng"),
-)
-class TestSetStonithWatchdogTimeoutSBDIsDisabledCrmAttributeMetadata(
-    CrmAttributeLoadMetadataMixin,
-    SetStonithWatchdogTimeoutSBDIsDisabledMixin,
-    TestCase,
-):
-    pass
-
-
-class SetStonithWatchdogTimeoutSBDIsEnabledWatchdogOnlyMixin(
-    StonithWatchdogTimeoutMixin
+@mock.patch("pcs.lib.sbd._get_local_sbd_watchdog_timeout", lambda: 10)
+@mock.patch("pcs.lib.sbd.get_local_sbd_device_list", list)
+class TestSetStonithWatchdogTimeoutSBDEnabledDevicesUnspecified(
+    StonithWatchdogTimeoutTestCase, TestCase
 ):
     sbd_enabled = True
 
@@ -267,47 +259,23 @@ class SetStonithWatchdogTimeoutSBDIsEnabledWatchdogOnlyMixin(
         self._set_success({"stonith-watchdog-timeout": "11s"})
 
 
-@mock.patch("pcs.lib.sbd._get_local_sbd_watchdog_timeout", lambda: 10)
-@mock.patch("pcs.lib.sbd.get_local_sbd_device_list", list)
-class TestSetStonithWatchdogTimeoutSBDIsEnabledWatchdogOnlyMixinCrmAttributeMetadata(
-    CrmAttributeLoadMetadataMixin,
-    SetStonithWatchdogTimeoutSBDIsEnabledWatchdogOnlyMixin,
-    TestCase,
-):
-    pass
-
-
-class SetStonithWatchdogTimeoutSBDIsEnabledSharedDevicesMixin(
-    StonithWatchdogTimeoutMixin
+@mock.patch.object(
+    settings,
+    "pacemaker_api_result_schema",
+    rc("pcmk_rng/api/api-result.rng"),
+)
+@mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: ["dev1", "dev2"])
+class TestSetStonithWatchdogTimeoutSBDEnabledDevicesSpecified(
+    CannotSetNoemptyProperty, TestCase
 ):
     sbd_enabled = True
-
-    def test_set_empty(self):
-        self._set_success({"stonith-watchdog-timeout": ""})
-
-    def test_set_to_zero(self):
-        self._set_success({"stonith-watchdog-timeout": "0"})
-
-    def test_set_to_zero_time_suffix(self):
-        self._set_success({"stonith-watchdog-timeout": "0min"})
-
-    def test_set_not_zero_or_empty(self):
-        self.env_assist.assert_raise_library_error(
-            lambda: cluster_property.set_properties(
-                self.env_assist.get_env(),
-                {"stonith-watchdog-timeout": "20"},
-                [],
-            )
+    not_forced_reports = [
+        fixture.error(
+            reports.codes.STONITH_WATCHDOG_TIMEOUT_CANNOT_BE_SET,
+            force_code=reports.codes.FORCE,
+            reason="sbd_set_up_with_devices",
         )
-        self.env_assist.assert_reports(
-            [
-                fixture.error(
-                    reports.codes.STONITH_WATCHDOG_TIMEOUT_CANNOT_BE_SET,
-                    force_code=reports.codes.FORCE,
-                    reason="sbd_set_up_with_devices",
-                )
-            ]
-        )
+    ]
 
     def test_set_not_zero_or_empty_forced(self):
         self.config.env.push_cib(
@@ -328,17 +296,3 @@ class SetStonithWatchdogTimeoutSBDIsEnabledSharedDevicesMixin(
                 )
             ]
         )
-
-
-@mock.patch.object(
-    settings,
-    "pacemaker_api_result_schema",
-    rc("pcmk_rng/api/api-result.rng"),
-)
-@mock.patch("pcs.lib.sbd.get_local_sbd_device_list", lambda: ["dev1", "dev2"])
-class TestSetStonithWatchdogTimeoutSBDIsEnabledSharedDevicesCrmAttributeMetadata(
-    CrmAttributeLoadMetadataMixin,
-    SetStonithWatchdogTimeoutSBDIsEnabledSharedDevicesMixin,
-    TestCase,
-):
-    pass

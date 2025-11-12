@@ -19,7 +19,14 @@ READONLY_PROPERTIES = [
 ]
 
 
-class TestGetPropertiesMetadataMixin:
+@mock.patch.object(
+    settings,
+    "pacemaker_api_result_schema",
+    rc("pcmk_rng/api/api-result.rng"),
+)
+class TestGetPropertiesMetadataCrmAttribute(
+    CrmAttributeMetadataErrorMixin, TestCase
+):
     _load_cib_when_metadata_error = False
 
     def setUp(self):
@@ -34,7 +41,47 @@ class TestGetPropertiesMetadataMixin:
         )
 
     def _load_fake_agent_test_metadata(self):
-        raise NotImplementedError
+        self.config.runner.pcmk.is_crm_attribute_list_options_supported(
+            is_supported=True
+        )
+        self.config.runner.pcmk.load_crm_attribute_metadata(
+            agent_name="cluster-options",
+            stdout="""
+                <pacemaker-result api-version="2.38" request="crm_attribute --list-options=cluster --output-as xml">
+                  <resource-agent name="cluster-options" version="2.1.5-7.el9">
+                    <version>1.1</version>
+                    <longdesc lang="en">agent longdesc</longdesc>
+                    <shortdesc lang="en">agent shortdesc</shortdesc>
+                    <parameters>
+                      <parameter name="property-name" advanced="0" generated="0">
+                        <longdesc lang="en">longdesc</longdesc>
+                        <shortdesc lang="en">shortdesc</shortdesc>
+                        <content type="boolean" default="false"/>
+                      </parameter>
+                      <parameter name="enum-property" advanced="0" generated="0">
+                        <longdesc lang="en">same desc</longdesc>
+                        <shortdesc lang="en">same desc</shortdesc>
+                        <content type="select" default="stop">
+                          <option value="stop" />
+                          <option value="freeze" />
+                          <option value="ignore" />
+                          <option value="demote" />
+                          <option value="suicide" />
+                        </content>
+                      </parameter>
+                      <parameter name="advanced-property" advanced="0" generated="0">
+                        <longdesc lang="en">longdesc</longdesc>
+                        <shortdesc lang="en">
+                          *** Advanced Use Only *** advanced shortdesc
+                        </shortdesc>
+                        <content type="boolean" default="false"/>
+                      </parameter>
+                    </parameters>
+                  </resource-agent>
+                  <status code="0" message="OK"/>
+                </pacemaker-result>
+            """,
+        )
 
     def test_get_properties_metadata(self):
         self._load_fake_agent_test_metadata()
@@ -98,55 +145,3 @@ class TestGetPropertiesMetadataMixin:
             ),
         )
         self.env_assist.assert_reports([])
-
-
-@mock.patch.object(
-    settings,
-    "pacemaker_api_result_schema",
-    rc("pcmk_rng/api/api-result.rng"),
-)
-class TestGetPropertiesMetadataCrmAttribute(
-    TestGetPropertiesMetadataMixin, CrmAttributeMetadataErrorMixin, TestCase
-):
-    def _load_fake_agent_test_metadata(self):
-        self.config.runner.pcmk.is_crm_attribute_list_options_supported(
-            is_supported=True
-        )
-        self.config.runner.pcmk.load_crm_attribute_metadata(
-            agent_name="cluster-options",
-            stdout="""
-                <pacemaker-result api-version="2.38" request="crm_attribute --list-options=cluster --output-as xml">
-                  <resource-agent name="cluster-options" version="2.1.5-7.el9">
-                    <version>1.1</version>
-                    <longdesc lang="en">agent longdesc</longdesc>
-                    <shortdesc lang="en">agent shortdesc</shortdesc>
-                    <parameters>
-                      <parameter name="property-name" advanced="0" generated="0">
-                        <longdesc lang="en">longdesc</longdesc>
-                        <shortdesc lang="en">shortdesc</shortdesc>
-                        <content type="boolean" default="false"/>
-                      </parameter>
-                      <parameter name="enum-property" advanced="0" generated="0">
-                        <longdesc lang="en">same desc</longdesc>
-                        <shortdesc lang="en">same desc</shortdesc>
-                        <content type="select" default="stop">
-                          <option value="stop" />
-                          <option value="freeze" />
-                          <option value="ignore" />
-                          <option value="demote" />
-                          <option value="suicide" />
-                        </content>
-                      </parameter>
-                      <parameter name="advanced-property" advanced="0" generated="0">
-                        <longdesc lang="en">longdesc</longdesc>
-                        <shortdesc lang="en">
-                          *** Advanced Use Only *** advanced shortdesc
-                        </shortdesc>
-                        <content type="boolean" default="false"/>
-                      </parameter>
-                    </parameters>
-                  </resource-agent>
-                  <status code="0" message="OK"/>
-                </pacemaker-result>
-            """,
-        )
