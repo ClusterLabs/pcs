@@ -155,6 +155,11 @@ def set_properties(
         ResourceAgentFacadeFactory(runner, env.report_processor),
         runner,
     )
+    params_spec = [
+        parameter
+        for facade in property_facade_list
+        for parameter in facade.metadata.parameters
+    ]
 
     configured_properties = [
         nvpair_dto.name
@@ -167,7 +172,7 @@ def set_properties(
     env.report_processor.report_list(
         cluster_property.validate_set_cluster_properties(
             runner,
-            property_facade_list,
+            params_spec,
             set_id,
             configured_properties,
             cluster_properties,

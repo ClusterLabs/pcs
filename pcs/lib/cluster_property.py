@@ -21,7 +21,7 @@ from pcs.lib.cib.tools import (
 )
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
-from pcs.lib.resource_agent import ResourceAgentFacade
+from pcs.lib.resource_agent import ResourceAgentParameter
 
 READONLY_CLUSTER_PROPERTY_LIST = [
     "cluster-infrastructure",
@@ -67,7 +67,7 @@ def _validate_stonith_watchdog_timeout_property(
 
 def validate_set_cluster_properties(  # noqa: PLR0912
     runner: CommandRunner,
-    cluster_property_facade_list: Iterable[ResourceAgentFacade],
+    params_spec: Iterable[ResourceAgentParameter],
     properties_set_id: str,
     configured_properties: StringSequence,
     new_properties: Mapping[str, str],
@@ -77,7 +77,7 @@ def validate_set_cluster_properties(  # noqa: PLR0912
     """
     Validate that cluster properties and their values can be set.
 
-    cluster_property_facade_list -- facades for cluster properties metadata
+    params_spec -- params specified by agent "cluster-options"
     properties_set_id -- id of the properties set to be updated
     configured_properties -- names of currently configured cluster properties
     new_properties -- dictionary of properties and their values to be set
@@ -88,8 +88,7 @@ def validate_set_cluster_properties(  # noqa: PLR0912
     # pylint: disable=too-many-locals
     possible_properties_dict = {
         parameter.name: parameter
-        for facade in cluster_property_facade_list
-        for parameter in facade.metadata.parameters
+        for parameter in params_spec
         if parameter.name not in READONLY_CLUSTER_PROPERTY_LIST
     }
     severity = reports.get_severity(reports.codes.FORCE, force)
