@@ -2,7 +2,10 @@ from textwrap import dedent
 
 from pcs.common.str_tools import format_list, format_plural
 
-from pcs_test.tier1.cib_resource.common import ResourceTest
+from pcs_test.tier1.cib_resource.common import (
+    ResourceTest,
+    fixture_use_meta_command_instead_warning,
+)
 from pcs_test.tools.bin_mock import get_mock_settings
 from pcs_test.tools.misc import ParametrizedTestMetaClass, write_data_to_tmpfile
 from pcs_test.tools.misc import get_test_resource as rc
@@ -430,7 +433,8 @@ class NodeAddGuest(RemoteTest):
         )
         self.pcs_runner.corosync_conf_opt = None
         self.assert_pcs_success(
-            "resource update G meta remote-node=node-name".split()
+            "resource update G meta remote-node=node-name".split(),
+            stderr_full=fixture_use_meta_command_instead_warning(),
         )
 
     def test_success_with_options(self):

@@ -728,6 +728,12 @@ def _resource_update_desc_fn(is_stonith: bool) -> tuple[str, ...]:
         """,
         "",
         f"""
+        If meta attributes are specified they will not be validated by this
+        command. For meta attributes validation use the 'pcs {agent_type} meta'
+        command instead.
+        """,
+        "",
+        f"""
         If --agent-validation is specified, {agent_type} agent validate-all
         action will be used to validate {obj} options and will prevent creating
         a misconfigured {obj}. If --agent-validation is not specified, the

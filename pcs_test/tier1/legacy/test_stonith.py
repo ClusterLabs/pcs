@@ -6,7 +6,10 @@ from unittest import TestCase
 
 from pcs.common.str_tools import indent
 
-from pcs_test.tier1.cib_resource.common import ResourceTest
+from pcs_test.tier1.cib_resource.common import (
+    ResourceTest,
+    fixture_use_meta_command_instead_warning,
+)
 from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.bin_mock import get_mock_settings
 from pcs_test.tools.fixture_cib import CachedCibFixture
@@ -2442,6 +2445,46 @@ class StonithUpdate(ResourceTest):
                 "Warning: stonith option 'debug' is deprecated and might be "
                 "removed in a future release, therefore it should not "
                 "be used, use 'debug_file' instead\n"
+            ),
+        )
+
+    def test_update_meta_attributes(self):
+        self.assert_effect(
+            "stonith update S meta a=A b=B".split(),
+            """
+            <resources>
+                <primitive id="S" class="stonith" type="fence_pcsmock_params">
+                    <instance_attributes id="S-instance_attributes">
+                        <nvpair id="S-instance_attributes-debug" name="debug"
+                            value="d"
+                        />
+                        <nvpair id="S-instance_attributes-ip" name="ip"
+                            value="i"
+                        />
+                        <nvpair id="S-instance_attributes-login" name="login"
+                            value="l"
+                        />
+                        <nvpair id="S-instance_attributes-password"
+                            name="password" value="1234"
+                        />
+                        <nvpair id="S-instance_attributes-ssh" name="ssh"
+                            value="0"
+                        />
+                    </instance_attributes>
+                    <operations>
+                        <op name="monitor" interval="60s"
+                            id="S-monitor-interval-60s"
+                        />
+                    </operations>
+                    <meta_attributes id="S-meta_attributes">
+                        <nvpair id="S-meta_attributes-a" name="a" value="A"/>
+                        <nvpair id="S-meta_attributes-b" name="b" value="B"/>
+                    </meta_attributes>
+                </primitive>
+            </resources>
+            """,
+            stderr_full=fixture_use_meta_command_instead_warning(
+                is_stonith=True
             ),
         )
 

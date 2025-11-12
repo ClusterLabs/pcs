@@ -25,6 +25,7 @@ from pcs_test.tier1.cib_resource.common import (
     ResourceTest,
     fixture_meta_attributes_not_validated_warning,
     fixture_meta_attributes_warning,
+    fixture_use_meta_command_instead_warning,
 )
 from pcs_test.tier1.legacy.common import FIXTURE_UTILIZATION_WARNING
 from pcs_test.tools.assertions import (
@@ -2658,7 +2659,12 @@ class Resource(TestCase, AssertPcsMixin):
             ),
         )
 
-        self.assert_pcs_success("resource update D1-clone foo=bar".split())
+        self.assert_pcs_success(
+            "resource update D1-clone foo=bar".split(),
+            stderr_full=fixture_meta_attributes_not_validated_warning(
+                ["clone"]
+            ),
+        )
         self.assert_pcs_success(
             "resource config".split(),
             dedent(
@@ -2674,7 +2680,12 @@ class Resource(TestCase, AssertPcsMixin):
             ),
         )
 
-        self.assert_pcs_success("resource update D1-clone bar=baz".split())
+        self.assert_pcs_success(
+            "resource update D1-clone bar=baz".split(),
+            stderr_full=fixture_meta_attributes_not_validated_warning(
+                ["clone"]
+            ),
+        )
         self.assert_pcs_success(
             "resource config".split(),
             dedent(
@@ -4042,7 +4053,8 @@ class MetaAttrs(
             (
                 "resource update D0 mandatory=test1b optional=test2a op monitor "
                 "interval=35 meta test7=test7a test6="
-            ).split()
+            ).split(),
+            stderr_full=fixture_use_meta_command_instead_warning(),
         )
         self.assert_pcs_success(
             "resource meta D1 d1meta=superd1meta".split(),
@@ -4584,6 +4596,9 @@ class TransformMasterToClone(ResourceTest):
                     </meta_attributes>
                 </clone>
             </resources>""",
+            stderr_full=fixture_meta_attributes_not_validated_warning(
+                ["clone"]
+            ),
         )
 
     def test_transform_master_with_meta_on_update(self):
@@ -4631,6 +4646,9 @@ class TransformMasterToClone(ResourceTest):
                     </meta_attributes>
                 </clone>
             </resources>""",
+            stderr_full=fixture_meta_attributes_not_validated_warning(
+                ["clone"]
+            ),
         )
 
 
@@ -4972,6 +4990,7 @@ class ResourceUpdateRemoteAndGuestChecks(TestCase, AssertPcsMixin):
             stderr_full=(
                 "Warning: this command is not sufficient for creating a guest node,"
                 " use 'pcs cluster node add-guest'\n"
+                + fixture_use_meta_command_instead_warning()
             ),
         )
 

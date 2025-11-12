@@ -66,3 +66,11 @@ def fixture_meta_attributes_not_validated_warning(meta_type_list):
         " / ".join(sorted(meta_type_list)), template="of {} "
     )
     return f"Warning: Meta attributes {resource_desc}are not validated\n"
+
+
+def fixture_use_meta_command_instead_warning(is_stonith=False):
+    command = "stonith" if is_stonith else "resource"
+    return (
+        "Warning: Meta attributes are not validated by this command. For "
+        f"validation, please use 'pcs {command} meta' instead.\n"
+    )

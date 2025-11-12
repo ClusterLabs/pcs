@@ -250,6 +250,8 @@ Add, remove or change options of specified resource, clone or multi\-state resou
 
 If an operation (op) is specified it will update the first found operation with the same action on the specified resource. If no operation with that action exists then a new operation will be created. (WARNING: all existing options on the updated operation will be reset if not specified.) If you want to create multiple monitor operations you should use the 'op add' & 'op remove' commands.
 
+If meta attributes are specified they will not be validated by this command. For meta attributes validation use the 'pcs resource meta' command instead.
+
 If \fB\-\-agent\-validation\fR is specified, resource agent validate\-all action will be used to validate resource options and will prevent creating a misconfigured resource. If \fB\-\-agent\-validation\fR is not specified, the validation will be done anyway, but it will only produce warnings not preventing the resource from being updated.
 
 If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the changes to take effect and then return 0 if the changes have been processed or 1 otherwise. If 'n' is not specified it defaults to 60 minutes.
@@ -766,6 +768,8 @@ update <stonith id> [stonith options] [op [<operation action> <operation options
 Add, remove or change options of specified stonith device. Unspecified options will be kept unchanged. If you wish to remove an option, set it to empty value, i.e. 'option_name='.
 
 If an operation (op) is specified it will update the first found operation with the same action on the specified stonith device. If no operation with that action exists then a new operation will be created. (WARNING: all existing options on the updated operation will be reset if not specified.) If you want to create multiple monitor operations you should use the 'op add' & 'op remove' commands.
+
+If meta attributes are specified they will not be validated by this command. For meta attributes validation use the 'pcs stonith meta' command instead.
 
 If \fB\-\-agent\-validation\fR is specified, stonith agent validate\-all action will be used to validate stonith device options and will prevent creating a misconfigured stonith device. If \fB\-\-agent\-validation\fR is not specified, the validation will be done anyway, but it will only produce warnings not preventing the stonith device from being updated.
 
