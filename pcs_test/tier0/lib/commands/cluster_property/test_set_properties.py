@@ -372,3 +372,29 @@ class TestPropertySetCrmAttribute(
                 ),
             ]
         )
+
+    def test_disable_fencing_warning(self):
+        orig_properties = {
+            "stonith-enabled": "true",
+        }
+        new_properties = {
+            "stonith-enabled": "false",
+        }
+
+        self.config.runner.cib.load(
+            crm_config=fixture_crm_config_properties([("id1", orig_properties)])
+        )
+        self.load_fake_agent_metadata()
+        self.config.env.push_cib(
+            crm_config=fixture_crm_config_properties([("id1", new_properties)])
+        )
+
+        cluster_property.set_properties(
+            self.env_assist.get_env(),
+            new_properties,
+            [],
+        )
+        code = reports.codes.NO_STONITH_MEANS_WOULD_BE_LEFT_DUE_TO_PROPERTIES
+        self.env_assist.assert_reports(
+            [fixture.warn(code, property_map=new_properties)]
+        )
