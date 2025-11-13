@@ -1,3 +1,4 @@
+import json
 from textwrap import dedent
 from unittest import TestCase
 
@@ -353,6 +354,85 @@ class UpdateConfig(TestCase):
                     option_type="crypto",
                     actual_transport="udp/udpu",
                     required_transports=["knet"],
+                ),
+            ]
+        )
+
+    def test_reload_failed(self):
+        node_labels = ["node1", "node2"]
+        self.config.env.set_known_nodes(node_labels)
+        corosync_nodes = dedent("""
+            nodelist {
+                node {
+                    ring0_addr: node1
+                    name: node1
+                    nodeid: 1
+                }
+
+                node {
+                    ring0_addr: node2
+                    name: node2
+                    nodeid: 2
+                }
+            }
+            """)
+
+        self.config.corosync_conf.load_content(fixture_totem() + corosync_nodes)
+        self.config.http.corosync.set_corosync_conf(
+            fixture_totem(crypto_options={"hash": "md5"}) + corosync_nodes,
+            node_labels=node_labels,
+        )
+        self.config.http.corosync.reload_corosync_conf(
+            communication_list=[
+                [
+                    dict(
+                        label="node1",
+                        output=json.dumps(
+                            dict(code="failed", message="Some error")
+                        ),
+                    )
+                ],
+                [
+                    dict(
+                        label="node2",
+                        output=json.dumps(
+                            dict(code="failed", message="Some error")
+                        ),
+                    ),
+                ],
+            ],
+        )
+
+        self.env_assist.assert_raise_library_error(
+            # option which does not need corosync to be stopped
+            lambda: cluster.config_update(
+                self.env_assist.get_env(), {}, {}, {"hash": "md5"}, {}
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.info(report_codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED),
+                fixture.info(
+                    report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE, node="node1"
+                ),
+                fixture.info(
+                    report_codes.COROSYNC_CONFIG_ACCEPTED_BY_NODE, node="node2"
+                ),
+                fixture.warn(
+                    report_codes.COROSYNC_CONFIG_RELOAD_ERROR,
+                    node="node1",
+                    reason="Some error",
+                ),
+                fixture.warn(
+                    report_codes.COROSYNC_CONFIG_RELOAD_ERROR,
+                    node="node2",
+                    reason="Some error",
+                ),
+                fixture.warn(
+                    report_codes.COROSYNC_CONFIG_INVALID_PREVENTS_CLUSTER_JOIN
+                ),
+                fixture.error(
+                    report_codes.UNABLE_TO_PERFORM_OPERATION_ON_ANY_NODE
                 ),
             ]
         )

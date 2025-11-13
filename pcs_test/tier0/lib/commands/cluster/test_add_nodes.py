@@ -1600,6 +1600,9 @@ class FailureReloadCorosyncConf(TestCase):
                     reports.codes.COROSYNC_CONFIG_RELOADED,
                     node="node3",
                 ),
+                fixture.warn(
+                    reports.codes.COROSYNC_CONFIG_INVALID_PREVENTS_CLUSTER_JOIN
+                ),
             ]
         )
 
@@ -1649,6 +1652,9 @@ class FailureReloadCorosyncConf(TestCase):
                 fixture.info(
                     reports.codes.COROSYNC_CONFIG_RELOADED,
                     node="node3",
+                ),
+                fixture.warn(
+                    reports.codes.COROSYNC_CONFIG_INVALID_PREVENTS_CLUSTER_JOIN
                 ),
             ]
         )
@@ -1749,11 +1755,12 @@ class FailureReloadCorosyncConf(TestCase):
                     command=self.cmd_url,
                     reason=self.err_msg,
                 ),
-            ]
-            + [
+                fixture.warn(
+                    reports.codes.COROSYNC_CONFIG_INVALID_PREVENTS_CLUSTER_JOIN
+                ),
                 fixture.error(
                     reports.codes.UNABLE_TO_PERFORM_OPERATION_ON_ANY_NODE,
-                )
+                ),
             ]
         )
 

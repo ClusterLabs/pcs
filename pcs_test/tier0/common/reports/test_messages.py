@@ -1006,6 +1006,20 @@ class CorosyncConfigReloadNotPossible(NameBuildTest):
         )
 
 
+class CorosyncConfigInvalidPreventsClusterJoin(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "One or more nodes failed to reload the Corosync configuration "
+                "and are currently running with the previous configuration. If "
+                "these nodes are restarted or fenced, they will fail to rejoin "
+                "the cluster. Update the configuration and fix the issues as "
+                "soon as possible."
+            ),
+            reports.CorosyncConfigInvalidPreventsClusterJoin(),
+        )
+
+
 class CorosyncConfigUnsupportedTransport(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(

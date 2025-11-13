@@ -221,11 +221,15 @@ class ReloadCorosyncConf(
                 )
             else:
                 self.__has_failures = True
+                message = "\n".join(
+                    line.strip()
+                    for line in output["message"].split("\n")
+                    if line.strip()
+                )
                 self._report(
                     ReportItem.warning(
                         reports.messages.CorosyncConfigReloadError(
-                            output["message"],
-                            node=node,
+                            message, node=node
                         )
                     )
                 )
@@ -238,6 +242,18 @@ class ReloadCorosyncConf(
         return self._get_next_list()
 
     def on_complete(self):
+        # corosync-cfgtool -R actually does not report issues with reload
+        # from nodes other than the local node
+        # We should eventually change this so that we run the reload on each
+        # node one-by-one, to see issues from all cluster nodes.
+        # For now, we want to print this warning even in case the reload was
+        # successful on the last node.
+        if self.__has_failures:
+            self._report(
+                ReportItem.warning(
+                    reports.messages.CorosyncConfigInvalidPreventsClusterJoin()
+                )
+            )
         if not self.__was_successful and self.__has_failures:
             self._report(
                 ReportItem.error(

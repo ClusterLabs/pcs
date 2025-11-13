@@ -209,6 +209,9 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
                     report_codes.COROSYNC_CONFIG_RELOADED,
                     node="node-2",
                 ),
+                fixture.warn(
+                    report_codes.COROSYNC_CONFIG_INVALID_PREVENTS_CLUSTER_JOIN
+                ),
             ]
         )
 
@@ -303,6 +306,9 @@ class PushCorosyncConfLiveNoQdeviceTest(PushCorosyncConfLiveBase):
                 fixture.warn(
                     report_codes.INVALID_RESPONSE_FORMAT,
                     node="node-2",
+                ),
+                fixture.warn(
+                    report_codes.COROSYNC_CONFIG_INVALID_PREVENTS_CLUSTER_JOIN
                 ),
                 fixture.error(
                     report_codes.UNABLE_TO_PERFORM_OPERATION_ON_ANY_NODE
@@ -941,6 +947,9 @@ class PushCorosyncConfLiveWithQdeviceTest(PushCorosyncConfLiveBase):
                     report_codes.COROSYNC_CONFIG_RELOADED,
                     node="node-2",
                 ),
+                fixture.warn(
+                    report_codes.COROSYNC_CONFIG_INVALID_PREVENTS_CLUSTER_JOIN
+                ),
                 fixture.info(report_codes.QDEVICE_CLIENT_RELOAD_STARTED),
                 fixture.info(
                     reports.codes.SERVICE_ACTION_SUCCEEDED,
@@ -1020,6 +1029,9 @@ class PushCorosyncConfLiveWithQdeviceTest(PushCorosyncConfLiveBase):
                 fixture.warn(
                     report_codes.INVALID_RESPONSE_FORMAT,
                     node="node-2",
+                ),
+                fixture.warn(
+                    report_codes.COROSYNC_CONFIG_INVALID_PREVENTS_CLUSTER_JOIN
                 ),
                 fixture.error(
                     report_codes.UNABLE_TO_PERFORM_OPERATION_ON_ANY_NODE

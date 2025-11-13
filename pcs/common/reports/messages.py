@@ -1602,6 +1602,26 @@ class CorosyncConfigReloadNotPossible(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class CorosyncConfigInvalidPreventsClusterJoin(ReportItemMessage):
+    """
+    Corosync is still running with the old configuration and the user should fix
+    the configuration issues before restarting any nodes
+    """
+
+    _code = codes.COROSYNC_CONFIG_INVALID_PREVENTS_CLUSTER_JOIN
+
+    @property
+    def message(self) -> str:
+        return (
+            "One or more nodes failed to reload the Corosync configuration and "
+            "are currently running with the previous configuration. If these "
+            "nodes are restarted or fenced, they will fail to rejoin the "
+            "cluster. Update the configuration and fix the issues as soon as "
+            "possible."
+        )
+
+
+@dataclass(frozen=True)
 class CorosyncConfigUnsupportedTransport(ReportItemMessage):
     """
     Transport type defined in corosync.conf is unknown.

@@ -11,6 +11,7 @@
 - Commands `pcs resource|stonith create`, `pcs resource|stonith meta` and `pcs
   resource|stonith defaults` print warning about primitive resource meta
   attributes which have no effect on cluster resource handling ([RHEL-7673])
+- Warning when Corosync configuration fails to reload ([RHEL-47300])
 
 ### Fixed
 - Commands `pcs acl role create` and `pcs acl permission add` now print
@@ -43,6 +44,7 @@
 [RHEL-7670]: https://issues.redhat.com/browse/RHEL-7670
 [RHEL-7673]: https://issues.redhat.com/browse/RHEL-7673
 [RHEL-21879]: https://issues.redhat.com/browse/RHEL-21879
+[RHEL-47300]: https://issues.redhat.com/browse/RHEL-47300
 [RHEL-73527]: https://issues.redhat.com/browse/RHEL-73527
 [RHEL-76157]: https://issues.redhat.com/browse/RHEL-76157
 [RHEL-76162]: https://issues.redhat.com/browse/RHEL-76162
