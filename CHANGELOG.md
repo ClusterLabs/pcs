@@ -12,6 +12,8 @@
   resource|stonith defaults` print warning about primitive resource meta
   attributes which have no effect on cluster resource handling ([RHEL-7673])
 - Warning when Corosync configuration fails to reload ([RHEL-47300])
+- Added warning that setting cluster property `stonith-enabled` to falsy value
+  can left the cluster with no enabled means to fence nodes ([RHEL-84120])
 
 ### Fixed
 - Commands `pcs acl role create` and `pcs acl permission add` now print
@@ -50,6 +52,7 @@
 [RHEL-76162]: https://issues.redhat.com/browse/RHEL-76162
 [RHEL-111451]: https://issues.redhat.com/browse/RHEL-111451
 [RHEL-126839]: https://issues.redhat.com/browse/RHEL-126839
+[RHEL-84120]: https://issues.redhat.com/browse/RHEL-84120
 
 
 ## [0.12.1] - 2025-07-08
