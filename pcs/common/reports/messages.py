@@ -8583,7 +8583,7 @@ class CibXmlMissing(ReportItemMessage):
 @dataclass(frozen=True)
 class NoStonithMeansWouldBeLeft(ReportItemMessage):
     """
-    The requested change would left the cluster with no stonith configured
+    The requested change would leave the cluster with no stonith configured
     """
 
     _code = codes.NO_STONITH_MEANS_WOULD_BE_LEFT
@@ -8591,7 +8591,7 @@ class NoStonithMeansWouldBeLeft(ReportItemMessage):
     @property
     def message(self) -> str:
         return (
-            "Requested action lefts the cluster with no enabled means to fence "
+            "Requested action leaves the cluster with no enabled means to fence "
             "nodes, resulting in the cluster not being able to recover from "
             "certain failure conditions"
         )
@@ -8600,7 +8600,7 @@ class NoStonithMeansWouldBeLeft(ReportItemMessage):
 @dataclass(frozen=True)
 class NoStonithMeansWouldBeLeftDueToProperties(ReportItemMessage):
     """
-    The requested cluster properties would left the cluster with no stonith
+    The requested cluster properties would leave the cluster with no stonith
     configured
     """
 
@@ -8613,7 +8613,7 @@ class NoStonithMeansWouldBeLeftDueToProperties(ReportItemMessage):
             f"{key} to {value}" for key, value in self.property_map.items()
         ]
         return (
-            f"Setting property {' or '.join(property_setting_msgs)} lefts the"
+            f"Setting property {' or '.join(property_setting_msgs)} leaves the"
             " cluster with no enabled means to fence nodes, resulting in the"
             " cluster not being able to recover from certain failure conditions"
         )

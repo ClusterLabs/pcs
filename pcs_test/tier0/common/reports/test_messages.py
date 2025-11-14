@@ -6351,7 +6351,7 @@ class NoStonithMeansWouldBeLeft(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
             (
-                "Requested action lefts the cluster with no enabled means "
+                "Requested action leaves the cluster with no enabled means "
                 "to fence nodes, resulting in the cluster not being able to "
                 "recover from certain failure conditions"
             ),
@@ -6364,7 +6364,7 @@ class NoStonithMeansWouldBeLeftDueToProperties(NameBuildTest):
         self.assert_message_from_report(
             (
                 "Setting property stonith-enabled to false or fencing-enabled"
-                " to 0 lefts the cluster with no enabled means to fence nodes,"
+                " to 0 leaves the cluster with no enabled means to fence nodes,"
                 " resulting in the cluster not being able to recover from"
                 " certain failure conditions"
             ),

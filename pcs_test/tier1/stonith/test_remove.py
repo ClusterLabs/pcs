@@ -42,12 +42,12 @@ ERRORS_HAVE_OCCURRED = (
     "Error: Errors have occurred, therefore pcs is unable to continue\n"
 )
 NO_STONITH_LEFT_ERROR = (
-    "Error: Requested action lefts the cluster with no enabled means to fence "
+    "Error: Requested action leaves the cluster with no enabled means to fence "
     "nodes, resulting in the cluster not being able to recover from certain "
     "failure conditions, use --force to override\n"
 )
 NO_STONITH_LEFT_WARNING = (
-    "Warning: Requested action lefts the cluster with no enabled means to fence "
+    "Warning: Requested action leaves the cluster with no enabled means to fence "
     "nodes, resulting in the cluster not being able to recover from certain "
     "failure conditions\n"
 )

@@ -172,7 +172,7 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
         self.assert_pcs_success(
             f"property set {fencing_enabled_property}=false".split(),
             stderr_full="Warning: Setting property stonith-enabled to false"
-            " lefts the cluster with no enabled means to fence nodes,"
+            " leaves the cluster with no enabled means to fence nodes,"
             " resulting in the cluster not being able to recover from"
             " certain failure conditions\n",
         )
