@@ -140,7 +140,7 @@ tf_tests:
         testing-farm cancel "$REQUEST_ID"; \
       fi
   tags:
-    - "shared-podman"
+    - $SHARED_RUNNER_TAG
   artifacts:
     expire_in: 1 week
     paths:
