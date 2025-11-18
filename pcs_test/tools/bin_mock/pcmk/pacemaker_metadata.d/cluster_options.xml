@@ -113,6 +113,11 @@
         <shortdesc lang="en">Whether nodes may be fenced as part of recovery</shortdesc>
         <content type="boolean" default="true"/>
       </parameter>
+      <parameter name="fencing-enabled" advanced="1" generated="0">
+        <longdesc lang="en">If false, unresponsive nodes are immediately assumed to be harmless, and resources that were active on them may be recovered elsewhere. This can result in a "split-brain" situation, potentially leading to data loss and/or service unavailability.</longdesc>
+        <shortdesc lang="en">Whether nodes may be fenced as part of recovery</shortdesc>
+        <content type="boolean" default="true"/>
+      </parameter>
       <parameter name="stonith-action" advanced="0" generated="0">
         <longdesc lang="en">Action to send to fence device when a node needs to be fenced ("poweroff" is a deprecated alias for "off")</longdesc>
         <shortdesc lang="en">Action to send to fence device when a node needs to be fenced ("poweroff" is a deprecated alias for "off")</shortdesc>

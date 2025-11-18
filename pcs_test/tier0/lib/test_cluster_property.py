@@ -61,6 +61,7 @@ PARAMETER_DEFINITIONS = [
     ("time_param", "time", "30s", None),
     ("stonith-watchdog-timeout", "time", "0", None),
     ("stonith-enabled", "boolean", "true", None),
+    ("fencing-enabled", "boolean", "true", None),
     ("cluster-infrastructure", "string", "corosync", None),
     ("cluster-name", "string", "(null)", None),
     ("dc-version", "string", "none", None),
@@ -72,9 +73,11 @@ PARAMETER_DEFINITIONS = [
     ("timeout_param", "timeout", "60s", None),
 ]
 
+# Warning: fragile needs to be sorted!
 ALLOWED_PROPERTIES = [
     "bool_param",
     "duration_param",
+    "fencing-enabled",
     "integer_param",
     "nonnegative_param",
     "percentage_param",
@@ -541,6 +544,7 @@ class TestValidateSetClusterProperties(TestCase):
             with self.subTest(value=falsy_value):
                 property_map = {
                     "stonith-enabled": falsy_value,
+                    "fencing-enabled": falsy_value,
                 }
                 self.assert_validate_set(
                     [],

@@ -1182,8 +1182,14 @@ def cluster_status_from_nodes(auth_user, cluster_nodes, cluster_name)
       }
     end
 
-    if status[:cluster_settings]['stonith-enabled'.to_sym] and
-        not is_cib_true(status[:cluster_settings]['stonith-enabled'.to_sym])
+    stonith_disabled = (
+      status[:cluster_settings]['stonith-enabled'.to_sym] and
+      not is_cib_true(status[:cluster_settings]['stonith-enabled'.to_sym])
+    ) || (
+      status[:cluster_settings]['fencing-enabled'.to_sym] and
+      not is_cib_true(status[:cluster_settings]['fencing-enabled'.to_sym])
+    )
+    if stonith_disabled
       status[:warning_list] << {
         :message => 'Stonith is not enabled',
       }
