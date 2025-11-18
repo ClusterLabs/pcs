@@ -155,9 +155,6 @@ class FullClusterStatusPlaintextBase(TestCase):
             """
         )
         self._fixture_config_crm_verify(self._fixture_crm_verify_success())
-        self.config.services.is_running(
-            "sbd", return_value=False, name="services.is_running.sbd"
-        )
 
     def _fixture_config_live_remote_minimal(self):
         self.config.runner.pcmk.load_state_plaintext(
@@ -173,9 +170,6 @@ class FullClusterStatusPlaintextBase(TestCase):
             """,
         )
         self._fixture_config_crm_verify(self._fixture_crm_verify_success())
-        self.config.services.is_running(
-            "sbd", return_value=False, name="services.is_running.sbd"
-        )
 
     def _fixture_config_local_daemons(  # noqa: PLR0913
         self,
@@ -384,9 +378,6 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
         self.config.runner.pcmk.load_ticket_state_plaintext(
             stdout="ticket status"
         )
-        self.config.services.is_running(
-            "sbd", return_value=False, name="services.is_running.sbd"
-        )
         self._fixture_config_local_daemons()
         self.config.http.host.check_reachability(
             node_labels=self.node_name_list
@@ -461,9 +452,6 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
         self._fixture_config_crm_verify(self._fixture_crm_verify_success())
         self.config.runner.pcmk.load_ticket_state_plaintext(
             stdout="ticket status"
-        )
-        self.config.services.is_running(
-            "sbd", return_value=False, name="services.is_running.sbd"
         )
         self._fixture_config_local_daemons(
             corosync_enabled=False,
@@ -587,9 +575,6 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
         self.config.runner.pcmk.load_ticket_state_plaintext(
             stdout="ticket status"
         )
-        self.config.services.is_running(
-            "sbd", return_value=False, name="services.is_running.sbd"
-        )
         self._fixture_config_local_daemons()
         self.config.http.host.check_reachability(
             node_labels=self.node_name_list
@@ -640,9 +625,6 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
         self._fixture_config_crm_verify(self._fixture_crm_verify_success())
         self.config.runner.pcmk.load_ticket_state_plaintext(
             stdout="ticket stdout", stderr=stderr, returncode=1
-        )
-        self.config.services.is_running(
-            "sbd", return_value=False, name="services.is_running.sbd"
         )
         self._fixture_config_local_daemons()
         self.config.http.host.check_reachability(
@@ -706,9 +688,6 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
             self._fixture_crm_verify_invalid_cib(errors),
             retval=EXITCODE_INVALID_CIB,
         )
-        self.config.services.is_running(
-            "sbd", return_value=False, name="services.is_running.sbd"
-        )
         self._fixture_config_local_daemons()
         self.config.fs.isfile(settings.crm_rule_exec, return_value=True)
 
@@ -749,9 +728,6 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
         self.config.runner.pcmk.verify_xml(
             stdout="not a xml", stderr="some message"
         )
-        self.config.services.is_running(
-            "sbd", return_value=False, name="services.is_running.sbd"
-        )
         self._fixture_config_local_daemons()
         self.config.fs.isfile(settings.crm_rule_exec, return_value=True)
 
@@ -779,66 +755,6 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
                     api_response="some message\nnot a xml",
                 )
             ]
-        )
-
-    def test_stonith_warning_no_devices(self):
-        self.config.runner.pcmk.load_state_plaintext(
-            stdout="crm_mon cluster status"
-        )
-        self.config.fs.exists(settings.corosync_conf_file, return_value=True)
-        self.config.corosync_conf.load()
-        self.config.runner.cib.load()
-        self._fixture_config_crm_verify(self._fixture_crm_verify_success())
-        self.config.services.is_running(
-            "sbd", return_value=False, name="services.is_running.sbd"
-        )
-        self._fixture_config_local_daemons()
-        self.config.fs.isfile(settings.crm_rule_exec, return_value=True)
-
-        self.assertEqual(
-            status.full_cluster_status_plaintext(self.env_assist.get_env()),
-            dedent(
-                """\
-                Cluster name: test99
-
-                WARNINGS:
-                No stonith devices and stonith-enabled is not false
-
-                crm_mon cluster status
-
-                Daemon Status:
-                  corosync: active/enabled
-                  pacemaker: active/enabled
-                  pcsd: active/enabled"""
-            ),
-        )
-
-    def test_stonith_warning_no_devices_sbd_enabled(self):
-        self.config.runner.pcmk.load_state_plaintext(
-            stdout="crm_mon cluster status"
-        )
-        self.config.fs.exists(settings.corosync_conf_file, return_value=True)
-        self.config.corosync_conf.load()
-        self.config.runner.cib.load()
-        self._fixture_config_crm_verify(self._fixture_crm_verify_success())
-        self.config.services.is_running(
-            "sbd", return_value=True, name="services.is_running.sbd"
-        )
-        self._fixture_config_local_daemons()
-        self.config.fs.isfile(settings.crm_rule_exec, return_value=True)
-
-        self.assertEqual(
-            status.full_cluster_status_plaintext(self.env_assist.get_env()),
-            dedent(
-                """\
-                Cluster name: test99
-                crm_mon cluster status
-
-                Daemon Status:
-                  corosync: active/enabled
-                  pacemaker: active/enabled
-                  pcsd: active/enabled"""
-            ),
         )
 
     def test_stonith_warnings_regarding_devices_configuration(self):
@@ -881,9 +797,6 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
             """
         )
         self._fixture_config_crm_verify(self._fixture_crm_verify_success())
-        self.config.services.is_running(
-            "sbd", return_value=False, name="services.is_running.sbd"
-        )
         self._fixture_config_local_daemons()
         self.config.fs.isfile(settings.crm_rule_exec, return_value=True)
 
@@ -925,9 +838,6 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
         self._fixture_config_crm_verify(self._fixture_crm_verify_success())
         self.config.runner.pcmk.load_ticket_state_plaintext(
             stdout="ticket status"
-        )
-        self.config.services.is_running(
-            "sbd", return_value=False, name="services.is_running.sbd"
         )
         self._fixture_config_local_daemons()
         self.config.http.host.check_reachability(
@@ -1065,9 +975,6 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
             """,
         )
         self._fixture_config_crm_verify(self._fixture_crm_verify_success())
-        self.config.services.is_running(
-            "sbd", return_value=True, name="services.is_running.sbd"
-        )
         self._fixture_config_local_daemons(sbd_enabled=True, sbd_active=True)
         self.config.fs.isfile(settings.crm_rule_exec, return_value=True)
 
@@ -1125,9 +1032,6 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
             """,
         )
         self._fixture_config_crm_verify(self._fixture_crm_verify_success())
-        self.config.services.is_running(
-            "sbd", return_value=True, name="services.is_running.sbd"
-        )
         self._fixture_config_local_daemons(sbd_enabled=True, sbd_active=True)
         self.config.fs.isfile(settings.crm_rule_exec, return_value=True)
         self.config.runner.pcmk.get_rule_in_effect_status(
@@ -1195,9 +1099,6 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
             """,
         )
         self._fixture_config_crm_verify(self._fixture_crm_verify_success())
-        self.config.services.is_running(
-            "sbd", return_value=True, name="services.is_running.sbd"
-        )
         self._fixture_config_local_daemons(sbd_enabled=True, sbd_active=True)
         self.config.fs.isfile(settings.crm_rule_exec, return_value=True)
         self.config.runner.pcmk.get_rule_in_effect_status(
@@ -1250,9 +1151,6 @@ class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
             """,
         )
         self._fixture_config_crm_verify(self._fixture_crm_verify_success())
-        self.config.services.is_running(
-            "sbd", return_value=True, name="services.is_running.sbd"
-        )
         self._fixture_config_local_daemons(sbd_enabled=True, sbd_active=True)
         self.config.fs.isfile(settings.crm_rule_exec, return_value=True)
 

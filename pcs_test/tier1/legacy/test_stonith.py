@@ -14,6 +14,7 @@ from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.bin_mock import get_mock_settings
 from pcs_test.tools.fixture_cib import CachedCibFixture
 from pcs_test.tools.misc import (
+    PacemakerFeatures,
     ParametrizedTestMetaClass,
     get_tmp_file,
     is_minimum_pacemaker_version,
@@ -1364,9 +1365,22 @@ class StonithTest(TestCase, AssertPcsMixin):
 
     def test_no_stonith_warning(self):
         self.pcs_runner.corosync_conf_opt = self.temp_corosync_conf.name
+        status_stdout_no_stonith = (
+            (
+                ".*error: Resource start-up disabled since no fencing resources"
+                " have been defined. Either configure some or disable fencing with"
+                " the fencing-enabled option. NOTE: Clusters with shared data need"
+                " fencing to ensure data integrity.*"
+            )
+            if PacemakerFeatures.fencing_enabled_property()
+            else (
+                ".*error: Resource start-up disabled since no STONITH resources"
+                " have been defined.*"
+            )
+        )
         self.assert_pcs_success(
             ["status"],
-            stdout_regexp=".*No stonith devices and stonith-enabled is not false.*",
+            stdout_regexp=status_stdout_no_stonith,
         )
 
         self.pcs_runner.corosync_conf_opt = None
@@ -1378,9 +1392,7 @@ class StonithTest(TestCase, AssertPcsMixin):
         stdout, dummy_stderr = self.assert_pcs_success_ignore_output(
             ["status"],
         )
-        self.assertNotIn(
-            "No stonith devices and stonith-enabled is not false", stdout
-        )
+        self.assertNotIn(status_stdout_no_stonith, stdout)
 
         self.pcs_runner.corosync_conf_opt = None
         self.assert_pcs_fail(
@@ -1404,7 +1416,7 @@ class StonithTest(TestCase, AssertPcsMixin):
         self.pcs_runner.corosync_conf_opt = self.temp_corosync_conf.name
         self.assert_pcs_success(
             ["status"],
-            stdout_regexp=".*No stonith devices and stonith-enabled is not false.*",
+            stdout_regexp=status_stdout_no_stonith,
         )
 
 

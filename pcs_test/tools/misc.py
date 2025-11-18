@@ -356,3 +356,9 @@ def create_setup_patch_mixin(module_specification_or_patcher):
             return patcher.start()
 
     return SetupPatchMixin
+
+
+class PacemakerFeatures:
+    @staticmethod
+    def fencing_enabled_property():
+        return is_minimum_pacemaker_features(3, 20, 5)

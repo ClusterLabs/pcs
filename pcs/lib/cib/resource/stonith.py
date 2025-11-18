@@ -25,7 +25,6 @@ from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
 from pcs.lib.pacemaker.live import get_resource_digests
 from pcs.lib.pacemaker.state import get_resource_state
-from pcs.lib.pacemaker.values import is_false
 from pcs.lib.xml_tools import get_root
 
 from . import (
@@ -39,20 +38,6 @@ def is_stonith(resource_el: _Element) -> bool:
         resource_el.tag == TAG_RESOURCE_PRIMITIVE
         and resource_el.get("class") == "stonith"
     )
-
-
-def is_stonith_enabled(crm_config_el: _Element) -> bool:
-    # We should read the default value from pacemaker. However, that may slow
-    # pcs down as we need to run 'pacemaker-schedulerd metadata' to get it.
-    stonith_enabled = True
-    # TODO properly support multiple cluster_property_set with rules
-    for nvpair in crm_config_el.iterfind(
-        "cluster_property_set/nvpair[@name='stonith-enabled']"
-    ):
-        if is_false(nvpair.get("value", "true")):
-            stonith_enabled = False
-            break
-    return stonith_enabled
 
 
 def get_all_resources(resources_el: _Element) -> list[_Element]:
@@ -89,14 +74,13 @@ RESOURCE_TYPES_WITH_DEFAULT_CYCLE_METHOD = (
 
 def get_misconfigured_resources(
     resources_el: _Element,
-) -> tuple[list[_Element], list[_Element], list[_Element]]:
+) -> tuple[list[_Element], list[_Element]]:
     """
-    Return stonith: all, 'action' option set, 'method' option set to 'cycle'
+    Return stonith: 'action' option set, 'method' option set to 'cycle'
     """
-    stonith_all = get_all_resources(resources_el)
     stonith_with_action = []
     stonith_with_method_cycle = []
-    for stonith in stonith_all:
+    for stonith in get_all_resources(resources_el):
         for nvpair in stonith.iterfind("instance_attributes/nvpair"):
             if nvpair.get("name") == "action" and nvpair.get("value"):
                 stonith_with_action.append(stonith)
@@ -107,7 +91,7 @@ def get_misconfigured_resources(
                 and nvpair.get("value") == "cycle"
             ):
                 stonith_with_method_cycle.append(stonith)
-    return stonith_all, stonith_with_action, stonith_with_method_cycle
+    return stonith_with_action, stonith_with_method_cycle
 
 
 SUPPORTED_RESOURCE_TYPES_FOR_RESTARTLESS_UPDATE = ["fence_scsi", "fence_mpath"]
