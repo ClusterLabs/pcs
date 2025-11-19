@@ -1,7 +1,7 @@
 from typing import (
     Iterable,
+    List,
     Mapping,
-    Optional,
 )
 
 from lxml.etree import _Element
@@ -69,7 +69,7 @@ def _validate_stonith_watchdog_timeout_property(
 
 def _validate_not_disabling_fencing(
     to_be_set_properties: Mapping[str, str],
-) -> Optional[reports.ReportItem]:
+) -> List[reports.ReportItem]:
     problematic_properties_setting = {
         key: to_be_set_properties[key]
         for key in ["stonith-enabled", "fencing-enabled"]
@@ -77,13 +77,15 @@ def _validate_not_disabling_fencing(
     }
 
     if problematic_properties_setting:
-        return reports.ReportItem.warning(
-            reports.messages.NoStonithMeansWouldBeLeftDueToProperties(
-                problematic_properties_setting
-            ),
-        )
+        return [
+            reports.ReportItem.warning(
+                reports.messages.NoStonithMeansWouldBeLeftDueToProperties(
+                    problematic_properties_setting
+                ),
+            )
+        ]
 
-    return None
+    return []
 
 
 def validate_set_cluster_properties(  # noqa: PLR0912
@@ -249,9 +251,7 @@ def validate_set_cluster_properties(  # noqa: PLR0912
             )
         )
 
-    no_fencing_report = _validate_not_disabling_fencing(to_be_set_properties)
-    if no_fencing_report:
-        report_list.append(no_fencing_report)
+    report_list.extend(_validate_not_disabling_fencing(to_be_set_properties))
 
     return report_list
 

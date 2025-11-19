@@ -58,7 +58,7 @@ def _get_properties_metadata(
                 )
             ]
         )
-        raise LibraryError() from None  # report should contain enough info
+        raise LibraryError() from e
 
 
 # backward compatibility layer - export cluster property metadata in the legacy
