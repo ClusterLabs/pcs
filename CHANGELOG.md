@@ -50,9 +50,9 @@
 [RHEL-73527]: https://issues.redhat.com/browse/RHEL-73527
 [RHEL-76157]: https://issues.redhat.com/browse/RHEL-76157
 [RHEL-76162]: https://issues.redhat.com/browse/RHEL-76162
+[RHEL-84120]: https://issues.redhat.com/browse/RHEL-84120
 [RHEL-111451]: https://issues.redhat.com/browse/RHEL-111451
 [RHEL-126839]: https://issues.redhat.com/browse/RHEL-126839
-[RHEL-84120]: https://issues.redhat.com/browse/RHEL-84120
 
 
 ## [0.12.1] - 2025-07-08
