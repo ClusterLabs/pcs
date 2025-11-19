@@ -4,6 +4,7 @@ from unittest import TestCase
 from pcs.lib.resource_agent import const as ra_const
 
 from pcs_test.tier1.cib_resource.common import (
+    fixture_meta_attributes_not_validated_warning,
     fixture_meta_attributes_warning,
     get_cib_resources,
 )
@@ -96,6 +97,8 @@ def fixture_meta_attrs(rsc_id, nvpairs_xml=""):
 
 
 class ResourceMetaBaseMixin(get_assert_pcs_effect_mixin(get_cib_resources)):
+    bundle_clone_meta_warning = None
+
     def setUp(self):
         self.temp_cib = get_tmp_file("tier1_test_resource_meta")
         self.pcs_runner = PcsRunner(self.temp_cib.name)
@@ -131,6 +134,7 @@ class ResourceMetaBaseMixin(get_assert_pcs_effect_mixin(get_cib_resources)):
                     ),
                 ),
             ),
+            stderr_full=self.bundle_clone_meta_warning,
         )
 
     def test_modify(self):
@@ -160,6 +164,7 @@ class ResourceMetaBaseMixin(get_assert_pcs_effect_mixin(get_cib_resources)):
                     ),
                 )
             ),
+            stderr_full=self.bundle_clone_meta_warning,
         )
 
     def test_remove(self):
@@ -239,16 +244,22 @@ class ResourceMetaGroup(ResourceMetaBaseMixin, TestCase):
 
 
 class ResourceMetaClone(ResourceMetaBaseMixin, TestCase):
+    bundle_clone_meta_warning = fixture_meta_attributes_not_validated_warning(
+        ["bundle", "clone"]
+    )
     rsc_id = "R-clone"
     resource_fixture = staticmethod(fixture_clone)
 
     def test_invalid_attribute(self):
-        self._invalid_attribute(warning_message="")
+        self._invalid_attribute(warning_message=self.bundle_clone_meta_warning)
 
 
 class ResourceMetaBundle(ResourceMetaBaseMixin, TestCase):
+    bundle_clone_meta_warning = fixture_meta_attributes_not_validated_warning(
+        ["bundle", "clone"]
+    )
     rsc_id = "B"
     resource_fixture = staticmethod(fixture_bundle)
 
     def test_invalid_attribute(self):
-        self._invalid_attribute(warning_message="")
+        self._invalid_attribute(warning_message=self.bundle_clone_meta_warning)

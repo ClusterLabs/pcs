@@ -40,6 +40,10 @@ DEFAULTS_MAY_BE_OVERRIDDEN = (
     "with their own defined values\n"
 )
 CIB_HAS_BEEN_UPGRADED = "CIB has been upgraded to the latest schema version.\n"
+META_NOT_VALIDATED = (
+    "Warning: Meta attributes of bundle / clone / group / resource are not "
+    "validated\n"
+)
 
 
 def fixture_warning_unknown_meta_primitive(unknown_meta):
@@ -569,6 +573,7 @@ class OpDefaultsConfig(
 class DefaultsSetCreateMixin(TestDefaultsMixin, AssertPcsMixin):
     cli_command = []
     cib_tag = ""
+    meta_warning_not_validated = ""
 
     def setUp(self):
         super().setUp()
@@ -601,7 +606,9 @@ class DefaultsSetCreateMixin(TestDefaultsMixin, AssertPcsMixin):
                 </{self.cib_tag}>
             """
             ),
-            stderr_full=DEFAULTS_MAY_BE_OVERRIDDEN,
+            stderr_full=(
+                self.meta_warning_not_validated + DEFAULTS_MAY_BE_OVERRIDDEN
+            ),
         )
 
     def _assert_success_rule(self, deprecated_rule_form):
@@ -663,6 +670,7 @@ class DefaultsSetCreateMixin(TestDefaultsMixin, AssertPcsMixin):
             stderr_full=(
                 (RULE_ARGV_DEPRECATED if deprecated_rule_form else "")
                 + CIB_HAS_BEEN_UPGRADED
+                + self.meta_warning_not_validated
                 + DEFAULTS_MAY_BE_OVERRIDDEN
             ),
         )
@@ -701,6 +709,7 @@ class DefaultsSetCreateMixin(TestDefaultsMixin, AssertPcsMixin):
                 "'hours', 'minutes', 'monthdays', 'months', 'seconds', "
                 "'weekdays', 'weeks', 'weekyears', 'yeardays', 'years'\n"
                 "Error: Duplicate options in a single (sub)expression: 'years'\n"
+                f"{self.meta_warning_not_validated}"
                 "Error: Errors have occurred, therefore pcs is unable to continue\n"
             ),
         )
@@ -717,6 +726,7 @@ class RscDefaultsSetCreate(
 ):
     cli_command = ["resource", "defaults"]
     cib_tag = "rsc_defaults"
+    meta_warning_not_validated = META_NOT_VALIDATED
 
     @skip_unless_pacemaker_supports_rsc_and_op_rules()
     def test_success_rules_rsc_op(self):
@@ -927,6 +937,7 @@ class DefaultsSetUpdateMixin(TestDefaultsMixin, AssertPcsMixin):
     cli_command = []
     prefix = ""
     cib_tag = ""
+    meta_warning_not_validated = ""
 
     def test_success(self):
         xml = f"""
@@ -955,7 +966,9 @@ class DefaultsSetUpdateMixin(TestDefaultsMixin, AssertPcsMixin):
                 </{self.cib_tag}>
             """
             ),
-            stderr_full=DEFAULTS_MAY_BE_OVERRIDDEN,
+            stderr_full=(
+                self.meta_warning_not_validated + DEFAULTS_MAY_BE_OVERRIDDEN
+            ),
         )
 
         self.assert_effect(
@@ -967,7 +980,9 @@ class DefaultsSetUpdateMixin(TestDefaultsMixin, AssertPcsMixin):
                 </{self.cib_tag}>
             """
             ),
-            stderr_full=DEFAULTS_MAY_BE_OVERRIDDEN,
+            stderr_full=(
+                self.meta_warning_not_validated + DEFAULTS_MAY_BE_OVERRIDDEN
+            ),
         )
 
 
@@ -983,6 +998,7 @@ class RscDefaultsSetUpdate(
     cli_command = ["resource", "defaults"]
     prefix = "rsc"
     cib_tag = "rsc_defaults"
+    meta_warning_not_validated = META_NOT_VALIDATED
 
     @skip_unless_pacemaker_supports_rsc_and_op_rules()
     def test_validate_meta_for_primitive(self):
@@ -1072,6 +1088,7 @@ class DefaultsUpdateMixin(TestDefaultsMixin, AssertPcsMixin):
     cli_command = []
     prefix = ""
     cib_tag = ""
+    meta_warning_not_validated = ""
 
     def test_success_legacy(self):
         write_file_to_tmpfile(empty_cib, self.temp_cib)
@@ -1098,7 +1115,9 @@ class DefaultsUpdateMixin(TestDefaultsMixin, AssertPcsMixin):
                 </{self.cib_tag}>
             """
             ),
-            stderr_full=DEFAULTS_MAY_BE_OVERRIDDEN,
+            stderr_full=(
+                DEFAULTS_MAY_BE_OVERRIDDEN + self.meta_warning_not_validated
+            ),
         )
 
         self.assert_effect(
@@ -1117,7 +1136,9 @@ class DefaultsUpdateMixin(TestDefaultsMixin, AssertPcsMixin):
                 </{self.cib_tag}>
             """
             ),
-            stderr_full=DEFAULTS_MAY_BE_OVERRIDDEN,
+            stderr_full=(
+                DEFAULTS_MAY_BE_OVERRIDDEN + self.meta_warning_not_validated
+            ),
         )
 
         self.assert_effect(
@@ -1129,7 +1150,9 @@ class DefaultsUpdateMixin(TestDefaultsMixin, AssertPcsMixin):
                 </{self.cib_tag}>
             """
             ),
-            stderr_full=DEFAULTS_MAY_BE_OVERRIDDEN,
+            stderr_full=(
+                DEFAULTS_MAY_BE_OVERRIDDEN + self.meta_warning_not_validated
+            ),
         )
 
 
@@ -1145,6 +1168,7 @@ class RscDefaultsUpdate(
     cli_command = ["resource", "defaults"]
     prefix = "rsc"
     cib_tag = "rsc_defaults"
+    meta_warning_not_validated = META_NOT_VALIDATED
 
     @skip_unless_pacemaker_supports_rsc_and_op_rules()
     def test_legacy_validate_meta_for_primitive(self):

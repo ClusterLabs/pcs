@@ -298,7 +298,11 @@ def _validate_meta_attributes(
                 e, severity=reports.ReportItemSeverity.warning()
             )
         )
-        # TODO: warn that validation was skipped
+        report_list.append(
+            reports.ReportItem.warning(
+                reports.messages.MetaAttrsNotValidatedLoadingError()
+            )
+        )
     return report_list
 
 

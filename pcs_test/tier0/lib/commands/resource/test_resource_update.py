@@ -336,6 +336,14 @@ class UpdateMeta(TestCase):
             {"priority": "1", "promotable": ""},
             [],
         )
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.META_ATTRS_NOT_VALIDATED_UNSUPPORTED_TYPE,
+                    meta_type_list=["bundle", "clone"],
+                ),
+            ]
+        )
 
 
 class UpdateMetaCheckCloneIncompatibleMetaAttrs(TestCase):
@@ -360,6 +368,14 @@ class UpdateMetaCheckCloneIncompatibleMetaAttrs(TestCase):
         )
         resource.update_meta(
             self.env_assist.get_env(), "A-clone", {"priority": "1"}, []
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.META_ATTRS_NOT_VALIDATED_UNSUPPORTED_TYPE,
+                    meta_type_list=["bundle", "clone"],
+                ),
+            ]
         )
 
     def test_success_cloned_primitive_promotable(self):
@@ -386,6 +402,14 @@ class UpdateMetaCheckCloneIncompatibleMetaAttrs(TestCase):
         )
         resource.update_meta(
             self.env_assist.get_env(), "A-clone", {"promotable": "true"}, []
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.META_ATTRS_NOT_VALIDATED_UNSUPPORTED_TYPE,
+                    meta_type_list=["bundle", "clone"],
+                ),
+            ]
         )
 
     def test_success_cloned_primitive_promotable_ocf_old(self):
@@ -414,6 +438,14 @@ class UpdateMetaCheckCloneIncompatibleMetaAttrs(TestCase):
         resource.update_meta(
             self.env_assist.get_env(), "A-clone", {"promotable": "true"}, []
         )
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.META_ATTRS_NOT_VALIDATED_UNSUPPORTED_TYPE,
+                    meta_type_list=["bundle", "clone"],
+                ),
+            ]
+        )
 
     def test_fail_cloned_primitive_promotable_incompatible(self):
         self.config.runner.cib.load(
@@ -434,6 +466,10 @@ class UpdateMetaCheckCloneIncompatibleMetaAttrs(TestCase):
 
         self.env_assist.assert_reports(
             [
+                fixture.warn(
+                    reports.codes.META_ATTRS_NOT_VALIDATED_UNSUPPORTED_TYPE,
+                    meta_type_list=["bundle", "clone"],
+                ),
                 fixture.error(
                     reports.codes.RESOURCE_CLONE_INCOMPATIBLE_META_ATTRIBUTES,
                     attribute="promotable",
@@ -441,7 +477,7 @@ class UpdateMetaCheckCloneIncompatibleMetaAttrs(TestCase):
                     resource_id="A",
                     group_id=None,
                     force_code=reports.codes.FORCE,
-                )
+                ),
             ]
         )
 
@@ -472,12 +508,16 @@ class UpdateMetaCheckCloneIncompatibleMetaAttrs(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.warn(
+                    reports.codes.META_ATTRS_NOT_VALIDATED_UNSUPPORTED_TYPE,
+                    meta_type_list=["bundle", "clone"],
+                ),
+                fixture.warn(
                     reports.codes.RESOURCE_CLONE_INCOMPATIBLE_META_ATTRIBUTES,
                     attribute="promotable",
                     resource_agent=_AGENT_NAME_PCMK_DUMMY.to_dto(),
                     resource_id="A",
                     group_id=None,
-                )
+                ),
             ]
         )
 
@@ -506,13 +546,17 @@ class UpdateMetaCheckCloneIncompatibleMetaAttrs(TestCase):
         )
         self.env_assist.assert_reports(
             [
+                fixture.warn(
+                    reports.codes.META_ATTRS_NOT_VALIDATED_UNSUPPORTED_TYPE,
+                    meta_type_list=["bundle", "clone"],
+                ),
                 fixture.error(
                     reports.codes.RESOURCE_CLONE_INCOMPATIBLE_META_ATTRIBUTES,
                     attribute=attr,
                     resource_agent=agent.to_dto(),
                     resource_id="non-ocf",
                     group_id=None,
-                )
+                ),
             ]
         )
 
@@ -545,6 +589,10 @@ class UpdateMetaCheckCloneIncompatibleMetaAttrs(TestCase):
 
         self.env_assist.assert_reports(
             [
+                fixture.warn(
+                    reports.codes.META_ATTRS_NOT_VALIDATED_UNSUPPORTED_TYPE,
+                    meta_type_list=["bundle", "clone"],
+                ),
                 fixture.error(
                     reports.codes.RESOURCE_CLONE_INCOMPATIBLE_META_ATTRIBUTES,
                     attribute="promotable",
@@ -552,7 +600,7 @@ class UpdateMetaCheckCloneIncompatibleMetaAttrs(TestCase):
                     resource_id="A",
                     group_id="G",
                     force_code=reports.codes.FORCE,
-                )
+                ),
             ]
         )
 
@@ -584,12 +632,16 @@ class UpdateMetaCheckCloneIncompatibleMetaAttrs(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.warn(
+                    reports.codes.META_ATTRS_NOT_VALIDATED_UNSUPPORTED_TYPE,
+                    meta_type_list=["bundle", "clone"],
+                ),
+                fixture.warn(
                     reports.codes.RESOURCE_CLONE_INCOMPATIBLE_META_ATTRIBUTES,
                     attribute="promotable",
                     resource_agent=_AGENT_NAME_PCMK_DUMMY.to_dto(),
                     resource_id="A",
                     group_id="G",
-                )
+                ),
             ]
         )
 
@@ -609,13 +661,15 @@ class UpdateMetaRemoveUpdatedGuestNode(TestCase):
     ):
         self.config.runner.cib.load(
             resources=fixture_primitive(
-                meta_nvpairs_xml=f"""
+                meta_nvpairs_xml=(
+                    f"""
                     <nvpair id="A-meta_attributes-remote-node"
                         name="remote-node" value="{old_node_addr}"
                     />
                 """
-                if old_node_addr
-                else "",
+                    if old_node_addr
+                    else ""
+                ),
             )
         )
         # we do not want to read the metadata when we are not adding any new
@@ -627,13 +681,15 @@ class UpdateMetaRemoveUpdatedGuestNode(TestCase):
             resources=fixture_primitive(
                 # For removeal, we want to hack the fixture to get the meta
                 # attributes element without nvpairs
-                meta_nvpairs_xml=" "
-                if is_nvset_empty
-                else f"""
+                meta_nvpairs_xml=(
+                    " "
+                    if is_nvset_empty
+                    else f"""
                     <nvpair id="A-meta_attributes-remote-node"
                         name="remote-node" value="{new_node_addr}"
                     />
                 """
+                )
             )
         )
         if is_node_removed:
@@ -652,13 +708,15 @@ class UpdateMetaRemoveUpdatedGuestNode(TestCase):
     ):
         self.config.runner.cib.load(
             resources=fixture_primitive(
-                meta_nvpairs_xml=f"""
+                meta_nvpairs_xml=(
+                    f"""
                     <nvpair id="A-meta_attributes-remote-node"
                         name="remote-node" value="{old_node_addr}"
                     />
                 """
-                if old_node_addr
-                else "",
+                    if old_node_addr
+                    else ""
+                ),
             )
         )
         if new_node_addr:
@@ -923,6 +981,9 @@ class UpdateMetaValidateMetaAttributes(TestCase):
                     reports.codes.UNABLE_TO_GET_AGENT_METADATA,
                     agent="primitive-meta",
                     reason="output",
-                )
+                ),
+                fixture.warn(
+                    reports.codes.META_ATTRS_NOT_VALIDATED_LOADING_ERROR
+                ),
             ]
         )

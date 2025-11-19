@@ -2282,6 +2282,10 @@ class CreateAsClone(TestCase):
                     resource_id="A",
                 ),
                 fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
+                fixture.warn(
+                    reports.codes.META_ATTRS_NOT_VALIDATED_UNSUPPORTED_TYPE,
+                    meta_type_list=["clone"],
+                ),
             ]
         )
 
@@ -2345,6 +2349,10 @@ class CreateAsClone(TestCase):
                     resource_id="A",
                 ),
                 fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
+                fixture.warn(
+                    reports.codes.META_ATTRS_NOT_VALIDATED_UNSUPPORTED_TYPE,
+                    meta_type_list=["clone"],
+                ),
             ]
         )
 
@@ -2409,6 +2417,10 @@ class CreateAsClone(TestCase):
                     resource_id="A",
                 ),
                 fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
+                fixture.warn(
+                    reports.codes.META_ATTRS_NOT_VALIDATED_UNSUPPORTED_TYPE,
+                    meta_type_list=["clone"],
+                ),
             ]
         )
 
@@ -2506,6 +2518,10 @@ class CreateAsCloneFailures(TestCase):
                     force_code=reports.codes.FORCE,
                 ),
                 fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
+                fixture.warn(
+                    reports.codes.META_ATTRS_NOT_VALIDATED_UNSUPPORTED_TYPE,
+                    meta_type_list=["clone"],
+                ),
             ]
         )
 

@@ -41,12 +41,21 @@ def fixture_report_unknown_meta_primitive(unknown_meta):
     )
 
 
+FIXTURE_META_WARNING = [
+    fixture.warn(
+        reports.codes.META_ATTRS_NOT_VALIDATED_UNSUPPORTED_TYPE,
+        meta_type_list=["bundle", "clone", "group", "primitive"],
+    ),
+]
+
+
 class DefaultsCreateMixin:
     @staticmethod
     def command(*args, **kwargs):
         pass
 
     tag = ""
+    meta_warning = None
 
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
@@ -195,6 +204,7 @@ class DefaultsCreateMixin:
 class ResourceDefaultsCreate(DefaultsCreateMixin, TestCase):
     command = staticmethod(cib_options.resource_defaults_create)
     tag = "rsc_defaults"
+    meta_warning = FIXTURE_META_WARNING
 
     def test_rule_op_expression_not_allowed(self):
         self.config.runner.cib.load(
@@ -301,6 +311,7 @@ class ResourceDefaultsCreate(DefaultsCreateMixin, TestCase):
 
         self.env_assist.assert_reports(
             [fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDDEN)]
+            + self.meta_warning
         )
 
     def test_validate_meta_for_primitive(self):
@@ -394,6 +405,7 @@ class ResourceDefaultsCreate(DefaultsCreateMixin, TestCase):
 
         self.env_assist.assert_reports(
             [fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDDEN)]
+            + self.meta_warning
         )
 
     def test_validate_meta_error_loading_definition(self):
@@ -434,6 +446,9 @@ class ResourceDefaultsCreate(DefaultsCreateMixin, TestCase):
                     agent=ra_const.PRIMITIVE_META,
                     reason="error loading definitions",
                 ),
+                fixture.warn(
+                    reports.codes.META_ATTRS_NOT_VALIDATED_LOADING_ERROR
+                ),
                 fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDDEN),
             ]
         )
@@ -442,6 +457,7 @@ class ResourceDefaultsCreate(DefaultsCreateMixin, TestCase):
 class OperationDefaultsCreate(DefaultsCreateMixin, TestCase):
     command = staticmethod(cib_options.operation_defaults_create)
     tag = "op_defaults"
+    meta_warning = []
 
     def test_success_full(self):
         defaults_xml = f"""
@@ -1109,6 +1125,7 @@ class DefaultsUpdateLegacyMixin:
 
     tag = ""
     command_for_report = None
+    meta_warning = None
 
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
@@ -1140,6 +1157,7 @@ class DefaultsUpdateLegacyMixin:
         self.command(self.env_assist.get_env(), None, {"a": "B", "b": "C"})
         self.env_assist.assert_reports(
             [fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDDEN)]
+            + self.meta_warning
         )
 
     def test_add(self):
@@ -1160,6 +1178,7 @@ class DefaultsUpdateLegacyMixin:
         self.command(self.env_assist.get_env(), None, {"c": "d"})
         self.env_assist.assert_reports(
             [fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDDEN)]
+            + self.meta_warning
         )
 
     def test_remove(self):
@@ -1174,6 +1193,7 @@ class DefaultsUpdateLegacyMixin:
         self.command(self.env_assist.get_env(), None, {"a": ""})
         self.env_assist.assert_reports(
             [fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDDEN)]
+            + self.meta_warning
         )
 
     def test_add_section_if_missing(self):
@@ -1190,6 +1210,7 @@ class DefaultsUpdateLegacyMixin:
         self.command(self.env_assist.get_env(), None, {"a": "A"})
         self.env_assist.assert_reports(
             [fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDDEN)]
+            + self.meta_warning
         )
 
     def test_add_meta_if_missing(self):
@@ -1206,6 +1227,7 @@ class DefaultsUpdateLegacyMixin:
         self.command(self.env_assist.get_env(), None, {"a": "A"})
         self.env_assist.assert_reports(
             [fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDDEN)]
+            + self.meta_warning
         )
 
     def test_dont_add_section_if_only_removing(self):
@@ -1230,6 +1252,7 @@ class DefaultsUpdateLegacyMixin:
         self.command(self.env_assist.get_env(), None, {"a": "", "b": ""})
         self.env_assist.assert_reports(
             [fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDDEN)]
+            + self.meta_warning
         )
 
     def test_ambiguous(self):
@@ -1265,6 +1288,7 @@ class DefaultsUpdateMixin:
         pass
 
     tag = ""
+    meta_warning = None
 
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
@@ -1302,6 +1326,7 @@ class DefaultsUpdateMixin:
         )
         self.env_assist.assert_reports(
             [fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDDEN)]
+            + self.meta_warning
         )
 
     def test_nvset_doesnt_exist(self):
@@ -1337,6 +1362,7 @@ class DefaultsUpdateMixin:
         )
         self.env_assist.assert_reports(
             [fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDDEN)]
+            + self.meta_warning
         )
 
 
@@ -1458,6 +1484,7 @@ class ResourceDefaultsUpdateMetaValidationMixin:
         )
         self.env_assist.assert_reports(
             [fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDDEN)]
+            + self.meta_warning
         )
 
     def test_validate_meta_error_loading_definition(self):
@@ -1517,6 +1544,9 @@ class ResourceDefaultsUpdateMetaValidationMixin:
                     agent=ra_const.PRIMITIVE_META,
                     reason="error loading definitions",
                 ),
+                fixture.warn(
+                    reports.codes.META_ATTRS_NOT_VALIDATED_LOADING_ERROR
+                ),
                 fixture.warn(reports.codes.DEFAULTS_CAN_BE_OVERRIDDEN),
             ]
         )
@@ -1531,12 +1561,14 @@ class ResourceDefaultsUpdateLegacy(
     tag = "rsc_defaults"
     command_for_report = reports.const.PCS_COMMAND_RESOURCE_DEFAULTS_UPDATE
     nvset_id_for_meta_validation_test = None
+    meta_warning = FIXTURE_META_WARNING
 
 
 class OperationDefaultsUpdateLegacy(DefaultsUpdateLegacyMixin, TestCase):
     command = staticmethod(cib_options.operation_defaults_update)
     tag = "op_defaults"
     command_for_report = reports.const.PCS_COMMAND_OPERATION_DEFAULTS_UPDATE
+    meta_warning = []
 
 
 class ResourceDefaultsUpdate(
@@ -1545,8 +1577,10 @@ class ResourceDefaultsUpdate(
     command = staticmethod(cib_options.resource_defaults_update)
     tag = "rsc_defaults"
     nvset_id_for_meta_validation_test = "my-id"
+    meta_warning = FIXTURE_META_WARNING
 
 
 class OperationDefaultsUpdate(DefaultsUpdateMixin, TestCase):
     command = staticmethod(cib_options.operation_defaults_update)
     tag = "op_defaults"
+    meta_warning = []

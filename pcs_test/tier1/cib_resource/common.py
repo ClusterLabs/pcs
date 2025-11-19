@@ -2,7 +2,7 @@ from unittest import TestCase
 
 from lxml import etree
 
-from pcs.common.str_tools import format_list, format_plural
+from pcs.common.str_tools import format_list, format_optional, format_plural
 from pcs.lib.resource_agent import const as ra_const
 
 from pcs_test.tools.cib import get_assert_pcs_effect_mixin
@@ -58,4 +58,19 @@ def fixture_meta_attributes_warning(meta_attrs, agent_type):
         f"Warning: {rsc_desc} meta {attributes} {format_list(meta_attrs)} "
         f"{have} no effect on cluster resource handling, meta "
         f"{attributes_known} with effect: {known_meta}\n"
+    )
+
+
+def fixture_meta_attributes_not_validated_warning(meta_type_list):
+    resource_desc = format_optional(
+        " / ".join(sorted(meta_type_list)), template="of {} "
+    )
+    return f"Warning: Meta attributes {resource_desc}are not validated\n"
+
+
+def fixture_use_meta_command_instead_warning(is_stonith=False):
+    command = "stonith" if is_stonith else "resource"
+    return (
+        "Warning: Meta attributes are not validated by this command. For "
+        f"validation, please use 'pcs {command} meta' instead.\n"
     )

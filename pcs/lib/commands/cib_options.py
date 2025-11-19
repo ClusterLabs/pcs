@@ -8,6 +8,7 @@ from pcs.common.pacemaker.nvset import CibNvsetDto
 from pcs.common.pacemaker.rule import CibRuleExpressionDto
 from pcs.common.reports.item import ReportItem
 from pcs.common.types import StringCollection
+from pcs.lib.cib import const as cib_const
 from pcs.lib.cib import nvpair_multi, sections
 from pcs.lib.cib.rule import (
     RuleInEffectEval,
@@ -465,5 +466,15 @@ def __validate_meta_attrs_based_on_rule(
     # Meta-attrs in nvset with other rules or no rules cannot be validated,
     # they may apply to all resource types and we don't have meta-attrs
     # definition for those.
-    # TODO: Report a warning that no validation happened.
-    return []
+    return [
+        reports.ReportItem.warning(
+            reports.messages.MetaAttrsNotValidatedUnsupportedType(
+                [
+                    cib_const.TAG_RESOURCE_BUNDLE,
+                    cib_const.TAG_RESOURCE_CLONE,
+                    cib_const.TAG_RESOURCE_GROUP,
+                    cib_const.TAG_RESOURCE_PRIMITIVE,
+                ]
+            )
+        )
+    ]

@@ -10,7 +10,7 @@
   and aliases `pcs resource|stonith description` ([RHEL-7670])
 - Commands `pcs resource|stonith create`, `pcs resource|stonith meta` and `pcs
   resource|stonith defaults` print warning about primitive resource meta
-  attributes which have no effect on cluster resource handling.
+  attributes which have no effect on cluster resource handling ([RHEL-7673])
 
 ### Fixed
 - Commands `pcs acl role create` and `pcs acl permission add` now print
@@ -41,6 +41,7 @@
   corosync / knet and might be removed in a future release ([RHEL-126839])
 
 [RHEL-7670]: https://issues.redhat.com/browse/RHEL-7670
+[RHEL-7673]: https://issues.redhat.com/browse/RHEL-7673
 [RHEL-21879]: https://issues.redhat.com/browse/RHEL-21879
 [RHEL-73527]: https://issues.redhat.com/browse/RHEL-73527
 [RHEL-76157]: https://issues.redhat.com/browse/RHEL-76157

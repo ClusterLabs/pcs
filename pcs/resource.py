@@ -50,6 +50,7 @@ from pcs.common.pacemaker.resource.operations import (
     OCF_CHECK_LEVEL_INSTANCE_ATTRIBUTE_NAME,
 )
 from pcs.common.str_tools import format_list_custom_last_separator
+from pcs.lib.cib import const as cib_const
 from pcs.lib.cib.resource import guest_node, primitive
 from pcs.lib.cib.tools import get_resources
 from pcs.lib.commands.resource import (
@@ -1014,10 +1015,9 @@ def resource_update(args: Argv, modifiers: InputModifiers) -> None:  # noqa: PLR
 
     params = utils.convert_args_to_tuples(ra_values)
 
+    agent_name = _get_resource_agent_name_from_rsc_el(resource)
     try:
-        agent_facade = _get_resource_agent_facade(
-            _get_resource_agent_name_from_rsc_el(resource)
-        )
+        agent_facade = _get_resource_agent_facade(agent_name)
         report_list = primitive.validate_resource_instance_attributes_update(
             utils.cmd_runner(),
             agent_facade,
@@ -1063,6 +1063,15 @@ def resource_update(args: Argv, modifiers: InputModifiers) -> None:  # noqa: PLR
         _detect_guest_change(
             meta_options,
             bool(modifiers.get("--force")),
+        )
+
+    # TODO: validation should be added after migrating the command to the new
+    # architecture
+    if any(meta_options.values()):
+        command = "stonith" if agent_name.is_stonith else "resource"
+        warn(
+            "Meta attributes are not validated by this command. For "
+            f"validation, please use 'pcs {command} meta' instead."
         )
 
     utils.dom_update_meta_attr(
@@ -1675,6 +1684,18 @@ def resource_clone_create(  # noqa: PLR0912
         clone.appendChild(element)
         resources_el.appendChild(clone)
 
+    # TODO: validation should be added after migrating the command to the new
+    # architecture
+    if any(
+        value
+        for name, value in parts.meta_attrs.items()
+        if name != "promotable" or not promotable
+    ):
+        warn(
+            reports.messages.MetaAttrsNotValidatedUnsupportedType(
+                [cib_const.TAG_RESOURCE_CLONE]
+            ).message
+        )
     utils.dom_update_meta_attr(clone, sorted(parts.meta_attrs.items()))
 
     return cib_dom, clone.getAttribute("id")

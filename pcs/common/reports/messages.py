@@ -8770,3 +8770,38 @@ class MetaAttrsUnknownToPcmk(ReportItemMessage):
             f"{plural_have} no effect on cluster resource handling, meta "
             f"{plural_attributes_known} with effect: {known_meta_list}"
         )
+
+
+@dataclass(frozen=True)
+class MetaAttrsNotValidatedUnsupportedType(ReportItemMessage):
+    """
+    Meta attributes of the specified resource types are not validated
+
+    meta_type_list -- resource types, which meta attributes are not validated
+    """
+
+    meta_type_list: list[str]
+    _code = codes.META_ATTRS_NOT_VALIDATED_UNSUPPORTED_TYPE
+
+    @property
+    def message(self) -> str:
+        resources_desc = format_optional(
+            _typelist_to_string(self.meta_type_list), template="of {} "
+        )
+        return f"Meta attributes {resources_desc}are not validated"
+
+
+@dataclass(frozen=True)
+class MetaAttrsNotValidatedLoadingError(ReportItemMessage):
+    """
+    Meta attribute validation is skipped due to a loading error
+    """
+
+    _code = codes.META_ATTRS_NOT_VALIDATED_LOADING_ERROR
+
+    @property
+    def message(self) -> str:
+        return (
+            "Meta attribute validation is skipped due to an error loading "
+            "meta attributes definition."
+        )
