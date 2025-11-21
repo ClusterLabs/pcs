@@ -108,14 +108,17 @@
         <shortdesc lang="en">Whether the cluster should check for active resources during start-up</shortdesc>
         <content type="boolean" default="true"/>
       </parameter>
-      <parameter name="stonith-enabled" advanced="1" generated="0">
+      <parameter name="fencing-enabled" advanced="1" generated="0">
         <longdesc lang="en">If false, unresponsive nodes are immediately assumed to be harmless, and resources that were active on them may be recovered elsewhere. This can result in a "split-brain" situation, potentially leading to data loss and/or service unavailability.</longdesc>
         <shortdesc lang="en">Whether nodes may be fenced as part of recovery</shortdesc>
         <content type="boolean" default="true"/>
       </parameter>
-      <parameter name="fencing-enabled" advanced="1" generated="0">
-        <longdesc lang="en">If false, unresponsive nodes are immediately assumed to be harmless, and resources that were active on them may be recovered elsewhere. This can result in a "split-brain" situation, potentially leading to data loss and/or service unavailability.</longdesc>
-        <shortdesc lang="en">Whether nodes may be fenced as part of recovery</shortdesc>
+      <parameter name="stonith-enabled" advanced="1" generated="0">
+        <deprecated>
+          <replaced-with name="fencing-enabled"/>
+        </deprecated>
+        <longdesc lang="en">Deprecated alias for fencing-enabled</longdesc>
+        <shortdesc lang="en">Deprecated alias for fencing-enabled</shortdesc>
         <content type="boolean" default="true"/>
       </parameter>
       <parameter name="stonith-action" advanced="0" generated="0">

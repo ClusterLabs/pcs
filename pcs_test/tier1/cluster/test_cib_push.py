@@ -129,7 +129,7 @@ class CibPush(AssertPcsMixin, TestCase):
 
     def test_cib_updated(self):
         write_data_to_tmpfile(CIB_EPOCH_NEWER, self.updated_cib)
-        if PacemakerFeatures.fencing_enabled_property():
+        if PacemakerFeatures.stonith_renamed_to_fencing():
             stonith_error = dedent(
                 """\
                 error: Resource start-up disabled since no fencing resources have been defined. Either configure some or disable fencing with the fencing-enabled option. NOTE: Clusters with shared data need fencing to ensure data integrity.

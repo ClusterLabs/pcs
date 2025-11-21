@@ -360,5 +360,5 @@ def create_setup_patch_mixin(module_specification_or_patcher):
 
 class PacemakerFeatures:
     @staticmethod
-    def fencing_enabled_property():
+    def stonith_renamed_to_fencing():
         return is_minimum_pacemaker_features(3, 20, 5)

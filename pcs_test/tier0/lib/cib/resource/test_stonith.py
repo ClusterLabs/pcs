@@ -63,6 +63,12 @@ class GetMisconfiguredResources(TestCase):
         resources = etree.fromstring(
             """
             <resources>
+                <primitive id="R" class="ocf" provider="pacemaker" type="Dummy">
+                    <instance_attributes>
+                        <nvpair name="action" value="value" />
+                        <nvpair name="method" value="cycle" />
+                    </instance_attributes>
+                </primitive>
                 <primitive id="S1" class="stonith" type="fence_something">
                     <instance_attributes>
                         <nvpair name="name" value="value" />

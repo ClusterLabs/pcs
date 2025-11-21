@@ -536,21 +536,29 @@ class TestValidateSetClusterProperties(TestCase):
                     sbd_enabled=True,
                 )
 
-    def test_warn_about_disable_fencing(
-        self,
-    ):
+    def test_warn_about_disable_fencing(self):
         code = reports.codes.NO_STONITH_MEANS_WOULD_BE_LEFT_DUE_TO_PROPERTIES
+
+        def assert_no_fencing_warning(property_map):
+            self.assert_validate_set(
+                [],
+                property_map,
+                [fixture.warn(code, property_map=property_map)],
+            )
+
         for falsy_value in packemaker_values._BOOLEAN_FALSE:
             with self.subTest(value=falsy_value):
-                property_map = {
-                    "stonith-enabled": falsy_value,
-                    "fencing-enabled": falsy_value,
-                }
-                self.assert_validate_set(
-                    [],
-                    property_map,
-                    [fixture.warn(code, property_map=property_map)],
+                assert_no_fencing_warning(
+                    {
+                        "stonith-enabled": falsy_value,
+                        "fencing-enabled": falsy_value,
+                    }
                 )
+            with self.subTest(value=falsy_value):
+                assert_no_fencing_warning({"stonith-enabled": falsy_value})
+
+            with self.subTest(value=falsy_value):
+                assert_no_fencing_warning({"fencing-enabled": falsy_value})
 
     def test_set_stonith_watchdog_timeout_sbd_enabled_with_devices(self):
         self.assert_validate_set(
