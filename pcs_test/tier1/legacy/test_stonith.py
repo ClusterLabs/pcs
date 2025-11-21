@@ -1363,26 +1363,10 @@ class StonithTest(TestCase, AssertPcsMixin):
         )
 
     def test_no_stonith_warning(self):
-        self.pcs_runner.corosync_conf_opt = self.temp_corosync_conf.name
-        self.assert_pcs_success(
-            ["status"],
-            stdout_regexp=".*No stonith devices and stonith-enabled is not false.*",
-        )
-
-        self.pcs_runner.corosync_conf_opt = None
         self.assert_pcs_success(
             "stonith create test_stonith fence_pcsmock_minimal".split()
         )
 
-        self.pcs_runner.corosync_conf_opt = self.temp_corosync_conf.name
-        stdout, dummy_stderr = self.assert_pcs_success_ignore_output(
-            ["status"],
-        )
-        self.assertNotIn(
-            "No stonith devices and stonith-enabled is not false", stdout
-        )
-
-        self.pcs_runner.corosync_conf_opt = None
         self.assert_pcs_fail(
             "stonith delete test_stonith".split(),
             (
@@ -1399,12 +1383,6 @@ class StonithTest(TestCase, AssertPcsMixin):
                 "means to fence nodes, resulting in the cluster not being able "
                 "to recover from certain failure conditions\n"
             ),
-        )
-
-        self.pcs_runner.corosync_conf_opt = self.temp_corosync_conf.name
-        self.assert_pcs_success(
-            ["status"],
-            stdout_regexp=".*No stonith devices and stonith-enabled is not false.*",
         )
 
 

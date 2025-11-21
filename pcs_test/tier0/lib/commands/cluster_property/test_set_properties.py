@@ -25,6 +25,7 @@ ALLOWED_PROPERTIES = [
     "enable-acl",
     "enable-startup-probes",
     "fence-reaction",
+    "fencing-enabled",
     "join-finalization-timeout",
     "join-integration-timeout",
     "load-threshold",
@@ -374,15 +375,13 @@ class TestPropertySetCrmAttribute(
         )
 
     def test_disable_fencing_warning(self):
-        orig_properties = {
-            "stonith-enabled": "true",
-        }
         new_properties = {
             "stonith-enabled": "false",
+            "fencing-enabled": "false",
         }
 
         self.config.runner.cib.load(
-            crm_config=fixture_crm_config_properties([("id1", orig_properties)])
+            crm_config=fixture_crm_config_properties([("id1", {})])
         )
         self.load_fake_agent_metadata()
         self.config.env.push_cib(

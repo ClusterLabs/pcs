@@ -72,6 +72,7 @@ def _cluster_property_metadata_to_dict(
         "no-quorum-policy": "No Quorum Policy",
         "symmetric-cluster": "Symmetric",
         "stonith-enabled": "Stonith Enabled",
+        "fencing-enabled": "Fencing Enabled",
         "stonith-action": "Stonith Action",
         "cluster-delay": "Cluster Delay",
         "stop-orphan-resources": "Stop Orphan Resources",

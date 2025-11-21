@@ -138,7 +138,6 @@ def full_cluster_status_plaintext(  # noqa: PLR0912, PLR0915
     runner = env.cmd_runner()
     report_processor = env.report_processor
     live = env.is_cib_live and env.is_corosync_conf_live
-    is_sbd_running = False
 
     # load status, cib, corosync.conf
     status_text, warning_list = get_cluster_status_text(
@@ -172,12 +171,7 @@ def full_cluster_status_plaintext(  # noqa: PLR0912, PLR0915
         ) = get_ticket_status_text(runner)
     # get extra info if live
     if live:
-        service_manager = env.service_manager
-        with contextlib.suppress(LibraryError):
-            is_sbd_running = service_manager.is_running(
-                get_sbd_service_name(service_manager)
-            )
-        local_services_status = _get_local_services_status(service_manager)
+        local_services_status = _get_local_services_status(env.service_manager)
         if verbose and corosync_conf:
             node_name_list, node_names_report_list = get_existing_nodes_names(
                 corosync_conf
@@ -192,7 +186,7 @@ def full_cluster_status_plaintext(  # noqa: PLR0912, PLR0915
 
     # check and warn about various issues
     warning_list = list(warning_list)
-    warning_list.extend(_stonith_warnings(cib, is_sbd_running))
+    warning_list.extend(_stonith_warnings(cib))
     warning_list.extend(
         _move_constraints_warnings(cib, runner, report_processor)
     )
@@ -246,20 +240,13 @@ def full_cluster_status_plaintext(  # noqa: PLR0912, PLR0915
     return "\n".join(parts)
 
 
-def _stonith_warnings(cib: _Element, is_sbd_running: bool) -> StringIterable:
+def _stonith_warnings(cib: _Element) -> StringIterable:
     warning_list = []
 
-    is_stonith_enabled = stonith.is_stonith_enabled(get_crm_config(cib))
     (
-        stonith_all,
         stonith_with_action,
         stonith_with_method_cycle,
     ) = stonith.get_misconfigured_resources(get_resources(cib))
-
-    if is_stonith_enabled and not stonith_all and not is_sbd_running:
-        warning_list.append(
-            "No stonith devices and stonith-enabled is not false"
-        )
 
     if stonith_with_action:
         warning_list.append(
