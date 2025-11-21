@@ -7,13 +7,13 @@ from pcs.common.services.interfaces import ServiceManagerInterface
 from pcs.lib import cluster_property as lib_cluster_property
 from pcs.lib.cib.tools import IdProvider
 from pcs.lib.pacemaker import values as packemaker_values
-from pcs.lib.resource_agent import const as ra_const
-from pcs.lib.resource_agent.facade import ResourceAgentFacade
-from pcs.lib.resource_agent.types import (
+from pcs.lib.resource_agent import (
+    ResourceAgentFacade,
     ResourceAgentMetadata,
     ResourceAgentName,
     ResourceAgentParameter,
 )
+from pcs.lib.resource_agent import const as ra_const
 from pcs.lib.xml_tools import etree_to_str
 
 from pcs_test.tools import fixture
@@ -58,30 +58,37 @@ FORBIDDEN_OPTIONS_LIST = [
 ]
 
 PARAMETER_DEFINITIONS = [
-    ("bool_param", "bool", "false", None),
-    ("integer_param", "integer", "9", None),
-    ("percentage_param", "percentage", "80%", None),
-    ("select_param", "select", "s1", ["s1", "s2", "s3"]),
-    ("time_param", "time", "30s", None),
-    ("stonith-watchdog-timeout", "time", "0", None),
-    ("stonith-enabled", "boolean", "true", None),
-    ("fencing-enabled", "boolean", "true", None),
-    ("cluster-infrastructure", "string", "corosync", None),
-    ("cluster-name", "string", "(null)", None),
-    ("dc-version", "string", "none", None),
-    ("have-watchdog", "boolean", "false", None),
-    ("duration_param", "duration", "P15S", None),
-    ("nonnegative_param", "nonnegative_integer", "9", None),
-    ("port_param", "port", "1234", None),
-    ("score_param", "score", "INFINITY", None),
-    ("timeout_param", "timeout", "60s", None),
+    ("bool_param", "bool", "false", None, []),
+    ("integer_param", "integer", "9", None, []),
+    ("percentage_param", "percentage", "80%", None, []),
+    ("select_param", "select", "s1", ["s1", "s2", "s3"], []),
+    ("time_param", "time", "30s", None, []),
+    (
+        "stonith-watchdog-timeout",
+        "time",
+        "0",
+        None,
+        ["fencing-watchdog-timeout"],
+    ),
+    ("fencing-watchdog-timeout", "time", "0", None, []),
+    ("stonith-enabled", "boolean", "true", None, []),
+    ("fencing-enabled", "boolean", "true", None, []),
+    ("cluster-infrastructure", "string", "corosync", None, []),
+    ("cluster-name", "string", "(null)", None, []),
+    ("dc-version", "string", "none", None, []),
+    ("have-watchdog", "boolean", "false", None, []),
+    ("duration_param", "duration", "P15S", None, []),
+    ("nonnegative_param", "nonnegative_integer", "9", None, []),
+    ("port_param", "port", "1234", None, []),
+    ("score_param", "score", "INFINITY", None, []),
+    ("timeout_param", "timeout", "60s", None, []),
 ]
 
-# Warning: fragile needs to be sorted!
 ALLOWED_PROPERTIES = [
     "bool_param",
     "duration_param",
     "fencing-enabled",
+    "fencing-watchdog-timeout",
     "integer_param",
     "nonnegative_param",
     "percentage_param",
@@ -103,7 +110,6 @@ FIXTURE_VALID_OPTIONS_DICT = {
     "port_param": "1234",
     "score_param": "-INFINITY",
     "select_param": "s3",
-    "stonith-watchdog-timeout": "0",
     "time_param": "5min",
     "timeout_param": "5",
 }
@@ -124,9 +130,13 @@ FIXTURE_INVALID_OPTIONS_DICT = {
 }
 
 STONITH_WATCHDOG_TIMEOUT_UNSET_VALUES = ["", "0", "0s"]
+STONITH_WATCHDOG_TIMEOUT_PROPERTIES = [
+    "stonith-watchdog-timeout",
+    "fencing-watchdog-timeout",
+]
 
 
-def _fixture_parameter(name, param_type, default, enum_values):
+def _fixture_parameter(name, param_type, default, enum_values, deprecated_by):
     return ResourceAgentParameter(
         name,
         shortdesc=None,
@@ -136,8 +146,8 @@ def _fixture_parameter(name, param_type, default, enum_values):
         enum_values=enum_values,
         required=False,
         advanced=False,
-        deprecated=False,
-        deprecated_by=[],
+        deprecated=bool(deprecated_by),
+        deprecated_by=deprecated_by,
         deprecated_desc=None,
         unique_group=None,
         reloadable=False,
@@ -149,6 +159,12 @@ FIXTURE_PARAMETER_LIST = [
 ]
 
 
+FIXTURE_WATCHDOG_TIMEOUT_DEPRECATION_REPORT = fixture.warn(
+    reports.codes.DEPRECATED_OPTION,
+    option_name="stonith-watchdog-timeout",
+    replaced_by=["fencing-watchdog-timeout"],
+    option_type="property",
+)
 FIXTURE_ERROR_REPORTS = [
     fixture.error(
         reports.codes.INVALID_OPTIONS,
@@ -312,10 +328,21 @@ class TestValidateSetClusterProperties(TestCase):
         valid_value=True,
         returncode=0,
     ):
-        # pylint: disable=too-many-arguments
+        calls_is_sbd_enabled = []
+        calls_sbd_devices = []
+        calls_sbd_timeout = []
+        self.mock_is_sbd_enabled.reset_mock()
+        self.mock_sbd_devices.reset_mock()
+        self.mock_sbd_timeout.reset_mock()
+
         self.mock_is_sbd_enabled.return_value = sbd_enabled
         self.mock_sbd_devices.return_value = ["devices"] if sbd_devices else []
         self.mock_sbd_timeout.return_value = 10
+        if "stonith-watchdog-timeout" in new_properties:
+            expected_report_list = [
+                FIXTURE_WATCHDOG_TIMEOUT_DEPRECATION_REPORT
+            ] + expected_report_list
+
         assert_report_item_list_equal(
             lib_cluster_property.validate_set_cluster_properties(
                 get_runner_mock(returncode=returncode),
@@ -328,38 +355,39 @@ class TestValidateSetClusterProperties(TestCase):
             ),
             expected_report_list,
         )
-        if (
-            "stonith-watchdog-timeout" in new_properties
-            and (
-                new_properties["stonith-watchdog-timeout"]
-                or "stonith-watchdog-timeout" in configured_properties
-            )
-            and valid_value
-        ):
-            self.mock_is_sbd_enabled.assert_called_once_with(
-                self.mock_service_manager
-            )
-            if sbd_enabled:
-                self.mock_sbd_devices.assert_called_once_with()
-                if sbd_devices or (
-                    new_properties["stonith-watchdog-timeout"]
-                    in STONITH_WATCHDOG_TIMEOUT_UNSET_VALUES
-                ):
-                    self.mock_sbd_timeout.assert_not_called()
-                else:
-                    self.mock_sbd_timeout.assert_called_once_with()
-                self.mock_sbd_devices.reset_mock()
-            else:
-                self.mock_sbd_devices.assert_not_called()
-                self.mock_sbd_timeout.assert_not_called()
-        else:
-            self.mock_is_sbd_enabled.assert_not_called()
-            self.mock_sbd_devices.assert_not_called()
-            self.mock_sbd_timeout.assert_not_called()
 
-        self.mock_is_sbd_enabled.reset_mock()
-        self.mock_sbd_devices.reset_mock()
-        self.mock_sbd_timeout.reset_mock()
+        for prop_name in STONITH_WATCHDOG_TIMEOUT_PROPERTIES:
+            if (
+                prop_name in new_properties
+                and (
+                    new_properties[prop_name]
+                    or prop_name in configured_properties
+                )
+                and valid_value
+            ):
+                calls_is_sbd_enabled.append(
+                    mock.call(self.mock_service_manager)
+                )
+                if sbd_enabled:
+                    calls_sbd_devices.append(mock.call())
+                    if not sbd_devices and (
+                        new_properties[prop_name]
+                        not in STONITH_WATCHDOG_TIMEOUT_UNSET_VALUES
+                    ):
+                        calls_sbd_timeout.append(mock.call())
+
+        self.mock_is_sbd_enabled.assert_has_calls(calls_is_sbd_enabled)
+        self.mock_sbd_devices.assert_has_calls(calls_sbd_devices)
+        self.mock_sbd_timeout.assert_has_calls(calls_sbd_timeout)
+        self.assertEqual(
+            self.mock_is_sbd_enabled.call_count, len(calls_is_sbd_enabled)
+        )
+        self.assertEqual(
+            self.mock_sbd_devices.call_count, len(calls_sbd_devices)
+        )
+        self.assertEqual(
+            self.mock_sbd_timeout.call_count, len(calls_sbd_timeout)
+        )
 
     def test_no_properties_to_set_or_unset(self):
         self.assert_validate_set(
@@ -412,92 +440,99 @@ class TestValidateSetClusterProperties(TestCase):
         )
 
     def test_unset_stonith_watchdog_timeout_sbd_disabled(self):
-        for value in STONITH_WATCHDOG_TIMEOUT_UNSET_VALUES:
-            with self.subTest(value=value):
-                self.assert_validate_set(
-                    ["stonith-watchdog-timeout"],
-                    {"stonith-watchdog-timeout": value},
-                    [],
-                )
+        for prop_name in STONITH_WATCHDOG_TIMEOUT_PROPERTIES:
+            for value in STONITH_WATCHDOG_TIMEOUT_UNSET_VALUES:
+                with self.subTest(property=prop_name, value=value):
+                    self.assert_validate_set(
+                        [prop_name], {prop_name: value}, []
+                    )
 
     def test_set_stonith_watchdog_timeout_sbd_disabled(self):
-        self.assert_validate_set(
-            [],
-            {"stonith-watchdog-timeout": "5"},
-            [
-                fixture.error(
-                    reports.codes.STONITH_WATCHDOG_TIMEOUT_CANNOT_BE_SET,
-                    reason="sbd_not_set_up",
-                )
-            ],
-        )
-
-    def test_set_ok_stonith_watchdog_timeout_sbd_enabled_without_devices(self):
-        for value in ["15", "15s"]:
-            with self.subTest(value=value):
+        for prop_name in STONITH_WATCHDOG_TIMEOUT_PROPERTIES:
+            with self.subTest(property=prop_name):
                 self.assert_validate_set(
                     [],
-                    {"stonith-watchdog-timeout": value},
-                    [],
-                    sbd_enabled=True,
+                    {prop_name: "5"},
+                    [
+                        fixture.error(
+                            reports.codes.STONITH_WATCHDOG_TIMEOUT_CANNOT_BE_SET,
+                            reason="sbd_not_set_up",
+                        )
+                    ],
                 )
+
+    def test_set_ok_stonith_watchdog_timeout_sbd_enabled_without_devices(self):
+        for prop_name in STONITH_WATCHDOG_TIMEOUT_PROPERTIES:
+            for value in ["15", "15s"]:
+                with self.subTest(property=prop_name, value=value):
+                    self.assert_validate_set(
+                        [],
+                        {prop_name: value},
+                        [],
+                        sbd_enabled=True,
+                    )
 
     def test_set_small_stonith_watchdog_timeout_sbd_enabled_without_devices(
         self,
     ):
-        self.assert_validate_set(
-            [],
-            {"stonith-watchdog-timeout": "9s"},
-            [
-                fixture.error(
-                    reports.codes.STONITH_WATCHDOG_TIMEOUT_TOO_SMALL,
-                    force_code=reports.codes.FORCE,
-                    cluster_sbd_watchdog_timeout=10,
-                    entered_watchdog_timeout="9s",
+        for prop_name in STONITH_WATCHDOG_TIMEOUT_PROPERTIES:
+            with self.subTest(property=prop_name):
+                self.assert_validate_set(
+                    [],
+                    {prop_name: "9s"},
+                    [
+                        fixture.error(
+                            reports.codes.STONITH_WATCHDOG_TIMEOUT_TOO_SMALL,
+                            force_code=reports.codes.FORCE,
+                            cluster_sbd_watchdog_timeout=10,
+                            entered_watchdog_timeout="9s",
+                        )
+                    ],
+                    sbd_enabled=True,
                 )
-            ],
-            sbd_enabled=True,
-        )
 
     def test_set_small_stonith_watchdog_timeout_sbd_enabled_without_devices_forced(
         self,
     ):
-        self.assert_validate_set(
-            [],
-            {"stonith-watchdog-timeout": "9"},
-            [
-                fixture.warn(
-                    reports.codes.STONITH_WATCHDOG_TIMEOUT_TOO_SMALL,
-                    cluster_sbd_watchdog_timeout=10,
-                    entered_watchdog_timeout="9",
+        for prop_name in STONITH_WATCHDOG_TIMEOUT_PROPERTIES:
+            with self.subTest(property=prop_name):
+                self.assert_validate_set(
+                    [],
+                    {prop_name: "9"},
+                    [
+                        fixture.warn(
+                            reports.codes.STONITH_WATCHDOG_TIMEOUT_TOO_SMALL,
+                            cluster_sbd_watchdog_timeout=10,
+                            entered_watchdog_timeout="9",
+                        )
+                    ],
+                    sbd_enabled=True,
+                    force=True,
                 )
-            ],
-            sbd_enabled=True,
-            force=True,
-        )
 
     def _set_invalid_value_stonith_watchdog_timeout(
         self, sbd_enabled=False, sbd_devices=False
     ):
-        for value in ["invalid", "10x"]:
-            with self.subTest(value=value):
-                self.assert_validate_set(
-                    [],
-                    {"stonith-watchdog-timeout": value},
-                    [
-                        fixture.error(
-                            reports.codes.INVALID_OPTION_VALUE,
-                            option_name="stonith-watchdog-timeout",
-                            option_value=value,
-                            allowed_values="time interval (e.g. 1, 2s, 3m, 4h, ...)",
-                            cannot_be_empty=False,
-                            forbidden_characters=None,
-                        )
-                    ],
-                    sbd_enabled=sbd_enabled,
-                    sbd_devices=sbd_devices,
-                    valid_value=False,
-                )
+        for prop_name in STONITH_WATCHDOG_TIMEOUT_PROPERTIES:
+            for value in ["invalid", "10x"]:
+                with self.subTest(property=prop_name, value=value):
+                    self.assert_validate_set(
+                        [],
+                        {prop_name: value},
+                        [
+                            fixture.error(
+                                reports.codes.INVALID_OPTION_VALUE,
+                                option_name=prop_name,
+                                option_value=value,
+                                allowed_values="time interval (e.g. 1, 2s, 3m, 4h, ...)",
+                                cannot_be_empty=False,
+                                forbidden_characters=None,
+                            )
+                        ],
+                        sbd_enabled=sbd_enabled,
+                        sbd_devices=sbd_devices,
+                        valid_value=False,
+                    )
 
     def test_set_invalid_value_stonith_watchdog_timeout_sbd_enabled_without_devices(
         self,
@@ -523,37 +558,103 @@ class TestValidateSetClusterProperties(TestCase):
     def test_unset_stonith_watchdog_timeout_sbd_enabled_without_devices(
         self,
     ):
-        for value in STONITH_WATCHDOG_TIMEOUT_UNSET_VALUES:
-            with self.subTest(value=value):
-                self.assert_validate_set(
-                    ["stonith-watchdog-timeout"],
-                    {"stonith-watchdog-timeout": value},
-                    [
-                        fixture.error(
-                            reports.codes.STONITH_WATCHDOG_TIMEOUT_CANNOT_BE_UNSET,
-                            force_code=reports.codes.FORCE,
-                            reason="sbd_set_up_without_devices",
-                        )
-                    ],
-                    sbd_enabled=True,
-                )
+        for prop_name in STONITH_WATCHDOG_TIMEOUT_PROPERTIES:
+            for value in STONITH_WATCHDOG_TIMEOUT_UNSET_VALUES:
+                with self.subTest(property=prop_name, value=value):
+                    self.assert_validate_set(
+                        [prop_name],
+                        {prop_name: value},
+                        [
+                            fixture.error(
+                                reports.codes.STONITH_WATCHDOG_TIMEOUT_CANNOT_BE_UNSET,
+                                force_code=reports.codes.FORCE,
+                                reason="sbd_set_up_without_devices",
+                            )
+                        ],
+                        sbd_enabled=True,
+                    )
 
     def test_unset_stonith_watchdog_timeout_sbd_enabled_without_devices_forced(
         self,
     ):
-        for value in STONITH_WATCHDOG_TIMEOUT_UNSET_VALUES:
-            with self.subTest(value=value):
+        for prop_name in STONITH_WATCHDOG_TIMEOUT_PROPERTIES:
+            for value in STONITH_WATCHDOG_TIMEOUT_UNSET_VALUES:
+                with self.subTest(property=prop_name, value=value):
+                    self.assert_validate_set(
+                        [prop_name],
+                        {prop_name: value},
+                        [
+                            fixture.warn(
+                                reports.codes.STONITH_WATCHDOG_TIMEOUT_CANNOT_BE_UNSET,
+                                reason="sbd_set_up_without_devices",
+                            )
+                        ],
+                        force=True,
+                        sbd_enabled=True,
+                    )
+
+    def test_set_stonith_watchdog_timeout_sbd_enabled_with_devices(self):
+        for prop_name in STONITH_WATCHDOG_TIMEOUT_PROPERTIES:
+            with self.subTest(property=prop_name):
                 self.assert_validate_set(
-                    ["stonith-watchdog-timeout"],
-                    {"stonith-watchdog-timeout": value},
+                    [],
+                    {prop_name: "15"},
                     [
-                        fixture.warn(
-                            reports.codes.STONITH_WATCHDOG_TIMEOUT_CANNOT_BE_UNSET,
-                            reason="sbd_set_up_without_devices",
+                        fixture.error(
+                            reports.codes.STONITH_WATCHDOG_TIMEOUT_CANNOT_BE_SET,
+                            force_code=reports.codes.FORCE,
+                            reason="sbd_set_up_with_devices",
                         )
                     ],
-                    force=True,
                     sbd_enabled=True,
+                    sbd_devices=True,
+                )
+
+    def test_set_stonith_watchdog_timeout_sbd_enabled_with_devices_forced(self):
+        for prop_name in STONITH_WATCHDOG_TIMEOUT_PROPERTIES:
+            with self.subTest(property=prop_name):
+                self.assert_validate_set(
+                    [],
+                    {prop_name: "15s"},
+                    [
+                        fixture.warn(
+                            reports.codes.STONITH_WATCHDOG_TIMEOUT_CANNOT_BE_SET,
+                            reason="sbd_set_up_with_devices",
+                        )
+                    ],
+                    sbd_enabled=True,
+                    sbd_devices=True,
+                    force=True,
+                )
+
+    def test_unset_stonith_watchdog_timeout_sbd_enabled_with_devices(self):
+        for prop_name in STONITH_WATCHDOG_TIMEOUT_PROPERTIES:
+            for value in STONITH_WATCHDOG_TIMEOUT_UNSET_VALUES:
+                with self.subTest(property=prop_name, value=value):
+                    self.assert_validate_set(
+                        [prop_name],
+                        {prop_name: value},
+                        [],
+                        sbd_enabled=True,
+                        sbd_devices=True,
+                    )
+
+    def test_remove_not_configured_stonith_watchdog_timeout(self):
+        for prop_name in STONITH_WATCHDOG_TIMEOUT_PROPERTIES:
+            with self.subTest(property=prop_name):
+                self.assert_validate_set(
+                    ["a", "b"],
+                    {prop_name: ""},
+                    [
+                        fixture.error(
+                            reports.codes.ADD_REMOVE_CANNOT_REMOVE_ITEMS_NOT_IN_THE_CONTAINER,
+                            force_code=reports.codes.FORCE,
+                            container_type=reports.const.ADD_REMOVE_CONTAINER_TYPE_PROPERTY_SET,
+                            item_type=reports.const.ADD_REMOVE_ITEM_TYPE_PROPERTY,
+                            container_id="property-set-id",
+                            item_list=[prop_name],
+                        )
+                    ],
                 )
 
     def test_warn_about_disable_fencing(self):
@@ -579,63 +680,6 @@ class TestValidateSetClusterProperties(TestCase):
 
             with self.subTest(value=falsy_value):
                 assert_no_fencing_warning({"fencing-enabled": falsy_value})
-
-    def test_set_stonith_watchdog_timeout_sbd_enabled_with_devices(self):
-        self.assert_validate_set(
-            [],
-            {"stonith-watchdog-timeout": "15"},
-            [
-                fixture.error(
-                    reports.codes.STONITH_WATCHDOG_TIMEOUT_CANNOT_BE_SET,
-                    force_code=reports.codes.FORCE,
-                    reason="sbd_set_up_with_devices",
-                )
-            ],
-            sbd_enabled=True,
-            sbd_devices=True,
-        )
-
-    def test_set_stonith_watchdog_timeout_sbd_enabled_with_devices_forced(self):
-        self.assert_validate_set(
-            [],
-            {"stonith-watchdog-timeout": "15s"},
-            [
-                fixture.warn(
-                    reports.codes.STONITH_WATCHDOG_TIMEOUT_CANNOT_BE_SET,
-                    reason="sbd_set_up_with_devices",
-                )
-            ],
-            sbd_enabled=True,
-            sbd_devices=True,
-            force=True,
-        )
-
-    def test_unset_stonith_watchdog_timeout_sbd_enabled_with_devices(self):
-        for value in STONITH_WATCHDOG_TIMEOUT_UNSET_VALUES:
-            with self.subTest(value=value):
-                self.assert_validate_set(
-                    ["stonith-watchdog-timeout"],
-                    {"stonith-watchdog-timeout": value},
-                    [],
-                    sbd_enabled=True,
-                    sbd_devices=True,
-                )
-
-    def test_remove_not_configured_stonith_watchdog_timeout(self):
-        self.assert_validate_set(
-            ["a", "b"],
-            {"stonith-watchdog-timeout": ""},
-            [
-                fixture.error(
-                    reports.codes.ADD_REMOVE_CANNOT_REMOVE_ITEMS_NOT_IN_THE_CONTAINER,
-                    force_code=reports.codes.FORCE,
-                    container_type=reports.const.ADD_REMOVE_CONTAINER_TYPE_PROPERTY_SET,
-                    item_type=reports.const.ADD_REMOVE_ITEM_TYPE_PROPERTY,
-                    container_id="property-set-id",
-                    item_list=["stonith-watchdog-timeout"],
-                )
-            ],
-        )
 
     def test_remove_valid_configured_options(self):
         self.assert_validate_set(

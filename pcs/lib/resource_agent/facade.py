@@ -177,6 +177,11 @@ class ResourceAgentFacade:
 
     @property
     def _validator_option_type(self) -> str:
+        if (
+            self.metadata.name.standard == const.FAKE_AGENT_STANDARD
+            and self.metadata.name.type == const.CLUSTER_OPTIONS
+        ):
+            return "property"
         return "stonith" if self.metadata.name.is_stonith else "resource"
 
     def _get_all_params_deprecated_by(self) -> Dict[str, Set[str]]:

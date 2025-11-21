@@ -26,6 +26,10 @@ READONLY_CLUSTER_PROPERTY_LIST = [
     "last-lrm-refresh",
 ]
 _DEFAULT_CLUSTER_PROPERTY_SET_ID = "cib-bootstrap-options"
+_STONITH_WATCHDOG_TIMEOUT_PROPERTIES = [
+    "stonith-watchdog-timeout",
+    "fencing-watchdog-timeout",
+]
 
 
 def _validate_stonith_watchdog_timeout_property(
@@ -117,16 +121,24 @@ def validate_set_cluster_properties(  # noqa: PLR0912
         else:
             to_be_removed_properties.append(name)
 
-    report_list = validate.validate_set_unset_items(
-        to_be_set_properties.keys(),
-        to_be_removed_properties,
-        configured_properties,
-        reports.const.ADD_REMOVE_CONTAINER_TYPE_PROPERTY_SET,
-        reports.const.ADD_REMOVE_ITEM_TYPE_PROPERTY,
-        properties_set_id,
-        severity=severity,
-    )
+    report_list = []
 
+    report_list.extend(
+        validate.ValidatorAll(
+            cluster_properties_facade.get_validators_deprecated_parameters()
+        ).validate(new_properties)
+    )
+    report_list.extend(
+        validate.validate_set_unset_items(
+            to_be_set_properties.keys(),
+            to_be_removed_properties,
+            configured_properties,
+            reports.const.ADD_REMOVE_CONTAINER_TYPE_PROPERTY_SET,
+            reports.const.ADD_REMOVE_ITEM_TYPE_PROPERTY,
+            properties_set_id,
+            severity=severity,
+        )
+    )
     report_list.extend(
         validate.NamesIn(
             possible_properties_dict.keys(),
@@ -206,7 +218,7 @@ def validate_set_cluster_properties(  # noqa: PLR0912
             )
         elif property_metadata.type in ["time", "timeout"]:
             # make stonith-watchdog-timeout value not forcable
-            if property_metadata.name == "stonith-watchdog-timeout":
+            if property_metadata.name in _STONITH_WATCHDOG_TIMEOUT_PROPERTIES:
                 validators.append(
                     validate.ValueTimeInterval(
                         property_metadata.name,
@@ -232,17 +244,17 @@ def validate_set_cluster_properties(  # noqa: PLR0912
 
     # Only validate SWT if it is being set, or if it is being removed and it
     # actually exists in the current configuration.
-    if "stonith-watchdog-timeout" in new_properties and (
-        new_properties["stonith-watchdog-timeout"]
-        or "stonith-watchdog-timeout" in configured_properties
-    ):
-        report_list.extend(
-            _validate_stonith_watchdog_timeout_property(
-                service_manager,
-                new_properties["stonith-watchdog-timeout"],
-                force=force,
+    for prop_name in _STONITH_WATCHDOG_TIMEOUT_PROPERTIES:
+        if prop_name in new_properties and (
+            new_properties[prop_name] or prop_name in configured_properties
+        ):
+            report_list.extend(
+                _validate_stonith_watchdog_timeout_property(
+                    service_manager,
+                    new_properties[prop_name],
+                    force=force,
+                )
             )
-        )
 
     report_list.extend(_validate_not_disabling_fencing(to_be_set_properties))
 

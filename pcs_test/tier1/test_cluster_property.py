@@ -10,24 +10,20 @@ from pcs.common.pacemaker.nvset import (
     CibNvsetDto,
     ListCibNvsetDto,
 )
-from pcs.common.str_tools import (
-    format_list,
-    format_plural,
-)
+from pcs.common.str_tools import format_list, format_plural
 
 from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.cib import get_assert_pcs_effect_mixin
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import (
     get_tmp_file,
+    is_minimum_pacemaker_features,
+    skip_unless_pacemaker_features,
     write_data_to_tmpfile,
     write_file_to_tmpfile,
 )
 from pcs_test.tools.pcs_runner import PcsRunner
-from pcs_test.tools.xml import (
-    XmlManipulation,
-    etree_to_str,
-)
+from pcs_test.tools.xml import XmlManipulation, etree_to_str
 
 property_cib = rc("cib-property.xml")
 UNCHANGED_CRM_CONFIG = etree_to_str(
@@ -205,10 +201,35 @@ class TestPropertySet(PropertyMixin, TestCase):
         self.assert_resources_xml_in_cib(UNCHANGED_CRM_CONFIG)
 
     def test_set_stonith_watchdog_timeout_invalid_value(self):
+        deprecation = ""
+        if is_minimum_pacemaker_features(3, 20, 5):
+            deprecation = (
+                "Warning: property option 'stonith-watchdog-timeout' is "
+                "deprecated and might be removed in a future release, "
+                "therefore it should not be used, use "
+                "'fencing-watchdog-timeout' instead\n"
+            )
+
         self.assert_pcs_fail(
             "property set stonith-watchdog-timeout=5x".split(),
             stderr_full=(
-                "Error: '5x' is not a valid stonith-watchdog-timeout value, use"
+                deprecation
+                + "Error: '5x' is not a valid stonith-watchdog-timeout value, "
+                "use time interval (e.g. 1, 2s, 3m, 4h, ...)\n"
+                "Error: Errors have occurred, therefore pcs is unable to "
+                "continue\n"
+            ),
+        )
+        self.assert_resources_xml_in_cib(UNCHANGED_CRM_CONFIG)
+
+    @skip_unless_pacemaker_features(
+        (3, 20, 5), "cluster property 'fencing-watchdog-timeout'"
+    )
+    def test_set_fencing_watchdog_timeout_invalid_value(self):
+        self.assert_pcs_fail(
+            "property set fencing-watchdog-timeout=5x".split(),
+            stderr_full=(
+                "Error: '5x' is not a valid fencing-watchdog-timeout value, use"
                 " time interval (e.g. 1, 2s, 3m, 4h, ...)\n"
                 "Error: Errors have occurred, therefore pcs is unable to "
                 "continue\n"
@@ -217,6 +238,13 @@ class TestPropertySet(PropertyMixin, TestCase):
         self.assert_resources_xml_in_cib(UNCHANGED_CRM_CONFIG)
 
     def test_disable_fencing_warning(self):
+        deprecation = ""
+        if is_minimum_pacemaker_features(3, 20, 5):
+            deprecation = (
+                "Warning: property option 'stonith-enabled' is deprecated and "
+                "might be removed in a future release, therefore it should not "
+                "be used, use 'fencing-enabled' instead\n"
+            )
         self.assert_effect_single(
             "property set stonith-enabled=false".split(),
             """
@@ -249,7 +277,8 @@ class TestPropertySet(PropertyMixin, TestCase):
             </crm_config>
 
             """,
-            stderr_full="Warning: Setting property stonith-enabled to false"
+            stderr_full=deprecation
+            + "Warning: Setting property stonith-enabled to false"
             " leaves the cluster with no enabled means to fence nodes,"
             " resulting in the cluster not being able to recover from"
             " certain failure conditions\n",
