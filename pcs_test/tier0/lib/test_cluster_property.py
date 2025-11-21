@@ -6,9 +6,8 @@ from pcs.common import reports
 from pcs.common.services.interfaces import ServiceManagerInterface
 from pcs.lib import cluster_property as lib_cluster_property
 from pcs.lib.cib.tools import IdProvider
-from pcs.lib.resource_agent.facade import ResourceAgentFacade
+from pcs.lib.pacemaker import values as packemaker_values
 from pcs.lib.resource_agent.types import (
-    ResourceAgentMetadata,
     ResourceAgentParameter,
 )
 from pcs.lib.xml_tools import etree_to_str
@@ -61,6 +60,7 @@ PARAMETER_DEFINITIONS = [
     ("select_param", "select", "s1", ["s1", "s2", "s3"]),
     ("time_param", "time", "30s", None),
     ("stonith-watchdog-timeout", "time", "0", None),
+    ("stonith-enabled", "boolean", "true", None),
     ("cluster-infrastructure", "string", "corosync", None),
     ("cluster-name", "string", "(null)", None),
     ("dc-version", "string", "none", None),
@@ -81,6 +81,7 @@ ALLOWED_PROPERTIES = [
     "port_param",
     "score_param",
     "select_param",
+    "stonith-enabled",
     "stonith-watchdog-timeout",
     "time_param",
     "timeout_param",
@@ -260,26 +261,6 @@ class TestValidateSetClusterProperties(TestCase):
     # pylint: disable=too-many-public-methods
     def setUp(self):
         self.mock_service_manager = mock.Mock(spec=ServiceManagerInterface)
-        self.mock_facade_list = [
-            mock.Mock(
-                spec=ResourceAgentFacade,
-                metadata=mock.Mock(
-                    spec=ResourceAgentMetadata,
-                    parameters=FIXTURE_PARAMETER_LIST[
-                        0 : int(len(FIXTURE_PARAMETER_LIST) / 2)
-                    ],
-                ),
-            ),
-            mock.Mock(
-                spec=ResourceAgentFacade,
-                metadata=mock.Mock(
-                    spec=ResourceAgentMetadata,
-                    parameters=FIXTURE_PARAMETER_LIST[
-                        int(len(FIXTURE_PARAMETER_LIST) / 2) :
-                    ],
-                ),
-            ),
-        ]
         self.patcher_is_sbd_enabled = mock.patch("pcs.lib.sbd.is_sbd_enabled")
         self.patcher_sbd_devices = mock.patch(
             "pcs.lib.sbd.get_local_sbd_device_list"
@@ -315,7 +296,7 @@ class TestValidateSetClusterProperties(TestCase):
         assert_report_item_list_equal(
             lib_cluster_property.validate_set_cluster_properties(
                 get_runner_mock(returncode=returncode),
-                self.mock_facade_list,
+                FIXTURE_PARAMETER_LIST,
                 "property-set-id",
                 configured_properties,
                 new_properties,
@@ -550,6 +531,21 @@ class TestValidateSetClusterProperties(TestCase):
                     ],
                     force=True,
                     sbd_enabled=True,
+                )
+
+    def test_warn_about_disable_fencing(
+        self,
+    ):
+        code = reports.codes.NO_STONITH_MEANS_WOULD_BE_LEFT_DUE_TO_PROPERTIES
+        for falsy_value in packemaker_values._BOOLEAN_FALSE:
+            with self.subTest(value=falsy_value):
+                property_map = {
+                    "stonith-enabled": falsy_value,
+                }
+                self.assert_validate_set(
+                    [],
+                    property_map,
+                    [fixture.warn(code, property_map=property_map)],
                 )
 
     def test_set_stonith_watchdog_timeout_sbd_enabled_with_devices(self):

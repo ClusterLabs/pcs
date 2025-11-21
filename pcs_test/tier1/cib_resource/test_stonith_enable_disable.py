@@ -81,7 +81,7 @@ class Disable(ResourceTest):
         self.assert_pcs_fail(
             "stonith disable S".split(),
             (
-                "Error: Requested action lefts the cluster with no enabled "
+                "Error: Requested action leaves the cluster with no enabled "
                 "means to fence nodes, resulting in the cluster not being able "
                 "to recover from certain failure conditions, use --force to "
                 "override\n" + ERRORS_HAVE_OCCURRED
@@ -118,7 +118,7 @@ class Disable(ResourceTest):
                 </primitive>
             </resources>""",
             stderr_full=(
-                "Warning: Requested action lefts the cluster with no enabled "
+                "Warning: Requested action leaves the cluster with no enabled "
                 "means to fence nodes, resulting in the cluster not being able "
                 "to recover from certain failure conditions\n"
             ),

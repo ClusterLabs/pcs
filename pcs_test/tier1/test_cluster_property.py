@@ -216,6 +216,45 @@ class TestPropertySet(PropertyMixin, TestCase):
         )
         self.assert_resources_xml_in_cib(UNCHANGED_CRM_CONFIG)
 
+    def test_disable_fencing_warning(self):
+        self.assert_effect_single(
+            "property set stonith-enabled=false".split(),
+            """
+            <crm_config>
+                <cluster_property_set id="cib-bootstrap-options">
+                    <nvpair id="cib-bootstrap-options-have-watchdog"
+                        name="have-watchdog" value="false"
+                    />
+                    <nvpair id="cib-bootstrap-options-cluster-name"
+                        name="cluster-name" value="HACluster"
+                    />
+                    <nvpair id="cib-bootstrap-options-maintenance-mode"
+                        name="maintenance-mode" value="false"
+                    />
+                    <nvpair id="cib-bootstrap-options-placement-strategy"
+                        name="placement-strategy" value="minimal"
+                    />
+                    <nvpair id="cib-bootstrap-options-enable-acl"
+                        name="enable-acl" value="false"
+                    />
+                    <nvpair id="cib-bootstrap-options-stonith-enabled"
+                        name="stonith-enabled" value="false"
+                    />
+                </cluster_property_set>
+                <cluster_property_set id="second-set" score="10">
+                    <nvpair id="second-set-maintenance-mode"
+                        name="maintenance-mode" value="false"
+                    />
+                </cluster_property_set>
+            </crm_config>
+
+            """,
+            stderr_full="Warning: Setting property stonith-enabled to false"
+            " leaves the cluster with no enabled means to fence nodes,"
+            " resulting in the cluster not being able to recover from"
+            " certain failure conditions\n",
+        )
+
 
 class TestPropertyUnset(PropertyMixin, TestCase):
     def test_success(self):

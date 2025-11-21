@@ -26,7 +26,6 @@ from pcs.lib.pacemaker.live import (
 )
 from pcs.lib.resource_agent import (
     ResourceAgentError,
-    ResourceAgentFacade,
     ResourceAgentMetadata,
     resource_agent_error_to_report_item,
 )
@@ -34,34 +33,32 @@ from pcs.lib.resource_agent import const as ra_const
 from pcs.lib.resource_agent.facade import ResourceAgentFacadeFactory
 
 
-def _get_property_facade_list(
+def _get_properties_metadata(
     report_processor: reports.ReportProcessor,
-    factory: ResourceAgentFacadeFactory,
     runner: CommandRunner,
-) -> list[ResourceAgentFacade]:
-    cluster_property_facade_list = []
-    if is_crm_attribute_list_options_supported(runner):
-        try:
-            cluster_property_facade_list.append(
-                factory.facade_from_crm_attribute(ra_const.CLUSTER_OPTIONS)
-            )
-        except ResourceAgentError as e:
-            report_processor.report_list(
-                [
-                    resource_agent_error_to_report_item(
-                        e, reports.ReportItemSeverity.error()
-                    )
-                ]
-            )
-    else:
+) -> ResourceAgentMetadata:
+    if not is_crm_attribute_list_options_supported(runner):
         report_processor.report(
             reports.ReportItem.error(
                 reports.messages.ClusterOptionsMetadataNotSupported()
             )
         )
-    if report_processor.has_errors:
         raise LibraryError()
-    return cluster_property_facade_list
+
+    try:
+        factory = ResourceAgentFacadeFactory(runner, report_processor)
+        return factory.facade_from_crm_attribute(
+            ra_const.CLUSTER_OPTIONS
+        ).metadata
+    except ResourceAgentError as e:
+        report_processor.report_list(
+            [
+                resource_agent_error_to_report_item(
+                    e, reports.ReportItemSeverity.error()
+                )
+            ]
+        )
+        raise LibraryError() from e
 
 
 # backward compatibility layer - export cluster property metadata in the legacy
@@ -114,17 +111,9 @@ def get_cluster_properties_definition_legacy(
 
     env -- provides communication with externals
     """
-    runner = env.cmd_runner()
-    property_dict = {}
-    for facade in _get_property_facade_list(
-        env.report_processor,
-        ResourceAgentFacadeFactory(runner, env.report_processor),
-        runner,
-    ):
-        property_dict.update(
-            _cluster_property_metadata_to_dict(facade.metadata)
-        )
-    return property_dict
+    return _cluster_property_metadata_to_dict(
+        _get_properties_metadata(env.report_processor, env.cmd_runner())
+    )
 
 
 def set_properties(
@@ -150,12 +139,6 @@ def set_properties(
     )
     set_id = cluster_property_set_el.get("id", "")
 
-    property_facade_list = _get_property_facade_list(
-        env.report_processor,
-        ResourceAgentFacadeFactory(runner, env.report_processor),
-        runner,
-    )
-
     configured_properties = [
         nvpair_dto.name
         for nvpair_dto in nvpair_multi.nvset_element_to_dto(
@@ -167,7 +150,7 @@ def set_properties(
     env.report_processor.report_list(
         cluster_property.validate_set_cluster_properties(
             runner,
-            property_facade_list,
+            _get_properties_metadata(env.report_processor, runner).parameters,
             set_id,
             configured_properties,
             cluster_properties,
@@ -222,18 +205,11 @@ def get_properties_metadata(
 
     env -- provides communication with externals
     """
-    runner = env.cmd_runner()
-    property_definition_list = []
-    for facade in _get_property_facade_list(
-        env.report_processor,
-        ResourceAgentFacadeFactory(runner, env.report_processor),
-        runner,
-    ):
-        property_definition_list.extend(facade.metadata.parameters)
+    metadata = _get_properties_metadata(env.report_processor, env.cmd_runner())
     return ClusterPropertyMetadataDto(
         properties_metadata=[
             property_definition.to_dto()
-            for property_definition in property_definition_list
+            for property_definition in metadata.parameters
         ],
         readonly_properties=cluster_property.READONLY_CLUSTER_PROPERTY_LIST,
     )

@@ -170,7 +170,11 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
                 """
             )
         self.assert_pcs_success(
-            f"property set {fencing_enabled_property}=false".split()
+            f"property set {fencing_enabled_property}=false".split(),
+            stderr_full=f"Warning: Setting property {fencing_enabled_property}"
+            " to false leaves the cluster with no enabled means to fence nodes,"
+            " resulting in the cluster not being able to recover from"
+            " certain failure conditions\n",
         )
         self.pcs_runner.corosync_conf_opt = self.corosync_conf
         self.assert_pcs_success(["status"], stdout_start=status_stdout_start)
