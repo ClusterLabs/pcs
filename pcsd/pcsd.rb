@@ -50,7 +50,14 @@ end
 
 before do
   @auth_user = getAuthUser()
-  $cluster_name, $cluster_uuid = get_cluster_name_and_uuid()
+  begin
+    $cluster_name, $cluster_uuid = get_cluster_name_and_uuid()
+  rescue CorosyncConf::ParseErrorException => e
+    $logger.error("Unable to parse corosync.conf: #{e.message}")
+    $logger.warn("Continuing request processing as if this node is not in a cluster")
+    $cluster_name = ''
+    $cluster_uuid = ''
+  end
   if PCSD_RESTART_AFTER_REQUESTS > 0
     $request_counter += 1
     # Even though Puma is multi-threaded, we don't need to lock here since GVL
