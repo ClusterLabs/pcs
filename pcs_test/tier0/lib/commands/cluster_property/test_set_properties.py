@@ -399,7 +399,7 @@ class TestPropertySetCrmAttribute(
                     reports.codes.DEPRECATED_OPTION,
                     option_name="stonith-enabled",
                     replaced_by=["fencing-enabled"],
-                    option_type="property",
+                    option_type="cluster property",
                 ),
                 fixture.warn(
                     reports.codes.NO_STONITH_MEANS_WOULD_BE_LEFT_DUE_TO_PROPERTIES,

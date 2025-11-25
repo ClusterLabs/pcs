@@ -140,22 +140,18 @@ def validate_set_cluster_properties(  # noqa: PLR0912
         )
     )
     report_list.extend(
-        validate.NamesIn(
-            possible_properties_dict.keys(),
-            option_type="cluster property",
-            banned_name_list=READONLY_CLUSTER_PROPERTY_LIST,
-            severity=severity,
+        validate.ValidatorAll(
+            cluster_properties_facade.get_validators_allowed_parameters(
+                force=force,
+                banned_parameter_list=READONLY_CLUSTER_PROPERTY_LIST,
+            )
         ).validate(
             # Allow removing properties unknown to pacemaker while preventing
             # setting them. Prevent removing read-only properties.
             {
                 name: value
                 for name, value in new_properties.items()
-                if not (
-                    value == ""
-                    and name not in READONLY_CLUSTER_PROPERTY_LIST
-                    and name not in possible_properties_dict
-                )
+                if value != "" or name in READONLY_CLUSTER_PROPERTY_LIST
             }
         )
     )

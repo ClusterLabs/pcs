@@ -81,17 +81,28 @@ class ResourceAgentFacade:
     # themselves, so we're not adding them now either.
 
     def get_validators_allowed_parameters(
-        self, force: bool = False
+        self,
+        force: bool = False,
+        banned_parameter_list: Optional[
+            Iterable[validate.TypeOptionName]
+        ] = None,
     ) -> list[validate.ValidatorInterface]:
         """
         Return validators checking for specified parameters names
 
         force -- if True, validators produce a warning instead of an error
+        banned_parameter_list -- list of parameters which cannot be forced
         """
+        banned_set = set(banned_parameter_list or [])
         return [
             validate.NamesIn(
-                {param.name for param in self.metadata.parameters},
+                {
+                    param.name
+                    for param in self.metadata.parameters
+                    if param.name not in banned_set
+                },
                 self._validator_option_type,
+                banned_name_list=banned_parameter_list,
                 severity=reports.item.get_severity(reports.codes.FORCE, force),
             )
         ]
@@ -169,7 +180,7 @@ class ResourceAgentFacade:
             self.metadata.name.standard == const.FAKE_AGENT_STANDARD
             and self.metadata.name.type == const.CLUSTER_OPTIONS
         ):
-            return "property"
+            return "cluster property"
         return "stonith" if self.metadata.name.is_stonith else "resource"
 
     def _get_all_params_deprecated_by(self) -> dict[str, set[str]]:

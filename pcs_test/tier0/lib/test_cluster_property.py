@@ -163,7 +163,7 @@ FIXTURE_WATCHDOG_TIMEOUT_DEPRECATION_REPORT = fixture.warn(
     reports.codes.DEPRECATED_OPTION,
     option_name="stonith-watchdog-timeout",
     replaced_by=["fencing-watchdog-timeout"],
-    option_type="property",
+    option_type="cluster property",
 )
 FIXTURE_ERROR_REPORTS = [
     fixture.error(

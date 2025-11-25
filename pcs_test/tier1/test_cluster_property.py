@@ -204,8 +204,8 @@ class TestPropertySet(PropertyMixin, TestCase):
         deprecation = ""
         if is_minimum_pacemaker_features(3, 20, 5):
             deprecation = (
-                "Warning: property option 'stonith-watchdog-timeout' is "
-                "deprecated and might be removed in a future release, "
+                "Warning: cluster property option 'stonith-watchdog-timeout' "
+                "is deprecated and might be removed in a future release, "
                 "therefore it should not be used, use "
                 "'fencing-watchdog-timeout' instead\n"
             )
@@ -241,9 +241,9 @@ class TestPropertySet(PropertyMixin, TestCase):
         deprecation = ""
         if is_minimum_pacemaker_features(3, 20, 5):
             deprecation = (
-                "Warning: property option 'stonith-enabled' is deprecated and "
-                "might be removed in a future release, therefore it should not "
-                "be used, use 'fencing-enabled' instead\n"
+                "Warning: cluster property option 'stonith-enabled' is "
+                "deprecated and might be removed in a future release, therefore "
+                "it should not be used, use 'fencing-enabled' instead\n"
             )
         self.assert_effect_single(
             "property set stonith-enabled=false".split(),
