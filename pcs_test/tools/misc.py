@@ -362,3 +362,10 @@ class PacemakerFeatures:
     @staticmethod
     def stonith_renamed_to_fencing():
         return is_minimum_pacemaker_features(3, 20, 5)
+
+    @staticmethod
+    def skip_unless_stonith_renamed_to_fencing():
+        return skip_unless_pacemaker_features(
+            (3, 20, 5),
+            "cluster properties 'stonith-*' renamed to 'fencing-*'",
+        )

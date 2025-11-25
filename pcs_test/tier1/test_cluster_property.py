@@ -14,14 +14,13 @@ from pcs.common.str_tools import format_list, format_plural
 
 from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.cib import get_assert_pcs_effect_mixin
-from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import (
+    PacemakerFeatures,
     get_tmp_file,
-    is_minimum_pacemaker_features,
-    skip_unless_pacemaker_features,
     write_data_to_tmpfile,
     write_file_to_tmpfile,
 )
+from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.pcs_runner import PcsRunner
 from pcs_test.tools.xml import XmlManipulation, etree_to_str
 
@@ -202,7 +201,7 @@ class TestPropertySet(PropertyMixin, TestCase):
 
     def test_set_stonith_watchdog_timeout_invalid_value(self):
         deprecation = ""
-        if is_minimum_pacemaker_features(3, 20, 5):
+        if PacemakerFeatures.stonith_renamed_to_fencing():
             deprecation = (
                 "Warning: cluster property option 'stonith-watchdog-timeout' "
                 "is deprecated and might be removed in a future release, "
@@ -222,9 +221,7 @@ class TestPropertySet(PropertyMixin, TestCase):
         )
         self.assert_resources_xml_in_cib(UNCHANGED_CRM_CONFIG)
 
-    @skip_unless_pacemaker_features(
-        (3, 20, 5), "cluster property 'fencing-watchdog-timeout'"
-    )
+    @PacemakerFeatures.skip_unless_stonith_renamed_to_fencing()
     def test_set_fencing_watchdog_timeout_invalid_value(self):
         self.assert_pcs_fail(
             "property set fencing-watchdog-timeout=5x".split(),
@@ -239,7 +236,7 @@ class TestPropertySet(PropertyMixin, TestCase):
 
     def test_disable_fencing_warning(self):
         deprecation = ""
-        if is_minimum_pacemaker_features(3, 20, 5):
+        if PacemakerFeatures.stonith_renamed_to_fencing():
             deprecation = (
                 "Warning: cluster property option 'stonith-enabled' is "
                 "deprecated and might be removed in a future release, therefore "
