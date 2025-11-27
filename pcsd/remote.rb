@@ -1773,16 +1773,53 @@ def sbd_enable(param, request, auth_user)
   end
 end
 
+# Original name of the cluster property is 'stonith-watchdog-timeout'. In
+# pacemaker feature set 3.20.5 (at the time of writing this comment it hasn't
+# been released in any pacemaker version yet), it was renamed to
+# 'fencing-watchdog-timeout', while the original property is still kept as
+# deprecated.
+#
+# Analyzing the pacemaker source code revealed how they are processed:
+# - first, the new property is looked for
+# - if it's found, its value is used and the deprecated property is ignored
+# - if it's not found or has no value, the deprecated property is used
+# The safest and easiest approach is to set or unset both properties:
+# - old pacemaker ignores the new property, no issues are caused by setting it
+# - both properties are set to the same value for the new pacemaker preventing
+#   inconsistencies
+#
+# Alternatively, pcs code could detect if it runs with the new pacemaker. If it
+# does, it would set the new property and remove the deprecated one. If it runs
+# with the old pacemaker, only the original property would be worked with.
+#
+# Once the deprecated property is removed from pacemaker, it should be removed
+# from pcs as well.
+
 def remove_stonith_watchdog_timeout(param, request, auth_user)
   unless allowed_for_local_cluster(auth_user, Permissions::WRITE)
     return 403, 'Permission denied'
   end
-  if set_cluster_prop_force(auth_user, 'stonith-watchdog-timeout', '')
-    $logger.info('Cluster property "stonith-watchdog-timeout" removed')
-    return [200, 'OK']
+
+  _STONITH_WATCHDOG_TIMEOUT_PROPERTIES = [
+      "stonith-watchdog-timeout",
+      "fencing-watchdog-timeout",
+  ]
+  error = false
+
+  # see comment above
+  for prop_name in _STONITH_WATCHDOG_TIMEOUT_PROPERTIES
+    if set_cluster_prop_force(auth_user, prop_name, '')
+      $logger.info("Cluster property '#{prop_name}' removed")
+    else
+      $logger.info("Failed to remove cluster property '#{prop_name}'")
+      error = true
+    end
+  end
+
+  if error
+    return [400, 'Failed to remove cluster property fencing-watchdog-timeout / stonith-watchdog-timeout']
   else
-    $logger.info('Failed to remove cluster property "stonith-watchdog-timeout"')
-    return [400, 'ERROR']
+    return [200, 'OK']
   end
 end
 
@@ -1790,14 +1827,27 @@ def set_stonith_watchdog_timeout_to_zero(param, request, auth_user)
   unless allowed_for_local_cluster(auth_user, Permissions::WRITE)
     return 403, 'Permission denied'
   end
-  if set_cluster_prop_force(auth_user, 'stonith-watchdog-timeout', '0')
-    $logger.info('Cluster property "stonith-watchdog-timeout" set to "0"')
-    return [200, 'OK']
+
+  _STONITH_WATCHDOG_TIMEOUT_PROPERTIES = [
+      "stonith-watchdog-timeout",
+      "fencing-watchdog-timeout",
+  ]
+  error = false
+
+  # see comment above
+  for prop_name in _STONITH_WATCHDOG_TIMEOUT_PROPERTIES
+    if set_cluster_prop_force(auth_user, prop_name, '0')
+      $logger.info("Cluster property '#{prop_name}' set to '0'")
+    else
+      $logger.info("Failed to set cluster property '#{prop_name}' to '0'")
+      error = true
+    end
+  end
+
+  if error
+    return [400, 'Failed to set cluster property fencing-watchdog-timeout / stonith-watchdog-timeout to zero']
   else
-    $logger.info(
-      'Failed to set cluster property "stonith-watchdog-timeout"to 0'
-    )
-    return [400, 'ERROR']
+    return [200, 'OK']
   end
 end
 

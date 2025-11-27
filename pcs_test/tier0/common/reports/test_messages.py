@@ -3449,8 +3449,8 @@ class SbdDeviceIsNotBlockDevice(NameBuildTest):
 class StonithWatchdogTimeoutCannotBeSet(NameBuildTest):
     def test_sbd_not_enabled(self):
         self.assert_message_from_report(
-            "stonith-watchdog-timeout can only be unset or set to 0 while SBD "
-            "is disabled",
+            "fencing-watchdog-timeout / stonith-watchdog-timeout can only be "
+            "unset or set to 0 while SBD is disabled",
             reports.StonithWatchdogTimeoutCannotBeSet(
                 reports.const.SBD_NOT_SET_UP
             ),
@@ -3458,8 +3458,8 @@ class StonithWatchdogTimeoutCannotBeSet(NameBuildTest):
 
     def test_sbd_with_devices(self):
         self.assert_message_from_report(
-            "stonith-watchdog-timeout can only be unset or set to 0 while SBD "
-            "is enabled with devices",
+            "fencing-watchdog-timeout / stonith-watchdog-timeout can only be "
+            "unset or set to 0 while SBD is enabled with devices",
             reports.StonithWatchdogTimeoutCannotBeSet(
                 reports.const.SBD_SET_UP_WITH_DEVICES
             ),
@@ -3469,8 +3469,8 @@ class StonithWatchdogTimeoutCannotBeSet(NameBuildTest):
 class StonithWatchdogTimeoutCannotBeUnset(NameBuildTest):
     def test_sbd_without_devices(self):
         self.assert_message_from_report(
-            "stonith-watchdog-timeout cannot be unset or set to 0 while SBD "
-            "is enabled without devices",
+            "fencing-watchdog-timeout / stonith-watchdog-timeout cannot be "
+            "unset or set to 0 while SBD is enabled without devices",
             reports.StonithWatchdogTimeoutCannotBeUnset(
                 reports.const.SBD_SET_UP_WITHOUT_DEVICES
             ),
@@ -3480,8 +3480,8 @@ class StonithWatchdogTimeoutCannotBeUnset(NameBuildTest):
 class StonithWatchdogTimeoutTooSmall(NameBuildTest):
     def test_all(self):
         self.assert_message_from_report(
-            "The stonith-watchdog-timeout must be greater than SBD watchdog "
-            "timeout '5', entered '4'",
+            "The fencing-watchdog-timeout / stonith-watchdog-timeout must be "
+            "greater than SBD watchdog timeout '5', entered '4'",
             reports.StonithWatchdogTimeoutTooSmall(5, "4"),
         )
 

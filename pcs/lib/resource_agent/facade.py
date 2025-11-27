@@ -1,12 +1,6 @@
 from collections import defaultdict
 from dataclasses import replace as dc_replace
-from typing import (
-    Dict,
-    Iterable,
-    List,
-    Optional,
-    Set,
-)
+from typing import Iterable, Optional
 
 from pcs.common import reports
 from pcs.common.types import StringIterable
@@ -14,16 +8,10 @@ from pcs.lib import validate
 from pcs.lib.external import CommandRunner
 
 from . import const
-from .error import (
-    ResourceAgentError,
-    resource_agent_error_to_report_item,
-)
+from .error import ResourceAgentError, resource_agent_error_to_report_item
 from .name import name_to_void_metadata
 from .ocf_transform import ocf_version_to_ocf_unified
-from .pcs_transform import (
-    get_additional_trace_parameters,
-    ocf_unified_to_pcs,
-)
+from .pcs_transform import get_additional_trace_parameters, ocf_unified_to_pcs
 from .types import (
     CrmAttrAgent,
     CrmResourceAgent,
@@ -93,24 +81,35 @@ class ResourceAgentFacade:
     # themselves, so we're not adding them now either.
 
     def get_validators_allowed_parameters(
-        self, force: bool = False
-    ) -> List[validate.ValidatorInterface]:
+        self,
+        force: bool = False,
+        banned_parameter_list: Optional[
+            Iterable[validate.TypeOptionName]
+        ] = None,
+    ) -> list[validate.ValidatorInterface]:
         """
         Return validators checking for specified parameters names
 
         force -- if True, validators produce a warning instead of an error
+        banned_parameter_list -- list of parameters which cannot be forced
         """
+        banned_set = set(banned_parameter_list or [])
         return [
             validate.NamesIn(
-                {param.name for param in self.metadata.parameters},
+                {
+                    param.name
+                    for param in self.metadata.parameters
+                    if param.name not in banned_set
+                },
                 self._validator_option_type,
+                banned_name_list=banned_parameter_list,
                 severity=reports.item.get_severity(reports.codes.FORCE, force),
             )
         ]
 
     def get_validators_deprecated_parameters(
         self,
-    ) -> List[validate.ValidatorInterface]:
+    ) -> list[validate.ValidatorInterface]:
         """
         Return validators looking for deprecated parameters
         """
@@ -131,18 +130,18 @@ class ResourceAgentFacade:
         self,
         force: bool = False,
         only_parameters: Optional[StringIterable] = None,
-    ) -> List[validate.ValidatorInterface]:
+    ) -> list[validate.ValidatorInterface]:
         """
         Return validators checking if required parameters were specified
 
         force -- if True, validators produce a warning instead of an error
         only_parameters -- if set, only specified parameters are checked
         """
-        validators: List[validate.ValidatorInterface] = []
+        validators: list[validate.ValidatorInterface] = []
         severity = reports.item.get_severity(reports.codes.FORCE, force)
         only_parameters = only_parameters or set()
 
-        required_not_obsoleting: Set[str] = set()
+        required_not_obsoleting: set[str] = set()
         all_params_deprecated_by = self._get_all_params_deprecated_by()
         for param in self.metadata.parameters:
             if not param.required or param.deprecated:
@@ -177,15 +176,20 @@ class ResourceAgentFacade:
 
     @property
     def _validator_option_type(self) -> str:
+        if (
+            self.metadata.name.standard == const.FAKE_AGENT_STANDARD
+            and self.metadata.name.type == const.CLUSTER_OPTIONS
+        ):
+            return "cluster property"
         return "stonith" if self.metadata.name.is_stonith else "resource"
 
-    def _get_all_params_deprecated_by(self) -> Dict[str, Set[str]]:
-        new_olds_map: Dict[str, Set[str]] = defaultdict(set)
+    def _get_all_params_deprecated_by(self) -> dict[str, set[str]]:
+        new_olds_map: dict[str, set[str]] = defaultdict(set)
         for param in self.metadata.parameters:
             for new_name in param.deprecated_by:
                 new_olds_map[new_name].add(param.name)
 
-        result: Dict[str, Set[str]] = defaultdict(set)
+        result: dict[str, set[str]] = defaultdict(set)
         for param in self.metadata.parameters:
             discovered = new_olds_map[param.name]
             while discovered:
@@ -273,7 +277,7 @@ class ResourceAgentFacadeFactory:
             )
         )
 
-    def _get_fenced_parameters(self) -> List[ResourceAgentParameter]:
+    def _get_fenced_parameters(self) -> list[ResourceAgentParameter]:
         if self._fenced_metadata is None:
             agent_name = const.PACEMAKER_FENCED
             try:

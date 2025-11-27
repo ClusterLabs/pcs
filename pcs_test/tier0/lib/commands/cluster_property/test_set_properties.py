@@ -393,7 +393,17 @@ class TestPropertySetCrmAttribute(
             new_properties,
             [],
         )
-        code = reports.codes.NO_STONITH_MEANS_WOULD_BE_LEFT_DUE_TO_PROPERTIES
         self.env_assist.assert_reports(
-            [fixture.warn(code, property_map=new_properties)]
+            [
+                fixture.warn(
+                    reports.codes.DEPRECATED_OPTION,
+                    option_name="stonith-enabled",
+                    replaced_by=["fencing-enabled"],
+                    option_type="cluster property",
+                ),
+                fixture.warn(
+                    reports.codes.NO_STONITH_MEANS_WOULD_BE_LEFT_DUE_TO_PROPERTIES,
+                    property_map=new_properties,
+                ),
+            ]
         )

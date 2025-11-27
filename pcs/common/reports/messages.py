@@ -4784,7 +4784,8 @@ class StonithWatchdogTimeoutCannotBeSet(ReportItemMessage):
     @property
     def message(self) -> str:
         return (
-            "stonith-watchdog-timeout can only be unset or set to 0 while "
+            "fencing-watchdog-timeout / stonith-watchdog-timeout can only be "
+            "unset or set to 0 while "
             + _stonith_watchdog_timeout_reason_to_str(self.reason)
         )
 
@@ -4801,7 +4802,8 @@ class StonithWatchdogTimeoutCannotBeUnset(ReportItemMessage):
     @property
     def message(self) -> str:
         return (
-            "stonith-watchdog-timeout cannot be unset or set to 0 while "
+            "fencing-watchdog-timeout / stonith-watchdog-timeout cannot be "
+            "unset or set to 0 while "
             + _stonith_watchdog_timeout_reason_to_str(self.reason)
         )
 
@@ -4822,7 +4824,8 @@ class StonithWatchdogTimeoutTooSmall(ReportItemMessage):
     @property
     def message(self) -> str:
         return (
-            "The stonith-watchdog-timeout must be greater than SBD watchdog "
+            "The fencing-watchdog-timeout / stonith-watchdog-timeout must be "
+            "greater than SBD watchdog "
             f"timeout '{self.cluster_sbd_watchdog_timeout}', entered "
             f"'{self.entered_watchdog_timeout}'"
         )

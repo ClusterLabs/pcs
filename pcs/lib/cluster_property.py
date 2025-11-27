@@ -1,8 +1,4 @@
-from typing import (
-    Iterable,
-    List,
-    Mapping,
-)
+from typing import Mapping
 
 from lxml.etree import _Element
 
@@ -10,10 +6,7 @@ from pcs.common import reports
 from pcs.common.services.interfaces import ServiceManagerInterface
 from pcs.common.tools import timeout_to_seconds
 from pcs.common.types import StringSequence
-from pcs.lib import (
-    sbd,
-    validate,
-)
+from pcs.lib import sbd, validate
 from pcs.lib.cib import nvpair_multi
 from pcs.lib.cib.tools import (
     IdProvider,
@@ -23,7 +16,7 @@ from pcs.lib.cib.tools import (
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
 from pcs.lib.pacemaker.values import is_false
-from pcs.lib.resource_agent import ResourceAgentParameter
+from pcs.lib.resource_agent import ResourceAgentFacade
 
 READONLY_CLUSTER_PROPERTY_LIST = [
     "cluster-infrastructure",
@@ -33,6 +26,10 @@ READONLY_CLUSTER_PROPERTY_LIST = [
     "last-lrm-refresh",
 ]
 _DEFAULT_CLUSTER_PROPERTY_SET_ID = "cib-bootstrap-options"
+_STONITH_WATCHDOG_TIMEOUT_PROPERTIES = [
+    "stonith-watchdog-timeout",
+    "fencing-watchdog-timeout",
+]
 
 
 def _validate_stonith_watchdog_timeout_property(
@@ -69,7 +66,7 @@ def _validate_stonith_watchdog_timeout_property(
 
 def _validate_not_disabling_fencing(
     to_be_set_properties: Mapping[str, str],
-) -> List[reports.ReportItem]:
+) -> reports.ReportItemList:
     problematic_properties_setting = {
         key: to_be_set_properties[key]
         for key in ["stonith-enabled", "fencing-enabled"]
@@ -90,7 +87,7 @@ def _validate_not_disabling_fencing(
 
 def validate_set_cluster_properties(  # noqa: PLR0912
     runner: CommandRunner,
-    params_spec: Iterable[ResourceAgentParameter],
+    cluster_properties_facade: ResourceAgentFacade,
     properties_set_id: str,
     configured_properties: StringSequence,
     new_properties: Mapping[str, str],
@@ -100,7 +97,7 @@ def validate_set_cluster_properties(  # noqa: PLR0912
     """
     Validate that cluster properties and their values can be set.
 
-    params_spec -- params specified by agent "cluster-options"
+    cluster_properties_facade -- facade for cluster properties metadata
     properties_set_id -- id of the properties set to be updated
     configured_properties -- names of currently configured cluster properties
     new_properties -- dictionary of properties and their values to be set
@@ -111,7 +108,7 @@ def validate_set_cluster_properties(  # noqa: PLR0912
     # pylint: disable=too-many-locals
     possible_properties_dict = {
         parameter.name: parameter
-        for parameter in params_spec
+        for parameter in cluster_properties_facade.metadata.parameters
         if parameter.name not in READONLY_CLUSTER_PROPERTY_LIST
     }
     severity = reports.get_severity(reports.codes.FORCE, force)
@@ -124,33 +121,37 @@ def validate_set_cluster_properties(  # noqa: PLR0912
         else:
             to_be_removed_properties.append(name)
 
-    report_list = validate.validate_set_unset_items(
-        to_be_set_properties.keys(),
-        to_be_removed_properties,
-        configured_properties,
-        reports.const.ADD_REMOVE_CONTAINER_TYPE_PROPERTY_SET,
-        reports.const.ADD_REMOVE_ITEM_TYPE_PROPERTY,
-        properties_set_id,
-        severity=severity,
-    )
+    report_list = []
 
     report_list.extend(
-        validate.NamesIn(
-            possible_properties_dict.keys(),
-            option_type="cluster property",
-            banned_name_list=READONLY_CLUSTER_PROPERTY_LIST,
+        validate.ValidatorAll(
+            cluster_properties_facade.get_validators_deprecated_parameters()
+        ).validate(new_properties)
+    )
+    report_list.extend(
+        validate.validate_set_unset_items(
+            to_be_set_properties.keys(),
+            to_be_removed_properties,
+            configured_properties,
+            reports.const.ADD_REMOVE_CONTAINER_TYPE_PROPERTY_SET,
+            reports.const.ADD_REMOVE_ITEM_TYPE_PROPERTY,
+            properties_set_id,
             severity=severity,
+        )
+    )
+    report_list.extend(
+        validate.ValidatorAll(
+            cluster_properties_facade.get_validators_allowed_parameters(
+                force=force,
+                banned_parameter_list=READONLY_CLUSTER_PROPERTY_LIST,
+            )
         ).validate(
             # Allow removing properties unknown to pacemaker while preventing
             # setting them. Prevent removing read-only properties.
             {
                 name: value
                 for name, value in new_properties.items()
-                if not (
-                    value == ""
-                    and name not in READONLY_CLUSTER_PROPERTY_LIST
-                    and name not in possible_properties_dict
-                )
+                if value != "" or name in READONLY_CLUSTER_PROPERTY_LIST
             }
         )
     )
@@ -213,7 +214,7 @@ def validate_set_cluster_properties(  # noqa: PLR0912
             )
         elif property_metadata.type in ["time", "timeout"]:
             # make stonith-watchdog-timeout value not forcable
-            if property_metadata.name == "stonith-watchdog-timeout":
+            if property_metadata.name in _STONITH_WATCHDOG_TIMEOUT_PROPERTIES:
                 validators.append(
                     validate.ValueTimeInterval(
                         property_metadata.name,
@@ -239,17 +240,17 @@ def validate_set_cluster_properties(  # noqa: PLR0912
 
     # Only validate SWT if it is being set, or if it is being removed and it
     # actually exists in the current configuration.
-    if "stonith-watchdog-timeout" in new_properties and (
-        new_properties["stonith-watchdog-timeout"]
-        or "stonith-watchdog-timeout" in configured_properties
-    ):
-        report_list.extend(
-            _validate_stonith_watchdog_timeout_property(
-                service_manager,
-                new_properties["stonith-watchdog-timeout"],
-                force=force,
+    for prop_name in _STONITH_WATCHDOG_TIMEOUT_PROPERTIES:
+        if prop_name in new_properties and (
+            new_properties[prop_name] or prop_name in configured_properties
+        ):
+            report_list.extend(
+                _validate_stonith_watchdog_timeout_property(
+                    service_manager,
+                    new_properties[prop_name],
+                    force=force,
+                )
             )
-        )
 
     report_list.extend(_validate_not_disabling_fencing(to_be_set_properties))
 
