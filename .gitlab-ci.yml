@@ -81,16 +81,16 @@ variables:
   rules:
     - if: $COMPOSE_NAME == "Rhel10Next"
       variables:
-        TF_COMPOSE: RHEL-10-Nightly
-        TMT_DISTRO: rhel-10.1
+        TF_COMPOSE: RHEL-10.2-Nightly
+        TMT_DISTRO: rhel-10.2
     - if: $COMPOSE_NAME == "Rhel10CurrentRelease"
       variables:
-        TF_COMPOSE: RHEL-10.0-Nightly
-        TMT_DISTRO: rhel-10.0
+        TF_COMPOSE: RHEL-10.1-Nightly
+        TMT_DISTRO: rhel-10.1
     - if: $COMPOSE_NAME == "FedoraCurrentRelease"
       variables:
-        TF_COMPOSE: Fedora-42
-        TMT_DISTRO: fedora-42
+        TF_COMPOSE: Fedora-43
+        TMT_DISTRO: fedora-43
         # FIPS is not supported on Fedora
         TFCLI_TMT_PREPARE: ""
 
