@@ -508,6 +508,14 @@ class ContainerUnknown(TestCase):
                 "attr": "val",
             },
         )
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.META_ATTRS_NOT_VALIDATED_UNSUPPORTED_TYPE,
+                    meta_type_list=["bundle"],
+                ),
+            ]
+        )
 
     def test_no_container_options(self):
         self.config.env.push_cib(
@@ -556,6 +564,14 @@ class ContainerUnknown(TestCase):
             network_options={
                 "host-netmask": "24",
             },
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.META_ATTRS_NOT_VALIDATED_UNSUPPORTED_TYPE,
+                    meta_type_list=["bundle"],
+                ),
+            ]
         )
 
     def test_with_container_options(self):
@@ -1147,6 +1163,14 @@ class Meta(TestCase):
                 "target-role": "Stopped",
             },
         )
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.META_ATTRS_NOT_VALIDATED_UNSUPPORTED_TYPE,
+                    meta_type_list=["bundle"],
+                ),
+            ]
+        )
 
     def test_keep_meta_element(self):
         (
@@ -1206,6 +1230,14 @@ class Meta(TestCase):
                 "resource-stickiness": "100",
                 "is-managed": "",
             },
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.META_ATTRS_NOT_VALIDATED_UNSUPPORTED_TYPE,
+                    meta_type_list=["bundle"],
+                ),
+            ]
         )
 
 

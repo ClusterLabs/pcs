@@ -1122,7 +1122,7 @@ def bundle_create(  # noqa: PLR0913
                 network_options,
                 port_map,
                 storage_map,
-                # TODO meta attributes - there is no validation for now
+                meta_attributes,
                 force_options,
             )
         ).has_errors:
@@ -1212,7 +1212,7 @@ def bundle_reset(  # noqa: PLR0913
                 network_options,
                 port_map,
                 storage_map,
-                # TODO meta attributes - there is no validation for now
+                meta_attributes,
                 force_options,
             )
         ).has_errors:
@@ -1299,7 +1299,7 @@ def bundle_update(  # noqa: PLR0913
                 port_map_remove,
                 storage_map_add,
                 storage_map_remove,
-                # TODO meta attributes - there is no validation for now
+                meta_attributes,
                 force_options,
             )
         ).has_errors:

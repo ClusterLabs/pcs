@@ -914,7 +914,14 @@ class MetaMixin(SetUpMixin):
                 "is-managed": "false",
             }
         )
-        self.env_assist.assert_reports([])
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.META_ATTRS_NOT_VALIDATED_UNSUPPORTED_TYPE,
+                    meta_type_list=["bundle"],
+                ),
+            ]
+        )
 
     def test_disabled(self):
         self.config.env.push_cib(

@@ -7,6 +7,7 @@ from pcs.common import reports
 from pcs.common.pacemaker.resource import bundle
 from pcs.common.types import StringIterable
 from pcs.lib import validate
+from pcs.lib.cib import const as cib_const
 from pcs.lib.cib import nvpair_multi, rule
 from pcs.lib.cib.const import TAG_RESOURCE_BUNDLE as TAG
 from pcs.lib.cib.nvpair import (
@@ -202,6 +203,7 @@ def validate_new(  # noqa: PLR0913
     network_options: Mapping[str, str],
     port_map: Iterable[Mapping[str, str]],
     storage_map: Iterable[Mapping[str, str]],
+    meta_attributes: Mapping[str, str],
     force_options: bool = False,
 ) -> reports.ReportItemList:
     """
@@ -214,6 +216,7 @@ def validate_new(  # noqa: PLR0913
     network_options -- network options
     port_map -- list of port mapping options
     storage_map -- list of storage mapping options
+    meta_attributes -- specifies meta attributes of the bundle
     force_options -- return warnings instead of forceable errors
     """
     return (
@@ -227,6 +230,7 @@ def validate_new(  # noqa: PLR0913
         + _validate_network_options_new(network_options, force_options)
         + _validate_port_map_list(port_map, id_provider, force_options)
         + _validate_storage_map_list(storage_map, id_provider, force_options)
+        + _validate_bundle_meta_attributes(meta_attributes)
     )
 
 
@@ -280,6 +284,7 @@ def validate_reset(
     network_options: Mapping[str, str],
     port_map: Iterable[Mapping[str, str]],
     storage_map: Iterable[Mapping[str, str]],
+    meta_attributes: Mapping[str, str],
     force_options: bool = False,
 ) -> reports.ReportItemList:
     """
@@ -291,6 +296,7 @@ def validate_reset(
     network_options -- network options
     port_map -- list of port mapping options
     storage_map -- list of storage mapping options
+    meta_attributes -- specifies meta attributes of the bundle
     force_options -- return warnings instead of forceable errors
     """
     return (
@@ -298,6 +304,7 @@ def validate_reset(
         + _validate_network_options_new(network_options, force_options)
         + _validate_port_map_list(port_map, id_provider, force_options)
         + _validate_storage_map_list(storage_map, id_provider, force_options)
+        + _validate_bundle_meta_attributes(meta_attributes)
     )
 
 
@@ -367,6 +374,7 @@ def validate_update(  # noqa: PLR0913
     port_map_remove: StringIterable,
     storage_map_add: Iterable[Mapping[str, str]],
     storage_map_remove: StringIterable,
+    meta_attributes: Mapping[str, str],
     force_options: bool = False,
 ) -> reports.ReportItemList:
     # pylint: disable=too-many-arguments
@@ -382,6 +390,7 @@ def validate_update(  # noqa: PLR0913
     port_map_remove -- list of port mapping ids to remove
     storage_map_add -- list of storage mapping options to add
     storage_map_remove -- list of storage mapping ids to remove
+    meta_attributes -- specifies meta attributes of the bundle
     force_options -- return warnings instead of forceable errors
     """
     # TODO It will probably be needed to split the following validators to
@@ -400,6 +409,7 @@ def validate_update(  # noqa: PLR0913
         + _validate_map_ids_exist(
             bundle_el, "storage-mapping", "storage-map", storage_map_remove
         )
+        + _validate_bundle_meta_attributes(meta_attributes)
     )
 
 
@@ -828,6 +838,21 @@ def _validate_map_ids_exist(
         )
         if not searcher.element_found():
             report_list.extend(searcher.get_errors())
+    return report_list
+
+
+def _validate_bundle_meta_attributes(
+    meta_attributes: Mapping[str, str],
+) -> reports.ReportItemList:
+    report_list = []
+    if any(meta_attributes.values()):
+        report_list.append(
+            reports.ReportItem.warning(
+                reports.messages.MetaAttrsNotValidatedUnsupportedType(
+                    [cib_const.TAG_RESOURCE_BUNDLE]
+                )
+            )
+        )
     return report_list
 
 
