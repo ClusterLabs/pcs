@@ -217,7 +217,7 @@ def create(  # noqa: PLR0913
     allow_invalid_operation: bool = False,
     allow_invalid_instance_attributes: bool = False,
     use_default_operations: bool = True,
-):
+) -> _Element:
     # pylint: disable=too-many-arguments
     # pylint: disable=too-many-positional-arguments
     """

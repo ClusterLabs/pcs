@@ -1,19 +1,11 @@
 from functools import partial
-from typing import (
-    List,
-    Optional,
-    cast,
-    overload,
-)
+from typing import Optional, cast, overload
 
 from lxml import etree
 from lxml.etree import _Element
 
 from pcs.lib.cib.tools import create_subelement_id
-from pcs.lib.xml_tools import (
-    append_when_useful,
-    get_sub_element,
-)
+from pcs.lib.xml_tools import append_when_useful, get_sub_element
 
 META_ATTRIBUTES_TAG = "meta_attributes"
 INSTANCE_ATTRIBUTES_TAG = "instance_attributes"
@@ -220,19 +212,23 @@ def get_value(
         tag_name=tag_name,
         name=name,
     )
-    return cast(List[str], value_list)[0] if value_list else default
+    return cast(list[str], value_list)[0] if value_list else default
 
 
-def get_nvset_as_dict(tag_name, context_element):
+def get_nvset_as_dict(
+    tag_name: str, context_element: _Element
+) -> dict[str, str]:
     """
     Returns nvset with specified tag_name in context_element as dictionary
 
-    tag_name string -- tag of nvset element which values should be returned
-    context_element etree.Element -- element in which required nvset is
-        specified
+    tag_name -- tag of nvset element which values should be returned
+    context_element -- element in which required nvset is specified
     """
     return {
-        nvpair["name"]: nvpair["value"]
+        # Silently turning None values to empty strings is not a good practice.
+        # However, the only caller of this function expects to get only str
+        # values.
+        str(nvpair["name"]): nvpair["value"] or ""
         for nvpair in get_nvset(
             get_sub_element(context_element, tag_name, append_if_missing=False)
         )

@@ -212,7 +212,9 @@ def _get_primitive_roles_with_nodes(primitive_el_list):
     return {role: sorted(nodes) for role, nodes in roles_with_nodes.items()}
 
 
-def get_resource_state(cluster_state, resource_id):
+def get_resource_state(
+    cluster_state: etree._Element, resource_id: str
+) -> dict[str, list[str]]:
     return _get_primitive_roles_with_nodes(
         _get_primitives_for_state_check(
             cluster_state, resource_id, expected_running=True

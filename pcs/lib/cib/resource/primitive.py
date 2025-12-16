@@ -1,11 +1,4 @@
-from typing import (
-    Iterable,
-    List,
-    Mapping,
-    Optional,
-    Set,
-    cast,
-)
+from typing import Iterable, Mapping, Optional, cast
 
 from lxml import etree
 from lxml.etree import _Element
@@ -14,10 +7,7 @@ from pcs.common import reports
 from pcs.common.pacemaker.resource.primitive import CibResourcePrimitiveDto
 from pcs.common.resource_agent.dto import ResourceAgentNameDto
 from pcs.lib import validate
-from pcs.lib.cib import (
-    nvpair_multi,
-    rule,
-)
+from pcs.lib.cib import nvpair_multi, rule
 from pcs.lib.cib.const import TAG_RESOURCE_PRIMITIVE as TAG
 from pcs.lib.cib.nvpair import (
     INSTANCE_ATTRIBUTES_TAG,
@@ -29,6 +19,7 @@ from pcs.lib.cib.nvpair import (
 from pcs.lib.cib.resource.agent import get_default_operations
 from pcs.lib.cib.resource.meta import validate_meta_attributes
 from pcs.lib.cib.resource.operations import (
+    ResourceOperationFilteredIn,
     create_operations,
     op_element_to_dto,
 )
@@ -117,7 +108,7 @@ def primitive_element_to_dto(
 
 def find_primitives_by_agent(
     resources_section: _Element, agent_name: ResourceAgentName
-) -> List[_Element]:
+) -> list[_Element]:
     """
     Returns list of primitive resource elements which are using same resource
     agent as specified by resource_agent_obj.
@@ -126,7 +117,7 @@ def find_primitives_by_agent(
     agent_name -- name of an agent resources of which should be returned
     """
     return cast(
-        List[_Element],
+        list[_Element],
         resources_section.xpath(
             ".//primitive[@class=$class_ and @type=$type_ {provider_part}]".format(
                 provider_part=(
@@ -157,7 +148,7 @@ def create(  # noqa: PLR0913
     # TODO remove this arg
     do_not_report_instance_attribute_server_exists: bool = False,
     enable_agent_self_validation: bool = False,
-):
+) -> _Element:
     # pylint: disable=too-many-arguments
     # pylint: disable=too-many-locals
     # pylint: disable=too-many-positional-arguments
@@ -307,31 +298,31 @@ def _validate_meta_attributes(
 
 
 def append_new(  # noqa: PLR0913
-    resources_section,
-    id_provider,
-    resource_id,
-    standard,
-    provider,
-    agent_type,
+    resources_section: _Element,
+    id_provider: IdProvider,
+    resource_id: str,
+    standard: str,
+    provider: Optional[str],
+    agent_type: str,
     *,
-    instance_attributes=None,
-    meta_attributes=None,
-    operation_list=None,
-):
+    instance_attributes: Mapping[str, str],
+    meta_attributes: Mapping[str, str],
+    operation_list: Iterable[ResourceOperationFilteredIn],
+) -> _Element:
     # pylint:disable=too-many-arguments
     # pylint: disable=too-many-positional-arguments
     """
     Append a new primitive element to the resources_section.
 
-    etree.Element resources_section is place where new element will be appended
-    IdProvider id_provider -- elements' ids generator
-    string resource_id is id of new resource
-    string standard is a standard of resource agent (e.g. ocf)
-    string agent_type is a type of resource agent (e.g. IPaddr2)
-    string provider is a provider of resource agent (e.g. heartbeat)
-    dict instance_attributes will be nvpairs inside instance_attributes element
-    dict meta_attributes will be nvpairs inside meta_attributes element
-    list operation_list contains dicts representing operations
+    resources_section -- place where new element will be appended
+    id_provider -- elements' ids generator
+    resource_id -- id of new resource
+    standard -- a standard of resource agent (e.g. ocf)
+    provider -- a provider of resource agent (e.g. heartbeat)
+    agent_type -- a type of resource agent (e.g. IPaddr2)
+    instance_attributes -- will be nvpairs inside instance_attributes element
+    meta_attributes -- will be nvpairs inside meta_attributes element
+    operation_list -- contains dicts representing operations
         (e.g. [{"name": "monitor"}, {"name": "start"}])
     """
     attributes = {
@@ -353,7 +344,10 @@ def append_new(  # noqa: PLR0913
             primitive_element, meta_attributes, id_provider
         )
 
-    create_operations(
+    # TODO pcs.lib.cib.resource.operations module should be overhauled, because
+    # it mixes operations provided as an input with operations existing in CIB
+    # already. Because of this mix, it cannot be properly typed now.
+    create_operations(  # type: ignore
         primitive_element, id_provider, operation_list if operation_list else []
     )
 
@@ -385,7 +379,7 @@ def _validate_unique_instance_attributes(
         if not any(new_group_values_map.values()):
             continue
 
-        conflicting_resources: Set[str] = set()
+        conflicting_resources: set[str] = set()
         for primitive in same_agent_resources:
             if primitive.attrib["id"] == resource_id:
                 continue
@@ -542,7 +536,11 @@ def validate_resource_instance_attributes_update(
     report_items: reports.ReportItemList = []
     current_instance_attrs = get_nvset_as_dict(
         INSTANCE_ATTRIBUTES_TAG,
-        find_element_by_tag_and_id(TAG, resources_section, resource_id),
+        cast(
+            _Element,
+            # If the primitive element doesn't exist, a LibraryError is raised
+            find_element_by_tag_and_id(TAG, resources_section, resource_id),
+        ),
     )
 
     agent_name = resource_agent.metadata.name
