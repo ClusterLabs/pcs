@@ -7,8 +7,8 @@ Follow these steps:
 2. If not specified, ask whether this is still work in progress and if so, which
    aspects should be ignored (e.g. missing tests, missing input validation).
    Use AskUserQuestion prompt.
-3. Try to understand the goal of the specified changes. Verify with me that you
-   understand the goal correctly before you proceed further.
+3. Try to understand the goal of the specified changes. You MUST NOT proceed
+   until you verify with me that you understand the goal correctly.
 4. Think hard about issues (logic errors, edge cases, race conditions, security
    issues) caused by the changes and point them out. Also check against project
    coding standards. List issues by impact, most critical first. Be brief and
