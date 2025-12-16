@@ -1,4 +1,4 @@
-from typing import Iterable, Mapping, Optional, Union, cast
+from typing import Iterable, Mapping, Optional, cast
 
 from lxml import etree
 from lxml.etree import _Element
@@ -216,7 +216,7 @@ def validate_new(  # noqa: PLR0913
     network_options -- network options
     port_map -- list of port mapping options
     storage_map -- list of storage mapping options
-    meta_attributes -- specifies meta attributes of the bundle
+    meta_attributes -- meta attributes of the bundle
     force_options -- return warnings instead of forceable errors
     """
     return (
@@ -296,7 +296,7 @@ def validate_reset(
     network_options -- network options
     port_map -- list of port mapping options
     storage_map -- list of storage mapping options
-    meta_attributes -- specifies meta attributes of the bundle
+    meta_attributes -- meta attributes of the bundle
     force_options -- return warnings instead of forceable errors
     """
     return (
@@ -390,7 +390,7 @@ def validate_update(  # noqa: PLR0913
     port_map_remove -- list of port mapping ids to remove
     storage_map_add -- list of storage mapping options to add
     storage_map_remove -- list of storage mapping ids to remove
-    meta_attributes -- specifies meta attributes of the bundle
+    meta_attributes -- meta attributes of the bundle
     force_options -- return warnings instead of forceable errors
     """
     # TODO It will probably be needed to split the following validators to
@@ -608,7 +608,11 @@ def _validate_container_update(
     if not _is_supported_container(container_el):
         return [_get_report_unsupported_container(bundle_el)]
     return _validate_generic_container_options_update(
-        cast(_Element, container_el), options, force_options
+        # casting is safe because _is_supported_container returns False if
+        # container_el is None
+        cast(_Element, container_el),
+        options,
+        force_options,
     )
 
 
@@ -826,10 +830,7 @@ def _validate_storage_map_list(
 
 
 def _validate_map_ids_exist(
-    bundle_el: _Element,
-    map_type: Union[str, StringIterable],
-    map_label: Union[None, str, StringIterable],
-    id_list: StringIterable,
+    bundle_el: _Element, map_type: str, map_label: str, id_list: StringIterable
 ) -> reports.ReportItemList:
     report_list = []
     for _id in id_list:
@@ -857,7 +858,7 @@ def _validate_bundle_meta_attributes(
 
 
 class ValueHostNetmask(validate.ValuePredicateBase):
-    def _is_valid(self, value: Union[str, int, float]) -> bool:
+    def _is_valid(self, value: str) -> bool:
         return validate.is_integer(value, 1, 32)
 
     def _get_allowed_values(self) -> str:
@@ -944,7 +945,7 @@ def _append_storage_map(
     if "id" not in storage_map_options:
         storage_map_options["id"] = id_provider.allocate_id(
             # use just numbers to keep the ids reasonably short
-            f"{id_base}-storage-map"
+            sanitize_id(f"{id_base}-storage-map")
         )
     storage_map_element = etree.SubElement(parent_element, "storage-mapping")
     # Do not add options with empty values. When updating, an empty value means
