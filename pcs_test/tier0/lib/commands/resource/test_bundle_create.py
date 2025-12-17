@@ -70,7 +70,7 @@ class MinimalCreate(CreateCommandMixin, FixturesMixin, SetUpMixin, TestCase):
                     {
                         "option_name": "container type",
                         "option_value": "nonsense",
-                        "allowed_values": {"docker", "podman"},
+                        "allowed_values": ["docker", "podman"],
                         "cannot_be_empty": False,
                         "forbidden_characters": None,
                     },

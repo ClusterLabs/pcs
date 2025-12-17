@@ -1035,7 +1035,8 @@ def create_into_bundle(  # noqa: PLR0913
         if ensure_disabled:
             resource.common.disable(primitive_element, id_provider)
 
-        bundle_el = _find_bundle(resources_section, bundle_id)
+        # the bundle element already exists or LibraryError is raised
+        bundle_el = cast(_Element, _find_bundle(resources_section, bundle_id))
         if not resource.bundle.is_pcmk_remote_accessible(bundle_el):
             env.report_processor.report(
                 ReportItem(
@@ -1121,7 +1122,7 @@ def bundle_create(  # noqa: PLR0913
                 network_options,
                 port_map,
                 storage_map,
-                # TODO meta attributes - there is no validation for now
+                meta_attributes,
                 force_options,
             )
         ).has_errors:
@@ -1211,7 +1212,7 @@ def bundle_reset(  # noqa: PLR0913
                 network_options,
                 port_map,
                 storage_map,
-                # TODO meta attributes - there is no validation for now
+                meta_attributes,
                 force_options,
             )
         ).has_errors:
@@ -1298,7 +1299,7 @@ def bundle_update(  # noqa: PLR0913
                 port_map_remove,
                 storage_map_add,
                 storage_map_remove,
-                # TODO meta attributes - there is no validation for now
+                meta_attributes,
                 force_options,
             )
         ).has_errors:

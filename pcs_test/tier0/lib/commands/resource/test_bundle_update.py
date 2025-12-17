@@ -508,6 +508,14 @@ class ContainerUnknown(TestCase):
                 "attr": "val",
             },
         )
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.META_ATTRS_NOT_VALIDATED_UNSUPPORTED_TYPE,
+                    meta_type_list=["bundle"],
+                ),
+            ]
+        )
 
     def test_no_container_options(self):
         self.config.env.push_cib(
@@ -556,6 +564,14 @@ class ContainerUnknown(TestCase):
             network_options={
                 "host-netmask": "24",
             },
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.META_ATTRS_NOT_VALIDATED_UNSUPPORTED_TYPE,
+                    meta_type_list=["bundle"],
+                ),
+            ]
         )
 
     def test_with_container_options(self):
@@ -1147,6 +1163,22 @@ class Meta(TestCase):
                 "target-role": "Stopped",
             },
         )
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.META_ATTRS_NOT_VALIDATED_UNSUPPORTED_TYPE,
+                    meta_type_list=["bundle"],
+                ),
+            ]
+        )
+
+    def test_empty_meta_attributes(self):
+        self.config.runner.cib.load(resources=self.fixture_no_meta)
+        self.config.env.push_cib(resources=self.fixture_no_meta)
+        resource.bundle_update(
+            self.env_assist.get_env(), "B1", meta_attributes={}
+        )
+        self.env_assist.assert_reports([])
 
     def test_keep_meta_element(self):
         (
@@ -1206,6 +1238,14 @@ class Meta(TestCase):
                 "resource-stickiness": "100",
                 "is-managed": "",
             },
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.META_ATTRS_NOT_VALIDATED_UNSUPPORTED_TYPE,
+                    meta_type_list=["bundle"],
+                ),
+            ]
         )
 
 

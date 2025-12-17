@@ -1,5 +1,6 @@
 from unittest import TestCase
 
+from pcs.common import reports
 from pcs.common.reports import ReportItemSeverity as severities
 from pcs.common.reports import codes as report_codes
 from pcs.lib.commands.resource import bundle_reset
@@ -273,6 +274,14 @@ class FullMixin(SetUpMixin, BaseMixin):
                 "target-role": "Started",
             },
         )
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.META_ATTRS_NOT_VALIDATED_UNSUPPORTED_TYPE,
+                    meta_type_list=["bundle"],
+                ),
+            ]
+        )
 
     def test_success_keep_map_ids(self):
         self.config.env.push_cib(
@@ -344,6 +353,15 @@ class FullMixin(SetUpMixin, BaseMixin):
             meta_attributes={
                 "target-role": "Stopped",
             },
+        )
+
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.META_ATTRS_NOT_VALIDATED_UNSUPPORTED_TYPE,
+                    meta_type_list=["bundle"],
+                ),
+            ]
         )
 
 
@@ -418,6 +436,14 @@ class ResetWithMetaMap(BaseMixin, MetaMixin, TestCase):
                 "target-role": "Stopped",
                 "is-managed": "false",
             }
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.META_ATTRS_NOT_VALIDATED_UNSUPPORTED_TYPE,
+                    meta_type_list=["bundle"],
+                ),
+            ]
         )
 
 
@@ -499,6 +525,14 @@ class NoMetaIdRegenerationMixin(BaseMixin, SetUpMixin):
             meta_attributes={
                 "target-role": "Stopped",
             },
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.META_ATTRS_NOT_VALIDATED_UNSUPPORTED_TYPE,
+                    meta_type_list=["bundle"],
+                ),
+            ]
         )
 
 

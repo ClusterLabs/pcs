@@ -914,6 +914,30 @@ class MetaMixin(SetUpMixin):
                 "is-managed": "false",
             }
         )
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.META_ATTRS_NOT_VALIDATED_UNSUPPORTED_TYPE,
+                    meta_type_list=["bundle"],
+                ),
+            ]
+        )
+
+    def test_empty_meta_attributes(self):
+        self.config.env.push_cib(
+            resources="""
+                <resources>
+                    <bundle id="{bundle_id}">
+                        <{container_type} image="{image}" />
+                    </bundle>
+                </resources>
+            """.format(
+                container_type=self.container_type,
+                bundle_id=self.bundle_id,
+                image=self.image,
+            )
+        )
+        self.run_bundle_cmd(meta_attributes={})
         self.env_assist.assert_reports([])
 
     def test_disabled(self):

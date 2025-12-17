@@ -1,19 +1,14 @@
-from typing import (
-    List,
-    Optional,
-    cast,
-)
+from typing import Iterable, Mapping, Optional, cast
 
 from lxml import etree
 from lxml.etree import _Element
 
 from pcs.common import reports
 from pcs.common.pacemaker.resource import bundle
+from pcs.common.types import StringIterable
 from pcs.lib import validate
-from pcs.lib.cib import (
-    nvpair_multi,
-    rule,
-)
+from pcs.lib.cib import const as cib_const
+from pcs.lib.cib import nvpair_multi, rule
 from pcs.lib.cib.const import TAG_RESOURCE_BUNDLE as TAG
 from pcs.lib.cib.nvpair import (
     META_ATTRIBUTES_TAG,
@@ -21,13 +16,14 @@ from pcs.lib.cib.nvpair import (
     arrange_first_meta_attributes,
 )
 from pcs.lib.cib.resource.primitive import TAG as TAG_PRIMITIVE
-from pcs.lib.cib.tools import ElementSearcher
+from pcs.lib.cib.tools import ElementSearcher, IdProvider
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.values import sanitize_id
 from pcs.lib.tools import get_optional_value
 from pcs.lib.xml_tools import (
     append_when_useful,
     get_sub_element,
+    remove_one_element,
     reset_element,
     update_attributes_remove_empty,
 )
@@ -199,27 +195,29 @@ def verify(resources_el: _Element) -> reports.ReportItemList:
     ]
 
 
-def validate_new(
-    id_provider,
-    bundle_id,
-    container_type,
-    container_options,
-    network_options,
-    port_map,
-    storage_map,
-    force_options=False,
-):
+def validate_new(  # noqa: PLR0913
+    id_provider: IdProvider,
+    bundle_id: str,
+    container_type: str,
+    container_options: Mapping[str, str],
+    network_options: Mapping[str, str],
+    port_map: Iterable[Mapping[str, str]],
+    storage_map: Iterable[Mapping[str, str]],
+    meta_attributes: Mapping[str, str],
+    force_options: bool = False,
+) -> reports.ReportItemList:
     """
     Validate new bundle parameters, return list of report items
 
-    IdProvider id_provider -- elements' ids generator and uniqueness checker
-    string bundle_id -- id of the bundle
-    string container_type -- bundle container type
-    dict container_options -- container options
-    dict network_options -- network options
-    list of dict port_map -- list of port mapping options
-    list of dict storage_map -- list of storage mapping options
-    bool force_options -- return warnings instead of forceable errors
+    id_provider -- elements' ids generator and uniqueness checker
+    bundle_id -- id of the bundle
+    container_type -- bundle container type
+    container_options -- container options
+    network_options -- network options
+    port_map -- list of port mapping options
+    storage_map -- list of storage mapping options
+    meta_attributes -- meta attributes of the bundle
+    force_options -- return warnings instead of forceable errors
     """
     return (
         validate.ValueId(
@@ -232,34 +230,35 @@ def validate_new(
         + _validate_network_options_new(network_options, force_options)
         + _validate_port_map_list(port_map, id_provider, force_options)
         + _validate_storage_map_list(storage_map, id_provider, force_options)
+        + _validate_bundle_meta_attributes(meta_attributes)
     )
 
 
 def append_new(  # noqa: PLR0913
-    parent_element,
-    id_provider,
-    bundle_id,
-    container_type,
-    container_options,
-    network_options,
-    port_map,
-    storage_map,
-    meta_attributes,
-):
+    parent_element: _Element,
+    id_provider: IdProvider,
+    bundle_id: str,
+    container_type: str,
+    container_options: Mapping[str, str],
+    network_options: Mapping[str, str],
+    port_map: Iterable[Mapping[str, str]],
+    storage_map: Iterable[Mapping[str, str]],
+    meta_attributes: Mapping[str, str],
+) -> _Element:
     # pylint: disable=too-many-arguments
     # pylint: disable=too-many-positional-arguments
     """
     Create new bundle and add it to the CIB
 
-    etree parent_element -- the bundle will be appended to this element
-    IdProvider id_provider -- elements' ids generator
-    string bundle_id -- id of the bundle
-    string container_type -- bundle container type
-    dict container_options -- container options
-    dict network_options -- network options
-    list of dict port_map -- list of port mapping options
-    list of dict storage_map -- list of storage mapping options
-    dict meta_attributes -- meta attributes
+    parent_element -- the bundle will be appended to this element
+    id_provider -- elements' ids generator
+    bundle_id -- id of the bundle
+    container_type -- bundle container type
+    container_options -- container options
+    network_options -- network options
+    port_map -- list of port mapping options
+    storage_map -- list of storage mapping options
+    meta_attributes -- meta attributes
     """
     bundle_element = etree.SubElement(parent_element, TAG, {"id": bundle_id})
     _append_container(bundle_element, container_type, container_options)
@@ -279,49 +278,54 @@ def append_new(  # noqa: PLR0913
 
 
 def validate_reset(
-    id_provider,
-    bundle_el,
-    container_options,
-    network_options,
-    port_map,
-    storage_map,
-    force_options=False,
-):
+    id_provider: IdProvider,
+    bundle_el: _Element,
+    container_options: Mapping[str, str],
+    network_options: Mapping[str, str],
+    port_map: Iterable[Mapping[str, str]],
+    storage_map: Iterable[Mapping[str, str]],
+    meta_attributes: Mapping[str, str],
+    force_options: bool = False,
+) -> reports.ReportItemList:
     """
     Validate bundle parameters, return list of report items
 
-    IdProvider id_provider -- elements' ids generator and uniqueness checker
-    etree bundle_el -- the bundle to be reset
-    dict container_options -- container options
-    dict network_options -- network options
-    list of dict port_map -- list of port mapping options
-    list of dict storage_map -- list of storage mapping options
-    bool force_options -- return warnings instead of forceable errors
+    id_provider -- elements' ids generator and uniqueness checker
+    bundle_el -- the bundle to be reset
+    container_options -- container options
+    network_options -- network options
+    port_map -- list of port mapping options
+    storage_map -- list of storage mapping options
+    meta_attributes -- meta attributes of the bundle
+    force_options -- return warnings instead of forceable errors
     """
     return (
         _validate_container_reset(bundle_el, container_options, force_options)
         + _validate_network_options_new(network_options, force_options)
         + _validate_port_map_list(port_map, id_provider, force_options)
         + _validate_storage_map_list(storage_map, id_provider, force_options)
+        + _validate_bundle_meta_attributes(meta_attributes)
     )
 
 
-def validate_reset_to_minimal(bundle_element):
+def validate_reset_to_minimal(
+    bundle_element: _Element,
+) -> reports.ReportItemList:
     """
     Validate removing configuration of bundle_element and keep the minimal one.
 
-    etree bundle_element -- the bundle element that will be reset
+    bundle_element -- the bundle element that will be reset
     """
     if not _is_supported_container(_get_container_element(bundle_element)):
         return [_get_report_unsupported_container(bundle_element)]
     return []
 
 
-def reset_to_minimal(bundle_element):
+def reset_to_minimal(bundle_element: _Element) -> None:
     """
     Remove configuration of bundle_element and keep the minimal one.
 
-    etree bundle_element -- the bundle element that will be reset
+    bundle_element -- the bundle element that will be reset
     """
     # Elements network, storage and meta_attributes must be kept even if they
     # are without children.
@@ -362,30 +366,32 @@ def _get_report_unsupported_container(
 
 
 def validate_update(  # noqa: PLR0913
-    id_provider,
-    bundle_el,
-    container_options,
-    network_options,
-    port_map_add,
-    port_map_remove,
-    storage_map_add,
-    storage_map_remove,
-    force_options=False,
-):
+    id_provider: IdProvider,
+    bundle_el: _Element,
+    container_options: Mapping[str, str],
+    network_options: Mapping[str, str],
+    port_map_add: Iterable[Mapping[str, str]],
+    port_map_remove: StringIterable,
+    storage_map_add: Iterable[Mapping[str, str]],
+    storage_map_remove: StringIterable,
+    meta_attributes: Mapping[str, str],
+    force_options: bool = False,
+) -> reports.ReportItemList:
     # pylint: disable=too-many-arguments
     # pylint: disable=too-many-positional-arguments
     """
     Validate modifying an existing bundle, return list of report items
 
-    IdProvider id_provider -- elements' ids generator and uniqueness checker
-    etree bundle_el -- the bundle to be updated
-    dict container_options -- container options to modify
-    dict network_options -- network options to modify
-    list of dict port_map_add -- list of port mapping options to add
-    list of string port_map_remove -- list of port mapping ids to remove
-    list of dict storage_map_add -- list of storage mapping options to add
-    list of string storage_map_remove -- list of storage mapping ids to remove
-    bool force_options -- return warnings instead of forceable errors
+    id_provider -- elements' ids generator and uniqueness checker
+    bundle_el -- the bundle to be updated
+    container_options -- container options to modify
+    network_options -- network options to modify
+    port_map_add -- list of port mapping options to add
+    port_map_remove -- list of port mapping ids to remove
+    storage_map_add -- list of storage mapping options to add
+    storage_map_remove -- list of storage mapping ids to remove
+    meta_attributes -- meta attributes of the bundle
+    force_options -- return warnings instead of forceable errors
     """
     # TODO It will probably be needed to split the following validators to
     # create and update variants. It should be done once the need exists and
@@ -403,34 +409,35 @@ def validate_update(  # noqa: PLR0913
         + _validate_map_ids_exist(
             bundle_el, "storage-mapping", "storage-map", storage_map_remove
         )
+        + _validate_bundle_meta_attributes(meta_attributes)
     )
 
 
 def update(  # noqa: PLR0913
-    id_provider,
-    bundle_el,
-    container_options,
-    network_options,
-    port_map_add,
-    port_map_remove,
-    storage_map_add,
-    storage_map_remove,
-    meta_attributes,
-):
+    id_provider: IdProvider,
+    bundle_el: _Element,
+    container_options: Mapping[str, str],
+    network_options: Mapping[str, str],
+    port_map_add: Iterable[Mapping[str, str]],
+    port_map_remove: StringIterable,
+    storage_map_add: Iterable[Mapping[str, str]],
+    storage_map_remove: StringIterable,
+    meta_attributes: Mapping[str, str],
+) -> None:
     # pylint: disable=too-many-arguments
     # pylint: disable=too-many-positional-arguments
     """
     Modify an existing bundle (does not touch encapsulated resources)
 
-    IdProvider id_provider -- elements' ids generator and uniqueness checker
-    etree bundle_el -- the bundle to be updated
-    dict container_options -- container options to modify
-    dict network_options -- network options to modify
-    list of dict port_map_add -- list of port mapping options to add
-    list of string port_map_remove -- list of port mapping ids to remove
-    list of dict storage_map_add -- list of storage mapping options to add
-    list of string storage_map_remove -- list of storage mapping ids to remove
-    dict meta_attributes -- meta attributes to update
+    id_provider -- elements' ids generator and uniqueness checker
+    bundle_el -- the bundle to be updated
+    container_options -- container options to modify
+    network_options -- network options to modify
+    port_map_add -- list of port mapping options to add
+    port_map_remove -- list of port mapping ids to remove
+    storage_map_add -- list of storage mapping options to add
+    storage_map_remove -- list of storage mapping ids to remove
+    meta_attributes -- meta attributes to update
     """
     # Do not ever remove meta_attributes, network and storage elements, even if
     # they are empty. There may be ACLs set in pacemaker which allow "write"
@@ -439,10 +446,10 @@ def update(  # noqa: PLR0913
     # rejected by pacemaker with a "permission denied" message.
     # https://bugzilla.redhat.com/show_bug.cgi?id=1642514
 
-    bundle_id = bundle_el.get("id")
-    update_attributes_remove_empty(
-        _get_container_element(bundle_el), container_options
-    )
+    bundle_id = bundle_el.get("id", "")
+    container_el = _get_container_element(bundle_el)
+    if container_el is not None:
+        update_attributes_remove_empty(container_el, container_options)
 
     network_element = get_sub_element(
         bundle_el, "network", append_if_missing=False
@@ -484,13 +491,13 @@ def update(  # noqa: PLR0913
         arrange_first_meta_attributes(bundle_el, meta_attributes, id_provider)
 
 
-def is_pcmk_remote_accessible(bundle_element):
+def is_pcmk_remote_accessible(bundle_element: _Element) -> bool:
     """
     Check whenever pacemaker remote inside the bundle is accessible from
     outside. Either a control-port or an ip-range-start have to be specified in
     the network element. Returns True if accessible, False otherwise.
 
-    etree bundle_element -- bundle element to check
+    bundle_element -- bundle element to check
     """
     network_el = bundle_element.find("network")
     if network_el is None:
@@ -502,12 +509,12 @@ def is_pcmk_remote_accessible(bundle_element):
     return False
 
 
-def add_resource(bundle_element, primitive_element):
+def add_resource(bundle_element: _Element, primitive_element: _Element) -> None:
     """
     Add an existing resource to an existing bundle
 
-    etree bundle_element -- where to add the resource to
-    etree primitive_element -- the resource to be added to the bundle
+    bundle_element -- where to add the resource to
+    primitive_element -- the resource to be added to the bundle
     """
     # TODO possibly split to 'validate' and 'do' functions
     # a bundle may currently contain at most one primitive resource
@@ -516,8 +523,8 @@ def add_resource(bundle_element, primitive_element):
         raise LibraryError(
             reports.ReportItem.error(
                 reports.messages.ResourceBundleAlreadyContainsAResource(
-                    bundle_element.get("id"),
-                    inner_primitive.get("id"),
+                    bundle_element.get("id", ""),
+                    inner_primitive.get("id", ""),
                 )
             )
         )
@@ -525,33 +532,39 @@ def add_resource(bundle_element, primitive_element):
 
 
 def get_inner_resource(bundle_el: _Element) -> Optional[_Element]:
-    resources = cast(List[_Element], bundle_el.xpath("./primitive"))
+    resources = cast(list[_Element], bundle_el.xpath("./primitive"))
     if resources:
         return resources[0]
     return None
 
 
-def _is_supported_container(container_el):
+def _is_supported_container(container_el: Optional[_Element]) -> bool:
     return (
         container_el is not None and container_el.tag in GENERIC_CONTAINER_TYPES
     )
 
 
-def _validate_container(container_type, container_options, force_options=False):
+def _validate_container(
+    container_type: str,
+    container_options: Mapping[str, str],
+    force_options: bool = False,
+) -> reports.ReportItemList:
     if container_type not in GENERIC_CONTAINER_TYPES:
         return [
             reports.ReportItem.error(
                 reports.messages.InvalidOptionValue(
                     "container type",
                     container_type,
-                    GENERIC_CONTAINER_TYPES,
+                    sorted(GENERIC_CONTAINER_TYPES),
                 )
             )
         ]
     return _validate_generic_container_options(container_options, force_options)
 
 
-def _validate_generic_container_options(container_options, force_options=False):
+def _validate_generic_container_options(
+    container_options: Mapping[str, str], force_options: bool = False
+) -> reports.ReportItemList:
     validators = [
         validate.NamesIn(
             GENERIC_CONTAINER_OPTIONS,
@@ -569,7 +582,11 @@ def _validate_generic_container_options(container_options, force_options=False):
     return validate.ValidatorAll(validators).validate(container_options)
 
 
-def _validate_container_reset(bundle_el, container_options, force_options):
+def _validate_container_reset(
+    bundle_el: _Element,
+    container_options: Mapping[str, str],
+    force_options: bool,
+) -> reports.ReportItemList:
     # Unlike in the case of update, in reset empty options are not necessary
     # valid - user MUST set everything (including required options e.g. image).
     if container_options and not _is_supported_container(
@@ -579,7 +596,9 @@ def _validate_container_reset(bundle_el, container_options, force_options):
     return _validate_generic_container_options(container_options, force_options)
 
 
-def _validate_container_update(bundle_el, options, force_options):
+def _validate_container_update(
+    bundle_el: _Element, options: Mapping[str, str], force_options: bool
+) -> reports.ReportItemList:
     # Validate container options only if they are being updated. Empty options
     # are valid - user DOESN'T NEED to change anything.
     if not options:
@@ -589,13 +608,17 @@ def _validate_container_update(bundle_el, options, force_options):
     if not _is_supported_container(container_el):
         return [_get_report_unsupported_container(bundle_el)]
     return _validate_generic_container_options_update(
-        container_el, options, force_options
+        # casting is safe because _is_supported_container returns False if
+        # container_el is None
+        cast(_Element, container_el),
+        options,
+        force_options,
     )
 
 
 def _validate_generic_container_options_update(
-    container_el, options, force_options
-):
+    container_el: _Element, options: Mapping[str, str], force_options: bool
+) -> reports.ReportItemList:
     validators_optional_options = [
         validate.ValueNonnegativeInteger("promoted-max"),
         validate.ValuePositiveInteger("replicas"),
@@ -638,7 +661,9 @@ def _validate_generic_container_options_update(
     )
 
 
-def _validate_network_options_new(options, force_options):
+def _validate_network_options_new(
+    options: Mapping[str, str], force_options: bool
+) -> reports.ReportItemList:
     severity = reports.item.get_severity(reports.codes.FORCE, force_options)
     validators = [
         # TODO add validators for other keys (ip-range-start - IPv4)
@@ -653,11 +678,13 @@ def _validate_network_options_new(options, force_options):
     return validate.ValidatorAll(validators).validate(options)
 
 
-def _is_pcmk_remote_accessible_after_update(network_el, options):
-    def removing(opt):
+def _is_pcmk_remote_accessible_after_update(
+    network_el: _Element, options: Mapping[str, str]
+) -> bool:
+    def removing(opt: str) -> bool:
         return options.get(opt) == ""
 
-    def not_adding(opt):
+    def not_adding(opt: str) -> bool:
         return options.get(opt) is None
 
     port_name = "control-port"
@@ -676,7 +703,9 @@ def _is_pcmk_remote_accessible_after_update(network_el, options):
     return not (case1 or case2 or case3)
 
 
-def _validate_network_update(bundle_el, options, force_options):
+def _validate_network_update(
+    bundle_el: _Element, options: Mapping[str, str], force_options: bool
+) -> reports.ReportItemList:
     network_el = bundle_el.find("network")
     if network_el is None:
         return _validate_network_options_new(options, force_options)
@@ -686,8 +715,11 @@ def _validate_network_update(bundle_el, options, force_options):
 
 
 def _validate_network_options_update(
-    bundle_el, network_el, options, force_options
-):
+    bundle_el: _Element,
+    network_el: _Element,
+    options: Mapping[str, str],
+    force_options: bool,
+) -> reports.ReportItemList:
     report_list = []
     inner_primitive = get_inner_resource(bundle_el)
     if (
@@ -701,8 +733,8 @@ def _validate_network_options_update(
                     force_options,
                 ),
                 message=reports.messages.ResourceInBundleNotAccessible(
-                    bundle_el.get("id"),
-                    inner_primitive.get("id"),
+                    bundle_el.get("id", ""),
+                    inner_primitive.get("id", ""),
                 ),
             )
         )
@@ -729,7 +761,11 @@ def _validate_network_options_update(
     return report_list + validate.ValidatorAll(validators).validate(options)
 
 
-def _validate_port_map_list(options_list, id_provider, force_options):
+def _validate_port_map_list(
+    options_list: Iterable[Mapping[str, str]],
+    id_provider: IdProvider,
+    force_options: bool,
+) -> reports.ReportItemList:
     severity = reports.item.get_severity(reports.codes.FORCE, force_options)
     option_type = "port-map"
     validators = [
@@ -759,7 +795,11 @@ def _validate_port_map_list(options_list, id_provider, force_options):
     return report_list
 
 
-def _validate_storage_map_list(options_list, id_provider, force_options):
+def _validate_storage_map_list(
+    options_list: Iterable[Mapping[str, str]],
+    id_provider: IdProvider,
+    force_options: bool,
+) -> reports.ReportItemList:
     severity = reports.item.get_severity(reports.codes.FORCE, force_options)
     option_type = "storage-map"
     validators = [
@@ -789,7 +829,9 @@ def _validate_storage_map_list(options_list, id_provider, force_options):
     return report_list
 
 
-def _validate_map_ids_exist(bundle_el, map_type, map_label, id_list):
+def _validate_map_ids_exist(
+    bundle_el: _Element, map_type: str, map_label: str, id_list: StringIterable
+) -> reports.ReportItemList:
     report_list = []
     for _id in id_list:
         searcher = ElementSearcher(
@@ -800,15 +842,34 @@ def _validate_map_ids_exist(bundle_el, map_type, map_label, id_list):
     return report_list
 
 
+def _validate_bundle_meta_attributes(
+    meta_attributes: Mapping[str, str],
+) -> reports.ReportItemList:
+    report_list = []
+    if any(meta_attributes.values()):
+        report_list.append(
+            reports.ReportItem.warning(
+                reports.messages.MetaAttrsNotValidatedUnsupportedType(
+                    [cib_const.TAG_RESOURCE_BUNDLE]
+                )
+            )
+        )
+    return report_list
+
+
 class ValueHostNetmask(validate.ValuePredicateBase):
-    def _is_valid(self, value):
+    def _is_valid(self, value: str) -> bool:
         return validate.is_integer(value, 1, 32)
 
-    def _get_allowed_values(self):
+    def _get_allowed_values(self) -> str:
         return "a number of bits of the mask (1..32)"
 
 
-def _append_container(bundle_element, container_type, container_options):
+def _append_container(
+    bundle_element: _Element,
+    container_type: str,
+    container_options: Mapping[str, str],
+) -> None:
     # Do not add options with empty values. When updating, an empty value means
     # remove the option.
     update_attributes_remove_empty(
@@ -818,8 +879,12 @@ def _append_container(bundle_element, container_type, container_options):
 
 
 def _append_network(
-    bundle_element, id_provider, id_base, network_options, port_map
-):
+    bundle_element: _Element,
+    id_provider: IdProvider,
+    id_base: str,
+    network_options: Mapping[str, str],
+    port_map: Iterable[Mapping[str, str]],
+) -> None:
     network_element = etree.SubElement(bundle_element, "network")
     # Do not add options with empty values. When updating, an empty value means
     # remove the option.
@@ -830,7 +895,13 @@ def _append_network(
         )
 
 
-def _append_port_map(parent_element, id_provider, id_base, port_map_options):
+def _append_port_map(
+    parent_element: _Element,
+    id_provider: IdProvider,
+    id_base: str,
+    port_map_options: Mapping[str, str],
+) -> _Element:
+    port_map_options = dict(port_map_options)
     if "id" not in port_map_options:
         id_suffix = None
         if "port" in port_map_options:
@@ -848,7 +919,12 @@ def _append_port_map(parent_element, id_provider, id_base, port_map_options):
     return port_map_element
 
 
-def _append_storage(bundle_element, id_provider, id_base, storage_map):
+def _append_storage(
+    bundle_element: _Element,
+    id_provider: IdProvider,
+    id_base: str,
+    storage_map: Iterable[Mapping[str, str]],
+) -> None:
     storage_element = etree.SubElement(bundle_element, "storage")
     for storage_map_options in storage_map:
         _append_storage_map(
@@ -860,12 +936,16 @@ def _append_storage(bundle_element, id_provider, id_base, storage_map):
 
 
 def _append_storage_map(
-    parent_element, id_provider, id_base, storage_map_options
-):
+    parent_element: _Element,
+    id_provider: IdProvider,
+    id_base: str,
+    storage_map_options: Mapping[str, str],
+) -> _Element:
+    storage_map_options = dict(storage_map_options)
     if "id" not in storage_map_options:
         storage_map_options["id"] = id_provider.allocate_id(
             # use just numbers to keep the ids reasonably short
-            f"{id_base}-storage-map"
+            sanitize_id(f"{id_base}-storage-map")
         )
     storage_map_element = etree.SubElement(parent_element, "storage-mapping")
     # Do not add options with empty values. When updating, an empty value means
@@ -874,7 +954,7 @@ def _append_storage_map(
     return storage_map_element
 
 
-def _get_container_element(bundle_el):
+def _get_container_element(bundle_el: _Element) -> Optional[_Element]:
     container_el = None
     for container_type in GENERIC_CONTAINER_TYPES:
         container_el = bundle_el.find(container_type)
@@ -883,13 +963,15 @@ def _get_container_element(bundle_el):
     return None
 
 
-def _remove_map_elements(element_list, id_to_remove_list):
+def _remove_map_elements(
+    element_list: Iterable[_Element], id_to_remove_list: StringIterable
+) -> None:
     for el in element_list:
         if el.get("id", "") in id_to_remove_list:
-            el.getparent().remove(el)
+            remove_one_element(el)
 
 
-def _options_to_remove(options):
+def _options_to_remove(options: Mapping[str, str]) -> set[str]:
     return {
         name
         for name, value in options.items()

@@ -16,6 +16,9 @@ from pcs_test.tools.pcs_runner import PcsRunner
 ERRORS_HAVE_OCCURRED = (
     "Error: Errors have occurred, therefore pcs is unable to continue\n"
 )
+BUNDLE_META_NOT_VALIDATED = (
+    "Warning: Meta attributes of bundle are not validated\n"
+)
 
 
 class BundleCreateCommon(
@@ -165,6 +168,7 @@ class BundleCreate(BundleCreateCommon):
                     </bundle>
                 </resources>
             """,
+            stderr_full=BUNDLE_META_NOT_VALIDATED,
         )
 
     def test_legacy_masters_not_allowed(self):
@@ -411,6 +415,7 @@ class BundleUpdate(BundleCreateCommon):
                 "resource-stickiness=100",
                 "is-managed=false",
             ],
+            stderr_full=BUNDLE_META_NOT_VALIDATED,
         )
 
     def test_fail_when_missing_args_1(self):
@@ -454,6 +459,7 @@ class BundleUpdate(BundleCreateCommon):
         self.assert_effect(
             self.success_command(remove_command="delete"),
             self.success_xml,
+            stderr_full=BUNDLE_META_NOT_VALIDATED,
         )
 
     def test_success_remove(self):
@@ -461,6 +467,7 @@ class BundleUpdate(BundleCreateCommon):
         self.assert_effect(
             self.success_command(remove_command="remove"),
             self.success_xml,
+            stderr_full=BUNDLE_META_NOT_VALIDATED,
         )
 
     def test_legacy_masters_not_allowed(self):
@@ -791,6 +798,7 @@ class BundleShow(TestCase, AssertPcsMixin):
                 "target-role=Stopped",
                 "is-managed=false",
             ],
+            stderr_full=BUNDLE_META_NOT_VALIDATED,
         )
         self.assert_pcs_success(
             "resource create A ocf:pcsmock:minimal bundle B1 --no-default-ops".split()
