@@ -55,7 +55,7 @@ def dom_rule_add(dom_element, options, rule_argv, cib_schema_version):  # noqa: 
         utils.err("invalid score'{score}'".format(score=options["score"]))
     if options.get("role"):
         role = options["role"].capitalize()
-        utils.print_depracation_warning_for_legacy_roles(options["role"])
+        utils.print_deprecation_warning_for_legacy_roles(options["role"])
         supported_roles = (
             const.PCMK_ROLES_PROMOTED + const.PCMK_ROLES_UNPROMOTED
         )

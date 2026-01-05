@@ -50,7 +50,7 @@ class CachedCibFixture(AssertPcsMixin):
     @property
     def cache_path(self):
         if self._cache_path is None:
-            raise AssertionError("Cache has not been initiialized")
+            raise AssertionError("Cache has not been initialized")
         return self._cache_path
 
     # methods for supporting assert_pcs_success
