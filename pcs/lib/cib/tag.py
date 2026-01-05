@@ -268,7 +268,7 @@ class ValidateTagUpdateByIds:
         return (
             self._validate_tag_exists(tags_section)
             + self._validate_ids_for_update_are_specified()
-            + self._valdiate_no_common_add_remove_ids()
+            + self._validate_no_common_add_remove_ids()
             + self._validate_ids_can_be_added_or_moved(resources_section)
             + self._validate_ids_can_be_removed()
             + self._validate_adjacent_id()
@@ -310,7 +310,7 @@ class ValidateTagUpdateByIds:
             )
         return report_list
 
-    def _valdiate_no_common_add_remove_ids(self) -> ReportItemList:
+    def _validate_no_common_add_remove_ids(self) -> ReportItemList:
         """
         Validate that we do not remove ids currently being added.
         """
@@ -535,7 +535,7 @@ def find_tag_elements_by_ids(
     list in case of errors.
 
     tags_section -- element tags
-    tag_id_list -- list of tag indentifiers
+    tag_id_list -- list of tag identifiers
     """
     element_list = []
     report_list: ReportItemList = []

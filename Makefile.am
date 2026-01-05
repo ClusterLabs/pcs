@@ -293,7 +293,7 @@ if DEV_TESTS
 		$(TIME) $(PYTHON) -m mypy --config-file mypy.ini --package pcs --package pcs_test
 endif
 
-RUN_TYPOS=typos --color never --format brief | sed -e 's/:[0-9]\+:[0-9]\+:/:/' | $(SORT)
+RUN_TYPOS=typos --color never --format brief | sed -e 's/:[0-9]\+:[0-9]\+:/:/' -e 's/: error:/:/' -e 's/ should be / -> /' | $(SORT)
 .PHONY: typos_check
 typos_check:
 if DEV_TESTS

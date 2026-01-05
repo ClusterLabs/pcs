@@ -1,4 +1,5 @@
 ./CHANGELOG.md: `regardles` -> `regardless`
+./CHANGELOG.md: `unaccessible` -> `inaccessible`
 ./Makefile.am: `ba` -> `by`, `be`
 ./pcs/cli/common/output.py: `substracted` -> `subtracted`
 ./pcs/cli/constraint/command.py: `alowed` -> `allowed`
@@ -121,7 +122,6 @@
 ./pcs_test/tier1/legacy/test_utils.py: `dum` -> `dumb`
 ./pcs_test/tier1/legacy/test_utils.py: `ue` -> `use`, `due`
 ./pcs_test/tier1/legacy/test_utils.py: `ue` -> `use`, `due`
-./README.md: `derivates` -> `derivate`
 ./rpm/pcs.spec.in: `shbang` -> `shebang`
 ./rpm/pcs.spec.in: `shbang` -> `shebang`
 ./rpm/pcs.spec.in: `shbang` -> `shebang`

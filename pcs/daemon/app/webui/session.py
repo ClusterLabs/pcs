@@ -10,7 +10,7 @@ class Session:
         sid: str,
         username: str,
     ) -> None:
-        # Session id propageted via cookies.
+        # Session id propagated via cookies.
         self.__sid = sid
         # Username given by login attempt. It does not matter if the
         # authentication succeeded.
