@@ -8,6 +8,7 @@ from lxml import etree
 from pcs.common.reports import ReportItemSeverity as severities
 from pcs.common.reports import codes as report_codes
 from pcs.lib.cib.constraint import order
+from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.values import BOOLEAN_VALUES
 
 from pcs_test.tools.assertions import assert_raise_library_error
@@ -47,10 +48,10 @@ class PrepareOptionsWithSetTest(TestCase):
         )
 
     def test_refuse_invalid_id(self, mock_check_new_id_applicable):
-        mock_check_new_id_applicable.side_effect = Exception()
+        mock_check_new_id_applicable.side_effect = LibraryError()
         invalid_id = "invalid_id"
         self.assertRaises(
-            Exception,
+            LibraryError,
             lambda: self.prepare(
                 {
                     "symmetrical": "true",

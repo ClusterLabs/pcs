@@ -10,7 +10,7 @@ class LibraryWrapperTest(TestCase):
     def test_raises_for_bad_path(self):
         mock_middleware_factory = mock.MagicMock()
         lib = Library("env", mock_middleware_factory)
-        self.assertRaises(Exception, lambda: lib.no_valid_library_part)
+        self.assertRaises(ValueError, lambda: lib.no_valid_library_part)
 
     @mock.patch("pcs.cli.common.lib_wrapper.constraint_order.create_with_set")
     @mock.patch("pcs.cli.common.lib_wrapper.cli_env_to_lib_env")
