@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.11.11] - 2026-01-06
 
 ### Changed
 - Do not wrap resource and stonith agent description to preserve existing
