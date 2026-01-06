@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.12.2] - 2026-01-06
 
 ### Added
 - Commands `pcs resource|stonith|booth delete|remove` and
