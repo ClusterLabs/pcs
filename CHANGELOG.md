@@ -24,6 +24,8 @@
   command
 - Setting ping\_interval and ping\_timeout knet options to less than 200ms is
   no longer allowed to prevent cluster misconfiguration ([RHEL-21879])
+- Prevent an unhandled exception when accessing pcsd `/remote/...` urls on nodes
+  with an invalid local corosync configuration
 
 ### Changed
 - Lib command `cib.remove_elements` does not stop resources before deletion.
