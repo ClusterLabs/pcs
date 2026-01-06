@@ -6,6 +6,10 @@
 - Do not wrap resource and stonith agent description to preserve existing
   formatting ([RHEL-113763])
 
+### Fixed
+- Prevent an unhandled exception when accessing pcsd `/remote/...` urls on nodes
+  with an invalid local corosync configuration
+
 ### Deprecated
 - Value `sctp` of the knet link option `transport` is deprecated in
   corosync / knet and might be removed in a future release ([RHEL-126842])
