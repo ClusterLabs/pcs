@@ -1,3 +1,6 @@
+#
+# Customized version to support uutils from Ubuntu
+#
 # ===========================================================================
 #       https://www.gnu.org/software/autoconf-archive/ax_prog_date.html
 # ===========================================================================
@@ -13,7 +16,7 @@
 #
 #   The type is determined as follow:
 #
-#     * If the version string contains "GNU", then:
+#     * If the version string contains "GNU" or "uutils", then:
 #       - The variable ax_cv_prog_date_gnu is set to "yes".
 #       - The variable ax_cv_prog_date_type is set to "gnu".
 #
@@ -78,7 +81,7 @@
 AC_DEFUN([AX_PROG_DATE], [dnl
   AC_CACHE_CHECK([for GNU date], [ax_cv_prog_date_gnu], [
     ax_cv_prog_date_gnu=no
-    if date --version 2>/dev/null | head -1 | grep -q GNU
+    if date --version 2>/dev/null | head -1 | grep -q "\(GNU\|uutils\)"
     then
       ax_cv_prog_date_gnu=yes
     fi

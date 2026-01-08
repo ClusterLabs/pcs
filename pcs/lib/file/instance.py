@@ -14,8 +14,8 @@ from pcs.common.file import (
 from pcs.lib.file import (
     metadata,
     raw_file,
-    toolbox,
 )
+from pcs.lib.file import toolbox as file_toolbox
 from pcs.lib.interface.config import (
     FacadeInterface,
     ParserErrorException,
@@ -78,7 +78,7 @@ class FileInstance:
                 ghost_file,
                 ghost_data,
             ),
-            toolbox.for_file_type(file_type_code),
+            file_toolbox.for_file_type(file_type_code),
         )
 
     @classmethod
@@ -131,13 +131,13 @@ class FileInstance:
     ) -> "FileInstance":
         return cls(
             raw_file.RealFile(metadata.for_file_type(file_type_code)),
-            toolbox.for_file_type(file_type_code),
+            file_toolbox.for_file_type(file_type_code),
         )
 
     def __init__(
         self,
         raw_file_interface: RawFileInterface,
-        file_toolbox: toolbox.FileToolbox,
+        file_toolbox: file_toolbox.FileToolbox,
     ):
         """
         Factories should be used instead
@@ -156,7 +156,7 @@ class FileInstance:
         return self._raw_file
 
     @property
-    def toolbox(self) -> toolbox.FileToolbox:
+    def toolbox(self) -> file_toolbox.FileToolbox:
         """
         Get the underlying FileToolbox instance
         """
