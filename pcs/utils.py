@@ -2715,7 +2715,7 @@ def get_token_from_file(file_name: str) -> str:
         raise SystemExit(1) from e
 
 
-def print_depracation_warning_for_legacy_roles(role: str) -> None:
+def print_deprecation_warning_for_legacy_roles(role: str) -> None:
     deprecation_map: Dict[str, str] = {
         const.PCMK_ROLE_PROMOTED_LEGACY: const.PCMK_ROLE_PROMOTED,
         const.PCMK_ROLE_UNPROMOTED_LEGACY: const.PCMK_ROLE_UNPROMOTED,

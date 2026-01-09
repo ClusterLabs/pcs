@@ -416,7 +416,7 @@ class Communicator:
         while need_to_wait:
             timeout = self._multi_handle.timeout()
             if timeout == 0:
-                # if timeout == 0 then there is something to precess already
+                # if timeout == 0 then there is something to process already
                 return
             select_timeout = (
                 timeout / 1000.0

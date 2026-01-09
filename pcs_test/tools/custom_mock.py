@@ -198,7 +198,7 @@ class MockCurl:
         request=None,
     ):
         # we don't need exception anymore, because we don't use perform on
-        # easy hanlers. but for now it has to stay as it is because it is sill
+        # easy handlers. but for now it has to stay as it is because it is sill
         # used from old communicator tests
         self._opts = {}
         self._info = info if info else {}

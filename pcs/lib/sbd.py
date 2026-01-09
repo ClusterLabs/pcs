@@ -277,7 +277,7 @@ def is_sbd_enabled(service_manager: ServiceManagerInterface) -> bool:
 def is_sbd_installed(service_manager: ServiceManagerInterface) -> bool:
     """
     Check if SBD service is installed in local system.
-    Reurns True id SBD service is installed. False otherwise.
+    Returns True id SBD service is installed. False otherwise.
     """
     return service_manager.is_installed(get_sbd_service_name(service_manager))
 

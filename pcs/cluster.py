@@ -9,6 +9,7 @@ import sys
 import tempfile
 import time
 import xml.dom.minidom
+import xml.parsers.expat
 from typing import Any, Callable, Iterable, Mapping, Optional, Union, cast
 
 import pcs.lib.pacemaker.live as lib_pacemaker

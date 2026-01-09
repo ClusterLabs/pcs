@@ -229,7 +229,7 @@ def colocation_add(lib, argv, modifiers):  # noqa: PLR0912, PLR0915
                     role, format_list(const.PCMK_ROLES)
                 )
             )
-        utils.print_depracation_warning_for_legacy_roles(role)
+        utils.print_deprecation_warning_for_legacy_roles(role)
         return pacemaker.role.get_value_for_cib(
             role_cleaned, new_roles_supported
         )
