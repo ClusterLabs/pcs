@@ -143,10 +143,13 @@ def _parameter_extract_advanced_from_desc(
     # strings. If either the strings are present OR the xml attribute is 1, the
     # parameter is advanced and the behavior is the same in both cases: remove
     # plaintext representation of structured data.
-    advanced_str_beginings = ["Advanced use only:", "*** Advanced Use Only ***"]
+    advanced_str_beginnings = [
+        "Advanced use only:",
+        "*** Advanced Use Only ***",
+    ]
     shortdesc = parameter.shortdesc
     if shortdesc:
-        for advanced_str in advanced_str_beginings:
+        for advanced_str in advanced_str_beginnings:
             if shortdesc.startswith(advanced_str):
                 new_shortdesc = shortdesc.removeprefix(advanced_str).lstrip()
                 return replace(
