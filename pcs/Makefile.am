@@ -217,6 +217,7 @@ EXTRA_DIST		= \
 			  daemon/app/api_v1.py \
 			  daemon/app/api_v2.py \
 			  daemon/app/auth.py \
+			  daemon/app/auth_provider.py \
 			  daemon/app/capabilities.py \
 			  daemon/app/sinatra_common.py \
 			  daemon/app/sinatra_remote.py \
@@ -224,6 +225,7 @@ EXTRA_DIST		= \
 			  daemon/app/ui_common.py \
 			  daemon/app/webui/__init__.py \
 			  daemon/app/webui/auth.py \
+			  daemon/app/webui/auth_provider.py \
 			  daemon/app/webui/core.py \
 			  daemon/app/webui/session.py \
 			  daemon/app/webui/sinatra_ui.py \
