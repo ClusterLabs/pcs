@@ -1,56 +1,28 @@
 import json
-from dataclasses import dataclass
-from typing import Any, Iterable, Mapping, cast
+from typing import Any, Mapping, cast
 
 from tornado.web import Finish
 
 from pcs.common import file_type_codes, reports
-from pcs.common.async_tasks import types
 from pcs.common.async_tasks.dto import (
     CommandDto,
     CommandOptionsDto,
 )
 from pcs.common.pcs_cfgsync_dto import SyncConfigsDto
-from pcs.common.reports.dto import ReportItemDto
 from pcs.common.str_tools import format_list
+from pcs.daemon.app.api_v0_tools import (
+    SimplifiedResult,
+    reports_to_str,
+    run_library_command_in_scheduler,
+)
 from pcs.daemon.app.auth import LegacyTokenAuthenticationHandler
 from pcs.daemon.async_tasks.scheduler import (
     Scheduler,
-    TaskNotFoundError,
 )
-from pcs.daemon.async_tasks.types import Command
 from pcs.lib.auth.provider import AuthProvider
 from pcs.lib.pcs_cfgsync.const import SYNCED_CONFIGS
 
 from .common import RoutesType
-
-
-@dataclass(frozen=True)
-class SimplifiedResult:
-    success: bool
-    result: Any
-    reports: list[ReportItemDto]
-
-
-_SEVERITY_LABEL = {
-    reports.ReportItemSeverity.DEBUG: "Debug: ",
-    reports.ReportItemSeverity.DEPRECATION: "Deprecation warning: ",
-    reports.ReportItemSeverity.ERROR: "Error: ",
-    reports.ReportItemSeverity.INFO: "",
-    reports.ReportItemSeverity.WARNING: "Warning: ",
-}
-
-
-def _report_to_str(report_item: ReportItemDto) -> str:
-    return (
-        _SEVERITY_LABEL.get(report_item.severity.level, "")
-        + (f"{report_item.context.node}: " if report_item.context else "")
-        + report_item.message.message
-    )
-
-
-def _reports_to_str(report_items: Iterable[ReportItemDto]) -> str:
-    return "\n".join(_report_to_str(item) for item in report_items)
 
 
 class _BaseApiV0Handler(LegacyTokenAuthenticationHandler):
@@ -102,45 +74,8 @@ class _BaseApiV0Handler(LegacyTokenAuthenticationHandler):
                 effective_groups=list(self.effective_user.groups),
             ),
         )
-        task_ident = self._scheduler.new_task(
-            Command(command_dto, is_legacy_command=True),
-            self.real_user,
-        )
-
-        try:
-            task_result_dto = await self._scheduler.wait_for_task(
-                task_ident, self.real_user
-            )
-        except TaskNotFoundError as e:
-            raise self._error("Internal server error", 500) from e
-
-        if (
-            task_result_dto.task_finish_type == types.TaskFinishType.FAIL
-            and task_result_dto.reports
-            and task_result_dto.reports[0].message.code
-            == reports.codes.NOT_AUTHORIZED
-            and not task_result_dto.reports[0].context
-        ):
-            raise self._error("Permission denied", 403)
-
-        if task_result_dto.task_finish_type == types.TaskFinishType.KILL:
-            if (
-                task_result_dto.kill_reason
-                == types.TaskKillReason.COMPLETION_TIMEOUT
-            ):
-                raise self._error("Task processing timed out", 500)
-            raise self._error("Task killed")
-
-        if (
-            task_result_dto.task_finish_type
-            == types.TaskFinishType.UNHANDLED_EXCEPTION
-        ):
-            raise self._error("Unhandled exception", 500)
-
-        return SimplifiedResult(
-            task_result_dto.task_finish_type == types.TaskFinishType.SUCCESS,
-            task_result_dto.result,
-            task_result_dto.reports,
+        return await run_library_command_in_scheduler(
+            self._scheduler, command_dto, self.real_user, self._error
         )
 
 
@@ -155,7 +90,7 @@ class ResourceManageUnmanageHandler(_BaseApiV0Handler):
             self._get_cmd(), dict(resource_or_tag_ids=resource_list)
         )
         if not result.success:
-            raise self._error(_reports_to_str(result.reports))
+            raise self._error(reports_to_str(result.reports))
 
     @staticmethod
     def _get_cmd() -> str:
@@ -180,7 +115,7 @@ class QdeviceNetGetCaCertificateHandler(_BaseApiV0Handler):
             "qdevice.qdevice_net_get_ca_certificate", {}
         )
         if not result.success:
-            raise self._error(_reports_to_str(result.reports))
+            raise self._error(reports_to_str(result.reports))
         self.write(result.result)
 
 
@@ -195,7 +130,7 @@ class QdeviceNetSignNodeCertificateHandler(_BaseApiV0Handler):
             ),
         )
         if not result.success:
-            raise self._error(_reports_to_str(result.reports))
+            raise self._error(reports_to_str(result.reports))
         self.write(result.result)
 
 
@@ -207,7 +142,7 @@ class QdeviceNetClientInitCertificateStorageHandler(_BaseApiV0Handler):
             dict(ca_certificate=self.get_argument("ca_certificate")),
         )
         if not result.success:
-            raise self._error(_reports_to_str(result.reports))
+            raise self._error(reports_to_str(result.reports))
 
 
 class QdeviceNetClientImportCertificateHandler(_BaseApiV0Handler):
@@ -218,14 +153,14 @@ class QdeviceNetClientImportCertificateHandler(_BaseApiV0Handler):
             dict(certificate=self.get_argument("certificate")),
         )
         if not result.success:
-            raise self._error(_reports_to_str(result.reports))
+            raise self._error(reports_to_str(result.reports))
 
 
 class QdeviceNetClientDestroyHandler(_BaseApiV0Handler):
     async def _handle_request(self) -> None:
         result = await self._process_request("qdevice.client_net_destroy", {})
         if not result.success:
-            raise self._error(_reports_to_str(result.reports))
+            raise self._error(reports_to_str(result.reports))
 
 
 class GetConfigsHandler(_BaseApiV0Handler):
@@ -260,7 +195,7 @@ class GetConfigsHandler(_BaseApiV0Handler):
             self.write({"status": "wrong_cluster_name"})
             return
         if not result.success or result.result is None:
-            raise self._error(_reports_to_str(result.reports))
+            raise self._error(reports_to_str(result.reports))
 
         command_result = cast(SyncConfigsDto, result.result)
         legacy_result = {

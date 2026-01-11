@@ -213,6 +213,7 @@ EXTRA_DIST		= \
 			  daemon/app/common.py \
 			  daemon/app/__init__.py \
 			  daemon/app/api_v0.py \
+			  daemon/app/api_v0_tools.py \
 			  daemon/app/api_v1.py \
 			  daemon/app/api_v2.py \
 			  daemon/app/auth.py \

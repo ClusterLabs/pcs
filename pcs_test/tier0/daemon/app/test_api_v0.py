@@ -1,15 +1,10 @@
 import json
 import logging
-from typing import (
-    Any,
-    Optional,
-)
+from typing import Any, Optional
 from unittest import mock
 from urllib.parse import urlencode
 
 from tornado.httpclient import HTTPResponse
-from tornado.httputil import HTTPHeaders
-from tornado.testing import AsyncHTTPTestCase
 from tornado.web import Application
 
 from pcs.common import file_type_codes, reports
@@ -25,7 +20,6 @@ from pcs.common.async_tasks.types import (
 )
 from pcs.common.file import RawFileError
 from pcs.common.pcs_cfgsync_dto import SyncConfigsDto
-from pcs.common.tools import bin_to_str
 from pcs.daemon.app import api_v0
 from pcs.daemon.async_tasks.scheduler import (
     Scheduler,
@@ -33,6 +27,8 @@ from pcs.daemon.async_tasks.scheduler import (
 )
 from pcs.daemon.async_tasks.types import Command
 from pcs.lib.auth.types import AuthUser
+
+from pcs_test.tier0.daemon.app.fixtures_app_api import ApiTestBase
 
 # Don't write errors to test output.
 logging.getLogger("tornado.access").setLevel(logging.CRITICAL)
@@ -47,12 +43,10 @@ class MockAuthProvider:
         return self.user if self.auth_successful else None
 
 
-class ApiV0Test(AsyncHTTPTestCase):
+class ApiV0Test(ApiTestBase):
     """
     Base class for testing API v0, provides useful tools used in tests
     """
-
-    maxDiff = None
 
     def setUp(self) -> None:
         self.scheduler = mock.AsyncMock(Scheduler)
@@ -61,42 +55,6 @@ class ApiV0Test(AsyncHTTPTestCase):
 
     def get_app(self) -> Application:
         raise NotImplementedError
-
-    def assert_body(self, val1, val2):
-        # TestCase.assertEqual doesn't print full diff when instances of bytes
-        # don't match. We want to see the whole diff, so we transform bytes to
-        # str. As a bonus, we dont need to specify expected value as bytes.
-        def to_str(value):
-            return bin_to_str(value) if isinstance(value, bytes) else value
-
-        return self.assertEqual(to_str(val1), to_str(val2))
-
-    def assert_headers(self, headers: HTTPHeaders) -> None:
-        banned_headers = {"Server"}
-        required_headers = {
-            "Cache-Control": "no-store, no-cache",
-            "Content-Security-Policy": "frame-ancestors 'self'; default-src 'self'",
-            "Pragma": "no-cache",
-            "Referrer-Policy": "no-referrer",
-            "Strict-Transport-Security": "max-age=63072000",
-            "X-Content-Type-Options": "nosniff",
-            "X-Frame-Options": "SAMEORIGIN",
-            "X-Xss-Protection": "1; mode=block",
-        }
-        required_real_headers = [
-            hdr for hdr in headers.get_all() if hdr[0] in required_headers
-        ]
-        banned_real_headers = {
-            hdr[0] for hdr in headers.get_all() if hdr[0] in banned_headers
-        }
-        self.assertEqual(
-            sorted(required_headers.items()),
-            sorted(required_real_headers),
-            "Required headers are not present",
-        )
-        self.assertEqual(
-            sorted(banned_real_headers), [], "Banned headers are present"
-        )
 
     def fetch(
         self,
@@ -326,35 +284,6 @@ class ApiV0HandlerTest(ApiV0Test):
         return Application(
             api_v0.get_routes(self.scheduler, self.auth_provider)
         )
-
-    @staticmethod
-    def result_success(result: Any = None) -> api_v0.SimplifiedResult:
-        return api_v0.SimplifiedResult(True, result, [])
-
-    @staticmethod
-    def result_failure(
-        result: Any = None,
-        report_items: Optional[list[reports.ReportItemDto]] = None,
-    ) -> api_v0.SimplifiedResult:
-        return api_v0.SimplifiedResult(False, result, report_items or [])
-
-    def assert_error_with_report(self, url, **kwargs):
-        # Test that the handler returns http 400 and report items in body. The
-        # actual report items don't matter, we can pick any simple report item.
-        self.mock_process_request.return_value = self.result_failure(
-            "some error",
-            [
-                reports.ReportItem.error(
-                    reports.messages.StonithUnfencingFailed("an error"),
-                    context=reports.ReportItemContext("node1"),
-                ).to_dto()
-            ],
-        )
-        response = self.fetch(url, **kwargs)
-        self.assert_body(
-            response.body, "Error: node1: Unfencing failed:\nan error"
-        )
-        self.assertEqual(response.code, 400)
 
 
 class ResourceManageUnmanageMixin:
