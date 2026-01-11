@@ -233,7 +233,6 @@ EXTRA_DIST		= \
 			  daemon/app/webui/auth_provider.py \
 			  daemon/app/webui/core.py \
 			  daemon/app/webui/session.py \
-			  daemon/app/webui/sinatra_ui.py \
 			  daemon/async_tasks/__init__.py \
 			  daemon/async_tasks/scheduler.py \
 			  daemon/async_tasks/task.py \
