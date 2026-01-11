@@ -6582,3 +6582,35 @@ class MetaAttrsNotValidatedLoadingError(NameBuildTest):
             ),
             reports.MetaAttrsNotValidatedLoadingError(),
         )
+
+
+class NodeNotInCluster(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "The node does not currently have a cluster configured",
+            reports.NodeNotInCluster(),
+        )
+
+
+class ClusterNameAlreadyInUse(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "The cluster name 'foo' is already used",
+            reports.ClusterNameAlreadyInUse("foo"),
+        )
+
+
+class UnableToGetClusterInfoFromStatus(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "Unable to retrieve cluster information from node status",
+            reports.UnableToGetClusterInfoFromStatus(),
+        )
+
+
+class UnableToGetClusterKnownHosts(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "Unable to get known hosts from cluster 'foo'",
+            reports.UnableToGetClusterKnownHosts("foo"),
+        )

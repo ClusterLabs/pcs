@@ -139,6 +139,56 @@ class GetCorosyncOnlineTargets(
         return self._corosync_online_target_list
 
 
+class GetClusterInfoFromStatus(
+    AllSameDataMixin, OneByOneStrategyMixin, RunRemotelyBase
+):
+    __cluster_name = ""
+    __cluster_nodes: list[str]
+    __was_successful = False
+
+    def _get_request_data(self) -> RequestData:
+        return RequestData("remote/status", [("version", "2")])
+
+    def _get_failure_report(self, response: Response) -> reports.ReportItem:
+        return reports.ReportItem.error(
+            reports.messages.UnableToGetClusterInfoFromStatus(),
+            context=reports.ReportItemContext(response.request.target.label),
+        )
+
+    def _process_response(self, response: Response) -> list[RequestTarget]:
+        node_label = response.request.target.label
+        report_item = self._get_response_report(response)
+        if report_item:
+            self._report_list([report_item, self._get_failure_report(response)])
+            return self._get_next_list()
+
+        try:
+            status = json.loads(response.data)
+            self.__cluster_name = status["cluster_name"]
+            self.__cluster_nodes = (
+                status["corosync_online"] + status["corosync_offline"]
+            )
+            self.__was_successful = True
+            return []
+        except (KeyError, json.JSONDecodeError):
+            self._report_list(
+                [
+                    ReportItem.error(
+                        reports.messages.InvalidResponseFormat(node_label)
+                    ),
+                    self._get_failure_report(response),
+                ]
+            )
+
+        return self._get_next_list()
+
+    def on_complete(self) -> tuple[str, list[str]]:
+        if not self.__was_successful:
+            return "", []
+
+        return self.__cluster_name, self.__cluster_nodes or []
+
+
 class DistributeCorosyncConf(
     SkipOfflineMixin, AllSameDataMixin, AllAtOnceStrategyMixin, RunRemotelyBase
 ):

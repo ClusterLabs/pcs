@@ -8850,3 +8850,61 @@ class MetaAttrsNotValidatedLoadingError(ReportItemMessage):
             "Meta attribute validation is skipped due to an error loading "
             "meta attributes definition."
         )
+
+
+@dataclass(frozen=True)
+class NodeNotInCluster(ReportItemMessage):
+    """
+    Node is not in cluster
+    """
+
+    _code = codes.NODE_NOT_IN_CLUSTER
+
+    @property
+    def message(self) -> str:
+        return "The node does not currently have a cluster configured"
+
+
+@dataclass(frozen=True)
+class ClusterNameAlreadyInUse(ReportItemMessage):
+    """
+    The provided cluster name is already used in pcsd settings
+
+    cluster_name -- name of the cluster
+    """
+
+    cluster_name: str
+    _code = codes.CLUSTER_NAME_ALREADY_IN_USE
+
+    @property
+    def message(self) -> str:
+        return f"The cluster name '{self.cluster_name}' is already used"
+
+
+@dataclass(frozen=True)
+class UnableToGetClusterInfoFromStatus(ReportItemMessage):
+    """
+    Unable to retrieve cluster info from node status
+    """
+
+    _code = codes.UNABLE_TO_GET_CLUSTER_INFO_FROM_STATUS
+
+    @property
+    def message(self) -> str:
+        return "Unable to retrieve cluster information from node status"
+
+
+@dataclass(frozen=True)
+class UnableToGetClusterKnownHosts(ReportItemMessage):
+    """
+    Unable to retrieve cluster known hosts
+
+    cluster_name -- name of the cluster
+    """
+
+    cluster_name: str
+    _code = codes.UNABLE_TO_GET_CLUSTER_KNOWN_HOSTS
+
+    @property
+    def message(self) -> str:
+        return f"Unable to get known hosts from cluster '{self.cluster_name}'"

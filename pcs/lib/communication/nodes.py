@@ -1,8 +1,9 @@
 import json
-from typing import Mapping
+from typing import Mapping, Optional
 
 from pcs.common import reports
 from pcs.common.auth import HostAuthData
+from pcs.common.host import Destination, PcsKnownHost
 from pcs.common.node_communicator import (
     Request,
     RequestData,
@@ -16,6 +17,7 @@ from pcs.lib import node_communication_format
 from pcs.lib.communication.tools import (
     AllAtOnceStrategyMixin,
     AllSameDataMixin,
+    OneByOneStrategyMixin,
     RunRemotelyBase,
     SimpleResponseProcessingMixin,
     SimpleResponseProcessingNoResponseOnSuccessMixin,
@@ -538,6 +540,81 @@ class UpdateKnownHosts(
             "remote/known_hosts_change",
             [("data_json", json.dumps(self._json_data))],
         )
+
+
+class GetClusterKnownHosts(
+    AllSameDataMixin, OneByOneStrategyMixin, RunRemotelyBase
+):
+    """
+    Get tokens for cluster nodes of the specified target(s)
+    """
+
+    __known_hosts: Optional[list[PcsKnownHost]] = None
+
+    def __init__(
+        self,
+        report_processor: reports.ReportProcessor,
+        cluster_name: str,
+        force_all_errors: bool,
+    ):
+        super().__init__(report_processor)
+        self._cluster_name = cluster_name
+        self._failure_severity = (
+            reports.ReportItemSeverity.WARNING
+            if force_all_errors
+            else reports.ReportItemSeverity.ERROR
+        )
+
+    def _get_request_data(self) -> RequestData:
+        return RequestData("remote/get_cluster_known_hosts")
+
+    def _get_response_report(self, response: Response) -> reports.ReportItem:
+        return response_to_report_item(
+            response, severity=self._failure_severity
+        )
+
+    def _get_failure_report(self, response: Response) -> reports.ReportItem:
+        return reports.ReportItem.warning(
+            reports.messages.UnableToGetClusterKnownHosts(self._cluster_name),
+            context=reports.ReportItemContext(response.request.target.label),
+        )
+
+    def _process_response(self, response: Response) -> list[Request]:
+        node_label = response.request.target.label
+        report = self._get_response_report(response)
+        if report is not None:
+            self._report_list([report, self._get_failure_report(response)])
+            return self._get_next_list()
+        try:
+            data = json.loads(response.data)
+            self.__known_hosts = []
+            for name, known_host_data in data.items():
+                self.__known_hosts.append(
+                    PcsKnownHost(
+                        name,
+                        known_host_data["token"],
+                        [
+                            Destination(dest["addr"], dest["port"])
+                            for dest in known_host_data["dest_list"]
+                        ],
+                    )
+                )
+
+            return []
+        except (KeyError, json.JSONDecodeError):
+            self.__known_hosts = None
+            invalid_response_report = ReportItem(
+                ReportItemSeverity(self._failure_severity, None),
+                reports.messages.InvalidResponseFormat(node_label),
+            )
+            self._report_list(
+                [invalid_response_report, self._get_failure_report(response)]
+            )
+
+        return self._get_next_list()
+
+    def on_complete(self) -> list[PcsKnownHost]:
+        return self.__known_hosts or []
 
 
 class RemoveNodesFromCib(
