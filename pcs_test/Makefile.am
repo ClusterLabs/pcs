@@ -167,6 +167,7 @@ EXTRA_DIST		= \
 			  tier0/common/test_tools_xml_fromstring.py \
 			  tier0/common/test_validate.py \
 			  tier0/daemon/app/fixtures_app.py \
+			  tier0/daemon/app/fixtures_app_api.py \
 			  tier0/daemon/app/fixtures_app_webui.py \
 			  tier0/daemon/app/__init__.py \
 			  tier0/daemon/app/test_api_v0.py \
@@ -179,6 +180,7 @@ EXTRA_DIST		= \
 			  tier0/daemon/app/test_app_spa.py \
 			  tier0/daemon/app/test_auth_provider_multi.py \
 			  tier0/daemon/app/test_session_auth_provider.py \
+			  tier0/daemon/app/test_ui_manage.py \
 			  tier0/daemon/app/test_unix_socket_auth_provider.py \
 			  tier0/daemon/async_tasks/__init__.py \
 			  tier0/daemon/async_tasks/dummy_commands.py \

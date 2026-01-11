@@ -15,6 +15,7 @@ from pcs.lib.commands import (  # services,
     cluster_property,
     constraint,
     fencing_topology,
+    manage_clusters,
     node,
     pcs_cfgsync,
     qdevice,
@@ -38,6 +39,12 @@ class _Cmd:
 
 
 COMMAND_MAP: Mapping[str, _Cmd] = {
+    # TODO
+    "manage_clusters.add_existing_cluster": _Cmd(
+        cmd=manage_clusters.add_existing_cluster,
+        # TODO
+        required_permission=p.GRANT,
+    ),
     "acl.add_permission": _Cmd(
         cmd=acl.add_permission,
         required_permission=p.GRANT,

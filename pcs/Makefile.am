@@ -223,6 +223,11 @@ EXTRA_DIST		= \
 			  daemon/app/sinatra_remote.py \
 			  daemon/app/sinatra_ui.py \
 			  daemon/app/ui_common.py \
+			  daemon/app/ui_manage \
+			  daemon/app/ui_manage/base_handler.py \
+			  daemon/app/ui_manage/existing_cluster.py \
+			  daemon/app/ui_manage/__init__.py \
+			  daemon/app/ui_manage/routes.py \
 			  daemon/app/webui/__init__.py \
 			  daemon/app/webui/auth.py \
 			  daemon/app/webui/auth_provider.py \
