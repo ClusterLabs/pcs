@@ -39,12 +39,6 @@ class _Cmd:
 
 
 COMMAND_MAP: Mapping[str, _Cmd] = {
-    # TODO
-    "manage_clusters.add_existing_cluster": _Cmd(
-        cmd=manage_clusters.add_existing_cluster,
-        # TODO
-        required_permission=p.GRANT,
-    ),
     "acl.add_permission": _Cmd(
         cmd=acl.add_permission,
         required_permission=p.GRANT,
@@ -251,6 +245,10 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
     ),
     "fencing_topology.verify": _Cmd(
         cmd=fencing_topology.verify,
+        required_permission=p.WRITE,
+    ),
+    "manage_clusters.add_existing_cluster": _Cmd(
+        cmd=manage_clusters.add_existing_cluster,
         required_permission=p.WRITE,
     ),
     "node.maintenance_unmaintenance_all": _Cmd(
