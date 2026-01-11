@@ -64,7 +64,7 @@ class BaseAjaxProtectedManageHandler(LegacyApiHandler, AjaxMixin):
 
         command_dto = CommandDto(
             command_name=cmd_name,
-            params=cmd_params,
+            params=dict(cmd_params),
             options=CommandOptionsDto(
                 effective_username=auth_user.username,
                 effective_groups=list(auth_user.groups),

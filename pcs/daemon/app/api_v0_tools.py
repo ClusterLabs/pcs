@@ -75,7 +75,7 @@ async def run_library_command_in_scheduler(
             == types.TaskKillReason.COMPLETION_TIMEOUT
         ):
             raise error_handler("Task processing timed out", 500)
-        raise error_handler("Task killed")
+        raise error_handler("Task killed", 400)
 
     if (
         task_result_dto.task_finish_type

@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, TypedDict
 
 from tornado.ioloop import IOLoop
 from tornado.web import RequestHandler
@@ -24,9 +24,14 @@ class SessionAuthProvider(ApiAuthProviderInterface):
     session storage and identified by the "pcsd.sid" cookie.
     """
 
+    class CookieOptions(TypedDict):
+        secure: bool
+        httponly: bool
+        samesite: str
+
     # Cookie options for session cookie
     # Matches settings from webui/auth.py for compatibility
-    _cookie_options = {
+    _cookie_options: CookieOptions = {
         "secure": True,
         "httponly": True,
         # rhbz#2097393
@@ -67,14 +72,15 @@ class SessionAuthProvider(ApiAuthProviderInterface):
         return self.__session is not None
 
     async def auth_user(self) -> AuthUser:
-        if not self.__session:
+        if self.__session is None:
             raise NotAuthorizedException()
 
+        # mypy complains that self.__session can be None when passed into
+        # the lambda below. Passing local variable fixes this
+        session = self.__session
         auth_user = await IOLoop.current().run_in_executor(
             executor=None,
-            func=lambda: self._lib_auth_provider.login_user(
-                self.__session.username
-            ),
+            func=lambda: self._lib_auth_provider.login_user(session.username),
         )
         if auth_user is None:
             raise NotAuthorizedException()

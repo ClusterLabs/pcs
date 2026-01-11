@@ -142,9 +142,11 @@ class GetCorosyncOnlineTargets(
 class GetClusterInfoFromStatus(
     AllSameDataMixin, OneByOneStrategyMixin, RunRemotelyBase
 ):
-    __cluster_name = ""
-    __cluster_nodes: list[str]
-    __was_successful = False
+    def __init__(self, report_processor: reports.ReportProcessor):
+        super().__init__(report_processor)
+        self.__cluster_name = ""
+        self.__cluster_nodes: list[str] = []
+        self.__was_successful = False
 
     def _get_request_data(self) -> RequestData:
         return RequestData("remote/status", [("version", "2")])

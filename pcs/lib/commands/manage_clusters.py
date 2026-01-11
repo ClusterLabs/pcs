@@ -1,7 +1,9 @@
-from typing import cast
+from typing import Sequence, cast
 
 from pcs.common import reports
 from pcs.common.file_type_codes import PCS_SETTINGS_CONF
+from pcs.common.host import PcsKnownHost
+from pcs.common.node_communicator import Communicator, RequestTarget
 from pcs.lib.communication.corosync import GetClusterInfoFromStatus
 from pcs.lib.communication.nodes import GetClusterKnownHosts
 from pcs.lib.communication.tools import run
@@ -23,6 +25,17 @@ def add_existing_cluster(  # noqa: PLR0912, PLR0915
     env: LibraryEnvironment,
     node_name: str,
 ) -> None:
+    """
+    Add an existing cluster to the local pcs configuration for management.
+
+    Contact the specified node to discover cluster details and tokens needed
+    for communication with cluster nodes. Update the local pcs_settings and
+    known-hosts configuration files. If the local node is in a cluster,
+    synchronize the updated configuration files to local cluster nodes.
+
+    node_name -- name of a node from the cluster to be added
+    """
+
     node_communicator = env.get_node_communicator()
     remote_request_targets = env.get_node_target_factory().get_target_list(
         [node_name]
@@ -34,7 +47,7 @@ def add_existing_cluster(  # noqa: PLR0912, PLR0915
     if env.report_processor.has_errors:
         raise LibraryError()
 
-    if cluster_name == "":
+    if not cluster_name:
         env.report_processor.report(
             reports.ReportItem.error(
                 reports.messages.NodeNotInCluster(),
@@ -86,29 +99,15 @@ def add_existing_cluster(  # noqa: PLR0912, PLR0915
             raise LibraryError()
 
         if is_in_cluster:
-            conflict_detected, new_file = save_sync_new_known_hosts(
+            __sync_known_hosts_in_cluster(
                 known_hosts,
+                known_hosts_file_instance,
                 new_hosts,
-                [],
                 local_cluster_name,
                 local_request_targets,
                 node_communicator,
                 env.report_processor,
             )
-            try:
-                if new_file is not None:
-                    known_hosts_file_instance.write_facade(
-                        new_file, can_overwrite=True
-                    )
-            except RawFileError as e:
-                env.report_processor.report(raw_file_error_report(e))
-
-            if conflict_detected:
-                env.report_processor.report(
-                    reports.ReportItem.error(
-                        reports.messages.PcsCfgsyncConflictRepeatAction()
-                    )
-                )
         else:
             known_hosts.update_known_hosts(new_hosts)
             known_hosts.set_data_version(known_hosts.data_version + 1)
@@ -123,34 +122,19 @@ def add_existing_cluster(  # noqa: PLR0912, PLR0915
     if env.report_processor.has_errors:
         raise LibraryError()
 
+    new_cluster_entry = ClusterEntry(cluster_name, cluster_nodes)
     if is_in_cluster:
-        pcs_settings_conf.add_cluster(ClusterEntry(cluster_name, cluster_nodes))
-        conflict_detected, new_file = save_sync_new_version(
-            PCS_SETTINGS_CONF,
+        __sync_pcs_settings_in_cluster(
             pcs_settings_conf,
+            pcs_settings_file_instance,
+            new_cluster_entry,
             local_cluster_name,
             local_request_targets,
             node_communicator,
             env.report_processor,
-            fetch_on_conflict=True,
-            reject_is_error=True,
         )
-        try:
-            if new_file is not None:
-                pcs_settings_file_instance.write_facade(
-                    new_file, can_overwrite=True
-                )
-        except RawFileError as e:
-            env.report_processor.report(raw_file_error_report(e))
-
-        if conflict_detected:
-            env.report_processor.report(
-                reports.ReportItem.error(
-                    reports.messages.PcsCfgsyncConflictRepeatAction()
-                )
-            )
     else:
-        pcs_settings_conf.add_cluster(ClusterEntry(cluster_name, cluster_nodes))
+        pcs_settings_conf.add_cluster(new_cluster_entry)
         pcs_settings_conf.set_data_version(pcs_settings_conf.data_version + 1)
         try:
             pcs_settings_file_instance.write_facade(
@@ -201,3 +185,71 @@ def __read_known_hosts(
             known_hosts_file_instance.parser_exception_to_report_list(e)
         )
     return KnownHostsFacade.create(), report_list
+
+
+def __sync_known_hosts_in_cluster(
+    known_hosts: KnownHostsFacade,
+    known_hosts_file_instance: FileInstance,
+    new_hosts: Sequence[PcsKnownHost],
+    local_cluster_name: str,
+    request_targets: Sequence[RequestTarget],
+    node_communicator: Communicator,
+    report_processor: reports.ReportProcessor,
+) -> None:
+    conflict_detected, new_file = save_sync_new_known_hosts(
+        known_hosts,
+        new_hosts,
+        [],
+        local_cluster_name,
+        request_targets,
+        node_communicator,
+        report_processor,
+    )
+    try:
+        if new_file is not None:
+            known_hosts_file_instance.write_facade(new_file, can_overwrite=True)
+    except RawFileError as e:
+        report_processor.report(raw_file_error_report(e))
+
+    if conflict_detected:
+        report_processor.report(
+            reports.ReportItem.error(
+                reports.messages.PcsCfgsyncConflictRepeatAction()
+            )
+        )
+
+
+def __sync_pcs_settings_in_cluster(
+    pcs_settings: PcsSettingsFacade,
+    pcs_settings_file_instance: FileInstance,
+    new_cluster_entry: ClusterEntry,
+    local_cluster_name: str,
+    request_targets: Sequence[RequestTarget],
+    node_communicator: Communicator,
+    report_processor: reports.ReportProcessor,
+) -> None:
+    pcs_settings.add_cluster(new_cluster_entry)
+    conflict_detected, new_file = save_sync_new_version(
+        PCS_SETTINGS_CONF,
+        pcs_settings,
+        local_cluster_name,
+        request_targets,
+        node_communicator,
+        report_processor,
+        fetch_on_conflict=True,
+        reject_is_error=True,
+    )
+    try:
+        if new_file is not None:
+            pcs_settings_file_instance.write_facade(
+                new_file, can_overwrite=True
+            )
+    except RawFileError as e:
+        report_processor.report(raw_file_error_report(e))
+
+    if conflict_detected:
+        report_processor.report(
+            reports.ReportItem.error(
+                reports.messages.PcsCfgsyncConflictRepeatAction()
+            )
+        )

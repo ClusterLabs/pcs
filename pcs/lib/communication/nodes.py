@@ -549,8 +549,6 @@ class GetClusterKnownHosts(
     Get tokens for cluster nodes of the specified target(s)
     """
 
-    __known_hosts: Optional[list[PcsKnownHost]] = None
-
     def __init__(
         self,
         report_processor: reports.ReportProcessor,
@@ -564,6 +562,7 @@ class GetClusterKnownHosts(
             if force_all_errors
             else reports.ReportItemSeverity.ERROR
         )
+        self.__known_hosts: Optional[list[PcsKnownHost]] = None
 
     def _get_request_data(self) -> RequestData:
         return RequestData("remote/get_cluster_known_hosts")

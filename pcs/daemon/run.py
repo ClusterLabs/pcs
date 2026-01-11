@@ -160,9 +160,7 @@ def configure_app(  # noqa: PLR0913
             )
         else:
             # No WebUI: only socket authentication
-            ui_auth_factory = auth_provider.AuthProviderMultiFactory(
-                [socket_factory]
-            )
+            ui_auth_factory = socket_factory
 
         # Even with disabled (standalone) webui the following routes must be
         # provided because they can be used via unix socket from cockpit.

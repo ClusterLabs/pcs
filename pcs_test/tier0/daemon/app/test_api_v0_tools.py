@@ -321,7 +321,7 @@ class RunLibraryCommandInSchedulerTest(IsolatedAsyncioTestCase):
                 self.error_handler,
             )
 
-        self.error_handler.assert_called_once_with("Task killed")
+        self.error_handler.assert_called_once_with("Task killed", 400)
 
     async def test_unhandled_exception(self):
         task_result = TaskResultDto(
