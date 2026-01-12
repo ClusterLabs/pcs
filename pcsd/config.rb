@@ -180,12 +180,6 @@ class PCSConfig
   end
 end
 
-def hash_to_ordered_hash(hash)
-  new_hash = Hash.new
-  hash.keys.sort.each { |key| new_hash[key] = hash[key] }
-  return new_hash
-end
-
 
 class CfgKnownHosts
   CURRENT_FORMAT = 1
