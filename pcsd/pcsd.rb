@@ -520,43 +520,6 @@ post '/managec/:cluster/send-known-hosts' do
   )
 end
 
-# This may be useful for adding node to pcs-0.9.x running cluster
-post '/managec/:cluster/add_node_to_cluster' do
-  auth_user = getAuthUser()
-  clustername = params[:cluster]
-  new_node = params["new_nodename"]
-
-  known_hosts = get_known_hosts()
-  if not known_hosts.include? new_node
-    return [400, "New node is not authenticated."]
-  end
-
-  # Save the new node token on all nodes in a cluster the new node is being
-  # added to. Send the token to one node and let the cluster nodes synchronize
-  # it by themselves.
-  retval = pcs_compatibility_layer_known_hosts_add(
-    # new node doesn't have config with permissions yet
-    PCSAuth.getSuperuserAuth(), true, clustername, [new_node]
-  )
-  # If the cluster runs an old pcsd which doesn't support adding known hosts,
-  # ignore 404 in order to not prevent the node to be added.
-  if retval != 'not_supported' and retval != 'success'
-    return [400, 'Failed to save the token of the new node in the target cluster.']
-  end
-
-  retval, out = send_cluster_request_with_token(
-    auth_user, clustername, "/add_node_all", true, params
-  )
-  if 403 == retval
-    return [retval, out]
-  end
-  if retval != 200
-    return [400, "Failed to add new node '#{new_node}' into cluster '#{clustername}': #{out}"]
-  end
-
-  return [200, "Node added successfully."]
-end
-
 def pcs_compatibility_layer_known_hosts_add(
   auth_user, is_cluster_request, target, host_list
 )
