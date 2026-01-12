@@ -39,7 +39,6 @@ def remote(params, request, auth_user)
       :config_restore => method(:config_restore),
       :cluster_enable => method(:cluster_enable),
       :cluster_disable => method(:cluster_disable),
-      :get_sw_versions => method(:get_sw_versions),
       :cluster_destroy => method(:cluster_destroy),
       :get_cluster_known_hosts => method(:get_cluster_known_hosts),
       :known_hosts_change => method(:known_hosts_change),
@@ -675,16 +674,6 @@ def set_permissions_remote(params, request, auth_user)
     return [200, 'Permissions saved'] if pushed
   }
   return 400, 'Unable to save permissions'
-end
-
-def get_sw_versions(params, request, auth_user)
-  versions = {
-    "rhel" => get_rhel_version(),
-    "pcs" => get_pcsd_version(),
-    "pacemaker" => get_pacemaker_version(),
-    "corosync" => get_corosync_version(),
-  }
-  return JSON.generate(versions)
 end
 
 def remote_pacemaker_node_status(params, request, auth_user)

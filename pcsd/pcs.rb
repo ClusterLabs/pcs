@@ -822,17 +822,6 @@ def get_pacemaker_version()
   return nil
 end
 
-def get_rhel_version()
-  if File.exist?('/etc/system-release')
-    release = File.open('/etc/system-release').read
-    match = /(\d+)\.(\d+)/.match(release)
-    if match
-      return match[1, 2].collect{ |x| x.to_i}
-    end
-  end
-  return nil
-end
-
 def get_pcsd_version()
   return PCS_VERSION.split(".").collect { | x | x.to_i }
 end
