@@ -2902,20 +2902,6 @@ def print_resources_utilization() -> None:
         print(" {0}: {1}".format(resource, utilization[resource]))
 
 
-# deprecated
-# This is used only by pcsd, will be removed in new architecture
-def get_resource_agent_info(
-    lib: Any, argv: Argv, modifiers: InputModifiers
-) -> None:
-    """
-    Options: no options
-    """
-    modifiers.ensure_only_supported()
-    if len(argv) != 1:
-        utils.err("One parameter expected")
-    print(json.dumps(lib.resource_agent.describe_agent(argv[0])))
-
-
 def resource_bundle_create_cmd(
     lib: Any, argv: Argv, modifiers: InputModifiers
 ) -> None:

@@ -100,8 +100,6 @@ stonith_cmd = create_router(
             ["stonith", "history"],
             default_cmd="show",
         ),
-        # internal use only
-        "get_fence_agent_info": stonith.get_fence_agent_info,
     },
     ["stonith"],
     default_cmd="status",

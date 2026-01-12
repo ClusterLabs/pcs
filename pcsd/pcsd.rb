@@ -462,34 +462,6 @@ get '/managec/:cluster/cluster_status' do
   cluster_status_gui(auth_user, params[:cluster])
 end
 
-get '/managec/:cluster/get_resource_agent_metadata' do
-  auth_user = getAuthUser()
-  cluster = params[:cluster]
-  resource_agent = params[:agent]
-  code, out = send_cluster_request_with_token(
-    auth_user,
-    cluster,
-    'get_resource_agent_metadata',
-    false,
-    {:resource_agent => resource_agent}
-  )
-  return [code, out]
-end
-
-get '/managec/:cluster/get_fence_agent_metadata' do
-  auth_user = getAuthUser()
-  cluster = params[:cluster]
-  fence_agent = params[:agent]
-  code, out = send_cluster_request_with_token(
-    auth_user,
-    cluster,
-    'get_fence_agent_metadata',
-    false,
-    {:fence_agent => fence_agent}
-  )
-  return [code, out]
-end
-
 post '/managec/:cluster/fix_auth_of_cluster' do
   clustername = params[:cluster]
   unless clustername

@@ -1,17 +1,10 @@
 # pylint: disable=too-many-lines
-import json
 from textwrap import dedent
-from unittest import (
-    TestCase,
-    skip,
-)
+from unittest import TestCase, skip
 
 from lxml import etree
 
-from pcs import (
-    resource,
-    utils,
-)
+from pcs import resource, utils
 from pcs.common import const
 from pcs.common.str_tools import (
     format_list,
@@ -28,10 +21,7 @@ from pcs_test.tier1.cib_resource.common import (
     fixture_use_meta_command_instead_warning,
 )
 from pcs_test.tier1.legacy.common import FIXTURE_UTILIZATION_WARNING
-from pcs_test.tools.assertions import (
-    AssertPcsMixin,
-    assert_pcs_status,
-)
+from pcs_test.tools.assertions import AssertPcsMixin, assert_pcs_status
 from pcs_test.tools.bin_mock import get_mock_settings
 from pcs_test.tools.cib import get_assert_pcs_effect_mixin
 from pcs_test.tools.fixture_cib import (
@@ -53,10 +43,7 @@ from pcs_test.tools.misc import (
     write_file_to_tmpfile,
 )
 from pcs_test.tools.pcs_runner import PcsRunner
-from pcs_test.tools.xml import (
-    XmlManipulation,
-    etree_to_str,
-)
+from pcs_test.tools.xml import XmlManipulation, etree_to_str
 
 PCMK_2_0_3_PLUS = is_minimum_pacemaker_version(2, 0, 3)
 
@@ -204,281 +191,6 @@ class ResourceDescribe(TestCase, AssertPcsMixin):
         self.assert_pcs_fail(
             "resource describe agent1 agent2".split(),
             stderr_start="\nUsage: pcs resource describe...\n",
-        )
-
-    def test_pcsd_interface(self):
-        self.maxDiff = None
-        stdout, stderr, returncode = self.pcs_runner.run(
-            "resource get_resource_agent_info ocf:pcsmock:params".split()
-        )
-        self.assertEqual(stderr, "")
-        self.assertEqual(returncode, 0)
-        self.assertEqual(
-            json.loads(stdout),
-            {
-                "name": "ocf:pcsmock:params",
-                "standard": "ocf",
-                "provider": "pcsmock",
-                "type": "params",
-                "shortdesc": "Mock agent for pcs tests - agent with various parameters",
-                "longdesc": "This is a mock agent for pcs test - agent with parameters",
-                "parameters": [
-                    {
-                        "advanced": False,
-                        "default": None,
-                        "deprecated": False,
-                        "deprecated_by": [],
-                        "deprecated_desc": None,
-                        "enum_values": None,
-                        "longdesc": "A generic mandatory string parameter",
-                        "name": "mandatory",
-                        "reloadable": False,
-                        "required": True,
-                        "shortdesc": "mandatory string parameter",
-                        "type": "string",
-                        "unique_group": None,
-                    },
-                    {
-                        "advanced": False,
-                        "default": "if not specified",
-                        "deprecated": False,
-                        "deprecated_by": [],
-                        "deprecated_desc": None,
-                        "enum_values": None,
-                        "longdesc": "A generic optional string parameter",
-                        "name": "optional",
-                        "reloadable": False,
-                        "required": False,
-                        "shortdesc": "optional string parameter",
-                        "type": "string",
-                        "unique_group": None,
-                    },
-                    {
-                        "advanced": False,
-                        "default": "value1",
-                        "deprecated": False,
-                        "deprecated_by": [],
-                        "deprecated_desc": None,
-                        "enum_values": ["value1", "value2", "value3"],
-                        "longdesc": "An optional enum parameter",
-                        "name": "enum",
-                        "reloadable": False,
-                        "required": False,
-                        "shortdesc": "optional enum parameter",
-                        "type": "select",
-                        "unique_group": None,
-                    },
-                    {
-                        "advanced": True,
-                        "default": None,
-                        "deprecated": False,
-                        "deprecated_by": [],
-                        "deprecated_desc": None,
-                        "enum_values": None,
-                        "longdesc": "This parameter should not be set usually",
-                        "name": "advanced",
-                        "reloadable": False,
-                        "required": False,
-                        "shortdesc": "advanced parameter",
-                        "type": "string",
-                        "unique_group": None,
-                    },
-                    {
-                        "advanced": False,
-                        "default": None,
-                        "deprecated": False,
-                        "deprecated_by": [],
-                        "deprecated_desc": None,
-                        "enum_values": None,
-                        "longdesc": "First parameter in a unique group",
-                        "name": "unique1",
-                        "reloadable": False,
-                        "required": False,
-                        "shortdesc": "unique param 1",
-                        "type": "string",
-                        "unique_group": "group-A",
-                    },
-                    {
-                        "advanced": False,
-                        "default": None,
-                        "deprecated": False,
-                        "deprecated_by": [],
-                        "deprecated_desc": None,
-                        "enum_values": None,
-                        "longdesc": "Second parameter in a unique group",
-                        "name": "unique2",
-                        "reloadable": False,
-                        "required": False,
-                        "shortdesc": "unique param 2",
-                        "type": "string",
-                        "unique_group": "group-A",
-                    },
-                ],
-                "actions": [
-                    {
-                        "name": "start",
-                        "timeout": "20s",
-                        "interval": None,
-                        "role": None,
-                        "start-delay": None,
-                        "OCF_CHECK_LEVEL": None,
-                        "automatic": False,
-                        "on_target": False,
-                    },
-                    {
-                        "name": "stop",
-                        "timeout": "20s",
-                        "interval": None,
-                        "role": None,
-                        "start-delay": None,
-                        "OCF_CHECK_LEVEL": None,
-                        "automatic": False,
-                        "on_target": False,
-                    },
-                    {
-                        "name": "monitor",
-                        "timeout": "20s",
-                        "interval": "10s",
-                        "role": None,
-                        "start-delay": None,
-                        "OCF_CHECK_LEVEL": None,
-                        "automatic": False,
-                        "on_target": False,
-                    },
-                    {
-                        "name": "reload",
-                        "timeout": "20s",
-                        "interval": None,
-                        "role": None,
-                        "start-delay": None,
-                        "OCF_CHECK_LEVEL": None,
-                        "automatic": False,
-                        "on_target": False,
-                    },
-                    {
-                        "name": "reload-agent",
-                        "timeout": "20s",
-                        "interval": None,
-                        "role": None,
-                        "start-delay": None,
-                        "OCF_CHECK_LEVEL": None,
-                        "automatic": False,
-                        "on_target": False,
-                    },
-                    {
-                        "name": "migrate_to",
-                        "timeout": "20s",
-                        "interval": None,
-                        "role": None,
-                        "start-delay": None,
-                        "OCF_CHECK_LEVEL": None,
-                        "automatic": False,
-                        "on_target": False,
-                    },
-                    {
-                        "name": "migrate_from",
-                        "timeout": "20s",
-                        "interval": None,
-                        "role": None,
-                        "start-delay": None,
-                        "OCF_CHECK_LEVEL": None,
-                        "automatic": False,
-                        "on_target": False,
-                    },
-                    {
-                        "name": "validate-all",
-                        "timeout": "20s",
-                        "interval": None,
-                        "role": None,
-                        "start-delay": None,
-                        "OCF_CHECK_LEVEL": None,
-                        "automatic": False,
-                        "on_target": False,
-                    },
-                    {
-                        "name": "meta-data",
-                        "timeout": "5s",
-                        "interval": None,
-                        "role": None,
-                        "start-delay": None,
-                        "OCF_CHECK_LEVEL": None,
-                        "automatic": False,
-                        "on_target": False,
-                    },
-                ],
-                "default_actions": [
-                    {
-                        "name": "start",
-                        "timeout": "20s",
-                        "interval": "0s",
-                        "role": None,
-                        "start-delay": None,
-                        "OCF_CHECK_LEVEL": None,
-                        "automatic": False,
-                        "on_target": False,
-                    },
-                    {
-                        "name": "stop",
-                        "timeout": "20s",
-                        "interval": "0s",
-                        "role": None,
-                        "start-delay": None,
-                        "OCF_CHECK_LEVEL": None,
-                        "automatic": False,
-                        "on_target": False,
-                    },
-                    {
-                        "name": "monitor",
-                        "timeout": "20s",
-                        "interval": "10s",
-                        "role": None,
-                        "start-delay": None,
-                        "OCF_CHECK_LEVEL": None,
-                        "automatic": False,
-                        "on_target": False,
-                    },
-                    {
-                        "name": "reload",
-                        "timeout": "20s",
-                        "interval": "0s",
-                        "role": None,
-                        "start-delay": None,
-                        "OCF_CHECK_LEVEL": None,
-                        "automatic": False,
-                        "on_target": False,
-                    },
-                    {
-                        "name": "reload-agent",
-                        "timeout": "20s",
-                        "interval": "0s",
-                        "role": None,
-                        "start-delay": None,
-                        "OCF_CHECK_LEVEL": None,
-                        "automatic": False,
-                        "on_target": False,
-                    },
-                    {
-                        "name": "migrate_to",
-                        "timeout": "20s",
-                        "interval": "0s",
-                        "role": None,
-                        "start-delay": None,
-                        "OCF_CHECK_LEVEL": None,
-                        "automatic": False,
-                        "on_target": False,
-                    },
-                    {
-                        "name": "migrate_from",
-                        "timeout": "20s",
-                        "interval": "0s",
-                        "role": None,
-                        "start-delay": None,
-                        "OCF_CHECK_LEVEL": None,
-                        "automatic": False,
-                        "on_target": False,
-                    },
-                ],
-            },
         )
 
 

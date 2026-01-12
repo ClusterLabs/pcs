@@ -115,12 +115,6 @@ def remote(params, request, auth_user)
       :resource_ungroup => method(:resource_ungroup),
       :set_resource_utilization => method(:set_resource_utilization),
       :set_node_utilization => method(:set_node_utilization),
-      # lib api:
-      # /api/v1/resource-agent-describe-agent/v1
-      :get_resource_agent_metadata => method(:get_resource_agent_metadata),
-      # lib api:
-      # /api/v1/stonith-agent-describe-agent/v1
-      :get_fence_agent_metadata => method(:get_fence_agent_metadata),
   }
 
   command = params[:command].to_sym
@@ -1606,49 +1600,6 @@ def get_cluster_properties_definition(params, request, auth_user)
     return [200, stdout]
   end
   return [400, '{}']
-end
-
-def get_resource_agent_metadata(params, request, auth_user)
-  unless allowed_for_local_cluster(auth_user, Permissions::READ)
-    return 403, 'Permission denied'
-  end
-  agent = params[:resource_agent]
-  unless agent
-    return [400, 'Parameter "resource_agent" required.']
-  end
-  stdout, stderr, retval = run_cmd(
-    auth_user, PCS, '--', 'resource', 'get_resource_agent_info', agent
-  )
-  if retval != 0
-    if stderr.join('').include?('is not supported')
-      return [200, JSON.generate({
-        :name => agent,
-        :longdesc => '',
-        :shortdesc => '',
-        :parameters => []
-      })]
-    else
-      return [400, stderr.join("\n")]
-    end
-  end
-  return [200, stdout.join("\n")]
-end
-
-def get_fence_agent_metadata(params, request, auth_user)
-  unless allowed_for_local_cluster(auth_user, Permissions::READ)
-    return 403, 'Permission denied'
-  end
-  agent = params[:fence_agent]
-  unless agent
-    return [400, 'Parameter "fence_agent" required.']
-  end
-  stdout, stderr, retval = run_cmd(
-    auth_user, PCS, '--', 'stonith', 'get_fence_agent_info', agent
-  )
-  if retval != 0
-    return [400, stderr.join("\n")]
-  end
-  return [200, stdout.join("\n")]
 end
 
 def check_sbd(param, request, auth_user)
