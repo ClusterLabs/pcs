@@ -127,17 +127,20 @@ class SaveSyncNewVersion(TestCase, FixtureFetchNewestFileMixin):
         )
 
         env = self.env_assist.get_env()
-        conflict_detected, new_file = save_sync.save_sync_new_version(
-            PCS_KNOWN_HOSTS,
-            self.local_known_hosts_facade,
-            "cluster",
-            [RequestTarget("node1"), RequestTarget("node2")],
-            env.get_node_communicator(),
-            env.report_processor,
-            False,
+        conflict_detected, failed_nodes, new_file = (
+            save_sync.save_sync_new_version(
+                PCS_KNOWN_HOSTS,
+                self.local_known_hosts_facade,
+                "cluster",
+                [RequestTarget("node1"), RequestTarget("node2")],
+                env.get_node_communicator(),
+                env.report_processor,
+                False,
+            )
         )
         self.assertFalse(conflict_detected)
         self.assertIsNone(new_file)
+        self.assertEqual(failed_nodes, set())
         self.env_assist.assert_reports(
             [
                 fixture.info(
@@ -190,21 +193,24 @@ class SaveSyncNewVersion(TestCase, FixtureFetchNewestFileMixin):
         )
 
         env = self.env_assist.get_env()
-        conflict_detected, new_file = save_sync.save_sync_new_version(
-            PCS_KNOWN_HOSTS,
-            self.local_known_hosts_facade,
-            "cluster",
-            [
-                RequestTarget("node1"),
-                RequestTarget("node2"),
-                RequestTarget("node3"),
-            ],
-            env.get_node_communicator(),
-            env.report_processor,
-            fetch_on_conflict=False,
+        conflict_detected, failed_nodes, new_file = (
+            save_sync.save_sync_new_version(
+                PCS_KNOWN_HOSTS,
+                self.local_known_hosts_facade,
+                "cluster",
+                [
+                    RequestTarget("node1"),
+                    RequestTarget("node2"),
+                    RequestTarget("node3"),
+                ],
+                env.get_node_communicator(),
+                env.report_processor,
+                fetch_on_conflict=False,
+            )
         )
         self.assertTrue(conflict_detected)
         self.assertIsNone(new_file)
+        self.assertEqual(failed_nodes, {"node2"})
         self.env_assist.assert_reports(
             [
                 fixture.info(
@@ -262,22 +268,25 @@ class SaveSyncNewVersion(TestCase, FixtureFetchNewestFileMixin):
         )
 
         env = self.env_assist.get_env()
-        conflict_detected, new_file = save_sync.save_sync_new_version(
-            PCS_KNOWN_HOSTS,
-            self.local_known_hosts_facade,
-            "cluster",
-            [
-                RequestTarget("node1"),
-                RequestTarget("node2"),
-                RequestTarget("node3"),
-            ],
-            env.get_node_communicator(),
-            env.report_processor,
-            fetch_on_conflict=False,
-            reject_is_error=False,
+        conflict_detected, failed_nodes, new_file = (
+            save_sync.save_sync_new_version(
+                PCS_KNOWN_HOSTS,
+                self.local_known_hosts_facade,
+                "cluster",
+                [
+                    RequestTarget("node1"),
+                    RequestTarget("node2"),
+                    RequestTarget("node3"),
+                ],
+                env.get_node_communicator(),
+                env.report_processor,
+                fetch_on_conflict=False,
+                reject_is_error=False,
+            )
         )
         self.assertTrue(conflict_detected)
         self.assertIsNone(new_file)
+        self.assertEqual(failed_nodes, {"node2"})
         self.env_assist.assert_reports(
             [
                 fixture.info(
@@ -328,19 +337,22 @@ class SaveSyncNewVersion(TestCase, FixtureFetchNewestFileMixin):
         self.fixture_fetch_newest_file(self.local_file, remote_file)
 
         env = self.env_assist.get_env()
-        conflict_detected, new_file = save_sync.save_sync_new_version(
-            PCS_KNOWN_HOSTS,
-            self.local_known_hosts_facade,
-            "cluster",
-            [RequestTarget("node1"), RequestTarget("node2")],
-            env.get_node_communicator(),
-            env.report_processor,
-            fetch_on_conflict=True,
+        conflict_detected, failed_nodes, new_file = (
+            save_sync.save_sync_new_version(
+                PCS_KNOWN_HOSTS,
+                self.local_known_hosts_facade,
+                "cluster",
+                [RequestTarget("node1"), RequestTarget("node2")],
+                env.get_node_communicator(),
+                env.report_processor,
+                fetch_on_conflict=True,
+            )
         )
         self.assertTrue(conflict_detected)
         self.assertEqual(
             new_file.config, KnownHosts(1, data_version=42, known_hosts={})
         )
+        self.assertEqual(failed_nodes, set())
         self.env_assist.assert_reports(
             [
                 fixture.info(
@@ -383,20 +395,23 @@ class SaveSyncNewKnownHosts(TestCase, FixtureFetchNewestFileMixin):
         )
 
         env = self.env_assist.get_env()
-        conflict_detected, new_file = save_sync.save_sync_new_known_hosts(
-            fixture_known_hosts_facade(1),
-            [PcsKnownHost("NODE", "TOKEN", [])],
-            [],
-            "cluster",
-            [
-                RequestTarget("node1"),
-                RequestTarget("node2"),
-            ],
-            env.get_node_communicator(),
-            env.report_processor,
+        conflict_detected, failed_nodes, new_file = (
+            save_sync.save_sync_new_known_hosts(
+                fixture_known_hosts_facade(1),
+                [PcsKnownHost("NODE", "TOKEN", [])],
+                [],
+                "cluster",
+                [
+                    RequestTarget("node1"),
+                    RequestTarget("node2"),
+                ],
+                env.get_node_communicator(),
+                env.report_processor,
+            )
         )
         self.assertFalse(conflict_detected)
         self.assertIsNone(new_file)
+        self.assertEqual(failed_nodes, set())
         self.env_assist.assert_reports(
             [
                 fixture.info(
@@ -437,20 +452,23 @@ class SaveSyncNewKnownHosts(TestCase, FixtureFetchNewestFileMixin):
         )
 
         env = self.env_assist.get_env()
-        conflict_detected, new_file = save_sync.save_sync_new_known_hosts(
-            local_file,
-            [],
-            ["NODE-A"],
-            "cluster",
-            [
-                RequestTarget("node1"),
-                RequestTarget("node2"),
-            ],
-            env.get_node_communicator(),
-            env.report_processor,
+        conflict_detected, failed_nodes, new_file = (
+            save_sync.save_sync_new_known_hosts(
+                local_file,
+                [],
+                ["NODE-A"],
+                "cluster",
+                [
+                    RequestTarget("node1"),
+                    RequestTarget("node2"),
+                ],
+                env.get_node_communicator(),
+                env.report_processor,
+            )
         )
         self.assertFalse(conflict_detected)
         self.assertIsNone(new_file)
+        self.assertEqual(failed_nodes, set())
         self.env_assist.assert_reports(
             [
                 fixture.info(
@@ -521,20 +539,23 @@ class SaveSyncNewKnownHosts(TestCase, FixtureFetchNewestFileMixin):
         )
 
         env = self.env_assist.get_env()
-        conflict_detected, new_file = save_sync.save_sync_new_known_hosts(
-            fixture_known_hosts_facade(local_file_version, local_tokens),
-            list(new_tokens.values()),
-            [],
-            "cluster",
-            [
-                RequestTarget("node1"),
-                RequestTarget("node2"),
-            ],
-            env.get_node_communicator(),
-            env.report_processor,
+        conflict_detected, failed_nodes, new_file = (
+            save_sync.save_sync_new_known_hosts(
+                fixture_known_hosts_facade(local_file_version, local_tokens),
+                list(new_tokens.values()),
+                [],
+                "cluster",
+                [
+                    RequestTarget("node1"),
+                    RequestTarget("node2"),
+                ],
+                env.get_node_communicator(),
+                env.report_processor,
+            )
         )
         self.assertFalse(conflict_detected)
         self.assertIsNone(new_file)
+        self.assertEqual(failed_nodes, set())
         self.env_assist.assert_reports(
             [
                 fixture.info(
@@ -653,17 +674,19 @@ class SaveSyncNewKnownHosts(TestCase, FixtureFetchNewestFileMixin):
         )
 
         env = self.env_assist.get_env()
-        conflict_detected, new_file = save_sync.save_sync_new_known_hosts(
-            fixture_known_hosts_facade(local_file_version, local_tokens),
-            list(new_tokens.values()),
-            [],
-            "cluster",
-            [
-                RequestTarget("node1"),
-                RequestTarget("node2"),
-            ],
-            env.get_node_communicator(),
-            env.report_processor,
+        conflict_detected, failed_nodes, new_file = (
+            save_sync.save_sync_new_known_hosts(
+                fixture_known_hosts_facade(local_file_version, local_tokens),
+                list(new_tokens.values()),
+                [],
+                "cluster",
+                [
+                    RequestTarget("node1"),
+                    RequestTarget("node2"),
+                ],
+                env.get_node_communicator(),
+                env.report_processor,
+            )
         )
         self.assertTrue(conflict_detected)
         self.assertEqual(
@@ -674,6 +697,7 @@ class SaveSyncNewKnownHosts(TestCase, FixtureFetchNewestFileMixin):
                 known_hosts=even_more_new_remote_tokens,
             ),
         )
+        self.assertEqual(failed_nodes, set())
         self.env_assist.assert_reports(
             [
                 fixture.info(
@@ -775,20 +799,23 @@ class SaveSyncNewKnownHosts(TestCase, FixtureFetchNewestFileMixin):
         )
 
         env = self.env_assist.get_env()
-        conflict_detected, new_file = save_sync.save_sync_new_known_hosts(
-            fixture_known_hosts_facade(local_file_version, local_tokens),
-            [],
-            ["LOCAL-A"],
-            "cluster",
-            [
-                RequestTarget("node1"),
-                RequestTarget("node2"),
-            ],
-            env.get_node_communicator(),
-            env.report_processor,
+        conflict_detected, failed_nodes, new_file = (
+            save_sync.save_sync_new_known_hosts(
+                fixture_known_hosts_facade(local_file_version, local_tokens),
+                [],
+                ["LOCAL-A"],
+                "cluster",
+                [
+                    RequestTarget("node1"),
+                    RequestTarget("node2"),
+                ],
+                env.get_node_communicator(),
+                env.report_processor,
+            )
         )
         self.assertFalse(conflict_detected)
         self.assertIsNone(new_file)
+        self.assertEqual(failed_nodes, set())
         self.env_assist.assert_reports(
             [
                 fixture.info(
@@ -885,20 +912,23 @@ class SaveSyncNewKnownHosts(TestCase, FixtureFetchNewestFileMixin):
         )
 
         env = self.env_assist.get_env()
-        conflict_detected, new_file = save_sync.save_sync_new_known_hosts(
-            fixture_known_hosts_facade(local_file_version, local_tokens),
-            list(new_tokens.values()),
-            [],
-            "cluster",
-            [
-                RequestTarget("node1"),
-                RequestTarget("node2"),
-            ],
-            env.get_node_communicator(),
-            env.report_processor,
+        conflict_detected, failed_nodes, new_file = (
+            save_sync.save_sync_new_known_hosts(
+                fixture_known_hosts_facade(local_file_version, local_tokens),
+                list(new_tokens.values()),
+                [],
+                "cluster",
+                [
+                    RequestTarget("node1"),
+                    RequestTarget("node2"),
+                ],
+                env.get_node_communicator(),
+                env.report_processor,
+            )
         )
         self.assertTrue(conflict_detected)
         self.assertIsNone(new_file)
+        self.assertEqual(failed_nodes, set())
         self.env_assist.assert_reports(
             [
                 fixture.info(

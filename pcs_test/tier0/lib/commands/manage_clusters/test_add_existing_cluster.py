@@ -972,6 +972,11 @@ class AddExistingClusterLocalNodeInCluster(TestCase):
                     file_type_code=file_type_codes.PCS_SETTINGS_CONF,
                     context=reports.dto.ReportItemContextDto("node3"),
                 ),
+                fixture.error(
+                    reports.codes.PCS_CFGSYNC_SENDING_CONFIGS_TO_NODES_FAILURES,
+                    file_type_code_list=[file_type_codes.PCS_SETTINGS_CONF],
+                    node_name_list=["node1"],
+                ),
             ]
         )
 
@@ -1244,6 +1249,11 @@ class AddExistingClusterLocalNodeInCluster(TestCase):
                     reports.codes.PCS_CFGSYNC_CONFIG_ACCEPTED,
                     file_type_code=file_type_codes.PCS_KNOWN_HOSTS,
                     context=reports.dto.ReportItemContextDto("node3"),
+                ),
+                fixture.error(
+                    reports.codes.PCS_CFGSYNC_SENDING_CONFIGS_TO_NODES_FAILURES,
+                    file_type_code_list=[file_type_codes.PCS_KNOWN_HOSTS],
+                    node_name_list=["node1"],
                 ),
             ]
         )

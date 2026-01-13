@@ -1,7 +1,7 @@
 from typing import Sequence, cast
 
 from pcs.common import reports
-from pcs.common.file_type_codes import PCS_SETTINGS_CONF
+from pcs.common.file_type_codes import PCS_KNOWN_HOSTS, PCS_SETTINGS_CONF
 from pcs.common.host import PcsKnownHost
 from pcs.common.node_communicator import Communicator, RequestTarget
 from pcs.lib.communication.corosync import GetClusterInfoFromStatus
@@ -196,7 +196,7 @@ def __sync_known_hosts_in_cluster(
     node_communicator: Communicator,
     report_processor: reports.ReportProcessor,
 ) -> None:
-    conflict_detected, new_file = save_sync_new_known_hosts(
+    conflict_detected, failed_nodes, new_file = save_sync_new_known_hosts(
         known_hosts,
         new_hosts,
         [],
@@ -210,6 +210,15 @@ def __sync_known_hosts_in_cluster(
             known_hosts_file_instance.write_facade(new_file, can_overwrite=True)
     except RawFileError as e:
         report_processor.report(raw_file_error_report(e))
+
+    if failed_nodes:
+        report_processor.report(
+            reports.ReportItem.error(
+                reports.messages.PcsCfgsyncSendingConfigsToNodesFailures(
+                    [PCS_KNOWN_HOSTS], sorted(failed_nodes)
+                )
+            )
+        )
 
     if conflict_detected:
         report_processor.report(
@@ -229,7 +238,7 @@ def __sync_pcs_settings_in_cluster(
     report_processor: reports.ReportProcessor,
 ) -> None:
     pcs_settings.add_cluster(new_cluster_entry)
-    conflict_detected, new_file = save_sync_new_version(
+    conflict_detected, failed_nodes, new_file = save_sync_new_version(
         PCS_SETTINGS_CONF,
         pcs_settings,
         local_cluster_name,
@@ -246,6 +255,15 @@ def __sync_pcs_settings_in_cluster(
             )
     except RawFileError as e:
         report_processor.report(raw_file_error_report(e))
+
+    if failed_nodes:
+        report_processor.report(
+            reports.ReportItem.error(
+                reports.messages.PcsCfgsyncSendingConfigsToNodesFailures(
+                    [PCS_SETTINGS_CONF], sorted(failed_nodes)
+                )
+            )
+        )
 
     if conflict_detected:
         report_processor.report(

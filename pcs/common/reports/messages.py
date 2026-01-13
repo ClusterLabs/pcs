@@ -8664,6 +8664,36 @@ class PcsCfgsyncSendingConfigsToNodes(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class PcsCfgsyncSendingConfigsToNodesFailures(ReportItemMessage):
+    """
+    Sending updated configs to specified nodes failed for some nodes
+
+    file_type_code_list -- configs that are sent
+    node_name_list -- names of nodes where sending failed
+    """
+
+    file_type_code_list: list[file_type_codes.FileTypeCode]
+    node_name_list: list[str]
+    _code = codes.PCS_CFGSYNC_SENDING_CONFIGS_TO_NODES_FAILURES
+
+    @property
+    def message(self) -> str:
+        return (
+            "Unable to save {files} {file_list} on {nodes} {node_list}".format(
+                files=format_plural(self.file_type_code_list, "file"),
+                file_list=format_list(
+                    [
+                        format_file_role(role)
+                        for role in self.file_type_code_list
+                    ]
+                ),
+                nodes=format_plural(self.node_name_list, "node"),
+                node_list=format_list(self.node_name_list),
+            )
+        )
+
+
+@dataclass(frozen=True)
 class PcsCfgsyncConfigAccepted(ReportItemMessage):
     """
     The config was saved

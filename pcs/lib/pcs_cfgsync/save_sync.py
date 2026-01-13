@@ -13,6 +13,34 @@ from pcs.lib.interface.config import SyncVersionFacadeInterface
 from pcs.lib.pcs_cfgsync.fetcher import ConfigFetcher
 
 
+def _get_failed_nodes(
+    file_type_code: FileTypeCode,
+    target_list: Sequence[RequestTarget],
+    results: dict[str, dict[FileTypeCode, SetConfigsResult]],
+) -> set[str]:
+    """
+    Get the list of nodes where saving the config failed.
+
+    A node is considered failed if:
+    - The endpoint returned ERROR or NOT_SUPPORTED
+    - The node doesn't appear in the results (communication failure)
+    """
+    failed_nodes: set[str] = set()
+
+    # Check for nodes that returned ERROR or NOT_SUPPORTED
+    for node_label, node_results in results.items():
+        result = node_results.get(file_type_code)
+        if result in (SetConfigsResult.ERROR, SetConfigsResult.NOT_SUPPORTED):
+            failed_nodes.add(node_label)
+
+    # Check for nodes that arent in the results (communication failure)
+    responded_nodes = set(results.keys())
+    all_nodes = {target.label for target in target_list}
+    failed_nodes.update(all_nodes - responded_nodes)
+
+    return failed_nodes
+
+
 def save_sync_new_version(
     file_type_code: FileTypeCode,
     file: SyncVersionFacadeInterface,
@@ -22,12 +50,13 @@ def save_sync_new_version(
     report_processor: reports.ReportProcessor,
     fetch_on_conflict: bool,
     reject_is_error: bool = True,
-) -> tuple[bool, Optional[SyncVersionFacadeInterface]]:
+) -> tuple[bool, set[str], Optional[SyncVersionFacadeInterface]]:
     """
     Update the file data_version of the file and send it to targets. If any
     target contained newer version of the file and fetch_on_conflict is set
     to True, then fetch the newest version of the file from all of the targets.
-    Returns True if conflict was detected, and newest file if it was fetched.
+    Returns True if conflict was detected, newest file if it was fetched, and
+    set of node labels where saving the config failed.
 
     file_type_code -- type of the file
     file -- the local file
@@ -52,6 +81,8 @@ def save_sync_new_version(
     com_cmd.set_targets(target_list)  # type: ignore[no-untyped-call]
     results = run(node_communicator, com_cmd)  # type: ignore[no-untyped-call]
 
+    failed_nodes = _get_failed_nodes(file_type_code, target_list, results)
+
     # we are only interested in the REJECTED state, so we can decide if we need
     # to fetch the newest version of the file from the cluster. The other
     # statuses/errors are already reported during the communication command
@@ -60,7 +91,7 @@ def save_sync_new_version(
         results[node_name].get(file_type_code) == SetConfigsResult.REJECTED
         for node_name in results
     ):
-        return False, None
+        return False, failed_nodes, None
 
     file_to_save = None
     if fetch_on_conflict:
@@ -76,7 +107,7 @@ def save_sync_new_version(
             cluster_name, target_list, [file_type_code]
         )
         file_to_save = newest_files.get(file_type_code)
-    return True, file_to_save
+    return True, failed_nodes, file_to_save
 
 
 def save_sync_new_known_hosts(
@@ -87,7 +118,7 @@ def save_sync_new_known_hosts(
     target_list: Sequence[RequestTarget],
     node_communicator: Communicator,
     report_processor: reports.ReportProcessor,
-) -> tuple[bool, Optional[SyncVersionFacadeInterface]]:
+) -> tuple[bool, set[str], Optional[SyncVersionFacadeInterface]]:
     """
     Add and/or remove known hosts from the file, then send it to targets.
     If any target contained newer version of the file, then try to resolve the
@@ -96,7 +127,8 @@ def save_sync_new_known_hosts(
     add and/or remove the new hosts to the merged file and send it to targets.
     If some node has newer version of the file even after this, then fetch
     the newest version. Returns True if there was conflict that the function
-    could not resolve, and newest file if it was fetched.
+    could not resolve, newest file if it was fetched, and set of node labels
+    where saving the config failed.
 
     known_hosts_facade -- local known-hosts file
     new_hosts -- hosts to add
@@ -110,7 +142,7 @@ def save_sync_new_known_hosts(
     known_hosts_facade.remove_known_hosts(hosts_to_remove)
     known_hosts_facade.update_known_hosts(new_hosts)
 
-    conflict_detected, new_file = save_sync_new_version(
+    conflict_detected, failed_nodes, new_file = save_sync_new_version(
         PCS_KNOWN_HOSTS,
         known_hosts_facade,
         cluster_name,
@@ -122,12 +154,12 @@ def save_sync_new_known_hosts(
     )
 
     if not conflict_detected:
-        return False, None
+        return False, failed_nodes, None
 
     if new_file is None:
         # we detected conflict, but got no new file to work with, so it does
         # not make sense to try sending the config again
-        return True, None
+        return True, failed_nodes, None
 
     newest_known_hosts_from_cluster = cast(KnownHostsFacade, new_file)
 
@@ -143,12 +175,16 @@ def save_sync_new_known_hosts(
     known_hosts_facade.remove_known_hosts(hosts_to_remove)
     known_hosts_facade.update_known_hosts(new_hosts)
 
-    return save_sync_new_version(
-        PCS_KNOWN_HOSTS,
-        known_hosts_facade,
-        cluster_name,
-        target_list,
-        node_communicator,
-        report_processor,
-        fetch_on_conflict=True,
+    second_conflict_detected, second_failed_nodes, second_new_file = (
+        save_sync_new_version(
+            PCS_KNOWN_HOSTS,
+            known_hosts_facade,
+            cluster_name,
+            target_list,
+            node_communicator,
+            report_processor,
+            fetch_on_conflict=True,
+        )
     )
+
+    return second_conflict_detected, second_failed_nodes, second_new_file
