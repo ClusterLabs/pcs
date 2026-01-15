@@ -363,6 +363,9 @@ rm -fv %{buildroot}/%{_libdir}/pcsd/vendor/bundle/gems/rackup-*/bin/rackup
 rm -fv %{buildroot}/%{_libdir}/pcsd/vendor/bundle/gems/tilt-*/bin/tilt
 
 
+%preun
+%systemd_preun pcsd.service pcsd-ruby.service
+
 # Mark pcsd and pcs_snmp_agent for restart after upgrade
 %posttrans
 %systemd_posttrans_with_restart pcsd.service
