@@ -1,9 +1,5 @@
 from dataclasses import replace
-from typing import (
-    List,
-    Optional,
-    cast,
-)
+from typing import List, Optional, cast
 
 from pcs.lib.interface.config import SyncVersionFacadeInterface
 

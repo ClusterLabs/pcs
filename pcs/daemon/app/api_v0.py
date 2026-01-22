@@ -4,10 +4,7 @@ from typing import Any, Mapping, cast
 from tornado.web import Finish
 
 from pcs.common import file_type_codes, reports
-from pcs.common.async_tasks.dto import (
-    CommandDto,
-    CommandOptionsDto,
-)
+from pcs.common.async_tasks.dto import CommandDto, CommandOptionsDto
 from pcs.common.pcs_cfgsync_dto import SyncConfigsDto
 from pcs.common.str_tools import format_list
 from pcs.daemon.app.api_v0_tools import (
@@ -16,9 +13,7 @@ from pcs.daemon.app.api_v0_tools import (
     run_library_command_in_scheduler,
 )
 from pcs.daemon.app.auth import LegacyTokenAuthenticationHandler
-from pcs.daemon.async_tasks.scheduler import (
-    Scheduler,
-)
+from pcs.daemon.async_tasks.scheduler import Scheduler
 from pcs.lib.auth.provider import AuthProvider
 from pcs.lib.pcs_cfgsync.const import SYNCED_CONFIGS
 

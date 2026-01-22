@@ -11,8 +11,8 @@ class ManageExistingClusterHandler(BaseAjaxProtectedManageHandler):
             {"node_name": node_name},
         )
 
-        # We are trying to replicate the output format of the original Ruby impl
-        # where possible and reasonable
+        # Replicate the output format of the original Ruby implementation where
+        # possible and reasonable
         if result.success:
             for rep in result.reports:
                 if (

@@ -546,7 +546,7 @@ class GetClusterKnownHosts(
     AllSameDataMixin, OneByOneStrategyMixin, RunRemotelyBase
 ):
     """
-    Get tokens for cluster nodes of the specified target(s)
+    Get a list of PcsKnownHost saved on the specified targets
     """
 
     def __init__(

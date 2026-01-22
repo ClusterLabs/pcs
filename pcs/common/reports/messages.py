@@ -1,9 +1,6 @@
 # pylint: disable=too-many-lines
 from collections import defaultdict
-from dataclasses import (
-    dataclass,
-    field,
-)
+from dataclasses import dataclass, field
 from functools import partial
 from typing import (
     Any,
@@ -23,10 +20,7 @@ from pcs.common.fencing_topology import (
     FencingTargetType,
     FencingTargetValue,
 )
-from pcs.common.file import (
-    FileAction,
-    RawFileError,
-)
+from pcs.common.file import FileAction, RawFileError
 from pcs.common.resource_agent.dto import (
     ResourceAgentNameDto,
     get_resource_agent_full_name,
@@ -42,16 +36,9 @@ from pcs.common.str_tools import (
     indent,
     is_iterable_not_str,
 )
-from pcs.common.types import (
-    CibRuleExpressionType,
-    StringIterable,
-)
+from pcs.common.types import CibRuleExpressionType, StringIterable
 
-from . import (
-    codes,
-    const,
-    types,
-)
+from . import codes, const, types
 from .dto import ReportItemMessageDto
 from .item import ReportItemMessage
 from .utils import format_file_role

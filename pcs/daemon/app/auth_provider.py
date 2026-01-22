@@ -63,8 +63,8 @@ class ApiAuthProviderInterface:
             AuthUser object containing the authenticated username and groups.
 
         Raises:
-            NotAuthorizedException: If authentication fails (invalid credentials,
-                                   expired session, etc.)
+            NotAuthorizedException: If authentication fails (invalid
+                credentials, expired session, etc.)
 
         Note:
             Providers must NOT implement fallback logic to other auth methods.

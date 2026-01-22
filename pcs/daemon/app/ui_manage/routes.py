@@ -1,6 +1,4 @@
-from pcs.daemon.app.auth_provider import (
-    ApiAuthProviderFactoryInterface,
-)
+from pcs.daemon.app.auth_provider import ApiAuthProviderFactoryInterface
 from pcs.daemon.app.common import RoutesType
 from pcs.daemon.app.ui_manage.existing_cluster import (
     ManageExistingClusterHandler,

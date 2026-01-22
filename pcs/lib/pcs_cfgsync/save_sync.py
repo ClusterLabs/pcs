@@ -21,7 +21,7 @@ def _get_failed_nodes(
     """
     Get the list of nodes where saving the config failed.
 
-    A node is considered failed if:
+    A node is considered failed if at least one of the following is true:
     - The endpoint returned ERROR or NOT_SUPPORTED
     - The node doesn't appear in the results (communication failure)
     """
@@ -33,7 +33,7 @@ def _get_failed_nodes(
         if result in (SetConfigsResult.ERROR, SetConfigsResult.NOT_SUPPORTED):
             failed_nodes.add(node_label)
 
-    # Check for nodes that arent in the results (communication failure)
+    # Check for nodes that aren't in the results (communication failure)
     responded_nodes = set(results.keys())
     all_nodes = {target.label for target in target_list}
     failed_nodes.update(all_nodes - responded_nodes)
@@ -55,8 +55,8 @@ def save_sync_new_version(
     Update the file data_version of the file and send it to targets. If any
     target contained newer version of the file and fetch_on_conflict is set
     to True, then fetch the newest version of the file from all of the targets.
-    Returns True if conflict was detected, newest file if it was fetched, and
-    set of node labels where saving the config failed.
+    Return True if conflict was detected, a set of node labels where saving the
+    config failed, and the newest file if it was fetched.
 
     file_type_code -- type of the file
     file -- the local file
@@ -126,9 +126,9 @@ def save_sync_new_known_hosts(
     targets and merging the local file with the newest file from cluster. Then
     add and/or remove the new hosts to the merged file and send it to targets.
     If some node has newer version of the file even after this, then fetch
-    the newest version. Returns True if there was conflict that the function
-    could not resolve, newest file if it was fetched, and set of node labels
-    where saving the config failed.
+    the newest version. Return True if there was conflict that the function
+    could not resolve, a set of node labels where saving the config failed, and
+    the newest file if it was fetched.
 
     known_hosts_facade -- local known-hosts file
     new_hosts -- hosts to add

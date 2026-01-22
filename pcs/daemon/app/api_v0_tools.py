@@ -5,14 +5,9 @@ from tornado.web import Finish
 
 from pcs.common import reports
 from pcs.common.async_tasks import types
-from pcs.common.async_tasks.dto import (
-    CommandDto,
-)
+from pcs.common.async_tasks.dto import CommandDto
 from pcs.common.reports.dto import ReportItemDto
-from pcs.daemon.async_tasks.scheduler import (
-    Scheduler,
-    TaskNotFoundError,
-)
+from pcs.daemon.async_tasks.scheduler import Scheduler, TaskNotFoundError
 from pcs.daemon.async_tasks.types import Command
 from pcs.lib.auth.types import AuthUser
 
