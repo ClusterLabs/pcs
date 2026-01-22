@@ -1,5 +1,5 @@
 import json
-from typing import Mapping, Optional
+from typing import Mapping, Optional, Sequence
 
 from pcs import settings
 from pcs.common import file_type_codes, reports
@@ -181,26 +181,54 @@ def fixture_save_sync_new_known_hosts_success(
 def fixture_save_sync_new_known_hosts_conflict(
     config: EnvConfig,
     node_labels: list[str],
+    initial_local_known_hosts: dict[str, PcsKnownHost],
+    new_hosts: dict[str, PcsKnownHost],
+    hosts_to_remove: Sequence[str] = (),
     cluster_name: str = "test99",
     file_data_version: int = 1,
-    known_hosts: Optional[Mapping[str, PcsKnownHost]] = None,
 ) -> str:
-    local_file = fixture_known_hosts_file_content(
-        file_data_version + 1, known_hosts
+    if new_hosts and hosts_to_remove:
+        raise AssertionError(
+            "Do not use this fixture to add and remove hosts at the same time"
+        )
+
+    def __construct_expected_hosts(
+        initial: dict[str, PcsKnownHost],
+    ) -> dict[str, PcsKnownHost]:
+        expected_hosts = {
+            k: v for k, v in initial.items() if k not in hosts_to_remove
+        }
+        return expected_hosts | new_hosts
+
+    expected_hosts = __construct_expected_hosts(initial_local_known_hosts)
+    first_push_file = fixture_known_hosts_file_content(
+        file_data_version + 1, expected_hosts
     )
 
+    remote_known_hosts = {
+        "NODE-FIRST-CONFLICT": PcsKnownHost("NODE-FIRST-CONFLICT", "TOKEN", [])
+    }
     remote_file_data_version = file_data_version + 42
-    newer_remote_file = fixture_known_hosts_file_content(
-        remote_file_data_version, known_hosts
+    remote_file = fixture_known_hosts_file_content(
+        remote_file_data_version, remote_known_hosts
     )
 
+    merged_known_hosts = __construct_expected_hosts(
+        initial_local_known_hosts | remote_known_hosts
+    )
+    merged_file_data_version = remote_file_data_version + 1
     merged_file = fixture_known_hosts_file_content(
-        remote_file_data_version + 1, known_hosts
+        merged_file_data_version, merged_known_hosts
     )
 
-    even_more_new_file_data_version = remote_file_data_version + 42
+    even_more_new_remote_hosts = {
+        "NODE-SECOND-CONFLICT": PcsKnownHost(
+            "NODE-SECOND-CONFLICT", "TOKEN", []
+        )
+    }
+    even_more_new_remote_file_data_version = merged_file_data_version + 42
     even_more_new_remote_file = fixture_known_hosts_file_content(
-        even_more_new_file_data_version, known_hosts
+        even_more_new_remote_file_data_version, even_more_new_remote_hosts
     )
 
     fixture_save_sync_new_version_conflict(
@@ -208,9 +236,9 @@ def fixture_save_sync_new_known_hosts_conflict(
         cluster_name=cluster_name,
         node_labels=node_labels,
         file_type_code=file_type_codes.PCS_KNOWN_HOSTS,
-        local_file_content=local_file,
+        local_file_content=first_push_file,
         fetch_after_conflict=True,
-        remote_file_content=newer_remote_file,
+        remote_file_content=remote_file,
         name_prefix="sync_initial",
     )
 

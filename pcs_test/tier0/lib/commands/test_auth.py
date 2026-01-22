@@ -712,7 +712,8 @@ class AuthHosts(TestCase):
             cluster_name="test99",
             node_labels=["node1", "node2"],
             file_data_version=local_file_version,
-            known_hosts=local_tokens | new_tokens,
+            initial_local_known_hosts=local_tokens,
+            new_hosts=new_tokens,
         )
 
     def test_conflict_upon_conflict(self):
@@ -1168,7 +1169,9 @@ class DeauthHosts(TestCase):
             cluster_name="test99",
             node_labels=["node1", "node2"],
             file_data_version=local_file_version,
-            known_hosts={},
+            initial_local_known_hosts=local_tokens,
+            new_hosts={},
+            hosts_to_remove=["LOCAL"],
         )
 
     def test_conflict_upon_conflict(self):
