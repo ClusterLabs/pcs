@@ -6430,11 +6430,11 @@ class PcsCfgsyncSendingConfigsToNodes(NameBuildTest):
         )
 
 
-class PcsCfgsyncSendingConfigsToNodesFailures(NameBuildTest):
+class PcsCfgsyncSendingConfigsToNodesFailed(NameBuildTest):
     def test_one_node(self):
         self.assert_message_from_report(
             "Unable to save file 'known-hosts' on node 'node1'",
-            reports.PcsCfgsyncSendingConfigsToNodesFailures(
+            reports.PcsCfgsyncSendingConfigsToNodesFailed(
                 [file_type_codes.PCS_KNOWN_HOSTS], ["node1"]
             ),
         )
@@ -6442,7 +6442,7 @@ class PcsCfgsyncSendingConfigsToNodesFailures(NameBuildTest):
     def test_multiple_nodes(self):
         self.assert_message_from_report(
             "Unable to save file 'known-hosts' on nodes 'node1', 'node2'",
-            reports.PcsCfgsyncSendingConfigsToNodesFailures(
+            reports.PcsCfgsyncSendingConfigsToNodesFailed(
                 [file_type_codes.PCS_KNOWN_HOSTS], ["node1", "node2"]
             ),
         )
@@ -6450,7 +6450,7 @@ class PcsCfgsyncSendingConfigsToNodesFailures(NameBuildTest):
     def test_multiple_files(self):
         self.assert_message_from_report(
             "Unable to save files 'known-hosts', 'pcs configuration' on node 'node1'",
-            reports.PcsCfgsyncSendingConfigsToNodesFailures(
+            reports.PcsCfgsyncSendingConfigsToNodesFailed(
                 [
                     file_type_codes.PCS_KNOWN_HOSTS,
                     file_type_codes.PCS_SETTINGS_CONF,

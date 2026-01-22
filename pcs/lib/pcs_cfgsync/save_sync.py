@@ -175,16 +175,12 @@ def save_sync_new_known_hosts(
     known_hosts_facade.remove_known_hosts(hosts_to_remove)
     known_hosts_facade.update_known_hosts(new_hosts)
 
-    second_conflict_detected, second_failed_nodes, second_new_file = (
-        save_sync_new_version(
-            PCS_KNOWN_HOSTS,
-            known_hosts_facade,
-            cluster_name,
-            target_list,
-            node_communicator,
-            report_processor,
-            fetch_on_conflict=True,
-        )
+    return save_sync_new_version(
+        PCS_KNOWN_HOSTS,
+        known_hosts_facade,
+        cluster_name,
+        target_list,
+        node_communicator,
+        report_processor,
+        fetch_on_conflict=True,
     )
-
-    return second_conflict_detected, second_failed_nodes, second_new_file

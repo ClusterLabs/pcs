@@ -1,5 +1,5 @@
 import json
-from typing import Mapping, Optional
+from typing import Mapping
 
 from pcs.common import reports
 from pcs.common.auth import HostAuthData
@@ -562,7 +562,7 @@ class GetClusterKnownHosts(
             if force_all_errors
             else reports.ReportItemSeverity.ERROR
         )
-        self.__known_hosts: Optional[list[PcsKnownHost]] = None
+        self.__known_hosts: list[PcsKnownHost] = []
 
     def _get_request_data(self) -> RequestData:
         return RequestData("remote/get_cluster_known_hosts")
@@ -586,7 +586,6 @@ class GetClusterKnownHosts(
             return self._get_next_list()
         try:
             data = json.loads(response.data)
-            self.__known_hosts = []
             for name, known_host_data in data.items():
                 self.__known_hosts.append(
                     PcsKnownHost(
@@ -600,8 +599,7 @@ class GetClusterKnownHosts(
                 )
 
             return []
-        except (KeyError, json.JSONDecodeError):
-            self.__known_hosts = None
+        except (json.JSONDecodeError, KeyError, TypeError):
             invalid_response_report = ReportItem(
                 ReportItemSeverity(self._failure_severity, None),
                 reports.messages.InvalidResponseFormat(node_label),
@@ -613,7 +611,7 @@ class GetClusterKnownHosts(
         return self._get_next_list()
 
     def on_complete(self) -> list[PcsKnownHost]:
-        return self.__known_hosts or []
+        return self.__known_hosts
 
 
 class RemoveNodesFromCib(

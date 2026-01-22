@@ -8651,7 +8651,7 @@ class PcsCfgsyncSendingConfigsToNodes(ReportItemMessage):
 
 
 @dataclass(frozen=True)
-class PcsCfgsyncSendingConfigsToNodesFailures(ReportItemMessage):
+class PcsCfgsyncSendingConfigsToNodesFailed(ReportItemMessage):
     """
     Sending updated configs to specified nodes failed for some nodes
 
@@ -8661,7 +8661,7 @@ class PcsCfgsyncSendingConfigsToNodesFailures(ReportItemMessage):
 
     file_type_code_list: list[file_type_codes.FileTypeCode]
     node_name_list: list[str]
-    _code = codes.PCS_CFGSYNC_SENDING_CONFIGS_TO_NODES_FAILURES
+    _code = codes.PCS_CFGSYNC_SENDING_CONFIGS_TO_NODES_FAILED
 
     @property
     def message(self) -> str:

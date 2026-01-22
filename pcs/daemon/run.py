@@ -164,7 +164,8 @@ def configure_app(  # noqa: PLR0913
 
         # Even with disabled (standalone) webui the following routes must be
         # provided because they can be used via unix socket from cockpit.
-        # These handlers are the same, only difference is the auth they use
+        # Handlers for these routes are the same in both cases, the only
+        # difference is the authentication method used.
         routes.extend(ui_manage.get_routes(ui_auth_factory, async_scheduler))
         routes.extend(sinatra_ui.get_routes(ui_auth_factory, ruby_pcsd_wrapper))
 
@@ -231,7 +232,7 @@ def main(argv=None) -> None:
             ),
         )
     )
-    auth_provider = AuthProvider(log.pcsd)
+    lib_auth_provider = AuthProvider(log.pcsd)
     SignalInfo.async_scheduler = async_scheduler
 
     sync_config_lock = Lock()
@@ -248,7 +249,7 @@ def main(argv=None) -> None:
 
     make_app = configure_app(
         async_scheduler,
-        auth_provider,
+        lib_auth_provider,
         env.PCSD_SESSION_LIFETIME,
         ruby_pcsd_wrapper,
         sync_config_lock,
