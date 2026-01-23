@@ -66,8 +66,6 @@ def remote(params, request, auth_user)
   }
   remote_cmd_with_pacemaker = {
       :pacemaker_node_status => method(:remote_pacemaker_node_status),
-      :resource_start => method(:resource_start),
-      :resource_stop => method(:resource_stop),
       :resource_cleanup => method(:resource_cleanup),
       :resource_refresh => method(:resource_refresh),
       :update_resource => method(:update_resource),
@@ -761,20 +759,6 @@ def imported_cluster_list(params, request, auth_user)
   return JSON.generate(imported_clusters)
 end
 
-def resource_stop(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::WRITE)
-    return 403, 'Permission denied'
-  end
-  stdout, stderr, retval = run_cmd(
-    auth_user, PCS, "--", "resource", "disable", params[:resource]
-  )
-  if retval == 0
-    return JSON.generate({"success" => "true"})
-  else
-    return JSON.generate({"error" => "true", "stdout" => stdout, "stderror" => stderr})
-  end
-end
-
 def resource_cleanup(params, request, auth_user)
   return _resource_cleanup_refresh("cleanup", params, request, auth_user)
 end
@@ -799,20 +783,6 @@ def _resource_cleanup_refresh(action, params, request, auth_user)
     return JSON.generate(
       {"error" => "true", "stdout" => stdout, "stderror" => stderr}
     )
-  end
-end
-
-def resource_start(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::WRITE)
-    return 403, 'Permission denied'
-  end
-  stdout, stderr, retval = run_cmd(
-    auth_user, PCS, "--", "resource", "enable", params[:resource]
-  )
-  if retval == 0
-    return JSON.generate({"success" => "true"})
-  else
-    return JSON.generate({"error" => "true", "stdout" => stdout, "stderror" => stderr})
   end
 end
 
