@@ -8,7 +8,7 @@ from pcs.daemon.app.auth_provider import (
     ApiAuthProviderFactoryInterface,
     ApiAuthProviderInterface,
 )
-from pcs.daemon.app.webui.session import Storage
+from pcs.daemon.app.webui.session import Session, Storage
 from pcs.lib.auth.provider import AuthProvider
 from pcs.lib.auth.types import AuthUser
 
@@ -56,28 +56,29 @@ class SessionAuthProvider(ApiAuthProviderInterface):
         self._handler = handler
         self._lib_auth_provider = lib_auth_provider
         self._session_storage = session_storage
-
-        sid_from_client = self.__sid_from_client
-        self.__session = (
-            self._session_storage.get(sid_from_client)
-            if sid_from_client
-            else None
-        )
+        self._session: Optional[Session] = None
 
     @property
     def __sid_from_client(self) -> Optional[str]:
         return self._handler.get_cookie(PCSD_SESSION, default=None)
 
     def is_available(self) -> bool:
-        return self.__session is not None
+        if self._session is not None:
+            return True
+
+        if self.__sid_from_client is None:
+            return False
+        self._session = self._session_storage.get(self.__sid_from_client)
+        return self._session is not None
 
     async def auth_user(self) -> AuthUser:
-        if self.__session is None:
+        if not self.is_available():
             raise NotAuthorizedException()
 
         # mypy complains that self.__session can be None when passed into
         # the lambda below. Passing local variable fixes this
-        session = self.__session
+        assert self._session is not None
+        session = self._session
         auth_user = await IOLoop.current().run_in_executor(
             executor=None,
             func=lambda: self._lib_auth_provider.login_user(session.username),
@@ -86,25 +87,18 @@ class SessionAuthProvider(ApiAuthProviderInterface):
             raise NotAuthorizedException()
 
         # Update session cookie in response
-        self._set_session_cookie()
+        self._handler.set_cookie(
+            PCSD_SESSION, self._session.sid, **self._cookie_options
+        )
 
         return auth_user
-
-    def _set_session_cookie(self) -> None:
-        """Set or clear session cookie based on current session state."""
-        if self.__session:
-            self._handler.set_cookie(
-                PCSD_SESSION, self.__session.sid, **self._cookie_options
-            )
-        else:
-            self._handler.clear_cookie(PCSD_SESSION)
 
 
 class SessionAuthProviderFactory(ApiAuthProviderFactoryInterface):
     def __init__(
         self, lib_auth_provider: AuthProvider, session_storage: Storage
     ) -> None:
-        super().__init__(lib_auth_provider)
+        self._lib_auth_provider = lib_auth_provider
         self._session_storage = session_storage
 
     def create(self, handler: RequestHandler) -> SessionAuthProvider:

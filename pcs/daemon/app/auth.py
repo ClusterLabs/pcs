@@ -174,6 +174,7 @@ class LegacyTokenAuthProvider(TokenAuthProvider):
         return DesiredUser(username, groups)
 
 
+# DEPRECATED, use pcs.daemon.app.auth_provider.UnixSocketAuthProvider
 class UnixSocketAuthProvider(_BaseLibAuthProvider):
     # Every required functionality is already in _BaseLibAuthProvider
     pass

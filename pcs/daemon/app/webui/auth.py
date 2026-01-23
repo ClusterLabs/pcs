@@ -17,6 +17,7 @@ from .session import (
 PCSD_SESSION = "pcsd.sid"
 
 
+# DEPRECATED, use pcs.daemon.app.webui.auth_provider.SessionAuthProvider
 class SessionAuthProvider(UnixSocketAuthProvider):
     class CookieOptions(TypedDict):
         secure: bool

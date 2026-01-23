@@ -1,5 +1,5 @@
 """
-This module reimplements the AuthProviders from pcs.daemon.auth module.
+This module reimplements the AuthProviders from pcs.daemon.app.auth module.
 
 This new approach tries to simplify the auth provider structure, and use
 composition over inheritance:
@@ -35,29 +35,15 @@ class ApiAuthProviderInterface:
         """
         Check if this authentication provider can handle the current request.
 
-        This method should check if the necessary credentials or conditions
-        are present for this provider to attempt authentication. For example:
-        - SocketAuthProvider: checks if request came via unix socket
-        - SessionAuthProvider: checks if session cookie is present
-
         Returns:
             True if this provider can attempt authentication for this request,
             False otherwise.
-
-        Note:
-            This method should not perform the actual authentication, only
-            check if the preconditions are met. It should be lightweight
-            and idempotent.
         """
         raise NotImplementedError()
 
     async def auth_user(self) -> AuthUser:
         """
         Authenticate the user and return the authenticated user object.
-
-        This method performs the actual authentication using the credentials
-        or session available in the current request. It should only be called
-        if is_available() returns True.
 
         Returns:
             AuthUser object containing the authenticated username and groups.
@@ -79,19 +65,7 @@ class ApiAuthProviderFactoryInterface:
     Factory interface for creating authentication provider instances.
     """
 
-    def __init__(self, lib_auth_provider: AuthProvider):
-        self._lib_auth_provider = lib_auth_provider
-
     def create(self, handler: RequestHandler) -> ApiAuthProviderInterface:
-        """
-        Create an authentication provider instance.
-
-        Args:
-            handler: Tornado request handler for accessing request data
-
-        Returns:
-            ApiAuthProviderInterface implementation configured for this request
-        """
         raise NotImplementedError()
 
 
@@ -105,12 +79,6 @@ class AuthProviderMulti(ApiAuthProviderInterface):
     """
 
     def __init__(self, providers: Sequence[ApiAuthProviderInterface]) -> None:
-        """
-        Initialize the multi-provider with a list of providers.
-
-        Args:
-            providers: Ordered sequence of providers to try
-        """
         self._providers = providers
         self._first_available_provider: Optional[ApiAuthProviderInterface] = (
             None
@@ -121,6 +89,8 @@ class AuthProviderMulti(ApiAuthProviderInterface):
         Check if any of the configured providers is available. Cache the first
         available provider.
         """
+        if self._first_available_provider is not None:
+            return True
         for provider in self._providers:
             if provider.is_available():
                 self._first_available_provider = provider
@@ -128,25 +98,15 @@ class AuthProviderMulti(ApiAuthProviderInterface):
         return False
 
     async def auth_user(self) -> AuthUser:
-        if self._first_available_provider is not None:
-            return await self._first_available_provider.auth_user()
-
         if not self.is_available():
-            # No providers available
             raise NotAuthorizedException()
-
+        # is_available returned true, so the _first_available_provider cannot
+        # be None
         assert self._first_available_provider is not None
         return await self._first_available_provider.auth_user()
 
 
 class AuthProviderMultiFactory(ApiAuthProviderFactoryInterface):
-    """
-    Factory for creating AuthProviderMulti instances.
-
-    This factory composes other factories to create a multi-provider that
-    tries multiple authentication methods in sequence.
-    """
-
     def __init__(
         self,
         factories: Sequence[ApiAuthProviderFactoryInterface],
@@ -198,9 +158,6 @@ class UnixSocketAuthProvider(ApiAuthProviderInterface):
         """
         Extract username from Unix socket peer credentials.
 
-        Returns:
-            Username of the peer process, or None if not a Unix socket
-
         Note:
             UID 0 (root) is treated as SUPERUSER
         """
@@ -246,5 +203,8 @@ class UnixSocketAuthProvider(ApiAuthProviderInterface):
 
 
 class UnixSocketAuthProviderFactory(ApiAuthProviderFactoryInterface):
+    def __init__(self, lib_auth_provider: AuthProvider):
+        self._lib_auth_provider = lib_auth_provider
+
     def create(self, handler: RequestHandler) -> UnixSocketAuthProvider:
         return UnixSocketAuthProvider(handler, self._lib_auth_provider)
