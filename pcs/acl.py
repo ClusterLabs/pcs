@@ -1,8 +1,13 @@
+from typing import Any
+
 from pcs.cli.cluster_property.output import PropertyConfigurationFacade
 from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.common.parse_args import Argv, InputModifiers
 from pcs.cli.reports.output import deprecation_warning
 from pcs.common.str_tools import indent
 from pcs.lib.pacemaker.values import is_true
+
+_autodelete_deprecated = "Flag '--autodelete' is deprecated and might be removed in a future release."
 
 
 def _print_list_of_objects(obj_list, transformation_fn):
@@ -150,7 +155,7 @@ def role_create(lib, argv, modifiers):
     lib.acl.create_role(role_id, permission_info_list, description)
 
 
-def role_delete(lib, argv, modifiers):
+def role_delete(lib: Any, argv: Argv, modifiers: InputModifiers):
     """
     Options:
       * -f - CIB file
@@ -159,6 +164,11 @@ def role_delete(lib, argv, modifiers):
     modifiers.ensure_only_supported("-f", "--autodelete")
     if len(argv) != 1:
         raise CmdLineInputError()
+
+    # --autodelete was used in old web ui only, was never used in the new web ui
+    # DEPRECATED since 0.12.3, unused since 0.11.1
+    if modifiers.is_specified("--autodelete"):
+        deprecation_warning(_autodelete_deprecated)
 
     lib.acl.remove_role(
         argv[0], autodelete_users_groups=modifiers.get("--autodelete")
@@ -170,6 +180,8 @@ def _role_assign_unassign(argv, keyword, not_specific_fn, user_fn, group_fn):
     Commandline options: no options
     """
     # DEPRECATED ambiguous syntax in the first 0.12 version
+    # it was used in the old web ui, it was never used in the new web ui
+    # therefore it is unused since pcs-0.11.1
     # - pcs role assign <role id> [to] [user|group] <username/group>
     # - pcs role unassign <role id> [from] [user|group] <username/group>
     # The problem is, that 'user|group' is optional, therefore pcs guesses
@@ -219,24 +231,34 @@ def role_assign(lib, argv, modifiers):
         "to",
         # DEPRECATED ambiguous syntax in the first 0.12 version
         # Use assign_role_to_target or assign_role_to_group instead.
+        # it was used in the old web ui, it was never used in the new web ui
+        # therefore it is unused since pcs-0.11.1
         lib.acl.assign_role_not_specific,
         lib.acl.assign_role_to_target,
         lib.acl.assign_role_to_group,
     )
 
 
-def role_unassign(lib, argv, modifiers):
+def role_unassign(lib: Any, argv: Argv, modifiers: InputModifiers):
     """
     Options:
       * -f - CIB file
       * --autodelete - autodelete empty targets, groups
     """
     modifiers.ensure_only_supported("-f", "--autodelete")
+
+    # --autodelete was used in old web ui only, was never used in the new web ui
+    # DEPRECATED since 0.12.3, unused since 0.11.1
+    if modifiers.is_specified("--autodelete"):
+        deprecation_warning(_autodelete_deprecated)
+
     _role_assign_unassign(
         argv,
         "from",
         # DEPRECATED ambiguous syntax in the first 0.12 version
         # Use unassign_role_from_target or unassign_role_from_group instead.
+        # it was used in the old web ui, it was never used in the new web ui
+        # therefore it is unused since pcs-0.11.1
         lambda role_id, ug_id: lib.acl.unassign_role_not_specific(
             role_id, ug_id, modifiers.get("--autodelete")
         ),

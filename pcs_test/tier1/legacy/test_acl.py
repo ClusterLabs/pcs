@@ -16,6 +16,10 @@ AMBIGUOUS_ASSIGN_DEPRECATED = (
     "without specifying 'user' or 'group' keyword is deprecated and might be "
     "removed in a future release.\n"
 )
+AUTODELETE_DEPRECATED = (
+    "Deprecation Warning: Flag '--autodelete' is deprecated and might be "
+    "removed in a future release.\n"
+)
 ERRORS_HAVE_OCCURRED = (
     "Error: Errors have occurred, therefore pcs is unable to continue\n"
 )
@@ -314,7 +318,7 @@ class ACLTest(TestCase, AssertPcsMixin):
         )
         self.assert_pcs_success(
             "acl role unassign role2 from user1 --autodelete".split(),
-            stderr_full=AMBIGUOUS_ASSIGN_DEPRECATED,
+            stderr_full=AUTODELETE_DEPRECATED + AMBIGUOUS_ASSIGN_DEPRECATED,
         )
         self.assert_pcs_success(
             ["acl"],
@@ -337,7 +341,7 @@ class ACLTest(TestCase, AssertPcsMixin):
         )
         self.assert_pcs_success(
             "acl role unassign role1 from user1 --autodelete".split(),
-            stderr_full=AMBIGUOUS_ASSIGN_DEPRECATED,
+            stderr_full=AUTODELETE_DEPRECATED + AMBIGUOUS_ASSIGN_DEPRECATED,
         )
         self.assert_pcs_success(
             ["acl"],
@@ -376,7 +380,10 @@ class ACLTest(TestCase, AssertPcsMixin):
                 """
             ),
         )
-        self.assert_pcs_success("acl role delete role1 --autodelete".split())
+        self.assert_pcs_success(
+            "acl role delete role1 --autodelete".split(),
+            stderr_full=AUTODELETE_DEPRECATED,
+        )
         self.assert_pcs_success(
             ["acl"],
             dedent(

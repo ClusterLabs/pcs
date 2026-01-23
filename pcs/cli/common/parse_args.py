@@ -529,6 +529,8 @@ class InputModifiers:
                 # boolean values
                 "--all": "--all" in options,
                 "--agent-validation": "--agent-validation" in options,
+                # TODO remove
+                # used only in acl commands and it is deprecated there
                 "--autodelete": "--autodelete" in options,
                 "--brief": "--brief" in options,
                 "--config": "--config" in options,

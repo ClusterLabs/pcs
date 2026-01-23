@@ -82,14 +82,6 @@ def remote(params, request, auth_user)
       :add_meta_attr_remote => method(:add_meta_attr_remote),
       :update_cluster_settings => method(:update_cluster_settings),
       :add_node_attr_remote => method(:add_node_attr_remote),
-      # lib api:
-      # /api/v1/acl-create-role/v1
-      :add_acl_role => method(:add_acl_role_remote),
-      # lib api:
-      # /api/v1/acl-remove-role/v1
-      :remove_acl_roles => method(:remove_acl_roles_remote),
-      :add_acl => method(:add_acl_remote),
-      :remove_acl => method(:remove_acl_remote),
       :resource_change_group => method(:resource_change_group),
       :resource_promotable => method(:resource_promotable),
       :resource_clone => method(:resource_clone),
@@ -954,96 +946,6 @@ def add_node_attr_remote(params, request, auth_user)
     return [200, "Successfully added attribute to node"]
   else
     return [400, "Error adding attribute to node"]
-  end
-end
-
-def add_acl_role_remote(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::GRANT)
-    return 403, 'Permission denied'
-  end
-  retval = add_acl_role(auth_user, params["name"], params["description"])
-  if retval == ""
-    return [200, "Successfully added ACL role"]
-  else
-    return [
-      400,
-      retval.include?("cib_replace failed") ? "Error adding ACL role" : retval
-    ]
-  end
-end
-
-def remove_acl_roles_remote(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::GRANT)
-    return 403, 'Permission denied'
-  end
-  errors = ""
-  params.each { |name, value|
-    if name.index("role-") == 0
-      out, errout, retval = run_cmd(
-        auth_user, PCS, "--autodelete", "--", "acl", "role", "delete", value.to_s
-      )
-      if retval != 0
-        errors += "Unable to remove role #{value}"
-        unless errout.include?("cib_replace failure")
-          errors += ": #{errout.join(" ").strip()}"
-        end
-        errors += "\n"
-        $logger.info errors
-      end
-    end
-  }
-  if errors == ""
-    return [200, "Successfully removed ACL roles"]
-  else
-    return [400, errors]
-  end
-end
-
-def add_acl_remote(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::GRANT)
-    return 403, 'Permission denied'
-  end
-  if params["item"] == "permission"
-    retval = add_acl_permission(
-      auth_user,
-      params["role_id"], params["type"], params["xpath_id"], params["query_id"]
-    )
-  elsif (params["item"] == "user") or (params["item"] == "group")
-    retval = add_acl_usergroup(
-      auth_user, params["role_id"], params["item"], params["usergroup"]
-    )
-  else
-    retval = "Error: Unknown adding request"
-  end
-
-  if retval == ""
-    return [200, "Successfully added permission to role"]
-  else
-    return [
-      400,
-      retval.include?("cib_replace failed") ? "Error adding permission" : retval
-    ]
-  end
-end
-
-def remove_acl_remote(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::GRANT)
-    return 403, 'Permission denied'
-  end
-  if params["item"] == "permission"
-    retval = remove_acl_permission(auth_user, params["acl_perm_id"])
-  elsif params["item"] == "usergroup"
-    retval = remove_acl_usergroup(
-      auth_user, params["role_id"],params["usergroup_id"], params["item_type"]
-    )
-  else
-    retval = "Error: Unknown removal request"
-  end
-
-  if retval == ""
-    return [200, "Successfully removed permission from role"]
-  else
-    return [400, retval]
   end
 end
 
