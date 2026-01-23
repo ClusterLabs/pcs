@@ -76,12 +76,6 @@ def remote(params, request, auth_user)
       :add_constraint_remote => method(:add_constraint_remote),
       :add_constraint_rule_remote => method(:add_constraint_rule_remote),
       # lib api:
-      # /api/v1/constraint-colocation-create-with-set/v1
-      # /api/v1/constraint-order-create-with-set/v1
-      # /api/v1/constraint-ticket-create-with-set/v1
-      # location is not supported => lib commands fully replaces this url
-      :add_constraint_set_remote => method(:add_constraint_set_remote),
-      # lib api:
       # /api/v1/constraint-ticket-remove/v1
       :remove_constraint_remote => method(:remove_constraint_remote),
       :remove_constraint_rule_remote => method(:remove_constraint_rule_remote),
@@ -1155,41 +1149,6 @@ def add_constraint_rule_remote(params, request, auth_user)
     retval, error = add_location_constraint_rule(
       auth_user,
       params["res_id"], params["rule"], params["score"], params["force"],
-    )
-  else
-    return [400, "Unknown constraint type: #{params["c_type"]}"]
-  end
-
-  if retval == 0
-    return [200, "Successfully added constraint"]
-  else
-    return [400, "Error adding constraint: #{error}"]
-  end
-end
-
-def add_constraint_set_remote(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::WRITE)
-    return 403, 'Permission denied'
-  end
-  case params["c_type"]
-  when "ord"
-    retval, error = add_order_set_constraint(
-      auth_user, params["resources"].values, params["force"]
-    )
-  when "col"
-    retval, error = add_colocation_set_constraint(
-      auth_user, params["resources"].values, params["force"]
-    )
-  when "ticket"
-    unless params["options"]["ticket"]
-      return [400, "Error adding constraint ticket: option ticket missing"]
-    end
-    retval, error = add_ticket_set_constraint(
-      auth_user,
-      params["options"]["ticket"],
-      (params["options"]["loss-policy"] or ""),
-      params["resources"].values,
-      params["force"],
     )
   else
     return [400, "Unknown constraint type: #{params["c_type"]}"]

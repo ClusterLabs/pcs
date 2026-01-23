@@ -131,30 +131,6 @@ def add_order_constraint(
   return retval, stderr.join(' ')
 end
 
-def add_order_set_constraint(auth_user, resource_set_list, force=false)
-  command = ["constraint", "order"]
-  resource_set_list.each { |resource_set|
-    command << "set"
-    command.concat(resource_set)
-  }
-  flags = []
-  flags << '--force' if force
-  stdout, stderr, retval = run_cmd(auth_user, PCS, *flags, "--", *command)
-  return retval, stderr.join(' ')
-end
-
-def add_colocation_set_constraint(auth_user, resource_set_list, force=false)
-  command = ["constraint", "colocation"]
-  resource_set_list.each { |resource_set|
-    command << "set"
-    command.concat(resource_set)
-  }
-  flags = []
-  flags << '--force' if force
-  stdout, stderr, retval = run_cmd(auth_user, PCS, *flags, "--", *command)
-  return retval, stderr.join(' ')
-end
-
 def add_ticket_constraint(
     auth_user, ticket, resource_id, role, loss_policy, force=false
 )
@@ -163,23 +139,6 @@ def add_ticket_constraint(
     command << role
   end
   command << resource_id
-  command << 'loss-policy=' + loss_policy unless loss_policy.strip().empty?()
-  flags = []
-  flags << '--force' if force
-  stdout, stderr, retval = run_cmd(auth_user, PCS, *flags, "--", *command)
-  return retval, stderr.join(' ')
-end
-
-def add_ticket_set_constraint(
-  auth_user, ticket, loss_policy, resource_set_list, force=false
-)
-  command = ['constraint', 'ticket']
-  resource_set_list.each { |resource_set|
-    command << 'set'
-    command.concat(resource_set)
-  }
-  command << 'setoptions'
-  command << 'ticket=' + ticket
   command << 'loss-policy=' + loss_policy unless loss_policy.strip().empty?()
   flags = []
   flags << '--force' if force
