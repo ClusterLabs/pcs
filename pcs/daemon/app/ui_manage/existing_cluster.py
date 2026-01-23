@@ -6,7 +6,7 @@ from pcs.daemon.app.ui_manage.base_handler import BaseAjaxProtectedManageHandler
 class ManageExistingClusterHandler(BaseAjaxProtectedManageHandler):
     async def _handle_request(self) -> None:
         node_name = self.get_argument("node-name", "")
-        result = await self._process_request(
+        result = await self._run_library_command(
             "manage_clusters.add_existing_cluster",
             {"node_name": node_name},
         )
@@ -61,15 +61,5 @@ class ManageExistingClusterHandler(BaseAjaxProtectedManageHandler):
                     ),
                 )
 
-        # return all errors and warnings in case we did not handle them above
-        raise self._error(
-            reports_to_str(
-                rep
-                for rep in result.reports
-                if rep.severity.level
-                in (
-                    reports.ReportItemSeverity.ERROR,
-                    reports.ReportItemSeverity.WARNING,
-                )
-            )
-        )
+        # return all reports in case we did not handle them above
+        raise self._error(reports_to_str(result.reports))

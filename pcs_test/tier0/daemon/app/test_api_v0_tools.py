@@ -146,10 +146,15 @@ class RunLibraryCommandInSchedulerTest(IsolatedAsyncioTestCase):
         self.scheduler.new_task.return_value = self.task_ident
 
     async def test_success(self):
+        report_items = [
+            reports.ReportItem.info(
+                reports.messages.NoActionNecessary()
+            ).to_dto()
+        ]
         task_result = TaskResultDto(
             task_ident=self.task_ident,
             command=self.command_dto,
-            reports=[],
+            reports=report_items,
             state=TaskState.FINISHED,
             task_finish_type=TaskFinishType.SUCCESS,
             kill_reason=None,
@@ -167,7 +172,7 @@ class RunLibraryCommandInSchedulerTest(IsolatedAsyncioTestCase):
         self.assertIsInstance(result, SimplifiedResult)
         self.assertTrue(result.success)
         self.assertEqual(result.result, "command result")
-        self.assertEqual(result.reports, [])
+        self.assertEqual(result.reports, report_items)
 
         self.scheduler.new_task.assert_called_once_with(
             Command(self.command_dto, is_legacy_command=True),
@@ -251,15 +256,16 @@ class RunLibraryCommandInSchedulerTest(IsolatedAsyncioTestCase):
 
     async def test_permission_denied_with_context(self):
         # Permission denied with context should not raise error
+        report_items = [
+            reports.ReportItem.error(
+                reports.messages.NotAuthorized(),
+                context=reports.ReportItemContext("node1"),
+            ).to_dto()
+        ]
         task_result = TaskResultDto(
             task_ident=self.task_ident,
             command=self.command_dto,
-            reports=[
-                reports.ReportItem.error(
-                    reports.messages.NotAuthorized(),
-                    context=reports.ReportItemContext("node1"),
-                ).to_dto()
-            ],
+            reports=report_items,
             state=TaskState.FINISHED,
             task_finish_type=TaskFinishType.FAIL,
             kill_reason=None,
@@ -275,6 +281,7 @@ class RunLibraryCommandInSchedulerTest(IsolatedAsyncioTestCase):
         )
 
         self.assertFalse(result.success)
+        self.assertEqual(result.reports, report_items)
         self.error_handler.assert_not_called()
 
     async def test_task_killed_completion_timeout(self):

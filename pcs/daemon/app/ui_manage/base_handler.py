@@ -54,7 +54,7 @@ class BaseAjaxProtectedManageHandler(LegacyApiHandler, AjaxMixin):
         except NotAuthorizedException as e:
             raise self.unauthorized() from e
 
-    async def _process_request(
+    async def _run_library_command(
         self, cmd_name: str, cmd_params: Mapping[str, Any]
     ) -> SimplifiedResult:
         """

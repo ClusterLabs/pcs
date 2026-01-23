@@ -100,7 +100,9 @@ class BaseAjaxProtectedManageHandlerTest(UiManageTest):
             self.cmd_params = cmd_params
 
         async def _handle_request(self):
-            result = await self._process_request(self.cmd_name, self.cmd_params)
+            result = await self._run_library_command(
+                self.cmd_name, self.cmd_params
+            )
             messages = [
                 report_item.message.message for report_item in result.reports
             ]
@@ -151,14 +153,14 @@ class UiManageHandlerTest(UiManageTest):
 
     def setUp(self):
         super().setUp()
-        self.mock_process_request = mock.AsyncMock()
-        process_request_patcher = mock.patch.object(
+        self.mock_run_library_command = mock.AsyncMock()
+        run_library_command_patcher = mock.patch.object(
             base_handler.BaseAjaxProtectedManageHandler,
-            "_process_request",
-            self.mock_process_request,
+            "_run_library_command",
+            self.mock_run_library_command,
         )
-        process_request_patcher.start()
-        self.addCleanup(process_request_patcher.stop)
+        run_library_command_patcher.start()
+        self.addCleanup(run_library_command_patcher.stop)
 
     def get_app(self) -> Application:
         return Application(
@@ -171,25 +173,25 @@ class ManageExistingClusterHandlerTest(UiManageHandlerTest):
     command_name = "manage_clusters.add_existing_cluster"
 
     def test_success_without_reports(self):
-        self.mock_process_request.return_value = self.result_success()
+        self.mock_run_library_command.return_value = self.result_success()
         response = self.fetch(self.url, body=urlencode({"node-name": "node1"}))
         self.assert_body(response.body, "")
         self.assertEqual(response.code, 200)
-        self.mock_process_request.assert_called_once_with(
+        self.mock_run_library_command.assert_called_once_with(
             self.command_name, {"node_name": "node1"}
         )
 
-    def test_success_with_default_node_name(self):
-        self.mock_process_request.return_value = self.result_success()
+    def test_pass_empty_node_name(self):
+        self.mock_run_library_command.return_value = self.result_success()
         response = self.fetch(self.url)
         self.assert_body(response.body, "")
         self.assertEqual(response.code, 200)
-        self.mock_process_request.assert_called_once_with(
+        self.mock_run_library_command.assert_called_once_with(
             self.command_name, {"node_name": ""}
         )
 
     def test_success_with_unable_to_get_cluster_known_hosts(self):
-        self.mock_process_request.return_value = self.result_success(
+        self.mock_run_library_command.return_value = self.result_success(
             reports=[
                 reports.ReportItem.warning(
                     reports.messages.UnableToGetClusterKnownHosts(
@@ -205,12 +207,12 @@ class ManageExistingClusterHandlerTest(UiManageHandlerTest):
             "cannot get authentication info from cluster 'test-cluster'",
         )
         self.assertEqual(response.code, 200)
-        self.mock_process_request.assert_called_once_with(
+        self.mock_run_library_command.assert_called_once_with(
             self.command_name, {"node_name": "node1"}
         )
 
     def test_unable_to_get_cluster_info_from_status(self):
-        self.mock_process_request.return_value = self.result_failure(
+        self.mock_run_library_command.return_value = self.result_failure(
             report_items=[
                 reports.ReportItem.error(
                     reports.messages.UnableToGetClusterInfoFromStatus(),
@@ -224,12 +226,12 @@ class ManageExistingClusterHandlerTest(UiManageHandlerTest):
             "Unable to communicate with remote pcsd on node 'node1'.",
         )
         self.assertEqual(response.code, 400)
-        self.mock_process_request.assert_called_once_with(
+        self.mock_run_library_command.assert_called_once_with(
             self.command_name, {"node_name": "node1"}
         )
 
     def test_unable_to_get_cluster_info_from_status_without_context(self):
-        self.mock_process_request.return_value = self.result_failure(
+        self.mock_run_library_command.return_value = self.result_failure(
             report_items=[
                 reports.ReportItem.error(
                     reports.messages.UnableToGetClusterInfoFromStatus()
@@ -242,12 +244,12 @@ class ManageExistingClusterHandlerTest(UiManageHandlerTest):
             "Unable to communicate with remote pcsd on node 'node2'.",
         )
         self.assertEqual(response.code, 400)
-        self.mock_process_request.assert_called_once_with(
+        self.mock_run_library_command.assert_called_once_with(
             self.command_name, {"node_name": "node2"}
         )
 
     def test_node_not_in_cluster(self):
-        self.mock_process_request.return_value = self.result_failure(
+        self.mock_run_library_command.return_value = self.result_failure(
             report_items=[
                 reports.ReportItem.error(
                     reports.messages.NodeNotInCluster(),
@@ -262,12 +264,12 @@ class ManageExistingClusterHandlerTest(UiManageHandlerTest):
             "You must create a cluster using this node before adding it to pcsd.",
         )
         self.assertEqual(response.code, 400)
-        self.mock_process_request.assert_called_once_with(
+        self.mock_run_library_command.assert_called_once_with(
             self.command_name, {"node_name": "node1"}
         )
 
     def test_cluster_name_already_in_use(self):
-        self.mock_process_request.return_value = self.result_failure(
+        self.mock_run_library_command.return_value = self.result_failure(
             report_items=[
                 reports.ReportItem.error(
                     reports.messages.ClusterNameAlreadyInUse("my-cluster")
@@ -281,12 +283,12 @@ class ManageExistingClusterHandlerTest(UiManageHandlerTest):
             "You may not add two clusters with the same name.",
         )
         self.assertEqual(response.code, 400)
-        self.mock_process_request.assert_called_once_with(
+        self.mock_run_library_command.assert_called_once_with(
             self.command_name, {"node_name": "node1"}
         )
 
-    def test_generic_error_and_warning_reports(self):
-        self.mock_process_request.return_value = self.result_failure(
+    def test_generic_reports(self):
+        self.mock_run_library_command.return_value = self.result_failure(
             report_items=[
                 reports.ReportItem.error(
                     reports.messages.StonithUnfencingFailed("error1")
@@ -303,14 +305,17 @@ class ManageExistingClusterHandlerTest(UiManageHandlerTest):
         # Info should be filtered out, only errors and warnings
         self.assert_body(
             response.body,
-            "Error: Unfencing failed:\nerror1\n"
-            "Warning: Unfencing failed:\nwarning1",
+            (
+                "Error: Unfencing failed:\nerror1\n"
+                "Warning: Unfencing failed:\nwarning1\n"
+                "Unfencing failed:\ninfo1"
+            ),
         )
         self.assertEqual(response.code, 400)
 
     def test_mixed_specific_and_generic_errors(self):
         # Test that specific errors are handled first, then generic errors
-        self.mock_process_request.return_value = self.result_failure(
+        self.mock_run_library_command.return_value = self.result_failure(
             report_items=[
                 reports.ReportItem.error(
                     reports.messages.ClusterNameAlreadyInUse("test-cluster")
