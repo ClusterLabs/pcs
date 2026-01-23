@@ -684,46 +684,6 @@ def pcs_compatibility_layer_known_hosts_add(
   return 'error'
 end
 
-def pcs_compatibility_layer_get_cluster_known_hosts(cluster_name, target_node)
-  warning_messages = []
-  known_hosts = []
-  auth_user = PCSAuth.getSuperuserAuth()
-
-  retval, out = send_request_with_token(
-    auth_user, target_node, '/get_cluster_known_hosts'
-  )
-  if retval == 200
-    begin
-      JSON.parse(out).each { |name, data|
-        known_hosts << PcsKnownHost.new(
-          name,
-          data.fetch('token'),
-          data.fetch('dest_list')
-        )
-      }
-    rescue => e
-      $logger.error "Unable to parse the response of /get_cluster_known_hosts: #{e}"
-      known_hosts = []
-      warning_messages << (
-        "Unable to automatically authenticate against cluster nodes: " +
-        "cannot get authentication info from cluster '#{cluster_name}'"
-      )
-    end
-  elsif retval == 404
-    warning_messages << (
-      "Unable to automatically authenticate against cluster nodes: " +
-      "cluster '#{cluster_name}' is running an old version of pcs/pcsd"
-    )
-  else
-    warning_messages << (
-      "Unable to automatically authenticate against cluster nodes: " +
-      "cannot get authentication info from cluster '#{cluster_name}'"
-    )
-  end
-
-  return known_hosts, warning_messages
-end
-
 def pcs_0_10_6_get_avail_resource_agents(code, out)
   if code != 200
     return code, out
