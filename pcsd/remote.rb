@@ -81,9 +81,6 @@ def remote(params, request, auth_user)
       :remove_constraint_rule_remote => method(:remove_constraint_rule_remote),
       :add_meta_attr_remote => method(:add_meta_attr_remote),
       :update_cluster_settings => method(:update_cluster_settings),
-      # lib api:
-      # /api/v1/fencing-topology-add-level/v1
-      :add_fence_level_remote => method(:add_fence_level_remote),
       :add_node_attr_remote => method(:add_node_attr_remote),
       # lib api:
       # /api/v1/acl-create-role/v1
@@ -942,20 +939,6 @@ def remove_resource(params, request, auth_user)
   else
     $logger.info("Remove resource errors:\n"+err.join('\n'))
     return [400, err]
-  end
-end
-
-def add_fence_level_remote(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::WRITE)
-    return 403, 'Permission denied'
-  end
-  retval, stdout, stderr = add_fence_level(
-    auth_user, params["level"], params["devices"], params["node"], params["remove"]
-  )
-  if retval == 0
-    return [200, "Successfully added fence level"]
-  else
-    return [400, stderr]
   end
 end
 

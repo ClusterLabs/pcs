@@ -42,20 +42,6 @@ def getAllSettings(auth_user, cib_dom=nil)
   return ret
 end
 
-def add_fence_level(auth_user, level, devices, node, remove = false)
-  if not remove
-    stdout, stderr, retval = run_cmd(
-      auth_user, PCS, "--", "stonith", "level", "add", level, node, devices
-    )
-    return retval,stdout, stderr
-  else
-    stdout, stderr, retval = run_cmd(
-      auth_user, PCS, "--", "stonith", "level", "remove", level, "target", node, "stonith", devices
-    )
-    return retval,stdout, stderr
-  end
-end
-
 def add_node_attr(auth_user, node, key, value)
   stdout, stderr, retval = run_cmd(
     auth_user, PCS, "--", "node", "attribute", node, key.to_s + '=' + value.to_s
