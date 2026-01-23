@@ -85,7 +85,6 @@ def remote(params, request, auth_user)
       :resource_change_group => method(:resource_change_group),
       :resource_clone => method(:resource_clone),
       :resource_unclone => method(:resource_unclone),
-      :resource_ungroup => method(:resource_ungroup),
       :set_resource_utilization => method(:set_resource_utilization),
       :set_node_utilization => method(:set_node_utilization),
   }
@@ -1228,26 +1227,6 @@ def resource_change_group(params, request, auth_user)
   if retval != 0
     return [400, "Unable to add resource '#{params[:resource_id]}' to " +
       "group '#{params[:group_id]}': #{stderr.join('')}"
-    ]
-  end
-  return 200
-end
-
-def resource_ungroup(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::WRITE)
-    return 403, 'Permission denied'
-  end
-
-  unless params[:group_id]
-    return [400, 'group_id has to be specified.']
-  end
-
-  _, stderr, retval = run_cmd(
-    auth_user, PCS, '--', 'resource', 'ungroup', params[:group_id]
-  )
-  if retval != 0
-    return [400, 'Unable to ungroup group ' +
-      "'#{params[:group_id]}': #{stderr.join('')}"
     ]
   end
   return 200

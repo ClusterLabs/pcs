@@ -1762,7 +1762,6 @@
           resource ungroup
         daemon urls:
           /api/v1/resource-group-add/v1
-          resource_ungroup
           resource_change_group
           update_resource
       </description>
