@@ -63,9 +63,6 @@ def remote(params, request, auth_user)
       :check_host => method(:check_host),
       :reload_corosync_conf => method(:reload_corosync_conf),
       :remove_nodes_from_cib => method(:remove_nodes_from_cib),
-      # lib api:
-      # /api/v1/resource-agent-list-agents/v1
-      :get_avail_resource_agents => method(:get_avail_resource_agents),
   }
   remote_cmd_with_pacemaker = {
       :pacemaker_node_status => method(:remote_pacemaker_node_status),
@@ -951,13 +948,6 @@ def update_fence_device(params, request, auth_user)
     end
   end
   return "{}"
-end
-
-def get_avail_resource_agents(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::READ)
-    return 403, 'Permission denied'
-  end
-  return JSON.generate(getResourceAgents(auth_user).map{|a| [a, get_resource_agent_name_structure(a)]}.to_h)
 end
 
 def remove_resource(params, request, auth_user)

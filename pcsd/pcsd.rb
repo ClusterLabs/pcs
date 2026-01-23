@@ -533,28 +533,6 @@ def pcs_compatibility_layer_known_hosts_add(
   return 'error'
 end
 
-def pcs_0_10_6_get_avail_resource_agents(code, out)
-  if code != 200
-    return code, out
-  end
-  begin
-    agent_map = {}
-    JSON.parse(out).each { |agent_name, agent_data|
-      if agent_data == {}
-        new_data = get_resource_agent_name_structure(agent_name)
-        if not new_data.nil?
-          agent_map[agent_name] = new_data
-        end
-      else
-        agent_map[agent_name] = agent_data
-      end
-    }
-    return code, JSON.generate(agent_map)
-  rescue
-    return code, out
-  end
-end
-
 post '/managec/:cluster/api/v1/:command' do
   auth_user = getAuthUser()
   if params[:cluster] and params[:command]
@@ -609,17 +587,6 @@ get '/managec/:cluster/?*' do
     code, out = send_cluster_request_with_token(
       auth_user, params[:cluster], request, false, params, true, raw_data
     )
-
-    # backward compatibility layer BEGIN
-    # function `send_cluster_request_with_token` sometimes removes the leading
-    # slash from the variable `request`; so we must check `request` with
-    # optional leading slash in every `when`!
-    case request
-      # new structured response format added in pcs-0.10.7
-      when /\/?get_avail_resource_agents/
-        return pcs_0_10_6_get_avail_resource_agents(code, out)
-    end
-    # backward compatibility layer END
     return code, out
   end
 end
