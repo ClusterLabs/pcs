@@ -83,7 +83,6 @@ def remote(params, request, auth_user)
       :update_cluster_settings => method(:update_cluster_settings),
       :add_node_attr_remote => method(:add_node_attr_remote),
       :resource_change_group => method(:resource_change_group),
-      :resource_promotable => method(:resource_promotable),
       :resource_clone => method(:resource_clone),
       :resource_unclone => method(:resource_unclone),
       :resource_ungroup => method(:resource_ungroup),
@@ -1190,25 +1189,6 @@ def known_hosts_change(params, request, auth_user)
   else
     return [400, 'Cannot update known-hosts file.']
   end
-end
-
-def resource_promotable(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::WRITE)
-    return 403, 'Permission denied'
-  end
-
-  unless params[:resource_id]
-    return [400, 'resource_id has to be specified.']
-  end
-  _, stderr, retval = run_cmd(
-    auth_user, PCS, '--', 'resource', 'promotable', params[:resource_id]
-  )
-  if retval != 0
-    return [400, 'Unable to create promotable resource from ' +
-      "'#{params[:resource_id]}': #{stderr.join('')}"
-    ]
-  end
-  return 200
 end
 
 def resource_change_group(params, request, auth_user)
