@@ -48,12 +48,14 @@ def fixture_known_hosts_file_content(
     ).decode("utf-8")
 
 
-def fixture_pcs_settings_file_content(data_version=1, clusters=None):
+def fixture_pcs_settings_file_content(
+    data_version=1, clusters=None, permissions=None
+):
     return ExporterV2.export(
         ConfigV2(
             data_version=data_version,
             clusters=clusters or [],
-            permissions=ClusterPermissions([]),
+            permissions=ClusterPermissions(permissions or []),
         )
     ).decode("utf-8")
 

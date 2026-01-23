@@ -6,7 +6,12 @@ from pcs import settings
 from pcs.common import file_type_codes, reports
 from pcs.common.host import Destination, PcsKnownHost
 from pcs.lib.commands import manage_clusters
-from pcs.lib.permissions.config.types import ClusterEntry
+from pcs.lib.permissions.config.types import (
+    ClusterEntry,
+    PermissionAccessType,
+    PermissionEntry,
+    PermissionTargetType,
+)
 
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
@@ -467,7 +472,20 @@ class AddExistingClusterLocalNodeNotInCluster(FixtureMixin, TestCase):
             file_type_codes.PCS_SETTINGS_CONF,
             settings.pcsd_settings_conf_location,
             fixture_pcs_settings_file_content(
-                data_version=1, clusters=self.REMOTE_CLUSTERS
+                data_version=1,
+                clusters=self.REMOTE_CLUSTERS,
+                # backwards compatibility default permissions
+                permissions=[
+                    PermissionEntry(
+                        name=settings.pacemaker_gname,
+                        type=PermissionTargetType.GROUP,
+                        allow=[
+                            PermissionAccessType.READ,
+                            PermissionAccessType.WRITE,
+                            PermissionAccessType.GRANT,
+                        ],
+                    )
+                ],
             ).encode(),
             can_overwrite=True,
             name="raw_file.write.pcs_settings_conf",

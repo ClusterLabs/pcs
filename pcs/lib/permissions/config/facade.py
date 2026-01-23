@@ -1,5 +1,5 @@
 from dataclasses import replace
-from typing import List, Optional, cast
+from typing import Optional, cast
 
 from pcs.lib.interface.config import SyncVersionFacadeInterface
 
@@ -25,8 +25,14 @@ class FacadeV2(SyncVersionFacadeInterface):
         return cast(ConfigV2, super().config)
 
     @classmethod
-    def create(cls, data_version: int = 1) -> "FacadeV2":
-        return cls(ConfigV2(data_version, [], ClusterPermissions([])))
+    def create(
+        cls,
+        data_version: int = 1,
+        permissions: Optional[list[PermissionEntry]] = None,
+    ) -> "FacadeV2":
+        return cls(
+            ConfigV2(data_version, [], ClusterPermissions(permissions or []))
+        )
 
     @property
     def data_version(self) -> int:
@@ -38,7 +44,7 @@ class FacadeV2(SyncVersionFacadeInterface):
     def _set_config(self, config: ConfigV2) -> None:
         super()._set_config(config)
 
-    def _set_permissions(self, permissions: List[PermissionEntry]) -> None:
+    def _set_permissions(self, permissions: list[PermissionEntry]) -> None:
         self._set_config(
             replace(
                 self.config,
