@@ -80,9 +80,6 @@ def remote(params, request, auth_user)
       :remove_constraint_remote => method(:remove_constraint_remote),
       :remove_constraint_rule_remote => method(:remove_constraint_rule_remote),
       :add_meta_attr_remote => method(:add_meta_attr_remote),
-      # lib api:
-      # /api/v1/resource-group-add/v1
-      :add_group => method(:add_group),
       :update_cluster_settings => method(:update_cluster_settings),
       # lib api:
       # /api/v1/fencing-topology-add-level/v1
@@ -1190,22 +1187,6 @@ def remove_constraint_rule_remote(params, request, auth_user)
     end
   else
     return [400, "Bad Constraint Rule Options"]
-  end
-end
-
-def add_group(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::WRITE)
-    return 403, 'Permission denied'
-  end
-  rg = params["resource_group"]
-  resources = params["resources"]
-  output, errout, retval = run_cmd(
-    auth_user, PCS, "--", "resource", "group", "add", rg, *(resources.split(" "))
-  )
-  if retval == 0
-    return 200
-  else
-    return 400, errout
   end
 end
 
