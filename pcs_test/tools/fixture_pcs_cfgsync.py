@@ -91,7 +91,7 @@ def fixture_save_sync_new_version_conflict(
     name_prefix: str = "",
 ) -> None:
     config.http.pcs_cfgsync.set_configs(
-        "test99",
+        cluster_name,
         file_contents={file_type_code: local_file_content},
         communication_list=[
             {
@@ -138,12 +138,13 @@ def fixture_save_sync_new_version_conflict(
 def fixture_save_sync_new_version_error(
     config: EnvConfig,
     node_labels: list[str],
+    cluster_name: str = "test99",
     file_type_code: file_type_codes.FileTypeCode = file_type_codes.PCS_SETTINGS_CONF,
     local_file_content: str = "",
     name_prefix: str = "",
 ) -> None:
     config.http.pcs_cfgsync.set_configs(
-        "test99",
+        cluster_name,
         file_contents={file_type_code: local_file_content},
         communication_list=[
             {
@@ -261,12 +262,14 @@ def fixture_save_sync_new_known_hosts_conflict(
 def fixture_save_sync_new_known_hosts_error(
     config: EnvConfig,
     node_labels: list[str],
+    cluster_name: str = "test99",
     file_data_version: int = 1,
     known_hosts: Optional[Mapping[str, PcsKnownHost]] = None,
 ) -> None:
     fixture_save_sync_new_version_error(
         config,
         node_labels,
+        cluster_name,
         file_type_codes.PCS_KNOWN_HOSTS,
         fixture_known_hosts_file_content(file_data_version, known_hosts or {}),
     )
