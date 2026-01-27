@@ -585,6 +585,7 @@ class GetClusterKnownHosts(
             self._report_list([report, self._get_failure_report(response)])
             return self._get_next_list()
         try:
+            self.__known_hosts = []
             data = json.loads(response.data)
             for name, known_host_data in data.items():
                 self.__known_hosts.append(
@@ -600,6 +601,7 @@ class GetClusterKnownHosts(
 
             return []
         except (json.JSONDecodeError, KeyError, TypeError):
+            self.__known_hosts = []
             invalid_response_report = ReportItem(
                 ReportItemSeverity(self._failure_severity, None),
                 reports.messages.InvalidResponseFormat(node_label),
