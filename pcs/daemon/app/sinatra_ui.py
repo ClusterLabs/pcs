@@ -1,16 +1,12 @@
 from pcs.daemon import ruby_pcsd
-from pcs.daemon.app.auth import (
-    NotAuthorizedException,
-    UnixSocketAuthProvider,
+from pcs.daemon.app.auth import NotAuthorizedException
+from pcs.daemon.app.auth_provider import (
+    ApiAuthProviderFactoryInterface,
+    ApiAuthProviderInterface,
 )
-from pcs.daemon.app.common import (
-    LegacyApiHandler,
-    RoutesType,
-)
+from pcs.daemon.app.common import LegacyApiHandler, RoutesType
 from pcs.daemon.app.sinatra_common import SinatraMixin
 from pcs.daemon.app.ui_common import AjaxMixin
-from pcs.lib.auth.provider import AuthProvider
-from pcs.lib.auth.types import AuthUser
 
 
 class SinatraAjaxProtected(LegacyApiHandler, SinatraMixin, AjaxMixin):
@@ -19,44 +15,34 @@ class SinatraAjaxProtected(LegacyApiHandler, SinatraMixin, AjaxMixin):
     It allows to use this urls only for ajax calls.
     """
 
-    _auth_provider: UnixSocketAuthProvider
+    __auth_provider: ApiAuthProviderInterface
 
     def initialize(
         self,
         ruby_pcsd_wrapper: ruby_pcsd.Wrapper,
-        auth_provider: AuthProvider,
+        api_auth_provider_factory: ApiAuthProviderFactoryInterface,
     ) -> None:
         self.initialize_sinatra(ruby_pcsd_wrapper)
-        self._auth_provider = UnixSocketAuthProvider(self, auth_provider)
+        self.__auth_provider = api_auth_provider_factory.create(self)
 
     def prepare(self) -> None:
         if not self.is_ajax:
             raise self.unauthorized()
+        if not self.__auth_provider.can_handle_request():
+            raise self.unauthorized()
 
     async def _handle_request(self):
         try:
-            auth_user = await self._get_auth_user()
+            auth_user = await self.__auth_provider.auth_user()
         except NotAuthorizedException as e:
             raise self.unauthorized() from e
 
-        # Webui version needs to deal with extra session operation here.
-        self._after_get_auth_user_hook(auth_user)
-
-        result = await self.ruby_pcsd_wrapper.request(
-            auth_user,
-            self.request,
-        )
+        result = await self.ruby_pcsd_wrapper.request(auth_user, self.request)
         self.send_sinatra_result(result)
-
-    async def _get_auth_user(self):
-        return await self._auth_provider.auth_by_socket_user()
-
-    def _after_get_auth_user_hook(self, auth_user: AuthUser):
-        pass
 
 
 def get_routes(
-    auth_provider: AuthProvider,
+    api_auth_provider_factory: ApiAuthProviderFactoryInterface,
     ruby_pcsd_wrapper: ruby_pcsd.Wrapper,
 ) -> RoutesType:
     return [
@@ -67,7 +53,7 @@ def get_routes(
             SinatraAjaxProtected,
             dict(
                 ruby_pcsd_wrapper=ruby_pcsd_wrapper,
-                auth_provider=auth_provider,
+                api_auth_provider_factory=api_auth_provider_factory,
             ),
         ),
     ]

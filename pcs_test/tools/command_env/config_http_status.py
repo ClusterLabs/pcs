@@ -63,3 +63,43 @@ class StatusShortcuts:
                 )
             ),
         )
+
+    def get_cluster_info_from_status(  # noqa: PLR0913
+        self,
+        *,
+        node_labels=None,
+        communication_list=None,
+        name="http.status.get_cluster_info_from_status",
+        cluster_name=None,
+        corosync_online_nodes=None,
+        corosync_offline_nodes=None,
+    ):
+        # pylint: disable=too-many-arguments
+        """
+        Create a call for getting cluster info from status.
+
+        We only mock the fields that the GetClusterInfoFromStatus communication
+        command needs.
+
+        node_labels list -- create success responses from these nodes
+        communication_list list -- create custom responses
+        name string -- the key of this call
+        cluster_name -- cluster name
+        corosync_online_nodes -- list of node names that are online
+        corosync_online_nodes -- list of node names that are offline
+        """
+        place_multinode_call(
+            self.__calls,
+            name,
+            node_labels,
+            communication_list,
+            action="remote/status",
+            param_list=[("version", "2")],
+            output=json.dumps(
+                dict(
+                    cluster_name=cluster_name or "",
+                    corosync_online=corosync_online_nodes or [],
+                    corosync_offline=corosync_offline_nodes or [],
+                )
+            ),
+        )

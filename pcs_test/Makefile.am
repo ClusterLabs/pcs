@@ -167,15 +167,21 @@ EXTRA_DIST		= \
 			  tier0/common/test_tools_xml_fromstring.py \
 			  tier0/common/test_validate.py \
 			  tier0/daemon/app/fixtures_app.py \
+			  tier0/daemon/app/fixtures_app_api.py \
 			  tier0/daemon/app/fixtures_app_webui.py \
 			  tier0/daemon/app/__init__.py \
 			  tier0/daemon/app/test_api_v0.py \
+			  tier0/daemon/app/test_api_v0_tools.py \
 			  tier0/daemon/app/test_api_v1.py \
 			  tier0/daemon/app/test_app_auth.py \
 			  tier0/daemon/app/test_app_gui.py \
 			  tier0/daemon/app/test_app_redirect.py \
 			  tier0/daemon/app/test_app_remote.py \
 			  tier0/daemon/app/test_app_spa.py \
+			  tier0/daemon/app/test_auth_provider_multi.py \
+			  tier0/daemon/app/test_session_auth_provider.py \
+			  tier0/daemon/app/test_ui_manage.py \
+			  tier0/daemon/app/test_unix_socket_auth_provider.py \
 			  tier0/daemon/async_tasks/__init__.py \
 			  tier0/daemon/async_tasks/dummy_commands.py \
 			  tier0/daemon/async_tasks/helpers.py \
@@ -285,6 +291,8 @@ EXTRA_DIST		= \
 			  tier0/lib/commands/dr/test_set_recovery_site.py \
 			  tier0/lib/commands/dr/test_status.py \
 			  tier0/lib/commands/__init__.py \
+			  tier0/lib/commands/manage_clusters/__init__.py \
+			  tier0/lib/commands/manage_clusters/test_add_existing_cluster.py \
 			  tier0/lib/commands/remote_node/fixtures_add.py \
 			  tier0/lib/commands/remote_node/fixtures_remove.py \
 			  tier0/lib/commands/remote_node/__init__.py \
@@ -557,6 +565,7 @@ EXTRA_DIST		= \
 			  tools/custom_mock.py \
 			  tools/fixture_cib.py \
 			  tools/fixture_crm_mon.py \
+			  tools/fixture_pcs_cfgsync.py \
 			  tools/fixture.py \
 			  tools/__init__.py \
 			  tools/metadata_dto.py \

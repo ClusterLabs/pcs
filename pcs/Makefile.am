@@ -213,19 +213,25 @@ EXTRA_DIST		= \
 			  daemon/app/common.py \
 			  daemon/app/__init__.py \
 			  daemon/app/api_v0.py \
+			  daemon/app/api_v0_tools.py \
 			  daemon/app/api_v1.py \
 			  daemon/app/api_v2.py \
 			  daemon/app/auth.py \
+			  daemon/app/auth_provider.py \
 			  daemon/app/capabilities.py \
 			  daemon/app/sinatra_common.py \
 			  daemon/app/sinatra_remote.py \
 			  daemon/app/sinatra_ui.py \
 			  daemon/app/ui_common.py \
+			  daemon/app/ui_manage/base_handler.py \
+			  daemon/app/ui_manage/existing_cluster.py \
+			  daemon/app/ui_manage/__init__.py \
+			  daemon/app/ui_manage/routes.py \
 			  daemon/app/webui/__init__.py \
 			  daemon/app/webui/auth.py \
+			  daemon/app/webui/auth_provider.py \
 			  daemon/app/webui/core.py \
 			  daemon/app/webui/session.py \
-			  daemon/app/webui/sinatra_ui.py \
 			  daemon/async_tasks/__init__.py \
 			  daemon/async_tasks/scheduler.py \
 			  daemon/async_tasks/task.py \
@@ -342,6 +348,7 @@ EXTRA_DIST		= \
 			  lib/commands/dr.py \
 			  lib/commands/fencing_topology.py \
 			  lib/commands/__init__.py \
+			  lib/commands/manage_clusters.py \
 			  lib/commands/node.py \
 			  lib/commands/pcs_cfgsync.py \
 			  lib/commands/pcsd.py \

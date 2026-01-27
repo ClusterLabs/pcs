@@ -1,7 +1,13 @@
 import json
+from typing import Optional
 
 from pcs.common import reports
-from pcs.common.node_communicator import RequestData
+from pcs.common.node_communicator import (
+    Request,
+    RequestData,
+    RequestTarget,
+    Response,
+)
 from pcs.common.reports import ReportItemSeverity
 from pcs.common.reports.item import ReportItem
 from pcs.lib.communication.tools import (
@@ -19,19 +25,19 @@ class CheckCorosyncOffline(
 ):
     def __init__(
         self,
-        report_processor,
-        skip_offline_targets=False,
-        allow_skip_offline=True,
+        report_processor: reports.ReportProcessor,
+        skip_offline_targets: bool = False,
+        allow_skip_offline: bool = True,
     ):
         super().__init__(report_processor)
         if allow_skip_offline:
             self._set_skip_offline(skip_offline_targets)
-        self._corosync_running_target_list = []
+        self._corosync_running_target_list: list[RequestTarget] = []
 
-    def _get_request_data(self):
+    def _get_request_data(self) -> RequestData:
         return RequestData("remote/status", [("version", "2")])
 
-    def _process_response(self, response):
+    def _process_response(self, response: Response) -> list[Request]:
         report_item = self._get_response_report(response)
         node_label = response.request.target.label
         if report_item is not None:
@@ -51,7 +57,7 @@ class CheckCorosyncOffline(
                     ),
                 ]
             )
-            return
+            return []
         try:
             status = response.data
             if not json.loads(status)["node"]["corosync"]:
@@ -80,13 +86,14 @@ class CheckCorosyncOffline(
                 ),
             )
         self._report(report_item)
+        return []
 
-    def before(self):
+    def before(self) -> None:
         self._report(
             ReportItem.info(reports.messages.CorosyncNotRunningCheckStarted())
         )
 
-    def on_complete(self):
+    def on_complete(self) -> list[RequestTarget]:
         return self._corosync_running_target_list
 
 
@@ -95,23 +102,23 @@ class GetCorosyncOnlineTargets(
 ):
     def __init__(
         self,
-        report_processor,
-        skip_offline_targets=False,
-        allow_skip_offline=True,
+        report_processor: reports.ReportProcessor,
+        skip_offline_targets: bool = False,
+        allow_skip_offline: bool = True,
     ):
         super().__init__(report_processor)
         if allow_skip_offline:
             self._set_skip_offline(skip_offline_targets)
-        self._corosync_online_target_list = []
+        self._corosync_online_target_list: list[RequestTarget] = []
 
-    def _get_request_data(self):
+    def _get_request_data(self) -> RequestData:
         return RequestData("remote/status", [("version", "2")])
 
-    def _process_response(self, response):
+    def _process_response(self, response: Response) -> list[Request]:
         report_item = self._get_response_report(response)
         if report_item:
             self._report(report_item)
-            return
+            return []
         try:
             status = response.data
             if json.loads(status)["node"]["corosync"]:
@@ -126,9 +133,62 @@ class GetCorosyncOnlineTargets(
                     )
                 )
             )
+        return []
 
-    def on_complete(self):
+    def on_complete(self) -> list[RequestTarget]:
         return self._corosync_online_target_list
+
+
+class GetClusterInfoFromStatus(
+    AllSameDataMixin, OneByOneStrategyMixin, RunRemotelyBase
+):
+    def __init__(self, report_processor: reports.ReportProcessor):
+        super().__init__(report_processor)
+        self.__cluster_name = ""
+        self.__cluster_nodes: list[str] = []
+        self.__was_successful = False
+
+    def _get_request_data(self) -> RequestData:
+        return RequestData("remote/status", [("version", "2")])
+
+    def _get_failure_report(self, response: Response) -> reports.ReportItem:
+        return reports.ReportItem.error(
+            reports.messages.UnableToGetClusterInfoFromStatus(),
+            context=reports.ReportItemContext(response.request.target.label),
+        )
+
+    def _process_response(self, response: Response) -> list[RequestTarget]:
+        node_label = response.request.target.label
+        report_item = self._get_response_report(response)
+        if report_item:
+            self._report_list([report_item, self._get_failure_report(response)])
+            return self._get_next_list()
+
+        try:
+            status = json.loads(response.data)
+            self.__cluster_name = status["cluster_name"]
+            self.__cluster_nodes = (
+                status["corosync_online"] + status["corosync_offline"]
+            )
+            self.__was_successful = True
+            return []
+        except (KeyError, json.JSONDecodeError):
+            self._report_list(
+                [
+                    ReportItem.error(
+                        reports.messages.InvalidResponseFormat(node_label)
+                    ),
+                    self._get_failure_report(response),
+                ]
+            )
+
+        return self._get_next_list()
+
+    def on_complete(self) -> tuple[str, list[str]]:
+        if not self.__was_successful:
+            return "", []
+
+        return self.__cluster_name, self.__cluster_nodes or []
 
 
 class DistributeCorosyncConf(
@@ -136,22 +196,22 @@ class DistributeCorosyncConf(
 ):
     def __init__(
         self,
-        report_processor,
-        config_text,
-        skip_offline_targets=False,
-        allow_skip_offline=True,
+        report_processor: reports.ReportProcessor,
+        config_text: str,
+        skip_offline_targets: bool = False,
+        allow_skip_offline: bool = True,
     ):
         super().__init__(report_processor)
         self._config_text = config_text
         if allow_skip_offline:
             self._set_skip_offline(skip_offline_targets)
 
-    def _get_request_data(self):
+    def _get_request_data(self) -> RequestData:
         return RequestData(
             "remote/set_corosync_conf", [("corosync_conf", self._config_text)]
         )
 
-    def _process_response(self, response):
+    def _process_response(self, response: Response) -> list[Request]:
         report_item = self._get_response_report(response)
         node_label = response.request.target.label
         if report_item is None:
@@ -175,8 +235,9 @@ class DistributeCorosyncConf(
                     ),
                 ]
             )
+        return []
 
-    def before(self):
+    def before(self) -> None:
         self._report(
             ReportItem.info(
                 reports.messages.CorosyncConfigDistributionStarted()
@@ -190,10 +251,10 @@ class ReloadCorosyncConf(
     __was_successful = False
     __has_failures = False
 
-    def _get_request_data(self):
+    def _get_request_data(self) -> RequestData:
         return RequestData("remote/reload_corosync_conf")
 
-    def _process_response(self, response):
+    def _process_response(self, response: Response) -> list[Request]:
         report_item = response_to_report_item(
             response, severity=ReportItemSeverity.WARNING
         )
@@ -241,7 +302,7 @@ class ReloadCorosyncConf(
 
         return self._get_next_list()
 
-    def on_complete(self):
+    def on_complete(self) -> None:
         # corosync-cfgtool -R actually does not report issues with reload
         # from nodes other than the local node
         # We should eventually change this so that we run the reload on each
@@ -267,10 +328,10 @@ class GetCorosyncConf(AllSameDataMixin, OneByOneStrategyMixin, RunRemotelyBase):
     __has_failures = False
     __corosync_conf = None
 
-    def _get_request_data(self):
+    def _get_request_data(self) -> RequestData:
         return RequestData("remote/get_corosync_conf")
 
-    def _process_response(self, response):
+    def _process_response(self, response: Response) -> list[Request]:
         report_item = response_to_report_item(
             response, severity=ReportItemSeverity.WARNING
         )
@@ -282,7 +343,7 @@ class GetCorosyncConf(AllSameDataMixin, OneByOneStrategyMixin, RunRemotelyBase):
         self.__was_successful = True
         return []
 
-    def on_complete(self):
+    def on_complete(self) -> Optional[str]:
         if not self.__was_successful and self.__has_failures:
             self._report(
                 ReportItem.error(

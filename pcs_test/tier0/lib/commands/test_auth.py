@@ -1,54 +1,20 @@
-import json
-from typing import Optional
 from unittest import TestCase
 
 from pcs import settings
 from pcs.common import reports
 from pcs.common.auth import HostAuthData, HostWithTokenAuthData
-from pcs.common.communication.const import COM_STATUS_SUCCESS
-from pcs.common.communication.dto import InternalCommunicationResultDto
-from pcs.common.communication.types import CommunicationResultStatus
 from pcs.common.file_type_codes import COROSYNC_CONF, PCS_KNOWN_HOSTS
 from pcs.common.host import Destination, PcsKnownHost
-from pcs.common.interface.dto import to_dict
 from pcs.lib.commands import auth
-from pcs.lib.host.config.exporter import Exporter as KnownHostsExporter
 from pcs.lib.host.config.types import KnownHosts
 
-from pcs_test.tier0.lib.pcs_cfgsync.test_save_sync import (
-    FixtureFetchNewestFileMixin,
-)
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
-
-
-def fixture_known_hosts_file_content(
-    data_version, hosts: dict[str, PcsKnownHost]
-) -> str:
-    return KnownHostsExporter.export(
-        KnownHosts(
-            format_version=1, data_version=data_version, known_hosts=hosts
-        )
-    ).decode("utf-8")
-
-
-def fixture_communication_result_string(
-    status: CommunicationResultStatus = COM_STATUS_SUCCESS,
-    status_msg: Optional[str] = None,
-    report_list: Optional[reports.dto.ReportItemDto] = None,
-    data="",
-) -> str:
-    return json.dumps(
-        to_dict(
-            InternalCommunicationResultDto(
-                status=status,
-                status_msg=status_msg,
-                report_list=report_list or [],
-                data=data,
-            )
-        )
-    )
-
+from pcs_test.tools.fixture_pcs_cfgsync import (
+    fixture_known_hosts_file_content,
+    fixture_save_sync_new_known_hosts_conflict,
+    fixture_save_sync_new_known_hosts_success,
+)
 
 _FIXTURE_KNOWN_HOSTS = {
     "node1": PcsKnownHost("node1", "aaa", [Destination("node1", 2224)]),
@@ -255,7 +221,7 @@ class AuthHostsTokenNoSync(TestCase):
         )
 
 
-class AuthHosts(TestCase, FixtureFetchNewestFileMixin):
+class AuthHosts(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
 
@@ -277,13 +243,10 @@ class AuthHosts(TestCase, FixtureFetchNewestFileMixin):
         )
         self.config.env.set_known_nodes(["node1", "node2"])
         self.config.corosync_conf.load(["node1", "node2"])
-        self.config.http.pcs_cfgsync.set_configs(
-            "test99",
-            {
-                PCS_KNOWN_HOSTS: fixture_known_hosts_file_content(
-                    2, _FIXTURE_KNOWN_HOSTS | new_tokens
-                )
-            },
+        fixture_save_sync_new_known_hosts_success(
+            self.config,
+            file_data_version=2,
+            known_hosts=_FIXTURE_KNOWN_HOSTS | new_tokens,
             node_labels=["node1", "node2"],
         )
 
@@ -621,17 +584,13 @@ class AuthHosts(TestCase, FixtureFetchNewestFileMixin):
         )
         self.config.env.set_known_nodes(["node1"])
         self.config.corosync_conf.load(["node1", "node2"])
-        self.config.http.pcs_cfgsync.set_configs(
-            "test99",
-            {
-                PCS_KNOWN_HOSTS: fixture_known_hosts_file_content(
-                    2,
-                    _FIXTURE_KNOWN_HOSTS
-                    | {
-                        "node3": PcsKnownHost(
-                            "node3", "TOKEN", [Destination("node3", 2224)]
-                        )
-                    },
+        fixture_save_sync_new_known_hosts_success(
+            self.config,
+            file_data_version=2,
+            known_hosts=_FIXTURE_KNOWN_HOSTS
+            | {
+                "node3": PcsKnownHost(
+                    "node3", "TOKEN", [Destination("node3", 2224)]
                 )
             },
             node_labels=["node1"],
@@ -725,15 +684,9 @@ class AuthHosts(TestCase, FixtureFetchNewestFileMixin):
         local_file_version = 1
         local_tokens = {"LOCAL": PcsKnownHost("LOCAL", "LOCAL", [])}
 
-        remote_file_version = 42
-        remote_tokens = {"REMOTE": PcsKnownHost("REMOTE", "REMOTE", [])}
-
         new_tokens = {
             "NEW": PcsKnownHost("NEW", "TOKEN", [Destination("NEW", 2224)]),
         }
-
-        even_more_new_remote_file_version = 69
-        even_more_new_remote_tokens = {"WHAT": PcsKnownHost("WHAT", "WHAT", [])}
 
         local_file = fixture_known_hosts_file_content(
             local_file_version, local_tokens
@@ -753,72 +706,15 @@ class AuthHosts(TestCase, FixtureFetchNewestFileMixin):
         )
         self.config.env.set_known_nodes(["node1", "node2"])
         self.config.corosync_conf.load(["node1", "node2"])
-        self.config.http.pcs_cfgsync.set_configs(
-            "test99",
-            {
-                PCS_KNOWN_HOSTS: fixture_known_hosts_file_content(
-                    local_file_version + 1, local_tokens | new_tokens
-                )
-            },
-            communication_list=[
-                {
-                    "label": "node1",
-                    "output": json.dumps(
-                        {
-                            "status": "ok",
-                            "result": {PCS_KNOWN_HOSTS: "rejected"},
-                        }
-                    ),
-                },
-                {"label": "node2"},
-            ],
-            name="set_configs.1",
-        )
 
-        # fetching the newest config from cluster
-        remote_file = fixture_known_hosts_file_content(
-            remote_file_version, remote_tokens
-        )
-        self.fixture_fetch_newest_file(
-            local_file, remote_file, call_name_suffix="1", cluster_name="test99"
-        )
-
-        # sending the merged tokens
-        self.config.http.pcs_cfgsync.set_configs(
-            "test99",
-            {
-                PCS_KNOWN_HOSTS: fixture_known_hosts_file_content(
-                    remote_file_version + 1,
-                    local_tokens | new_tokens | remote_tokens,
-                )
-            },
-            communication_list=[
-                {
-                    "label": "node1",
-                    "output": json.dumps(
-                        {
-                            "status": "ok",
-                            "result": {PCS_KNOWN_HOSTS: "rejected"},
-                        }
-                    ),
-                },
-                {"label": "node2"},
-            ],
-            name="set_configs.2",
-        )
-
-        # fetching the even more newest config from cluster
-        even_more_new_remote_file = fixture_known_hosts_file_content(
-            even_more_new_remote_file_version, even_more_new_remote_tokens
-        )
-        self.fixture_fetch_newest_file(
-            local_file,
-            even_more_new_remote_file,
-            call_name_suffix="2",
+        return fixture_save_sync_new_known_hosts_conflict(
+            self.config,
             cluster_name="test99",
+            node_labels=["node1", "node2"],
+            file_data_version=local_file_version,
+            initial_local_known_hosts=local_tokens,
+            new_hosts=new_tokens,
         )
-
-        return even_more_new_remote_file
 
     def test_conflict_upon_conflict(self):
         file_to_save = self.fixture_cfgsync_conflict()
@@ -969,7 +865,7 @@ class AuthHosts(TestCase, FixtureFetchNewestFileMixin):
         )
 
 
-class DeauthHosts(TestCase, FixtureFetchNewestFileMixin):
+class DeauthHosts(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
 
@@ -1060,13 +956,10 @@ class DeauthHosts(TestCase, FixtureFetchNewestFileMixin):
         )
         self.config.env.set_known_nodes(["node1", "node2"])
         self.config.corosync_conf.load(["node1", "node2"])
-        self.config.http.pcs_cfgsync.set_configs(
-            "test99",
-            {
-                PCS_KNOWN_HOSTS: fixture_known_hosts_file_content(
-                    2, {"node1": _FIXTURE_KNOWN_HOSTS["node1"]}
-                )
-            },
+        fixture_save_sync_new_known_hosts_success(
+            self.config,
+            file_data_version=2,
+            known_hosts={"node1": _FIXTURE_KNOWN_HOSTS["node1"]},
             node_labels=["node1", "node2"],
         )
 
@@ -1107,13 +1000,10 @@ class DeauthHosts(TestCase, FixtureFetchNewestFileMixin):
         )
         self.config.env.set_known_nodes(["node1", "node2"])
         self.config.corosync_conf.load(["node1", "node2"])
-        self.config.http.pcs_cfgsync.set_configs(
-            "test99",
-            {
-                PCS_KNOWN_HOSTS: fixture_known_hosts_file_content(
-                    2, {"node1": _FIXTURE_KNOWN_HOSTS["node1"]}
-                )
-            },
+        fixture_save_sync_new_known_hosts_success(
+            self.config,
+            file_data_version=2,
+            known_hosts={"node1": _FIXTURE_KNOWN_HOSTS["node1"]},
             node_labels=["node1", "node2"],
         )
 
@@ -1194,13 +1084,10 @@ class DeauthHosts(TestCase, FixtureFetchNewestFileMixin):
         )
         self.config.env.set_known_nodes(["node1"])
         self.config.corosync_conf.load(["node1", "node2"])
-        self.config.http.pcs_cfgsync.set_configs(
-            "test99",
-            {
-                PCS_KNOWN_HOSTS: fixture_known_hosts_file_content(
-                    2, {"node1": _FIXTURE_KNOWN_HOSTS["node1"]}
-                )
-            },
+        fixture_save_sync_new_known_hosts_success(
+            self.config,
+            file_data_version=2,
+            known_hosts={"node1": _FIXTURE_KNOWN_HOSTS["node1"]},
             node_labels=["node1"],
         )
 
@@ -1258,12 +1145,6 @@ class DeauthHosts(TestCase, FixtureFetchNewestFileMixin):
         local_file_version = 1
         local_tokens = {"LOCAL": PcsKnownHost("LOCAL", "LOCAL", [])}
 
-        remote_file_version = 42
-        remote_tokens = {"REMOTE": PcsKnownHost("REMOTE", "REMOTE", [])}
-
-        even_more_new_remote_file_version = 69
-        even_more_new_remote_tokens = {"WHAT": PcsKnownHost("WHAT", "WHAT", [])}
-
         local_file = fixture_known_hosts_file_content(
             local_file_version, local_tokens
         )
@@ -1282,72 +1163,16 @@ class DeauthHosts(TestCase, FixtureFetchNewestFileMixin):
         )
         self.config.env.set_known_nodes(["node1", "node2"])
         self.config.corosync_conf.load(["node1", "node2"])
-        self.config.http.pcs_cfgsync.set_configs(
-            "test99",
-            {
-                PCS_KNOWN_HOSTS: fixture_known_hosts_file_content(
-                    local_file_version + 1, {}
-                )
-            },
-            communication_list=[
-                {
-                    "label": "node1",
-                    "output": json.dumps(
-                        {
-                            "status": "ok",
-                            "result": {PCS_KNOWN_HOSTS: "rejected"},
-                        }
-                    ),
-                },
-                {"label": "node2"},
-            ],
-            name="set_configs.1",
-        )
 
-        # fetching the newest config from cluster
-        remote_file = fixture_known_hosts_file_content(
-            remote_file_version, remote_tokens
-        )
-        self.fixture_fetch_newest_file(
-            local_file, remote_file, call_name_suffix="1", cluster_name="test99"
-        )
-
-        # sending the merged tokens
-        self.config.http.pcs_cfgsync.set_configs(
-            "test99",
-            {
-                PCS_KNOWN_HOSTS: fixture_known_hosts_file_content(
-                    remote_file_version + 1,
-                    remote_tokens,
-                )
-            },
-            communication_list=[
-                {
-                    "label": "node1",
-                    "output": json.dumps(
-                        {
-                            "status": "ok",
-                            "result": {PCS_KNOWN_HOSTS: "rejected"},
-                        }
-                    ),
-                },
-                {"label": "node2"},
-            ],
-            name="set_configs.2",
-        )
-
-        # fetching the even more newest config from cluster
-        even_more_new_remote_file = fixture_known_hosts_file_content(
-            even_more_new_remote_file_version, even_more_new_remote_tokens
-        )
-        self.fixture_fetch_newest_file(
-            local_file,
-            even_more_new_remote_file,
-            call_name_suffix="2",
+        return fixture_save_sync_new_known_hosts_conflict(
+            self.config,
             cluster_name="test99",
+            node_labels=["node1", "node2"],
+            file_data_version=local_file_version,
+            initial_local_known_hosts=local_tokens,
+            new_hosts={},
+            hosts_to_remove=["LOCAL"],
         )
-
-        return even_more_new_remote_file
 
     def test_conflict_upon_conflict(self):
         file_to_save = self.fixture_cfgsync_conflict()
@@ -1563,9 +1388,10 @@ class DeauthAllLocalHosts(TestCase):
         )
         self.config.env.set_known_nodes(["node1", "node2"])
         self.config.corosync_conf.load(["node1", "node2"])
-        self.config.http.pcs_cfgsync.set_configs(
-            "test99",
-            {PCS_KNOWN_HOSTS: fixture_known_hosts_file_content(2, {})},
+        fixture_save_sync_new_known_hosts_success(
+            self.config,
+            file_data_version=2,
+            known_hosts={},
             node_labels=["node1", "node2"],
         )
 

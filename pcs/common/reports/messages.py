@@ -1,9 +1,6 @@
 # pylint: disable=too-many-lines
 from collections import defaultdict
-from dataclasses import (
-    dataclass,
-    field,
-)
+from dataclasses import dataclass, field
 from functools import partial
 from typing import (
     Any,
@@ -23,10 +20,7 @@ from pcs.common.fencing_topology import (
     FencingTargetType,
     FencingTargetValue,
 )
-from pcs.common.file import (
-    FileAction,
-    RawFileError,
-)
+from pcs.common.file import FileAction, RawFileError
 from pcs.common.resource_agent.dto import (
     ResourceAgentNameDto,
     get_resource_agent_full_name,
@@ -42,16 +36,9 @@ from pcs.common.str_tools import (
     indent,
     is_iterable_not_str,
 )
-from pcs.common.types import (
-    CibRuleExpressionType,
-    StringIterable,
-)
+from pcs.common.types import CibRuleExpressionType, StringIterable
 
-from . import (
-    codes,
-    const,
-    types,
-)
+from . import codes, const, types
 from .dto import ReportItemMessageDto
 from .item import ReportItemMessage
 from .utils import format_file_role
@@ -8664,6 +8651,36 @@ class PcsCfgsyncSendingConfigsToNodes(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class PcsCfgsyncSendingConfigsToNodesFailed(ReportItemMessage):
+    """
+    Sending updated configs to specified nodes failed for some nodes
+
+    file_type_code_list -- configs that are sent
+    node_name_list -- names of nodes where sending failed
+    """
+
+    file_type_code_list: list[file_type_codes.FileTypeCode]
+    node_name_list: list[str]
+    _code = codes.PCS_CFGSYNC_SENDING_CONFIGS_TO_NODES_FAILED
+
+    @property
+    def message(self) -> str:
+        return (
+            "Unable to save {files} {file_list} on {nodes} {node_list}".format(
+                files=format_plural(self.file_type_code_list, "file"),
+                file_list=format_list(
+                    [
+                        format_file_role(role)
+                        for role in self.file_type_code_list
+                    ]
+                ),
+                nodes=format_plural(self.node_name_list, "node"),
+                node_list=format_list(self.node_name_list),
+            )
+        )
+
+
+@dataclass(frozen=True)
 class PcsCfgsyncConfigAccepted(ReportItemMessage):
     """
     The config was saved
@@ -8850,3 +8867,61 @@ class MetaAttrsNotValidatedLoadingError(ReportItemMessage):
             "Meta attribute validation is skipped due to an error loading "
             "meta attributes definition."
         )
+
+
+@dataclass(frozen=True)
+class NodeNotInCluster(ReportItemMessage):
+    """
+    Node is not in cluster
+    """
+
+    _code = codes.NODE_NOT_IN_CLUSTER
+
+    @property
+    def message(self) -> str:
+        return "The node does not currently have a cluster configured"
+
+
+@dataclass(frozen=True)
+class ClusterNameAlreadyInUse(ReportItemMessage):
+    """
+    The provided cluster name is already used in pcsd settings
+
+    cluster_name -- name of the cluster
+    """
+
+    cluster_name: str
+    _code = codes.CLUSTER_NAME_ALREADY_IN_USE
+
+    @property
+    def message(self) -> str:
+        return f"The cluster name '{self.cluster_name}' is already used"
+
+
+@dataclass(frozen=True)
+class UnableToGetClusterInfoFromStatus(ReportItemMessage):
+    """
+    Unable to retrieve cluster info from node status
+    """
+
+    _code = codes.UNABLE_TO_GET_CLUSTER_INFO_FROM_STATUS
+
+    @property
+    def message(self) -> str:
+        return "Unable to retrieve cluster information from node status"
+
+
+@dataclass(frozen=True)
+class UnableToGetClusterKnownHosts(ReportItemMessage):
+    """
+    Unable to retrieve cluster known hosts
+
+    cluster_name -- name of the cluster
+    """
+
+    cluster_name: str
+    _code = codes.UNABLE_TO_GET_CLUSTER_KNOWN_HOSTS
+
+    @property
+    def message(self) -> str:
+        return f"Unable to get known hosts from cluster '{self.cluster_name}'"

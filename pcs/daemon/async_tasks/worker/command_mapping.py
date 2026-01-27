@@ -15,6 +15,7 @@ from pcs.lib.commands import (  # services,
     cluster_property,
     constraint,
     fencing_topology,
+    manage_clusters,
     node,
     pcs_cfgsync,
     qdevice,
@@ -244,6 +245,10 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
     ),
     "fencing_topology.verify": _Cmd(
         cmd=fencing_topology.verify,
+        required_permission=p.WRITE,
+    ),
+    "manage_clusters.add_existing_cluster": _Cmd(
+        cmd=manage_clusters.add_existing_cluster,
         required_permission=p.WRITE,
     ),
     "node.maintenance_unmaintenance_all": _Cmd(

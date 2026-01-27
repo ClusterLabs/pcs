@@ -283,74 +283,6 @@ post '/run_pcs' do
   return JSON.pretty_generate(result)
 end
 
-post '/manage/existingcluster' do
-  pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
-  node = params['node-name']
-  code, result = send_request_with_token(
-    PCSAuth.getSuperuserAuth(), node, 'status', false, {:version=>'2'}
-  )
-  begin
-    status = JSON.parse(result)
-  rescue JSON::ParserError
-    return 400, "Unable to communicate with remote pcsd on node '#{node}'."
-  end
-
-  if status.has_key?("corosync_offline") and
-    status.has_key?("corosync_online") then
-    nodes = status["corosync_offline"] + status["corosync_online"]
-
-    if status["cluster_name"] == ''
-      return 400, "The node, '#{node}', does not currently have a cluster
- configured.  You must create a cluster using this node before adding it to pcsd."
-    end
-
-    if pcs_config.is_cluster_name_in_use(status['cluster_name'])
-      return 400, __msg_cluster_name_already_used(status['cluster_name'])
-    end
-
-    # auth begin
-    new_hosts, warning_messages = pcs_compatibility_layer_get_cluster_known_hosts(
-      status['cluster_name'], node
-    )
-    if not new_hosts.empty?
-      no_conflict, sync_responses = Cfgsync::save_sync_new_known_hosts(
-        new_hosts, [], get_corosync_nodes_names(), $cluster_name
-      )
-      sync_notauthorized_nodes, sync_failed_nodes = (
-        Cfgsync::get_failed_nodes_from_sync_responses(sync_responses)
-      )
-      sync_all_failures = (sync_notauthorized_nodes + sync_failed_nodes).sort
-      if not sync_all_failures.empty?
-        return 400, __msg_sync_nodes_error(sync_all_failures)
-      end
-      if not no_conflict
-        return 400, __msg_sync_conflict_detected()
-      end
-    end
-    #auth end
-
-    pcs_config.clusters << Cluster.new(status["cluster_name"], nodes)
-
-    sync_config = Cfgsync::PcsdSettings.from_text(pcs_config.text())
-    no_conflict, sync_responses = Cfgsync::save_sync_new_version(
-      sync_config, get_corosync_nodes_names(), $cluster_name, true
-    )
-    sync_notauthorized_nodes, sync_failed_nodes = (
-      Cfgsync::get_failed_nodes_from_sync_responses(sync_responses)
-    )
-    sync_all_failures = (sync_notauthorized_nodes + sync_failed_nodes).sort
-    if not sync_all_failures.empty?
-      return 400, __msg_sync_nodes_error(sync_all_failures)
-    end
-    if not no_conflict
-      return 400, __msg_sync_conflict_detected()
-    end
-    return 200, warning_messages.join("\n\n")
-  else
-    return 400, "Unable to communicate with remote pcsd on node '#{node}'."
-  end
-end
-
 ### urls related to creating a new cluster - begin
 #
 # Creating a new cluster consists of several steps which are directed from js.
@@ -750,46 +682,6 @@ def pcs_compatibility_layer_known_hosts_add(
     return 'not_supported'
   end
   return 'error'
-end
-
-def pcs_compatibility_layer_get_cluster_known_hosts(cluster_name, target_node)
-  warning_messages = []
-  known_hosts = []
-  auth_user = PCSAuth.getSuperuserAuth()
-
-  retval, out = send_request_with_token(
-    auth_user, target_node, '/get_cluster_known_hosts'
-  )
-  if retval == 200
-    begin
-      JSON.parse(out).each { |name, data|
-        known_hosts << PcsKnownHost.new(
-          name,
-          data.fetch('token'),
-          data.fetch('dest_list')
-        )
-      }
-    rescue => e
-      $logger.error "Unable to parse the response of /get_cluster_known_hosts: #{e}"
-      known_hosts = []
-      warning_messages << (
-        "Unable to automatically authenticate against cluster nodes: " +
-        "cannot get authentication info from cluster '#{cluster_name}'"
-      )
-    end
-  elsif retval == 404
-    warning_messages << (
-      "Unable to automatically authenticate against cluster nodes: " +
-      "cluster '#{cluster_name}' is running an old version of pcs/pcsd"
-    )
-  else
-    warning_messages << (
-      "Unable to automatically authenticate against cluster nodes: " +
-      "cannot get authentication info from cluster '#{cluster_name}'"
-    )
-  end
-
-  return known_hosts, warning_messages
 end
 
 def pcs_0_10_6_get_avail_resource_agents(code, out)

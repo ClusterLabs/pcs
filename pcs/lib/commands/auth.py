@@ -138,7 +138,7 @@ def auth_hosts(  # noqa: PLR0912
             raise LibraryError()
         return
 
-    conflict_detected, new_file = save_sync_new_known_hosts(
+    conflict_detected, _, new_file = save_sync_new_known_hosts(
         known_hosts_facade,
         new_known_hosts,
         [],
@@ -266,7 +266,7 @@ def _deauth_hosts_common(
             raise LibraryError()
         return
 
-    conflict_detected, new_file = save_sync_new_known_hosts(
+    conflict_detected, _, new_file = save_sync_new_known_hosts(
         known_hosts_facade,
         [],
         hosts_to_deauth,

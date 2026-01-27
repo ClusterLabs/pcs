@@ -5,12 +5,15 @@ from tornado.httputil import parse_cookie
 
 from pcs.daemon import ruby_pcsd
 from pcs.daemon.app import sinatra_ui
-from pcs.daemon.app.auth import UnixSocketAuthProvider
 
 try:
     from pcs.daemon.app import webui
 except ImportError:
     webui = None
+from pcs.daemon.app.auth_provider import (
+    UnixSocketAuthProvider,
+    UnixSocketAuthProviderFactory,
+)
 from pcs.lib.auth.provider import AuthProvider
 from pcs.lib.auth.types import AuthUser
 
@@ -32,15 +35,15 @@ def patch_login_user():
     )
 
 
-def patch_get_unix_socket_user(user):
-    return mock.patch.object(
+def patch_unix_socket_provider(user):
+    return mock.patch.multiple(
         UnixSocketAuthProvider,
-        "get_unix_socket_user",
-        lambda _self: user,
+        can_handle_request=lambda _self: True,
+        _get_unix_socket_user=lambda _self: user,
     )
 
 
-auth_provider = AuthProvider(logging.getLogger("test logger"))
+lib_auth_provider = AuthProvider(logging.getLogger("test logger"))
 
 
 @skip_unless_webui_installed()
@@ -51,9 +54,10 @@ class SinatraAjaxProtectedSession(fixtures_app_webui.AppTest):
         super().setUp()
 
     def get_routes(self):
-        return webui.sinatra_ui.get_routes(
-            self.session_storage,
-            auth_provider,
+        return sinatra_ui.get_routes(
+            webui.auth_provider.SessionAuthProviderFactory(
+                lib_auth_provider, self.session_storage
+            ),
             self.wrapper,
         )
 
@@ -86,17 +90,19 @@ class SinatraAjaxProtectedUnixSocket(fixtures_app.AppTest):
         super().setUp()
 
     def get_routes(self):
-        return sinatra_ui.get_routes(auth_provider, self.wrapper)
+        return sinatra_ui.get_routes(
+            UnixSocketAuthProviderFactory(lib_auth_provider), self.wrapper
+        )
 
-    @patch_get_unix_socket_user(None)
+    @patch_unix_socket_provider(None)
     def test_deal_without_authentication(self):
         self.assert_unauth_ajax(self.get("/some-ajax", is_ajax=True))
 
-    @patch_get_unix_socket_user(fixtures_app.USER)
+    @patch_unix_socket_provider(fixtures_app.USER)
     def test_take_result_from_ruby(self):
         response = self.get("/some-ajax", is_ajax=True)
         self.assert_wrappers_response(response)
 
-    @patch_get_unix_socket_user(fixtures_app.USER)
+    @patch_unix_socket_provider(fixtures_app.USER)
     def test_not_ajax(self):
         self.assert_unauth_ajax(self.get("/some-ajax"))

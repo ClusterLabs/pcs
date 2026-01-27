@@ -5,34 +5,25 @@ import socket
 import sys
 from logging import Logger
 from pathlib import Path
-from typing import (
-    Iterable,
-    Optional,
-)
+from typing import Iterable, Optional
 
-from tornado.ioloop import (
-    IOLoop,
-    PeriodicCallback,
-)
+from tornado.ioloop import IOLoop, PeriodicCallback
 from tornado.locks import Lock
 from tornado.web import Application
 
 from pcs import settings
 from pcs.common import capabilities
 from pcs.common.types import StringCollection
-from pcs.daemon import (
-    log,
-    ruby_pcsd,
-    ssl,
-    systemd,
-)
+from pcs.daemon import log, ruby_pcsd, ssl, systemd
 from pcs.daemon.app import (
     api_v0,
     api_v1,
     api_v2,
     auth,
+    auth_provider,
     sinatra_remote,
     sinatra_ui,
+    ui_manage,
 )
 from pcs.daemon.app import capabilities as capabilities_app
 
@@ -44,14 +35,8 @@ except ImportError:
 from pcs.common.communication.logger import CommunicatorLogger
 from pcs.common.node_communicator import NodeCommunicatorFactory
 from pcs.common.reports.processor import ReportProcessorToLog
-from pcs.daemon.app.common import (
-    Http404Handler,
-    RedirectHandler,
-)
-from pcs.daemon.async_tasks.scheduler import (
-    Scheduler,
-    SchedulerConfig,
-)
+from pcs.daemon.app.common import Http404Handler, RedirectHandler
+from pcs.daemon.async_tasks.scheduler import Scheduler, SchedulerConfig
 from pcs.daemon.async_tasks.task import TaskConfig
 from pcs.daemon.env import prepare_env
 from pcs.daemon.http_server import HttpsServerManage
@@ -115,7 +100,7 @@ async def config_sync(
 
 def configure_app(  # noqa: PLR0913
     async_scheduler: Scheduler,
-    auth_provider: AuthProvider,
+    lib_auth_provider: AuthProvider,
     session_lifetime: int,
     ruby_pcsd_wrapper: ruby_pcsd.Wrapper,
     sync_config_lock: Lock,
@@ -133,20 +118,25 @@ def configure_app(  # noqa: PLR0913
             object via the method `initialize`.
         """
 
-        routes = api_v2.get_routes(async_scheduler, auth_provider)
-        routes.extend(api_v1.get_routes(async_scheduler, auth_provider))
-        routes.extend(api_v0.get_routes(async_scheduler, auth_provider))
-        routes.extend(auth.get_routes(auth_provider))
+        routes = api_v2.get_routes(async_scheduler, lib_auth_provider)
+        routes.extend(api_v1.get_routes(async_scheduler, lib_auth_provider))
+        routes.extend(api_v0.get_routes(async_scheduler, lib_auth_provider))
+        routes.extend(auth.get_routes(lib_auth_provider))
         routes.extend(
-            capabilities_app.get_routes(auth_provider, pcsd_capabilities)
+            capabilities_app.get_routes(lib_auth_provider, pcsd_capabilities)
         )
         routes.extend(
             sinatra_remote.get_routes(
                 ruby_pcsd_wrapper,
                 sync_config_lock,
                 https_server_manage,
-                auth_provider,
+                lib_auth_provider,
             )
+        )
+
+        # Create common auth provider factories
+        socket_factory = auth_provider.UnixSocketAuthProviderFactory(
+            lib_auth_provider
         )
 
         if webui:
@@ -158,18 +148,26 @@ def configure_app(  # noqa: PLR0913
                     app_dir=webui_dir,
                     fallback_page_path=webui_fallback,
                     session_storage=session_storage,
-                    auth_provider=auth_provider,
+                    auth_provider=lib_auth_provider,
                 )
-                + webui.sinatra_ui.get_routes(
-                    session_storage, auth_provider, ruby_pcsd_wrapper
-                )
+            )
+            # Create WebUI auth factory (session -> socket fallback)
+            session_factory = webui.auth_provider.SessionAuthProviderFactory(
+                lib_auth_provider, session_storage
+            )
+            ui_auth_factory = auth_provider.AuthProviderMultiFactory(
+                [session_factory, socket_factory]
             )
         else:
-            # Even with disabled (standalone) webui the following routes must be
-            # provided because they can be used via unix socket from cockpit.
-            routes.extend(
-                sinatra_ui.get_routes(auth_provider, ruby_pcsd_wrapper)
-            )
+            # No WebUI: only socket authentication
+            ui_auth_factory = socket_factory
+
+        # Even with disabled (standalone) webui the following routes must be
+        # provided because they can be used via unix socket from cockpit.
+        # Handlers for these routes are the same in both cases, the only
+        # difference is the authentication method used.
+        routes.extend(ui_manage.get_routes(ui_auth_factory, async_scheduler))
+        routes.extend(sinatra_ui.get_routes(ui_auth_factory, ruby_pcsd_wrapper))
 
         return Application(
             routes, debug=debug, default_handler_class=Http404Handler
@@ -234,7 +232,7 @@ def main(argv=None) -> None:
             ),
         )
     )
-    auth_provider = AuthProvider(log.pcsd)
+    lib_auth_provider = AuthProvider(log.pcsd)
     SignalInfo.async_scheduler = async_scheduler
 
     sync_config_lock = Lock()
@@ -251,7 +249,7 @@ def main(argv=None) -> None:
 
     make_app = configure_app(
         async_scheduler,
-        auth_provider,
+        lib_auth_provider,
         env.PCSD_SESSION_LIFETIME,
         ruby_pcsd_wrapper,
         sync_config_lock,

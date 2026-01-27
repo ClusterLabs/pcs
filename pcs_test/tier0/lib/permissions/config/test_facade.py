@@ -2,6 +2,7 @@ from unittest import TestCase
 
 from pcs.lib.permissions.config.facade import FacadeV2
 from pcs.lib.permissions.config.types import (
+    ClusterEntry,
     ClusterPermissions,
     ConfigV2,
     PermissionAccessType,
@@ -33,9 +34,13 @@ _GROUP2 = PermissionEntry(
     type=PermissionTargetType.GROUP,
     allow=[PermissionAccessType.WRITE],
 )
+
+_CLUSTER1 = ClusterEntry(name="cluster1", nodes=["A", "B"])
+_CLUSTER2 = ClusterEntry(name="cluster2", nodes=["C", "D"])
+
 _CONFIG = ConfigV2(
     data_version=1,
-    clusters=[],
+    clusters=[_CLUSTER1, _CLUSTER2],
     permissions=ClusterPermissions(
         local_cluster=[_USER1, _USER2, _GROUP1, _GROUP2]
     ),
@@ -84,3 +89,25 @@ class FacadeV2DataVersionTest(TestCase):
         self.assertEqual(facade.data_version, 1)
         facade.set_data_version(10)
         self.assertEqual(facade.data_version, 10)
+
+
+class FacadeV2IsClusterNameUsed(TestCase):
+    def setUp(self):
+        self.facade = FacadeV2(_CONFIG)
+
+    def test_present(self):
+        self.assertTrue(self.facade.is_cluster_name_in_use("cluster1"))
+
+    def test_not_present(self):
+        self.assertFalse(self.facade.is_cluster_name_in_use("cluster99"))
+
+
+class FacadeV2AddCluster(TestCase):
+    def test_success(self):
+        facade = FacadeV2(_CONFIG)
+
+        new_entry = ClusterEntry("cluster3", ["X", "Y"])
+        facade.add_cluster(new_entry)
+        self.assertEqual(
+            facade.config.clusters, [_CLUSTER1, _CLUSTER2, new_entry]
+        )
