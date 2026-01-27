@@ -61,15 +61,15 @@ class UnixSocketAuthProviderTest(IsolatedAsyncioTestCase):
 
         self.handler.request.connection = mock_connection
 
-    def test_is_available_returns_true_for_unix_socket(self):
+    def test_can_handle_request_returns_true_for_unix_socket(self):
         self._setup_unix_socket()
 
-        self.assertTrue(self.provider.is_available())
+        self.assertTrue(self.provider.can_handle_request())
 
-    def test_is_available_returns_false_for_tcp_socket(self):
+    def test_can_handle_request_returns_false_for_tcp_socket(self):
         self._setup_tcp_socket()
 
-        self.assertFalse(self.provider.is_available())
+        self.assertFalse(self.provider.can_handle_request())
 
     def test_get_unix_socket_user_extracts_username(self):
         self._setup_unix_socket(uid=1000, username="alice")

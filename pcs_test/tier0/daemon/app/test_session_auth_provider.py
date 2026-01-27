@@ -41,21 +41,21 @@ class SessionAuthProviderTest(IsolatedAsyncioTestCase):
 
         self.lib_auth_provider = mock.Mock(spec=AuthProvider)
 
-    def test_is_available_returns_true_with_session(self):
+    def test_can_handle_request_returns_true_with_session(self):
         self.session_storage.add_session("session123", "bob")
 
         provider = webui.auth_provider.SessionAuthProvider(
             self.handler, self.lib_auth_provider, self.session_storage
         )
 
-        self.assertTrue(provider.is_available())
+        self.assertTrue(provider.can_handle_request())
 
-    def test_is_available_returns_false_without_session(self):
+    def test_can_handle_request_returns_false_without_session(self):
         provider = webui.auth_provider.SessionAuthProvider(
             self.handler, self.lib_auth_provider, self.session_storage
         )
 
-        self.assertFalse(provider.is_available())
+        self.assertFalse(provider.can_handle_request())
 
     async def test_auth_user_success_with_valid_session(self):
         self.session_storage.add_session("session123", "bob")

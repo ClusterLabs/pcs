@@ -62,7 +62,7 @@ class SessionAuthProvider(ApiAuthProviderInterface):
     def __sid_from_client(self) -> Optional[str]:
         return self._handler.get_cookie(PCSD_SESSION, default=None)
 
-    def is_available(self) -> bool:
+    def can_handle_request(self) -> bool:
         if self._session is not None:
             return True
 
@@ -72,7 +72,7 @@ class SessionAuthProvider(ApiAuthProviderInterface):
         return self._session is not None
 
     async def auth_user(self) -> AuthUser:
-        if not self.is_available():
+        if not self.can_handle_request():
             raise NotAuthorizedException()
 
         # mypy complains that self.__session can be None when passed into

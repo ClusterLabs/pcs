@@ -25,7 +25,7 @@ class MockApiAuthProvider(ApiAuthProviderInterface):
         self.user = AuthUser("testuser", ["testgroup"])
         self.auth_successful = True
 
-    def is_available(self) -> bool:
+    def can_handle_request(self) -> bool:
         return self.available
 
     async def auth_user(self) -> AuthUser:

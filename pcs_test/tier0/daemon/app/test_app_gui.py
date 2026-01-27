@@ -38,7 +38,7 @@ def patch_login_user():
 def patch_unix_socket_provider(user):
     return mock.patch.multiple(
         UnixSocketAuthProvider,
-        is_available=lambda _self: True,
+        can_handle_request=lambda _self: True,
         _get_unix_socket_user=lambda _self: user,
     )
 

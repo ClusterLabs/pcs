@@ -37,7 +37,7 @@ class BaseAjaxProtectedManageHandler(LegacyApiHandler, AjaxMixin):
     def prepare(self) -> None:
         if not self.is_ajax:
             raise self.unauthorized()
-        if not self.__auth_provider.is_available():
+        if not self.__auth_provider.can_handle_request():
             raise self.unauthorized()
 
     def _error(self, message: str, http_code: int = 400) -> Finish:

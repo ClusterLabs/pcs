@@ -31,9 +31,13 @@ class ApiAuthProviderInterface:
     (socket, session, token, password, etc.).
     """
 
-    def is_available(self) -> bool:
+    def can_handle_request(self) -> bool:
         """
         Check if this authentication provider can handle the current request.
+
+        This method determines whether the provider is applicable to the current
+        request based on request-specific conditions (e.g., connection type,
+        presence of credentials, session validity).
 
         Returns:
             True if this provider can attempt authentication for this request,
@@ -84,24 +88,24 @@ class AuthProviderMulti(ApiAuthProviderInterface):
             None
         )
 
-    def is_available(self) -> bool:
+    def can_handle_request(self) -> bool:
         """
-        Check if any of the configured providers is available. Cache the first
-        available provider.
+        Check if any of the configured providers can handle the request.
+        Cache the first available provider.
         """
         if self._first_available_provider is not None:
             return True
         for provider in self._providers:
-            if provider.is_available():
+            if provider.can_handle_request():
                 self._first_available_provider = provider
                 return True
         return False
 
     async def auth_user(self) -> AuthUser:
-        if not self.is_available():
+        if not self.can_handle_request():
             raise NotAuthorizedException()
-        # is_available returned true, so the _first_available_provider cannot
-        # be None
+        # can_handle_request returned true, so the _first_available_provider
+        # cannot be None
         assert self._first_available_provider is not None
         return await self._first_available_provider.auth_user()
 
@@ -187,7 +191,7 @@ class UnixSocketAuthProvider(ApiAuthProviderInterface):
         except KeyError:
             return None
 
-    def is_available(self) -> bool:
+    def can_handle_request(self) -> bool:
         return self._is_unix_socket_used()
 
     async def auth_user(self) -> AuthUser:
