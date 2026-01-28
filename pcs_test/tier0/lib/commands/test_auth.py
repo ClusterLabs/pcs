@@ -624,6 +624,11 @@ class AuthHosts(TestCase):
                     file_type_code=PCS_KNOWN_HOSTS,
                     context=reports.dto.ReportItemContextDto(node="node1"),
                 ),
+                fixture.error(
+                    reports.codes.PCS_CFGSYNC_SENDING_CONFIGS_TO_NODES_FAILED,
+                    file_type_code_list=[PCS_KNOWN_HOSTS],
+                    node_name_list=["node2"],
+                ),
             ]
         )
 
@@ -1108,6 +1113,11 @@ class DeauthHosts(TestCase):
                     reports.codes.PCS_CFGSYNC_CONFIG_ACCEPTED,
                     file_type_code=PCS_KNOWN_HOSTS,
                     context=reports.dto.ReportItemContextDto(node="node1"),
+                ),
+                fixture.error(
+                    reports.codes.PCS_CFGSYNC_SENDING_CONFIGS_TO_NODES_FAILED,
+                    file_type_code_list=[PCS_KNOWN_HOSTS],
+                    node_name_list=["node2"],
                 ),
             ]
         )
