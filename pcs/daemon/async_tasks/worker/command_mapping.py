@@ -8,6 +8,7 @@ from typing import (
 from pcs.lib.commands import (  # services,
     acl,
     alert,
+    auth,
     booth,
     cib,
     cib_options,
@@ -113,6 +114,10 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
     ),
     "alert.update_recipient": _Cmd(
         cmd=alert.update_recipient,
+        required_permission=p.WRITE,
+    ),
+    "auth.auth_hosts": _Cmd(
+        cmd=auth.auth_hosts,
         required_permission=p.WRITE,
     ),
     "booth.ticket_cleanup": _Cmd(

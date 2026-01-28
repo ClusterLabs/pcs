@@ -2588,12 +2588,13 @@
 
 
 
-    <capability id="pcs.auth.client" in-pcs="1" in-pcsd="0">
+    <capability id="pcs.auth.client" in-pcs="1" in-pcsd="1">
       <description>
         Can authenticate against other hosts to be able to connect to such
         hosts.
 
         pcs commands: pcs host auth
+        API v2: auth.auth_hosts
       </description>
     </capability>
     <capability id="pcs.auth.client.cluster" in-pcs="1" in-pcsd="0">

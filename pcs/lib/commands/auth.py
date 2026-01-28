@@ -3,6 +3,7 @@ from typing import Mapping, cast
 from pcs.common import reports
 from pcs.common.auth import HostAuthData, HostWithTokenAuthData
 from pcs.common.file import RawFileError
+from pcs.common.file_type_codes import PCS_KNOWN_HOSTS
 from pcs.common.node_communicator import PcsKnownHost, RequestTarget
 from pcs.common.types import StringSequence
 from pcs.lib.auth import validations
@@ -138,7 +139,7 @@ def auth_hosts(  # noqa: PLR0912
             raise LibraryError()
         return
 
-    conflict_detected, _, new_file = save_sync_new_known_hosts(
+    conflict_detected, failed_nodes, new_file = save_sync_new_known_hosts(
         known_hosts_facade,
         new_known_hosts,
         [],
@@ -147,16 +148,28 @@ def auth_hosts(  # noqa: PLR0912
         node_communicator,
         env.report_processor,
     )
-    try:
-        if new_file is not None:
-            FileInstance.for_known_hosts().write_facade(new_file, True)
-    except RawFileError as e:
-        env.report_processor.report(raw_file_error_report(e))
-
     if conflict_detected:
         env.report_processor.report(
             reports.ReportItem.error(
                 reports.messages.PcsCfgsyncConflictRepeatAction()
+            )
+        )
+        try:
+            if new_file is not None:
+                FileInstance.for_known_hosts().write_facade(new_file, True)
+        except RawFileError as e:
+            env.report_processor.report(raw_file_error_report(e))
+
+    nodes_with_missing_token = set(node_names) - {
+        target.label for target in target_list
+    }
+    if failed_nodes or nodes_with_missing_token:
+        env.report_processor.report(
+            reports.ReportItem.error(
+                reports.messages.PcsCfgsyncSendingConfigsToNodesFailed(
+                    [PCS_KNOWN_HOSTS],
+                    sorted(set(failed_nodes) | nodes_with_missing_token),
+                )
             )
         )
     if env.report_processor.has_errors:
@@ -266,7 +279,7 @@ def _deauth_hosts_common(
             raise LibraryError()
         return
 
-    conflict_detected, _, new_file = save_sync_new_known_hosts(
+    conflict_detected, failed_nodes, new_file = save_sync_new_known_hosts(
         known_hosts_facade,
         [],
         hosts_to_deauth,
@@ -275,15 +288,28 @@ def _deauth_hosts_common(
         node_communicator,
         env.report_processor,
     )
-    try:
-        if new_file is not None:
-            FileInstance.for_known_hosts().write_facade(new_file, True)
-    except RawFileError as e:
-        env.report_processor.report(raw_file_error_report(e))
     if conflict_detected:
         env.report_processor.report(
             reports.ReportItem.error(
                 reports.messages.PcsCfgsyncConflictRepeatAction()
+            )
+        )
+        try:
+            if new_file is not None:
+                FileInstance.for_known_hosts().write_facade(new_file, True)
+        except RawFileError as e:
+            env.report_processor.report(raw_file_error_report(e))
+
+    nodes_with_missing_token = set(node_names) - {
+        target.label for target in target_list
+    }
+    if failed_nodes or nodes_with_missing_token:
+        env.report_processor.report(
+            reports.ReportItem.error(
+                reports.messages.PcsCfgsyncSendingConfigsToNodesFailed(
+                    [PCS_KNOWN_HOSTS],
+                    sorted(set(failed_nodes) | nodes_with_missing_token),
+                )
             )
         )
 
