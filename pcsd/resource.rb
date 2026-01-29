@@ -79,41 +79,6 @@ def getAllConstraints(constraints_dom)
   return constraints
 end
 
-def getResourceAgents(auth_user)
-  stdout, stderr, retval = run_cmd(
-    auth_user, PCS, "--nodesc", "--", "resource", "list"
-  )
-  if retval != 0
-    $logger.error("Error running 'pcs resource list --nodesc")
-    $logger.error(stdout + stderr)
-    return []
-  end
-
-  return stdout.map{|agent_name| agent_name.chomp}
-end
-
-
-def get_resource_agent_name_structure(agent_name)
-  [
-    # full_agent_name could be for example systemd:lvm2-pvscan@252:2
-    # note that the second colon is not separator of provider and type
-    /^(?<standard>systemd|service):(?<type>[^:@]+@.*)$/,
-    /^(?<standard>[^:]+)(:(?<provider>[^:]+))?:(?<type>[^:]+)$/,
-  ].each{|expression|
-    match = expression.match(agent_name)
-    if match
-      provider = match.names.include?('provider') ? match[:provider] : nil
-      return {
-        :full_name => agent_name,
-        :class => match[:standard],
-        :provider => provider,
-        :type => match[:type],
-      }
-    end
-  }
-  return nil
-end
-
 
 class RuleToExpression
   def export(rule)

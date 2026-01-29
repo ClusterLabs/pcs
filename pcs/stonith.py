@@ -367,27 +367,6 @@ def stonith_confirm(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
         print("Node: %s confirmed fenced" % node)
 
 
-# This is used only by pcsd, will be removed in new architecture
-def get_fence_agent_info(
-    lib: Any, argv: Argv, modifiers: InputModifiers
-) -> None:
-    """
-    Options: no options
-    """
-    modifiers.ensure_only_supported()
-    if len(argv) != 1:
-        utils.err("One parameter expected")
-
-    agent_name = argv[0]
-    if not agent_name.startswith("stonith:"):
-        utils.err("Invalid fence agent name")
-    print(
-        json.dumps(
-            lib.stonith_agent.describe_agent(agent_name[len("stonith:") :])
-        )
-    )
-
-
 def sbd_watchdog_list(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options: no options

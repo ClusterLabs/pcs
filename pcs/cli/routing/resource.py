@@ -107,8 +107,6 @@ resource_cmd = create_router(
             },
             ["resource", "bundle"],
         ),
-        # internal use only
-        "get_resource_agent_info": resource.get_resource_agent_info,
         "relations": show_resource_relations_cmd,
     },
     ["resource"],

@@ -39,7 +39,6 @@ def remote(params, request, auth_user)
       :config_restore => method(:config_restore),
       :cluster_enable => method(:cluster_enable),
       :cluster_disable => method(:cluster_disable),
-      :get_sw_versions => method(:get_sw_versions),
       :cluster_destroy => method(:cluster_destroy),
       :get_cluster_known_hosts => method(:get_cluster_known_hosts),
       :known_hosts_change => method(:known_hosts_change),
@@ -64,14 +63,9 @@ def remote(params, request, auth_user)
       :check_host => method(:check_host),
       :reload_corosync_conf => method(:reload_corosync_conf),
       :remove_nodes_from_cib => method(:remove_nodes_from_cib),
-      # lib api:
-      # /api/v1/resource-agent-list-agents/v1
-      :get_avail_resource_agents => method(:get_avail_resource_agents),
   }
   remote_cmd_with_pacemaker = {
       :pacemaker_node_status => method(:remote_pacemaker_node_status),
-      :resource_start => method(:resource_start),
-      :resource_stop => method(:resource_stop),
       :resource_cleanup => method(:resource_cleanup),
       :resource_refresh => method(:resource_refresh),
       :update_resource => method(:update_resource),
@@ -82,45 +76,17 @@ def remote(params, request, auth_user)
       :add_constraint_remote => method(:add_constraint_remote),
       :add_constraint_rule_remote => method(:add_constraint_rule_remote),
       # lib api:
-      # /api/v1/constraint-colocation-create-with-set/v1
-      # /api/v1/constraint-order-create-with-set/v1
-      # /api/v1/constraint-ticket-create-with-set/v1
-      # location is not supported => lib commands fully replaces this url
-      :add_constraint_set_remote => method(:add_constraint_set_remote),
-      # lib api:
       # /api/v1/constraint-ticket-remove/v1
       :remove_constraint_remote => method(:remove_constraint_remote),
       :remove_constraint_rule_remote => method(:remove_constraint_rule_remote),
       :add_meta_attr_remote => method(:add_meta_attr_remote),
-      # lib api:
-      # /api/v1/resource-group-add/v1
-      :add_group => method(:add_group),
       :update_cluster_settings => method(:update_cluster_settings),
-      # lib api:
-      # /api/v1/fencing-topology-add-level/v1
-      :add_fence_level_remote => method(:add_fence_level_remote),
       :add_node_attr_remote => method(:add_node_attr_remote),
-      # lib api:
-      # /api/v1/acl-create-role/v1
-      :add_acl_role => method(:add_acl_role_remote),
-      # lib api:
-      # /api/v1/acl-remove-role/v1
-      :remove_acl_roles => method(:remove_acl_roles_remote),
-      :add_acl => method(:add_acl_remote),
-      :remove_acl => method(:remove_acl_remote),
       :resource_change_group => method(:resource_change_group),
-      :resource_promotable => method(:resource_promotable),
       :resource_clone => method(:resource_clone),
       :resource_unclone => method(:resource_unclone),
-      :resource_ungroup => method(:resource_ungroup),
       :set_resource_utilization => method(:set_resource_utilization),
       :set_node_utilization => method(:set_node_utilization),
-      # lib api:
-      # /api/v1/resource-agent-describe-agent/v1
-      :get_resource_agent_metadata => method(:get_resource_agent_metadata),
-      # lib api:
-      # /api/v1/stonith-agent-describe-agent/v1
-      :get_fence_agent_metadata => method(:get_fence_agent_metadata),
   }
 
   command = params[:command].to_sym
@@ -683,16 +649,6 @@ def set_permissions_remote(params, request, auth_user)
   return 400, 'Unable to save permissions'
 end
 
-def get_sw_versions(params, request, auth_user)
-  versions = {
-    "rhel" => get_rhel_version(),
-    "pcs" => get_pcsd_version(),
-    "pacemaker" => get_pacemaker_version(),
-    "corosync" => get_corosync_version(),
-  }
-  return JSON.generate(versions)
-end
-
 def remote_pacemaker_node_status(params, request, auth_user)
   if not allowed_for_local_cluster(auth_user, Permissions::READ)
     return 403, 'Permission denied'
@@ -781,20 +737,6 @@ def imported_cluster_list(params, request, auth_user)
   return JSON.generate(imported_clusters)
 end
 
-def resource_stop(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::WRITE)
-    return 403, 'Permission denied'
-  end
-  stdout, stderr, retval = run_cmd(
-    auth_user, PCS, "--", "resource", "disable", params[:resource]
-  )
-  if retval == 0
-    return JSON.generate({"success" => "true"})
-  else
-    return JSON.generate({"error" => "true", "stdout" => stdout, "stderror" => stderr})
-  end
-end
-
 def resource_cleanup(params, request, auth_user)
   return _resource_cleanup_refresh("cleanup", params, request, auth_user)
 end
@@ -819,20 +761,6 @@ def _resource_cleanup_refresh(action, params, request, auth_user)
     return JSON.generate(
       {"error" => "true", "stdout" => stdout, "stderror" => stderr}
     )
-  end
-end
-
-def resource_start(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::WRITE)
-    return 403, 'Permission denied'
-  end
-  stdout, stderr, retval = run_cmd(
-    auth_user, PCS, "--", "resource", "enable", params[:resource]
-  )
-  if retval == 0
-    return JSON.generate({"success" => "true"})
-  else
-    return JSON.generate({"error" => "true", "stdout" => stdout, "stderror" => stderr})
   end
 end
 
@@ -970,13 +898,6 @@ def update_fence_device(params, request, auth_user)
   return "{}"
 end
 
-def get_avail_resource_agents(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::READ)
-    return 403, 'Permission denied'
-  end
-  return JSON.generate(getResourceAgents(auth_user).map{|a| [a, get_resource_agent_name_structure(a)]}.to_h)
-end
-
 def remove_resource(params, request, auth_user)
   if not allowed_for_local_cluster(auth_user, Permissions::WRITE)
     return 403, 'Permission denied'
@@ -1011,20 +932,6 @@ def remove_resource(params, request, auth_user)
   end
 end
 
-def add_fence_level_remote(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::WRITE)
-    return 403, 'Permission denied'
-  end
-  retval, stdout, stderr = add_fence_level(
-    auth_user, params["level"], params["devices"], params["node"], params["remove"]
-  )
-  if retval == 0
-    return [200, "Successfully added fence level"]
-  else
-    return [400, stderr]
-  end
-end
-
 def add_node_attr_remote(params, request, auth_user)
   if not allowed_for_local_cluster(auth_user, Permissions::WRITE)
     return 403, 'Permission denied'
@@ -1037,96 +944,6 @@ def add_node_attr_remote(params, request, auth_user)
     return [200, "Successfully added attribute to node"]
   else
     return [400, "Error adding attribute to node"]
-  end
-end
-
-def add_acl_role_remote(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::GRANT)
-    return 403, 'Permission denied'
-  end
-  retval = add_acl_role(auth_user, params["name"], params["description"])
-  if retval == ""
-    return [200, "Successfully added ACL role"]
-  else
-    return [
-      400,
-      retval.include?("cib_replace failed") ? "Error adding ACL role" : retval
-    ]
-  end
-end
-
-def remove_acl_roles_remote(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::GRANT)
-    return 403, 'Permission denied'
-  end
-  errors = ""
-  params.each { |name, value|
-    if name.index("role-") == 0
-      out, errout, retval = run_cmd(
-        auth_user, PCS, "--autodelete", "--", "acl", "role", "delete", value.to_s
-      )
-      if retval != 0
-        errors += "Unable to remove role #{value}"
-        unless errout.include?("cib_replace failure")
-          errors += ": #{errout.join(" ").strip()}"
-        end
-        errors += "\n"
-        $logger.info errors
-      end
-    end
-  }
-  if errors == ""
-    return [200, "Successfully removed ACL roles"]
-  else
-    return [400, errors]
-  end
-end
-
-def add_acl_remote(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::GRANT)
-    return 403, 'Permission denied'
-  end
-  if params["item"] == "permission"
-    retval = add_acl_permission(
-      auth_user,
-      params["role_id"], params["type"], params["xpath_id"], params["query_id"]
-    )
-  elsif (params["item"] == "user") or (params["item"] == "group")
-    retval = add_acl_usergroup(
-      auth_user, params["role_id"], params["item"], params["usergroup"]
-    )
-  else
-    retval = "Error: Unknown adding request"
-  end
-
-  if retval == ""
-    return [200, "Successfully added permission to role"]
-  else
-    return [
-      400,
-      retval.include?("cib_replace failed") ? "Error adding permission" : retval
-    ]
-  end
-end
-
-def remove_acl_remote(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::GRANT)
-    return 403, 'Permission denied'
-  end
-  if params["item"] == "permission"
-    retval = remove_acl_permission(auth_user, params["acl_perm_id"])
-  elsif params["item"] == "usergroup"
-    retval = remove_acl_usergroup(
-      auth_user, params["role_id"],params["usergroup_id"], params["item_type"]
-    )
-  else
-    retval = "Error: Unknown removal request"
-  end
-
-  if retval == ""
-    return [200, "Successfully removed permission from role"]
-  else
-    return [400, retval]
   end
 end
 
@@ -1224,41 +1041,6 @@ def add_constraint_rule_remote(params, request, auth_user)
   end
 end
 
-def add_constraint_set_remote(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::WRITE)
-    return 403, 'Permission denied'
-  end
-  case params["c_type"]
-  when "ord"
-    retval, error = add_order_set_constraint(
-      auth_user, params["resources"].values, params["force"]
-    )
-  when "col"
-    retval, error = add_colocation_set_constraint(
-      auth_user, params["resources"].values, params["force"]
-    )
-  when "ticket"
-    unless params["options"]["ticket"]
-      return [400, "Error adding constraint ticket: option ticket missing"]
-    end
-    retval, error = add_ticket_set_constraint(
-      auth_user,
-      params["options"]["ticket"],
-      (params["options"]["loss-policy"] or ""),
-      params["resources"].values,
-      params["force"],
-    )
-  else
-    return [400, "Unknown constraint type: #{params["c_type"]}"]
-  end
-
-  if retval == 0
-    return [200, "Successfully added constraint"]
-  else
-    return [400, "Error adding constraint: #{error}"]
-  end
-end
-
 def remove_constraint_remote(params, request, auth_user)
   if not allowed_for_local_cluster(auth_user, Permissions::WRITE)
     return 403, 'Permission denied'
@@ -1288,22 +1070,6 @@ def remove_constraint_rule_remote(params, request, auth_user)
     end
   else
     return [400, "Bad Constraint Rule Options"]
-  end
-end
-
-def add_group(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::WRITE)
-    return 403, 'Permission denied'
-  end
-  rg = params["resource_group"]
-  resources = params["resources"]
-  output, errout, retval = run_cmd(
-    auth_user, PCS, "--", "resource", "group", "add", rg, *(resources.split(" "))
-  )
-  if retval == 0
-    return 200
-  else
-    return 400, errout
   end
 end
 
@@ -1424,25 +1190,6 @@ def known_hosts_change(params, request, auth_user)
   end
 end
 
-def resource_promotable(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::WRITE)
-    return 403, 'Permission denied'
-  end
-
-  unless params[:resource_id]
-    return [400, 'resource_id has to be specified.']
-  end
-  _, stderr, retval = run_cmd(
-    auth_user, PCS, '--', 'resource', 'promotable', params[:resource_id]
-  )
-  if retval != 0
-    return [400, 'Unable to create promotable resource from ' +
-      "'#{params[:resource_id]}': #{stderr.join('')}"
-    ]
-  end
-  return 200
-end
-
 def resource_change_group(params, request, auth_user)
   if not allowed_for_local_cluster(auth_user, Permissions::WRITE)
     return 403, 'Permission denied'
@@ -1480,26 +1227,6 @@ def resource_change_group(params, request, auth_user)
   if retval != 0
     return [400, "Unable to add resource '#{params[:resource_id]}' to " +
       "group '#{params[:group_id]}': #{stderr.join('')}"
-    ]
-  end
-  return 200
-end
-
-def resource_ungroup(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::WRITE)
-    return 403, 'Permission denied'
-  end
-
-  unless params[:group_id]
-    return [400, 'group_id has to be specified.']
-  end
-
-  _, stderr, retval = run_cmd(
-    auth_user, PCS, '--', 'resource', 'ungroup', params[:group_id]
-  )
-  if retval != 0
-    return [400, 'Unable to ungroup group ' +
-      "'#{params[:group_id]}': #{stderr.join('')}"
     ]
   end
   return 200
@@ -1606,49 +1333,6 @@ def get_cluster_properties_definition(params, request, auth_user)
     return [200, stdout]
   end
   return [400, '{}']
-end
-
-def get_resource_agent_metadata(params, request, auth_user)
-  unless allowed_for_local_cluster(auth_user, Permissions::READ)
-    return 403, 'Permission denied'
-  end
-  agent = params[:resource_agent]
-  unless agent
-    return [400, 'Parameter "resource_agent" required.']
-  end
-  stdout, stderr, retval = run_cmd(
-    auth_user, PCS, '--', 'resource', 'get_resource_agent_info', agent
-  )
-  if retval != 0
-    if stderr.join('').include?('is not supported')
-      return [200, JSON.generate({
-        :name => agent,
-        :longdesc => '',
-        :shortdesc => '',
-        :parameters => []
-      })]
-    else
-      return [400, stderr.join("\n")]
-    end
-  end
-  return [200, stdout.join("\n")]
-end
-
-def get_fence_agent_metadata(params, request, auth_user)
-  unless allowed_for_local_cluster(auth_user, Permissions::READ)
-    return 403, 'Permission denied'
-  end
-  agent = params[:fence_agent]
-  unless agent
-    return [400, 'Parameter "fence_agent" required.']
-  end
-  stdout, stderr, retval = run_cmd(
-    auth_user, PCS, '--', 'stonith', 'get_fence_agent_info', agent
-  )
-  if retval != 0
-    return [400, stderr.join("\n")]
-  end
-  return [200, stdout.join("\n")]
 end
 
 def check_sbd(param, request, auth_user)

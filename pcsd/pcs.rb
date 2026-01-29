@@ -42,20 +42,6 @@ def getAllSettings(auth_user, cib_dom=nil)
   return ret
 end
 
-def add_fence_level(auth_user, level, devices, node, remove = false)
-  if not remove
-    stdout, stderr, retval = run_cmd(
-      auth_user, PCS, "--", "stonith", "level", "add", level, node, devices
-    )
-    return retval,stdout, stderr
-  else
-    stdout, stderr, retval = run_cmd(
-      auth_user, PCS, "--", "stonith", "level", "remove", level, "target", node, "stonith", devices
-    )
-    return retval,stdout, stderr
-  end
-end
-
 def add_node_attr(auth_user, node, key, value)
   stdout, stderr, retval = run_cmd(
     auth_user, PCS, "--", "node", "attribute", node, key.to_s + '=' + value.to_s
@@ -131,30 +117,6 @@ def add_order_constraint(
   return retval, stderr.join(' ')
 end
 
-def add_order_set_constraint(auth_user, resource_set_list, force=false)
-  command = ["constraint", "order"]
-  resource_set_list.each { |resource_set|
-    command << "set"
-    command.concat(resource_set)
-  }
-  flags = []
-  flags << '--force' if force
-  stdout, stderr, retval = run_cmd(auth_user, PCS, *flags, "--", *command)
-  return retval, stderr.join(' ')
-end
-
-def add_colocation_set_constraint(auth_user, resource_set_list, force=false)
-  command = ["constraint", "colocation"]
-  resource_set_list.each { |resource_set|
-    command << "set"
-    command.concat(resource_set)
-  }
-  flags = []
-  flags << '--force' if force
-  stdout, stderr, retval = run_cmd(auth_user, PCS, *flags, "--", *command)
-  return retval, stderr.join(' ')
-end
-
 def add_ticket_constraint(
     auth_user, ticket, resource_id, role, loss_policy, force=false
 )
@@ -163,23 +125,6 @@ def add_ticket_constraint(
     command << role
   end
   command << resource_id
-  command << 'loss-policy=' + loss_policy unless loss_policy.strip().empty?()
-  flags = []
-  flags << '--force' if force
-  stdout, stderr, retval = run_cmd(auth_user, PCS, *flags, "--", *command)
-  return retval, stderr.join(' ')
-end
-
-def add_ticket_set_constraint(
-  auth_user, ticket, loss_policy, resource_set_list, force=false
-)
-  command = ['constraint', 'ticket']
-  resource_set_list.each { |resource_set|
-    command << 'set'
-    command.concat(resource_set)
-  }
-  command << 'setoptions'
-  command << 'ticket=' + ticket
   command << 'loss-policy=' + loss_policy unless loss_policy.strip().empty?()
   flags = []
   flags << '--force' if force
@@ -216,96 +161,6 @@ def remove_constraint_rule(auth_user, rule_id)
   )
   $logger.info stdout
   return retval
-end
-
-def add_acl_role(auth_user, name, description)
-  cmd = [PCS, "--", "acl", "role", "create", name.to_s]
-  if description.to_s != ""
-    cmd << "description=#{description.to_s}"
-  end
-  stdout, stderror, retval = run_cmd(auth_user, *cmd)
-  if retval != 0
-    return stderror.join("\n").strip
-  end
-  return ""
-end
-
-def add_acl_permission(auth_user, acl_role_id, perm_type, xpath_id, query_id)
-  stdout, stderror, retval = run_cmd(
-    auth_user, PCS, "--", "acl", "permission", "add", acl_role_id.to_s, perm_type.to_s,
-    xpath_id.to_s, query_id.to_s
-  )
-  if retval != 0
-    if stderror.empty?
-      return "Error adding permission"
-    else
-      return stderror.join("\n").strip
-    end
-  end
-  return ""
-end
-
-def add_acl_usergroup(auth_user, acl_role_id, user_group, name)
-  if (user_group == "user") or (user_group == "group")
-    stdout, stderr, retval = run_cmd(
-      auth_user, PCS, "--", "acl", user_group, "create", name.to_s, acl_role_id.to_s
-    )
-    if retval == 0
-      return ""
-    end
-    $logger.info(stdout)
-    if not /^Error: '#{name.to_s}' already exists$/i.match(stderr.join("\n").strip)
-      return stderr.join("\n").strip
-    end
-  end
-  stdout, stderror, retval = run_cmd(
-    auth_user, PCS, "--", "acl", "role", "assign",
-    acl_role_id.to_s, user_group, name.to_s
-  )
-  if retval != 0
-    if stderror.empty?
-      return "Error adding #{user_group}"
-    else
-      return stderror.join("\n").strip
-    end
-  end
-  return ""
-end
-
-def remove_acl_permission(auth_user, acl_perm_id)
-  stdout, stderror, retval = run_cmd(
-    auth_user, PCS, "--", "acl", "permission", "delete", acl_perm_id.to_s
-  )
-  if retval != 0
-    if stderror.empty?
-      return "Error removing permission"
-    else
-      return stderror.join("\n").strip
-    end
-  end
-  return ""
-end
-
-def remove_acl_usergroup(auth_user, role_id, usergroup_id, user_or_group)
-  if ['user', 'group'].include?(user_or_group)
-    stdout, stderror, retval = run_cmd(
-      auth_user, PCS, "--autodelete", "--", "acl", "role", "unassign", role_id.to_s, user_or_group,
-      usergroup_id.to_s
-    )
-  else
-    stdout, stderror, retval = run_cmd(
-      auth_user, PCS, "--autodelete", "--", "acl", "role", "unassign", role_id.to_s,
-      usergroup_id.to_s
-    )
-  end
-  if retval != 0
-    if stderror.empty?
-      return "Error removing user / group"
-    else
-      return stderror.join("\n").strip
-    end
-  end
-  return ""
 end
 
 # Gets all of the nodes specified in the pcs config file for the cluster
@@ -817,17 +672,6 @@ def get_pacemaker_version()
     match = /(\d+)\.(\d+)\.(\d+)/.match(stdout.join())
     if match
       return match[1..3].collect { | x | x.to_i }
-    end
-  end
-  return nil
-end
-
-def get_rhel_version()
-  if File.exist?('/etc/system-release')
-    release = File.open('/etc/system-release').read
-    match = /(\d+)\.(\d+)/.match(release)
-    if match
-      return match[1, 2].collect{ |x| x.to_i}
     end
   end
   return nil

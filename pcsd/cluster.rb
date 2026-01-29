@@ -15,12 +15,4 @@ class Cluster
     @nodes = @nodes.uniq.sort
     return self
   end
-
-  def num_nodes
-    @nodes.length
-  end
-
-  def ui_address
-    return "/managec/" + @name + "/main"
-  end
 end
