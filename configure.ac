@@ -77,29 +77,46 @@ AC_SUBST([PIP])
 
 # use a wrapper to call into PKG_CHECK_VAR to allow to set a default
 AC_DEFUN([PCS_PKG_CHECK_VAR], [
-	  varname=$1
-	  default=$4
-	  AC_MSG_CHECKING([for pkg-conf $2 var $3])
-	  PKG_CHECK_VAR([$1], [$2], [$3])
-	  AS_VAR_IF([$1], [""],
-		    [AS_VAR_IF([default], [""],
-			      AC_MSG_ERROR([not found]),
-			      [AS_VAR_COPY([$varname], [default]) && AC_MSG_RESULT([not found, using default ${!varname}])])],
-		    [AC_MSG_RESULT([yes (detected: ${!varname})])])
+	varname=$1
+	default=$4
+	AC_MSG_CHECKING([for pkg-conf $2 var $3])
+	PKG_CHECK_VAR([$1], [$2], [$3])
+	AS_VAR_IF([$1], [""],
+		[AS_VAR_IF([default], [""],
+			AC_MSG_ERROR([not found]),
+			[AS_VAR_COPY([$varname], [default])
+			eval "actual_value=\${$varname}"
+			AC_MSG_RESULT([not found, using default $actual_value])])],
+		[eval "actual_value=\${$varname}"
+		AC_MSG_RESULT([yes (detected: $actual_value)])])
 ])
 
 # check for systemd
-PKG_CHECK_MODULES([systemd], [systemd])
-PCS_PKG_CHECK_VAR([SYSTEMD_UNIT_DIR_TMP], [systemd], [systemdsystemunitdir], [/usr/lib/systemd/system])
-if test "${prefix}" != "/usr"; then
-	SYSTEMD_UNIT_DIR="${prefix}/$SYSTEMD_UNIT_DIR_TMP"
-else
-	SYSTEMD_UNIT_DIR="$SYSTEMD_UNIT_DIR_TMP"
+PKG_CHECK_MODULES([systemd], [systemd], [have_systemd=yes], [have_systemd=no])
+if test "$have_systemd" = yes; then
+	PCS_PKG_CHECK_VAR([SYSTEMD_UNIT_DIR_TMP], [systemd], [systemdsystemunitdir], [/usr/lib/systemd/system])
+	if test "${prefix}" != "/usr"; then
+		SYSTEMD_UNIT_DIR="${prefix}/$SYSTEMD_UNIT_DIR_TMP"
+	else
+		SYSTEMD_UNIT_DIR="$SYSTEMD_UNIT_DIR_TMP"
+	fi
+	AC_SUBST([SYSTEMD_UNIT_DIR])
+	PCS_PKG_CHECK_VAR([SYSTEMD_UNIT_PATH], [systemd], [systemdsystemunitpath],
+		[/etc/systemd/system:/etc/systemd/system:/run/systemd/system:/usr/local/lib/systemd/system:/usr/lib/systemd/system:/usr/lib/systemd/system:/lib/systemd/system])
+	AC_SUBST([SYSTEMD_UNIT_PATH])
 fi
-AC_SUBST([SYSTEMD_UNIT_DIR])
-PCS_PKG_CHECK_VAR([SYSTEMD_UNIT_PATH], [systemd], [systemdsystemunitpath],
-		  [/etc/systemd/system:/etc/systemd/system:/run/systemd/system:/usr/local/lib/systemd/system:/usr/lib/systemd/system:/usr/lib/systemd/system:/lib/systemd/system])
-AC_SUBST([SYSTEMD_UNIT_PATH])
+
+# Check for openrc
+PKG_CHECK_MODULES([openrc], [openrc], [have_openrc=yes], [have_openrc=no])
+if test "$have_openrc" = yes; then
+	AC_PATH_PROG([RC_SERVICE], [rc-service])
+	AC_PATH_PROG([RC_UPDATE], [rc-update])
+fi
+
+# If no init systems were found, raise an error
+if test "$have_systemd" = no && test "$have_openrc" = no; then
+	AC_MSG_ERROR([Unable to detect an init system])
+fi
 
 # check for ruby
 AC_PATH_PROG([RUBY], [ruby])
@@ -251,7 +268,7 @@ for i in $DISTRO $DISTROS; do
 			DISTROEXT=fedora
 			break
 		;;
-		opencloudos)
+		opencloudos|alpine)
 			FOUND_DISTRO=1
 			CONFIGDIR="$sysconfdir/sysconfig"
 			PCSLIBDIR="$LIBDIR"

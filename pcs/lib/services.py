@@ -86,6 +86,9 @@ def get_service_manager(
         services.drivers.SystemdDriver(
             executor, settings.systemctl_exec, settings.systemd_unit_path
         ),
+        services.drivers.OpenRcDriver(
+            executor, settings.rc_service_exec, settings.rc_update_exec
+        ),
         services.drivers.SysVInitRhelDriver(
             executor, settings.service_exec, settings.chkconfig_exec
         ),
