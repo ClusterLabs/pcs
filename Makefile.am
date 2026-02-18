@@ -27,6 +27,7 @@ MAINTAINERCLEANFILES	= \
 			  config.guess \
 			  config.sub \
 			  configure \
+			  configure~ \
 			  configure.scan \
 			  depcomp \
 			  Gemfile \

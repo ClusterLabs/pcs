@@ -60,6 +60,7 @@ compile
 config.guess
 config.sub
 configure
+configure~
 install-sh
 ltmain.sh
 missing
