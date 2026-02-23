@@ -75,6 +75,8 @@ def _cluster_property_metadata_to_dict(
         "pe-warn-series-max": "PE Warning Storage",
         "pe-input-series-max": "PE Input Storage",
         "enable-acl": "Enable ACLs",
+        "cancel-removed-actions": "Cancel Removed Actions",
+        "stop-removed-resources": "Stop Removed Resources",
     }
     property_definition = {}
     for parameter in metadata.parameters:
