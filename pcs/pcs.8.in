@@ -283,7 +283,7 @@ Expression looks like one of the following:
 .br
   (<expression>)
 
-You may specify all or any of 'standard', 'provider' and 'type' in a resource expression. For example: 'resource ocf::' matches all resources of 'ocf' standard, while 'resource ::Dummy' matches all resources of 'Dummy' type regardless of their standard and provider.
+You may specify all or any of 'standard', 'provider' and 'type' in a resource expression. For example: 'resource ocf::' matches all resources of 'ocf' standard, while 'resource ::Dummy' matches all resources of 'Dummy' type regardless of their standard and provider. To specify a full name of an agent which does not have a provider, use a double colon, for example 'resource stonith::fence_virt'.
 
 Dates are expected to conform to ISO 8601 format.
 
@@ -390,7 +390,7 @@ Expression looks like one of the following:
 .br
   (<expression>)
 
-You may specify all or any of 'standard', 'provider' and 'type' in a resource expression. For example: 'resource ocf::' matches all resources of 'ocf' standard, while 'resource ::Dummy' matches all resources of 'Dummy' type regardless of their standard and provider.
+You may specify all or any of 'standard', 'provider' and 'type' in a resource expression. For example: 'resource ocf::' matches all resources of 'ocf' standard, while 'resource ::Dummy' matches all resources of 'Dummy' type regardless of their standard and provider. To specify a full name of an agent which does not have a provider, use a double colon, for example 'resource stonith::fence_virt'.
 
 Dates are expected to conform to ISO 8601 format.
 
@@ -811,7 +811,7 @@ Expression looks like one of the following:
 .br
   (<expression>)
 
-You may specify all or any of 'standard', 'provider' and 'type' in a resource expression. For example: 'resource ocf::' matches all resources of 'ocf' standard, while 'resource ::Dummy' matches all resources of 'Dummy' type regardless of their standard and provider.
+You may specify all or any of 'standard', 'provider' and 'type' in a resource expression. For example: 'resource ocf::' matches all resources of 'ocf' standard, while 'resource ::Dummy' matches all resources of 'Dummy' type regardless of their standard and provider. To specify a full name of an agent which does not have a provider, use a double colon, for example 'resource stonith::fence_virt'.
 
 Dates are expected to conform to ISO 8601 format.
 
@@ -885,7 +885,7 @@ Expression looks like one of the following:
 .br
   (<expression>)
 
-You may specify all or any of 'standard', 'provider' and 'type' in a resource expression. For example: 'resource ocf::' matches all resources of 'ocf' standard, while 'resource ::Dummy' matches all resources of 'Dummy' type regardless of their standard and provider.
+You may specify all or any of 'standard', 'provider' and 'type' in a resource expression. For example: 'resource ocf::' matches all resources of 'ocf' standard, while 'resource ::Dummy' matches all resources of 'Dummy' type regardless of their standard and provider. To specify a full name of an agent which does not have a provider, use a double colon, for example 'resource stonith::fence_virt'.
 
 Dates are expected to conform to ISO 8601 format.
 

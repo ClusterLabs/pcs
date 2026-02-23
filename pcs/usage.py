@@ -504,7 +504,9 @@ _RESOURCE_OP_DEFAULTS_SET_CREATE_DESC = (
         You may specify all or any of 'standard', 'provider' and 'type' in a
         resource expression. For example: 'resource ocf::' matches all
         resources of 'ocf' standard, while 'resource ::Dummy' matches all
-        resources of 'Dummy' type regardless of their standard and provider.
+        resources of 'Dummy' type regardless of their standard and provider. To
+        specify a full name of an agent which does not have a provider, use a
+        double colon, for example 'resource stonith::fence_virt'.
         """
     ),
     "",
@@ -639,7 +641,9 @@ _RESOURCE_DEFAULTS_SET_CREATE_DESC = (
         You may specify all or any of 'standard', 'provider' and 'type' in a
         resource expression. For example: 'resource ocf::' matches all
         resources of 'ocf' standard, while 'resource ::Dummy' matches all
-        resources of 'Dummy' type regardless of their standard and provider.
+        resources of 'Dummy' type regardless of their standard and provider. To
+        specify a full name of an agent which does not have a provider, use a
+        double colon, for example 'resource stonith::fence_virt'.
         """
     ),
     "",
