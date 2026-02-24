@@ -19,6 +19,7 @@ EXTRA_DIST		= \
 			  resources/cib-fencing-levels.xml \
 			  resources/cib-largefile.xml \
 			  resources/cib-large.xml \
+			  resources/cib-non-primitive-secrets.xml \
 			  resources/cib-property.xml \
 			  resources/cib-remote.xml \
 			  resources/cib-rule-several-times-in-constraint.xml \

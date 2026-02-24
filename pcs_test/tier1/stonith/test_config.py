@@ -41,6 +41,7 @@ class StonithConfigJson(AssertPcsMixin, TestCase):
             primitives=[
                 resources_dto.STONITH_S1,
                 resources_dto.STONITH_S2,
+                resources_dto.STONITH_S3,
             ],
             clones=[],
             groups=[],
@@ -108,6 +109,15 @@ class StonithConfigCmd(ResourceConfigCmdMixin, TestCase):
                   Description: S2 description
                   Operations:
                     monitor: S2-monitor-interval-60s
+                      interval=60s
+                Resource: S3 (class=stonith type=fence_pcsmock_minimal)
+                  Attributes: S3-instance_attributes
+                    ip=hostname.host
+                    Secret Attributes:
+                      password
+                      username
+                  Operations:
+                    monitor: S3-monitor-interval-60s
                       interval=60s
                 """
             ),

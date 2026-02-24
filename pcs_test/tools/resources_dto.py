@@ -386,6 +386,49 @@ PRIMITIVE_R7 = CibResourcePrimitiveDto(
     ],
     utilization=[],
 )
+PRIMITIVE_R8 = CibResourcePrimitiveDto(
+    id="R8",
+    agent_name=DUMMY_AGENT_NAME,
+    description=None,
+    operations=[
+        CibResourceOperationDto(
+            id="R8-monitor-interval-10s",
+            name="monitor",
+            interval="10s",
+            description=None,
+            start_delay=None,
+            interval_origin=None,
+            timeout="20s",
+            enabled=None,
+            record_pending=None,
+            role=None,
+            on_fail=None,
+            meta_attributes=[],
+            instance_attributes=[],
+        ),
+    ],
+    meta_attributes=[],
+    instance_attributes=[
+        CibNvsetDto(
+            id="R8-instance_attributes",
+            options={},
+            rule=None,
+            nvpairs=[
+                CibNvpairDto(
+                    id="R8-instance_attributes-fake",
+                    name="fake",
+                    value="fake_value",
+                ),
+                CibNvpairDto(
+                    id="R8-instance_attributes-secret1",
+                    name="secret1",
+                    value="lrm://",
+                ),
+            ],
+        )
+    ],
+    utilization=[],
+)
 STONITH_S1 = CibResourcePrimitiveDto(
     id="S1",
     agent_name=STONITH_AGENT_PARAMS_NAME,
@@ -457,6 +500,54 @@ STONITH_S2 = CibResourcePrimitiveDto(
     ],
     meta_attributes=[],
     instance_attributes=[],
+    utilization=[],
+)
+STONITH_S3 = CibResourcePrimitiveDto(
+    id="S3",
+    agent_name=STONITH_AGENT_NAME,
+    description=None,
+    operations=[
+        CibResourceOperationDto(
+            id="S3-monitor-interval-60s",
+            name="monitor",
+            interval="60s",
+            description=None,
+            start_delay=None,
+            interval_origin=None,
+            timeout=None,
+            enabled=None,
+            record_pending=None,
+            role=None,
+            on_fail=None,
+            meta_attributes=[],
+            instance_attributes=[],
+        )
+    ],
+    meta_attributes=[],
+    instance_attributes=[
+        CibNvsetDto(
+            id="S3-instance_attributes",
+            options={},
+            rule=None,
+            nvpairs=[
+                CibNvpairDto(
+                    id="S3-instance_attributes-ip",
+                    name="ip",
+                    value="hostname.host",
+                ),
+                CibNvpairDto(
+                    id="S3-instance_attributes-password",
+                    name="password",
+                    value="lrm://",
+                ),
+                CibNvpairDto(
+                    id="S3-instance_attributes-username",
+                    name="username",
+                    value="lrm://",
+                ),
+            ],
+        )
+    ],
     utilization=[],
 )
 CLONE_G1 = CibResourceCloneDto(
@@ -635,8 +726,10 @@ ALL_RESOURCES = CibResourcesDto(
     primitives=[
         PRIMITIVE_R1,
         PRIMITIVE_R7,
+        PRIMITIVE_R8,
         STONITH_S1,
         STONITH_S2,
+        STONITH_S3,
         PRIMITIVE_R5,
         PRIMITIVE_R2,
         PRIMITIVE_R3,

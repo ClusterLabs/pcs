@@ -263,6 +263,29 @@ class FormatNameValueIdList(TestCase):
         )
 
 
+class FormatNameOptionalValueList(TestCase):
+    def test_empty(self):
+        self.assertEqual([], tools.format_name_optional_value_list([]))
+
+    def test_mixed_items(self):
+        self.assertEqual(
+            [
+                "name1=value1",
+                '"name 2"="value 2"',
+                '"name=3"',
+                '"name 4"="value=4"',
+            ],
+            tools.format_name_optional_value_list(
+                [
+                    ("name1", "value1"),
+                    ("name 2", "value 2"),
+                    ("name=3", None),
+                    ("name 4", "value=4"),
+                ]
+            ),
+        )
+
+
 class FormatNameValueDefaultList(TestCase):
     def test_empty(self):
         self.assertEqual([], tools.format_name_value_default_list([]))

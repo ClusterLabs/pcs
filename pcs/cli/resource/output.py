@@ -1,7 +1,7 @@
 import shlex
 from collections import defaultdict
 from collections.abc import Container, Sequence
-from typing import Optional, Union
+from typing import Mapping, Optional, Union
 
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.output import (
@@ -249,6 +249,9 @@ class ResourcesConfigurationFacade:
         self._groups_map = {res.id: res for res in self._groups}
         self._child_parent_map: dict[str, str] = {}
         self._parent_child_map: dict[str, list[str]] = defaultdict(list)
+        self._cibsecrets_map: Optional[dict[str, dict[str, Optional[str]]]] = (
+            None
+        )
         for bundle_dto in self._bundles:
             if bundle_dto.member_id:
                 self._set_parent(bundle_dto.member_id, bundle_dto.id)
@@ -305,6 +308,38 @@ class ResourcesConfigurationFacade:
             or self._clones_map.get(obj_id)
             or self._groups_map.get(obj_id)
         )
+
+    def _create_cibsecrets_map(
+        self,
+        *resource_dtos: Union[
+            CibResourcePrimitiveDto,
+            CibResourceGroupDto,
+            CibResourceCloneDto,
+            CibResourceBundleDto,
+        ],
+    ) -> dict[str, dict[str, Optional[str]]]:
+        _CIBSECRET_MARK_VALUE = "lrm://"
+        return {
+            resource_dto.id: {
+                nvpair_dto.name: None
+                for nvset_dto in resource_dto.instance_attributes
+                for nvpair_dto in nvset_dto.nvpairs
+                if nvpair_dto.value == _CIBSECRET_MARK_VALUE
+            }
+            for resource_dto in resource_dtos
+        }
+
+    def _get_cibsecrets_map(self) -> dict[str, dict[str, Optional[str]]]:
+        if self._cibsecrets_map is None:
+            self._cibsecrets_map = self._create_cibsecrets_map(
+                *self._primitives, *self._groups, *self._clones, *self._bundles
+            )
+        return self._cibsecrets_map
+
+    def get_resource_secrets_map(
+        self, resource_id: str
+    ) -> dict[str, Optional[str]]:
+        return self._get_cibsecrets_map().get(resource_id, {})
 
     @property
     def filtered_ids(self) -> Container[str]:
@@ -427,9 +462,15 @@ def _resource_agent_name_to_text(
     return output
 
 
-def _nvset_to_text(label: str, nvsets: Sequence[CibNvsetDto]) -> list[str]:
+def _nvset_to_text(
+    label: str,
+    nvsets: Sequence[CibNvsetDto],
+    secrets_map: Optional[Mapping[str, Optional[str]]] = None,
+) -> list[str]:
     if nvsets and nvsets[0].nvpairs:
-        return nvset_dto_to_lines(nvset=nvsets[0], nvset_label=label)
+        return nvset_dto_to_lines(
+            nvset=nvsets[0], nvset_label=label, secrets_map=secrets_map
+        )
     return []
 
 
@@ -441,10 +482,15 @@ def _resource_description_to_text(desc: Optional[str]) -> list[str]:
 
 def _resource_primitive_to_text(
     primitive_dto: CibResourcePrimitiveDto,
+    resources_facade: ResourcesConfigurationFacade,
 ) -> list[str]:
     output = (
         _resource_description_to_text(primitive_dto.description)
-        + _nvset_to_text("Attributes", primitive_dto.instance_attributes)
+        + _nvset_to_text(
+            "Attributes",
+            primitive_dto.instance_attributes,
+            resources_facade.get_resource_secrets_map(primitive_dto.id),
+        )
         + _nvset_to_text("Meta Attributes", primitive_dto.meta_attributes)
         + _nvset_to_text("Utilization", primitive_dto.utilization)
     )
@@ -470,7 +516,11 @@ def _resource_group_to_text(
 ) -> list[str]:
     output = (
         _resource_description_to_text(group_dto.description)
-        + _nvset_to_text("Attributes", group_dto.instance_attributes)
+        + _nvset_to_text(
+            "Attributes",
+            group_dto.instance_attributes,
+            resources_facade.get_resource_secrets_map(group_dto.id),
+        )
         + _nvset_to_text("Meta Attributes", group_dto.meta_attributes)
     )
     for primitive_id in group_dto.member_ids:
@@ -479,7 +529,9 @@ def _resource_group_to_text(
             raise CmdLineInputError(
                 f"Invalid data: group {group_dto.id} has no children"
             )
-        output.extend(_resource_primitive_to_text(primitive_dto))
+        output.extend(
+            _resource_primitive_to_text(primitive_dto, resources_facade)
+        )
     return [f"Group: {group_dto.id}"] + indent(output, indent_step=INDENT_STEP)
 
 
@@ -489,13 +541,19 @@ def _resource_clone_to_text(
 ) -> list[str]:
     output = (
         _resource_description_to_text(clone_dto.description)
-        + _nvset_to_text("Attributes", clone_dto.instance_attributes)
+        + _nvset_to_text(
+            "Attributes",
+            clone_dto.instance_attributes,
+            resources_facade.get_resource_secrets_map(clone_dto.id),
+        )
         + _nvset_to_text("Meta Attributes", clone_dto.meta_attributes)
     )
     primitive_dto = resources_facade.get_primitive_dto(clone_dto.member_id)
     group_dto = resources_facade.get_group_dto(clone_dto.member_id)
     if primitive_dto is not None:
-        output.extend(_resource_primitive_to_text(primitive_dto))
+        output.extend(
+            _resource_primitive_to_text(primitive_dto, resources_facade)
+        )
     elif group_dto is not None:
         output.extend(_resource_group_to_text(group_dto, resources_facade))
     else:
@@ -665,6 +723,11 @@ def _resource_bundle_to_text(
         + _resource_bundle_network_to_text(bundle_dto.network)
         + _resource_bundle_port_mappings_to_text(bundle_dto.port_mappings)
         + _resource_bundle_storage_to_text(bundle_dto.storage_mappings)
+        + _nvset_to_text(
+            "Attributes",
+            bundle_dto.instance_attributes,
+            resources_facade.get_resource_secrets_map(bundle_dto.id),
+        )
         + _nvset_to_text("Meta Attributes", bundle_dto.meta_attributes)
     )
     if bundle_dto.member_id:
@@ -674,7 +737,9 @@ def _resource_bundle_to_text(
                 f"Invalid data: bundle '{bundle_dto.id}' has inner primitive "
                 f"resource with id '{bundle_dto.member_id}' which was not found"
             )
-        output.extend(_resource_primitive_to_text(primitive_dto))
+        output.extend(
+            _resource_primitive_to_text(primitive_dto, resources_facade)
+        )
     return [f"Bundle: {bundle_dto.id}"] + indent(
         output, indent_step=INDENT_STEP
     )
@@ -691,7 +756,9 @@ def resources_to_text(
     output = []
     for primitive_dto in resources_facade.primitives:
         if _is_allowed_to_display_fn(primitive_dto.id):
-            output.extend(_resource_primitive_to_text(primitive_dto))
+            output.extend(
+                _resource_primitive_to_text(primitive_dto, resources_facade)
+            )
     for group_dto in resources_facade.groups:
         if _is_allowed_to_display_fn(group_dto.id):
             output.extend(_resource_group_to_text(group_dto, resources_facade))

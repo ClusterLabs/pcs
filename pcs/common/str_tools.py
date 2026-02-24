@@ -113,6 +113,23 @@ def format_name_value_id_list(
     return output
 
 
+def format_name_optional_value_list(
+    item_list: Sequence[tuple[str, Optional[str]]],
+) -> list[str]:
+    """
+    Turn 2-tuples to 'name=value' or 'name' strings with standard quoting
+    """
+    output = []
+    for raw_name, raw_value in item_list:
+        name = quote(raw_name, "= ")
+        if raw_value is None:
+            output.append(name)
+        else:
+            value = quote(raw_value, "= ")
+            output.append(f"{name}={value}")
+    return output
+
+
 def pairs_to_text(pairs: Sequence[tuple[str, str]]) -> list[str]:
     if pairs:
         return [" ".join(format_name_value_list(pairs))]
