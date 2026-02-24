@@ -28,10 +28,10 @@ class FacadeV2(SyncVersionFacadeInterface):
     def create(
         cls,
         data_version: int = 1,
-        permissions: Optional[list[PermissionEntry]] = None,
+        permissions: Optional[Sequence[PermissionEntry]] = None,
     ) -> "FacadeV2":
         return cls(
-            ConfigV2(data_version, [], ClusterPermissions(permissions or []))
+            ConfigV2(data_version, [], ClusterPermissions(permissions or ()))
         )
 
     @property

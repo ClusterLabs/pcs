@@ -25,6 +25,7 @@ from .config.types import (
     PermissionEntry,
     PermissionTargetType,
 )
+from .const import DEFAULT_PERMISSIONS
 
 
 def _get_empty_facade(permissions: Sequence[PermissionEntry]) -> FacadeV2:
@@ -68,19 +69,7 @@ class PermissionsChecker:
                 "File '%s' doesn't exist, using default configuration",
                 self._config_file_instance.raw_file.metadata.path,
             )
-            return _get_empty_facade(
-                (
-                    PermissionEntry(
-                        type=PermissionTargetType.GROUP,
-                        name=ADMIN_GROUP,
-                        allow=(
-                            PermissionAccessType.READ,
-                            PermissionAccessType.WRITE,
-                            PermissionAccessType.GRANT,
-                        ),
-                    ),
-                )
-            )
+            return FacadeV2.create(permissions=DEFAULT_PERMISSIONS)
         try:
             return cast(FacadeV2, self._config_file_instance.read_to_facade())
         except ParserError as e:
@@ -105,7 +94,7 @@ class PermissionsChecker:
                 self._config_file_instance.raw_file.metadata.path,
                 e.reason,
             )
-        return _get_empty_facade(tuple())
+        return FacadeV2.create()
 
     def get_permissions(self, auth_user: AuthUser) -> Set[PermissionAccessType]:
         if auth_user.username == SUPERUSER:

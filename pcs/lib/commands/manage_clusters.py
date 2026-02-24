@@ -1,6 +1,5 @@
 from typing import Sequence, cast
 
-from pcs import settings
 from pcs.common import reports
 from pcs.common.file_type_codes import PCS_KNOWN_HOSTS, PCS_SETTINGS_CONF
 from pcs.common.host import PcsKnownHost
@@ -19,12 +18,8 @@ from pcs.lib.pcs_cfgsync.save_sync import (
     save_sync_new_version,
 )
 from pcs.lib.permissions.config.facade import FacadeV2 as PcsSettingsFacade
-from pcs.lib.permissions.config.types import (
-    ClusterEntry,
-    PermissionAccessType,
-    PermissionEntry,
-    PermissionTargetType,
-)
+from pcs.lib.permissions.config.types import ClusterEntry
+from pcs.lib.permissions.tools import read_pcs_settings_conf
 
 
 def add_existing_cluster(  # noqa: PLR0912, PLR0915
@@ -62,7 +57,7 @@ def add_existing_cluster(  # noqa: PLR0912, PLR0915
         )
         raise LibraryError()
 
-    pcs_settings_conf, report_list = __read_pcs_settings()
+    pcs_settings_conf, report_list = read_pcs_settings_conf()
     if env.report_processor.report_list(report_list).has_errors:
         raise LibraryError()
 
@@ -145,45 +140,6 @@ def add_existing_cluster(  # noqa: PLR0912, PLR0915
 
     if env.report_processor.has_errors:
         raise LibraryError()
-
-
-def __read_pcs_settings() -> tuple[PcsSettingsFacade, reports.ReportItemList]:
-    file_instance = FileInstance.for_pcs_settings_config()
-    report_list: reports.ReportItemList = []
-
-    default_empty_file = PcsSettingsFacade.create(
-        data_version=0,
-        permissions=[
-            # set a reasonable default if file doesn't exist
-            # set default permissions for backwards compatibility (there is
-            # no way to differentiante between an old cluster without config
-            # and a new cluster without config)
-            # Since settings.pacemaker_gname has access to pacemaker by
-            # default anyway, we can safely allow access in pcsd as well
-            # even for new clusters.
-            PermissionEntry(
-                name=settings.pacemaker_gname,
-                type=PermissionTargetType.GROUP,
-                allow=[
-                    PermissionAccessType.READ,
-                    PermissionAccessType.WRITE,
-                    PermissionAccessType.GRANT,
-                ],
-            )
-        ],
-    )
-    if not file_instance.raw_file.exists():
-        return default_empty_file, report_list
-
-    try:
-        return cast(
-            PcsSettingsFacade, file_instance.read_to_facade()
-        ), report_list
-    except RawFileError as e:
-        report_list.append(raw_file_error_report(e))
-    except ParserErrorException as e:
-        report_list.extend(file_instance.parser_exception_to_report_list(e))
-    return default_empty_file, report_list
 
 
 def __read_known_hosts() -> tuple[KnownHostsFacade, reports.ReportItemList]:
