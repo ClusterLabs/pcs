@@ -1,16 +1,13 @@
-from unittest import TestCase
+import json
+from unittest import TestCase, mock
 
 from pcs import settings
-from pcs.common import reports
-from pcs.common.file_type_codes import (
-    COROSYNC_CONF,
-    PCS_KNOWN_HOSTS,
-    PCS_SETTINGS_CONF,
-)
+from pcs.common import file_type_codes, reports
 from pcs.common.pcs_cfgsync_dto import SyncConfigsDto
 from pcs.lib.commands import pcs_cfgsync as lib
 
 from pcs_test.tools import fixture
+from pcs_test.tools.assertions import assert_report_item_list_equal
 from pcs_test.tools.command_env import get_env_tools
 
 
@@ -22,27 +19,27 @@ class GetConfigs(TestCase):
         self, known_hosts_exists: bool = True, pcs_settings_exists: bool = True
     ) -> None:
         self.config.raw_file.exists(
-            PCS_KNOWN_HOSTS,
+            file_type_codes.PCS_KNOWN_HOSTS,
             path=settings.pcsd_known_hosts_location,
             exists=known_hosts_exists,
             name="known-hosts.exists",
         )
         if known_hosts_exists:
             self.config.raw_file.read(
-                PCS_KNOWN_HOSTS,
+                file_type_codes.PCS_KNOWN_HOSTS,
                 path=settings.pcsd_known_hosts_location,
                 content="known-hosts content".encode("utf-8"),
                 name="known-hosts.read",
             )
         self.config.raw_file.exists(
-            PCS_SETTINGS_CONF,
+            file_type_codes.PCS_SETTINGS_CONF,
             path=settings.pcsd_settings_conf_location,
             exists=pcs_settings_exists,
             name="pcs_settings.exists",
         )
         if pcs_settings_exists:
             self.config.raw_file.read(
-                PCS_SETTINGS_CONF,
+                file_type_codes.PCS_SETTINGS_CONF,
                 path=settings.pcsd_settings_conf_location,
                 content="pcs_settings.conf content".encode("utf-8"),
                 name="pcs_settings.read",
@@ -72,7 +69,7 @@ class GetConfigs(TestCase):
             reports=[
                 fixture.error(
                     reports.codes.FILE_IO_ERROR,
-                    file_type_code=COROSYNC_CONF,
+                    file_type_code=file_type_codes.COROSYNC_CONF,
                     operation="read",
                     reason="some error",
                     file_path=settings.corosync_conf_file,
@@ -100,7 +97,9 @@ class GetConfigs(TestCase):
         self.assertEqual(
             SyncConfigsDto(
                 cluster_name="test99",
-                configs={PCS_KNOWN_HOSTS: "known-hosts content"},
+                configs={
+                    file_type_codes.PCS_KNOWN_HOSTS: "known-hosts content"
+                },
             ),
             result,
         )
@@ -113,8 +112,8 @@ class GetConfigs(TestCase):
             SyncConfigsDto(
                 cluster_name="test99",
                 configs={
-                    PCS_KNOWN_HOSTS: "known-hosts content",
-                    PCS_SETTINGS_CONF: "pcs_settings.conf content",
+                    file_type_codes.PCS_KNOWN_HOSTS: "known-hosts content",
+                    file_type_codes.PCS_SETTINGS_CONF: "pcs_settings.conf content",
                 },
             ),
             result,
@@ -123,23 +122,23 @@ class GetConfigs(TestCase):
     def test_raw_file_error(self):
         self.config.corosync_conf.load()
         self.config.raw_file.exists(
-            PCS_KNOWN_HOSTS,
+            file_type_codes.PCS_KNOWN_HOSTS,
             path=settings.pcsd_known_hosts_location,
             name="known-hosts.exists",
         )
         self.config.raw_file.read(
-            PCS_KNOWN_HOSTS,
+            file_type_codes.PCS_KNOWN_HOSTS,
             path=settings.pcsd_known_hosts_location,
             exception_msg="some error",
             name="known-hosts.read",
         )
         self.config.raw_file.exists(
-            PCS_SETTINGS_CONF,
+            file_type_codes.PCS_SETTINGS_CONF,
             path=settings.pcsd_settings_conf_location,
             name="pcs_settings.exists",
         )
         self.config.raw_file.read(
-            PCS_SETTINGS_CONF,
+            file_type_codes.PCS_SETTINGS_CONF,
             path=settings.pcsd_settings_conf_location,
             content="pcs_settings.conf content".encode("utf-8"),
             name="pcs_settings.read",
@@ -150,7 +149,9 @@ class GetConfigs(TestCase):
         self.assertEqual(
             SyncConfigsDto(
                 cluster_name="test99",
-                configs={PCS_SETTINGS_CONF: "pcs_settings.conf content"},
+                configs={
+                    file_type_codes.PCS_SETTINGS_CONF: "pcs_settings.conf content"
+                },
             ),
             result,
         )
@@ -158,10 +159,241 @@ class GetConfigs(TestCase):
             [
                 fixture.warn(
                     reports.codes.FILE_IO_ERROR,
-                    file_type_code=PCS_KNOWN_HOSTS,
+                    file_type_code=file_type_codes.PCS_KNOWN_HOSTS,
                     operation="read",
                     reason="some error",
                     file_path=settings.pcsd_known_hosts_location,
+                )
+            ]
+        )
+
+
+class ValidateUpdateSyncOptions(TestCase):
+    _ALLOWED_OPTIONS = [
+        "sync_thread_disable",
+        "sync_thread_enable",
+        "sync_thread_pause",
+        "sync_thread_resume",
+    ]
+
+    def test_empty_options(self):
+        assert_report_item_list_equal(
+            lib._validate_update_sync_options({}),
+            [
+                fixture.error(
+                    reports.codes.REQUIRED_OPTION_OF_ALTERNATIVES_IS_MISSING,
+                    option_names=self._ALLOWED_OPTIONS,
+                    deprecated_names=[],
+                    option_type=None,
+                )
+            ],
+        )
+
+    def test_invalid_options(self):
+        assert_report_item_list_equal(
+            lib._validate_update_sync_options(
+                {"sync_thread_disable": True, "sync_thread_super_disable": True}
+            ),
+            [
+                fixture.error(
+                    reports.codes.INVALID_OPTIONS,
+                    option_names=["sync_thread_super_disable"],
+                    allowed=self._ALLOWED_OPTIONS,
+                    option_type=None,
+                    allowed_patterns=[],
+                )
+            ],
+        )
+
+    def test_mutually_exclusive(self):
+        option_values = [
+            {"sync_thread_pause": True, "sync_thread_resume": True},
+            {"sync_thread_enable": True, "sync_thread_disable": True},
+        ]
+        for options in option_values:
+            with self.subTest(value=options):
+                assert_report_item_list_equal(
+                    lib._validate_update_sync_options(options),
+                    [
+                        fixture.error(
+                            reports.codes.MUTUALLY_EXCLUSIVE_OPTIONS,
+                            option_names=sorted(options.keys()),
+                            option_type=None,
+                        )
+                    ],
+                )
+
+    def test_invalid_pause_interval(self):
+        timeout_values = ["-10", "3.14", "timeout"]
+        for timeout in timeout_values:
+            with self.subTest(value=timeout):
+                assert_report_item_list_equal(
+                    lib._validate_update_sync_options(
+                        {"sync_thread_pause": timeout}
+                    ),
+                    [
+                        fixture.error(
+                            reports.codes.INVALID_OPTION_VALUE,
+                            option_name="sync_thread_pause",
+                            option_value=timeout,
+                            allowed_values="an integer greater than or equal to 0",
+                            cannot_be_empty=False,
+                            forbidden_characters=None,
+                        )
+                    ],
+                )
+
+
+class UpdateSyncOptions(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+
+    def fixture_expected_json(self, values) -> bytes:
+        return json.dumps(values, indent=4, sort_keys=True).encode()
+
+    def test_validation_error(self):
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.update_sync_options(
+                self.env_assist.get_env(),
+                {"sync_thread_pause": True, "sync_thread_resume": True},
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.MUTUALLY_EXCLUSIVE_OPTIONS,
+                    option_names=["sync_thread_pause", "sync_thread_resume"],
+                    option_type=None,
+                )
+            ]
+        )
+
+    def test_error_reading_config_file(self):
+        self.config.raw_file.exists(
+            file_type_codes.PCS_CFGSYNC_CTL, settings.pcs_cfgsync_ctl_location
+        )
+        self.config.raw_file.read(
+            file_type_codes.PCS_CFGSYNC_CTL,
+            settings.pcs_cfgsync_ctl_location,
+            exception_msg="Something bad",
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.update_sync_options(
+                self.env_assist.get_env(), {"sync_thread_enable": ""}
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.FILE_IO_ERROR,
+                    file_type_code=file_type_codes.PCS_CFGSYNC_CTL,
+                    operation="read",
+                    reason="Something bad",
+                    file_path=settings.pcs_cfgsync_ctl_location,
+                )
+            ]
+        )
+
+    def test_success_read_file(self):
+        self.config.raw_file.exists(
+            file_type_codes.PCS_CFGSYNC_CTL, settings.pcs_cfgsync_ctl_location
+        )
+        self.config.raw_file.read(
+            file_type_codes.PCS_CFGSYNC_CTL,
+            settings.pcs_cfgsync_ctl_location,
+            json.dumps({"file_backup_count": 123, "thread_interval": 500}),
+        )
+        self.config.raw_file.write(
+            file_type_codes.PCS_CFGSYNC_CTL,
+            settings.pcs_cfgsync_ctl_location,
+            self.fixture_expected_json(
+                {
+                    "file_backup_count": 123,
+                    "thread_interval": 500,
+                    "thread_disabled": False,
+                }
+            ),
+            can_overwrite=True,
+        )
+        lib.update_sync_options(
+            self.env_assist.get_env(), {"sync_thread_enable": ""}
+        )
+
+    def _test_update_valid_options(self, options, expected_output):
+        self.config.raw_file.exists(
+            file_type_codes.PCS_CFGSYNC_CTL,
+            settings.pcs_cfgsync_ctl_location,
+            exists=False,
+        )
+        self.config.raw_file.write(
+            file_type_codes.PCS_CFGSYNC_CTL,
+            settings.pcs_cfgsync_ctl_location,
+            self.fixture_expected_json(expected_output),
+            can_overwrite=True,
+        )
+
+        lib.update_sync_options(self.env_assist.get_env(), options)
+
+    def test_success_enable(self):
+        self._test_update_valid_options(
+            {"sync_thread_enable": ""}, {"thread_disabled": False}
+        )
+
+    def test_success_disable(self):
+        self._test_update_valid_options(
+            {"sync_thread_disable": ""}, {"thread_disabled": True}
+        )
+
+    def test_success_resume(self):
+        self._test_update_valid_options({"sync_thread_resume": ""}, {})
+
+    @mock.patch("pcs.lib.pcs_cfgsync.config.facade.time.time", lambda: 1000)
+    def test_success_pause_default_value(self):
+        self._test_update_valid_options(
+            {"sync_thread_pause": ""}, {"thread_paused_until": 1000}
+        )
+
+    @mock.patch("pcs.lib.pcs_cfgsync.config.facade.time.time", lambda: 1000)
+    def test_success_pause_provided_value(self):
+        self._test_update_valid_options(
+            {"sync_thread_pause": "1000"}, {"thread_paused_until": 2000}
+        )
+
+    @mock.patch("pcs.lib.pcs_cfgsync.config.facade.time.time", lambda: 1000)
+    def test_success_combination(self):
+        self._test_update_valid_options(
+            {"sync_thread_pause": "1000", "sync_thread_disable": ""},
+            {"thread_paused_until": 2000, "thread_disabled": True},
+        )
+
+    def test_error_writing_config_file(self):
+        self.config.raw_file.exists(
+            file_type_codes.PCS_CFGSYNC_CTL,
+            settings.pcs_cfgsync_ctl_location,
+            exists=False,
+        )
+        self.config.raw_file.write(
+            file_type_codes.PCS_CFGSYNC_CTL,
+            settings.pcs_cfgsync_ctl_location,
+            self.fixture_expected_json({"thread_disabled": False}),
+            can_overwrite=True,
+            exception_msg="Something bad",
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.update_sync_options(
+                self.env_assist.get_env(), {"sync_thread_enable": ""}
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.FILE_IO_ERROR,
+                    file_type_code=file_type_codes.PCS_CFGSYNC_CTL,
+                    operation="write",
+                    reason="Something bad",
+                    file_path=settings.pcs_cfgsync_ctl_location,
                 )
             ]
         )

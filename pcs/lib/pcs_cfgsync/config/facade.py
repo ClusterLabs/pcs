@@ -54,6 +54,21 @@ class Facade(FacadeInterface):
             settings.pcs_cfgsync_file_backup_count_minimum,
         )
 
+    def disable_sync(self) -> None:
+        self._config["thread_disabled"] = True
+
+    def enable_sync(self) -> None:
+        self._config["thread_disabled"] = False
+
+    def resume_sync(self) -> None:
+        if "thread_paused_until" in self._config:
+            del self._config["thread_paused_until"]
+
+    def pause_sync(self, duration_seconds: int = 300) -> None:
+        self._config["thread_paused_until"] = (
+            int(time.time()) + duration_seconds
+        )
+
     def __get_int(
         self, key: str, default_value: int, minimum_value: int
     ) -> int:
