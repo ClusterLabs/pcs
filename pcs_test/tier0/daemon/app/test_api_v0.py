@@ -6,6 +6,8 @@ from unittest import mock
 from urllib.parse import urlencode
 
 from tornado.httpclient import HTTPResponse
+from tornado.locks import Lock
+from tornado.util import TimeoutError as TornadoTimeoutError
 from tornado.web import Application
 
 from pcs.common import file_type_codes, reports
@@ -22,10 +24,7 @@ from pcs.common.async_tasks.types import (
 from pcs.common.file import RawFileError
 from pcs.common.pcs_cfgsync_dto import SyncConfigsDto
 from pcs.daemon.app import api_v0
-from pcs.daemon.async_tasks.scheduler import (
-    Scheduler,
-    TaskNotFoundError,
-)
+from pcs.daemon.async_tasks.scheduler import Scheduler, TaskNotFoundError
 from pcs.daemon.async_tasks.types import Command
 
 from pcs_test.tier0.daemon.app.fixtures_app_api import (
@@ -45,6 +44,7 @@ class ApiV0Test(ApiTestBase):
     def setUp(self) -> None:
         self.scheduler = mock.AsyncMock(Scheduler)
         self.api_auth_provider_factory = MockAuthProviderFactory()
+        self.sync_config_lock = Lock()
         super().setUp()
 
     def get_app(self) -> Application:
@@ -344,7 +344,11 @@ class ApiV0HandlerTest(ApiV0Test):
 
     def get_app(self) -> Application:
         return Application(
-            api_v0.get_routes(self.api_auth_provider_factory, self.scheduler)
+            api_v0.get_routes(
+                self.api_auth_provider_factory,
+                self.scheduler,
+                self.sync_config_lock,
+            )
         )
 
 
@@ -642,4 +646,64 @@ class GetConfigsHandler(ApiV0HandlerTest):
         )
         self.mock_run_library_command.assert_called_once_with(
             self.command, self.request_data
+        )
+
+
+class SetSyncOptions(ApiV0HandlerTest):
+    url = "/remote/set_sync_options"
+
+    def test_locked(self):
+        self.sync_config_lock.acquire()
+
+        try:
+            self.fetch(self.url)
+        except TornadoTimeoutError:
+            # The http_client timeouted because of lock and this is how we test
+            # the locking function. However event loop on the server side should
+            # finish. So we release the lock and the request successfully
+            # finish.
+            self.sync_config_lock.release()
+            # Now, there is an unfinished request. It was started by calling
+            # fetch("/remote/set_sync_options") (in self.fetch_set_sync_options)
+            # and it was waiting for the lock to be released.
+            # The lock was released and the request is able to be finished now.
+            # So, io_loop needs an opportunity to execute the rest of request.
+            # Next line runs io_loop to finish hanging request. Without this an
+            # error appears during calling
+            # `self.http_server.close_all_connections` in tearDown...
+            self.io_loop.run_sync(lambda: None)
+        else:
+            raise AssertionError("Timeout not raised")
+
+    def test_success(self):
+        self.mock_run_library_command.return_value = self.result_success()
+
+        response = self.fetch(self.url)
+
+        self.assert_body(
+            response.body, "Sync thread options updated successfully"
+        )
+        self.assertEqual(response.code, 200)
+        self.mock_run_library_command.assert_called_once_with(
+            "pcs_cfgsync.update_sync_options", {"options": {}}
+        )
+
+    def test_success_with_args(self):
+        self.mock_run_library_command.return_value = self.result_success()
+
+        response = self.fetch(self.url, body=urlencode({"foo": "", "bar": 123}))
+
+        self.assert_body(
+            response.body, "Sync thread options updated successfully"
+        )
+        self.assertEqual(response.code, 200)
+        self.mock_run_library_command.assert_called_once_with(
+            "pcs_cfgsync.update_sync_options",
+            {"options": {"foo": "", "bar": "123"}},
+        )
+
+    def test_failure(self):
+        self.assert_error_with_report(self.url)
+        self.mock_run_library_command.assert_called_once_with(
+            "pcs_cfgsync.update_sync_options", {"options": {}}
         )

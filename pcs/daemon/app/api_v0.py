@@ -1,6 +1,7 @@
 import json
 from typing import Any, Mapping, cast
 
+from tornado.locks import Lock
 from tornado.web import Finish
 
 from pcs.common import file_type_codes, reports
@@ -237,9 +238,37 @@ class GetConfigsHandler(_BaseApiV0Handler):
         self.write(legacy_result)
 
 
+class SetSyncOptionsHandler(_BaseApiV0Handler):
+    _sync_config_lock: Lock
+
+    def initialize(  # type: ignore[override]
+        self,
+        api_auth_provider_factory: ApiAuthProviderFactoryInterface,
+        scheduler: Scheduler,
+        sync_config_lock: Lock,
+    ) -> None:
+        super().initialize(api_auth_provider_factory, scheduler)
+        self._sync_config_lock = sync_config_lock
+
+    async def _handle_request(self) -> None:
+        options = {
+            key: self.get_argument(key) for key in self.request.arguments
+        }
+
+        async with self._sync_config_lock:
+            result = await self._run_library_command(
+                "pcs_cfgsync.update_sync_options", {"options": options}
+            )
+
+        if not result.success:
+            raise self._error(reports_to_str(result.reports))
+        self.write("Sync thread options updated successfully")
+
+
 def get_routes(
     api_auth_provider_factory: ApiAuthProviderFactoryInterface,
     scheduler: Scheduler,
+    sync_config_lock: Lock,
 ) -> RoutesType:
     def r(url: str) -> str:
         # pylint: disable=invalid-name
@@ -282,4 +311,9 @@ def get_routes(
         ),
         # cfgsync
         (r("get_configs"), GetConfigsHandler, params),
+        (
+            r("set_sync_options"),
+            SetSyncOptionsHandler,
+            {**params, "sync_config_lock": sync_config_lock},
+        ),
     ]

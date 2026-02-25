@@ -278,6 +278,10 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
         cmd=pcs_cfgsync.get_configs,
         required_permission=p.FULL,
     ),
+    "pcs_cfgsync.update_sync_options": _Cmd(
+        cmd=pcs_cfgsync.update_sync_options,
+        required_permission=p.FULL,
+    ),
     "qdevice.client_net_destroy": _Cmd(
         cmd=qdevice.client_net_destroy,
         # Last step of adding qdevice into a cluster is distribution of
@@ -481,6 +485,7 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
 
 
 LEGACY_API_COMMANDS = (
+    "pcs_cfgsync.update_sync_options",
     "qdevice.qdevice_net_get_ca_certificate",
     "resource_agent.describe_agent",
     "resource_agent.list_agents",
