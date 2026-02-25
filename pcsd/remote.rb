@@ -28,7 +28,6 @@ def remote(params, request, auth_user)
       :get_quorum_info => method(:get_quorum_info),
       :get_corosync_conf => method(:get_corosync_conf_remote),
       :set_corosync_conf => method(:set_corosync_conf),
-      :get_sync_capabilities => method(:get_sync_capabilities),
       :set_configs => method(:set_configs),
       :set_certs => method(:set_certs),
       :get_permissions => method(:get_permissions_remote),
@@ -407,12 +406,6 @@ def set_corosync_conf(params, request, auth_user)
     $logger.info "Invalid corosync.conf file"
     return 400, "Failed"
   end
-end
-
-def get_sync_capabilities(params, request, auth_user)
-  return JSON.generate({
-    'syncable_configs' => Cfgsync::get_cfg_classes_by_name().keys,
-  })
 end
 
 def set_configs(params, request, auth_user)
