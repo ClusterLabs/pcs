@@ -177,27 +177,44 @@ def _convert_payload(klass: type[DTOTYPE], data: DtoPayload) -> DtoPayload:
         new_dict = dict(data)
     except ValueError as e:
         raise PayloadConversionError() from e
+    # resolve forward references in type hints, because type-detecting
+    # functions do not work with forward references
+    type_hints = get_type_hints(klass)
     for _field in fields(klass):
         new_name = _field.metadata.get(META_NAME, _field.name)
         if new_name not in data:
             continue
+
+        try:
+            _type = _extract_type_from_optional(type_hints[_field.name])
+        except _UnionNotAllowed as e:
+            raise AssertionError(
+                f"Field '{_field.name}' in class '{klass}' is a Union: "
+                f"{_field.type}. "
+                "Dataclass fields cannot be Unions, unless they are a Union of "
+                "one type and None (which is equal to Optional)."
+            ) from e
         value = data[new_name]
-        if is_dataclass(_field.type):
-            value = _convert_payload(_field.type, value)  # type: ignore
-        elif isinstance(value, list) and _is_compatible_type(_field.type, 0):
-            value = [
-                # ignore _field.type may not have __args__
-                # this is prevented by _is_compatible_type
-                _convert_payload(_field.type.__args__[0], item)  # type: ignore
-                for item in value
+
+        new_value: SerializableType
+        if value is None:
+            # None must be handled here, other checks fail if they get None
+            new_value = value
+        elif is_dataclass(_type):
+            new_value = _convert_payload(_type, value)  # type: ignore
+        elif isinstance(value, list) and _is_compatible_type(_type, 0):
+            new_value = [
+                _convert_payload(_type.__args__[0], item) for item in value
             ]
-        elif isinstance(value, dict) and _is_compatible_type(_field.type, 1):
-            value = {
-                item_key: _convert_payload(_field.type.__args__[1], item_val)  # type: ignore[union-attr,arg-type]
+        elif isinstance(value, dict) and _is_compatible_type(_type, 1):
+            new_value = {
+                item_key: _convert_payload(_type.__args__[1], item_val)  # type: ignore[arg-type]
                 for item_key, item_val in value.items()
             }
+        else:
+            new_value = value
         del new_dict[new_name]
-        new_dict[_field.name] = value
+        new_dict[_field.name] = new_value
     return new_dict
 
 
