@@ -80,7 +80,7 @@ module Cfgsync
           end
         end
       }
-      backup_count = ConfigSyncControl::file_backup_count()
+      backup_count = Cfgsync::file_backup_count()
       to_delete = backup_files.sort()[0..-(backup_count + 1)]
       return if not to_delete
       to_delete.each { |timestamp, path|
@@ -271,167 +271,6 @@ module Cfgsync
         totem.set_attribute('config_version', new_version)
       }
       return parsed.text
-    end
-  end
-
-
-  class ConfigSyncControl
-    # intervals in seconds
-    @thread_interval_default = 600
-    @thread_interval_minimum = 60
-    @thread_interval_previous_not_connected_default = 60
-    @thread_interval_previous_not_connected_minimum = 20
-    @file_backup_count_default = 50
-    @file_backup_count_minimum = 0
-
-    def self.sync_thread_allowed?()
-      data = self.load()
-      return !(
-        self.sync_thread_paused_data?(data)\
-        or\
-        self.sync_thread_disabled_data?(data)
-      )
-    end
-
-    def self.sync_thread_paused?()
-      return self.sync_thread_paused_data?(self.load())
-    end
-
-    def self.sync_thread_disabled?()
-      return self.sync_thread_disabled_data?(self.load())
-    end
-
-    def self.sync_thread_interval()
-      return self.get_integer_value(
-        self.load()['thread_interval'],
-        @thread_interval_default,
-        @thread_interval_minimum
-      )
-    end
-
-    def self.sync_thread_interval=(seconds)
-      data = self.load()
-      data['thread_interval'] = seconds
-      return self.save(data)
-    end
-
-    def self.sync_thread_interval_previous_not_connected()
-      return self.get_integer_value(
-        self.load()['thread_interval_previous_not_connected'],
-        @thread_interval_previous_not_connected_default,
-        @thread_interval_previous_not_connected_minimum
-      )
-    end
-
-    def self.sync_thread_interval_previous_not_connected=(seconds)
-      data = self.load()
-      data['thread_interval_previous_not_connected'] = seconds
-      return self.save(data)
-    end
-
-    def self.sync_thread_pause(seconds=300)
-      data = self.load()
-      data['thread_paused_until'] = Time.now.to_i() + seconds.to_i()
-      return self.save(data)
-    end
-
-    def self.sync_thread_resume()
-      data = self.load()
-      if data['thread_paused_until']
-        data.delete('thread_paused_until')
-        return self.save(data)
-      end
-      return true
-    end
-
-    def self.sync_thread_disable()
-      data = self.load()
-      data['thread_disabled'] = true
-      return self.save(data)
-    end
-
-    def self.sync_thread_enable()
-      data = self.load()
-      if data['thread_disabled']
-        data.delete('thread_disabled')
-        return self.save(data)
-      end
-      return true
-    end
-
-    def self.file_backup_count()
-      return self.get_integer_value(
-        self.load()['file_backup_count'],
-        @file_backup_count_default,
-        @file_backup_count_minimum
-      )
-    end
-
-    def self.file_backup_count=(count)
-      data = self.load()
-      data['file_backup_count'] = count
-      return self.save(data)
-    end
-
-    protected
-
-    def self.sync_thread_paused_data?(data)
-      if data['thread_paused_until']
-        paused_until = data['thread_paused_until'].to_i()
-        return ((paused_until > 0) and (Time.now().to_i() < paused_until))
-      end
-      return false
-    end
-
-    def self.sync_thread_disabled_data?(data)
-      return data['thread_disabled']
-    end
-
-    def self.get_integer_value(value, default, minimum)
-      return default if value.nil?
-      if value.respond_to?(:match)
-        return default if not value.match(/\A\s*[+-]?\d+\Z/)
-      end
-      return default if not value.respond_to?(:to_i)
-      numeric = value.to_i()
-      return minimum if numeric < minimum
-      return numeric
-    end
-
-    def self.load()
-      begin
-        file = nil
-        file = File.open(CFG_SYNC_CONTROL, File::RDONLY)
-        file.flock(File::LOCK_SH)
-        return JSON.parse(file.read())
-      rescue => e
-        $logger.debug("Cannot read config '#{CFG_SYNC_CONTROL}': #{e.message}")
-        return {}
-      ensure
-        unless file.nil?
-          file.flock(File::LOCK_UN)
-          file.close()
-        end
-      end
-    end
-
-    def self.save(data)
-      text = JSON.pretty_generate(data)
-      begin
-        file = nil
-        file = File.open(CFG_SYNC_CONTROL, 'w', 0600)
-        file.flock(File::LOCK_EX)
-        file.write(text)
-      rescue => e
-        $logger.error("Cannot save config '#{CFG_SYNC_CONTROL}': #{e.message}")
-        return false
-      ensure
-        unless file.nil?
-          file.flock(File::LOCK_UN)
-          file.close()
-        end
-      end
-      return true
     end
   end
 
@@ -854,4 +693,34 @@ module Cfgsync
     }
     return not_authorized_nodes, sync_failed_nodes
   end
+
+  def self.get_integer_value(value, default, minimum)
+    return default if value.nil?
+    if value.respond_to?(:match)
+      return default if not value.match(/\A\s*[+-]?\d+\Z/)
+    end
+    return default if not value.respond_to?(:to_i)
+    numeric = value.to_i()
+    return minimum if numeric < minimum
+    return numeric
+  end
+
+  def self.file_backup_count()
+    begin
+      file = nil
+      file = File.open(CFG_SYNC_CONTROL, File::RDONLY)
+      file.flock(File::LOCK_SH)
+      parsed_file = JSON.parse(file.read())
+      return get_integer_value(parsed_file["file_backup_count"], 50, 0)
+    rescue => e
+      $logger.debug("Cannot read config '#{CFG_SYNC_CONTROL}': #{e.message}")
+      return 50 # default
+    ensure
+      unless file.nil?
+        file.flock(File::LOCK_UN)
+        file.close()
+      end
+    end
+  end
+
 end

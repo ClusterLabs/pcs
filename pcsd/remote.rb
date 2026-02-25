@@ -29,7 +29,6 @@ def remote(params, request, auth_user)
       :get_corosync_conf => method(:get_corosync_conf_remote),
       :set_corosync_conf => method(:set_corosync_conf),
       :get_sync_capabilities => method(:get_sync_capabilities),
-      :set_sync_options => method(:set_sync_options),
       :set_configs => method(:set_configs),
       :set_certs => method(:set_certs),
       :get_permissions => method(:get_permissions_remote),
@@ -414,54 +413,6 @@ def get_sync_capabilities(params, request, auth_user)
   return JSON.generate({
     'syncable_configs' => Cfgsync::get_cfg_classes_by_name().keys,
   })
-end
-
-def set_sync_options(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::FULL)
-    return 403, 'Permission denied'
-  end
-
-  options = [
-    'sync_thread_pause', 'sync_thread_resume',
-    'sync_thread_disable', 'sync_thread_enable',
-  ]
-  if params.keys.count { |key| options.include?(key) } != 1
-    return [400, 'Exactly one option has to be specified']
-  end
-
-  if params['sync_thread_disable']
-    if Cfgsync::ConfigSyncControl.sync_thread_disable()
-      return 'sync thread disabled'
-    else
-      return [400, 'sync thread disable error']
-    end
-  end
-
-  if params['sync_thread_enable']
-    if Cfgsync::ConfigSyncControl.sync_thread_enable()
-      return 'sync thread enabled'
-    else
-      return [400, 'sync thread enable error']
-    end
-  end
-
-  if params['sync_thread_resume']
-    if Cfgsync::ConfigSyncControl.sync_thread_resume()
-      return 'sync thread resumed'
-    else
-      return [400, 'sync thread resume error']
-    end
-  end
-
-  if params['sync_thread_pause']
-    if Cfgsync::ConfigSyncControl.sync_thread_pause(params['sync_thread_pause'])
-      return 'sync thread paused'
-    else
-      return [400, 'sync thread pause error']
-    end
-  end
-
-  return [400, 'Exactly one option has to be specified']
 end
 
 def set_configs(params, request, auth_user)
