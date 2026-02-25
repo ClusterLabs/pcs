@@ -1,22 +1,15 @@
 from dataclasses import dataclass
-from typing import (
-    Any,
-    Mapping,
-    Sequence,
-)
+from typing import Any, Mapping, Sequence
 
 from pcs.common.interface.dto import DataTransferObject
-from pcs.common.types import (
-    ResourceRelationType,
-    StringSequence,
-)
+from pcs.common.types import ResourceRelationType
 
 
 @dataclass(frozen=True)
 class RelationEntityDto(DataTransferObject):
     id: str  # pylint: disable=invalid-name
     type: ResourceRelationType
-    members: StringSequence
+    members: list[str]
     metadata: Mapping[str, Any]
 
 

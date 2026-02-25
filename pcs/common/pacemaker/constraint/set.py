@@ -1,16 +1,12 @@
 from dataclasses import dataclass
 from typing import Optional
 
-from pcs.common.const import (
-    PcmkAction,
-    PcmkRoleType,
-)
+from pcs.common.const import PcmkAction, PcmkRoleType
 from pcs.common.interface.dto import DataTransferObject
 from pcs.common.pacemaker.types import (
     CibResourceSetOrdering,
     CibResourceSetOrderType,
 )
-from pcs.common.types import StringSequence
 
 
 @dataclass(frozen=True)
@@ -24,4 +20,4 @@ class CibResourceSetDto(DataTransferObject):
     role: Optional[PcmkRoleType]
     score: Optional[str]
     kind: Optional[CibResourceSetOrderType]
-    resources_ids: StringSequence
+    resources_ids: list[str]

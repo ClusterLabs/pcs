@@ -1,26 +1,17 @@
 from shlex import quote
-from typing import (
-    Optional,
-    Sequence,
-)
+from typing import Optional, Sequence
 
 from pcs.cli.nvset import nvset_dto_to_lines
 from pcs.cli.resource.output import resource_agent_parameter_metadata_to_text
 from pcs.common.pacemaker.cluster_property import ClusterPropertyMetadataDto
-from pcs.common.pacemaker.nvset import (
-    CibNvsetDto,
-    ListCibNvsetDto,
-)
+from pcs.common.pacemaker.nvset import CibNvsetDto, ListCibNvsetDto
 from pcs.common.resource_agent.dto import ResourceAgentParameterDto
 from pcs.common.str_tools import (
     format_name_value_default_list,
     format_name_value_list,
     indent,
 )
-from pcs.common.types import (
-    StringCollection,
-    StringSequence,
-)
+from pcs.common.types import StringCollection, StringSequence
 
 
 class PropertyConfigurationFacade:
@@ -35,7 +26,7 @@ class PropertyConfigurationFacade:
             self._properties[0].nvpairs if self._properties else []
         )
         self._properties_metadata = properties_metadata
-        self._readonly_properties = readonly_properties
+        self._readonly_properties = list(readonly_properties)
         self._defaults_map = self.get_defaults(include_advanced=True)
         self._name_nvpair_dto_map = {
             nvpair_dto.name: nvpair_dto for nvpair_dto in self._first_nvpair_set
@@ -82,7 +73,7 @@ class PropertyConfigurationFacade:
         return self._properties_metadata
 
     @property
-    def readonly_properties(self) -> StringCollection:
+    def readonly_properties(self) -> list[str]:
         return self._readonly_properties
 
     def get_property_value(
