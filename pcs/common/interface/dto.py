@@ -1,6 +1,6 @@
 from dataclasses import asdict, fields, is_dataclass
 from enum import Enum, EnumType
-from types import NoneType
+from types import NoneType, UnionType
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -11,6 +11,7 @@ from typing import (
     get_type_hints,
 )
 from typing import get_args as get_type_args
+from typing import get_origin as get_type_origin
 
 import dacite
 
@@ -65,14 +66,20 @@ def meta(name: str) -> dict[str, str]:
 # Properly typing (rather metatyping, since its input and output are types)
 # this function doesn't bring any benefits.
 def _extract_type_from_optional(_type: Any) -> Any:
-    # Dataclass fields may be typed as Union[None, some_type] or
-    # Optional[some_type] (which is transformed to the former). This function
-    # extracts the original type from Optional, and thus allows to properly
-    # detect types of such dataclass fields. It raises an exception if a Union
-    # contains more than one type other than None, because in that case it is
-    # unclear which one is the correct type. However, such a field should never
-    # be defined in a dataclass, because field type must be unambiguous.
-    if type(_type) is not Union:
+    # Dataclass fields may be typed as 'Optional[some_type]' or
+    # 'Union[some_type, None]' or 'some_type | None'. This function extracts
+    # the inner type from an Optional, and thus allows to properly detect types
+    # of such dataclass fields. It raises an exception if a Union contains more
+    # than one type other than None, because in that case it is unclear which
+    # one is the correct type. However, such a field should never be defined in
+    # a dataclass, because field type must be unambiguous.
+
+    # Internal representation of Union and Optional is different in Python 3.12
+    # and 3.14. To be able to handle the differences, typing.get_origin is
+    # used. It transforms all the representations to Union or UnionType.
+    # https://docs.python.org/3/library/typing.html#typing.Union
+    _type_origin = get_type_origin(_type)
+    if not (_type_origin is Union or _type_origin is UnionType):
         return _type
 
     inner_types_without_none = [
