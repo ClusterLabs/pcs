@@ -107,9 +107,12 @@ environment:
     dnf install -y \
       $TMT_PLAN_DATA/rpms/pcs-*${COMPOSE_NAME}*$(rpm -E %{dist}).*.rpm &&
     rm -rf pcs pcsd pcs_bundled &&
+    sed -n -i "s/^PCSD_DEBUG=.*/PCSD_DEBUG=true/p" /etc/sysconfig/pcsd &&
     systemctl start pcsd &&
     sleep 2 &&
-    pcs_test/smoke.sh &&
+    EXIT_CODE=0 &&
+    pcs_test/smoke.sh || EXIT_CODE=$? &&
     mkdir -p {$TMT_PLAN_DATA,$TMT_TEST_DATA}/var/log/ &&
     cp -rv /var/log/pcsd $TMT_PLAN_DATA/var/log &&
-    cp -rv /var/log/pcsd $TMT_TEST_DATA/var/log
+    cp -rv /var/log/pcsd $TMT_TEST_DATA/var/log &&
+    exit $EXIT_CODE
