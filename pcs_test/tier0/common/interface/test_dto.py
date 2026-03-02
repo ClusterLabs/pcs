@@ -1,13 +1,7 @@
+import importlib
 import pkgutil
-from dataclasses import (
-    dataclass,
-    field,
-    is_dataclass,
-)
-from typing import (
-    Any,
-    List,
-)
+from dataclasses import dataclass, field, is_dataclass
+from typing import Any
 from unittest import TestCase
 
 from dacite.exceptions import WrongTypeError
@@ -25,12 +19,12 @@ from pcs.common.types import CorosyncNodeAddressType
 def _import_all(_path):
     # arbitrary prefix so it doesn't interact with real import in real tests
     for module_finder, module_name, is_pkg in pkgutil.walk_packages(
-        _path, prefix="_pcs."
+        _path, prefix="pcs."
     ):
-        if module_name.startswith("_pcs.snmp."):
+        del module_finder, is_pkg
+        if module_name.startswith("pcs.snmp."):
             continue
-        del is_pkg
-        module_finder.find_spec(module_name).loader.load_module(module_name)
+        importlib.import_module(module_name)
 
 
 def _all_subclasses(cls):
@@ -62,7 +56,7 @@ class MyDto2(DataTransferObject):
 @dataclass
 class MyDto3(DataTransferObject):
     field_g: MyDto2 = field(metadata=meta(name="field-g"))
-    field_h: List[MyDto2]
+    field_h: list[MyDto2]
     field_i: int = field(metadata=meta(name="field-i"))
 
 

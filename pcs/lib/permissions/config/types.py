@@ -1,20 +1,16 @@
 from dataclasses import dataclass
-from typing import (
-    Collection,
-    Sequence,
-)
+from typing import Collection, Sequence
 
 from pcs.common.permissions.types import (
     PermissionAccessType,
     PermissionTargetType,
 )
-from pcs.common.types import StringSequence
 
 
 @dataclass(frozen=True)
 class ClusterEntry:
     name: str
-    nodes: StringSequence
+    nodes: list[str]
 
 
 @dataclass(frozen=True)

@@ -1,7 +1,7 @@
 import json
-from dataclasses import asdict
 from unittest import TestCase
 
+from pcs.common.interface.dto import to_dict
 from pcs.common.permissions.types import (
     PermissionAccessType,
     PermissionTargetType,
@@ -35,12 +35,10 @@ class ParserV2Test(TestCase):
     def test_format_version_missing(self):
         with self.assertRaises(ParserError):
             self._run_parse(
-                asdict(
-                    ConfigV2(
-                        data_version=1,
-                        clusters=[],
-                        permissions=ClusterPermissions(local_cluster=[]),
-                    )
+                dict(
+                    data_version=1,
+                    clusters=[],
+                    permissions=dict(local_cluster=[]),
                 )
             )
 
@@ -48,14 +46,10 @@ class ParserV2Test(TestCase):
         with self.assertRaises(ParserError):
             self._run_parse(
                 dict(
-                    **asdict(
-                        ConfigV2(
-                            data_version=1,
-                            clusters=[],
-                            permissions=ClusterPermissions(local_cluster=[]),
-                        )
-                    ),
+                    data_version=1,
                     format_version=3,
+                    clusters=[],
+                    permissions=dict(local_cluster=[]),
                 )
             )
 
@@ -63,20 +57,16 @@ class ParserV2Test(TestCase):
         with self.assertRaises(ParserError):
             self._run_parse(
                 dict(
-                    **asdict(
-                        ConfigV2(
-                            data_version=1,
-                            clusters=[
-                                ClusterEntry(
-                                    name="testcluster",
-                                    nodes=["node1", "node2", "node0"],
-                                ),
-                                dict(name="invalid data"),
-                            ],
-                            permissions=ClusterPermissions(local_cluster=[]),
-                        )
-                    ),
                     format_version=2,
+                    data_version=1,
+                    clusters=[
+                        dict(
+                            name="testcluster",
+                            nodes=["node1", "node2", "node0"],
+                        ),
+                        dict(name="invalid data"),
+                    ],
+                    permissions=dict(local_cluster=[]),
                 )
             )
 
@@ -112,5 +102,5 @@ class ParserV2Test(TestCase):
             ),
         )
         self.assertEqual(
-            self._run_parse(dict(**asdict(config), format_version=2)), config
+            self._run_parse(dict(**to_dict(config), format_version=2)), config
         )
