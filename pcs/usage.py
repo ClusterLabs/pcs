@@ -754,7 +754,9 @@ def _resource_update_desc_fn(is_stonith: bool) -> tuple[str, ...]:
 
 
 def _resource_config_syntax(obj: str) -> str:
-    return f"config [{_output_format_syntax()}] [<{obj} id>]..."
+    return (
+        f"config [--show-secrets] [{_output_format_syntax()}] [<{obj} id>]..."
+    )
 
 
 _STONITH_DEVICE: Final = "stonith device"
@@ -765,6 +767,12 @@ def _resource_config_desc(obj: str) -> tuple[str, ...]:
         f"""
         Show options of all currently configured {obj}s or if {obj} ids are
         specified show the options for the specified {obj} ids.
+        """,
+        "",
+        """
+        If --show-secrets is specified, display the values of secret attributes
+        in the configuration text output. By default, only attribute names are
+        displayed and values are omitted.
         """,
         "",
         _output_format_desc(),
@@ -2979,8 +2987,12 @@ Usage: pcs config [commands]...
 View and manage cluster configuration
 
 Commands:
-    [show]
+    [show] [--show-secrets]
         View full cluster configuration.
+
+        If --show-secrets is specified, display the values of secret attributes
+        in the configuration text output. By default, only attribute names are
+        displayed and values are omitted.
 
     backup [filename]
         Creates the tarball containing the cluster configuration files.

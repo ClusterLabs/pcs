@@ -6775,3 +6775,13 @@ class UnableToGetClusterKnownHosts(NameBuildTest):
             "Unable to get known hosts from cluster 'foo'",
             reports.UnableToGetClusterKnownHosts("foo"),
         )
+
+
+class CibResourceSecretUnableToGet(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "Unable to get secret 'secret_name' for resource 'resource_id'",
+            reports.CibResourceSecretUnableToGet(
+                "resource_id", "secret_name", "reason"
+            ),
+        )

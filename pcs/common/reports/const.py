@@ -2,6 +2,7 @@ from .types import (
     AddRemoveContainerType,
     AddRemoveItemType,
     BoothConfigUsedWhere,
+    CibResourceSecretErrorReason,
     DefaultAddressSource,
     FenceHistoryCommandType,
     PcsCommand,
@@ -26,6 +27,14 @@ BOOTH_CONFIG_USED_ENABLED_IN_SYSTEMD = BoothConfigUsedWhere(
 BOOTH_CONFIG_USED_RUNNING_IN_SYSTEMD = BoothConfigUsedWhere(
     "running in systemd"
 )
+
+CIB_SECRET_REASON_CANNOT_READ_VALUE_FILE = CibResourceSecretErrorReason(
+    "cannot_read_value_file"
+)
+CIB_SECRET_REASON_CANNOT_READ_CHECKSUM_FILE = CibResourceSecretErrorReason(
+    "cannot_read_checksum_file"
+)
+CIB_SECRET_REASON_BAD_CHECKSUM = CibResourceSecretErrorReason("bad_checksum")
 
 FENCE_HISTORY_COMMAND_CLEANUP = FenceHistoryCommandType("cleanup")
 FENCE_HISTORY_COMMAND_SHOW = FenceHistoryCommandType("show")

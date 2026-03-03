@@ -9,8 +9,10 @@ from pcs.cli.common.output import (
 )
 from pcs.cli.common.parse_args import (
     FUTURE_OPTION,
+    OUTPUT_FORMAT_OPTION,
     OUTPUT_FORMAT_VALUE_CMD,
     OUTPUT_FORMAT_VALUE_JSON,
+    OUTPUT_FORMAT_VALUE_TEXT,
     Argv,
     InputModifiers,
     KeyValueParser,
@@ -58,7 +60,18 @@ def config_common(
       * -f - CIB file
       * --output-format - supported formats: text, cmd, json
     """
-    modifiers.ensure_only_supported("-f", output_format_supported=True)
+    modifiers.ensure_only_supported(
+        "-f", "--show-secrets", output_format_supported=True
+    )
+    output_format = modifiers.get_output_format()
+    if (
+        modifiers.is_specified("--show-secrets")
+        and output_format != OUTPUT_FORMAT_VALUE_TEXT
+    ):
+        raise CmdLineInputError(
+            "using '--show-secrets' is supported only with "
+            f"{OUTPUT_FORMAT_OPTION}={OUTPUT_FORMAT_VALUE_TEXT}"
+        )
     resources_facade = (
         ResourcesConfigurationFacade.from_resources_dto(
             lib.resource.get_configured_resources()
@@ -66,7 +79,12 @@ def config_common(
         .filter_stonith(stonith)
         .filter_resources(argv)
     )
-    output_format = modifiers.get_output_format()
+    if modifiers.is_specified("--show-secrets"):
+        queries = resources_facade.get_secrets_queries()
+        if queries:
+            resources_facade.update_secrets_values(
+                lib.resource.get_cibsecrets(queries)
+            )
     if output_format == OUTPUT_FORMAT_VALUE_CMD:
         output = format_cmd_list(
             [" \\\n".join(cmd) for cmd in resources_to_cmd(resources_facade)]

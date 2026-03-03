@@ -119,6 +119,7 @@ EXTRA_DIST		= \
 			  tier0/cli/reports/test_output.py \
 			  tier0/cli/resource/__init__.py \
 			  tier0/cli/resource/test_common.py \
+			  tier0/cli/resource/test_config.py\
 			  tier0/cli/resource/test_defaults.py \
 			  tier0/cli/resource/test_parse_args.py \
 			  tier0/cli/resource/test_relations.py \
@@ -140,6 +141,7 @@ EXTRA_DIST		= \
 			  tier0/cli/stonith/__init__.py \
 			  tier0/cli/stonith/levels/__init__.py \
 			  tier0/cli/stonith/levels/test_output.py \
+			  tier0/cli/stonith/test_config.py\
 			  tier0/cli/stonith/test_update.py \
 			  tier0/common/__init__.py \
 			  tier0/common/communication/__init__.py \
@@ -317,6 +319,7 @@ EXTRA_DIST		= \
 			  tier0/lib/commands/resource/test_bundle_reset.py \
 			  tier0/lib/commands/resource/test_bundle_update.py \
 			  tier0/lib/commands/resource/test_failcounts.py \
+			  tier0/lib/commands/resource/test_get_cibsecrets.py \
 			  tier0/lib/commands/resource/test_get_configured_resources.py \
 			  tier0/lib/commands/resource/test_group_add.py \
 			  tier0/lib/commands/resource/test_resource_create.py \

@@ -271,15 +271,15 @@ class NvsetDtoToLines(TestCase):
               name1=value1 (id: my-id-pair1)
               "name=3"="value=3" (id: my-id-pair3)
               "secret=3"=lrm:// (id: my-id-pair6)
-              Secret Attributes:
-                "secret 2"
-                secret1=secrete_value1
+              Secret {self.label}:
+                "secret 2" (id: my-id-pair5)
+                secret1=secret_value1 (id: my-id-pair4)
               Rule: boolean-op=or (id: my-id-rule)
                 Expression: op monitor (id: my-id-rule-op)
             """
         )
         secrets_map = {
-            "secret1": "secrete_value1",
+            "secret1": "secret_value1",
             "secret 2": None,
         }
         self.assert_lines(self.full_dto, output, secrets_map)

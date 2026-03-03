@@ -120,6 +120,8 @@ PCS_LONG_OPTIONS: Final = [
     "quiet",
     # proceed with dangerous actions, meant for / used in CLI only
     "yes",
+    # retrieve and display cibsecret values / used in CLI only
+    "show-secrets",
 ]
 
 
@@ -565,6 +567,7 @@ class InputModifiers:
                 "--pacemaker": "--pacemaker" in options,
                 "--promoted": "--promoted" in options,
                 "--safe": "--safe" in options,
+                "--show-secrets": "--show-secretes" in options,
                 "--simulate": "--simulate" in options,
                 "--skip-offline": "--skip-offline" in options,
                 "--start": "--start" in options,

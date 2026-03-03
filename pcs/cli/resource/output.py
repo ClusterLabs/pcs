@@ -16,6 +16,7 @@ from pcs.cli.nvset import nvset_dto_to_lines
 from pcs.cli.reports.output import warn
 from pcs.cli.resource_agent import is_stonith
 from pcs.common import resource_agent
+from pcs.common.pacemaker.cibsecret import CibResourceSecretListDto
 from pcs.common.pacemaker.defaults import CibDefaultsDto
 from pcs.common.pacemaker.nvset import CibNvsetDto
 from pcs.common.pacemaker.resource.bundle import (
@@ -322,11 +323,11 @@ class ResourcesConfigurationFacade:
         return {
             resource_dto.id: {
                 nvpair_dto.name: None
-                for nvset_dto in resource_dto.instance_attributes
-                for nvpair_dto in nvset_dto.nvpairs
+                for nvpair_dto in resource_dto.instance_attributes[0].nvpairs
                 if nvpair_dto.value == _CIBSECRET_MARK_VALUE
             }
             for resource_dto in resource_dtos
+            if resource_dto.instance_attributes
         }
 
     def _get_cibsecrets_map(self) -> dict[str, dict[str, Optional[str]]]:
@@ -340,6 +341,31 @@ class ResourcesConfigurationFacade:
         self, resource_id: str
     ) -> dict[str, Optional[str]]:
         return self._get_cibsecrets_map().get(resource_id, {})
+
+    def get_secrets_queries(self) -> list[tuple[str, str]]:
+        return [
+            (resource_id, attribute_name)
+            for resource_id, secrets_map in self._get_cibsecrets_map().items()
+            for attribute_name in secrets_map
+        ]
+
+    def update_secrets_values(
+        self, cibsecret_dto: CibResourceSecretListDto
+    ) -> None:
+        for resource_secret_dto in cibsecret_dto.resource_secrets:
+            resource_secrets_map = self.get_resource_secrets_map(
+                resource_secret_dto.resource_id
+            )
+            try:
+                resource_secrets_map[resource_secret_dto.name]
+            except KeyError as e:
+                raise AssertionError(
+                    f"Unexpected secret '{resource_secret_dto.name}' of "
+                    f"resource '{resource_secret_dto.resource_id}'"
+                ) from e
+            resource_secrets_map[resource_secret_dto.name] = (
+                resource_secret_dto.value
+            )
 
     @property
     def filtered_ids(self) -> Container[str]:

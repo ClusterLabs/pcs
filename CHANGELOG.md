@@ -5,6 +5,8 @@
 ### Added
 - Commands `pcs cluster node rename-corosync` and `pcs cluster node rename-cib`
   for cluster node renaming ([RHEL-7585])
+- Support for displaying secret resource attributes in `pcs config` and `pcs
+  resource | stonith config` commands ([RHEL-7604])
 
 ### Fixed
 - Upgrade CIB schema version when creating a colocation constraint with
@@ -14,6 +16,7 @@
 - Commands `pcs pcsd certkey` and `pcs pcsd sync-certificates` ([RHEL-149608])
 
 [RHEL-7585]: https://issues.redhat.com/browse/RHEL-7585
+[RHEL-7604]: https://issues.redhat.com/browse/RHEL-7604
 [RHEL-84511]: https://issues.redhat.com/browse/RHEL-84511
 [RHEL-149608]: https://issues.redhat.com/browse/RHEL-149608
 

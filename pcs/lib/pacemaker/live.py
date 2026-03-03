@@ -1,5 +1,7 @@
 import os.path
 import re
+from hashlib import md5
+from pathlib import Path
 from typing import (
     Mapping,
     Optional,
@@ -56,6 +58,11 @@ class BadApiResultFormat(Exception):
     def __init__(self, original_exception: Exception, pacemaker_response: str):
         self.original_exception = original_exception
         self.pacemaker_response = pacemaker_response
+
+
+class CibResourceSecretErrorException(Exception):
+    def __init__(self, reason: reports.types.CibResourceSecretErrorReason):
+        self.reason = reason
 
 
 ### status
@@ -1122,3 +1129,48 @@ def validate_resource_instance_attributes_via_pcmk(
         resource_agent_name,
         instance_attributes,
     )
+
+
+def get_resource_secret_value(resource_id: str, attribute_name: str) -> str:
+    """
+    Return the value of the resource secret attribute.
+
+    Try to read the secret attribute value from the file and compare its
+    checksum against the value in the corresponding checksum file.
+    Raise CibResourceSecretErrorException in case of errors.
+
+    resource_id: resource id
+    attribute_name: name of the secret attribute
+    """
+    # do not read files if there were some paths in resource_id or attribute_name
+    if (
+        resource_id != Path(resource_id).name
+        or attribute_name != Path(attribute_name).name
+    ):
+        raise CibResourceSecretErrorException(
+            reports.const.CIB_SECRET_REASON_CANNOT_READ_VALUE_FILE
+        )
+    value_file = Path(
+        settings.pacemaker_secrets_dir, resource_id, attribute_name
+    )
+    checksum_file = Path(f"{value_file}.sign")
+    try:
+        secret_value = value_file.read_text().rstrip()
+    except OSError as e:
+        raise CibResourceSecretErrorException(
+            reports.const.CIB_SECRET_REASON_CANNOT_READ_VALUE_FILE
+        ) from e
+    try:
+        stored_checksum = checksum_file.read_text().rstrip()
+    except OSError as e:
+        raise CibResourceSecretErrorException(
+            reports.const.CIB_SECRET_REASON_CANNOT_READ_CHECKSUM_FILE
+        ) from e
+    calculated_checksum = md5(
+        secret_value.encode(), usedforsecurity=False
+    ).hexdigest()
+    if calculated_checksum != stored_checksum:
+        raise CibResourceSecretErrorException(
+            reports.const.CIB_SECRET_REASON_BAD_CHECKSUM
+        )
+    return secret_value

@@ -7,7 +7,7 @@ from pcs.cli.rule import (
 )
 from pcs.common.pacemaker.nvset import CibNvpairDto, CibNvsetDto
 from pcs.common.str_tools import (
-    format_name_optional_value_list,
+    format_name_optional_value_or_id_list,
     format_name_value_id_list,
     format_name_value_list,
     format_optional,
@@ -132,14 +132,18 @@ def nvset_dto_to_lines(
             )
         )
 
-    secret_lines = format_name_optional_value_list(
+    secret_lines = format_name_optional_value_or_id_list(
         sorted(
-            (nvpair.name, secrets_map[nvpair.name])
+            (
+                nvpair.name,
+                secrets_map[nvpair.name],
+                nvpair.id if with_ids else None,
+            )
             for nvpair in _get_secret_nvpairs(nvset, secrets_map)
         )
     )
     if secret_lines:
-        lines.extend(["Secret Attributes:"] + indent(secret_lines))
+        lines.extend([f"Secret {nvset_label}:"] + indent(secret_lines))
     if nvset.rule:
         lines.extend(
             rule_expression_dto_to_lines(nvset.rule, with_ids=with_ids)

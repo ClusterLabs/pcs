@@ -3,6 +3,7 @@ from typing import Collection, NewType
 AddRemoveContainerType = NewType("AddRemoveContainerType", str)
 AddRemoveItemType = NewType("AddRemoveItemType", str)
 BoothConfigUsedWhere = NewType("BoothConfigUsedWhere", str)
+CibResourceSecretErrorReason = NewType("CibResourceSecretErrorReason", str)
 DefaultAddressSource = NewType("DefaultAddressSource", str)
 FenceHistoryCommandType = NewType("FenceHistoryCommandType", str)
 ForceCode = NewType("ForceCode", str)
