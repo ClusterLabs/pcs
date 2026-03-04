@@ -1821,6 +1821,10 @@ Commands:
         removed node is still considered by the cluster to be a member of the
         cluster.
 
+    node rename-cib <old name> <new name> [--force]
+        Rename a cluster node in the CIB. Places that cannot be updated
+        automatically are reported for manual review.
+
     link add <node_name>=<node_address>... [options <link options>]
         Add a corosync link. One address must be specified for each cluster
         node. If no linknumber is specified, pcs will use the lowest available
