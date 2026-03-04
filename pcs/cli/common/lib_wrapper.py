@@ -188,6 +188,7 @@ def load_module(env, middleware_factory, name):  # noqa: PLR0911, PLR0912
             middleware.build(middleware_factory.cib),
             {
                 "remove_elements": cib.remove_elements,
+                "rename_node": cib.rename_node,
             },
         )
 
