@@ -203,6 +203,21 @@ def node_clear(lib: Any, arg_list: Argv, modifiers: InputModifiers) -> None:
     )
 
 
+def node_rename_cib(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
+    """
+    Options:
+      * -f - CIB file
+      * --force - allow to continue without fully prepared corosync
+    """
+    modifiers.ensure_only_supported("-f", "--force")
+    if len(argv) != 2:
+        raise CmdLineInputError()
+    force_flags = []
+    if modifiers.get("--force"):
+        force_flags.append(reports.codes.FORCE)
+    lib.cib.rename_node(argv[0], argv[1], force_flags)
+
+
 def cluster_rename(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
