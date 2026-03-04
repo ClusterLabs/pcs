@@ -206,6 +206,7 @@ def load_module(env, middleware_factory, name):  # noqa: PLR0911, PLR0912
                 "element_description_get": cib.element_description_get,
                 "element_description_set": cib.element_description_set,
                 "remove_elements": cib.remove_elements,
+                "rename_node": cib.rename_node,
             },
         )
 
