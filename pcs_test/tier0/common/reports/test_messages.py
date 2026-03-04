@@ -6175,6 +6175,93 @@ class CibXmlMissing(NameBuildTest):
         )
 
 
+class CibNodeRenameElementUpdated(NameBuildTest):
+    def test_location_constraint(self):
+        self.assert_message_from_report(
+            "Location constraint 'loc-1': node updated from 'node1' to 'node2'",
+            reports.CibNodeRenameElementUpdated(
+                "Location constraint", "loc-1", "node", "node1", "node2"
+            ),
+        )
+
+    def test_rule_expression(self):
+        self.assert_message_from_report(
+            "Rule 'rule-1': #uname expression updated from 'node1' to 'node2'",
+            reports.CibNodeRenameElementUpdated(
+                "Rule", "rule-1", "#uname expression", "node1", "node2"
+            ),
+        )
+
+    def test_fencing_level(self):
+        self.assert_message_from_report(
+            "Fencing level '1': target updated from 'node1' to 'node2'",
+            reports.CibNodeRenameElementUpdated(
+                "Fencing level", "1", "target", "node1", "node2"
+            ),
+        )
+
+    def test_fence_device(self):
+        self.assert_message_from_report(
+            "Fence device 'fence_xvm': attribute 'pcmk_host_list' "
+            "updated from 'node1,node2' to 'node3,node2'",
+            reports.CibNodeRenameElementUpdated(
+                "Fence device",
+                "fence_xvm",
+                "attribute 'pcmk_host_list'",
+                "node1,node2",
+                "node3,node2",
+            ),
+        )
+
+
+class CibNodeRenameFencingLevelPatternExists(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "Fencing level '1' uses target-pattern 'node.*', "
+            "please verify manually",
+            reports.CibNodeRenameFencingLevelPatternExists("1", "node.*"),
+        )
+
+
+class CibNodeRenameAclsExist(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "ACL rules exist in CIB and may contain references to node "
+            "names, please verify manually",
+            reports.CibNodeRenameAclsExist(),
+        )
+
+
+class CibNodeRenameOldNodeInCorosync(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "Node 'old_name' is still known to corosync, "
+            "the node may not have been renamed in corosync.conf yet",
+            reports.CibNodeRenameOldNodeInCorosync(
+                old_name="old_name",
+            ),
+        )
+
+
+class CibNodeRenameNewNodeNotInCorosync(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "Node 'new_name' is not known to corosync, "
+            "the node name may be incorrect",
+            reports.CibNodeRenameNewNodeNotInCorosync(
+                new_name="new_name",
+            ),
+        )
+
+
+class CibNodeRenameNoChange(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "No CIB configuration changes needed for node rename",
+            reports.CibNodeRenameNoChange(),
+        )
+
+
 class ConfiguredResourceMissingInStatus(NameBuildTest):
     def test_only_resource_id(self):
         self.assert_message_from_report(
