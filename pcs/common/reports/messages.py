@@ -8571,6 +8571,125 @@ class CibXmlMissing(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class CibNodeRenameElementUpdated(ReportItemMessage):
+    """
+    A CIB element was updated during node rename.
+
+    element_type -- type of the updated element
+    element_id -- identifier of the updated element
+    attribute_desc -- description of the updated attribute
+    old_value -- original value
+    new_value -- new value
+    """
+
+    element_type: str
+    element_id: str
+    attribute_desc: str
+    old_value: str
+    new_value: str
+    _code = codes.CIB_NODE_RENAME_ELEMENT_UPDATED
+
+    @property
+    def message(self) -> str:
+        return (
+            f"{self.element_type} '{self.element_id}': "
+            f"{self.attribute_desc} updated from "
+            f"'{self.old_value}' to '{self.new_value}'"
+        )
+
+
+@dataclass(frozen=True)
+class CibNodeRenameFencingLevelPatternExists(ReportItemMessage):
+    """
+    A fencing level uses a target-pattern, which may match node names
+    and needs manual review.
+
+    level_id -- fencing level id
+    pattern -- the target-pattern value
+    """
+
+    level_id: str
+    pattern: str
+    _code = codes.CIB_NODE_RENAME_FENCING_LEVEL_PATTERN_EXISTS
+
+    @property
+    def message(self) -> str:
+        return (
+            f"Fencing level '{self.level_id}' uses target-pattern "
+            f"'{self.pattern}', please verify manually"
+        )
+
+
+@dataclass(frozen=True)
+class CibNodeRenameAclsExist(ReportItemMessage):
+    """
+    ACL rules exist in CIB and may contain references to node names
+    that need manual review.
+    """
+
+    _code = codes.CIB_NODE_RENAME_ACLS_EXIST
+
+    @property
+    def message(self) -> str:
+        return (
+            "ACL rules exist in CIB and may contain references to node "
+            "names, please verify manually"
+        )
+
+
+@dataclass(frozen=True)
+class CibNodeRenameNewNodeNotInCorosync(ReportItemMessage):
+    """
+    The new node name was not found among corosync.conf nodes.
+
+    new_name -- the new node name that was not found
+    """
+
+    new_name: str
+    _code = codes.CIB_NODE_RENAME_NEW_NODE_NOT_IN_COROSYNC
+
+    @property
+    def message(self) -> str:
+        return (
+            f"Node '{self.new_name}' is not known to corosync, "
+            "the node name may be incorrect"
+        )
+
+
+@dataclass(frozen=True)
+class CibNodeRenameOldNodeInCorosync(ReportItemMessage):
+    """
+    The old node name was found in corosync.conf, indicating that the node
+    has not been renamed in corosync.conf yet.
+
+    old_name -- the old node name that was found in corosync.conf
+    """
+
+    old_name: str
+    _code = codes.CIB_NODE_RENAME_OLD_NODE_IN_COROSYNC
+
+    @property
+    def message(self) -> str:
+        return (
+            f"Node '{self.old_name}' is still known to corosync, "
+            "the node may not have been renamed in corosync.conf yet"
+        )
+
+
+@dataclass(frozen=True)
+class CibNodeRenameNoChange(ReportItemMessage):
+    """
+    No CIB elements were updated during node rename operation.
+    """
+
+    _code = codes.CIB_NODE_RENAME_NO_CHANGE
+
+    @property
+    def message(self) -> str:
+        return "No CIB configuration changes needed for node rename"
+
+
+@dataclass(frozen=True)
 class NoStonithMeansWouldBeLeft(ReportItemMessage):
     """
     The requested change would leave the cluster with no stonith configured
