@@ -2,7 +2,7 @@
 
 ## Applicable policies
 Pull request must comply with the following policies:
-* [AI policy](AI-policy.md)
+* [AI policy](https://github.com/ClusterLabs/pcs/wiki/Policy-on-Use-of-Artificial-Intelligence-in-Pull-Requests)
 
 ## Running pcs and its test suite
 

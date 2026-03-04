@@ -1,5 +1,4 @@
 EXTRA_DIST		= \
-			  AI-policy.md \
 			  autogen.sh \
 			  CHANGELOG.md \
 			  CONTRIBUTING.md \
