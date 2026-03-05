@@ -1,5 +1,13 @@
 # Change Log
 
+## [Unreleased]
+
+### Deprecated
+- Commands `pcs pcsd certkey` and `pcs pcsd sync-certificates` ([RHEL-149608])
+
+[RHEL-149608]: https://issues.redhat.com/browse/RHEL-149608
+
+
 ## [0.12.2] - 2026-01-06
 
 ### Added

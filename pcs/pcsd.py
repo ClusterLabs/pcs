@@ -21,7 +21,7 @@ from pcs.cli.reports import (
     output,
     process_library_reports,
 )
-from pcs.cli.reports.output import print_to_stderr
+from pcs.cli.reports.output import deprecation_warning, print_to_stderr
 from pcs.common import file as pcs_file
 from pcs.common import reports
 from pcs.common.reports.item import ReportItem
@@ -40,6 +40,10 @@ def pcsd_certkey_cmd(lib: Any, argv: Argv, modifiers: InputModifiers):
       * --force - overwrite existing file
     """
     del lib
+    # deprecated after pcs-0.12.2, to be removed
+    deprecation_warning(
+        "This command is deprecated and might be removed in a future release"
+    )
     modifiers.ensure_only_supported("--force")
     if len(argv) != 2:
         raise CmdLineInputError()
@@ -111,6 +115,11 @@ def pcsd_sync_certs(lib, argv, modifiers):
     Options:
       * --skip-offline - skip offline nodes
     """
+    # deprecated after pcs-0.12.2, to be removed
+    # also remove this command and deprecation from app.py
+    deprecation_warning(
+        "This command is deprecated and might be removed in a future release"
+    )
     modifiers.ensure_only_supported("--skip-offline")
     if argv:
         raise CmdLineInputError()

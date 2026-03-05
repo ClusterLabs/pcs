@@ -3,23 +3,10 @@ import logging
 import os
 import sys
 
-from pcs import (
-    settings,
-    usage,
-    utils,
-)
-from pcs.cli.common import (
-    completion,
-    errors,
-    parse_args,
-    routing,
-)
+from pcs import settings, usage, utils
+from pcs.cli.common import completion, errors, parse_args, routing
 from pcs.cli.reports import process_library_reports
-from pcs.cli.reports.output import (
-    deprecation_warning,
-    error,
-    print_to_stderr,
-)
+from pcs.cli.reports.output import deprecation_warning, error, print_to_stderr
 from pcs.cli.routing import (
     acl,
     alert,
@@ -45,7 +32,7 @@ from pcs.common import capabilities
 from pcs.lib.errors import LibraryError
 
 
-def _non_root_run(argv_cmd):
+def _non_root_run(argv_cmd):  # noqa: PLR0912 Too many branches
     """
     This function will run commands which has to be run as root for users which
     are not root. If it required to run such command as root it will do that by
@@ -98,6 +85,13 @@ def _non_root_run(argv_cmd):
                 if "-p" not in utils.pcs_options:
                     password = utils.get_terminal_password()
                     options.extend(["-p", password])
+
+            if argv_cmd[0:2] == ["pcsd", "sync-certificates"]:
+                # deprecated after pcs-0.12.2, to be removed
+                deprecation_warning(
+                    "This command is deprecated and might be removed "
+                    "in a future release"
+                )
 
             # call the local pcsd
             err_msgs, exitcode, std_out, std_err = utils.call_local_pcsd(
