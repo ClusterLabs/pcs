@@ -8592,7 +8592,8 @@ class CibNodeRenameElementUpdated(ReportItemMessage):
     @property
     def message(self) -> str:
         return (
-            f"{self.element_type} '{self.element_id}': "
+            f"{_type_to_string(self.element_type).capitalize()}"
+            f" '{self.element_id}': "
             f"{self.attribute_desc} updated from "
             f"'{self.old_value}' to '{self.new_value}'"
         )
@@ -8616,7 +8617,8 @@ class CibNodeRenameFencingLevelPatternExists(ReportItemMessage):
     def message(self) -> str:
         return (
             f"Fencing level '{self.level_id}' uses target-pattern "
-            f"'{self.pattern}', please verify manually"
+            f"'{self.pattern}' which may match the renamed node,"
+            "check the pattern and adjust the configuration if necessary"
         )
 
 
@@ -8632,8 +8634,8 @@ class CibNodeRenameAclsExist(ReportItemMessage):
     @property
     def message(self) -> str:
         return (
-            "ACL rules exist in CIB and may contain references to node "
-            "names, please verify manually"
+            "ACL rules exist in CIB and may contain references to node names, "
+            "check the ACL configuration and adjust if necessary"
         )
 
 
