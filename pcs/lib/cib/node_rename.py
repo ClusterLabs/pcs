@@ -16,35 +16,29 @@ from pcs.lib.xml_tools import find_parent
 def rename_in_cib(
     cib: _Element, old_name: str, new_name: str
 ) -> tuple[bool, reports.ReportItemList]:
-    report_list: reports.ReportItemList = [
-        *_rename_node_in_locations(cib, old_name, new_name),
-        *_rename_node_in_rules(cib, old_name, new_name),
-        *_rename_node_in_fencing_levels(cib, old_name, new_name),
-        *_rename_node_in_fence_devices(cib, old_name, new_name),
-    ]
-
-    cib_updated = len(report_list) > 0
+    cib_updated, report_list = _reduce_update_results(
+        _rename_node_in_locations(cib, old_name, new_name),
+        _rename_node_in_rules(cib, old_name, new_name),
+        _rename_node_in_fencing_levels(cib, old_name, new_name),
+        _rename_node_in_fence_devices(cib, old_name, new_name),
+    )
 
     report_list.extend(_warn_about_fencing_level_patterns(cib))
-
-    if _warn_about_acls(cib):
-        report_list.append(
-            reports.ReportItem.warning(
-                reports.messages.CibNodeRenameAclsExist()
-            )
-        )
+    report_list.extend(_warn_about_acls(cib))
 
     return cib_updated, report_list
 
 
 def _rename_node_in_locations(
     cib: _Element, old_name: str, new_name: str
-) -> reports.ReportItemList:
+) -> tuple[bool, reports.ReportItemList]:
     report_list: reports.ReportItemList = []
+    cib_updated = False
     for location in cib.findall(
         f".//{TAG_CONSTRAINT_LOCATION}[@node='{old_name}']"
     ):
         location.set("node", new_name)
+        cib_updated = True
         report_list.append(
             reports.ReportItem.info(
                 reports.messages.CibNodeRenameElementUpdated(
@@ -56,17 +50,19 @@ def _rename_node_in_locations(
                 )
             )
         )
-    return report_list
+    return cib_updated, report_list
 
 
 def _rename_node_in_rules(
     cib: _Element, old_name: str, new_name: str
-) -> reports.ReportItemList:
+) -> tuple[bool, reports.ReportItemList]:
     report_list: reports.ReportItemList = []
+    cib_updated = False
     for expression in cib.findall(
         f".//{TAG_RULE}/expression[@attribute='#uname'][@value='{old_name}']"
     ):
         expression.set("value", new_name)
+        cib_updated = True
         rule = expression.getparent()
         # mypy would complain but: //{TAG_RULE}/expression
         assert rule is not None
@@ -81,17 +77,19 @@ def _rename_node_in_rules(
                 )
             )
         )
-    return report_list
+    return cib_updated, report_list
 
 
 def _rename_node_in_fencing_levels(
     cib: _Element, old_name: str, new_name: str
-) -> reports.ReportItemList:
+) -> tuple[bool, reports.ReportItemList]:
     report_list: reports.ReportItemList = []
+    cib_updated = False
     for level in cib.findall(f".//{TAG_FENCING_LEVEL}"):
         level_id = str(level.get("id", ""))
         if level.get("target") == old_name:
             level.set("target", new_name)
+            cib_updated = True
             report_list.append(
                 reports.ReportItem.info(
                     reports.messages.CibNodeRenameElementUpdated(
@@ -108,6 +106,7 @@ def _rename_node_in_fencing_levels(
             and level.get("target-value") == old_name
         ):
             level.set("target-value", new_name)
+            cib_updated = True
             report_list.append(
                 reports.ReportItem.info(
                     reports.messages.CibNodeRenameElementUpdated(
@@ -119,7 +118,7 @@ def _rename_node_in_fencing_levels(
                     )
                 )
             )
-    return report_list
+    return cib_updated, report_list
 
 
 def _rename_in_host_list(value: str, old_name: str, new_name: str) -> str:
@@ -151,8 +150,9 @@ def _rename_node_in_fence_devices_attribute(
     rename_func: Callable[[str, str, str], str],
     old_name: str,
     new_name: str,
-) -> reports.ReportItemList:
+) -> tuple[bool, reports.ReportItemList]:
     report_list: reports.ReportItemList = []
+    cib_updated = False
     for nvpair in cib.findall(
         f".//{TAG_RESOURCE_PRIMITIVE}[@class='stonith']/instance_attributes"
         f"/nvpair[@name='{attr_name}']"
@@ -161,6 +161,7 @@ def _rename_node_in_fence_devices_attribute(
         new_value = rename_func(old_value, old_name, new_name)
         if new_value != old_value:
             nvpair.set("value", new_value)
+            cib_updated = True
             fence_device = find_parent(nvpair, [TAG_RESOURCE_PRIMITIVE])
             # mypy would complain but:
             # //{TAG_RESOURCE_PRIMITIVE}/instance_attributes/nvpair
@@ -176,20 +177,20 @@ def _rename_node_in_fence_devices_attribute(
                     )
                 )
             )
-    return report_list
+    return cib_updated, report_list
 
 
 def _rename_node_in_fence_devices(
     cib: _Element, old_name: str, new_name: str
-) -> reports.ReportItemList:
-    return [
-        *_rename_node_in_fence_devices_attribute(
+) -> tuple[bool, reports.ReportItemList]:
+    return _reduce_update_results(
+        _rename_node_in_fence_devices_attribute(
             cib, "pcmk_host_list", _rename_in_host_list, old_name, new_name
         ),
-        *_rename_node_in_fence_devices_attribute(
+        _rename_node_in_fence_devices_attribute(
             cib, "pcmk_host_map", _rename_in_host_map, old_name, new_name
         ),
-    ]
+    )
 
 
 def _warn_about_fencing_level_patterns(
@@ -209,6 +210,17 @@ def _warn_about_fencing_level_patterns(
     ]
 
 
-def _warn_about_acls(cib: _Element) -> bool:
+def _warn_about_acls(cib: _Element) -> reports.ReportItemList:
     acl_section = cib.find(f".//{ACLS}")
-    return acl_section is not None and len(acl_section) > 0
+    return (
+        [reports.ReportItem.warning(reports.messages.CibNodeRenameAclsExist())]
+        if acl_section is not None and len(acl_section) > 0
+        else []
+    )
+
+
+def _reduce_update_results(
+    *updates: tuple[bool, reports.ReportItemList],
+) -> tuple[bool, reports.ReportItemList]:
+    updates, report_lists = zip(*updates, strict=True)
+    return any(updates), [r for rlist in report_lists for r in rlist]
