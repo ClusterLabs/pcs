@@ -2,6 +2,12 @@ from textwrap import dedent
 from unittest import TestCase
 
 from pcs.common import file_type_codes, reports
+from pcs.lib.cib.const import (
+    TAG_CONSTRAINT_LOCATION,
+    TAG_FENCING_LEVEL,
+    TAG_RESOURCE_PRIMITIVE,
+    TAG_RULE,
+)
 from pcs.lib.commands import cluster as lib
 
 from pcs_test.tools import fixture
@@ -264,7 +270,7 @@ class RenameNode(TestCase):
             [
                 fixture.info(
                     reports.codes.CIB_NODE_RENAME_ELEMENT_UPDATED,
-                    element_type="Location constraint",
+                    element_type=TAG_CONSTRAINT_LOCATION,
                     element_id=self.location_id,
                     attribute_desc="node",
                     old_value=self.old_name,
@@ -272,7 +278,7 @@ class RenameNode(TestCase):
                 ),
                 fixture.info(
                     reports.codes.CIB_NODE_RENAME_ELEMENT_UPDATED,
-                    element_type="Rule",
+                    element_type=TAG_RULE,
                     element_id=self.rule_id,
                     attribute_desc="#uname expression",
                     old_value=self.old_name,
@@ -280,7 +286,7 @@ class RenameNode(TestCase):
                 ),
                 fixture.info(
                     reports.codes.CIB_NODE_RENAME_ELEMENT_UPDATED,
-                    element_type="Fencing level",
+                    element_type=TAG_FENCING_LEVEL,
                     element_id="fl1",
                     attribute_desc="target",
                     old_value=self.old_name,
@@ -288,9 +294,9 @@ class RenameNode(TestCase):
                 ),
                 fixture.info(
                     reports.codes.CIB_NODE_RENAME_ELEMENT_UPDATED,
-                    element_type="Fencing level",
+                    element_type=TAG_FENCING_LEVEL,
                     element_id="fl2",
-                    attribute_desc="target",
+                    attribute_desc="target-value for target-attribute=#uname",
                     old_value=self.old_name,
                     new_value=self.new_name,
                 ),
@@ -301,33 +307,33 @@ class RenameNode(TestCase):
                 ),
                 fixture.info(
                     reports.codes.CIB_NODE_RENAME_ELEMENT_UPDATED,
-                    element_type="Fence device",
+                    element_type=TAG_RESOURCE_PRIMITIVE,
                     element_id="F1",
-                    attribute_desc="attribute 'pcmk_host_list'",
+                    attribute_desc="pcmk_host_list",
                     old_value=f"{self.old_name},other_host",
                     new_value=f"{self.new_name},other_host",
                 ),
                 fixture.info(
                     reports.codes.CIB_NODE_RENAME_ELEMENT_UPDATED,
-                    element_type="Fence device",
+                    element_type=TAG_RESOURCE_PRIMITIVE,
                     element_id="F2",
-                    attribute_desc="attribute 'pcmk_host_list'",
+                    attribute_desc="pcmk_host_list",
                     old_value=f"other_host,{self.old_name}",
                     new_value=f"other_host,{self.new_name}",
                 ),
                 fixture.info(
                     reports.codes.CIB_NODE_RENAME_ELEMENT_UPDATED,
-                    element_type="Fence device",
+                    element_type=TAG_RESOURCE_PRIMITIVE,
                     element_id="F3",
-                    attribute_desc="attribute 'pcmk_host_map'",
+                    attribute_desc="pcmk_host_map",
                     old_value=f"{self.old_name}:1;other_host:2",
                     new_value=f"{self.new_name}:1;other_host:2",
                 ),
                 fixture.info(
                     reports.codes.CIB_NODE_RENAME_ELEMENT_UPDATED,
-                    element_type="Fence device",
+                    element_type=TAG_RESOURCE_PRIMITIVE,
                     element_id="F4",
-                    attribute_desc="attribute 'pcmk_host_map'",
+                    attribute_desc="pcmk_host_map",
                     old_value=f"other_host:1;{self.old_name}:2",
                     new_value=f"other_host:1;{self.new_name}:2",
                 ),
@@ -399,7 +405,7 @@ class RenameNodeCorosyncCheckCornerCases(TestCase):
                 ),
                 fixture.info(
                     reports.codes.CIB_NODE_RENAME_ELEMENT_UPDATED,
-                    element_type="Location constraint",
+                    element_type=TAG_CONSTRAINT_LOCATION,
                     element_id=self.location_id,
                     attribute_desc="node",
                     old_value=self.old_name,
@@ -454,7 +460,7 @@ class RenameNodeCorosyncCheckCornerCases(TestCase):
             [
                 fixture.info(
                     reports.codes.CIB_NODE_RENAME_ELEMENT_UPDATED,
-                    element_type="Location constraint",
+                    element_type=TAG_CONSTRAINT_LOCATION,
                     element_id=self.location_id,
                     attribute_desc="node",
                     old_value=self.old_name,
