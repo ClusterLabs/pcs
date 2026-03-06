@@ -1,7 +1,7 @@
 from textwrap import dedent
 from unittest import TestCase
 
-from pcs.common import reports
+from pcs.common import file_type_codes, reports
 from pcs.lib.commands import cluster as lib
 
 from pcs_test.tools import fixture
@@ -154,7 +154,7 @@ class RenameNode(TestCase):
         self.new_name = "new_name"
         self.rule_id = "l1-rule"
         self.location_id = "loc1"
-        self.config.env.set_corosync_conf_data(
+        self.config.corosync_conf.load_content(
             _corosync_conf(self.new_name, "other_node")
         )
         self.irrelevant_location = _location("loc2", "other-node")
@@ -344,7 +344,7 @@ class RenameNodeCorosyncCheckCornerCases(TestCase):
         self.env_assist, self.config = get_env_tools(self)
 
     def test_corosync_checks_fail(self):
-        self.config.env.set_corosync_conf_data(
+        self.config.corosync_conf.load_content(
             _corosync_conf(self.old_name, "other_node")
         )
         self.env_assist.assert_raise_library_error(
@@ -368,7 +368,7 @@ class RenameNodeCorosyncCheckCornerCases(TestCase):
         )
 
     def test_corosync_checks_fail_forced(self):
-        self.config.env.set_corosync_conf_data(
+        self.config.corosync_conf.load_content(
             _corosync_conf(self.old_name, "other_node")
         )
         self.config.runner.cib.load(
