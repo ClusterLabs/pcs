@@ -8617,7 +8617,7 @@ class CibNodeRenameFencingLevelPatternExists(ReportItemMessage):
     def message(self) -> str:
         return (
             f"Fencing level '{self.level_id}' uses target-pattern "
-            f"'{self.pattern}' which may match the renamed node,"
+            f"'{self.pattern}', which may match the renamed node,"
             "check the pattern and adjust the configuration if necessary"
         )
 
