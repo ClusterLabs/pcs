@@ -328,7 +328,7 @@ def node_rename_cib(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     force_flags = []
     if modifiers.get("--force"):
         force_flags.append(reports.codes.FORCE)
-    lib.cib.rename_node(argv[0], argv[1], force_flags)
+    lib.cluster.rename_node_cib(argv[0], argv[1], force_flags)
 
 
 def cluster_rename(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
