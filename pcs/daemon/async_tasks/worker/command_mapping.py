@@ -156,6 +156,10 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
         cmd=cluster.rename,
         required_permission=p.FULL,
     ),
+    "cluster.rename_node_cib": _Cmd(
+        cmd=cluster.rename_node_cib,
+        required_permission=p.FULL,
+    ),
     "cluster.setup": _Cmd(
         cmd=cluster.setup,
         required_permission=p.SUPERUSER,
@@ -190,10 +194,6 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
     ),
     "cib.remove_elements": _Cmd(
         cmd=cib.remove_elements,
-        required_permission=p.WRITE,
-    ),
-    "cib.rename_node": _Cmd(
-        cmd=cib.rename_node,
         required_permission=p.WRITE,
     ),
     "cib_options.operation_defaults_config": _Cmd(

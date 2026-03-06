@@ -28,6 +28,7 @@ from pcs.common.str_tools import join_multilines
 from pcs.common.tools import format_os_error
 from pcs.common.types import (
     CorosyncTransportType,
+    StringCollection,
     UnknownCorosyncTransportTypeException,
 )
 from pcs.lib import (
@@ -37,6 +38,7 @@ from pcs.lib import (
 )
 from pcs.lib.booth import sync as booth_sync
 from pcs.lib.cib import fencing_topology
+from pcs.lib.cib.node_rename import rename_in_cib
 from pcs.lib.cib.nvpair_multi import NVSET_INSTANCE, find_nvsets
 from pcs.lib.cib.resource.bundle import verify as verify_bundles
 from pcs.lib.cib.resource.guest_node import find_node_list as get_guest_nodes
@@ -2421,3 +2423,73 @@ def rename(
 
     corosync_conf.set_cluster_name(new_name)
     env.push_corosync_conf(corosync_conf, skip_offline)
+
+
+def _check_corosync_consistency(
+    corosync_node_names: StringCollection,
+    old_name: str,
+    new_name: str,
+    force_flags: reports.types.ForceFlags,
+) -> reports.ReportItemList:
+    report_list: reports.ReportItemList = []
+    force_severity = reports.item.get_severity(
+        reports.codes.FORCE,
+        reports.codes.FORCE in force_flags,
+    )
+    if new_name not in corosync_node_names:
+        report_list.append(
+            reports.ReportItem(
+                severity=force_severity,
+                message=reports.messages.CibNodeRenameNewNodeNotInCorosync(
+                    new_name=new_name,
+                ),
+            )
+        )
+    if old_name in corosync_node_names:
+        report_list.append(
+            reports.ReportItem(
+                severity=force_severity,
+                message=reports.messages.CibNodeRenameOldNodeInCorosync(
+                    old_name=old_name,
+                ),
+            )
+        )
+    return report_list
+
+
+def rename_node_cib(
+    env: LibraryEnvironment,
+    old_name: str,
+    new_name: str,
+    force_flags: reports.types.ForceFlags = (),
+) -> None:
+    """
+    Rename a cluster node in CIB configuration elements.
+
+    old_name -- current node name
+    new_name -- new node name
+    """
+
+    if env.is_cib_live:
+        corosync_node_names = {
+            n.name for n in env.get_corosync_conf().get_nodes() if n.name
+        }
+        for report_item in _check_corosync_consistency(
+            corosync_node_names, old_name, new_name, force_flags
+        ):
+            env.report_processor.report(report_item)
+
+    if env.report_processor.has_errors:
+        raise LibraryError()
+
+    cib = env.get_cib()
+    cib_updated, report_list = rename_in_cib(cib, old_name, new_name)
+    env.report_processor.report_list(report_list)
+
+    if cib_updated:
+        env.push_cib()
+        return
+
+    env.report_processor.report(
+        reports.ReportItem.info(reports.messages.CibNodeRenameNoChange())
+    )
