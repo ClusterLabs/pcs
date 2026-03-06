@@ -28,7 +28,6 @@ from pcs.common.str_tools import join_multilines
 from pcs.common.tools import format_os_error
 from pcs.common.types import (
     CorosyncTransportType,
-    StringCollection,
     UnknownCorosyncTransportTypeException,
 )
 from pcs.lib import (
@@ -38,7 +37,7 @@ from pcs.lib import (
 )
 from pcs.lib.booth import sync as booth_sync
 from pcs.lib.cib import fencing_topology
-from pcs.lib.cib.node_rename import rename_in_cib
+from pcs.lib.cib.node_rename import check_corosync_consistency, rename_in_cib
 from pcs.lib.cib.nvpair_multi import NVSET_INSTANCE, find_nvsets
 from pcs.lib.cib.resource.bundle import verify as verify_bundles
 from pcs.lib.cib.resource.guest_node import find_node_list as get_guest_nodes
@@ -2425,38 +2424,6 @@ def rename(
     env.push_corosync_conf(corosync_conf, skip_offline)
 
 
-def _check_corosync_consistency(
-    corosync_node_names: StringCollection,
-    old_name: str,
-    new_name: str,
-    force_flags: reports.types.ForceFlags,
-) -> reports.ReportItemList:
-    report_list: reports.ReportItemList = []
-    force_severity = reports.item.get_severity(
-        reports.codes.FORCE,
-        reports.codes.FORCE in force_flags,
-    )
-    if new_name not in corosync_node_names:
-        report_list.append(
-            reports.ReportItem(
-                severity=force_severity,
-                message=reports.messages.CibNodeRenameNewNodeNotInCorosync(
-                    new_name=new_name,
-                ),
-            )
-        )
-    if old_name in corosync_node_names:
-        report_list.append(
-            reports.ReportItem(
-                severity=force_severity,
-                message=reports.messages.CibNodeRenameOldNodeInCorosync(
-                    old_name=old_name,
-                ),
-            )
-        )
-    return report_list
-
-
 def rename_node_cib(
     env: LibraryEnvironment,
     old_name: str,
@@ -2484,7 +2451,7 @@ def rename_node_cib(
             get_existing_nodes_names(env.get_corosync_conf(), None)
         )
         corosync_nodes_report_list.extend(
-            _check_corosync_consistency(
+            check_corosync_consistency(
                 corosync_node_names, old_name, new_name, force_flags
             )
         )
