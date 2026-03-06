@@ -6218,7 +6218,8 @@ class CibNodeRenameFencingLevelPatternExists(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
             "Fencing level '1' uses target-pattern 'node.*', "
-            "please verify manually",
+            "which may match the renamed node,check the pattern and adjust the "
+            "configuration if necessary",
             reports.CibNodeRenameFencingLevelPatternExists("1", "node.*"),
         )
 
@@ -6227,7 +6228,7 @@ class CibNodeRenameAclsExist(NameBuildTest):
     def test_success(self):
         self.assert_message_from_report(
             "ACL rules exist in CIB and may contain references to node "
-            "names, please verify manually",
+            "names, check the ACL configuration and adjust if necessary",
             reports.CibNodeRenameAclsExist(),
         )
 
