@@ -4,8 +4,12 @@ from lxml.etree import _Element
 
 from pcs.common import reports
 from pcs.lib.cib.const import (
+    TAG_CONSTRAINT_LOCATION,
     TAG_FENCING_LEVEL,
+    TAG_RESOURCE_PRIMITIVE,
+    TAG_RULE,
 )
+from pcs.lib.xml_tools import find_parent
 
 
 def rename_in_cib(
@@ -36,13 +40,15 @@ def _rename_node_in_locations(
     cib: _Element, old_name: str, new_name: str
 ) -> reports.ReportItemList:
     report_list: reports.ReportItemList = []
-    for element in cib.findall(f".//rsc_location[@node='{old_name}']"):
-        element.set("node", new_name)
+    for location in cib.findall(
+        f".//{TAG_CONSTRAINT_LOCATION}[@node='{old_name}']"
+    ):
+        location.set("node", new_name)
         report_list.append(
             reports.ReportItem.info(
                 reports.messages.CibNodeRenameElementUpdated(
-                    element_type="Location constraint",
-                    element_id=str(element.get("id", "")),
+                    element_type=TAG_CONSTRAINT_LOCATION,
+                    element_id=str(location.get("id", "")),
                     attribute_desc="node",
                     old_value=old_name,
                     new_value=new_name,
@@ -56,18 +62,18 @@ def _rename_node_in_rules(
     cib: _Element, old_name: str, new_name: str
 ) -> reports.ReportItemList:
     report_list: reports.ReportItemList = []
-    for element in cib.findall(
-        f".//expression[@attribute='#uname'][@value='{old_name}']"
+    for expression in cib.findall(
+        f".//{TAG_RULE}/expression[@attribute='#uname'][@value='{old_name}']"
     ):
-        element.set("value", new_name)
-        # expression -> rule
-        rule_element = element.getparent()
-        assert rule_element is not None
+        expression.set("value", new_name)
+        rule = expression.getparent()
+        # mypy would complain but: //{TAG_RULE}/expression
+        assert rule is not None
         report_list.append(
             reports.ReportItem.info(
                 reports.messages.CibNodeRenameElementUpdated(
-                    element_type="Rule",
-                    element_id=str(rule_element.get("id", "")),
+                    element_type=TAG_RULE,
+                    element_id=str(rule.get("id", "")),
                     attribute_desc="#uname expression",
                     old_value=old_name,
                     new_value=new_name,
@@ -81,14 +87,14 @@ def _rename_node_in_fencing_levels(
     cib: _Element, old_name: str, new_name: str
 ) -> reports.ReportItemList:
     report_list: reports.ReportItemList = []
-    for element in cib.findall(f".//{TAG_FENCING_LEVEL}"):
-        level_id = str(element.get("id", ""))
-        if element.get("target") == old_name:
-            element.set("target", new_name)
+    for level in cib.findall(f".//{TAG_FENCING_LEVEL}"):
+        level_id = str(level.get("id", ""))
+        if level.get("target") == old_name:
+            level.set("target", new_name)
             report_list.append(
                 reports.ReportItem.info(
                     reports.messages.CibNodeRenameElementUpdated(
-                        element_type="Fencing level",
+                        element_type=TAG_FENCING_LEVEL,
                         element_id=level_id,
                         attribute_desc="target",
                         old_value=old_name,
@@ -97,16 +103,16 @@ def _rename_node_in_fencing_levels(
                 )
             )
         elif (
-            element.get("target-attribute") == "#uname"
-            and element.get("target-value") == old_name
+            level.get("target-attribute") == "#uname"
+            and level.get("target-value") == old_name
         ):
-            element.set("target-value", new_name)
+            level.set("target-value", new_name)
             report_list.append(
                 reports.ReportItem.info(
                     reports.messages.CibNodeRenameElementUpdated(
-                        element_type="Fencing level",
+                        element_type=TAG_FENCING_LEVEL,
                         element_id=level_id,
-                        attribute_desc="target",
+                        attribute_desc="target-value for target-attribute=#uname",
                         old_value=old_name,
                         new_value=new_name,
                     )
@@ -125,7 +131,13 @@ def _rename_in_host_map(value: str, old_name: str, new_name: str) -> str:
     # Format: node:port[,port];node:port
     new_entries = []
     for entry in value.split(";"):
-        host, ports = entry.split(":")
+        if ":" not in entry:
+            # It's broken but if it's an old domain name, it can be confused
+            # with host_list. We cannot fix it but it makes sense to update
+            # host name if it exactly match with the old name.
+            new_entries.append(new_name if entry == old_name else entry)
+            continue
+        host, ports = entry.split(":", 1)
         if host == old_name:
             host = new_name
         new_entries.append(f"{host}:{ports}")
@@ -141,24 +153,23 @@ def _rename_node_in_fence_devices_attribute(
 ) -> reports.ReportItemList:
     report_list: reports.ReportItemList = []
     for nvpair in cib.findall(
-        ".//primitive[@class='stonith']/instance_attributes/nvpair"
-        f"[@name='{attr_name}']"
+        f".//{TAG_RESOURCE_PRIMITIVE}[@class='stonith']/instance_attributes"
+        f"/nvpair[@name='{attr_name}']"
     ):
         old_value = str(nvpair.get("value", ""))
         new_value = rename_func(old_value, old_name, new_name)
         if new_value != old_value:
             nvpair.set("value", new_value)
-            # nvpair -> instance_attributes -> primitive
-            instance_attrs = nvpair.getparent()
-            assert instance_attrs is not None
-            fence_device = instance_attrs.getparent()
+            fence_device = find_parent(nvpair, [TAG_RESOURCE_PRIMITIVE])
+            # mypy would complain but:
+            # //{TAG_RESOURCE_PRIMITIVE}/instance_attributes/nvpair
             assert fence_device is not None
             report_list.append(
                 reports.ReportItem.info(
                     reports.messages.CibNodeRenameElementUpdated(
-                        element_type="Fence device",
+                        element_type=TAG_RESOURCE_PRIMITIVE,
                         element_id=fence_device.get("id", ""),
-                        attribute_desc=f"attribute '{attr_name}'",
+                        attribute_desc=attr_name,
                         old_value=old_value,
                         new_value=new_value,
                     )
