@@ -278,6 +278,7 @@ EXTRA_DIST		= \
 			  lib/cib/fencing_topology.py \
 			  lib/cib/__init__.py \
 			  lib/cib/node.py \
+			  lib/cib/node_rename.py \
 			  lib/cib/nvpair_multi.py \
 			  lib/cib/nvpair.py \
 			  lib/cib/remove_elements.py \

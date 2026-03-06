@@ -1,8 +1,8 @@
 from textwrap import dedent
 from unittest import TestCase
 
-from pcs.common import reports
-from pcs.lib.commands import cib as lib
+from pcs.common import file_type_codes, reports
+from pcs.lib.commands import cluster as lib
 
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
@@ -189,7 +189,9 @@ class RenameNode(TestCase):
                 self.irrelevant_stonith_map,
             ),
         )
-        lib.rename_node(self.env_assist.get_env(), "nonexistent", self.new_name)
+        lib.rename_node_cib(
+            self.env_assist.get_env(), "nonexistent", self.new_name
+        )
         self.env_assist.assert_reports(
             [
                 fixture.info(
@@ -255,7 +257,9 @@ class RenameNode(TestCase):
             ),
             acls=FIXTURE_ACLS,
         )
-        lib.rename_node(self.env_assist.get_env(), self.old_name, self.new_name)
+        lib.rename_node_cib(
+            self.env_assist.get_env(), self.old_name, self.new_name
+        )
         self.env_assist.assert_reports(
             [
                 fixture.info(
@@ -344,7 +348,7 @@ class RenameNodeCorosyncCheckCornerCases(TestCase):
             _corosync_conf(self.old_name, "other_node")
         )
         self.env_assist.assert_raise_library_error(
-            lambda: lib.rename_node(
+            lambda: lib.rename_node_cib(
                 self.env_assist.get_env(), self.old_name, self.new_name
             ),
         )
@@ -377,7 +381,7 @@ class RenameNodeCorosyncCheckCornerCases(TestCase):
                 _location(self.location_id, self.new_name)
             ),
         )
-        lib.rename_node(
+        lib.rename_node_cib(
             self.env_assist.get_env(),
             self.old_name,
             self.new_name,
@@ -404,6 +408,24 @@ class RenameNodeCorosyncCheckCornerCases(TestCase):
             ]
         )
 
+    def test_live_cib_non_live_corosync_not_consistent(self):
+        self.config.env.set_corosync_conf_data(
+            _corosync_conf(self.new_name, "other_node")
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.rename_node_cib(
+                self.env_assist.get_env(), self.old_name, self.new_name
+            ),
+            [
+                fixture.error(
+                    reports.codes.LIVE_ENVIRONMENT_NOT_CONSISTENT,
+                    mocked_files=[file_type_codes.COROSYNC_CONF],
+                    required_files=[file_type_codes.CIB],
+                ),
+            ],
+            expected_in_processor=False,
+        )
+
     def test_cib_from_file_skips_corosync_check(self):
         cib_xml = dedent(
             f"""\
@@ -427,7 +449,7 @@ class RenameNodeCorosyncCheckCornerCases(TestCase):
             ),
             load_key="runner.cib.load_content",
         )
-        lib.rename_node(self.env_assist.get_env(), "old_name", "new_name")
+        lib.rename_node_cib(self.env_assist.get_env(), "old_name", "new_name")
         self.env_assist.assert_reports(
             [
                 fixture.info(
