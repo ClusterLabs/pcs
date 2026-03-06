@@ -2470,17 +2470,17 @@ def rename_node_cib(
     old_name -- current node name
     new_name -- new node name
     """
-    if env.is_cib_live and not env.is_corosync_conf_live:
-        raise LibraryError(
-            ReportItem.error(
-                reports.messages.LiveEnvironmentNotConsistent(
-                    [file_type_codes.COROSYNC_CONF],
-                    [file_type_codes.CIB],
-                )
-            )
-        )
 
     if env.is_cib_live:
+        if not env.is_corosync_conf_live:
+            raise LibraryError(
+                ReportItem.error(
+                    reports.messages.LiveEnvironmentNotConsistent(
+                        [file_type_codes.COROSYNC_CONF],
+                        [file_type_codes.CIB],
+                    )
+                )
+            )
         corosync_node_names, corosync_nodes_report_list = (
             get_existing_nodes_names(env.get_corosync_conf(), None)
         )
