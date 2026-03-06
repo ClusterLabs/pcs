@@ -241,7 +241,7 @@
         Rename a cluster node in the CIB.
 
         pcs commands: cluster node rename-cib
-        daemon commands: cluster.rename_node_cib
+        API v2: cluster.rename_node_cib
       </description>
     </capability>
     <capability id="cluster.rename" in-pcs="1" in-pcsd="1">

@@ -8408,7 +8408,7 @@ class CibNodeRenameFencingLevelPatternExists(ReportItemMessage):
     def message(self) -> str:
         return (
             f"Fencing level '{self.level_id}' uses target-pattern "
-            f"'{self.pattern}', which may match the renamed node,"
+            f"'{self.pattern}', which may match the renamed node, "
             "check the pattern and adjust the configuration if necessary"
         )
 
@@ -8426,7 +8426,7 @@ class CibNodeRenameAclsExist(ReportItemMessage):
     def message(self) -> str:
         return (
             "ACL rules exist in CIB and may contain references to node names, "
-            "check the ACL configuration and adjust if necessary"
+            "check the ACL configuration and adjust it if necessary"
         )
 
 
