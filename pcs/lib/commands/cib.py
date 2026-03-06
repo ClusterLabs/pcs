@@ -390,6 +390,30 @@ def _warn_about_acls(cib: _Element) -> bool:
     return acl_section is not None and len(acl_section) > 0
 
 
+def _rename_in_cib(
+    cib: _Element, old_name: str, new_name: str
+) -> tuple[bool, reports.ReportItemList]:
+    report_list: reports.ReportItemList = [
+        *_rename_node_in_locations(cib, old_name, new_name),
+        *_rename_node_in_rules(cib, old_name, new_name),
+        *_rename_node_in_fencing_levels(cib, old_name, new_name),
+        *_rename_node_in_fence_devices(cib, old_name, new_name),
+    ]
+
+    cib_updated = len(report_list) > 0
+
+    report_list.extend(_warn_about_fencing_level_patterns(cib))
+
+    if _warn_about_acls(cib):
+        report_list.append(
+            reports.ReportItem.warning(
+                reports.messages.CibNodeRenameAclsExist()
+            )
+        )
+
+    return cib_updated, report_list
+
+
 def rename_node(
     env: LibraryEnvironment,
     old_name: str,
@@ -402,7 +426,6 @@ def rename_node(
     old_name -- current node name
     new_name -- new node name
     """
-    report = env.report_processor.report
 
     if env.is_cib_live:
         corosync_node_names = {
@@ -411,37 +434,19 @@ def rename_node(
         for report_item in _check_corosync_consistency(
             corosync_node_names, old_name, new_name, force_flags
         ):
-            report(report_item)
+            env.report_processor.report(report_item)
 
     if env.report_processor.has_errors:
         raise LibraryError()
 
     cib = env.get_cib()
-
-    cib_update_report_list = [
-        *_rename_node_in_locations(cib, old_name, new_name),
-        *_rename_node_in_rules(cib, old_name, new_name),
-        *_rename_node_in_fencing_levels(cib, old_name, new_name),
-        *_rename_node_in_fence_devices(cib, old_name, new_name),
-    ]
-
-    cib_updated = False
-    for report_item in cib_update_report_list:
-        report(report_item)
-        cib_updated = True
-
-    for report_item in _warn_about_fencing_level_patterns(cib):
-        report(report_item)
-
-    if _warn_about_acls(cib):
-        report(
-            reports.ReportItem.warning(
-                reports.messages.CibNodeRenameAclsExist()
-            )
-        )
+    cib_updated, report_list = _rename_in_cib(cib, old_name, new_name)
+    env.report_processor.report_list(report_list)
 
     if cib_updated:
         env.push_cib()
         return
 
-    report(reports.ReportItem.info(reports.messages.CibNodeRenameNoChange()))
+    env.report_processor.report(
+        reports.ReportItem.info(reports.messages.CibNodeRenameNoChange())
+    )
