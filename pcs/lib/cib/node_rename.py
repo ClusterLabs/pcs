@@ -9,6 +9,7 @@ from pcs.lib.cib.const import (
     TAG_RESOURCE_PRIMITIVE,
     TAG_RULE,
 )
+from pcs.lib.cib.sections import ACLS
 from pcs.lib.xml_tools import find_parent
 
 
@@ -209,5 +210,5 @@ def _warn_about_fencing_level_patterns(
 
 
 def _warn_about_acls(cib: _Element) -> bool:
-    acl_section = cib.find(".//acls")
+    acl_section = cib.find(f".//{ACLS}")
     return acl_section is not None and len(acl_section) > 0
