@@ -2700,8 +2700,7 @@
         cluster. This consists of the synchronization itself done by the daemon
         and commands to configure it (daemon and client).
 
-        daemon urls: get_sync_capabilities, set_sync_options, get_configs,
-          set_configs
+        daemon urls: set_sync_options, get_configs, set_configs
       </description>
     </capability>
     <capability id="pcs.cfg-in-file.cib" in-pcs="1" in-pcsd="0">

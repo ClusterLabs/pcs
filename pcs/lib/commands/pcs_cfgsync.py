@@ -1,15 +1,15 @@
-from typing import cast
+from typing import Mapping, cast
 
 from pcs.common import reports
 from pcs.common.file import RawFileError
 from pcs.common.pcs_cfgsync_dto import SyncConfigsDto
-from pcs.lib import validate
 from pcs.lib.env import LibraryEnvironment, LibraryError
 from pcs.lib.file.instance import FileInstance
 from pcs.lib.file.raw_file import raw_file_error_report
 from pcs.lib.interface.config import ParserErrorException
 from pcs.lib.pcs_cfgsync.config.facade import Facade as CfgsyncCtlFacade
 from pcs.lib.pcs_cfgsync.const import SYNCED_CONFIGS
+from pcs.lib.pcs_cfgsync.validations import validate_update_sync_options
 
 
 def get_configs(env: LibraryEnvironment, cluster_name: str) -> SyncConfigsDto:
@@ -49,7 +49,7 @@ def get_configs(env: LibraryEnvironment, cluster_name: str) -> SyncConfigsDto:
 
 
 def update_sync_options(
-    env: LibraryEnvironment, options: dict[str, str]
+    env: LibraryEnvironment, options: Mapping[str, str]
 ) -> None:
     """
     Update options for pcs cfgsync thread
@@ -58,7 +58,7 @@ def update_sync_options(
     """
 
     if env.report_processor.report_list(
-        _validate_update_sync_options(options)
+        validate_update_sync_options(options)
     ).has_errors:
         raise LibraryError()
 
@@ -84,8 +84,7 @@ def update_sync_options(
         "sync_thread_disable": lambda: cfgsync_ctl_facade.disable_sync(),
         "sync_thread_resume": lambda: cfgsync_ctl_facade.resume_sync(),
         "sync_thread_pause": lambda: cfgsync_ctl_facade.pause_sync(
-            # backwards compatibility: Ruby used 0 when the value was empty
-            int(options.get("sync_thread_pause") or 0)
+            int(options["sync_thread_pause"])
         ),
     }
     for option in options:
@@ -99,28 +98,3 @@ def update_sync_options(
         env.report_processor.report(raw_file_error_report(e))
     if env.report_processor.has_errors:
         raise LibraryError()
-
-
-def _validate_update_sync_options(
-    options: dict[str, str],
-) -> reports.ReportItemList:
-    allowed_options = [
-        "sync_thread_disable",
-        "sync_thread_enable",
-        "sync_thread_pause",
-        "sync_thread_resume",
-    ]
-    validators: list[validate.ValidatorInterface] = [
-        validate.NamesIn(allowed_options),
-        validate.IsRequiredSome(allowed_options),
-        validate.MutuallyExclusive(
-            ["sync_thread_disable", "sync_thread_enable"]
-        ),
-        validate.MutuallyExclusive(["sync_thread_pause", "sync_thread_resume"]),
-    ]
-    if options.get("sync_thread_pause", ""):
-        # only validate the number if there is some value
-        validators.append(
-            validate.ValueInteger("sync_thread_pause", at_least=0)
-        )
-    return validate.ValidatorAll(validators).validate(options)

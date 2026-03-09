@@ -7,7 +7,6 @@ from pcs.common.pcs_cfgsync_dto import SyncConfigsDto
 from pcs.lib.commands import pcs_cfgsync as lib
 
 from pcs_test.tools import fixture
-from pcs_test.tools.assertions import assert_report_item_list_equal
 from pcs_test.tools.command_env import get_env_tools
 
 
@@ -168,82 +167,6 @@ class GetConfigs(TestCase):
         )
 
 
-class ValidateUpdateSyncOptions(TestCase):
-    _ALLOWED_OPTIONS = [
-        "sync_thread_disable",
-        "sync_thread_enable",
-        "sync_thread_pause",
-        "sync_thread_resume",
-    ]
-
-    def test_empty_options(self):
-        assert_report_item_list_equal(
-            lib._validate_update_sync_options({}),
-            [
-                fixture.error(
-                    reports.codes.REQUIRED_OPTION_OF_ALTERNATIVES_IS_MISSING,
-                    option_names=self._ALLOWED_OPTIONS,
-                    deprecated_names=[],
-                    option_type=None,
-                )
-            ],
-        )
-
-    def test_invalid_options(self):
-        assert_report_item_list_equal(
-            lib._validate_update_sync_options(
-                {"sync_thread_disable": True, "sync_thread_super_disable": True}
-            ),
-            [
-                fixture.error(
-                    reports.codes.INVALID_OPTIONS,
-                    option_names=["sync_thread_super_disable"],
-                    allowed=self._ALLOWED_OPTIONS,
-                    option_type=None,
-                    allowed_patterns=[],
-                )
-            ],
-        )
-
-    def test_mutually_exclusive(self):
-        option_values = [
-            {"sync_thread_pause": True, "sync_thread_resume": True},
-            {"sync_thread_enable": True, "sync_thread_disable": True},
-        ]
-        for options in option_values:
-            with self.subTest(value=options):
-                assert_report_item_list_equal(
-                    lib._validate_update_sync_options(options),
-                    [
-                        fixture.error(
-                            reports.codes.MUTUALLY_EXCLUSIVE_OPTIONS,
-                            option_names=sorted(options.keys()),
-                            option_type=None,
-                        )
-                    ],
-                )
-
-    def test_invalid_pause_interval(self):
-        timeout_values = ["-10", "3.14", "timeout"]
-        for timeout in timeout_values:
-            with self.subTest(value=timeout):
-                assert_report_item_list_equal(
-                    lib._validate_update_sync_options(
-                        {"sync_thread_pause": timeout}
-                    ),
-                    [
-                        fixture.error(
-                            reports.codes.INVALID_OPTION_VALUE,
-                            option_name="sync_thread_pause",
-                            option_value=timeout,
-                            allowed_values="an integer greater than or equal to 0",
-                            cannot_be_empty=False,
-                            forbidden_characters=None,
-                        )
-                    ],
-                )
-
-
 class UpdateSyncOptions(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
@@ -255,7 +178,7 @@ class UpdateSyncOptions(TestCase):
         self.env_assist.assert_raise_library_error(
             lambda: lib.update_sync_options(
                 self.env_assist.get_env(),
-                {"sync_thread_pause": True, "sync_thread_resume": True},
+                {"sync_thread_pause": "1", "sync_thread_resume": True},
             )
         )
         self.env_assist.assert_reports(
@@ -295,7 +218,40 @@ class UpdateSyncOptions(TestCase):
             ]
         )
 
-    def test_success_read_file(self):
+    def test_error_invalid_file(self):
+        self.config.raw_file.exists(
+            file_type_codes.PCS_CFGSYNC_CTL, settings.pcs_cfgsync_ctl_location
+        )
+        self.config.raw_file.read(
+            file_type_codes.PCS_CFGSYNC_CTL,
+            settings.pcs_cfgsync_ctl_location,
+            "{",
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.update_sync_options(
+                self.env_assist.get_env(), {"sync_thread_enable": ""}
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.PARSE_ERROR_JSON_FILE,
+                    file_type_code=file_type_codes.PCS_CFGSYNC_CTL,
+                    line_number=1,
+                    column_number=2,
+                    position=1,
+                    reason="Expecting property name enclosed in double quotes",
+                    full_msg=(
+                        "Expecting property name enclosed in double quotes: "
+                        "line 1 column 2 (char 1)"
+                    ),
+                    file_path=settings.pcs_cfgsync_ctl_location,
+                )
+            ]
+        )
+
+    def test_success(self):
         self.config.raw_file.exists(
             file_type_codes.PCS_CFGSYNC_CTL, settings.pcs_cfgsync_ctl_location
         )
@@ -347,12 +303,6 @@ class UpdateSyncOptions(TestCase):
 
     def test_success_resume(self):
         self._test_update_valid_options({"sync_thread_resume": ""}, {})
-
-    @mock.patch("pcs.lib.pcs_cfgsync.config.facade.time.time", lambda: 1000)
-    def test_success_pause_default_value(self):
-        self._test_update_valid_options(
-            {"sync_thread_pause": ""}, {"thread_paused_until": 1000}
-        )
 
     @mock.patch("pcs.lib.pcs_cfgsync.config.facade.time.time", lambda: 1000)
     def test_success_pause_provided_value(self):
