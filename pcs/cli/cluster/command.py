@@ -316,6 +316,21 @@ def node_clear(lib: Any, arg_list: Argv, modifiers: InputModifiers) -> None:
     )
 
 
+def node_rename_cib(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
+    """
+    Options:
+      * -f - CIB file
+      * --force
+    """
+    modifiers.ensure_only_supported("-f", "--force")
+    if len(argv) != 2:
+        raise CmdLineInputError()
+    force_flags = []
+    if modifiers.get("--force"):
+        force_flags.append(reports.codes.FORCE)
+    lib.cluster.rename_node_cib(argv[0], argv[1], force_flags)
+
+
 def cluster_rename(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:

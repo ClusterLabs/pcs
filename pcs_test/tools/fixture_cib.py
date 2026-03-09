@@ -320,6 +320,7 @@ MODIFIER_GENERATORS = {
     "fencing_topology": lambda xml: put_or_replace("./configuration", xml),
     "status": lambda xml: put_or_replace(".", xml),
     "tags": lambda xml: put_or_replace("./configuration", xml),
+    "acls": lambda xml: put_or_replace("./configuration", xml),
     "optional_in_conf": lambda xml: put_or_replace("./configuration", xml),
     # common modifier `put_or_replace` makes not sense - see explanation inside
     # this function - all occurrences should be satisfied by `optional_in_conf`
