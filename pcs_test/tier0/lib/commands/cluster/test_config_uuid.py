@@ -15,7 +15,9 @@ from .common import (
 )
 
 
-@mock.patch("pcs.lib.commands.cluster.generate_uuid", lambda: CLUSTER_UUID)
+@mock.patch(
+    "pcs.lib.commands.cluster.authkey.generate_uuid", lambda: CLUSTER_UUID
+)
 class GenerateUuid(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
@@ -57,7 +59,9 @@ class GenerateUuid(TestCase):
         )
 
 
-@mock.patch("pcs.lib.commands.cluster.generate_uuid", lambda: CLUSTER_UUID)
+@mock.patch(
+    "pcs.lib.commands.cluster.authkey.generate_uuid", lambda: CLUSTER_UUID
+)
 class GenerateUuidLocal(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
