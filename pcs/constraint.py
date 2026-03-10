@@ -189,20 +189,9 @@ def colocation_add(lib, argv, modifiers):  # noqa: PLR0912, PLR0915
         ]
         return score, arg_array
 
-    del lib
-    modifiers.ensure_only_supported("-f", "--force")
-    if len(argv) < 3:
-        raise CmdLineInputError()
-
-    role1 = ""
-    role2 = ""
-
-    cib_dom = utils.get_cib_dom()
-    new_roles_supported = utils.isCibVersionSatisfied(
-        cib_dom, const.PCMK_NEW_ROLES_CIB_VERSION
-    )
-
-    def _validate_and_prepare_role(role):
+    def _validate_and_prepare_role(new_roles_supported, role):
+        if role is None:
+            return ""
         role_cleaned = role.lower().capitalize()
         if role_cleaned not in const.PCMK_ROLES:
             utils.err(
@@ -214,8 +203,16 @@ def colocation_add(lib, argv, modifiers):  # noqa: PLR0912, PLR0915
             role_cleaned, new_roles_supported
         )
 
+    del lib
+    modifiers.ensure_only_supported("-f", "--force")
+    if len(argv) < 3:
+        raise CmdLineInputError()
+
+    role1_candidate = None
+    role2_candidate = None
+
     if argv[2] == "with":
-        role1 = _validate_and_prepare_role(argv.pop(0))
+        role1_candidate = argv.pop(0)
         resource1 = argv.pop(0)
     elif argv[1] == "with":
         resource1 = argv.pop(0)
@@ -239,11 +236,25 @@ def colocation_add(lib, argv, modifiers):  # noqa: PLR0912, PLR0915
     if len(argv) == 1 or utils.is_score_or_opt(argv[1]):
         resource2 = argv.pop(0)
     else:
-        role2 = _validate_and_prepare_role(argv.pop(0))
+        role2_candidate = argv.pop(0)
         resource2 = argv.pop(0)
 
     score, nv_pairs = _parse_score_options(argv)
+    influence_attr_set = any(name == "influence" for name, _ in nv_pairs)
 
+    cib_dom = (
+        utils.cluster_upgrade_to_version(
+            const.PCMK_COLOCATION_INFLUENCE_CIB_VERSION
+        )
+        if influence_attr_set
+        else utils.get_cib_dom()
+    )
+    new_roles_supported = utils.isCibVersionSatisfied(
+        cib_dom, const.PCMK_NEW_ROLES_CIB_VERSION
+    )
+
+    role1 = _validate_and_prepare_role(new_roles_supported, role1_candidate)
+    role2 = _validate_and_prepare_role(new_roles_supported, role2_candidate)
     _validate_constraint_resource(cib_dom, resource1)
     _validate_constraint_resource(cib_dom, resource2)
 

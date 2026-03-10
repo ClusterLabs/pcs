@@ -76,6 +76,7 @@ PCMK_NEW_ROLES_CIB_VERSION = Version(3, 7, 0)
 # only in pcs-0.12.
 PCMK_RULES_PCMK3_SYNTAX_CIB_VERSION = Version(3, 9, 0)
 PCMK_ON_FAIL_DEMOTE_CIB_VERSION = Version(3, 4, 0)
+PCMK_COLOCATION_INFLUENCE_CIB_VERSION = Version(3, 6, 0)
 
 RESOURCE_ID_TYPE_PLAIN = ResourceIdType("resource_id_plain")
 RESOURCE_ID_TYPE_REGEXP = ResourceIdType("resource_id_regexp")

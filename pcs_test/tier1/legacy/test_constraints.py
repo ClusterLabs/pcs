@@ -559,7 +559,8 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
         self.assertEqual(stdout, "")
         ac(
             stderr,
-            "Error: invalid role value '{}', allowed values are: {}\n".format(
+            DEPRECATED_STANDALONE_SCORE
+            + "Error: invalid role value '{}', allowed values are: {}\n".format(
                 role, format_list(const.PCMK_ROLES)
             ),
         )
@@ -854,6 +855,29 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
         self.assertEqual(stdout, "")
         self.assertIn("value of 'option1' option is empty", stderr)
         self.assertEqual(retval, 1)
+
+    def test_colocation_influence(self):
+        write_file_to_tmpfile(rc("cib-empty-3.5.xml"), self.temp_cib)
+        self.assert_pcs_success(
+            "resource create D1 ocf:pcsmock:minimal".split()
+        )
+        self.assert_pcs_success(
+            "resource create D2 ocf:pcsmock:minimal".split()
+        )
+        self.assert_pcs_success(
+            "constraint colocation add D1 with D2 influence=false".split(),
+            stderr_full="Cluster CIB has been upgraded to latest version\n",
+        )
+        self.assert_pcs_success(
+            ["constraint"],
+            stdout_full=outdent(
+                """\
+                Colocation Constraints:
+                  resource 'D1' with resource 'D2'
+                    score=INFINITY influence=false
+                """
+            ),
+        )
 
     # see also BundleColocation
     def test_colocation_sets(self):  # noqa: PLR0915
