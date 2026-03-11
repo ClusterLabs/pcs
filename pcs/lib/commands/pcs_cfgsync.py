@@ -7,6 +7,7 @@ from pcs.lib.env import LibraryEnvironment, LibraryError
 from pcs.lib.file.instance import FileInstance
 from pcs.lib.file.raw_file import raw_file_error_report
 from pcs.lib.interface.config import ParserErrorException
+from pcs.lib.pcs_cfgsync.actions import UPDATE_SYNC_OPTIONS_ACTIONS
 from pcs.lib.pcs_cfgsync.config.facade import Facade as CfgsyncCtlFacade
 from pcs.lib.pcs_cfgsync.const import SYNCED_CONFIGS
 from pcs.lib.pcs_cfgsync.validations import validate_update_sync_options
@@ -79,16 +80,10 @@ def update_sync_options(
     if env.report_processor.has_errors:
         raise LibraryError()
 
-    actions = {
-        "sync_thread_enable": lambda: cfgsync_ctl_facade.enable_sync(),
-        "sync_thread_disable": lambda: cfgsync_ctl_facade.disable_sync(),
-        "sync_thread_resume": lambda: cfgsync_ctl_facade.resume_sync(),
-        "sync_thread_pause": lambda: cfgsync_ctl_facade.pause_sync(
-            int(options["sync_thread_pause"])
-        ),
-    }
-    for option in options:
-        actions[option]()
+    for option_name, option_value in options.items():
+        UPDATE_SYNC_OPTIONS_ACTIONS[option_name](
+            cfgsync_ctl_facade, option_value
+        )
 
     try:
         cfgsync_ctl_instance.write_facade(
