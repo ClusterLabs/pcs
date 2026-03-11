@@ -1,3 +1,5 @@
+from textwrap import dedent
+
 from pcs.lib.corosync.config_facade import ConfigFacade
 from pcs.lib.errors import LibraryError
 
@@ -16,7 +18,7 @@ class Call:
         raises=False,
         need_stopped_cluster=False,
     ):
-        self.corosync_conf_text = corosync_conf_text
+        self.corosync_conf_text = dedent(corosync_conf_text)
         self.skip_offline_targets = skip_offline_targets
         self.raises = raises
         self.need_stopped_cluster = need_stopped_cluster
