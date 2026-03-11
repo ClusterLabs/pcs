@@ -1,4 +1,3 @@
-from textwrap import dedent
 from unittest import TestCase
 
 from pcs.common.reports import codes as report_codes
@@ -22,8 +21,7 @@ class AddLink(TestCase):
             "linknumber": "1",
             "transport": "udp",
         }
-        self.before = dedent(
-            """\
+        self.before = """\
             totem {
                 transport: knet
 
@@ -48,10 +46,9 @@ class AddLink(TestCase):
                     nodeid: 2
                 }
             }
-            """
-        )
-        self.after = dedent(
-            """\
+        """
+
+        self.after = """\
             totem {
                 transport: knet
 
@@ -83,8 +80,7 @@ class AddLink(TestCase):
                     ring1_addr: node2-addr1
                 }
             }
-            """
-        )
+        """
 
     def test_success(self):
         self.config.corosync_conf.load_content(self.before)
@@ -231,8 +227,7 @@ class AddLink(TestCase):
         )
 
     def test_missing_node_names(self):
-        before = dedent(
-            """\
+        before = """\
             totem {
                 transport: knet
             }
@@ -251,8 +246,8 @@ class AddLink(TestCase):
                     nodeid: 2
                 }
             }
-            """
-        )
+        """
+
         self.config.corosync_conf.load_content(before)
         self.config.runner.cib.load()
 
