@@ -1,4 +1,3 @@
-from textwrap import dedent
 from unittest import TestCase
 
 from pcs.common.reports import codes as report_codes
@@ -21,8 +20,7 @@ class UpdateLink(TestCase):
             "node2-addr0",
             "node2-addr2",
         ]
-        self.before = dedent(
-            """\
+        self.before = """\
             totem {
                 transport: knet
 
@@ -47,10 +45,9 @@ class UpdateLink(TestCase):
                     nodeid: 2
                 }
             }
-            """
-        )
-        self.after = dedent(
-            """\
+        """
+
+        self.after = """\
             totem {
                 transport: knet
 
@@ -75,8 +72,7 @@ class UpdateLink(TestCase):
                     nodeid: 2
                 }
             }
-            """
-        )
+        """
 
     def test_not_live(self):
         self.config.env.set_corosync_conf_data("")
@@ -180,8 +176,7 @@ class UpdateLinkKnet(TestCase):
             "node2-addr0",
             "node2-addr2",
         ]
-        self.before = dedent(
-            """\
+        self.before = """\
             totem {
                 transport: knet
 
@@ -207,12 +202,10 @@ class UpdateLinkKnet(TestCase):
                     nodeid: 2
                 }
             }
-            """
-        )
+        """
 
     def test_success(self):
-        after = dedent(
-            """\
+        after = """\
             totem {
                 transport: knet
 
@@ -238,8 +231,8 @@ class UpdateLinkKnet(TestCase):
                     nodeid: 2
                 }
             }
-            """
-        )
+        """
+
         patch_getaddrinfo(self, self.existing_addrs + ["node2-addr2a"])
         self.config.corosync_conf.load_content(self.before)
         self.config.env.push_corosync_conf(
@@ -257,8 +250,7 @@ class UpdateLinkKnet(TestCase):
         self.env_assist.assert_reports([])
 
     def test_success_deprecated_sctp(self):
-        before = dedent(
-            """\
+        before = """\
             totem {
                 transport: knet
 
@@ -283,10 +275,9 @@ class UpdateLinkKnet(TestCase):
                     nodeid: 2
                 }
             }
-            """
-        )
-        after = dedent(
-            """\
+        """
+
+        after = """\
             totem {
                 transport: knet
 
@@ -311,8 +302,8 @@ class UpdateLinkKnet(TestCase):
                     nodeid: 2
                 }
             }
-            """
-        )
+        """
+
         patch_getaddrinfo(self, self.existing_addrs + ["node2-addr2a"])
         self.config.corosync_conf.load_content(before)
         self.config.env.push_corosync_conf(
@@ -411,8 +402,7 @@ class UpdateLinkUdp(TestCase):
         self.env_assist, self.config = get_env_tools(self)
         self.config.env.set_known_nodes(["node1", "node2", "node3"])
         self.existing_addrs = ["node1-addr0", "node2-addr0", "node3-addr0"]
-        self.before = dedent(
-            """\
+        self.before = """\
             totem {
                 transport: udp
 
@@ -442,12 +432,10 @@ class UpdateLinkUdp(TestCase):
                     nodeid: 3
                 }
             }
-            """
-        )
+        """
 
     def test_success(self):
-        after = dedent(
-            """\
+        after = """\
             totem {
                 transport: udp
 
@@ -476,8 +464,8 @@ class UpdateLinkUdp(TestCase):
                     nodeid: 3
                 }
             }
-            """
-        )
+        """
+
         patch_getaddrinfo(self, self.existing_addrs + ["node2-addrA"])
         self.config.corosync_conf.load_content(self.before)
         self.config.env.push_corosync_conf(
