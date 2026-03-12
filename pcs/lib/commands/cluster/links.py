@@ -13,7 +13,7 @@ def add_link(
     node_addr_map,
     link_options=None,
     force_flags: reports.types.ForceFlags = (),
-):
+) -> None:
     """
     Add a corosync link to a cluster
 
@@ -80,7 +80,7 @@ def remove_links(
     env: LibraryEnvironment,
     linknumber_list,
     force_flags: reports.types.ForceFlags = (),
-):
+) -> None:
     """
     Remove corosync links from a cluster
 
@@ -123,7 +123,7 @@ def update_link(
     node_addr_map=None,
     link_options=None,
     force_flags: reports.types.ForceFlags = (),
-):
+) -> None:
     """
     Change an existing corosync link
 
