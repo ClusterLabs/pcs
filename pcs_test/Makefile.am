@@ -398,6 +398,7 @@ EXTRA_DIST		= \
 			  tier1/cluster/test_config_show.py \
 			  tier1/cluster/test_config_update.py \
 			  tier1/cluster/test_node_rename_cib.py \
+			  tier1/cluster/test_node_rename_corosync.py \
 			  tier1/cluster/test_setup_local.py \
 			  tier1/cluster/test_cluster_rename.py \
 			  tier1/constraint/__init__.py \

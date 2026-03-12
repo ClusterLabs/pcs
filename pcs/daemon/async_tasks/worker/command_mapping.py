@@ -153,6 +153,10 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
         cmd=cluster.rename_node_cib,
         required_permission=p.WRITE,
     ),
+    "cluster.rename_node_corosync": _Cmd(
+        cmd=cluster.rename_node_corosync,
+        required_permission=p.WRITE,
+    ),
     "cluster.setup": _Cmd(
         cmd=cluster.setup,
         required_permission=p.SUPERUSER,
