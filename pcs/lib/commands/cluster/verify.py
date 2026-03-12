@@ -9,7 +9,7 @@ from pcs.lib.pacemaker.live import verify as verify_cmd
 from pcs.lib.pacemaker.state import ClusterState
 
 
-def verify(env: LibraryEnvironment, verbose=False):
+def verify(env: LibraryEnvironment, verbose: bool = False) -> None:
     runner = env.cmd_runner()
     (
         dummy_stdout,

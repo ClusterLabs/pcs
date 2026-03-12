@@ -10,13 +10,14 @@ from pcs.lib.communication.nodes import CheckPacemakerStarted, StartCluster
 from pcs.lib.communication.tools import run as run_com
 from pcs.lib.communication.tools import run_and_raise
 from pcs.lib.corosync import config_parser
+from pcs.lib.corosync.config_facade import ConfigFacade
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.values import get_valid_timeout_seconds
 from pcs.lib.tools import environment_file_to_dict
 
 
-def ensure_live_env(env: LibraryEnvironment):
+def ensure_live_env(env: LibraryEnvironment) -> None:
     not_live = []
     if not env.is_cib_live:
         not_live.append(file_type_codes.CIB)
@@ -35,7 +36,7 @@ def start_cluster(
     report_processor: reports.ReportProcessor,
     target_list,
     wait_timeout=False,
-):
+) -> None:
     # Large clusters take longer time to start up. So we make the timeout
     # longer for each 8 nodes:
     #  1 -  8 nodes: 1 * timeout
@@ -121,7 +122,7 @@ def get_validated_wait_timeout(report_processor, wait, start):
     return None
 
 
-def is_ssl_cert_sync_enabled(report_processor: reports.ReportProcessor):
+def is_ssl_cert_sync_enabled(report_processor: reports.ReportProcessor) -> bool:
     try:
         if os.path.isfile(settings.pcsd_config):
             with open(settings.pcsd_config, "r") as cfg_file:
@@ -144,7 +145,7 @@ def is_ssl_cert_sync_enabled(report_processor: reports.ReportProcessor):
     return False
 
 
-def verify_corosync_conf(corosync_conf_facade):
+def verify_corosync_conf(corosync_conf_facade: ConfigFacade) -> None:
     # This is done in pcs.lib.env.LibraryEnvironment.push_corosync_conf
     # usually. But there are special cases here which use custom corosync.conf
     # pushing so the check must be done individually.
