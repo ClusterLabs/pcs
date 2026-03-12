@@ -51,7 +51,7 @@ def setup(  # noqa:  PLR0913, PLR0915
     no_keys_sync: bool = False,
     no_cluster_uuid: bool = False,
     force_flags: reports.types.ForceFlags = (),
-):
+) -> None:
     # pylint: disable=too-many-arguments
     # pylint: disable=too-many-positional-arguments
     # pylint: disable=too-many-locals

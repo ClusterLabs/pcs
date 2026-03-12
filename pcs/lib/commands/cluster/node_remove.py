@@ -26,7 +26,7 @@ def remove_nodes(  # noqa: PLR0912, PLR0915
     env: LibraryEnvironment,
     node_list,
     force_flags: reports.types.ForceFlags = (),
-):
+) -> None:
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-locals
     # pylint: disable=too-many-statements
@@ -233,7 +233,7 @@ def remove_nodes(  # noqa: PLR0912, PLR0915
     run_and_raise(env.get_node_communicator(), com_cmd)
 
 
-def remove_nodes_from_cib(env: LibraryEnvironment, node_list):
+def remove_nodes_from_cib(env: LibraryEnvironment, node_list) -> None:
     """
     Remove specified nodes from CIB. When pcmk is running 'crm_node -R <node>'
     will be used. Otherwise nodes will be removed directly from CIB file.

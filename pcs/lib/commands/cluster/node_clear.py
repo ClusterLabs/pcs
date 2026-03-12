@@ -8,15 +8,13 @@ from pcs.lib.pacemaker.live import remove_node
 
 def node_clear(
     env: LibraryEnvironment,
-    node_name,
-    allow_clear_cluster_node=False,
-):
+    node_name: str,
+    allow_clear_cluster_node: bool = False,
+) -> None:
     """
     Remove specified node from various cluster caches.
 
-    LibraryEnvironment env provides all for communication with externals
-    string node_name
-    bool allow_clear_cluster_node -- flag allows to clear node even if it's
+    allow_clear_cluster_node -- flag allows to clear node even if it's
         still in a cluster
     """
     ensure_live_env(env)  # raises if env is not live
