@@ -1,12 +1,5 @@
 from pcs import settings
-from pcs.common import (
-    file_type_codes,
-    reports,
-)
-from pcs.common.reports import codes as report_codes
-from pcs.common.reports.item import (
-    ReportItem,
-)
+from pcs.common import file_type_codes, reports
 from pcs.common.str_tools import join_multilines
 from pcs.lib import sbd
 from pcs.lib.commands.cluster.common import (
@@ -19,25 +12,14 @@ from pcs.lib.communication.corosync import (
     DistributeCorosyncConf,
     ReloadCorosyncConf,
 )
-from pcs.lib.communication.nodes import (
-    GetOnlineTargets,
-    RemoveNodesFromCib,
-)
-from pcs.lib.communication.tools import (
-    AllSameDataMixin,
-    run_and_raise,
-)
+from pcs.lib.communication.nodes import GetOnlineTargets, RemoveNodesFromCib
+from pcs.lib.communication.tools import AllSameDataMixin, run_and_raise
 from pcs.lib.communication.tools import run as run_com
 from pcs.lib.corosync import config_validators
-from pcs.lib.env import (
-    LibraryEnvironment,
-)
+from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 from pcs.lib.node import get_existing_nodes_names
-from pcs.lib.pacemaker.live import (
-    get_cib_file_runner_env,
-    remove_node,
-)
+from pcs.lib.pacemaker.live import get_cib_file_runner_env, remove_node
 
 
 def remove_nodes(  # noqa: PLR0912, PLR0915
@@ -57,8 +39,8 @@ def remove_nodes(  # noqa: PLR0912, PLR0915
     """
     ensure_live_env(env)  # raises if env is not live
 
-    force_quorum_loss = report_codes.FORCE in force_flags
-    skip_offline = report_codes.SKIP_OFFLINE_NODES in force_flags
+    force_quorum_loss = reports.codes.FORCE in force_flags
+    skip_offline = reports.codes.SKIP_OFFLINE_NODES in force_flags
 
     report_processor = env.report_processor
     target_factory = env.get_node_target_factory()
@@ -126,7 +108,7 @@ def remove_nodes(  # noqa: PLR0912, PLR0915
     ]
     if not staying_online_target_list:
         report_processor.report(
-            ReportItem.error(
+            reports.ReportItem.error(
                 reports.messages.UnableToConnectToAnyRemainingNode()
             )
         )
@@ -142,7 +124,7 @@ def remove_nodes(  # noqa: PLR0912, PLR0915
         ] + [name for name in unknown_nodes if name not in node_list]
         if staying_offline_nodes:
             report_processor.report(
-                ReportItem.warning(
+                reports.ReportItem.warning(
                     reports.messages.UnableToConnectToAllRemainingNodes(
                         sorted(staying_offline_nodes)
                     )
@@ -162,13 +144,13 @@ def remove_nodes(  # noqa: PLR0912, PLR0915
         )
         if cluster_running_target_list:
             report_processor.report(
-                ReportItem.error(
+                reports.ReportItem.error(
                     reports.messages.CorosyncQuorumAtbWillBeEnabledDueToSbdClusterIsRunning()
                 )
             )
         else:
             report_processor.report(
-                ReportItem.warning(
+                reports.ReportItem.warning(
                     reports.messages.CorosyncQuorumAtbWillBeEnabledDueToSbd()
                 )
             )
@@ -189,9 +171,9 @@ def remove_nodes(  # noqa: PLR0912, PLR0915
         if quorum_status_facade:
             if quorum_status_facade.stopping_nodes_cause_quorum_loss(node_list):
                 report_processor.report(
-                    ReportItem(
+                    reports.ReportItem(
                         severity=reports.item.get_severity(
-                            report_codes.FORCE,
+                            reports.codes.FORCE,
                             force_quorum_loss,
                         ),
                         message=reports.messages.CorosyncQuorumWillBeLost(),
@@ -199,9 +181,9 @@ def remove_nodes(  # noqa: PLR0912, PLR0915
                 )
         elif failures or not targets_to_remove:
             report_processor.report(
-                ReportItem(
+                reports.ReportItem(
                     severity=reports.item.get_severity(
-                        report_codes.FORCE,
+                        reports.codes.FORCE,
                         force_quorum_loss,
                     ),
                     message=reports.messages.CorosyncQuorumLossUnableToCheck(),
@@ -216,7 +198,7 @@ def remove_nodes(  # noqa: PLR0912, PLR0915
     unknown_to_remove = [name for name in unknown_nodes if name in node_list]
     if unknown_to_remove:
         report_processor.report(
-            ReportItem.warning(
+            reports.ReportItem.warning(
                 reports.messages.NodesToRemoveUnreachable(
                     sorted(unknown_to_remove)
                 )
@@ -262,7 +244,7 @@ def remove_nodes_from_cib(env: LibraryEnvironment, node_list):
     # TODO: more advanced error handling
     if not env.is_cib_live:
         raise LibraryError(
-            ReportItem.error(
+            reports.ReportItem.error(
                 reports.messages.LiveEnvironmentRequired([file_type_codes.CIB])
             )
         )
@@ -289,7 +271,7 @@ def remove_nodes_from_cib(env: LibraryEnvironment, node_list):
         )
         if retval != 0:
             raise LibraryError(
-                ReportItem.error(
+                reports.ReportItem.error(
                     reports.messages.NodeRemoveInPacemakerFailed(
                         node_list_to_remove=[node],
                         reason=join_multilines([stderr, stdout]),

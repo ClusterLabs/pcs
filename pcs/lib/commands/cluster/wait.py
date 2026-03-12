@@ -1,7 +1,4 @@
-from pcs.lib.env import (
-    LibraryEnvironment,
-    WaitType,
-)
+from pcs.lib.env import LibraryEnvironment, WaitType
 
 
 def wait_for_pcmk_idle(env: LibraryEnvironment, wait_value: WaitType) -> None:

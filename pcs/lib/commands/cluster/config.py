@@ -5,8 +5,6 @@ from pcs.common.corosync_conf import (
     CorosyncConfDto,
     CorosyncQuorumDeviceSettingsDto,
 )
-from pcs.common.reports import ReportProcessor
-from pcs.common.reports.item import ReportItem
 from pcs.common.types import (
     CorosyncTransportType,
     UnknownCorosyncTransportTypeException,
@@ -15,10 +13,7 @@ from pcs.lib.commands.cluster.common import (
     ensure_live_env,
     verify_corosync_conf,
 )
-from pcs.lib.corosync import (
-    config_facade,
-    config_validators,
-)
+from pcs.lib.corosync import config_facade, config_validators
 from pcs.lib.corosync import constants as corosync_constants
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
@@ -27,7 +22,7 @@ from pcs.lib.interface.config import ParserErrorException
 
 
 def _config_update(
-    report_processor: ReportProcessor,
+    report_processor: reports.ReportProcessor,
     corosync_conf: config_facade.ConfigFacade,
     transport_options: Mapping[str, str],
     compression_options: Mapping[str, str],
@@ -51,7 +46,7 @@ def _config_update(
         )
     else:
         report_processor.report(
-            ReportItem.error(
+            reports.ReportItem.error(
                 reports.messages.CorosyncConfigUnsupportedTransport(
                     transport_type, sorted(corosync_constants.TRANSPORTS_ALL)
                 )
@@ -189,7 +184,7 @@ def get_corosync_conf_struct(env: LibraryEnvironment) -> CorosyncConfDto:
         )
     except UnknownCorosyncTransportTypeException as e:
         raise LibraryError(
-            ReportItem.error(
+            reports.ReportItem.error(
                 reports.messages.CorosyncConfigUnsupportedTransport(
                     e.transport, sorted(corosync_constants.TRANSPORTS_ALL)
                 )

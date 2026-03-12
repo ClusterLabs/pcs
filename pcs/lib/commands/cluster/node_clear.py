@@ -1,6 +1,4 @@
 from pcs.common import reports
-from pcs.common.reports import codes as report_codes
-from pcs.common.reports.item import ReportItem
 from pcs.lib.commands.cluster.common import ensure_live_env
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
@@ -31,9 +29,9 @@ def node_clear(
 
     if node_name in current_nodes:
         env.report_processor.report(
-            ReportItem(
+            reports.ReportItem(
                 severity=reports.item.get_severity(
-                    report_codes.FORCE,
+                    reports.codes.FORCE,
                     allow_clear_cluster_node,
                 ),
                 message=reports.messages.NodeToClearIsStillInCluster(node_name),

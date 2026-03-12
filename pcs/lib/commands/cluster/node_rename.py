@@ -1,14 +1,6 @@
-from pcs.common import (
-    file_type_codes,
-    reports,
-)
-from pcs.common.reports.item import (
-    ReportItem,
-)
+from pcs.common import file_type_codes, reports
 from pcs.lib.cib.node_rename import check_corosync_consistency, rename_in_cib
-from pcs.lib.env import (
-    LibraryEnvironment,
-)
+from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 from pcs.lib.node import get_existing_nodes_names
 
@@ -29,7 +21,7 @@ def rename_node_cib(
     if env.is_cib_live:
         if not env.is_corosync_conf_live:
             raise LibraryError(
-                ReportItem.error(
+                reports.ReportItem.error(
                     reports.messages.LiveEnvironmentNotConsistent(
                         [file_type_codes.COROSYNC_CONF],
                         [file_type_codes.CIB],

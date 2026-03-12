@@ -1,7 +1,6 @@
 from lxml.etree import _Element
 
 from pcs.common import reports
-from pcs.common.reports import codes as report_codes
 from pcs.lib.cib.nvpair_multi import NVSET_INSTANCE, find_nvsets
 from pcs.lib.cib.resource.primitive import find_primitives_by_agent
 from pcs.lib.cib.tools import get_resources
@@ -84,7 +83,7 @@ def rename(
         env.report_processor.report_list(warn_gfs2_resources(resources))
 
     corosync_conf = env.get_corosync_conf()
-    skip_offline = report_codes.SKIP_OFFLINE_NODES in force_flags
+    skip_offline = reports.codes.SKIP_OFFLINE_NODES in force_flags
 
     corosync_nodes, report_list = get_existing_nodes_names(corosync_conf, None)
     if env.report_processor.report_list(report_list).has_errors:
