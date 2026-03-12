@@ -3,26 +3,12 @@ import os.path
 import time
 
 from pcs import settings
-from pcs.common import (
-    file_type_codes,
-    reports,
-)
+from pcs.common import file_type_codes, reports
 from pcs.common.file import RawFileError
-from pcs.common.reports import ReportProcessor
-from pcs.common.reports.item import (
-    ReportItem,
-)
 from pcs.common.tools import format_os_error
-from pcs.lib.communication.nodes import (
-    CheckPacemakerStarted,
-    StartCluster,
-)
-from pcs.lib.communication.tools import (
-    run as run_com,
-)
-from pcs.lib.communication.tools import (
-    run_and_raise,
-)
+from pcs.lib.communication.nodes import CheckPacemakerStarted, StartCluster
+from pcs.lib.communication.tools import run as run_com
+from pcs.lib.communication.tools import run_and_raise
 from pcs.lib.corosync import config_parser
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
@@ -38,13 +24,15 @@ def ensure_live_env(env: LibraryEnvironment):
         not_live.append(file_type_codes.COROSYNC_CONF)
     if not_live:
         raise LibraryError(
-            ReportItem.error(reports.messages.LiveEnvironmentRequired(not_live))
+            reports.ReportItem.error(
+                reports.messages.LiveEnvironmentRequired(not_live)
+            )
         )
 
 
 def start_cluster(
     communicator_factory,
-    report_processor: ReportProcessor,
+    report_processor: reports.ReportProcessor,
     target_list,
     wait_timeout=False,
 ):
@@ -80,7 +68,7 @@ def start_cluster(
 
 def wait_for_pacemaker_to_start(
     node_communicator,
-    report_processor: ReportProcessor,
+    report_processor: reports.ReportProcessor,
     target_list,
     timeout=None,
 ):
@@ -88,7 +76,7 @@ def wait_for_pacemaker_to_start(
     interval = 2
     stop_at = time.time() + timeout
     report_processor.report(
-        ReportItem.info(
+        reports.ReportItem.info(
             reports.messages.WaitForNodeStartupStarted(
                 sorted([target.label for target in target_list])
             )
@@ -99,7 +87,9 @@ def wait_for_pacemaker_to_start(
     while target_list:
         if time.time() > stop_at:
             error_report_list.append(
-                ReportItem.error(reports.messages.WaitForNodeStartupTimedOut())
+                reports.ReportItem.error(
+                    reports.messages.WaitForNodeStartupTimedOut()
+                )
             )
             break
         time.sleep(interval)
@@ -110,7 +100,7 @@ def wait_for_pacemaker_to_start(
 
     if error_report_list or has_errors:
         error_report_list.append(
-            ReportItem.error(reports.messages.WaitForNodeStartupError())
+            reports.ReportItem.error(reports.messages.WaitForNodeStartupError())
         )
     return error_report_list
 
@@ -121,7 +111,7 @@ def get_validated_wait_timeout(report_processor, wait, start):
             return False
         if not start:
             report_processor.report(
-                ReportItem.error(
+                reports.ReportItem.error(
                     reports.messages.WaitForNodeStartupWithoutStart()
                 )
             )
@@ -131,7 +121,7 @@ def get_validated_wait_timeout(report_processor, wait, start):
     return None
 
 
-def is_ssl_cert_sync_enabled(report_processor: ReportProcessor):
+def is_ssl_cert_sync_enabled(report_processor: reports.ReportProcessor):
     try:
         if os.path.isfile(settings.pcsd_config):
             with open(settings.pcsd_config, "r") as cfg_file:
@@ -142,7 +132,7 @@ def is_ssl_cert_sync_enabled(report_processor: ReportProcessor):
                 )
     except OSError as e:
         report_processor.report(
-            ReportItem.error(
+            reports.ReportItem.error(
                 reports.messages.FileIoError(
                     file_type_codes.PCSD_ENVIRONMENT_CONFIG,
                     RawFileError.ACTION_READ,
@@ -165,7 +155,7 @@ def verify_corosync_conf(corosync_conf_facade):
     ) = config_parser.verify_section(corosync_conf_facade.config)
     if bad_sections or bad_attr_names or bad_attr_values:
         raise LibraryError(
-            ReportItem.error(
+            reports.ReportItem.error(
                 reports.messages.CorosyncConfigCannotSaveInvalidNamesValues(
                     bad_sections,
                     bad_attr_names,

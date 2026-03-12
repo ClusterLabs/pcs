@@ -1,6 +1,4 @@
 from pcs.common import reports
-from pcs.common.reports import codes as report_codes
-from pcs.common.reports.item import ReportItem
 from pcs.lib.cib.resource.guest_node import find_node_list as get_guest_nodes
 from pcs.lib.cib.resource.remote_node import find_node_list as get_remote_nodes
 from pcs.lib.commands.cluster.common import ensure_live_env
@@ -27,8 +25,8 @@ def add_link(
     ensure_live_env(env)  # raises if env is not live
 
     link_options = link_options or {}
-    force = report_codes.FORCE in force_flags
-    skip_offline = report_codes.SKIP_OFFLINE_NODES in force_flags
+    force = reports.codes.FORCE in force_flags
+    skip_offline = reports.codes.SKIP_OFFLINE_NODES in force_flags
 
     report_processor = env.report_processor
     corosync_conf = env.get_corosync_conf()
@@ -50,8 +48,8 @@ def add_link(
     except LibraryError:
         cib_nodes = []
         report_processor.report(
-            ReportItem(
-                reports.item.get_severity(report_codes.FORCE, force),
+            reports.ReportItem(
+                reports.item.get_severity(reports.codes.FORCE, force),
                 reports.messages.CibLoadErrorGetNodesForValidation(),
             )
         )
@@ -94,7 +92,7 @@ def remove_links(
     # strings. The layer in which the check should be done does not exist yet.
     ensure_live_env(env)  # raises if env is not live
 
-    skip_offline = report_codes.SKIP_OFFLINE_NODES in force_flags
+    skip_offline = reports.codes.SKIP_OFFLINE_NODES in force_flags
 
     report_processor = env.report_processor
     corosync_conf = env.get_corosync_conf()
@@ -139,8 +137,8 @@ def update_link(
 
     node_addr_map = node_addr_map or {}
     link_options = link_options or {}
-    force = report_codes.FORCE in force_flags
-    skip_offline = report_codes.SKIP_OFFLINE_NODES in force_flags
+    force = reports.codes.FORCE in force_flags
+    skip_offline = reports.codes.SKIP_OFFLINE_NODES in force_flags
 
     report_processor = env.report_processor
     corosync_conf = env.get_corosync_conf()

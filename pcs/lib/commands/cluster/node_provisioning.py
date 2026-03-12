@@ -1,7 +1,4 @@
 from pcs.common import reports
-from pcs.common.reports import ReportProcessor
-from pcs.common.reports import codes as report_codes
-from pcs.common.reports.item import ReportItem
 
 
 def host_check_cluster_setup(
@@ -21,7 +18,7 @@ def host_check_cluster_setup(
     required_as_stopped_service_list = required_service_list + [
         "pacemaker_remote"
     ]
-    severity = reports.item.get_severity(report_codes.FORCE, force)
+    severity = reports.item.get_severity(reports.codes.FORCE, force)
     cluster_exists_on_nodes = False
     for host_name, host_info in host_info_dict.items():
         try:
@@ -36,7 +33,7 @@ def host_check_cluster_setup(
             ]
             if missing_service_list:
                 report_list.append(
-                    ReportItem.error(
+                    reports.ReportItem.error(
                         reports.messages.ServiceNotInstalled(
                             host_name, sorted(missing_service_list)
                         )
@@ -50,7 +47,7 @@ def host_check_cluster_setup(
             if cannot_be_running_service_list:
                 cluster_exists_on_nodes = True
                 report_list.append(
-                    ReportItem(
+                    reports.ReportItem(
                         severity=severity,
                         message=reports.messages.HostAlreadyInClusterServices(
                             host_name,
@@ -61,7 +58,7 @@ def host_check_cluster_setup(
             if host_info["cluster_configuration_exists"]:
                 cluster_exists_on_nodes = True
                 report_list.append(
-                    ReportItem(
+                    reports.ReportItem(
                         severity=severity,
                         message=reports.messages.HostAlreadyInClusterConfig(
                             host_name,
@@ -70,7 +67,7 @@ def host_check_cluster_setup(
                 )
         except KeyError:
             report_list.append(
-                ReportItem.error(
+                reports.ReportItem.error(
                     reports.messages.InvalidResponseFormat(host_name)
                 )
             )
@@ -84,9 +81,9 @@ def host_check_cluster_setup(
     if cluster_exists_on_nodes and not force:
         # This is always a forceable error
         report_list.append(
-            ReportItem(
+            reports.ReportItem(
                 severity=reports.item.ReportItemSeverity.error(
-                    report_codes.FORCE
+                    reports.codes.FORCE
                 ),
                 message=reports.messages.ClusterWillBeDestroyed(),
             )
@@ -98,7 +95,7 @@ def _check_for_not_matching_service_versions(service, service_version_dict):
     if len(set(service_version_dict.values())) <= 1:
         return []
     return [
-        ReportItem.error(
+        reports.ReportItem.error(
             reports.messages.ServiceVersionMismatch(
                 service, service_version_dict
             )
@@ -123,7 +120,7 @@ def set_defaults_in_dict(input_dict, defaults):
 
 
 def get_addrs_defaulter(
-    report_processor: ReportProcessor,
+    report_processor: reports.ReportProcessor,
     targets_dict,
     default_to_name_if_no_target: bool = False,
 ):
@@ -141,7 +138,7 @@ def get_addrs_defaulter(
             address_source = reports.const.DEFAULT_ADDRESS_SOURCE_HOST_NAME
         if address_for_use:
             report_processor.report(
-                ReportItem.info(
+                reports.ReportItem.info(
                     reports.messages.UsingDefaultAddressForHost(
                         node["name"], address_for_use, address_source
                     )

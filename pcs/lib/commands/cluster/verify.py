@@ -1,15 +1,10 @@
 from pcs.common import reports
-from pcs.common.reports.item import ReportItem
 from pcs.lib.cib import fencing_topology
 from pcs.lib.cib.resource.bundle import verify as verify_bundles
 from pcs.lib.cib.tools import get_resources
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
-from pcs.lib.pacemaker.live import (
-    get_cib,
-    get_cib_xml,
-    get_cib_xml_cmd_results,
-)
+from pcs.lib.pacemaker.live import get_cib, get_cib_xml, get_cib_xml_cmd_results
 from pcs.lib.pacemaker.live import verify as verify_cmd
 from pcs.lib.pacemaker.state import ClusterState
 
@@ -29,7 +24,7 @@ def verify(env: LibraryEnvironment, verbose=False):
     # upgrade cib at all times inside env.get_cib). Go to a lower level here.
     if verify_returncode != 0:
         env.report_processor.report(
-            ReportItem.error(
+            reports.ReportItem.error(
                 reports.messages.InvalidCibContent(
                     verify_stderr,
                     can_be_more_verbose,

@@ -1,28 +1,14 @@
 import os.path
 
 from pcs import settings
-from pcs.common import (
-    file_type_codes,
-    reports,
-)
+from pcs.common import file_type_codes, reports
 from pcs.common.file import RawFileError
 from pcs.common.node_communicator import HostNotFound
-from pcs.common.reports import ReportProcessor
-from pcs.common.reports import codes as report_codes
-from pcs.common.reports.item import (
-    ReportItem,
-)
 from pcs.common.tools import format_os_error
-from pcs.lib import (
-    node_communication_format,
-    sbd,
-    validate,
-)
+from pcs.lib import node_communication_format, sbd, validate
 from pcs.lib.booth import sync as booth_sync
 from pcs.lib.cib.resource.guest_node import find_node_list as get_guest_nodes
-from pcs.lib.cib.resource.remote_node import (
-    find_node_list as get_remote_nodes,
-)
+from pcs.lib.cib.resource.remote_node import find_node_list as get_remote_nodes
 from pcs.lib.commands.cluster.common import (
     ensure_live_env,
     get_validated_wait_timeout,
@@ -55,23 +41,13 @@ from pcs.lib.communication.sbd import (
     EnableSbdService,
     SetSbdConfig,
 )
-from pcs.lib.communication.tools import (
-    AllSameDataMixin,
-    run_and_raise,
-)
+from pcs.lib.communication.tools import AllSameDataMixin, run_and_raise
 from pcs.lib.communication.tools import run as run_com
-from pcs.lib.corosync import (
-    config_validators,
-    qdevice_net,
-)
-from pcs.lib.env import (
-    LibraryEnvironment,
-)
+from pcs.lib.corosync import config_validators, qdevice_net
+from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 from pcs.lib.node import get_existing_nodes_names
-from pcs.lib.tools import (
-    environment_file_to_dict,
-)
+from pcs.lib.tools import environment_file_to_dict
 
 
 def add_nodes(  # noqa: PLR0912, PLR0915
@@ -118,8 +94,8 @@ def add_nodes(  # noqa: PLR0912, PLR0915
     """
     ensure_live_env(env)  # raises if env is not live
 
-    force = report_codes.FORCE in force_flags
-    skip_offline_nodes = report_codes.SKIP_OFFLINE_NODES in force_flags
+    force = reports.codes.FORCE in force_flags
+    skip_offline_nodes = reports.codes.SKIP_OFFLINE_NODES in force_flags
 
     report_processor = env.report_processor
     target_factory = env.get_node_target_factory()
@@ -164,7 +140,7 @@ def add_nodes(  # noqa: PLR0912, PLR0915
             )
         except HostNotFound:
             report_processor.report(
-                ReportItem.error(
+                reports.ReportItem.error(
                     reports.messages.HostNotFound(
                         [qdevice_model_options["host"]]
                     )
@@ -234,8 +210,8 @@ def add_nodes(  # noqa: PLR0912, PLR0915
     except LibraryError:
         cib_nodes = []
         report_processor.report(
-            ReportItem(
-                reports.item.get_severity(report_codes.FORCE, force),
+            reports.ReportItem(
+                reports.item.get_severity(reports.codes.FORCE, force),
                 reports.messages.CibLoadErrorGetNodesForValidation(),
             )
         )
@@ -269,7 +245,7 @@ def add_nodes(  # noqa: PLR0912, PLR0915
             sbd_options = sbd_node_options.intersection(node.keys())
             if sbd_options and "name" in node:
                 report_processor.report(
-                    ReportItem.error(
+                    reports.ReportItem.error(
                         reports.messages.SbdNotUsedCannotSetSbdOptions(
                             sorted(sbd_options), node["name"]
                         )
@@ -305,7 +281,7 @@ def add_nodes(  # noqa: PLR0912, PLR0915
         ]
         if not online_cluster_target_list:
             report_processor.report(
-                ReportItem.error(
+                reports.ReportItem.error(
                     reports.messages.UnableToPerformOperationOnAnyNode()
                 )
             )
@@ -329,13 +305,13 @@ def add_nodes(  # noqa: PLR0912, PLR0915
             )
             if cluster_running_target_list:
                 report_processor.report(
-                    ReportItem.error(
+                    reports.ReportItem.error(
                         reports.messages.CorosyncQuorumAtbWillBeEnabledDueToSbdClusterIsRunning()
                     )
                 )
             else:
                 report_processor.report(
-                    ReportItem.warning(
+                    reports.ReportItem.warning(
                         reports.messages.CorosyncQuorumAtbWillBeEnabledDueToSbd()
                     )
                 )
@@ -357,7 +333,7 @@ def add_nodes(  # noqa: PLR0912, PLR0915
     if is_sbd_enabled:
         if no_watchdog_validation:
             report_processor.report(
-                ReportItem.warning(
+                reports.ReportItem.warning(
                     reports.messages.SbdWatchdogValidationInactive()
                 )
             )
@@ -466,7 +442,7 @@ def add_nodes(  # noqa: PLR0912, PLR0915
                 )
         except OSError as e:
             report_processor.report(
-                ReportItem(
+                reports.ReportItem(
                     severity,
                     reports.messages.FileIoError(
                         file_type_codes.COROSYNC_AUTHKEY,
@@ -489,7 +465,7 @@ def add_nodes(  # noqa: PLR0912, PLR0915
                 )
         except OSError as e:
             report_processor.report(
-                ReportItem(
+                reports.ReportItem(
                     severity,
                     reports.messages.FileIoError(
                         file_type_codes.PACEMAKER_AUTHKEY,
@@ -512,7 +488,7 @@ def add_nodes(  # noqa: PLR0912, PLR0915
                 )
         except OSError as e:
             report_processor.report(
-                ReportItem(
+                reports.ReportItem(
                     severity,
                     reports.messages.FileIoError(
                         file_type_codes.PCS_DR_CONFIG,
@@ -538,7 +514,7 @@ def add_nodes(  # noqa: PLR0912, PLR0915
                 )
         except OSError as e:
             report_processor.report(
-                ReportItem(
+                reports.ReportItem(
                     severity,
                     reports.messages.FileIoError(
                         file_type_codes.PCS_SETTINGS_CONF,
@@ -563,7 +539,7 @@ def add_nodes(  # noqa: PLR0912, PLR0915
     # Distribute and reload pcsd SSL certificate
     if sync_ssl_certs:
         report_processor.report(
-            ReportItem.info(
+            reports.ReportItem.info(
                 reports.messages.PcsdSslCertAndKeyDistributionStarted(
                     sorted([target.label for target in new_nodes_target_list])
                 )
@@ -575,7 +551,7 @@ def add_nodes(  # noqa: PLR0912, PLR0915
                 ssl_cert = file.read()
         except OSError as e:
             report_processor.report(
-                ReportItem.error(
+                reports.ReportItem.error(
                     reports.messages.FileIoError(
                         file_type_codes.PCSD_SSL_CERT,
                         RawFileError.ACTION_READ,
@@ -589,7 +565,7 @@ def add_nodes(  # noqa: PLR0912, PLR0915
                 ssl_key = file.read()
         except OSError as e:
             report_processor.report(
-                ReportItem.error(
+                reports.ReportItem.error(
                     reports.messages.FileIoError(
                         file_type_codes.PCSD_SSL_KEY,
                         RawFileError.ACTION_READ,
@@ -644,12 +620,14 @@ def add_nodes(  # noqa: PLR0912, PLR0915
         )
 
 
-def _get_watchdog_defaulter(report_processor: ReportProcessor, targets_dict):
+def _get_watchdog_defaulter(
+    report_processor: reports.ReportProcessor, targets_dict
+):
     del targets_dict
 
     def defaulter(node):
         report_processor.report(
-            ReportItem.info(
+            reports.ReportItem.info(
                 reports.messages.UsingDefaultWatchdog(
                     settings.sbd_watchdog_default,
                     node["name"],
