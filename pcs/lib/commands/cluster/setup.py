@@ -1,12 +1,7 @@
 from typing import Any, Mapping, Optional, Sequence
 
 from pcs import settings
-from pcs.common import (
-    reports,
-    ssl,
-)
-from pcs.common.reports import codes as report_codes
-from pcs.common.reports.item import ReportItem
+from pcs.common import reports, ssl
 from pcs.lib import node_communication_format
 from pcs.lib.commands.cluster.common import (
     ensure_live_env,
@@ -30,20 +25,11 @@ from pcs.lib.communication.nodes import (
     SendPcsdSslCertAndKey,
     UpdateKnownHosts,
 )
-from pcs.lib.communication.tools import (
-    AllSameDataMixin,
-    run_and_raise,
-)
+from pcs.lib.communication.tools import AllSameDataMixin, run_and_raise
 from pcs.lib.communication.tools import run as run_com
-from pcs.lib.corosync import (
-    config_facade,
-    config_validators,
-)
+from pcs.lib.corosync import config_facade, config_validators
 from pcs.lib.corosync import constants as corosync_constants
-from pcs.lib.env import (
-    LibraryEnvironment,
-    WaitType,
-)
+from pcs.lib.env import LibraryEnvironment, WaitType
 from pcs.lib.errors import LibraryError
 from pcs.lib.tools import generate_binary_key, generate_uuid
 
@@ -116,7 +102,7 @@ def setup(  # noqa:  PLR0913, PLR0915
     ]
     """
     ensure_live_env(env)  # raises if env is not live
-    force = report_codes.FORCE in force_flags
+    force = reports.codes.FORCE in force_flags
 
     transport_type = transport_type or "knet"
     transport_options = transport_options or {}
@@ -248,7 +234,7 @@ def setup(  # noqa:  PLR0913, PLR0915
         # Distribute and reload pcsd SSL certificate
         if sync_ssl_certs:
             report_processor.report(
-                ReportItem.info(
+                reports.ReportItem.info(
                     reports.messages.PcsdSslCertAndKeyDistributionStarted(
                         sorted([target.label for target in target_list])
                     )
@@ -291,7 +277,7 @@ def setup(  # noqa:  PLR0913, PLR0915
     run_and_raise(env.get_node_communicator(), com_cmd)
 
     if env.report_processor.report(
-        ReportItem.info(reports.messages.ClusterSetupSuccess())
+        reports.ReportItem.info(reports.messages.ClusterSetupSuccess())
     ).has_errors:
         raise LibraryError()
 
@@ -359,7 +345,7 @@ def setup_local(  # noqa: PLR0913
     # pylint: disable=too-many-arguments
     # pylint: disable=too-many-locals
     # pylint: disable=too-many-positional-arguments
-    force = report_codes.FORCE in force_flags
+    force = reports.codes.FORCE in force_flags
 
     transport_type = transport_type or "knet"
     nodes = [normalize_dict(node, {"addrs"}) for node in nodes]

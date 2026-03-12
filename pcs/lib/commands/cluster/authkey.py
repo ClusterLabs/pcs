@@ -2,11 +2,6 @@ from typing import Optional, Tuple, cast
 
 from pcs import settings
 from pcs.common import reports
-from pcs.common.reports import codes as report_codes
-from pcs.common.reports.item import (
-    ReportItem,
-    ReportItemList,
-)
 from pcs.lib import node_communication_format
 from pcs.lib.commands.cluster.common import ensure_live_env
 from pcs.lib.communication.corosync import ReloadCorosyncConf
@@ -14,10 +9,7 @@ from pcs.lib.communication.nodes import (
     DistributeFilesWithoutForces,
     GetOnlineTargets,
 )
-from pcs.lib.communication.tools import (
-    AllSameDataMixin,
-    run_and_raise,
-)
+from pcs.lib.communication.tools import AllSameDataMixin, run_and_raise
 from pcs.lib.corosync import config_facade
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
@@ -58,10 +50,10 @@ def corosync_authkey_change(
     if corosync_authkey is not None:
         if len(corosync_authkey) != settings.corosync_authkey_bytes:
             report_processor.report(
-                ReportItem(
+                reports.ReportItem(
                     severity=reports.item.get_severity(
-                        report_codes.FORCE,
-                        report_codes.FORCE in force_flags,
+                        reports.codes.FORCE,
+                        reports.codes.FORCE in force_flags,
                     ),
                     message=reports.messages.CorosyncAuthkeyWrongLength(
                         len(corosync_authkey),
@@ -80,7 +72,7 @@ def corosync_authkey_change(
 
     com_cmd: AllSameDataMixin = GetOnlineTargets(
         report_processor,
-        ignore_offline_targets=report_codes.SKIP_OFFLINE_NODES in force_flags,
+        ignore_offline_targets=reports.codes.SKIP_OFFLINE_NODES in force_flags,
     )
     com_cmd.set_targets(cluster_nodes_target_list)
     online_cluster_target_list = run_and_raise(
@@ -89,7 +81,7 @@ def corosync_authkey_change(
 
     if not online_cluster_target_list:
         report_processor.report(
-            ReportItem.error(
+            reports.ReportItem.error(
                 reports.messages.UnableToPerformOperationOnAnyNode()
             )
         )
@@ -110,13 +102,13 @@ def corosync_authkey_change(
 
 def _generate_cluster_uuid(
     corosync_conf: config_facade.ConfigFacade, is_forced: bool
-) -> Tuple[ReportItemList, config_facade.ConfigFacade]:
+) -> Tuple[reports.ReportItemList, config_facade.ConfigFacade]:
     report_list = []
     if corosync_conf.get_cluster_uuid():
         report_list.append(
             reports.ReportItem(
                 severity=reports.item.get_severity(
-                    report_codes.FORCE, is_forced
+                    reports.codes.FORCE, is_forced
                 ),
                 message=reports.messages.ClusterUuidAlreadySet(),
             )
@@ -140,7 +132,7 @@ def generate_cluster_uuid(
     ensure_live_env(env)
     corosync_conf = env.get_corosync_conf()
     report_list, corosync_conf = _generate_cluster_uuid(
-        corosync_conf, report_codes.FORCE in force_flags
+        corosync_conf, reports.codes.FORCE in force_flags
     )
     if env.report_processor.report_list(report_list).has_errors:
         raise LibraryError()
@@ -179,7 +171,7 @@ def generate_cluster_uuid_local(
             raise LibraryError() from e
 
     report_list, corosync_conf = _generate_cluster_uuid(
-        corosync_conf, report_codes.FORCE in force_flags
+        corosync_conf, reports.codes.FORCE in force_flags
     )
     if env.report_processor.report_list(report_list).has_errors:
         raise LibraryError()

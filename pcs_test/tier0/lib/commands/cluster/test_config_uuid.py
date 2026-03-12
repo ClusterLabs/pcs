@@ -1,7 +1,4 @@
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
 from pcs.common.reports import codes as report_codes
 from pcs.lib.commands import cluster
@@ -9,10 +6,7 @@ from pcs.lib.commands import cluster
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
 
-from .common import (
-    CLUSTER_UUID,
-    fixture_totem,
-)
+from .common import CLUSTER_UUID, fixture_totem
 
 
 @mock.patch(

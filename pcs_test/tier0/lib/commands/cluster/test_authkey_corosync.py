@@ -1,8 +1,5 @@
 import json
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
 from pcs.common import reports
 from pcs.lib.commands import cluster
@@ -11,11 +8,7 @@ from pcs.settings import corosync_authkey_bytes
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
 
-from .common import (
-    corosync_conf_fixture,
-    get_two_node,
-    node_fixture,
-)
+from .common import corosync_conf_fixture, get_two_node, node_fixture
 
 TEST_AUTHKEY_DEFAULT_SIZE = corosync_authkey_bytes * b"a"
 TEST_AUTHKEY_LONGER_THAN_DEFAULT = corosync_authkey_bytes * 2 * b"a"
