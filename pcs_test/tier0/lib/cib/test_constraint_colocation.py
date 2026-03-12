@@ -92,7 +92,7 @@ class PrepareOptionsWithSetTest(TestCase):
                 {
                     "option_names": ["unknown"],
                     "option_type": None,
-                    "allowed": ["id", "score"],
+                    "allowed": ["id", "influence", "score"],
                     "allowed_patterns": [],
                 },
             ),

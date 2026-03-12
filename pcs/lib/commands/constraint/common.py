@@ -2,7 +2,7 @@ from functools import partial
 
 from lxml.etree import _Element
 
-from pcs.common import reports
+from pcs.common import const, reports
 from pcs.common.pacemaker.constraint import CibConstraintsDto
 from pcs.lib import validate
 from pcs.lib.cib.constraint import (
@@ -51,7 +51,11 @@ def create_with_set(
     callable duplicate_check takes two elements and decide if they are
         duplicates
     """
-    cib = env.get_cib()
+    required_cib_version = None
+    if tag_name == colocation.TAG and "influence" in constraint_options:
+        required_cib_version = const.PCMK_COLOCATION_INFLUENCE_CIB_VERSION
+
+    cib = env.get_cib(minimal_version=required_cib_version)
 
     find_valid_resource_id = partial(
         constraint.find_valid_resource_id,

@@ -559,7 +559,8 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
         self.assertEqual(stdout, "")
         ac(
             stderr,
-            "Error: invalid role value '{}', allowed values are: {}\n".format(
+            DEPRECATED_STANDALONE_SCORE
+            + "Error: invalid role value '{}', allowed values are: {}\n".format(
                 role, format_list(const.PCMK_ROLES)
             ),
         )
@@ -855,6 +856,29 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
         self.assertIn("value of 'option1' option is empty", stderr)
         self.assertEqual(retval, 1)
 
+    def test_colocation_influence(self):
+        write_file_to_tmpfile(rc("cib-empty-3.5.xml"), self.temp_cib)
+        self.assert_pcs_success(
+            "resource create D1 ocf:pcsmock:minimal".split()
+        )
+        self.assert_pcs_success(
+            "resource create D2 ocf:pcsmock:minimal".split()
+        )
+        self.assert_pcs_success(
+            "constraint colocation add D1 with D2 influence=false".split(),
+            stderr_full="Cluster CIB has been upgraded to latest version\n",
+        )
+        self.assert_pcs_success(
+            ["constraint"],
+            stdout_full=outdent(
+                """\
+                Colocation Constraints:
+                  resource 'D1' with resource 'D2'
+                    score=INFINITY influence=false
+                """
+            ),
+        )
+
     # see also BundleColocation
     def test_colocation_sets(self):  # noqa: PLR0915
         # pylint: disable=too-many-statements
@@ -1148,7 +1172,7 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
         self.assertEqual(stdout, "")
         ac(
             stderr,
-            "Error: invalid option 'foo', allowed options are: 'id', 'score'\n",
+            "Error: invalid option 'foo', allowed options are: 'id', 'influence', 'score'\n",
         )
         self.assertEqual(retval, 1)
 
@@ -1162,6 +1186,31 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
             "Error: invalid score 'foo', use integer or INFINITY or -INFINITY\n",
         )
         self.assertEqual(retval, 1)
+
+    def test_colocation_set_influence(self):
+        write_file_to_tmpfile(rc("cib-empty-3.5.xml"), self.temp_cib)
+        self.assert_pcs_success(
+            "resource create D1 ocf:pcsmock:minimal".split()
+        )
+        self.assert_pcs_success(
+            "resource create D2 ocf:pcsmock:minimal".split()
+        )
+        self.assert_pcs_success(
+            "constraint colocation set D1 D2 setoptions influence=false".split(),
+            stderr_full="CIB has been upgraded to the latest schema version.\n",
+        )
+        self.assert_pcs_success(
+            ["constraint"],
+            stdout_full=outdent(
+                """\
+                Colocation Set Constraints:
+                  Set Constraint:
+                    score=INFINITY influence=false
+                    Resource Set:
+                      Resources: 'D1', 'D2'
+                """
+            ),
+        )
 
     def test_constraint_resource_discovery(self):
         self.assert_pcs_success(
