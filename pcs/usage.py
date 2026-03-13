@@ -1868,6 +1868,24 @@ Commands:
     node rename-cib <old name> <new name> [--force]
         Rename a cluster node in the CIB. Places that cannot be updated
         automatically are reported for manual review.
+        This is one step of the node rename procedure. The full procedure
+        is: put the cluster in standby, stop the cluster, optionally update
+        /etc/hosts and authenticate nodes under new names using 'pcs host
+        auth', rename nodes in corosync.conf using 'pcs cluster node
+        rename-corosync', optionally update addresses using 'pcs cluster
+        link update', start the cluster, rename nodes in the CIB using
+        this command, and remove standby.
+
+    node rename-corosync <old name> <new name> [--skip-offline]
+        Rename a cluster node in corosync.conf and distribute the updated
+        configuration to all nodes.
+        This is one step of the node rename procedure. The full procedure
+        is: put the cluster in standby, stop the cluster, optionally update
+        /etc/hosts and authenticate nodes under new names using 'pcs host
+        auth', rename nodes in corosync.conf using this command, optionally
+        update addresses using 'pcs cluster link update', start the
+        cluster, rename nodes in the CIB using 'pcs cluster node
+        rename-cib', and remove standby.
 
     link add <node_name>=<node_address>... [options <link options>]
         Add a corosync link. One address must be specified for each cluster
