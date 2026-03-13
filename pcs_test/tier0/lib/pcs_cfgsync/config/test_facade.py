@@ -87,3 +87,22 @@ class Facade(TestCase):
             }
         )
         self.assert_all_default_values(facade)
+
+    def test_enable_disable_sync(self):
+        facade = CfgsyncFacade.create()
+
+        self.assertTrue(facade.is_sync_allowed)
+        facade.disable_sync()
+        self.assertFalse(facade.is_sync_allowed)
+        facade.enable_sync()
+        self.assertTrue(facade.is_sync_allowed)
+
+    @mock.patch("pcs.lib.pcs_cfgsync.config.facade.time.time", lambda: 1000)
+    def test_resume_pause_sync(self):
+        facade = CfgsyncFacade.create()
+
+        self.assertFalse(facade.is_sync_paused)
+        facade.pause_sync(300)
+        self.assertTrue(facade.is_sync_paused)
+        facade.resume_sync()
+        self.assertFalse(facade.is_sync_paused)

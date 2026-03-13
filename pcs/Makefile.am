@@ -420,12 +420,14 @@ EXTRA_DIST		= \
 			  lib/pacemaker/state.py \
 			  lib/pacemaker/status.py \
 			  lib/pacemaker/values.py \
+			  lib/pcs_cfgsync/actions.py \
 			  lib/pcs_cfgsync/config/facade.py \
 			  lib/pcs_cfgsync/config/__init__.py \
 			  lib/pcs_cfgsync/const.py \
 			  lib/pcs_cfgsync/fetcher.py \
 			  lib/pcs_cfgsync/__init__.py \
 			  lib/pcs_cfgsync/save_sync.py \
+			  lib/pcs_cfgsync/validations.py \
 			  lib/permissions/__init__.py \
 			  lib/permissions/checker.py \
 			  lib/permissions/config/__init__.py \

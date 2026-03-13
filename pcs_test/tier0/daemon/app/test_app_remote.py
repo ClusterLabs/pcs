@@ -121,7 +121,7 @@ class SyncConfigMutualExclusive(AppTest):
     def fetch_set_sync_options(self, method):
         def fetch_sync_options():
             return self.http_client.fetch(
-                self.get_url("/remote/set_sync_options"), **kwargs
+                self.get_url("/remote/set_configs"), **kwargs
             )
 
         kwargs = (

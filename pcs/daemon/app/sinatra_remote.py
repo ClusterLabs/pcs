@@ -137,7 +137,7 @@ def get_routes(
             ),
         ),
         (
-            r"/remote/(set_sync_options|set_configs)",
+            r"/remote/set_configs",
             SyncConfigMutualExclusive,
             dict(**sinatra_remote_options, sync_config_lock=sync_config_lock),
         ),

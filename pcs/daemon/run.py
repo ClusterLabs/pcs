@@ -151,7 +151,11 @@ def configure_app(  # noqa: PLR0913
 
         routes = api_v2.get_routes(api_v2_auth_factory, async_scheduler)
         routes.extend(api_v1.get_routes(api_auth_factory, async_scheduler))
-        routes.extend(api_v0.get_routes(api_auth_factory, async_scheduler))
+        routes.extend(
+            api_v0.get_routes(
+                api_auth_factory, async_scheduler, sync_config_lock
+            )
+        )
         routes.extend(auth.get_routes(api_auth_factory, lib_auth_provider))
         routes.extend(
             capabilities_app.get_routes(api_auth_factory, pcsd_capabilities)

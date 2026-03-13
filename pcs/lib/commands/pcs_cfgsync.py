@@ -1,10 +1,16 @@
+from typing import Mapping, cast
+
 from pcs.common import reports
 from pcs.common.file import RawFileError
 from pcs.common.pcs_cfgsync_dto import SyncConfigsDto
 from pcs.lib.env import LibraryEnvironment, LibraryError
 from pcs.lib.file.instance import FileInstance
 from pcs.lib.file.raw_file import raw_file_error_report
+from pcs.lib.interface.config import ParserErrorException
+from pcs.lib.pcs_cfgsync.actions import UPDATE_SYNC_OPTIONS_ACTIONS
+from pcs.lib.pcs_cfgsync.config.facade import Facade as CfgsyncCtlFacade
 from pcs.lib.pcs_cfgsync.const import SYNCED_CONFIGS
+from pcs.lib.pcs_cfgsync.validations import validate_update_sync_options
 
 
 def get_configs(env: LibraryEnvironment, cluster_name: str) -> SyncConfigsDto:
@@ -41,3 +47,49 @@ def get_configs(env: LibraryEnvironment, cluster_name: str) -> SyncConfigsDto:
             )
 
     return SyncConfigsDto(current_cluster_name, configs)
+
+
+def update_sync_options(
+    env: LibraryEnvironment, options: Mapping[str, str]
+) -> None:
+    """
+    Update options for pcs cfgsync thread
+
+    options -- options for pcs cfgsync
+    """
+
+    if env.report_processor.report_list(
+        validate_update_sync_options(options)
+    ).has_errors:
+        raise LibraryError()
+
+    cfgsync_ctl_instance = FileInstance.for_pcs_cfgsync_ctl()
+    if not cfgsync_ctl_instance.raw_file.exists():
+        cfgsync_ctl_facade = CfgsyncCtlFacade.create()
+    else:
+        try:
+            cfgsync_ctl_facade = cast(
+                CfgsyncCtlFacade, cfgsync_ctl_instance.read_to_facade()
+            )
+        except RawFileError as e:
+            env.report_processor.report(raw_file_error_report(e))
+        except ParserErrorException as e:
+            env.report_processor.report_list(
+                cfgsync_ctl_instance.parser_exception_to_report_list(e)
+            )
+    if env.report_processor.has_errors:
+        raise LibraryError()
+
+    for option_name, option_value in options.items():
+        UPDATE_SYNC_OPTIONS_ACTIONS[option_name](
+            cfgsync_ctl_facade, option_value
+        )
+
+    try:
+        cfgsync_ctl_instance.write_facade(
+            cfgsync_ctl_facade, can_overwrite=True
+        )
+    except RawFileError as e:
+        env.report_processor.report(raw_file_error_report(e))
+    if env.report_processor.has_errors:
+        raise LibraryError()
