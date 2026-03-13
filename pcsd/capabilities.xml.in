@@ -244,6 +244,14 @@
         API v2: cluster.rename_node_cib
       </description>
     </capability>
+    <capability id="cluster.node.rename-corosync" in-pcs="1" in-pcsd="1">
+      <description>
+        Rename a cluster node in corosync.conf.
+
+        pcs commands: cluster node rename-corosync
+        API v2: cluster.rename_node_corosync
+      </description>
+    </capability>
     <capability id="cluster.rename" in-pcs="1" in-pcsd="1">
       <description>
         Rename configured cluster. The cluster has to be stopped
