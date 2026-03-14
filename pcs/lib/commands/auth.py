@@ -1,9 +1,8 @@
-from typing import Mapping, cast
+from typing import Mapping, Sequence, cast
 
 from pcs.common import reports
 from pcs.common.auth import HostAuthData, HostWithTokenAuthData
 from pcs.common.file import RawFileError
-from pcs.common.file_type_codes import PCS_KNOWN_HOSTS
 from pcs.common.node_communicator import PcsKnownHost, RequestTarget
 from pcs.common.types import StringSequence
 from pcs.lib.auth import validations
@@ -15,7 +14,10 @@ from pcs.lib.file.raw_file import raw_file_error_report
 from pcs.lib.host.config.facade import Facade as KnownHostsFacade
 from pcs.lib.interface.config import ParserErrorException
 from pcs.lib.node import get_existing_nodes_names
-from pcs.lib.pcs_cfgsync.save_sync import save_sync_new_known_hosts
+from pcs.lib.pcs_cfgsync.sync_files import (
+    sync_known_hosts_in_cluster,
+    update_known_hosts_locally,
+)
 
 
 def auth_hosts_token_no_sync(
@@ -41,19 +43,14 @@ def auth_hosts_token_no_sync(
 
     known_hosts_facade = _read_known_hosts_file(env.report_processor)
 
-    known_hosts_facade.update_known_hosts(new_known_hosts)
-    known_hosts_facade.set_data_version(known_hosts_facade.data_version + 1)
-
-    try:
-        FileInstance.for_known_hosts().write_facade(
-            known_hosts_facade, can_overwrite=True
-        )
-    except RawFileError as e:
-        env.report_processor.report(raw_file_error_report(e))
-        raise LibraryError() from e
+    update_known_hosts_locally(
+        known_hosts_facade, new_known_hosts, [], env.report_processor
+    )
+    if env.report_processor.has_errors:
+        raise LibraryError()
 
 
-def auth_hosts(  # noqa: PLR0912
+def auth_hosts(
     env: LibraryEnvironment, hosts: Mapping[str, HostAuthData]
 ) -> None:
     """
@@ -94,85 +91,7 @@ def auth_hosts(  # noqa: PLR0912
 
     known_hosts_facade = _read_known_hosts_file(env.report_processor)
 
-    if not env.has_corosync_conf:
-        # we are not running in a cluster, so just save the new tokens locally
-        known_hosts_facade.update_known_hosts(new_known_hosts)
-        known_hosts_facade.set_data_version(known_hosts_facade.data_version + 1)
-
-        try:
-            FileInstance.for_known_hosts().write_facade(
-                known_hosts_facade, can_overwrite=True
-            )
-        except RawFileError as e:
-            env.report_processor.report(raw_file_error_report(e))
-            raise LibraryError() from e
-        return
-
-    # we are in cluster, so we distribute the new tokens
-    corosync_conf = env.get_corosync_conf()
-    cluster_name = corosync_conf.get_cluster_name()
-
-    # we want to send the tokens to all cluster nodes, but we want to use
-    # the new tokens in case we ran auth on any nodes that are already in
-    # the cluster
-    node_names, report_list = get_existing_nodes_names(corosync_conf, None)
-    env.report_processor.report_list(report_list)
-    new_hosts_already_in_cluster = set(received_tokens) & set(node_names)
-    (
-        report_list,
-        target_list,
-    ) = env.get_node_target_factory().get_target_list_with_reports(
-        sorted(set(node_names) - new_hosts_already_in_cluster),
-        allow_skip=False,
-        report_none_host_found=False,
-    )
-    env.report_processor.report_list(report_list)
-    target_list.extend(
-        RequestTarget.from_known_host(host)
-        for host in new_known_hosts
-        if host.name in new_hosts_already_in_cluster
-    )
-    if not target_list:
-        # we can end, since we have no cluster nodes where to send the config to
-        if env.report_processor.has_errors:
-            raise LibraryError()
-        return
-
-    conflict_detected, failed_nodes, new_file = save_sync_new_known_hosts(
-        known_hosts_facade,
-        new_known_hosts,
-        [],
-        cluster_name,
-        target_list,
-        env.get_node_communicator_no_privilege_transition(),
-        env.report_processor,
-    )
-    if conflict_detected:
-        env.report_processor.report(
-            reports.ReportItem.error(
-                reports.messages.PcsCfgsyncConflictRepeatAction()
-            )
-        )
-        try:
-            if new_file is not None:
-                FileInstance.for_known_hosts().write_facade(new_file, True)
-        except RawFileError as e:
-            env.report_processor.report(raw_file_error_report(e))
-
-    nodes_with_missing_token = set(node_names) - {
-        target.label for target in target_list
-    }
-    if failed_nodes or nodes_with_missing_token:
-        env.report_processor.report(
-            reports.ReportItem.error(
-                reports.messages.PcsCfgsyncSendingConfigsToNodesFailed(
-                    [PCS_KNOWN_HOSTS],
-                    sorted(set(failed_nodes) | nodes_with_missing_token),
-                )
-            )
-        )
-    if env.report_processor.has_errors:
-        raise LibraryError()
+    __auth_deauth_hosts_common(env, known_hosts_facade, new_known_hosts, [])
 
 
 def deauth_hosts(env: LibraryEnvironment, hosts: StringSequence) -> None:
@@ -205,7 +124,7 @@ def deauth_hosts(env: LibraryEnvironment, hosts: StringSequence) -> None:
             raise LibraryError()
         return
 
-    _deauth_hosts_common(env, known_hosts_facade, hosts)
+    __auth_deauth_hosts_common(env, known_hosts_facade, [], hosts)
 
 
 def deauth_all_local_hosts(env: LibraryEnvironment) -> None:
@@ -219,7 +138,7 @@ def deauth_all_local_hosts(env: LibraryEnvironment) -> None:
     if not all_known_hosts:
         return
 
-    _deauth_hosts_common(env, known_hosts_facade, all_known_hosts)
+    __auth_deauth_hosts_common(env, known_hosts_facade, [], all_known_hosts)
 
 
 def _read_known_hosts_file(
@@ -239,77 +158,70 @@ def _read_known_hosts_file(
     raise LibraryError()
 
 
-def _deauth_hosts_common(
+def __auth_deauth_hosts_common(
     env: LibraryEnvironment,
     known_hosts_facade: KnownHostsFacade,
+    new_hosts: Sequence[PcsKnownHost],
     hosts_to_deauth: StringSequence,
 ) -> None:
     """
-    Extracted common parts of deauth commands, to reduce code duplication
-    Deauth hosts and sync the known-hosts file if needed.
+    Extracted common part of auth and deauth commands, to reduce code
+    duplication
+
+    Add and/or remove the hosts and sync the known-hosts file if needed
     """
     if not env.has_corosync_conf:
-        known_hosts_facade.remove_known_hosts(hosts_to_deauth)
-        known_hosts_facade.set_data_version(known_hosts_facade.data_version + 1)
-        try:
-            FileInstance.for_known_hosts().write_facade(
-                known_hosts_facade, can_overwrite=True
-            )
-        except RawFileError as e:
-            env.report_processor.report(raw_file_error_report(e))
+        # we are not running in a cluster, so just save the updated file
+        # locally
+        update_known_hosts_locally(
+            known_hosts_facade, new_hosts, hosts_to_deauth, env.report_processor
+        )
         if env.report_processor.has_errors:
             raise LibraryError()
         return
 
+    # we are in cluster, we distribute the new tokens
     corosync_conf = env.get_corosync_conf()
     cluster_name = corosync_conf.get_cluster_name()
+
+    # we want to send the tokens to all cluster nodes, but we want to use
+    # the new tokens in case we ran auth on any nodes that are already in
+    # the cluster
     node_names, report_list = get_existing_nodes_names(corosync_conf, None)
     env.report_processor.report_list(report_list)
-    report_list, target_list = (
-        env.get_node_target_factory().get_target_list_with_reports(
-            node_names, allow_skip=False
-        )
+    new_hosts_already_in_cluster = {host.name for host in new_hosts} & set(
+        node_names
+    )
+    (
+        report_list,
+        target_list,
+    ) = env.get_node_target_factory().get_target_list_with_reports(
+        sorted(set(node_names) - new_hosts_already_in_cluster), allow_skip=False
     )
     env.report_processor.report_list(report_list)
+    target_list.extend(
+        RequestTarget.from_known_host(host)
+        for host in new_hosts
+        if host.name in new_hosts_already_in_cluster
+    )
     if not target_list:
         # we can end, since we have no cluster nodes where to send the config to
         if env.report_processor.has_errors:
             raise LibraryError()
         return
+    nodes_with_missing_token = set(node_names) - {
+        target.label for target in target_list
+    }
 
-    conflict_detected, failed_nodes, new_file = save_sync_new_known_hosts(
+    sync_known_hosts_in_cluster(
         known_hosts_facade,
-        [],
+        new_hosts,
         hosts_to_deauth,
         cluster_name,
         target_list,
         env.get_node_communicator_no_privilege_transition(),
         env.report_processor,
+        nodes_with_missing_token,
     )
-    if conflict_detected:
-        env.report_processor.report(
-            reports.ReportItem.error(
-                reports.messages.PcsCfgsyncConflictRepeatAction()
-            )
-        )
-        try:
-            if new_file is not None:
-                FileInstance.for_known_hosts().write_facade(new_file, True)
-        except RawFileError as e:
-            env.report_processor.report(raw_file_error_report(e))
-
-    nodes_with_missing_token = set(node_names) - {
-        target.label for target in target_list
-    }
-    if failed_nodes or nodes_with_missing_token:
-        env.report_processor.report(
-            reports.ReportItem.error(
-                reports.messages.PcsCfgsyncSendingConfigsToNodesFailed(
-                    [PCS_KNOWN_HOSTS],
-                    sorted(set(failed_nodes) | nodes_with_missing_token),
-                )
-            )
-        )
-
     if env.report_processor.has_errors:
         raise LibraryError()

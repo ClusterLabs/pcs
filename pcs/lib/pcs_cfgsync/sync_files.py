@@ -1,9 +1,9 @@
 from typing import Optional, Sequence
 
-from pcs.common import reports
-from pcs.common.file_type_codes import PCS_KNOWN_HOSTS, PCS_SETTINGS_CONF
+from pcs.common import file_type_codes, reports
 from pcs.common.host import PcsKnownHost
 from pcs.common.node_communicator import Communicator, RequestTarget
+from pcs.common.types import StringCollection, StringSequence
 from pcs.lib.file.instance import FileInstance
 from pcs.lib.file.raw_file import RawFileError, raw_file_error_report
 from pcs.lib.host.config.facade import Facade as KnownHostsFacade
@@ -31,8 +31,10 @@ def update_pcs_settings_locally(
 def update_known_hosts_locally(
     known_hosts: KnownHostsFacade,
     new_hosts: Sequence[PcsKnownHost],
+    hosts_to_remove: StringSequence,
     report_processor: reports.ReportProcessor,
 ) -> None:
+    known_hosts.remove_known_hosts(hosts_to_remove)
     known_hosts.update_known_hosts(new_hosts)
     known_hosts.set_data_version(known_hosts.data_version + 1)
 
@@ -42,6 +44,73 @@ def update_known_hosts_locally(
         )
     except RawFileError as e:
         report_processor.report(raw_file_error_report(e))
+
+
+def sync_pcs_settings_in_cluster(
+    pcs_settings: PcsSettingsFacade,
+    local_cluster_name: str,
+    request_targets: Sequence[RequestTarget],
+    node_communicator: Communicator,
+    report_processor: reports.ReportProcessor,
+    local_nodes_with_missing_token: StringCollection = (),
+) -> None:
+    conflict_detected, failed_nodes, new_file = save_sync_new_version(
+        file_type_codes.PCS_SETTINGS_CONF,
+        pcs_settings,
+        local_cluster_name,
+        request_targets,
+        node_communicator,
+        report_processor,
+        fetch_on_conflict=True,
+        reject_is_error=True,
+    )
+    if conflict_detected:
+        _handle_conflict(
+            new_file, FileInstance.for_pcs_settings_config(), report_processor
+        )
+
+    if failed_nodes or local_nodes_with_missing_token:
+        report_processor.report(
+            _failed_nodes_report(
+                file_type_codes.PCS_SETTINGS_CONF,
+                failed_nodes,
+                local_nodes_with_missing_token,
+            )
+        )
+
+
+def sync_known_hosts_in_cluster(
+    known_hosts: KnownHostsFacade,
+    new_hosts: Sequence[PcsKnownHost],
+    hosts_to_remove: StringSequence,
+    local_cluster_name: str,
+    request_targets: Sequence[RequestTarget],
+    node_communicator: Communicator,
+    report_processor: reports.ReportProcessor,
+    local_nodes_with_missing_token: StringCollection = (),
+) -> None:
+    conflict_detected, failed_nodes, new_file = save_sync_new_known_hosts(
+        known_hosts,
+        new_hosts,
+        hosts_to_remove,
+        local_cluster_name,
+        request_targets,
+        node_communicator,
+        report_processor,
+    )
+    if conflict_detected:
+        _handle_conflict(
+            new_file, FileInstance.for_known_hosts(), report_processor
+        )
+
+    if failed_nodes or local_nodes_with_missing_token:
+        report_processor.report(
+            _failed_nodes_report(
+                file_type_codes.PCS_KNOWN_HOSTS,
+                failed_nodes,
+                local_nodes_with_missing_token,
+            )
+        )
 
 
 def _handle_conflict(
@@ -61,65 +130,14 @@ def _handle_conflict(
         report_processor.report(raw_file_error_report(e))
 
 
-def sync_pcs_settings_in_cluster(
-    pcs_settings: PcsSettingsFacade,
-    local_cluster_name: str,
-    request_targets: Sequence[RequestTarget],
-    node_communicator: Communicator,
-    report_processor: reports.ReportProcessor,
-) -> None:
-    conflict_detected, failed_nodes, new_file = save_sync_new_version(
-        PCS_SETTINGS_CONF,
-        pcs_settings,
-        local_cluster_name,
-        request_targets,
-        node_communicator,
-        report_processor,
-        fetch_on_conflict=True,
-        reject_is_error=True,
+def _failed_nodes_report(
+    file_type_code: file_type_codes.FileTypeCode,
+    failed_nodes: StringCollection,
+    node_with_missing_token: StringCollection,
+) -> reports.ReportItem:
+    return reports.ReportItem.error(
+        reports.messages.PcsCfgsyncSendingConfigsToNodesFailed(
+            [file_type_code],
+            sorted(set(failed_nodes) | set(node_with_missing_token)),
+        )
     )
-    if conflict_detected:
-        _handle_conflict(
-            new_file, FileInstance.for_pcs_settings_config(), report_processor
-        )
-
-    if failed_nodes:
-        report_processor.report(
-            reports.ReportItem.error(
-                reports.messages.PcsCfgsyncSendingConfigsToNodesFailed(
-                    [PCS_SETTINGS_CONF], sorted(failed_nodes)
-                )
-            )
-        )
-
-
-def sync_known_hosts_in_cluster(
-    known_hosts: KnownHostsFacade,
-    new_hosts: Sequence[PcsKnownHost],
-    local_cluster_name: str,
-    request_targets: Sequence[RequestTarget],
-    node_communicator: Communicator,
-    report_processor: reports.ReportProcessor,
-) -> None:
-    conflict_detected, failed_nodes, new_file = save_sync_new_known_hosts(
-        known_hosts,
-        new_hosts,
-        [],
-        local_cluster_name,
-        request_targets,
-        node_communicator,
-        report_processor,
-    )
-    if conflict_detected:
-        _handle_conflict(
-            new_file, FileInstance.for_known_hosts(), report_processor
-        )
-
-    if failed_nodes:
-        report_processor.report(
-            reports.ReportItem.error(
-                reports.messages.PcsCfgsyncSendingConfigsToNodesFailed(
-                    [PCS_KNOWN_HOSTS], sorted(failed_nodes)
-                )
-            )
-        )
