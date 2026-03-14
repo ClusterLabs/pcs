@@ -6827,3 +6827,16 @@ class NotAuthorizedToChangeFullPermission(NameBuildTest):
             ),
             reports.NotAuthorizedToChangeFullPermission(),
         )
+
+
+class KnownHostsChangeCannotAddAndRemoveAtTheSameTime(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "Hosts cannot be added and removed at the same time: 'node1', "
+                "'nodeX'"
+            ),
+            reports.KnownHostsChangeCannotAddAndRemoveAtTheSameTime(
+                ["nodeX", "node1"]
+            ),
+        )

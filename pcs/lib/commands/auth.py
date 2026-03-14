@@ -141,6 +141,37 @@ def deauth_all_local_hosts(env: LibraryEnvironment) -> None:
     __auth_deauth_hosts_common(env, known_hosts_facade, [], all_known_hosts)
 
 
+def known_hosts_change(
+    env: LibraryEnvironment,
+    hosts_to_add: Mapping[str, HostWithTokenAuthData],
+    hosts_to_remove: StringSequence,
+) -> None:
+    """
+    Legacy command, allowing to directly change contents of known-hosts file on
+    host
+
+    Add and remove known-hosts, synchronize the known-hosts file if the local
+    node is in cluster
+
+    hosts_to_add -- new hosts to be added
+    hosts_to_remove -- hosts to be removed
+    """
+    if env.report_processor.report_list(
+        validations.validate_known_hosts_change(hosts_to_add, hosts_to_remove)
+    ).has_errors:
+        raise LibraryError()
+
+    known_hosts_facade = _read_known_hosts_file(env.report_processor)
+
+    new_known_hosts = [
+        host_data.to_known_host(host_name)
+        for host_name, host_data in hosts_to_add.items()
+    ]
+    __auth_deauth_hosts_common(
+        env, known_hosts_facade, new_known_hosts, hosts_to_remove
+    )
+
+
 def _read_known_hosts_file(
     report_processor: reports.ReportProcessor,
 ) -> KnownHostsFacade:

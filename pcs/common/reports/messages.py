@@ -9223,3 +9223,24 @@ class NotAuthorizedToChangeFullPermission(ReportItemMessage):
             superuser=SUPERUSER,
             full_label=PermissionGrantedType.FULL.value.capitalize(),
         )
+
+
+@dataclass(frozen=True)
+class KnownHostsChangeCannotAddAndRemoveAtTheSameTime(ReportItemMessage):
+    """
+    Cannot add and remove the same known hosts at the same time. Avoid operation
+    without an effect.
+
+    host_labels -- host labels that are both added and removed at the same time
+    """
+
+    host_labels: list[str]
+    _code = codes.KNOWN_HOSTS_CHANGE_CANNOT_ADD_AND_REMOVE_AT_THE_SAME_TIME
+
+    @property
+    def message(self) -> str:
+        return (
+            "Hosts cannot be added and removed at the same time: {list}".format(
+                list=format_list(self.host_labels)
+            )
+        )

@@ -133,11 +133,11 @@ def _handle_conflict(
 def _failed_nodes_report(
     file_type_code: file_type_codes.FileTypeCode,
     failed_nodes: StringCollection,
-    node_with_missing_token: StringCollection,
+    nodes_with_missing_token: StringCollection,
 ) -> reports.ReportItem:
     return reports.ReportItem.error(
         reports.messages.PcsCfgsyncSendingConfigsToNodesFailed(
             [file_type_code],
-            sorted(set(failed_nodes) | set(node_with_missing_token)),
+            sorted(set(failed_nodes) | set(nodes_with_missing_token)),
         )
     )

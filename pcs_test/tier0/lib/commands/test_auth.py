@@ -14,6 +14,7 @@ from pcs_test.tools.fixture_pcs_cfgsync import (
     fixture_expected_save_sync_reports,
     fixture_known_hosts_file_content,
     fixture_save_sync_new_known_hosts_conflict,
+    fixture_save_sync_new_known_hosts_error,
     fixture_save_sync_new_known_hosts_success,
 )
 
@@ -1247,3 +1248,355 @@ class DeauthAllLocalHosts(TestCase):
         )
 
         auth.deauth_all_local_hosts(self.env_assist.get_env())
+
+
+class KnownHostsChangeNotInCluster(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+
+    def test_validation_failures(self):
+        self.env_assist.assert_raise_library_error(
+            lambda: auth.known_hosts_change(
+                self.env_assist.get_env(),
+                hosts_to_add={
+                    "node1": HostWithTokenAuthData(
+                        "TOKEN", [Destination("node3", 2224)]
+                    )
+                },
+                hosts_to_remove=["node1"],
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.KNOWN_HOSTS_CHANGE_CANNOT_ADD_AND_REMOVE_AT_THE_SAME_TIME,
+                    host_labels=["node1"],
+                )
+            ]
+        )
+
+    def test_success(self):
+        self.config.raw_file.exists(
+            PCS_KNOWN_HOSTS,
+            settings.pcsd_known_hosts_location,
+            name="known_hosts.exists",
+        )
+        self.config.raw_file.read(
+            PCS_KNOWN_HOSTS,
+            settings.pcsd_known_hosts_location,
+            content=fixture_known_hosts_file_content(1, _FIXTURE_KNOWN_HOSTS),
+        )
+        self.config.raw_file.exists(
+            COROSYNC_CONF,
+            settings.corosync_conf_file,
+            exists=False,
+            name="corosync.exists",
+        )
+        self.config.raw_file.write(
+            PCS_KNOWN_HOSTS,
+            settings.pcsd_known_hosts_location,
+            fixture_known_hosts_file_content(
+                2,
+                {
+                    "node2": _FIXTURE_KNOWN_HOSTS["node2"],
+                    "node3": PcsKnownHost(
+                        "node3", "TOKEN", [Destination("node3", 2224)]
+                    ),
+                    "node4": PcsKnownHost(
+                        "node4", "TOKEN", [Destination("node4", 2224)]
+                    ),
+                },
+            ).encode("utf-8"),
+            can_overwrite=True,
+        )
+
+        auth.known_hosts_change(
+            self.env_assist.get_env(),
+            hosts_to_add={
+                "node3": HostWithTokenAuthData(
+                    "TOKEN", [Destination("node3", 2224)]
+                ),
+                "node4": HostWithTokenAuthData(
+                    "TOKEN", [Destination("node4", 2224)]
+                ),
+            },
+            hosts_to_remove=["node1"],
+        )
+
+    def test_error_reading_file(self):
+        self.config.raw_file.exists(
+            PCS_KNOWN_HOSTS,
+            settings.pcsd_known_hosts_location,
+            name="known_hosts.exists",
+        )
+        self.config.raw_file.read(
+            PCS_KNOWN_HOSTS,
+            settings.pcsd_known_hosts_location,
+            exception_msg="some error",
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: auth.known_hosts_change(
+                self.env_assist.get_env(),
+                hosts_to_add={
+                    "node3": HostWithTokenAuthData(
+                        "TOKEN", [Destination("node3", 2224)]
+                    ),
+                },
+                hosts_to_remove=["node1"],
+            )
+        )
+
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.FILE_IO_ERROR,
+                    file_type_code=PCS_KNOWN_HOSTS,
+                    operation="read",
+                    reason="some error",
+                    file_path=settings.pcsd_known_hosts_location,
+                )
+            ],
+        )
+
+    def test_error_writing_file(self):
+        self.config.raw_file.exists(
+            PCS_KNOWN_HOSTS,
+            settings.pcsd_known_hosts_location,
+            name="known_hosts.exists",
+        )
+        self.config.raw_file.read(
+            PCS_KNOWN_HOSTS,
+            settings.pcsd_known_hosts_location,
+            content=fixture_known_hosts_file_content(1, _FIXTURE_KNOWN_HOSTS),
+        )
+        self.config.raw_file.exists(
+            COROSYNC_CONF,
+            settings.corosync_conf_file,
+            exists=False,
+            name="corosync.exists",
+        )
+        self.config.raw_file.write(
+            PCS_KNOWN_HOSTS,
+            settings.pcsd_known_hosts_location,
+            fixture_known_hosts_file_content(
+                2,
+                {
+                    "node2": _FIXTURE_KNOWN_HOSTS["node2"],
+                    "node3": PcsKnownHost(
+                        "node3", "TOKEN", [Destination("node3", 2224)]
+                    ),
+                },
+            ).encode("utf-8"),
+            can_overwrite=True,
+            exception_msg="some error",
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: auth.known_hosts_change(
+                self.env_assist.get_env(),
+                hosts_to_add={
+                    "node3": HostWithTokenAuthData(
+                        "TOKEN", [Destination("node3", 2224)]
+                    ),
+                },
+                hosts_to_remove=["node1"],
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.FILE_IO_ERROR,
+                    file_type_code=PCS_KNOWN_HOSTS,
+                    operation="write",
+                    reason="some error",
+                    file_path=settings.pcsd_known_hosts_location,
+                )
+            ]
+        )
+
+
+class KnownHostsChangeInCluster(TestCase):
+    EXPECTED_KNOWN_HOSTS = {
+        "node2": _FIXTURE_KNOWN_HOSTS["node2"],
+        "node3": PcsKnownHost("node3", "TOKEN", [Destination("node3", 2224)]),
+    }
+
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+        self.node_labels = list(_FIXTURE_KNOWN_HOSTS.keys())
+        self.config.env.set_known_nodes(self.node_labels)
+
+    def fixture_read_local_files(self):
+        self.config.raw_file.exists(
+            PCS_KNOWN_HOSTS,
+            settings.pcsd_known_hosts_location,
+            name="known_hosts.exists",
+        )
+        self.config.raw_file.read(
+            PCS_KNOWN_HOSTS,
+            settings.pcsd_known_hosts_location,
+            content=fixture_known_hosts_file_content(1, _FIXTURE_KNOWN_HOSTS),
+        )
+        self.config.raw_file.exists(
+            COROSYNC_CONF, settings.corosync_conf_file, name="corosync.exists"
+        )
+        self.config.corosync_conf.load(self.node_labels)
+
+    def test_success(self):
+        self.fixture_read_local_files()
+        fixture_save_sync_new_known_hosts_success(
+            self.config,
+            file_data_version=2,
+            known_hosts=self.EXPECTED_KNOWN_HOSTS,
+            node_labels=self.node_labels,
+        )
+
+        auth.known_hosts_change(
+            self.env_assist.get_env(),
+            hosts_to_add={
+                "node3": HostWithTokenAuthData(
+                    "TOKEN", [Destination("node3", 2224)]
+                ),
+            },
+            hosts_to_remove=["node1"],
+        )
+
+        self.env_assist.assert_reports(
+            fixture_expected_save_sync_reports(
+                file_type=PCS_KNOWN_HOSTS, node_labels=self.node_labels
+            )
+        )
+
+    def test_conflict_syncing_known_hosts(self):
+        self.fixture_read_local_files()
+        new_file = fixture_save_sync_new_known_hosts_conflict(
+            self.config,
+            self.node_labels,
+            _FIXTURE_KNOWN_HOSTS,
+            new_hosts={
+                "node3": PcsKnownHost(
+                    "node3", "TOKEN", [Destination("node3", 2224)]
+                )
+            },
+            hosts_to_remove=["node1"],
+        )
+        self.config.raw_file.write(
+            PCS_KNOWN_HOSTS,
+            settings.pcsd_known_hosts_location,
+            file_data=new_file.encode(),
+            can_overwrite=True,
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: auth.known_hosts_change(
+                self.env_assist.get_env(),
+                hosts_to_add={
+                    "node3": HostWithTokenAuthData(
+                        "TOKEN", [Destination("node3", 2224)]
+                    ),
+                },
+                hosts_to_remove=["node1"],
+            )
+        )
+
+        self.env_assist.assert_reports(
+            fixture_expected_save_sync_reports(
+                file_type=PCS_KNOWN_HOSTS,
+                expected_result="conflict",
+                conflict_is_error=False,
+                node_labels=self.node_labels,
+            )
+            + fixture_expected_save_sync_reports(
+                file_type=PCS_KNOWN_HOSTS,
+                expected_result="conflict",
+                conflict_is_error=True,
+                node_labels=self.node_labels,
+            )
+        )
+
+    def test_conflict_syncing_known_hosts_error_writing_new_file(self):
+        self.fixture_read_local_files()
+        new_file = fixture_save_sync_new_known_hosts_conflict(
+            self.config,
+            self.node_labels,
+            _FIXTURE_KNOWN_HOSTS,
+            new_hosts={
+                "node3": PcsKnownHost(
+                    "node3", "TOKEN", [Destination("node3", 2224)]
+                )
+            },
+            hosts_to_remove=["node1"],
+        )
+        self.config.raw_file.write(
+            PCS_KNOWN_HOSTS,
+            settings.pcsd_known_hosts_location,
+            file_data=new_file.encode(),
+            can_overwrite=True,
+            exception_msg="some error",
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: auth.known_hosts_change(
+                self.env_assist.get_env(),
+                hosts_to_add={
+                    "node3": HostWithTokenAuthData(
+                        "TOKEN", [Destination("node3", 2224)]
+                    ),
+                },
+                hosts_to_remove=["node1"],
+            )
+        )
+
+        self.env_assist.assert_reports(
+            fixture_expected_save_sync_reports(
+                file_type=PCS_KNOWN_HOSTS,
+                expected_result="conflict",
+                conflict_is_error=False,
+                node_labels=self.node_labels,
+            )
+            + fixture_expected_save_sync_reports(
+                file_type=PCS_KNOWN_HOSTS,
+                expected_result="conflict",
+                conflict_is_error=True,
+                node_labels=self.node_labels,
+            )
+            + [
+                fixture.error(
+                    reports.codes.FILE_IO_ERROR,
+                    file_type_code=PCS_KNOWN_HOSTS,
+                    operation="write",
+                    reason="some error",
+                    file_path=settings.pcsd_known_hosts_location,
+                ),
+            ]
+        )
+
+    def test_error_syncing_known_hosts(self):
+        self.fixture_read_local_files()
+        fixture_save_sync_new_known_hosts_error(
+            self.config,
+            self.node_labels,
+            file_data_version=2,
+            known_hosts=self.EXPECTED_KNOWN_HOSTS,
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: auth.known_hosts_change(
+                self.env_assist.get_env(),
+                hosts_to_add={
+                    "node3": HostWithTokenAuthData(
+                        "TOKEN", [Destination("node3", 2224)]
+                    ),
+                },
+                hosts_to_remove=["node1"],
+            )
+        )
+
+        self.env_assist.assert_reports(
+            fixture_expected_save_sync_reports(
+                file_type=PCS_KNOWN_HOSTS,
+                node_labels=self.node_labels,
+                expected_result="error",
+            )
+        )
