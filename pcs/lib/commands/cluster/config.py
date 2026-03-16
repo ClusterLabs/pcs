@@ -9,16 +9,14 @@ from pcs.common.types import (
     CorosyncTransportType,
     UnknownCorosyncTransportTypeException,
 )
-from pcs.lib.commands.cluster.common import (
-    ensure_live_env,
-    verify_corosync_conf,
-)
+from pcs.lib.commands.cluster.utils import ensure_live_env, verify_corosync_conf
 from pcs.lib.corosync import config_facade, config_validators
 from pcs.lib.corosync import constants as corosync_constants
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 from pcs.lib.file.instance import FileInstance
 from pcs.lib.interface.config import ParserErrorException
+from pcs.lib.tools import generate_uuid
 
 
 def _config_update(
@@ -190,3 +188,82 @@ def get_corosync_conf_struct(env: LibraryEnvironment) -> CorosyncConfDto:
                 )
             )
         ) from e
+
+
+def _generate_cluster_uuid(
+    corosync_conf: config_facade.ConfigFacade, is_forced: bool
+) -> tuple[reports.ReportItemList, config_facade.ConfigFacade]:
+    report_list = []
+    if corosync_conf.get_cluster_uuid():
+        report_list.append(
+            reports.ReportItem(
+                severity=reports.item.get_severity(
+                    reports.codes.FORCE, is_forced
+                ),
+                message=reports.messages.ClusterUuidAlreadySet(),
+            )
+        )
+        if not is_forced:
+            return report_list, corosync_conf
+
+    corosync_conf.set_cluster_uuid(generate_uuid())
+    return report_list, corosync_conf
+
+
+def generate_cluster_uuid(
+    env: LibraryEnvironment,
+    force_flags: reports.types.ForceFlags = (),
+) -> None:
+    """
+    Add or update cluster UUID in live cluster
+
+    env
+    """
+    ensure_live_env(env)
+    corosync_conf = env.get_corosync_conf()
+    report_list, corosync_conf = _generate_cluster_uuid(
+        corosync_conf, reports.codes.FORCE in force_flags
+    )
+    if env.report_processor.report_list(report_list).has_errors:
+        raise LibraryError()
+    env.push_corosync_conf(corosync_conf)
+
+
+def generate_cluster_uuid_local(
+    env: LibraryEnvironment,
+    corosync_conf_content: bytes,
+    force_flags: reports.types.ForceFlags = (),
+) -> bytes:
+    """
+    Add or update cluster UUID in corosync.conf passed as an argument and return
+    the updated config
+
+    env
+    corosync_conf_content -- corosync.conf to be updated
+    """
+    ensure_live_env(env)
+    corosync_conf_instance = FileInstance.for_corosync_conf()
+    try:
+        corosync_conf: config_facade.ConfigFacade = cast(
+            config_facade.ConfigFacade,
+            corosync_conf_instance.raw_to_facade(corosync_conf_content),
+        )
+    except ParserErrorException as e:
+        if env.report_processor.report_list(
+            corosync_conf_instance.toolbox.parser.exception_to_report_list(
+                e,
+                corosync_conf_instance.toolbox.file_type_code,
+                None,
+                force_code=None,
+                is_forced_or_warning=False,
+            )
+        ).has_errors:
+            raise LibraryError() from e
+
+    report_list, corosync_conf = _generate_cluster_uuid(
+        corosync_conf, reports.codes.FORCE in force_flags
+    )
+    if env.report_processor.report_list(report_list).has_errors:
+        raise LibraryError()
+
+    return corosync_conf_instance.facade_to_raw(corosync_conf)
