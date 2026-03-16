@@ -1,7 +1,7 @@
 from pcs.common import reports
 from pcs.lib.cib.resource.guest_node import find_node_list as get_guest_nodes
 from pcs.lib.cib.resource.remote_node import find_node_list as get_remote_nodes
-from pcs.lib.commands.cluster.common import ensure_live_env
+from pcs.lib.commands.cluster.utils import ensure_live_env
 from pcs.lib.corosync import config_validators
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError

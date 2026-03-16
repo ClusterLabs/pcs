@@ -398,17 +398,18 @@ class CheckLive(TestCase):
 
 
 @mock.patch(
-    "pcs.lib.commands.cluster.setup.generate_uuid", lambda: CLUSTER_UUID
+    "pcs.lib.commands.cluster.setup_cluster.generate_uuid", lambda: CLUSTER_UUID
 )
 @mock.patch(
-    "pcs.lib.commands.cluster.setup.generate_binary_key",
+    "pcs.lib.commands.cluster.setup_cluster.generate_binary_key",
     lambda random_bytes_count: RANDOM_KEY,
 )
 @mock.patch(
-    "pcs.lib.commands.cluster.setup.ssl.generate_key", lambda: PCSD_SSL_KEY
+    "pcs.lib.commands.cluster.setup_cluster.ssl.generate_key",
+    lambda: PCSD_SSL_KEY,
 )
 @mock.patch(
-    "pcs.lib.commands.cluster.setup.ssl.generate_cert",
+    "pcs.lib.commands.cluster.setup_cluster.ssl.generate_cert",
     lambda ssl_key, server_name: PCSD_SSL_CERT,
 )
 class SetupSuccessMinimal(TestCase):
@@ -599,17 +600,18 @@ class SetupSuccessMinimal(TestCase):
 
 
 @mock.patch(
-    "pcs.lib.commands.cluster.setup.generate_uuid", lambda: CLUSTER_UUID
+    "pcs.lib.commands.cluster.setup_cluster.generate_uuid", lambda: CLUSTER_UUID
 )
 @mock.patch(
-    "pcs.lib.commands.cluster.setup.generate_binary_key",
+    "pcs.lib.commands.cluster.setup_cluster.generate_binary_key",
     lambda random_bytes_count: RANDOM_KEY,
 )
 @mock.patch(
-    "pcs.lib.commands.cluster.setup.ssl.generate_key", lambda: PCSD_SSL_KEY
+    "pcs.lib.commands.cluster.setup_cluster.ssl.generate_key",
+    lambda: PCSD_SSL_KEY,
 )
 @mock.patch(
-    "pcs.lib.commands.cluster.setup.ssl.generate_cert",
+    "pcs.lib.commands.cluster.setup_cluster.ssl.generate_cert",
     lambda ssl_key, server_name: PCSD_SSL_CERT,
 )
 class SetupSuccessNoClusterUuid(TestCase):
@@ -635,17 +637,18 @@ class SetupSuccessNoClusterUuid(TestCase):
 
 
 @mock.patch(
-    "pcs.lib.commands.cluster.setup.generate_uuid", lambda: CLUSTER_UUID
+    "pcs.lib.commands.cluster.setup_cluster.generate_uuid", lambda: CLUSTER_UUID
 )
 @mock.patch(
-    "pcs.lib.commands.cluster.setup.generate_binary_key",
+    "pcs.lib.commands.cluster.setup_cluster.generate_binary_key",
     lambda random_bytes_count: RANDOM_KEY,
 )
 @mock.patch(
-    "pcs.lib.commands.cluster.setup.ssl.generate_key", lambda: PCSD_SSL_KEY
+    "pcs.lib.commands.cluster.setup_cluster.ssl.generate_key",
+    lambda: PCSD_SSL_KEY,
 )
 @mock.patch(
-    "pcs.lib.commands.cluster.setup.ssl.generate_cert",
+    "pcs.lib.commands.cluster.setup_cluster.ssl.generate_cert",
     lambda ssl_key, server_name: PCSD_SSL_CERT,
 )
 class SetupSuccessAddresses(TestCase):
@@ -713,17 +716,18 @@ class SetupSuccessAddresses(TestCase):
 
 
 @mock.patch(
-    "pcs.lib.commands.cluster.setup.generate_uuid", lambda: CLUSTER_UUID
+    "pcs.lib.commands.cluster.setup_cluster.generate_uuid", lambda: CLUSTER_UUID
 )
 @mock.patch(
-    "pcs.lib.commands.cluster.setup.generate_binary_key",
+    "pcs.lib.commands.cluster.setup_cluster.generate_binary_key",
     lambda random_bytes_count: RANDOM_KEY,
 )
 @mock.patch(
-    "pcs.lib.commands.cluster.setup.ssl.generate_key", lambda: PCSD_SSL_KEY
+    "pcs.lib.commands.cluster.setup_cluster.ssl.generate_key",
+    lambda: PCSD_SSL_KEY,
 )
 @mock.patch(
-    "pcs.lib.commands.cluster.setup.ssl.generate_cert",
+    "pcs.lib.commands.cluster.setup_cluster.ssl.generate_cert",
     lambda ssl_key, server_name: PCSD_SSL_CERT,
 )
 class Setup2NodeSuccessMinimal(TestCase):
@@ -810,17 +814,18 @@ class Setup2NodeSuccessMinimal(TestCase):
 
 
 @mock.patch(
-    "pcs.lib.commands.cluster.setup.generate_uuid", lambda: CLUSTER_UUID
+    "pcs.lib.commands.cluster.setup_cluster.generate_uuid", lambda: CLUSTER_UUID
 )
 @mock.patch(
-    "pcs.lib.commands.cluster.setup.generate_binary_key",
+    "pcs.lib.commands.cluster.setup_cluster.generate_binary_key",
     lambda random_bytes_count: RANDOM_KEY,
 )
 @mock.patch(
-    "pcs.lib.commands.cluster.setup.ssl.generate_key", lambda: PCSD_SSL_KEY
+    "pcs.lib.commands.cluster.setup_cluster.ssl.generate_key",
+    lambda: PCSD_SSL_KEY,
 )
 @mock.patch(
-    "pcs.lib.commands.cluster.setup.ssl.generate_cert",
+    "pcs.lib.commands.cluster.setup_cluster.ssl.generate_cert",
     lambda ssl_key, server_name: PCSD_SSL_CERT,
 )
 class Validation(TestCase):
@@ -1994,17 +1999,18 @@ QUORUM_OPTIONS = dict(
 
 
 @mock.patch(
-    "pcs.lib.commands.cluster.setup.generate_uuid", lambda: CLUSTER_UUID
+    "pcs.lib.commands.cluster.setup_cluster.generate_uuid", lambda: CLUSTER_UUID
 )
 @mock.patch(
-    "pcs.lib.commands.cluster.setup.generate_binary_key",
+    "pcs.lib.commands.cluster.setup_cluster.generate_binary_key",
     lambda random_bytes_count: RANDOM_KEY,
 )
 @mock.patch(
-    "pcs.lib.commands.cluster.setup.ssl.generate_key", lambda: PCSD_SSL_KEY
+    "pcs.lib.commands.cluster.setup_cluster.ssl.generate_key",
+    lambda: PCSD_SSL_KEY,
 )
 @mock.patch(
-    "pcs.lib.commands.cluster.setup.ssl.generate_cert",
+    "pcs.lib.commands.cluster.setup_cluster.ssl.generate_cert",
     lambda ssl_key, server_name: PCSD_SSL_CERT,
 )
 class TransportKnetSuccess(TestCase):
@@ -2172,17 +2178,18 @@ class TransportKnetSuccess(TestCase):
 
 
 @mock.patch(
-    "pcs.lib.commands.cluster.setup.generate_uuid", lambda: CLUSTER_UUID
+    "pcs.lib.commands.cluster.setup_cluster.generate_uuid", lambda: CLUSTER_UUID
 )
 @mock.patch(
-    "pcs.lib.commands.cluster.setup.generate_binary_key",
+    "pcs.lib.commands.cluster.setup_cluster.generate_binary_key",
     lambda random_bytes_count: RANDOM_KEY,
 )
 @mock.patch(
-    "pcs.lib.commands.cluster.setup.ssl.generate_key", lambda: PCSD_SSL_KEY
+    "pcs.lib.commands.cluster.setup_cluster.ssl.generate_key",
+    lambda: PCSD_SSL_KEY,
 )
 @mock.patch(
-    "pcs.lib.commands.cluster.setup.ssl.generate_cert",
+    "pcs.lib.commands.cluster.setup_cluster.ssl.generate_cert",
     lambda ssl_key, server_name: PCSD_SSL_CERT,
 )
 class TransportUdpSuccess(TestCase):
@@ -2275,17 +2282,18 @@ def get_time_mock(step=1):
 
 
 @mock.patch(
-    "pcs.lib.commands.cluster.setup.generate_uuid", lambda: CLUSTER_UUID
+    "pcs.lib.commands.cluster.setup_cluster.generate_uuid", lambda: CLUSTER_UUID
 )
 @mock.patch(
-    "pcs.lib.commands.cluster.setup.generate_binary_key",
+    "pcs.lib.commands.cluster.setup_cluster.generate_binary_key",
     lambda random_bytes_count: RANDOM_KEY,
 )
 @mock.patch(
-    "pcs.lib.commands.cluster.setup.ssl.generate_key", lambda: PCSD_SSL_KEY
+    "pcs.lib.commands.cluster.setup_cluster.ssl.generate_key",
+    lambda: PCSD_SSL_KEY,
 )
 @mock.patch(
-    "pcs.lib.commands.cluster.setup.ssl.generate_cert",
+    "pcs.lib.commands.cluster.setup_cluster.ssl.generate_cert",
     lambda ssl_key, server_name: PCSD_SSL_CERT,
 )
 class SetupWithWait(TestCase):
@@ -2619,17 +2627,18 @@ REASON = "error msg"
 
 
 @mock.patch(
-    "pcs.lib.commands.cluster.setup.generate_uuid", lambda: CLUSTER_UUID
+    "pcs.lib.commands.cluster.setup_cluster.generate_uuid", lambda: CLUSTER_UUID
 )
 @mock.patch(
-    "pcs.lib.commands.cluster.setup.generate_binary_key",
+    "pcs.lib.commands.cluster.setup_cluster.generate_binary_key",
     lambda random_bytes_count: RANDOM_KEY,
 )
 @mock.patch(
-    "pcs.lib.commands.cluster.setup.ssl.generate_key", lambda: PCSD_SSL_KEY
+    "pcs.lib.commands.cluster.setup_cluster.ssl.generate_key",
+    lambda: PCSD_SSL_KEY,
 )
 @mock.patch(
-    "pcs.lib.commands.cluster.setup.ssl.generate_cert",
+    "pcs.lib.commands.cluster.setup_cluster.ssl.generate_cert",
     lambda ssl_key, server_name: PCSD_SSL_CERT,
 )
 class Failures(RemoveCallsMixin, TestCase):
@@ -3197,10 +3206,10 @@ class Failures(RemoveCallsMixin, TestCase):
 
 
 @mock.patch(
-    "pcs.lib.commands.cluster.setup.generate_uuid", lambda: CLUSTER_UUID
+    "pcs.lib.commands.cluster.setup_cluster.generate_uuid", lambda: CLUSTER_UUID
 )
 @mock.patch(
-    "pcs.lib.commands.cluster.setup.generate_binary_key",
+    "pcs.lib.commands.cluster.setup_cluster.generate_binary_key",
     lambda random_bytes_count: RANDOM_KEY,
 )
 class SslCertSync(RemoveCallsMixin, TestCase):
@@ -3315,10 +3324,11 @@ class SslCertSync(RemoveCallsMixin, TestCase):
         )
 
     @mock.patch(
-        "pcs.lib.commands.cluster.setup.ssl.generate_key", lambda: PCSD_SSL_KEY
+        "pcs.lib.commands.cluster.setup_cluster.ssl.generate_key",
+        lambda: PCSD_SSL_KEY,
     )
     @mock.patch(
-        "pcs.lib.commands.cluster.setup.ssl.generate_cert",
+        "pcs.lib.commands.cluster.setup_cluster.ssl.generate_cert",
         lambda ssl_key, server_name: PCSD_SSL_CERT,
     )
     def test_sync_success(self):
@@ -3358,10 +3368,11 @@ class SslCertSync(RemoveCallsMixin, TestCase):
         )
 
     @mock.patch(
-        "pcs.lib.commands.cluster.setup.ssl.generate_key", lambda: PCSD_SSL_KEY
+        "pcs.lib.commands.cluster.setup_cluster.ssl.generate_key",
+        lambda: PCSD_SSL_KEY,
     )
     @mock.patch(
-        "pcs.lib.commands.cluster.setup.ssl.generate_cert",
+        "pcs.lib.commands.cluster.setup_cluster.ssl.generate_cert",
         lambda ssl_key, server_name: PCSD_SSL_CERT,
     )
     def test_sending_failure(self):
@@ -3419,7 +3430,7 @@ class SslCertSync(RemoveCallsMixin, TestCase):
 
 
 @mock.patch(
-    "pcs.lib.commands.cluster.setup.generate_uuid", lambda: CLUSTER_UUID
+    "pcs.lib.commands.cluster.setup_cluster.generate_uuid", lambda: CLUSTER_UUID
 )
 class SetupLocal(TestCase):
     def setUp(self):

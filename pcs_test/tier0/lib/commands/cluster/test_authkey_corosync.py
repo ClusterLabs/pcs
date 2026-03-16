@@ -66,7 +66,7 @@ class CorosyncAuthkeyVariants(TestCase):
         )
 
     @mock.patch(
-        "pcs.lib.commands.cluster.authkey.generate_binary_key",
+        "pcs.lib.commands.cluster.misc.generate_binary_key",
         lambda random_bytes_count: TEST_AUTHKEY_DEFAULT_SIZE,
     )
     def test_no_key(self):
@@ -151,7 +151,7 @@ class CorosyncAuthkeyVariants(TestCase):
 
 
 @mock.patch(
-    "pcs.lib.commands.cluster.authkey.generate_binary_key",
+    "pcs.lib.commands.cluster.misc.generate_binary_key",
     lambda random_bytes_count: TEST_AUTHKEY_DEFAULT_SIZE,
 )
 class FailureGetOnlineTargets(TestCase):
@@ -308,7 +308,7 @@ class FailureGetOnlineTargets(TestCase):
 
 
 @mock.patch(
-    "pcs.lib.commands.cluster.authkey.generate_binary_key",
+    "pcs.lib.commands.cluster.misc.generate_binary_key",
     lambda random_bytes_count: TEST_AUTHKEY_DEFAULT_SIZE,
 )
 class FailureReloadCorosyncConf(TestCase):
@@ -504,7 +504,7 @@ class FailureReloadCorosyncConf(TestCase):
 
 
 @mock.patch(
-    "pcs.lib.commands.cluster.authkey.generate_binary_key",
+    "pcs.lib.commands.cluster.misc.generate_binary_key",
     lambda random_bytes_count: TEST_AUTHKEY_DEFAULT_SIZE,
 )
 class FailureDistributeCorosyncAuthkey(TestCase):

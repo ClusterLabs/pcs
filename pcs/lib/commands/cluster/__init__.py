@@ -1,18 +1,20 @@
-from .authkey import (
-    corosync_authkey_change,
+from .config import (
+    config_update,
+    config_update_local,
     generate_cluster_uuid,
     generate_cluster_uuid_local,
+    get_corosync_conf_struct,
 )
-from .config import config_update, config_update_local, get_corosync_conf_struct
-from .links import add_link, remove_links, update_link
-from .node_add import add_nodes
-from .node_clear import node_clear
-from .node_remove import remove_nodes, remove_nodes_from_cib
-from .node_rename import rename_node_cib
-from .rename import rename
-from .setup import setup, setup_local
-from .verify import verify
-from .wait import wait_for_pcmk_idle
+from .link import add_link, remove_links, update_link
+from .misc import corosync_authkey_change, rename, verify, wait_for_pcmk_idle
+from .node import (
+    node_clear,
+    remove_nodes,
+    remove_nodes_from_cib,
+    rename_node_cib,
+)
+from .setup_cluster import setup, setup_local
+from .setup_node import add_nodes
 
 __all__ = [
     "add_link",

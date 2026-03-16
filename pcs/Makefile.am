@@ -339,21 +339,16 @@ EXTRA_DIST		= \
 			  lib/commands/booth.py \
 			  lib/commands/cib.py \
 			  lib/commands/cib_options.py \
-			  lib/commands/cluster/authkey.py \
-			  lib/commands/cluster/common.py \
+			  lib/commands/cluster/utils.py \
 			  lib/commands/cluster/config.py \
 			  lib/commands/cluster/__init__.py \
-			  lib/commands/cluster/links.py \
-			  lib/commands/cluster/node_add.py \
-			  lib/commands/cluster/node_clear.py \
-			  lib/commands/cluster/node_provisioning.py \
-			  lib/commands/cluster/node_remove.py \
-			  lib/commands/cluster/node_rename.py \
-			  lib/commands/cluster/rename.py \
-			  lib/commands/cluster/setup.py \
-			  lib/commands/cluster/verify.py \
-			  lib/commands/cluster/wait.py \
+			  lib/commands/cluster/link.py \
+			  lib/commands/cluster/misc.py \
+			  lib/commands/cluster/node.py \
 			  lib/commands/cluster_property.py \
+			  lib/commands/cluster/setup_cluster.py \
+			  lib/commands/cluster/setup_node.py \
+			  lib/commands/cluster/setup_utils.py \
 			  lib/commands/constraint/colocation.py \
 			  lib/commands/constraint/common.py \
 			  lib/commands/constraint/__init__.py \
