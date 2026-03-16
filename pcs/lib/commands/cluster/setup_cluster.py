@@ -3,19 +3,16 @@ from typing import Any, Mapping, Optional, Sequence
 from pcs import settings
 from pcs.common import reports, ssl
 from pcs.lib import node_communication_format
-from pcs.lib.commands.cluster.common import (
-    ensure_live_env,
-    get_validated_wait_timeout,
-    is_ssl_cert_sync_enabled,
-    start_cluster,
-    verify_corosync_conf,
-)
-from pcs.lib.commands.cluster.node_provisioning import (
+from pcs.lib.commands.cluster.setup_utils import (
     get_addrs_defaulter,
+    get_validated_wait_timeout,
     host_check_cluster_setup,
+    is_ssl_cert_sync_enabled,
     normalize_dict,
     set_defaults_in_dict,
+    start_cluster,
 )
+from pcs.lib.commands.cluster.utils import ensure_live_env, verify_corosync_conf
 from pcs.lib.communication import cluster
 from pcs.lib.communication.nodes import (
     DistributeFilesWithoutForces,

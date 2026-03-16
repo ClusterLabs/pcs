@@ -10,7 +10,7 @@ from .common import CLUSTER_UUID, fixture_totem
 
 
 @mock.patch(
-    "pcs.lib.commands.cluster.authkey.generate_uuid", lambda: CLUSTER_UUID
+    "pcs.lib.commands.cluster.config.generate_uuid", lambda: CLUSTER_UUID
 )
 class GenerateUuid(TestCase):
     def setUp(self):
@@ -54,7 +54,7 @@ class GenerateUuid(TestCase):
 
 
 @mock.patch(
-    "pcs.lib.commands.cluster.authkey.generate_uuid", lambda: CLUSTER_UUID
+    "pcs.lib.commands.cluster.config.generate_uuid", lambda: CLUSTER_UUID
 )
 class GenerateUuidLocal(TestCase):
     def setUp(self):
