@@ -1,9 +1,8 @@
 from pcs import settings
 from pcs.common import file_type_codes, reports
 from pcs.common.str_tools import join_multilines
-from pcs.common.types import StringCollection
 from pcs.lib import sbd
-from pcs.lib.cib.node_rename import check_corosync_consistency, rename_in_cib
+from pcs.lib.cib.node_rename import rename_in_cib
 from pcs.lib.commands.cluster.utils import ensure_live_env, verify_corosync_conf
 from pcs.lib.communication import cluster
 from pcs.lib.communication.corosync import (
@@ -347,11 +346,28 @@ def rename_node_cib(
         corosync_node_names, corosync_nodes_report_list = (
             get_existing_nodes_names(env.get_corosync_conf())
         )
-        corosync_nodes_report_list.extend(
-            check_corosync_consistency(
-                corosync_node_names, old_name, new_name, force_flags
-            )
+        force_severity = reports.item.get_severity(
+            reports.codes.FORCE,
+            reports.codes.FORCE in force_flags,
         )
+        if new_name not in corosync_node_names:
+            corosync_nodes_report_list.append(
+                reports.ReportItem(
+                    severity=force_severity,
+                    message=reports.messages.CibNodeRenameNewNodeNotInCorosync(
+                        new_name=new_name,
+                    ),
+                )
+            )
+        if old_name in corosync_node_names:
+            corosync_nodes_report_list.append(
+                reports.ReportItem(
+                    severity=force_severity,
+                    message=reports.messages.CibNodeRenameOldNodeInCorosync(
+                        old_name=old_name,
+                    ),
+                )
+            )
 
         env.report_processor.report_list(corosync_nodes_report_list)
 
@@ -403,9 +419,20 @@ def rename_node_corosync(
     corosync_node_names, corosync_nodes_report_list = get_existing_nodes_names(
         corosync_conf
     )
-    corosync_nodes_report_list.extend(
-        _check_corosync_consistency(corosync_node_names, old_name, new_name)
-    )
+    if old_name not in corosync_node_names:
+        corosync_nodes_report_list.append(
+            reports.ReportItem.error(
+                reports.messages.CorosyncNodeRenameOldNodeNotFound(old_name)
+            )
+        )
+    if new_name in corosync_node_names:
+        corosync_nodes_report_list.append(
+            reports.ReportItem.error(
+                reports.messages.CorosyncNodeRenameNewNodeAlreadyExists(
+                    new_name
+                )
+            )
+        )
     env.report_processor.report_list(corosync_nodes_report_list)
 
     if env.report_processor.has_errors:
@@ -417,26 +444,3 @@ def rename_node_corosync(
         corosync_conf,
         skip_offline_nodes=(reports.codes.SKIP_OFFLINE_NODES in force_flags),
     )
-
-
-def _check_corosync_consistency(
-    corosync_node_names: StringCollection,
-    old_name: str,
-    new_name: str,
-):
-    report_list: reports.ReportItemList = []
-    if old_name not in corosync_node_names:
-        report_list.append(
-            reports.ReportItem.error(
-                reports.messages.CorosyncNodeRenameOldNodeNotFound(old_name)
-            )
-        )
-    if new_name in corosync_node_names:
-        report_list.append(
-            reports.ReportItem.error(
-                reports.messages.CorosyncNodeRenameNewNodeAlreadyExists(
-                    new_name
-                )
-            )
-        )
-    return report_list
