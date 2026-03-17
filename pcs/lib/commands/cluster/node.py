@@ -1,6 +1,7 @@
 from pcs import settings
 from pcs.common import file_type_codes, reports
 from pcs.common.str_tools import join_multilines
+from pcs.common.types import StringCollection
 from pcs.lib import sbd
 from pcs.lib.cib.node_rename import check_corosync_consistency, rename_in_cib
 from pcs.lib.commands.cluster.utils import ensure_live_env, verify_corosync_conf
@@ -326,6 +327,13 @@ def rename_node_cib(
     new_name -- new node name
     """
 
+    if old_name == new_name:
+        raise LibraryError(
+            reports.ReportItem.error(
+                reports.messages.NodeRenameNamesEqual(old_name)
+            )
+        )
+
     if env.is_cib_live:
         if not env.is_corosync_conf_live:
             raise LibraryError(
@@ -337,7 +345,7 @@ def rename_node_cib(
                 )
             )
         corosync_node_names, corosync_nodes_report_list = (
-            get_existing_nodes_names(env.get_corosync_conf(), None)
+            get_existing_nodes_names(env.get_corosync_conf())
         )
         corosync_nodes_report_list.extend(
             check_corosync_consistency(
@@ -361,3 +369,74 @@ def rename_node_cib(
     env.report_processor.report(
         reports.ReportItem.info(reports.messages.CibNodeRenameNoChange())
     )
+
+
+def rename_node_corosync(
+    env: LibraryEnvironment,
+    old_name: str,
+    new_name: str,
+    force_flags: reports.types.ForceFlags = (),
+) -> None:
+    """
+    Rename a cluster node in corosync.conf and distribute it to all nodes.
+
+    old_name -- current node name
+    new_name -- new node name
+    """
+    if old_name == new_name:
+        raise LibraryError(
+            reports.ReportItem.error(
+                reports.messages.NodeRenameNamesEqual(old_name)
+            )
+        )
+
+    if not env.is_corosync_conf_live:
+        raise LibraryError(
+            reports.ReportItem.error(
+                reports.messages.LiveEnvironmentRequired(
+                    [file_type_codes.COROSYNC_CONF]
+                )
+            )
+        )
+
+    corosync_conf = env.get_corosync_conf()
+    corosync_node_names, corosync_nodes_report_list = get_existing_nodes_names(
+        corosync_conf
+    )
+    corosync_nodes_report_list.extend(
+        _check_corosync_consistency(corosync_node_names, old_name, new_name)
+    )
+    env.report_processor.report_list(corosync_nodes_report_list)
+
+    if env.report_processor.has_errors:
+        raise LibraryError()
+
+    rename_report_list = corosync_conf.rename_node(old_name, new_name)
+    env.report_processor.report_list(rename_report_list)
+    env.push_corosync_conf(
+        corosync_conf,
+        skip_offline_nodes=(reports.codes.SKIP_OFFLINE_NODES in force_flags),
+    )
+
+
+def _check_corosync_consistency(
+    corosync_node_names: StringCollection,
+    old_name: str,
+    new_name: str,
+):
+    report_list: reports.ReportItemList = []
+    if old_name not in corosync_node_names:
+        report_list.append(
+            reports.ReportItem.error(
+                reports.messages.CorosyncNodeRenameOldNodeNotFound(old_name)
+            )
+        )
+    if new_name in corosync_node_names:
+        report_list.append(
+            reports.ReportItem.error(
+                reports.messages.CorosyncNodeRenameNewNodeAlreadyExists(
+                    new_name
+                )
+            )
+        )
+    return report_list

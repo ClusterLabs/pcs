@@ -12,6 +12,7 @@ from .node import (
     remove_nodes,
     remove_nodes_from_cib,
     rename_node_cib,
+    rename_node_corosync,
 )
 from .setup_cluster import setup, setup_local
 from .setup_node import add_nodes
@@ -31,6 +32,7 @@ __all__ = [
     "remove_nodes_from_cib",
     "rename",
     "rename_node_cib",
+    "rename_node_corosync",
     "setup",
     "setup_local",
     "update_link",

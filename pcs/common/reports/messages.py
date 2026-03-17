@@ -2146,6 +2146,73 @@ class CorosyncNodesMissing(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class CorosyncNodeRenameOldNodeNotFound(ReportItemMessage):
+    """
+    The old node name was not found in corosync.conf.
+
+    old_name -- the node name that was not found
+    """
+
+    old_name: str
+    _code = codes.COROSYNC_NODE_RENAME_OLD_NODE_NOT_FOUND
+
+    @property
+    def message(self) -> str:
+        return (
+            f"Node '{self.old_name}' was not found in corosync.conf, "
+            "unable to rename"
+        )
+
+
+@dataclass(frozen=True)
+class CorosyncNodeRenameNewNodeAlreadyExists(ReportItemMessage):
+    """
+    The new node name already exists in corosync.conf.
+
+    new_name -- the node name that already exists
+    """
+
+    new_name: str
+    _code = codes.COROSYNC_NODE_RENAME_NEW_NODE_ALREADY_EXISTS
+
+    @property
+    def message(self) -> str:
+        return (
+            f"Node '{self.new_name}' already exists in corosync.conf, "
+            "unable to rename"
+        )
+
+
+@dataclass(frozen=True)
+class CorosyncNodeRenameAddrsMatchOldName(ReportItemMessage):
+    """
+    Some ring addresses match the old node name after rename.
+
+    old_name -- the old node name
+    new_name -- the new node name
+    node_addrs -- dict mapping node name (or nodeid) to list of address
+        attribute names that still reference old_name
+    """
+
+    old_name: str
+    new_name: str
+    node_addrs: dict[str, list[str]]
+    _code = codes.COROSYNC_NODE_RENAME_ADDRS_MATCH_OLD_NAME
+
+    @property
+    def message(self) -> str:
+        addrs = "; ".join(
+            f"{node}: {', '.join(addr_list)}"
+            for node, addr_list in sorted(self.node_addrs.items())
+        )
+        return (
+            f"Node '{self.old_name}' has been renamed to"
+            f" '{self.new_name}', but the following addresses still"
+            f" reference the old name: {addrs}"
+        )
+
+
+@dataclass(frozen=True)
 class CorosyncTooManyLinksOptions(ReportItemMessage):
     """
     Options for more links than defined by nodes' addresses have been specified
@@ -3693,6 +3760,25 @@ class NodeNotFound(ReportItemMessage):
     def message(self) -> str:
         desc = _build_node_description(self.searched_types)
         return f"{desc} '{self.node}' does not appear to exist in configuration"
+
+
+@dataclass(frozen=True)
+class NodeRenameNamesEqual(ReportItemMessage):
+    """
+    Cannot rename node because old and new names are the same.
+
+    name -- the node name
+    """
+
+    name: str
+    _code = codes.NODE_RENAME_NAMES_EQUAL
+
+    @property
+    def message(self) -> str:
+        return (
+            f"Unable to rename node '{self.name}': "
+            "new name is the same as the current name"
+        )
 
 
 @dataclass(frozen=True)

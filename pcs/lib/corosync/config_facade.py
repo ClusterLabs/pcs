@@ -251,6 +251,48 @@ class ConfigFacade(FacadeInterface):
         self.__remove_empty_sections(self.config)
         self.__update_two_node()
 
+    def rename_node(
+        self, old_name: str, new_name: str
+    ) -> reports.ReportItemList:
+        """
+        Rename a node in config
+
+        old_name -- current node name
+        new_name -- new node name
+        """
+        self._need_stopped_cluster = True
+        matching_node_addrs: dict[str, list[str]] = {}
+        for nodelist_section in self.config.get_sections("nodelist"):
+            for node_section in nodelist_section.get_sections("node"):
+                node_data = self._get_node_data(node_section)
+                node_ident = node_data.get("name", node_data.get("nodeid", ""))
+
+                if node_data.get("name") == old_name:
+                    node_section.set_attribute("name", new_name)
+                    node_ident = new_name
+
+                # Check for old name in address for all nodes. User should be
+                # notified if such address exists even if it is weird.
+                matching_addrs = [
+                    f"ring{i}_addr"
+                    for i in range(constants.LINKS_MAX)
+                    if node_data.get(f"ring{i}_addr") == old_name
+                ]
+                if matching_addrs:
+                    matching_node_addrs[node_ident] = matching_addrs
+
+        return (
+            [
+                ReportItem.warning(
+                    reports.messages.CorosyncNodeRenameAddrsMatchOldName(
+                        old_name, new_name, matching_node_addrs
+                    )
+                )
+            ]
+            if matching_node_addrs
+            else []
+        )
+
     def create_link_list(self, link_list: Sequence[Mapping[str, str]]) -> None:
         """
         Add a link list to a config without one
