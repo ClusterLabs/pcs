@@ -1,4 +1,3 @@
-from textwrap import dedent
 from unittest import TestCase
 
 from pcs.common import file_type_codes, reports
@@ -349,6 +348,20 @@ class RenameNodeCorosyncCheckCornerCases(TestCase):
         self.location_id = "loc1"
         self.env_assist, self.config = get_env_tools(self)
 
+    def test_names_equal(self):
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.rename_node_cib(
+                self.env_assist.get_env(), self.old_name, self.old_name
+            ),
+            [
+                fixture.error(
+                    reports.codes.NODE_RENAME_NAMES_EQUAL,
+                    name=self.old_name,
+                ),
+            ],
+            expected_in_processor=False,
+        )
+
     def test_corosync_checks_fail(self):
         self.config.corosync_conf.load_content(
             _corosync_conf(self.old_name, "other_node")
@@ -433,8 +446,7 @@ class RenameNodeCorosyncCheckCornerCases(TestCase):
         )
 
     def test_cib_from_file_skips_corosync_check(self):
-        cib_xml = dedent(
-            f"""\
+        cib_xml = f"""\
             <cib>
               <configuration>
                 <constraints>
@@ -442,8 +454,7 @@ class RenameNodeCorosyncCheckCornerCases(TestCase):
                   </constraints>
             </configuration>
             </cib>
-            """
-        )
+        """
         self.config.env.set_cib_data(cib_xml)
         self.config.runner.cib.load_content(
             cib_xml,
