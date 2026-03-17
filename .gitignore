@@ -20,8 +20,8 @@ pcs-*
 .mypy_cache/
 pyproject.toml
 requirements.txt
-setup.py
-setup.cfg
+/setup.py
+/setup.cfg
 pcs/api_v2_client
 pcs_test/api_v2_client
 pcs/pcs
