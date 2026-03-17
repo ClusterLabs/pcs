@@ -3,7 +3,6 @@ from typing import Callable
 from lxml.etree import _Element
 
 from pcs.common import reports
-from pcs.common.types import StringCollection
 from pcs.lib.cib.const import (
     TAG_CONSTRAINT_LOCATION,
     TAG_FENCING_LEVEL,
@@ -12,38 +11,6 @@ from pcs.lib.cib.const import (
 )
 from pcs.lib.cib.sections import ACLS
 from pcs.lib.xml_tools import find_parent
-
-
-def check_corosync_consistency(
-    corosync_node_names: StringCollection,
-    old_name: str,
-    new_name: str,
-    force_flags: reports.types.ForceFlags,
-) -> reports.ReportItemList:
-    report_list: reports.ReportItemList = []
-    force_severity = reports.item.get_severity(
-        reports.codes.FORCE,
-        reports.codes.FORCE in force_flags,
-    )
-    if new_name not in corosync_node_names:
-        report_list.append(
-            reports.ReportItem(
-                severity=force_severity,
-                message=reports.messages.CibNodeRenameNewNodeNotInCorosync(
-                    new_name=new_name,
-                ),
-            )
-        )
-    if old_name in corosync_node_names:
-        report_list.append(
-            reports.ReportItem(
-                severity=force_severity,
-                message=reports.messages.CibNodeRenameOldNodeInCorosync(
-                    old_name=old_name,
-                ),
-            )
-        )
-    return report_list
 
 
 def rename_in_cib(
