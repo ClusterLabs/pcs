@@ -4,8 +4,8 @@
 
 ### Added
 
-* Commands pcs cluster node rename-corosync and pcs cluster node rename-cib to
-  support cluster node renaming ([RHEL-7585])
+* Commands `pcs cluster node rename-corosync` and `pcs cluster node rename-cib`
+  for cluster node renaming ([RHEL-7585])
 
 ### Fixed
 - Upgrade CIB schema version when creating a colocation constraint with

@@ -684,10 +684,58 @@ node clear <node name>
 Remove specified node from various cluster caches. Use this if a removed node is still considered by the cluster to be a member of the cluster.
 .TP
 node rename\-cib <old name> <new name> [\fB\-\-force\fR]
-Rename a cluster node in the CIB. Places that cannot be updated automatically are reported for manual review. This is one step of the node rename procedure. The full procedure is: put the cluster in standby, stop the cluster, optionally update /etc/hosts and authenticate nodes under new names using \fBpcs host auth\fR, rename nodes in corosync.conf using \fBpcs cluster node rename\-corosync\fR, optionally update addresses using \fBpcs cluster link update\fR, start the cluster, rename nodes in the CIB using this command, and remove standby.
+Rename a cluster node in the CIB. This replaces all references to the old name with the new name. References which cannot be updated automatically are reported for manual review.
+
+This command is one step of the node rename procedure. The recommended procedure is:
+.RS
+.PD 0
+.IP \(bu 2
+put all nodes in standby mode,
+.IP \(bu 2
+stop the cluster,
+.IP \(bu 2
+authenticate nodes using their new names,
+.IP \(bu 2
+rename nodes in corosync.conf using 'pcs cluster node rename\-corosync' command,
+.IP \(bu 2
+at this step, you can change nodes' addresses, if you wish to do so,
+.IP \(bu 2
+start the cluster,
+.IP \(bu 2
+rename nodes in the CIB using this command,
+.IP \(bu 2
+take all nodes from standby mode,
+.IP \(bu 2
+optionally, you can deauthenticate old node names.
+.PD
+.RE
 .TP
 node rename\-corosync <old name> <new name> [\fB\-\-skip\-offline\fR]
-Rename a cluster node in corosync.conf and distribute the updated configuration to all nodes. This is one step of the node rename procedure. The full procedure is: put the cluster in standby, stop the cluster, optionally update /etc/hosts and authenticate nodes under new names using \fBpcs host auth\fR, rename nodes in corosync.conf using this command, optionally update addresses using \fBpcs cluster link update\fR, start the cluster, rename nodes in the CIB using \fBpcs cluster node rename\-cib\fR, and remove standby.
+Rename a cluster node in corosync.conf and distribute the updated configuration to all nodes.
+
+This command is one step of the node rename procedure. The recommended procedure is:
+.RS
+.PD 0
+.IP \(bu 2
+put all nodes in standby mode,
+.IP \(bu 2
+stop the cluster,
+.IP \(bu 2
+authenticate nodes using their new names,
+.IP \(bu 2
+rename nodes in corosync.conf using this command,
+.IP \(bu 2
+at this step, you can change nodes' addresses, if you wish to do so,
+.IP \(bu 2
+start the cluster,
+.IP \(bu 2
+rename nodes in the CIB using 'pcs cluster node rename\-cib' command,
+.IP \(bu 2
+take all nodes from standby mode,
+.IP \(bu 2
+optionally, you can deauthenticate old node names.
+.PD
+.RE
 .TP
 link add <node_name>=<node_address>... [options <link options>]
 Add a corosync link. One address must be specified for each cluster node. If no linknumber is specified, pcs will use the lowest available linknumber.
