@@ -3,8 +3,7 @@
 ## [Unreleased]
 
 ### Added
-
-* Commands `pcs cluster node rename-corosync` and `pcs cluster node rename-cib`
+- Commands `pcs cluster node rename-corosync` and `pcs cluster node rename-cib`
   for cluster node renaming ([RHEL-7585])
 
 ### Fixed

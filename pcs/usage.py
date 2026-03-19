@@ -1865,7 +1865,7 @@ Commands:
         removed node is still considered by the cluster to be a member of the
         cluster.
 
-    node rename-cib <old name> <new name> [--force]
+    node rename-cib <old name> <new name>
         Rename a cluster node in the CIB. This replaces all references to
         the old name with the new name. References which cannot be updated
         automatically are reported for manual review.
