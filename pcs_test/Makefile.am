@@ -274,7 +274,8 @@ EXTRA_DIST		= \
 			  tier0/lib/commands/cluster/test_config_update.py \
 			  tier0/lib/commands/cluster/test_get_corosync_conf_struct.py \
 			  tier0/lib/commands/cluster/test_node_clear.py \
-			  tier0/lib/commands/cluster/test_node_rename.py \
+			  tier0/lib/commands/cluster/test_node_rename_cib.py \
+			  tier0/lib/commands/cluster/test_node_rename_corosync.py \
 			  tier0/lib/commands/cluster/test_remove_links.py \
 			  tier0/lib/commands/cluster/test_remove_nodes_from_cib.py \
 			  tier0/lib/commands/cluster/test_remove_nodes.py \
@@ -460,6 +461,7 @@ EXTRA_DIST		= \
 			  tier1/cluster/test_config_show.py \
 			  tier1/cluster/test_config_update.py \
 			  tier1/cluster/test_node_rename_cib.py \
+			  tier1/cluster/test_node_rename_corosync.py \
 			  tier1/cluster/test_setup_local.py \
 			  tier1/cluster/test_cluster_rename.py \
 			  tier1/constraint/__init__.py \

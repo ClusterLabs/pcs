@@ -1459,6 +1459,38 @@ class CorosyncNodesMissing(NameBuildTest):
         )
 
 
+class CorosyncNodeRenameOldNodeNotFound(NameBuildTest):
+    def test_message(self):
+        self.assert_message_from_report(
+            ("Node 'node1' was not found in corosync.conf, unable to rename"),
+            reports.CorosyncNodeRenameOldNodeNotFound("node1"),
+        )
+
+
+class CorosyncNodeRenameNewNodeAlreadyExists(NameBuildTest):
+    def test_message(self):
+        self.assert_message_from_report(
+            ("Node 'node2' already exists in corosync.conf, unable to rename"),
+            reports.CorosyncNodeRenameNewNodeAlreadyExists("node2"),
+        )
+
+
+class CorosyncNodeRenameAddrsMatchOldName(NameBuildTest):
+    def test_message(self):
+        self.assert_message_from_report(
+            (
+                "Node 'node1' has been renamed to 'node1-new', but the"
+                " following addresses still reference the old name:"
+                " node1-new: ring1_addr; node2: ring0_addr"
+            ),
+            reports.CorosyncNodeRenameAddrsMatchOldName(
+                "node1",
+                "node1-new",
+                {"node1-new": ["ring1_addr"], "node2": ["ring0_addr"]},
+            ),
+        )
+
+
 class CorosyncTooManyLinksOptions(NameBuildTest):
     def test_message(self):
         self.assert_message_from_report(
@@ -2446,6 +2478,17 @@ class NodeNotFound(NameBuildTest):
             "nor remote node or guest node 'SOME_NODE' does not appear to exist"
             " in configuration",
             reports.NodeNotFound("SOME_NODE", ["remote", "guest"]),
+        )
+
+
+class NodeRenameNamesEqual(NameBuildTest):
+    def test_message(self):
+        self.assert_message_from_report(
+            (
+                "Unable to rename node 'node1': "
+                "new name is the same as the current name"
+            ),
+            reports.NodeRenameNamesEqual("node1"),
         )
 
 
