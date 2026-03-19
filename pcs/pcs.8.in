@@ -662,7 +662,7 @@ Shutdown specified guest node and remove it from the cluster. The node\-identifi
 node clear <node name>
 Remove specified node from various cluster caches. Use this if a removed node is still considered by the cluster to be a member of the cluster.
 .TP
-node rename\-cib <old name> <new name> [\fB\-\-force\fR]
+node rename\-cib <old name> <new name>
 Rename a cluster node in the CIB. This replaces all references to the old name with the new name. References which cannot be updated automatically are reported for manual review.
 
 This command is one step of the node rename procedure. The recommended procedure is:
