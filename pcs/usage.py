@@ -1822,26 +1822,38 @@ Commands:
         cluster.
 
     node rename-cib <old name> <new name> [--force]
-        Rename a cluster node in the CIB. Places that cannot be updated
+        Rename a cluster node in the CIB. This replaces all references to
+        the old name with the new name. References which cannot be updated
         automatically are reported for manual review.
-        This is one step of the node rename procedure. The full procedure
-        is: put the cluster in standby, stop the cluster, optionally update
-        /etc/hosts and authenticate nodes under new names using 'pcs host
-        auth', rename nodes in corosync.conf using 'pcs cluster node
-        rename-corosync', optionally update addresses using 'pcs cluster
-        link update', start the cluster, rename nodes in the CIB using
-        this command, and remove standby.
+
+        This command is one step of the node rename procedure. The recommended
+        procedure is:
+        - put all nodes in standby mode,
+        - stop the cluster,
+        - authenticate nodes using their new names,
+        - rename nodes in corosync.conf using 'pcs cluster node rename-corosync'
+          command,
+        - at this step, you can change nodes' addresses, if you wish to do so
+        - start the cluster,
+        - rename nodes in the CIB using this command,
+        - take all nodes from standby mode,
+        - optionally, you can deauthenticate old node names.
 
     node rename-corosync <old name> <new name> [--skip-offline]
         Rename a cluster node in corosync.conf and distribute the updated
         configuration to all nodes.
-        This is one step of the node rename procedure. The full procedure
-        is: put the cluster in standby, stop the cluster, optionally update
-        /etc/hosts and authenticate nodes under new names using 'pcs host
-        auth', rename nodes in corosync.conf using this command, optionally
-        update addresses using 'pcs cluster link update', start the
-        cluster, rename nodes in the CIB using 'pcs cluster node
-        rename-cib', and remove standby.
+
+        This command is one step of the node rename procedure. The recommended
+        procedure is:
+        - put all nodes in standby mode,
+        - stop the cluster,
+        - authenticate nodes using their new names,
+        - rename nodes in corosync.conf using this command,
+        - at this step, you can change nodes' addresses, if you wish to do so
+        - start the cluster,
+        - rename nodes in the CIB using 'pcs cluster node rename-cib' command,
+        - take all nodes from standby mode,
+        - optionally, you can deauthenticate old node names.
 
     link add <node_name>=<node_address>... [options <link options>]
         Add a corosync link. One address must be specified for each cluster
