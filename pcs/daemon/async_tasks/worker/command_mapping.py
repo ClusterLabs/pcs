@@ -116,6 +116,10 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
         cmd=auth.auth_hosts,
         required_permission=p.NONE,
     ),
+    "auth.known_hosts_change": _Cmd(
+        cmd=auth.known_hosts_change,
+        required_permission=p.FULL,
+    ),
     "booth.ticket_cleanup": _Cmd(
         cmd=booth.ticket_cleanup,
         required_permission=p.WRITE,
@@ -497,6 +501,7 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
 
 
 LEGACY_API_COMMANDS = (
+    "auth.known_hosts_change",
     "cluster.set_permissions",
     "pcs_cfgsync.update_sync_options",
     "qdevice.qdevice_net_get_ca_certificate",

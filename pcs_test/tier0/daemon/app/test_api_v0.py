@@ -840,3 +840,97 @@ class SetPermissions(ApiV0HandlerTest):
         self.mock_run_library_command.assert_called_once_with(
             self.command, self.lib_command_call_arguments
         )
+
+
+class KnownHostsChange(ApiV0HandlerTest):
+    url = "/remote/known_hosts_change"
+    command = "auth.known_hosts_change"
+
+    request_data = {
+        "known_hosts_add": {
+            "node1": {
+                "token": "token1",
+                "dest_list": [
+                    {"addr": "1.2.3.4", "port": 1234},
+                    {"addr": "", "port": ""},
+                ],
+            },
+            "node2": {},  # default values, real validation in lib command
+        },
+        "known_hosts_remove": ["nodeX", "nodeY"],
+    }
+    lib_command_call_arguments = {
+        "hosts_to_add": {
+            "node1": {
+                "token": "token1",
+                "dest_list": [
+                    {"addr": "1.2.3.4", "port": 1234},
+                    {"addr": "node1", "port": 2224},
+                ],
+            },
+            "node2": {"token": "", "dest_list": []},
+        },
+        "hosts_to_remove": ["nodeX", "nodeY"],
+    }
+
+    def test_success(self):
+        self.mock_run_library_command.return_value = self.result_success()
+
+        response = self.fetch(
+            self.url,
+            body=urlencode({"data_json": json.dumps(self.request_data)}),
+        )
+
+        self.assertEqual(response.code, 200)
+        self.assert_body(response.body, "")
+        self.mock_run_library_command.assert_called_once_with(
+            self.command, self.lib_command_call_arguments
+        )
+
+    def test_failure(self):
+        self.assert_error_with_report(
+            self.url,
+            body=urlencode({"data_json": json.dumps(self.request_data)}),
+        )
+        self.mock_run_library_command.assert_called_once_with(
+            self.command, self.lib_command_call_arguments
+        )
+
+    def test_bad_json(self):
+        bad_inputs = [
+            [],
+            "not a valid json",
+            "",
+            {
+                "known_hosts_add": [],
+            },
+            {
+                "known_hosts_add": {
+                    "token": "",
+                    "dest_list": "foo",
+                }
+            },
+            {
+                "known_hosts_add": {
+                    "token": "",
+                    "dest_list": ["foo", "bar"],
+                }
+            },
+            {"known_hosts_remove": 123},
+        ]
+        for data in bad_inputs:
+            with self.subTest(value=data):
+                self.mock_run_library_command.reset_mock()
+
+                response = self.fetch(
+                    self.url,
+                    body=urlencode({"data_json": json.dumps(data)}),
+                )
+
+                self.assertEqual(response.code, 400)
+                self.assertTrue(
+                    response.body.decode().startswith(
+                        "Incorrect format of request data: "
+                    )
+                )
+                self.mock_run_library_command.assert_not_called()
