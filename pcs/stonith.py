@@ -763,10 +763,17 @@ def sbd_config(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
 
     config_list = lib.sbd.get_cluster_sbd_config()
 
-    if not config_list:
+    config_files = [
+        config["config"]
+        for config in config_list
+        if config["config"] is not None
+    ]
+    if not config_files:
         utils.err("No config obtained.")
 
-    config = config_list[0]["config"]
+    # Files are received in random order (due to race condition).
+    # We expect them to be the same on all nodes.
+    config = config_files[0]
 
     filtered_options = [
         "SBD_WATCHDOG_DEV",

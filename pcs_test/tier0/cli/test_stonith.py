@@ -29,6 +29,106 @@ def _dict_to_modifiers(options):
     )
 
 
+@mock.patch("pcs.stonith.utils.err")
+@mock.patch("pcs.stonith.print")
+class SbdConfig(TestCase):
+    def fixture_sbd_config_input_output(self, nodes_have_config):
+        # We hardcode config, as it is expected to be the same in all
+        # nodes (in input and also in output).
+        input_config = {
+            "SBD_PACEMAKER": "yes",
+            "SBD_STARTMODE": "always",
+            "SBD_DELAY_START": "no",
+            "SBD_WATCHDOG_DEV": "/dev/watchdog",
+            "SBD_WATCHDOG_TIMEOUT": "5",
+            "SBD_TIMEOUT_ACTION": "flush,reboot",
+            "SBD_MOVE_TO_ROOT_CGROUP": "auto",
+            "SBD_SYNC_RESOURCE_STARTUP": "yes",
+            "SBD_OPTS": "",
+        }
+        input_ = []
+        output = [
+            mock.call("SBD_STARTMODE=always"),
+            mock.call("SBD_DELAY_START=no"),
+            mock.call("SBD_WATCHDOG_TIMEOUT=5"),
+            mock.call("SBD_TIMEOUT_ACTION=flush,reboot"),
+            mock.call("SBD_MOVE_TO_ROOT_CGROUP=auto"),
+            mock.call("SBD_SYNC_RESOURCE_STARTUP=yes"),
+            mock.call(),
+            mock.call("Watchdogs:"),
+        ]
+
+        for i, node_has_config in enumerate(nodes_have_config, 1):
+            node_name = f"node-{i}"
+
+            if node_has_config:
+                input_.append(
+                    {
+                        "node": node_name,
+                        "config": input_config,
+                    }
+                )
+                output.append(mock.call(f"  {node_name}: /dev/watchdog"))
+
+            else:
+                input_.append(
+                    {
+                        "node": node_name,
+                        "config": None,
+                    }
+                )
+                output.append(mock.call(f"  {node_name}: <unknown>"))
+
+        return input_, output
+
+    def setUp(self):
+        self.lib = mock.Mock(spec_set=["sbd"])
+        self.sbd = mock.Mock(spec_set=["get_cluster_sbd_config"])
+        self.lib.sbd = self.sbd
+
+    def test_no_config(self, mock_print, mock_err):
+        nodes_have_config = [False, False]
+        input_, _ = self.fixture_sbd_config_input_output(nodes_have_config)
+        self.lib.sbd.get_cluster_sbd_config.return_value = input_
+        mock_err.side_effect = SystemExit
+
+        with self.assertRaises(SystemExit):
+            stonith.sbd_config(
+                lib=self.lib, argv=[], modifiers=_dict_to_modifiers({})
+            )
+
+        mock_print.assert_not_called()
+        mock_err.assert_called_once_with("No config obtained.")
+
+    def test_valid_config_in_first_node(self, mock_print, mock_err):
+        nodes_have_config = [True, False]
+        input_, expected_output = self.fixture_sbd_config_input_output(
+            nodes_have_config
+        )
+        self.lib.sbd.get_cluster_sbd_config.return_value = input_
+
+        stonith.sbd_config(
+            lib=self.lib, argv=[], modifiers=_dict_to_modifiers({})
+        )
+
+        mock_print.assert_has_calls(expected_output, any_order=False)
+        mock_err.assert_not_called()
+
+    def test_valid_config_in_non_first_node(self, mock_print, mock_err):
+        nodes_have_config = [False, True]
+        input_, expected_output = self.fixture_sbd_config_input_output(
+            nodes_have_config
+        )
+        self.lib.sbd.get_cluster_sbd_config.return_value = input_
+
+        stonith.sbd_config(
+            lib=self.lib, argv=[], modifiers=_dict_to_modifiers({})
+        )
+
+        mock_print.assert_has_calls(expected_output, any_order=False)
+        mock_err.assert_not_called()
+
+
 @mock.patch("pcs.stonith.print_to_stderr")
 @mock.patch("pcs.stonith.print")
 class SbdWatchdogList(TestCase):
