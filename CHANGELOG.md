@@ -1,5 +1,13 @@
 # Change Log
 
+## [Unreleased]
+### Added
+
+* Commands `pcs cluster node rename-corosync` and `pcs cluster node rename-cib`
+  for cluster node renaming ([RHEL-7585])
+
+[RHEL-7585]: https://issues.redhat.com/browse/RHEL-7585
+
 ## [0.11.11] - 2026-01-06
 
 ### Changed

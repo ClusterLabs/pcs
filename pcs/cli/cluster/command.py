@@ -230,7 +230,7 @@ def node_rename_corosync(
         raise CmdLineInputError()
     force_flags = []
     if modifiers.get("--skip-offline"):
-        force_flags.append(reports.codes.SKIP_OFFLINE_NODES)
+        force_flags.append(report_codes.SKIP_OFFLINE_NODES)
     lib.cluster.rename_node_corosync(argv[0], argv[1], force_flags)
 
 
