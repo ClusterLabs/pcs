@@ -4,7 +4,6 @@ from pcs.common import reports
 from pcs.common.auth import HostAuthData, HostWithTokenAuthData
 from pcs.common.file import RawFileError
 from pcs.common.node_communicator import PcsKnownHost, RequestTarget
-from pcs.common.types import StringSequence
 from pcs.lib.auth import validations
 from pcs.lib.communication.nodes import Auth
 from pcs.lib.communication.tools import run
@@ -94,7 +93,7 @@ def auth_hosts(
     __auth_deauth_hosts_common(env, known_hosts_facade, new_known_hosts, [])
 
 
-def deauth_hosts(env: LibraryEnvironment, hosts: StringSequence) -> None:
+def deauth_hosts(env: LibraryEnvironment, hosts: list[str]) -> None:
     """
     Deauth the specified hosts. Sync the known-hosts file to all cluster
     nodes if the local node is in a cluster
@@ -141,10 +140,15 @@ def deauth_all_local_hosts(env: LibraryEnvironment) -> None:
     __auth_deauth_hosts_common(env, known_hosts_facade, [], all_known_hosts)
 
 
+# TODO
+# hosts_to_remove: set[str] or AbstractSet[str] would be ideal, to show that
+# duplicates are ignored
+# We would need to update pcs.common.interface.dto to allow sets when calling
+# commands through API - json doesn't have set
 def known_hosts_change(
     env: LibraryEnvironment,
     hosts_to_add: Mapping[str, HostWithTokenAuthData],
-    hosts_to_remove: StringSequence,
+    hosts_to_remove: list[str],
 ) -> None:
     """
     Legacy command, allowing to directly change contents of known-hosts file on
@@ -193,7 +197,7 @@ def __auth_deauth_hosts_common(
     env: LibraryEnvironment,
     known_hosts_facade: KnownHostsFacade,
     new_hosts: Sequence[PcsKnownHost],
-    hosts_to_deauth: StringSequence,
+    hosts_to_deauth: list[str],
 ) -> None:
     """
     Extracted common part of auth and deauth commands, to reduce code
@@ -205,7 +209,10 @@ def __auth_deauth_hosts_common(
         # we are not running in a cluster, so just save the updated file
         # locally
         update_known_hosts_locally(
-            known_hosts_facade, new_hosts, hosts_to_deauth, env.report_processor
+            known_hosts_facade,
+            new_hosts,
+            hosts_to_deauth,
+            env.report_processor,
         )
         if env.report_processor.has_errors:
             raise LibraryError()

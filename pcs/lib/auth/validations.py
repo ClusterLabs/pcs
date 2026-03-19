@@ -5,7 +5,6 @@ from pcs import settings
 from pcs.common import reports
 from pcs.common.auth import HostAuthData, HostWithTokenAuthData
 from pcs.common.host import Destination
-from pcs.common.types import StringSequence
 from pcs.lib import validate
 
 # TODO This is a temporary solution for validation of input "dto" data.
@@ -110,7 +109,7 @@ def validate_hosts(
 
 def validate_known_hosts_change(
     hosts_to_add: Mapping[str, HostWithTokenAuthData],
-    hosts_to_remove: StringSequence,
+    hosts_to_remove: list[str],
 ) -> reports.ReportItemList:
     report_list = []
     if not hosts_to_add and not hosts_to_remove:
