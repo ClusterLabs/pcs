@@ -353,13 +353,14 @@ class RenameNodeCorosyncCheckCornerCases(TestCase):
             lambda: lib.rename_node_cib(
                 self.env_assist.get_env(), self.old_name, self.old_name
             ),
+        )
+        self.env_assist.assert_reports(
             [
                 fixture.error(
                     reports.codes.NODE_RENAME_NAMES_EQUAL,
                     name=self.old_name,
                 ),
             ],
-            expected_in_processor=False,
         )
 
     def test_corosync_checks_fail(self):
@@ -435,6 +436,8 @@ class RenameNodeCorosyncCheckCornerCases(TestCase):
             lambda: lib.rename_node_cib(
                 self.env_assist.get_env(), self.old_name, self.new_name
             ),
+        )
+        self.env_assist.assert_reports(
             [
                 fixture.error(
                     reports.codes.LIVE_ENVIRONMENT_NOT_CONSISTENT,
@@ -442,7 +445,6 @@ class RenameNodeCorosyncCheckCornerCases(TestCase):
                     required_files=[file_type_codes.CIB],
                 ),
             ],
-            expected_in_processor=False,
         )
 
     def test_cib_from_file_skips_corosync_check(self):

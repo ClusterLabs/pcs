@@ -103,13 +103,14 @@ class RenameNodeCorosync(TestCase):
     def test_names_equal(self):
         self.env_assist.assert_raise_library_error(
             lambda: self.rename_node_corosync(self.old_name, self.old_name),
+        )
+        self.env_assist.assert_reports(
             [
                 fixture.error(
                     reports.codes.NODE_RENAME_NAMES_EQUAL,
                     name=self.old_name,
                 ),
             ],
-            expected_in_processor=False,
         )
 
     def test_not_live_env_corosync(self):
@@ -118,13 +119,14 @@ class RenameNodeCorosync(TestCase):
         )
         self.env_assist.assert_raise_library_error(
             lambda: self.rename_node_corosync(self.old_name, self.new_name),
+        )
+        self.env_assist.assert_reports(
             [
                 fixture.error(
                     reports.codes.LIVE_ENVIRONMENT_REQUIRED,
                     forbidden_options=[file_type_codes.COROSYNC_CONF],
                 ),
             ],
-            expected_in_processor=False,
         )
 
     def test_corosync_conf_not_consistent_with_changes(self):
