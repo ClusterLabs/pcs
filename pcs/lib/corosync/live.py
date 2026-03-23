@@ -11,6 +11,7 @@ from pcs.common import reports
 from pcs.common.file import RawFileError
 from pcs.common.reports.item import ReportItem
 from pcs.common.str_tools import format_list
+from pcs.common.tools import Version, get_version_from_string
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
 from pcs.lib.file.instance import FileInstance
@@ -249,3 +250,16 @@ def _parse_quorum_status(quorum_status: str) -> QuorumStatus:  # noqa: PLR0912
         # exception would be raised just above
         votes_needed_for_quorum=int(quorum) if quorum is not None else 0,
     )
+
+
+def get_corosync_version(runner: CommandRunner) -> Optional[Version]:
+    """
+    Return the installed corosync version or None if version cannot be
+    determined.
+
+    runner -- CommandRunner instance
+    """
+    stdout, stderr, retval = runner.run([settings.corosync_exec, "-v"])
+    if retval != 0:
+        return None
+    return get_version_from_string(stdout)

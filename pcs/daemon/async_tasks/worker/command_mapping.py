@@ -6,6 +6,7 @@ from pcs.lib.commands import (
     alert,
     auth,
     booth,
+    check_host,
     cib,
     cib_options,
     cluster,
@@ -136,6 +137,10 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
     "booth.ticket_unstandby": _Cmd(
         cmd=booth.ticket_unstandby,
         required_permission=p.WRITE,
+    ),
+    "check_host.check_host": _Cmd(
+        cmd=check_host.check_host,
+        required_permission=p.READ,
     ),
     "cluster.add_nodes": _Cmd(
         cmd=cluster.add_nodes,

@@ -1,3 +1,4 @@
+import re
 import uuid
 from dataclasses import astuple, dataclass
 from typing import Generator, MutableSet, Optional, TypeVar, Union
@@ -9,6 +10,10 @@ from pcs.common.types import StringCollection
 from pcs.common.validate import is_integer
 
 T = TypeVar("T", bound=type)
+
+_VERSION_PATTERN = re.compile(
+    r"(?P<major>\d+)\.(?P<minor>\d+)(\.(?P<rev>\d+))?"
+)
 
 
 def bin_to_str(binary: bytes) -> str:
@@ -140,3 +145,19 @@ class Version:
 
     def __ge__(self, other: "Version") -> bool:
         return self.as_full_tuple >= other.as_full_tuple
+
+
+def get_version_from_string(value: str) -> Optional[Version]:
+    """
+    Get Version instance from a string or None if version cannot be determined.
+
+    value -- string to be searched for version pattern
+    """
+    match = _VERSION_PATTERN.search(value)
+    if not match:
+        return None
+    return Version(
+        int(match.group("major")),
+        int(match.group("minor")),
+        int(match.group("rev")) if match.group("rev") else None,
+    )
