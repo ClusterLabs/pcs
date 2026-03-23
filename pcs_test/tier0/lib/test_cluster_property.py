@@ -778,7 +778,10 @@ class TestValidateSetClusterProperties(TestCase):
                     allowed=ALLOWED_PROPERTIES,
                     option_type="cluster property",
                     allowed_patterns=[],
-                )
+                ),
+                fixture.error(
+                    reports.codes.USE_COMMAND_CLUSTER_RENAME,
+                ),
             ],
         )
 
@@ -793,7 +796,10 @@ class TestValidateSetClusterProperties(TestCase):
                     allowed=ALLOWED_PROPERTIES,
                     option_type="cluster property",
                     allowed_patterns=[],
-                )
+                ),
+                fixture.error(
+                    reports.codes.USE_COMMAND_CLUSTER_RENAME,
+                ),
             ],
             force=True,
         )

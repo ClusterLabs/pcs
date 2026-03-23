@@ -5473,6 +5473,19 @@ class CibRemoveReferences(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class UseCommandClusterRename(ReportItemMessage):
+    """
+    Advise user to not use `pcs property set cluster-name`.
+    """
+
+    _code = codes.USE_COMMAND_CLUSTER_RENAME
+
+    @property
+    def message(self) -> str:
+        return "This command cannot be used for renaming a cluster"
+
+
+@dataclass(frozen=True)
 class UseCommandNodeAddRemote(ReportItemMessage):
     """
     Advise the user for more appropriate command.

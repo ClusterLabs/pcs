@@ -254,6 +254,15 @@ def validate_set_cluster_properties(  # noqa: PLR0912
 
     report_list.extend(_validate_not_disabling_fencing(to_be_set_properties))
 
+    if "cluster-name" in new_properties:
+        report_list.extend(
+            [
+                reports.item.ReportItem.error(
+                    reports.messages.UseCommandClusterRename(),
+                )
+            ]
+        )
+
     return report_list
 
 

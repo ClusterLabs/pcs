@@ -873,3 +873,14 @@ class ResourceWaitDeprecated(CliReportMessageTestBase):
                 "that the resource is in the expected state after the wait."
             ),
         )
+
+
+class UseCommandClusterRename(CliReportMessageTestBase):
+    def test_success(self):
+        self.assert_message(
+            messages.UseCommandClusterRename(),
+            (
+                "This command cannot be used for renaming a cluster"
+                ", use 'pcs cluster rename'"
+            ),
+        )

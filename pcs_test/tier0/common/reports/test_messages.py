@@ -6837,3 +6837,11 @@ class NotAuthorizedToChangeFullPermission(NameBuildTest):
             ),
             reports.NotAuthorizedToChangeFullPermission(),
         )
+
+
+class UseCommandClusterRename(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            "This command cannot be used for renaming a cluster",
+            reports.UseCommandClusterRename(),
+        )

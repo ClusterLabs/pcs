@@ -61,10 +61,15 @@ def get_invalid_option_messages_regexp(
     error_occurred = (
         "Error: Errors have occurred, therefore pcs is unable to continue\n"
     )
+    rename_hint = (
+        "Error: This command cannot be used for renaming a cluster"
+        ", use 'pcs cluster rename'\n"
+    )
     use_force = ", use --force to override"
     return (
         r"{severity}: invalid cluster property {option_pl} {option_name_list}, "
         r"allowed options are: {allowed_properties_regexp}{use_force}\n"
+        r"{rename_hint}"
         r"{error_occurred}"
     ).format(
         severity="Error" if error else "Warning",
@@ -73,6 +78,7 @@ def get_invalid_option_messages_regexp(
         allowed_properties_regexp=ALLOWED_PROPERTIES_REGEXP,
         use_force=use_force if error and forceable else "",
         error_occurred=error_occurred if error else "",
+        rename_hint=rename_hint if "cluster-name" in option_names else "",
     )
 
 
@@ -181,23 +187,34 @@ class TestPropertySet(PropertyMixin, TestCase):
             ),
         )
 
-    def test_forbidden_properties(self):
+    def _assert_forbidden_property(self, command, property_name):
         self.assert_pcs_fail(
-            "property set cluster-name=NewName".split(),
+            command.split(),
             stderr_regexp=get_invalid_option_messages_regexp(
-                ["cluster-name"], forceable=False
+                [property_name], forceable=False
             ),
         )
         self.assert_resources_xml_in_cib(UNCHANGED_CRM_CONFIG)
 
-    def test_forbidden_properties_forced(self):
-        self.assert_pcs_fail(
-            "property set cluster-name=NewName --force".split(),
-            stderr_regexp=get_invalid_option_messages_regexp(
-                ["cluster-name"], forceable=False
-            ),
+    def test_forbidden_property_cluster_name(self):
+        self._assert_forbidden_property(
+            "property set cluster-name=NewName", "cluster-name"
         )
-        self.assert_resources_xml_in_cib(UNCHANGED_CRM_CONFIG)
+
+    def test_forbidden_property_cluster_name_forced(self):
+        self._assert_forbidden_property(
+            "property set cluster-name=NewName --force", "cluster-name"
+        )
+
+    def test_forbidden_property_have_watchdog(self):
+        self._assert_forbidden_property(
+            "property set have-watchdog=yes", "have-watchdog"
+        )
+
+    def test_forbidden_property_have_watchdog_forced(self):
+        self._assert_forbidden_property(
+            "property set have-watchdog=yes --force", "have-watchdog"
+        )
 
     def test_set_stonith_watchdog_timeout_invalid_value(self):
         deprecation = ""

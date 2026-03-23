@@ -162,7 +162,9 @@ class TestPropertySetCrmAttribute(
         )
         self.env_assist.assert_reports([])
 
-    def _readonly_properties(self, force):
+    def _readonly_properties(
+        self, cluster_property_input, expected_reports, force
+    ):
         self.config.runner.cib.load(
             crm_config=fixture_crm_config_properties(
                 [
@@ -181,35 +183,66 @@ class TestPropertySetCrmAttribute(
         self.env_assist.assert_raise_library_error(
             lambda: cluster_property.set_properties(
                 self.env_assist.get_env(),
-                {
-                    "cluster-name": "HACluster",
-                    "dc-version": "",
-                    "have-watchdog": "yes",
-                },
+                cluster_property_input,
                 [reports.codes.FORCE] if force else [],
             )
         )
-        self.env_assist.assert_reports(
-            [
-                fixture.error(
-                    reports.codes.INVALID_OPTIONS,
-                    option_names=[
-                        "cluster-name",
-                        "dc-version",
-                        "have-watchdog",
-                    ],
-                    allowed=ALLOWED_PROPERTIES,
-                    option_type="cluster property",
-                    allowed_patterns=[],
-                )
-            ]
+        self.env_assist.assert_reports(expected_reports)
+
+    def _assert_readonly_properties_with_cluster(self, force):
+        cluster_property_input = {
+            "cluster-name": "HACluster",
+        }
+        expected_reports = [
+            fixture.error(
+                reports.codes.INVALID_OPTIONS,
+                option_names=["cluster-name"],
+                allowed=ALLOWED_PROPERTIES,
+                option_type="cluster property",
+                allowed_patterns=[],
+            ),
+            fixture.error(
+                reports.codes.USE_COMMAND_CLUSTER_RENAME,
+            ),
+        ]
+
+        self._readonly_properties(
+            cluster_property_input, expected_reports, force
         )
 
-    def test_readonly_properties(self):
-        self._readonly_properties(False)
+    def test_readonly_properties_with_cluster_name(self):
+        self._assert_readonly_properties_with_cluster(force=False)
 
-    def test_readonly_properties_forced(self):
-        self._readonly_properties(True)
+    def test_readonly_properties_with_cluster_name_forced(self):
+        self._assert_readonly_properties_with_cluster(force=True)
+
+    def _assert_readonly_properties_without_cluster(self, force):
+        cluster_property_input = {
+            "dc-version": "",
+            "have-watchdog": "yes",
+        }
+        expected_reports = [
+            fixture.error(
+                reports.codes.INVALID_OPTIONS,
+                option_names=[
+                    "dc-version",
+                    "have-watchdog",
+                ],
+                allowed=ALLOWED_PROPERTIES,
+                option_type="cluster property",
+                allowed_patterns=[],
+            )
+        ]
+
+        self._readonly_properties(
+            cluster_property_input, expected_reports, force
+        )
+
+    def test_readonly_properties_without_cluster_name(self):
+        self._assert_readonly_properties_without_cluster(force=False)
+
+    def test_readonly_properties_without_cluster_name_forced(self):
+        self._assert_readonly_properties_without_cluster(force=True)
 
     def test_success(self):
         orig_properties = {

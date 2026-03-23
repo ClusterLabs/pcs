@@ -266,6 +266,14 @@ class HostNotFound(CliReportMessageCustom):
         )
 
 
+class UseCommandClusterRename(CliReportMessageCustom):
+    _obj: messages.UseCommandClusterRename
+
+    @property
+    def message(self) -> str:
+        return self._obj.message + ", use 'pcs cluster rename'"
+
+
 class UseCommandNodeRemoveRemote(CliReportMessageCustom):
     _obj: messages.UseCommandNodeRemoveRemote
 
