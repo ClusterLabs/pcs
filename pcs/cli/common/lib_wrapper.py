@@ -440,6 +440,7 @@ def load_module(env, middleware_factory, name):  # noqa: PLR0911, PLR0912
                 "disable_safe": resource.disable_safe,
                 "disable_simulate": resource.disable_simulate,
                 "enable": resource.enable,
+                "get_cibsecrets": resource.get_cibsecrets,
                 "get_configured_resources": resource.get_configured_resources,
                 "get_failcounts": resource.get_failcounts,
                 "get_resource_relations_tree": (

@@ -33,6 +33,7 @@ class ResourceConfigJson(TestCase):
             primitives=[
                 resources_dto.PRIMITIVE_R1,
                 resources_dto.PRIMITIVE_R7,
+                resources_dto.PRIMITIVE_R8,
                 resources_dto.PRIMITIVE_R5,
                 resources_dto.PRIMITIVE_R2,
                 resources_dto.PRIMITIVE_R3,
@@ -245,6 +246,14 @@ class ResourceConfigCmd(ResourceConfigCmdMixin, TestCase):
                       interval=0s timeout=20s
                     stop: R7-stop-interval-0s
                       interval=0s timeout=20s
+                Resource: R8 (class=ocf provider=pcsmock type=minimal)
+                  Attributes: R8-instance_attributes
+                    fake=fake_value
+                    Secret Attributes:
+                      secret1
+                  Operations:
+                    monitor: R8-monitor-interval-10s
+                      interval=10s timeout=20s
                 Group: G2
                   Meta Attributes: G2-meta_attributes
                     meta1=metaval1
@@ -309,6 +318,36 @@ class ResourceConfigCmd(ResourceConfigCmdMixin, TestCase):
                   Network: control-port=9000
                   Resource: R1 (class=ocf provider=pcsmock type=minimal)
                     Description: R1 description
+                    Operations:
+                      monitor: R1-monitor-interval-10s
+                        interval=10s timeout=20s
+                """
+            ),
+        )
+        self.assertEqual(stderr, "")
+        self.assertEqual(retval, 0)
+
+    def test_plaintext_non_primitive_secrets(self):
+        self.pcs_runner_orig = PcsRunner(
+            cib_file=get_test_resource("cib-non-primitive-secrets.xml"),
+            mock_settings=get_mock_settings(),
+        )
+        stdout, stderr, retval = self.pcs_runner_orig.run(
+            [self.sub_command, "config"]
+        )
+        self.assertEqual(
+            stdout,
+            dedent(
+                """\
+                Clone: R1-clone
+                  Attributes: R1-clone-instance_attributes
+                    Secret Attributes:
+                      secret2
+                  Resource: R1 (class=ocf provider=pcsmock type=minimal)
+                    Attributes: R1-instance_attributes
+                      fake=fake_value
+                      Secret Attributes:
+                        secret1
                     Operations:
                       monitor: R1-monitor-interval-10s
                         interval=10s timeout=20s

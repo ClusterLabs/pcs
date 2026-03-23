@@ -144,6 +144,7 @@ pacemaker_authkey_bytes = 256
 pacemaker_local_state_dir = os.path.join(
     "/", "@PCMKLOCALSTATEDIR@", "lib/pacemaker"
 )
+pacemaker_secrets_dir = os.path.join(pacemaker_local_state_dir, "lrm/secrets")
 pacemaker_daemon_dir = "@PCMK_DAEMON_DIR@"
 pacemaker_schedulerd_exec = os.path.join(
     pacemaker_daemon_dir, "pacemaker-schedulerd"

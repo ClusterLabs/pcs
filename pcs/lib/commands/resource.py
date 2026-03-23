@@ -1,5 +1,6 @@
 # pylint: disable=too-many-lines
 import re
+from collections import defaultdict
 from contextlib import contextmanager
 from functools import partial
 from typing import (
@@ -11,6 +12,7 @@ from typing import (
     List,
     Mapping,
     Optional,
+    Sequence,
     Set,
     Tuple,
     Union,
@@ -21,6 +23,10 @@ from lxml.etree import _Element
 
 from pcs.common import const, file_type_codes, reports
 from pcs.common.interface import dto
+from pcs.common.pacemaker.cibsecret import (
+    CibResourceSecretDto,
+    CibResourceSecretListDto,
+)
 from pcs.common.pacemaker.resource.list import CibResourcesDto
 from pcs.common.reports import ReportItemList, ReportProcessor
 from pcs.common.reports.item import ReportItem
@@ -57,10 +63,12 @@ from pcs.lib.node import (
 )
 from pcs.lib.pacemaker import simulate as simulate_tools
 from pcs.lib.pacemaker.live import (
+    CibResourceSecretErrorException,
     diff_cibs_xml,
     get_cib,
     get_cib_xml,
     get_cluster_status_dom,
+    get_resource_secret_value,
     has_resource_unmove_unban_expired_support,
     push_cib_diff_xml,
     remove_node,
@@ -3213,3 +3221,37 @@ def _ensure_resources_managed(
         )
 
     return report_list
+
+
+def get_cibsecrets(
+    env: LibraryEnvironment, queries: Sequence[tuple[str, str]]
+) -> CibResourceSecretListDto:
+    """
+    Retrieves a batch of secret attribute values for specified resources
+
+    env -- provides all for communication with externals
+    queries -- a sequence of (resource_id, attribute_name) tuples to look up
+    """
+    resource_attributes_map: dict[str, set[str]] = defaultdict(set)
+    resource_secret_dtos: list[CibResourceSecretDto] = []
+    for resource_id, attribute_name in queries:
+        if attribute_name in resource_attributes_map[resource_id]:
+            continue
+        try:
+            resource_secret_dtos.append(
+                CibResourceSecretDto(
+                    resource_id,
+                    attribute_name,
+                    get_resource_secret_value(resource_id, attribute_name),
+                )
+            )
+        except CibResourceSecretErrorException as e:
+            env.report_processor.report(
+                ReportItem.warning(
+                    reports.messages.CibResourceSecretUnableToGet(
+                        resource_id, attribute_name, e.reason
+                    )
+                )
+            )
+        resource_attributes_map[resource_id].add(attribute_name)
+    return CibResourceSecretListDto(resource_secrets=resource_secret_dtos)

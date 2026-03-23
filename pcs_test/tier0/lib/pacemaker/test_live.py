@@ -1,4 +1,5 @@
 # pylint: disable=too-many-lines
+from hashlib import md5
 from unittest import TestCase, mock
 
 from lxml import etree
@@ -6,6 +7,7 @@ from lxml import etree
 import pcs.lib.pacemaker.live as lib
 from pcs import settings
 from pcs.common.reports import codes as report_codes
+from pcs.common.reports import const as report_const
 from pcs.common.tools import Version
 from pcs.common.types import CibRuleInEffectStatus
 from pcs.lib.external import CommandRunner
@@ -19,7 +21,12 @@ from pcs_test.tools.assertions import (
     start_tag_error_text,
 )
 from pcs_test.tools.command_env import get_env_tools
-from pcs_test.tools.custom_mock import TmpFileCall, TmpFileMock
+from pcs_test.tools.custom_mock import (
+    CibResourceSecretMock,
+    CibResourceSecretMockSpec,
+    TmpFileCall,
+    TmpFileMock,
+)
 from pcs_test.tools.custom_mock import get_runner_mock as get_runner
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.xml import XmlManipulation, etree_to_str
@@ -2074,4 +2081,104 @@ class ValidateStonithInstanceAttributesViaPcmkTest(TestCase):
             ],
             "./validate/command/output",
             self.attrs,
+        )
+
+
+@mock.patch("pcs.lib.pacemaker.live.Path.read_text", autospec=True)
+class GetResourceSecretValue(TestCase):
+    def setUp(self):
+        self.resource = "secret_resource"
+        self.attribute = "secret_attribute"
+        self.value = "secret_value"
+
+    def checksum(self, value):
+        return md5(value.encode(), usedforsecurity=False).hexdigest()
+
+    def assert_error(
+        self, mock_read_text, mock_spec, reason, use_mock_spec=True
+    ):
+        secrets_mock = CibResourceSecretMock(
+            [mock_spec] if use_mock_spec else []
+        )
+        mock_read_text.side_effect = secrets_mock.get_read_text_side_effect()
+        with self.assertRaises(lib.CibResourceSecretErrorException) as cm:
+            lib.get_resource_secret_value(mock_spec.id, mock_spec.name)
+        self.assertEqual(cm.exception.reason, reason)
+        expected_calls = secrets_mock.get_read_text_calls()
+        mock_read_text.assert_has_calls(expected_calls)
+        self.assertEqual(mock_read_text.call_count, len(expected_calls))
+
+    def assert_success(self, mock_read_text, mock_spec):
+        secrets_mock = CibResourceSecretMock([mock_spec])
+        mock_read_text.side_effect = secrets_mock.get_read_text_side_effect()
+        self.assertEqual(
+            lib.get_resource_secret_value(mock_spec.id, mock_spec.name),
+            mock_spec.value.strip(),
+        )
+        expected_calls = secrets_mock.get_read_text_calls()
+        mock_read_text.assert_has_calls(expected_calls)
+        self.assertEqual(mock_read_text.call_count, len(expected_calls))
+
+    def test_value_read_success(self, mock_read_text):
+        self.assert_success(
+            mock_read_text,
+            CibResourceSecretMockSpec(
+                self.resource, self.attribute, self.value, None
+            ),
+        )
+
+    def test_files_with_trailing_spaces_success(self, mock_read_text):
+        self.assert_success(
+            mock_read_text,
+            CibResourceSecretMockSpec(
+                self.resource,
+                self.attribute,
+                "secret_value \t\n\r\v\f",
+                f"{self.checksum('secret_value')} \t\n\r\v\f",
+            ),
+        )
+
+    def test_value_file_does_not_exist(self, mock_read_text):
+        self.assert_error(
+            mock_read_text,
+            CibResourceSecretMockSpec(
+                self.resource, self.attribute, OSError(), None
+            ),
+            report_const.CIB_SECRET_REASON_CANNOT_READ_VALUE_FILE,
+        )
+
+    def test_checksum_file_does_not_exist(self, mock_read_text):
+        self.assert_error(
+            mock_read_text,
+            CibResourceSecretMockSpec(
+                self.resource, self.attribute, self.value, OSError()
+            ),
+            report_const.CIB_SECRET_REASON_CANNOT_READ_CHECKSUM_FILE,
+        )
+
+    def test_checksum_file_checksum_does_not_match(self, mock_read_text):
+        self.assert_error(
+            mock_read_text,
+            CibResourceSecretMockSpec(
+                self.resource, self.attribute, self.value, "bad_checksum"
+            ),
+            report_const.CIB_SECRET_REASON_BAD_CHECKSUM,
+        )
+
+    def test_resource_id_contains_path(self, mock_read_text):
+        self.assert_error(
+            mock_read_text,
+            CibResourceSecretMockSpec("./R1", self.attribute, self.value, None),
+            report_const.CIB_SECRET_REASON_CANNOT_READ_VALUE_FILE,
+            use_mock_spec=False,
+        )
+
+    def test_attribute_name_contains_path(self, mock_read_text):
+        self.assert_error(
+            mock_read_text,
+            CibResourceSecretMockSpec(
+                self.resource, "../R1/secret_name", self.value, None
+            ),
+            report_const.CIB_SECRET_REASON_CANNOT_READ_VALUE_FILE,
+            use_mock_spec=False,
         )

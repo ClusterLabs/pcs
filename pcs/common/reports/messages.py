@@ -9132,3 +9132,22 @@ class UnableToGetClusterKnownHosts(ReportItemMessage):
     @property
     def message(self) -> str:
         return f"Unable to get known hosts from cluster '{self.cluster_name}'"
+
+
+@dataclass(frozen=True)
+class CibResourceSecretUnableToGet(ReportItemMessage):
+    """
+    Unable to get a secret value for the resource secret attribute.
+    """
+
+    resource_id: str
+    secret_name: str
+    reason: Optional[types.CibResourceSecretErrorReason] = None
+    _code = codes.CIB_RESOURCE_SECRET_UNABLE_TO_GET
+
+    @property
+    def message(self) -> str:
+        return (
+            f"Unable to get secret '{self.secret_name}' for resource "
+            f"'{self.resource_id}'"
+        )

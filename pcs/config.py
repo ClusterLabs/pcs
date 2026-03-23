@@ -61,7 +61,7 @@ def config_show(lib, argv, modifiers):
         doesn't exist)
       * --corosync_conf - corosync.conf file
     """
-    modifiers.ensure_only_supported("-f", "--corosync_conf")
+    modifiers.ensure_only_supported("-f", "--corosync_conf", "--show-secrets")
     if argv:
         raise CmdLineInputError()
 
@@ -127,13 +127,21 @@ def _config_show_cib_lines(lib, properties_facade=None):  # noqa: PLR0912, PLR09
     resources_facade = ResourcesConfigurationFacade.from_resources_dto(
         lib.resource.get_configured_resources()
     )
+    resources_only_facade = resources_facade.filter_stonith(False)
+    stonith_only_facade = resources_facade.filter_stonith(True)
+    if modifiers.is_specified("--show-secrets"):
+        for facade in [resources_only_facade, stonith_only_facade]:
+            queries = facade.get_secrets_queries()
+            if queries:
+                facade.update_secrets_values(
+                    lib.resource.get_cibsecrets(queries)
+                )
 
     all_lines = []
 
     resources_lines = smart_wrap_text(
         indent(
-            resources_to_text(resources_facade.filter_stonith(False)),
-            indent_step=INDENT_STEP,
+            resources_to_text(resources_only_facade), indent_step=INDENT_STEP
         )
     )
     if resources_lines:
@@ -141,10 +149,7 @@ def _config_show_cib_lines(lib, properties_facade=None):  # noqa: PLR0912, PLR09
         all_lines.extend(resources_lines)
 
     stonith_lines = smart_wrap_text(
-        indent(
-            resources_to_text(resources_facade.filter_stonith(True)),
-            indent_step=INDENT_STEP,
-        )
+        indent(resources_to_text(stonith_only_facade), indent_step=INDENT_STEP)
     )
     if stonith_lines:
         if all_lines:

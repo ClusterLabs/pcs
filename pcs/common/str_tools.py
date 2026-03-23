@@ -113,6 +113,25 @@ def format_name_value_id_list(
     return output
 
 
+def format_name_optional_value_or_id_list(
+    item_list: Sequence[tuple[str, Optional[str], Optional[str]]],
+) -> list[str]:
+    """
+    Turn 3-tuples to strings with starndard quoting:
+      * 'name'
+      * 'name=value'
+      * 'name (id: id)'
+      * 'name=value (id: id)'
+    """
+    output = []
+    for raw_name, raw_value, an_id in item_list:
+        name = quote(raw_name, "= ")
+        value = f"={quote(raw_value, '= ')}" if raw_value is not None else ""
+        _id = f" (id: {an_id})" if an_id is not None else ""
+        output.append(f"{name}{value}{_id}")
+    return output
+
+
 def pairs_to_text(pairs: Sequence[tuple[str, str]]) -> list[str]:
     if pairs:
         return [" ".join(format_name_value_list(pairs))]

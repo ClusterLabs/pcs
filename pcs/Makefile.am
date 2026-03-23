@@ -147,6 +147,7 @@ EXTRA_DIST		= \
 			  common/node_communicator.py \
 			  common/pacemaker/__init__.py \
 			  common/pacemaker/alert.py \
+			  common/pacemaker/cibsecret.py \
 			  common/pacemaker/cluster_property.py \
 			  common/pacemaker/constraint/__init__.py \
 			  common/pacemaker/constraint/all.py \

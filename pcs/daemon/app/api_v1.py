@@ -82,6 +82,7 @@ API_V1_MAP: Mapping[str, str] = {
     "resource-disable-safe/v1": "resource.disable_safe",
     "resource-disable-simulate/v1": "resource.disable_simulate",
     "resource-enable/v1": "resource.enable",
+    "resource-get-cibsecrets/v1": "resource.get_cibsecrets",
     "resource-group-add/v1": "resource.group_add",
     "resource-manage/v1": "resource.manage",
     "resource-move/v1": "resource.move",

@@ -89,8 +89,8 @@ cib
 [status [<resource id | tag id>] [node=<node>] [\fB\-\-hide\-inactive\fR]]
 Show status of all currently configured resources. If \fB\-\-hide\-inactive\fR is specified, only show active resources. If a resource or tag id is specified, only show status of the specified resource or resources in the specified tag. If node is specified, only show status of resources configured for the specified node.
 .TP
-config [@OUTPUT_FORMAT_SYNTAX_DOC@] [<resource id>]...
-Show options of all currently configured resources or if resource ids are specified show the options for the specified resource ids. @OUTPUT_FORMAT_DESC_DOC@
+config [\fB\-\-show\-secrets\fR] [@OUTPUT_FORMAT_SYNTAX_DOC@] [<resource id>]...
+Show options of all currently configured resources or if resource ids are specified show the options for the specified resource ids. If \fB\-\-show\-secrets\fR is specified, display the values of secret attributes in the configuration text output. By default, only attribute names are displayed and values are omitted. @OUTPUT_FORMAT_DESC_DOC@
 .TP
 list [filter] [\fB\-\-nodesc\fR]
 Show list of all available resource agents (if filter is provided then only resource agents matching the filter will be shown). If \fB\-\-nodesc\fR is used then descriptions of resource agents are not printed.
@@ -790,8 +790,8 @@ Create a tarball containing everything needed when reporting cluster problems. I
 [status [<resource id | tag id>] [node=<node>] [\fB\-\-hide\-inactive\fR]]
 Show status of all currently configured stonith devices. If \fB\-\-hide\-inactive\fR is specified, only show active stonith devices. If a resource or tag id is specified, only show status of the specified resource or resources in the specified tag. If node is specified, only show status of resources configured for the specified node.
 .TP
-config [@OUTPUT_FORMAT_SYNTAX_DOC@] [<stonith id>]...
-Show options of all currently configured stonith devices or if stonith device ids are specified show the options for the specified stonith device ids. @OUTPUT_FORMAT_DESC_DOC@
+config [\fB\-\-show\-secrets\fR] [@OUTPUT_FORMAT_SYNTAX_DOC@] [<stonith id>]...
+Show options of all currently configured stonith devices or if stonith device ids are specified show the options for the specified stonith device ids. If \fB\-\-show\-secrets\fR is specified, display the values of secret attributes in the configuration text output. By default, only attribute names are displayed and values are omitted. @OUTPUT_FORMAT_DESC_DOC@
 
 Note: The 'json' output format does not include fencing levels. Use 'pcs stonith level config \-\-output\-format=json' to get fencing levels.
 .TP
@@ -1572,8 +1572,8 @@ query resource <resource\-id> get\-index\-in\-group
 Get an index of the resource in a group. The first resource in a group has an index of 0. Usable only for resources that are in a group.
 .SS "config"
 .TP
-[show]
-View full cluster configuration.
+[show] [\fB\-\-show\-secrets\fR]
+View full cluster configuration. If \fB\-\-show\-secrets\fR is specified, display the values of secret attributes in the configuration text output. By default, only attribute names are displayed and values are omitted.
 .TP
 backup [filename]
 Creates the tarball containing the cluster configuration files.  If filename is not specified the standard output will be used.

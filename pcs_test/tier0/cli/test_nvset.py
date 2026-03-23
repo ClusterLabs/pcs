@@ -181,38 +181,7 @@ class FilterNvpairsByNames(TestCase):
 class NvsetDtoToLines(TestCase):
     def setUp(self):
         self.label = "Meta Attributes"
-
-    def _export(self, dto, with_ids):
-        return (
-            "\n".join(
-                nvset.nvset_dto_to_lines(
-                    dto, nvset_label=self.label, with_ids=with_ids
-                )
-            )
-            + "\n"
-        )
-
-    def assert_lines(self, dto, lines):
-        self.assertEqual(
-            self._export(dto, True),
-            lines,
-        )
-        self.assertEqual(
-            self._export(dto, False),
-            re.sub(r" +\(id:.*\)", "", lines),
-        )
-
-    def test_minimal(self):
-        dto = CibNvsetDto("my-id", {}, None, [])
-        output = dedent(
-            f"""\
-              {self.label}: my-id
-            """
-        )
-        self.assert_lines(dto, output)
-
-    def test_full(self):
-        dto = CibNvsetDto(
+        self.full_dto = CibNvsetDto(
             "my-id",
             {"score": "150"},
             CibRuleExpressionDto(
@@ -240,19 +209,80 @@ class NvsetDtoToLines(TestCase):
                 CibNvpairDto("my-id-pair1", "name1", "value1"),
                 CibNvpairDto("my-id-pair2", "name 2", "value 2"),
                 CibNvpairDto("my-id-pair3", "name=3", "value=3"),
+                CibNvpairDto("my-id-pair4", "secret1", "lrm://"),
+                CibNvpairDto("my-id-pair5", "secret 2", "lrm://"),
+                CibNvpairDto("my-id-pair6", "secret=3", "lrm://"),
             ],
         )
+
+    def _export(self, dto, with_ids, secrets_map):
+        return (
+            "\n".join(
+                nvset.nvset_dto_to_lines(
+                    dto,
+                    nvset_label=self.label,
+                    with_ids=with_ids,
+                    secrets_map=secrets_map,
+                )
+            )
+            + "\n"
+        )
+
+    def assert_lines(self, dto, lines, secrets_map=None):
+        self.assertEqual(
+            self._export(dto, True, secrets_map),
+            lines,
+        )
+        self.assertEqual(
+            self._export(dto, False, secrets_map),
+            re.sub(r" +\(id:.*\)", "", lines),
+        )
+
+    def test_minimal(self):
+        dto = CibNvsetDto("my-id", {}, None, [])
+        output = dedent(
+            f"""\
+              {self.label}: my-id
+            """
+        )
+        self.assert_lines(dto, output)
+
+    def test_full_without_secrets_map(self):
         output = dedent(
             f"""\
             {self.label}: my-id score=150
               "name 2"="value 2" (id: my-id-pair2)
               name1=value1 (id: my-id-pair1)
               "name=3"="value=3" (id: my-id-pair3)
+              "secret 2"=lrm:// (id: my-id-pair5)
+              secret1=lrm:// (id: my-id-pair4)
+              "secret=3"=lrm:// (id: my-id-pair6)
               Rule: boolean-op=or (id: my-id-rule)
                 Expression: op monitor (id: my-id-rule-op)
             """
         )
-        self.assert_lines(dto, output)
+        self.assert_lines(self.full_dto, output)
+
+    def test_full_with_secrets_map(self):
+        output = dedent(
+            f"""\
+            {self.label}: my-id score=150
+              "name 2"="value 2" (id: my-id-pair2)
+              name1=value1 (id: my-id-pair1)
+              "name=3"="value=3" (id: my-id-pair3)
+              "secret=3"=lrm:// (id: my-id-pair6)
+              Secret {self.label}:
+                "secret 2" (id: my-id-pair5)
+                secret1=secret_value1 (id: my-id-pair4)
+              Rule: boolean-op=or (id: my-id-rule)
+                Expression: op monitor (id: my-id-rule-op)
+            """
+        )
+        secrets_map = {
+            "secret1": "secret_value1",
+            "secret 2": None,
+        }
+        self.assert_lines(self.full_dto, output, secrets_map)
 
 
 class NvsetDtoListToLines(TestCase):

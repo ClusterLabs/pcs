@@ -2,6 +2,8 @@ import contextlib
 import io
 import socket
 from dataclasses import dataclass
+from hashlib import md5
+from pathlib import Path
 from typing import (
     Callable,
     Iterable,
@@ -12,6 +14,7 @@ from typing import (
 from unittest import mock
 
 import pcs.common.pcs_pycurl as pycurl
+from pcs import settings
 from pcs.common.reports import (
     ReportItemSeverity,
     ReportProcessor,
@@ -349,3 +352,68 @@ class RuleInEffectEvalMock(RuleInEffectEval):
 
     def get_rule_status(self, rule_id: str) -> CibRuleInEffectStatus:
         return self._results.get(rule_id, CibRuleInEffectStatus.UNKNOWN)
+
+
+@dataclass(frozen=True)
+class CibResourceSecretMockSpec:
+    id: str
+    name: str
+    value: Union[str, Exception]
+    checksum: Union[Optional[str], Exception]
+
+
+class CibResourceSecretMock:
+    def __init__(self, mock_defs: Iterable[CibResourceSecretMockSpec]):
+        self._mock_defs = list(mock_defs)
+        self._mock_paths: Optional[list[Path]] = None
+        self._path_mock_map: Optional[dict[Path, mock.MagicMock]] = None
+        self._secrets_dir = Path(settings.pacemaker_secrets_dir)
+
+    def _create_path_mock_map(self):
+        path_mock_map = {}
+        mock_paths = []
+        for mock_def in self._mock_defs:
+            value_path = Path(self._secrets_dir, mock_def.id, mock_def.name)
+            checksum_path = Path(f"{value_path}.sign")
+            mock_value = (
+                mock.MagicMock(return_value=mock_def.value)
+                if isinstance(mock_def.value, str)
+                else mock.MagicMock(side_effect=mock_def.value)
+            )
+            mock_checksum = (
+                mock.MagicMock(
+                    return_value=(
+                        md5(
+                            mock_def.value.encode(), usedforsecurity=False
+                        ).hexdigest()
+                        if mock_def.checksum is None
+                        else mock_def.checksum
+                    )
+                )
+                if not isinstance(mock_def.value, Exception)
+                and not isinstance(mock_def.checksum, Exception)
+                else mock.MagicMock(side_effect=mock_def.checksum)
+            )
+            path_mock_map[value_path] = mock_value
+            path_mock_map[checksum_path] = mock_checksum
+            mock_paths.append(value_path)
+            if not isinstance(mock_def.value, Exception):
+                mock_paths.append(checksum_path)
+
+        self._path_mock_map = path_mock_map
+        self._mock_paths = mock_paths
+
+    def get_read_text_side_effect(self):
+        if not self._path_mock_map:
+            self._create_path_mock_map()
+        path_mock_map = self._path_mock_map
+
+        def read_text_side_effect(self: Path, *args, **kwargs):
+            return path_mock_map.get(self, mock.DEFAULT)(*args, **kwargs)
+
+        return read_text_side_effect
+
+    def get_read_text_calls(self):
+        if not self._mock_paths:
+            self._create_path_mock_map()
+        return [mock.call(path) for path in self._mock_paths]
