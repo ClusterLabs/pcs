@@ -202,14 +202,11 @@ pcs_test/suite pcs_test.tier0.lib.test_*
 
 ## Critical Policies
 
-### AI-Generated Code Policy
+### AI-Assisted Contributions Policy
 
-**The pcs project does NOT accept any AI-generated code.** This includes:
-- Code directly produced by AI tools (GitHub Copilot, ChatGPT, etc.)
-- Code heavily adapted from AI suggestions
-- Code snippets from AI models
+The pcs project permits AI-assisted contributions. Contributors may use AI tools but must maintain full accountability for all submissions. AI usage other than autocomplete or language corrections requires disclosure via commit message trailers (`Assisted-by:` or `Generated-by:`).
 
-Rationale: Concerns about intellectual property, quality, and ethics. Non-compliance will result in PR rejection.
+Full policy: https://github.com/ClusterLabs/pcs/wiki/Policy-on-Use-of-Artificial-Intelligence-in-Pull-Requests
 
 ### Code Quality Standards
 
