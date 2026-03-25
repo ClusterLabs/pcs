@@ -15,6 +15,12 @@
 ### Deprecated
 - Commands `pcs pcsd certkey` and `pcs pcsd sync-certificates` ([RHEL-149608])
 
+### Security
+- Stop accepting multipart requests in pcsd as we don't use them. This should
+  boost security as there have been multiple reported vulnerabilities in Rack
+  and Tornado. Since we use Tornado as a proxy for Rack, this also prevents
+  future attacks on the Ruby daemon.
+
 [RHEL-7585]: https://issues.redhat.com/browse/RHEL-7585
 [RHEL-7604]: https://issues.redhat.com/browse/RHEL-7604
 [RHEL-84511]: https://issues.redhat.com/browse/RHEL-84511

@@ -7,6 +7,16 @@ from logging import Logger
 from pathlib import Path
 from typing import Iterable, Optional
 
+try:
+    from tornado.httputil import (
+        ParseBodyConfig,
+        ParseMultipartConfig,
+        set_parse_body_config,
+    )
+
+    _TORNADO_SUPPORTS_DISABLE_MULTIPART = True
+except ImportError:
+    _TORNADO_SUPPORTS_DISABLE_MULTIPART = False
 from tornado.ioloop import IOLoop, PeriodicCallback
 from tornado.locks import Lock
 from tornado.web import Application
@@ -117,6 +127,14 @@ def configure_app(  # noqa: PLR0913
             reload its SSL certificates). A relevant handler should get this
             object via the method `initialize`.
         """
+        if _TORNADO_SUPPORTS_DISABLE_MULTIPART:
+            # Disable multipart requests to enhance security due to recent CVEs
+            # but only if Tornado supports it (added in Tornado 6.5.5)
+            # https://www.tornadoweb.org/en/stable/httputil.html#tornado.httputil.set_parse_body_config
+            set_parse_body_config(
+                ParseBodyConfig(multipart=ParseMultipartConfig(enabled=False))
+            )
+
         socket_auth_factory = auth_provider.UnixSocketAuthProviderFactory(
             lib_auth_provider
         )
