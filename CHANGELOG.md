@@ -3,9 +3,9 @@
 ## [Unreleased]
 ### Added
 - Commands `pcs cluster node rename-corosync` and `pcs cluster node rename-cib`
-  for cluster node renaming ([RHEL-7585])
+  for cluster node renaming ([RHEL-149172])
 
-[RHEL-7585]: https://issues.redhat.com/browse/RHEL-7585
+[RHEL-149172]: https://redhat.atlassian.net/browse/RHEL-149172
 
 ## [0.11.11] - 2026-01-06
 
