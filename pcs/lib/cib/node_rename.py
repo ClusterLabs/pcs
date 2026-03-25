@@ -222,5 +222,5 @@ def _warn_about_acls(cib: _Element) -> reports.ReportItemList:
 def _reduce_update_results(
     *updates: tuple[bool, reports.ReportItemList],
 ) -> tuple[bool, reports.ReportItemList]:
-    updates, report_lists = zip(*updates, strict=True)
+    updates, report_lists = zip(*updates)
     return any(updates), [r for rlist in report_lists for r in rlist]
