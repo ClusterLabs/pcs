@@ -14,6 +14,12 @@
 - Value `sctp` of the knet link option `transport` is deprecated in
   corosync / knet and might be removed in a future release ([RHEL-126842])
 
+### Security
+- Stop accepting multipart requests in pcsd as we don't use them. This should
+  boost security as there have been multiple reported vulnerabilities in Rack
+  and Tornado. Since we use Tornado as a proxy for Rack, this also prevents
+  future attacks on the Ruby daemon.
+
 [RHEL-113763]: https://issues.redhat.com/browse/RHEL-113763
 [RHEL-126842]: https://issues.redhat.com/browse/RHEL-126842
 
