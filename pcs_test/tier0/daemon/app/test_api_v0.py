@@ -707,3 +707,136 @@ class SetSyncOptions(ApiV0HandlerTest):
         self.mock_run_library_command.assert_called_once_with(
             "pcs_cfgsync.update_sync_options", {"options": {}}
         )
+
+
+class SetPermissions(ApiV0HandlerTest):
+    url = "/remote/set_permissions"
+    command = "cluster.set_permissions"
+
+    request_data = {
+        "cluster_name": "ignored",
+        "cluster": "ignored",
+        "permissions": {
+            "1": {
+                "name": "username",
+                "type": "user",
+                "allow": {
+                    "read": "1",
+                    "write": "1",
+                    "grant": "1",
+                },
+            },
+            "2": {
+                "name": "groupname",
+                "type": "group",
+                "allow": {
+                    "read": "0",
+                    "write": "0",
+                    "superuser": "1",
+                    "full": "1",
+                },
+            },
+            # to verify that default values will be used.
+            # real validation of the values is done in the lib command
+            "3": {},
+        },
+    }
+    lib_command_call_arguments = {
+        "permissions": [
+            {
+                "name": "username",
+                "type": "user",
+                "allow": ["read", "write", "grant"],
+            },
+            {
+                "name": "groupname",
+                "type": "group",
+                "allow": ["superuser", "full"],
+            },
+            {
+                "name": "",
+                "type": "",
+                "allow": [],
+            },
+        ]
+    }
+
+    def test_success(self):
+        self.mock_run_library_command.return_value = self.result_success()
+
+        response = self.fetch(
+            self.url,
+            body=urlencode({"json_data": json.dumps(self.request_data)}),
+        )
+
+        self.assertEqual(response.code, 200)
+        self.assert_body(response.body, "Permissions saved")
+        self.mock_run_library_command.assert_called_once_with(
+            self.command, self.lib_command_call_arguments
+        )
+
+    def test_success_empty_json_data(self):
+        self.mock_run_library_command.return_value = self.result_success()
+
+        response = self.fetch(self.url, body=urlencode({"json_data": "{}"}))
+
+        self.assertEqual(response.code, 200)
+        self.assert_body(response.body, "Permissions saved")
+        self.mock_run_library_command.assert_called_once_with(
+            self.command, {"permissions": []}
+        )
+
+    def test_bad_json(self):
+        bad_inputs = [
+            [],
+            "not a valid json",
+            {"permissions": []},  # list instead of dict
+            {"permissions": {"allow": []}},  # list for 'allow' instead of dict
+        ]
+        for data in bad_inputs:
+            with self.subTest(value=data):
+                self.mock_run_library_command.reset_mock()
+
+                response = self.fetch(
+                    self.url,
+                    body=urlencode({"json_data": json.dumps(data)}),
+                )
+
+                self.assertEqual(response.code, 400)
+                self.assert_body(response.body, "{'status': 'bad_json'}")
+
+    def test_not_authorized_to_change_full_users(self):
+        self.mock_run_library_command.return_value = self.result_failure(
+            report_items=[
+                reports.ReportItem.error(
+                    reports.messages.NotAuthorizedToChangeFullPermission()
+                )
+            ]
+        )
+
+        response = self.fetch(
+            self.url,
+            body=urlencode({"json_data": json.dumps(self.request_data)}),
+        )
+
+        self.assertEqual(response.code, 403)
+        self.assert_body(
+            response.body,
+            (
+                "Current user is not authorized for this operation.\n"
+                "Only hacluster and users with Full permission can grant or "
+                "revoke Full permission."
+            ),
+        )
+        self.mock_run_library_command.assert_called_once_with(
+            self.command, self.lib_command_call_arguments
+        )
+
+    def test_failure(self):
+        self.assert_error_with_report(
+            self.url,
+            body=urlencode({"json_data": json.dumps(self.request_data)}),
+        )
+        self.mock_run_library_command.assert_called_once_with(
+            self.command, self.lib_command_call_arguments
+        )
