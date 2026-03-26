@@ -1,5 +1,5 @@
 import json
-from typing import Mapping
+from typing import Mapping, Sequence
 
 from pcs.common import reports
 from pcs.common.auth import HostAuthData
@@ -13,6 +13,7 @@ from pcs.common.node_communicator import (
 from pcs.common.reports import ReportItemSeverity
 from pcs.common.reports import codes as report_codes
 from pcs.common.reports.item import ReportItem
+from pcs.common.types import StringSequence
 from pcs.lib import node_communication_format
 from pcs.lib.communication.tools import (
     AllAtOnceStrategyMixin,
@@ -523,16 +524,17 @@ class UpdateKnownHosts(
     RunRemotelyBase,
 ):
     def __init__(
-        self, report_processor, known_hosts_to_add, known_hosts_to_remove
+        self,
+        report_processor,
+        known_hosts_to_add: Sequence[PcsKnownHost],
+        known_hosts_to_remove: StringSequence,
     ):
         super().__init__(report_processor)
         self._json_data = dict(
             known_hosts_add=dict(
                 [host.to_known_host_dict() for host in known_hosts_to_add]
             ),
-            known_hosts_remove=dict(
-                [host.to_known_host_dict() for host in known_hosts_to_remove]
-            ),
+            known_hosts_remove=list(known_hosts_to_remove),
         )
 
     def _get_request_data(self):
