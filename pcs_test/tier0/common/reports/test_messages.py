@@ -8,6 +8,7 @@ from pcs.common.fencing_topology import (
     TARGET_TYPE_REGEXP,
 )
 from pcs.common.file import RawFileError
+from pcs.common.permissions.types import PermissionTargetType
 from pcs.common.reports import const
 from pcs.common.reports import messages as reports
 from pcs.common.resource_agent.dto import ResourceAgentNameDto
@@ -6797,4 +6798,32 @@ class CibResourceSecretUnableToGet(NameBuildTest):
             reports.CibResourceSecretUnableToGet(
                 "resource_id", "secret_name", "reason"
             ),
+        )
+
+
+class PermissionDuplication(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "Permissions must be unique, duplicate permissions for "
+                "user: 'john', group: 'haclient'"
+            ),
+            reports.PermissionDuplication(
+                [
+                    ("john", PermissionTargetType.USER),
+                    ("haclient", PermissionTargetType.GROUP),
+                ]
+            ),
+        )
+
+
+class NotAuthorizedToChangeFullPermission(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "Current user is not authorized for this operation.\n"
+                "Only hacluster and users with Full permission can grant or "
+                "revoke Full permission."
+            ),
+            reports.NotAuthorizedToChangeFullPermission(),
         )

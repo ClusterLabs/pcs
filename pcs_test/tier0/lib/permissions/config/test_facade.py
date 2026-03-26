@@ -116,3 +116,10 @@ class FacadeV2AddCluster(TestCase):
         self.assertEqual(
             facade.config.clusters, [_CLUSTER1, _CLUSTER2, new_entry]
         )
+
+
+class FacadeV2GetEntriesWithAllowFull(TestCase):
+    def test_success(self):
+        facade = FacadeV2(_CONFIG)
+        result = facade.get_entries_with_allow_full()
+        self.assertEqual(result, [_USER2, _GROUP3])

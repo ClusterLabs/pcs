@@ -21,6 +21,10 @@ from pcs.common.fencing_topology import (
     FencingTargetValue,
 )
 from pcs.common.file import FileAction, RawFileError
+from pcs.common.permissions.types import (
+    PermissionGrantedType,
+    PermissionTargetType,
+)
 from pcs.common.resource_agent.dto import (
     ResourceAgentNameDto,
     get_resource_agent_full_name,
@@ -37,6 +41,7 @@ from pcs.common.str_tools import (
     is_iterable_not_str,
 )
 from pcs.common.types import CibRuleExpressionType, StringIterable
+from pcs.lib.auth.const import SUPERUSER
 
 from . import codes, const, types
 from .dto import ReportItemMessageDto
@@ -9174,4 +9179,47 @@ class CibResourceSecretUnableToGet(ReportItemMessage):
         return (
             f"Unable to get secret '{self.secret_name}' for resource "
             f"'{self.resource_id}'"
+        )
+
+
+@dataclass(frozen=True)
+class PermissionDuplication(ReportItemMessage):
+    """
+    Trying to set different permissions for the same users or groups
+
+    target_list -- list of info about duplicate permissions
+    """
+
+    target_list: list[tuple[str, PermissionTargetType]]
+    _code = codes.PERMISSION_DUPLICATION
+
+    @property
+    def message(self) -> str:
+        return (
+            "Permissions must be unique, duplicate permissions for {perms}"
+        ).format(
+            perms=", ".join(
+                f"{target_type.value}: '{name}'"
+                for name, target_type in self.target_list
+            )
+        )
+
+
+@dataclass(frozen=True)
+class NotAuthorizedToChangeFullPermission(ReportItemMessage):
+    """
+    Current user is not authorized to change FULL permissions
+    """
+
+    _code = codes.NOT_AUTHORIZED_TO_CHANGE_FULL_PERMISSION
+
+    @property
+    def message(self) -> str:
+        return (
+            "Current user is not authorized for this operation.\n"
+            "Only {superuser} and users with {full_label} permission can grant "
+            "or revoke {full_label} permission."
+        ).format(
+            superuser=SUPERUSER,
+            full_label=PermissionGrantedType.FULL.value.capitalize(),
         )

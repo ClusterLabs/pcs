@@ -174,6 +174,7 @@ EXTRA_DIST		= \
 			  common/pacemaker/tools.py \
 			  common/pacemaker/types.py \
 			  common/pcs_cfgsync_dto.py \
+			  common/permissions/dto.py \
 			  common/permissions/__init__.py \
 			  common/permissions/types.py \
 			  common/pcs_pycurl.py \
@@ -448,6 +449,7 @@ EXTRA_DIST		= \
 			  lib/permissions/__init__.py \
 			  lib/permissions/tools.py \
 			  lib/permissions/types.py \
+			  lib/permissions/validations.py \
 			  lib/resource_agent/const.py \
 			  lib/resource_agent/error.py \
 			  lib/resource_agent/facade.py \

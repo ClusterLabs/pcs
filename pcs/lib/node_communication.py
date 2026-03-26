@@ -68,8 +68,11 @@ class NodeTargetLibFactory(NodeTargetFactory):
         return report_list, target_list
 
     def get_target_list(
-        self, host_name_list, skip_non_existing=False, allow_skip=True
-    ):
+        self,
+        host_name_list: StringIterable,
+        skip_non_existing: bool = False,
+        allow_skip: bool = True,
+    ) -> list[RequestTarget]:
         report_list, target_list = self.get_target_list_with_reports(
             host_name_list, skip_non_existing, allow_skip
         )
