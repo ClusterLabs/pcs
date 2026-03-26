@@ -203,6 +203,37 @@ def node_clear(lib: Any, arg_list: Argv, modifiers: InputModifiers) -> None:
     )
 
 
+def node_rename_cib(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
+    """
+    Options:
+      * -f - CIB file
+      * --force
+    """
+    modifiers.ensure_only_supported("-f", "--force")
+    if len(argv) != 2:
+        raise CmdLineInputError()
+    force_flags = []
+    if modifiers.get("--force"):
+        force_flags.append(report_codes.FORCE)
+    lib.cluster.rename_node_cib(argv[0], argv[1], force_flags)
+
+
+def node_rename_corosync(
+    lib: Any, argv: Argv, modifiers: InputModifiers
+) -> None:
+    """
+    Options:
+      * --skip-offline - skip offline nodes
+    """
+    modifiers.ensure_only_supported("--skip-offline")
+    if len(argv) != 2:
+        raise CmdLineInputError()
+    force_flags = []
+    if modifiers.get("--skip-offline"):
+        force_flags.append(report_codes.SKIP_OFFLINE_NODES)
+    lib.cluster.rename_node_corosync(argv[0], argv[1], force_flags)
+
+
 def cluster_rename(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:

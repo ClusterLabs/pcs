@@ -107,6 +107,8 @@ cluster_cmd = create_router(
                 "remove": cluster.node_remove,
                 "remove-guest": cluster_command.node_remove_guest,
                 "remove-remote": cluster_command.node_remove_remote,
+                "rename-cib": cluster_command.node_rename_cib,
+                "rename-corosync": cluster_command.node_rename_corosync,
             },
             ["cluster", "node"],
         ),

@@ -2097,6 +2097,73 @@ class CorosyncNodesMissing(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class CorosyncNodeRenameOldNodeNotFound(ReportItemMessage):
+    """
+    The old node name was not found in corosync.conf.
+
+    old_name -- the node name that was not found
+    """
+
+    old_name: str
+    _code = codes.COROSYNC_NODE_RENAME_OLD_NODE_NOT_FOUND
+
+    @property
+    def message(self) -> str:
+        return (
+            f"Node '{self.old_name}' was not found in corosync.conf, "
+            "unable to rename"
+        )
+
+
+@dataclass(frozen=True)
+class CorosyncNodeRenameNewNodeAlreadyExists(ReportItemMessage):
+    """
+    The new node name already exists in corosync.conf.
+
+    new_name -- the node name that already exists
+    """
+
+    new_name: str
+    _code = codes.COROSYNC_NODE_RENAME_NEW_NODE_ALREADY_EXISTS
+
+    @property
+    def message(self) -> str:
+        return (
+            f"Node '{self.new_name}' already exists in corosync.conf, "
+            "unable to rename"
+        )
+
+
+@dataclass(frozen=True)
+class CorosyncNodeRenameAddrsMatchOldName(ReportItemMessage):
+    """
+    Some ring addresses match the old node name after rename.
+
+    old_name -- the old node name
+    new_name -- the new node name
+    node_addrs -- dict mapping node name (or nodeid) to list of address
+        attribute names that still reference old_name
+    """
+
+    old_name: str
+    new_name: str
+    node_addrs: dict[str, list[str]]
+    _code = codes.COROSYNC_NODE_RENAME_ADDRS_MATCH_OLD_NAME
+
+    @property
+    def message(self) -> str:
+        addrs = "; ".join(
+            f"{node}: {', '.join(addr_list)}"
+            for node, addr_list in sorted(self.node_addrs.items())
+        )
+        return (
+            f"Node '{self.old_name}' has been renamed to"
+            f" '{self.new_name}', but the following addresses still"
+            f" reference the old name: {addrs}"
+        )
+
+
+@dataclass(frozen=True)
 class CorosyncTooManyLinksOptions(ReportItemMessage):
     """
     Options for more links than defined by nodes' addresses have been specified
@@ -3623,6 +3690,25 @@ class NodeNotFound(ReportItemMessage):
     def message(self) -> str:
         desc = _build_node_description(self.searched_types)
         return f"{desc} '{self.node}' does not appear to exist in configuration"
+
+
+@dataclass(frozen=True)
+class NodeRenameNamesEqual(ReportItemMessage):
+    """
+    Cannot rename node because old and new names are the same.
+
+    name -- the node name
+    """
+
+    name: str
+    _code = codes.NODE_RENAME_NAMES_EQUAL
+
+    @property
+    def message(self) -> str:
+        return (
+            f"Unable to rename node '{self.name}': "
+            "new name is the same as the current name"
+        )
 
 
 @dataclass(frozen=True)
@@ -8359,6 +8445,127 @@ class CibXmlMissing(ReportItemMessage):
     @property
     def message(self) -> str:
         return "CIB XML file cannot be found"
+
+
+@dataclass(frozen=True)
+class CibNodeRenameElementUpdated(ReportItemMessage):
+    """
+    A CIB element was updated during node rename.
+
+    element_type -- type of the updated element
+    element_id -- identifier of the updated element
+    attribute_desc -- description of the updated attribute
+    old_value -- original value
+    new_value -- new value
+    """
+
+    element_type: str
+    element_id: str
+    attribute_desc: str
+    old_value: str
+    new_value: str
+    _code = codes.CIB_NODE_RENAME_ELEMENT_UPDATED
+
+    @property
+    def message(self) -> str:
+        return (
+            f"{_type_to_string(self.element_type).capitalize()}"
+            f" '{self.element_id}': "
+            f"{self.attribute_desc} updated from "
+            f"'{self.old_value}' to '{self.new_value}'"
+        )
+
+
+@dataclass(frozen=True)
+class CibNodeRenameFencingLevelPatternExists(ReportItemMessage):
+    """
+    A fencing level uses a target-pattern, which may match node names
+    and needs manual review.
+
+    level_id -- fencing level id
+    pattern -- the target-pattern value
+    """
+
+    level_id: str
+    pattern: str
+    _code = codes.CIB_NODE_RENAME_FENCING_LEVEL_PATTERN_EXISTS
+
+    @property
+    def message(self) -> str:
+        return (
+            f"Fencing level '{self.level_id}' uses target-pattern "
+            f"'{self.pattern}', which may match the renamed node, "
+            "check the pattern and adjust the configuration if necessary"
+        )
+
+
+@dataclass(frozen=True)
+class CibNodeRenameAclsExist(ReportItemMessage):
+    """
+    ACL rules exist in CIB and may contain references to node names
+    that need manual review.
+    """
+
+    _code = codes.CIB_NODE_RENAME_ACLS_EXIST
+
+    @property
+    def message(self) -> str:
+        return (
+            "ACL rules exist in CIB and may contain references to node names, "
+            "check the ACL configuration and adjust it if necessary"
+        )
+
+
+@dataclass(frozen=True)
+class CibNodeRenameNewNodeNotInCorosync(ReportItemMessage):
+    """
+    The new node name was not found among corosync.conf nodes.
+
+    new_name -- the new node name that was not found
+    """
+
+    new_name: str
+    _code = codes.CIB_NODE_RENAME_NEW_NODE_NOT_IN_COROSYNC
+
+    @property
+    def message(self) -> str:
+        return (
+            f"Node '{self.new_name}' is not known to corosync, "
+            "the node name may be incorrect"
+        )
+
+
+@dataclass(frozen=True)
+class CibNodeRenameOldNodeInCorosync(ReportItemMessage):
+    """
+    The old node name was found in corosync.conf, indicating that the node
+    has not been renamed in corosync.conf yet.
+
+    old_name -- the old node name that was found in corosync.conf
+    """
+
+    old_name: str
+    _code = codes.CIB_NODE_RENAME_OLD_NODE_IN_COROSYNC
+
+    @property
+    def message(self) -> str:
+        return (
+            f"Node '{self.old_name}' is still known to corosync, "
+            "the node may not have been renamed in corosync.conf yet"
+        )
+
+
+@dataclass(frozen=True)
+class CibNodeRenameNoChange(ReportItemMessage):
+    """
+    No CIB elements were updated during node rename operation.
+    """
+
+    _code = codes.CIB_NODE_RENAME_NO_CHANGE
+
+    @property
+    def message(self) -> str:
+        return "No CIB configuration changes needed for node rename"
 
 
 @dataclass(frozen=True)
