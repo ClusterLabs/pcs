@@ -94,7 +94,7 @@ def auth_hosts(  # noqa: PLR0912
 
     known_hosts_facade = _read_known_hosts_file(env.report_processor)
 
-    if not FileInstance.for_corosync_conf().raw_file.exists():
+    if not env.has_corosync_conf:
         # we are not running in a cluster, so just save the new tokens locally
         known_hosts_facade.update_known_hosts(new_known_hosts)
         known_hosts_facade.set_data_version(known_hosts_facade.data_version + 1)
@@ -248,7 +248,7 @@ def _deauth_hosts_common(
     Extracted common parts of deauth commands, to reduce code duplication
     Deauth hosts and sync the known-hosts file if needed.
     """
-    if not FileInstance.for_corosync_conf().raw_file.exists():
+    if not env.has_corosync_conf:
         known_hosts_facade.remove_known_hosts(hosts_to_deauth)
         known_hosts_facade.set_data_version(known_hosts_facade.data_version + 1)
         try:

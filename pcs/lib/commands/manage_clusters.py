@@ -89,8 +89,7 @@ def add_existing_cluster(  # noqa: PLR0912, PLR0915
         no_privilege_transition_node_communicator, get_cluster_known_hosts_cmd
     )
 
-    is_in_cluster = FileInstance.for_corosync_conf().raw_file.exists()
-
+    is_in_cluster = env.has_corosync_conf
     if is_in_cluster:
         corosync_conf = env.get_corosync_conf()
         local_cluster_name = corosync_conf.get_cluster_name()
