@@ -436,6 +436,7 @@ EXTRA_DIST		= \
 			  lib/pcs_cfgsync/fetcher.py \
 			  lib/pcs_cfgsync/__init__.py \
 			  lib/pcs_cfgsync/save_sync.py \
+			  lib/pcs_cfgsync/sync_files.py \
 			  lib/pcs_cfgsync/validations.py \
 			  lib/permissions/checker.py \
 			  lib/permissions/config/exporter.py \

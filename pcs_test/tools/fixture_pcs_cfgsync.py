@@ -1,5 +1,5 @@
 import json
-from typing import Mapping, Optional, Sequence
+from typing import Literal, Mapping, Optional, Sequence
 
 from pcs import settings
 from pcs.common import file_type_codes, reports
@@ -14,6 +14,7 @@ from pcs.lib.host.config.types import KnownHosts
 from pcs.lib.permissions.config.exporter import ExporterV2
 from pcs.lib.permissions.config.types import ClusterPermissions, ConfigV2
 
+from pcs_test.tools import fixture
 from pcs_test.tools.command_env.config import Config as EnvConfig
 from pcs_test.tools.command_env.mock_node_communicator import (
     NodeCommunicatorType,
@@ -306,3 +307,81 @@ def fixture_save_sync_new_known_hosts_error(
         fixture_known_hosts_file_content(file_data_version, known_hosts or {}),
         communicator_type=communicator_type,
     )
+
+
+def fixture_expected_save_sync_reports(
+    file_type: file_type_codes.FileTypeCode,
+    node_labels: list[str],
+    expected_result: Literal["ok", "conflict", "error"] = "ok",
+    conflict_is_error: bool = True,
+) -> list[fixture.ReportItemFixture]:
+    _report_code_map = {
+        "ok": reports.codes.PCS_CFGSYNC_CONFIG_ACCEPTED,
+        "conflict": reports.codes.PCS_CFGSYNC_CONFIG_REJECTED,
+        "error": reports.codes.PCS_CFGSYNC_CONFIG_SAVE_ERROR,
+    }
+
+    first_node_report = (
+        fixture.error(
+            _report_code_map[expected_result],
+            file_type_code=file_type,
+            context=reports.dto.ReportItemContextDto(
+                node_labels[0],
+            ),  # type: ignore [arg-type]
+        )
+        if expected_result == "error"
+        or (expected_result == "conflict" and conflict_is_error)
+        else fixture.info(
+            _report_code_map[expected_result],
+            file_type_code=file_type,
+            context=reports.dto.ReportItemContextDto(
+                node_labels[0],
+            ),  # type: ignore [arg-type]
+        )
+    )
+
+    report_list = (
+        [
+            fixture.info(
+                reports.codes.PCS_CFGSYNC_SENDING_CONFIGS_TO_NODES,
+                file_type_code_list=[file_type],
+                node_name_list=node_labels,
+            ),
+            first_node_report,
+        ]
+        + [
+            fixture.info(
+                reports.codes.PCS_CFGSYNC_CONFIG_ACCEPTED,
+                file_type_code=file_type,
+                context=reports.dto.ReportItemContextDto(
+                    node_label,
+                ),  # type: ignore [arg-type]
+            )
+            for node_label in node_labels[1:]
+        ]
+    )
+
+    if expected_result == "conflict":
+        report_list.append(
+            fixture.info(
+                reports.codes.PCS_CFGSYNC_FETCHING_NEWEST_CONFIG,
+                file_type_code_list=[file_type],
+                node_name_list=node_labels,
+            )
+        )
+        if conflict_is_error:
+            report_list.append(
+                fixture.error(reports.codes.PCS_CFGSYNC_CONFLICT_REPEAT_ACTION)
+            )
+        return report_list
+
+    if expected_result == "error":
+        return report_list + [
+            fixture.error(
+                reports.codes.PCS_CFGSYNC_SENDING_CONFIGS_TO_NODES_FAILED,
+                file_type_code_list=[file_type],
+                node_name_list=[node_labels[0]],
+            )
+        ]
+
+    return report_list

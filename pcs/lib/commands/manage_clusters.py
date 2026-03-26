@@ -1,9 +1,6 @@
-from typing import Sequence, cast
+from typing import cast
 
 from pcs.common import reports
-from pcs.common.file_type_codes import PCS_KNOWN_HOSTS, PCS_SETTINGS_CONF
-from pcs.common.host import PcsKnownHost
-from pcs.common.node_communicator import Communicator, RequestTarget
 from pcs.lib.communication.corosync import GetClusterInfoFromStatus
 from pcs.lib.communication.nodes import GetClusterKnownHosts
 from pcs.lib.communication.tools import run
@@ -13,11 +10,12 @@ from pcs.lib.file.raw_file import RawFileError, raw_file_error_report
 from pcs.lib.host.config.facade import Facade as KnownHostsFacade
 from pcs.lib.interface.config import ParserErrorException
 from pcs.lib.node import get_existing_nodes_names
-from pcs.lib.pcs_cfgsync.save_sync import (
-    save_sync_new_known_hosts,
-    save_sync_new_version,
+from pcs.lib.pcs_cfgsync.sync_files import (
+    sync_known_hosts_in_cluster,
+    sync_pcs_settings_in_cluster,
+    update_known_hosts_locally,
+    update_pcs_settings_locally,
 )
-from pcs.lib.permissions.config.facade import FacadeV2 as PcsSettingsFacade
 from pcs.lib.permissions.config.types import ClusterEntry
 from pcs.lib.permissions.tools import read_pcs_settings_conf
 
@@ -106,7 +104,7 @@ def add_existing_cluster(  # noqa: PLR0912, PLR0915
             raise LibraryError()
 
         if is_in_cluster:
-            __sync_known_hosts_in_cluster(
+            sync_known_hosts_in_cluster(
                 known_hosts,
                 new_hosts,
                 local_cluster_name,
@@ -115,27 +113,24 @@ def add_existing_cluster(  # noqa: PLR0912, PLR0915
                 env.report_processor,
             )
         else:
-            __update_known_hosts_locally(
+            update_known_hosts_locally(
                 known_hosts, new_hosts, env.report_processor
             )
 
     if env.report_processor.has_errors:
         raise LibraryError()
 
-    new_cluster_entry = ClusterEntry(cluster_name, cluster_nodes)
+    pcs_settings_conf.add_cluster(ClusterEntry(cluster_name, cluster_nodes))
     if is_in_cluster:
-        __sync_pcs_settings_in_cluster(
+        sync_pcs_settings_in_cluster(
             pcs_settings_conf,
-            new_cluster_entry,
             local_cluster_name,
             local_request_targets,
             no_privilege_transition_node_communicator,
             env.report_processor,
         )
     else:
-        __update_pcs_settings_locally(
-            pcs_settings_conf, new_cluster_entry, env.report_processor
-        )
+        update_pcs_settings_locally(pcs_settings_conf, env.report_processor)
 
     if env.report_processor.has_errors:
         raise LibraryError()
@@ -157,118 +152,3 @@ def __read_known_hosts() -> tuple[KnownHostsFacade, reports.ReportItemList]:
     except ParserErrorException as e:
         report_list.extend(file_instance.parser_exception_to_report_list(e))
     return KnownHostsFacade.create(data_version=0), report_list
-
-
-def __sync_known_hosts_in_cluster(
-    known_hosts: KnownHostsFacade,
-    new_hosts: Sequence[PcsKnownHost],
-    local_cluster_name: str,
-    request_targets: Sequence[RequestTarget],
-    node_communicator: Communicator,
-    report_processor: reports.ReportProcessor,
-) -> None:
-    conflict_detected, failed_nodes, new_file = save_sync_new_known_hosts(
-        known_hosts,
-        new_hosts,
-        [],
-        local_cluster_name,
-        request_targets,
-        node_communicator,
-        report_processor,
-    )
-    if conflict_detected:
-        report_processor.report(
-            reports.ReportItem.error(
-                reports.messages.PcsCfgsyncConflictRepeatAction()
-            )
-        )
-        try:
-            if new_file is not None:
-                FileInstance.for_known_hosts().write_facade(
-                    new_file, can_overwrite=True
-                )
-        except RawFileError as e:
-            report_processor.report(raw_file_error_report(e))
-
-    if failed_nodes:
-        report_processor.report(
-            reports.ReportItem.error(
-                reports.messages.PcsCfgsyncSendingConfigsToNodesFailed(
-                    [PCS_KNOWN_HOSTS], sorted(failed_nodes)
-                )
-            )
-        )
-
-
-def __update_known_hosts_locally(
-    known_hosts: KnownHostsFacade,
-    new_hosts: Sequence[PcsKnownHost],
-    report_processor: reports.ReportProcessor,
-) -> None:
-    known_hosts.update_known_hosts(new_hosts)
-    known_hosts.set_data_version(known_hosts.data_version + 1)
-
-    try:
-        FileInstance.for_known_hosts().write_facade(
-            known_hosts, can_overwrite=True
-        )
-    except RawFileError as e:
-        report_processor.report(raw_file_error_report(e))
-
-
-def __sync_pcs_settings_in_cluster(
-    pcs_settings: PcsSettingsFacade,
-    new_cluster_entry: ClusterEntry,
-    local_cluster_name: str,
-    request_targets: Sequence[RequestTarget],
-    node_communicator: Communicator,
-    report_processor: reports.ReportProcessor,
-) -> None:
-    pcs_settings.add_cluster(new_cluster_entry)
-    conflict_detected, failed_nodes, new_file = save_sync_new_version(
-        PCS_SETTINGS_CONF,
-        pcs_settings,
-        local_cluster_name,
-        request_targets,
-        node_communicator,
-        report_processor,
-        fetch_on_conflict=True,
-        reject_is_error=True,
-    )
-    if conflict_detected:
-        report_processor.report(
-            reports.ReportItem.error(
-                reports.messages.PcsCfgsyncConflictRepeatAction()
-            )
-        )
-        try:
-            if new_file is not None:
-                FileInstance.for_pcs_settings_config().write_facade(
-                    new_file, can_overwrite=True
-                )
-        except RawFileError as e:
-            report_processor.report(raw_file_error_report(e))
-
-    if failed_nodes:
-        report_processor.report(
-            reports.ReportItem.error(
-                reports.messages.PcsCfgsyncSendingConfigsToNodesFailed(
-                    [PCS_SETTINGS_CONF], sorted(failed_nodes)
-                )
-            )
-        )
-
-
-def __update_pcs_settings_locally(
-    pcs_settings_conf: PcsSettingsFacade,
-    new_cluster_entry: ClusterEntry,
-    report_processor: reports.ReportProcessor,
-) -> None:
-    pcs_settings_conf.add_cluster(new_cluster_entry)
-    pcs_settings_conf.set_data_version(pcs_settings_conf.data_version + 1)
-    try:
-        FileInstance.for_pcs_settings_config().write_facade(
-            pcs_settings_conf, can_overwrite=True
-        )
-    except RawFileError as e:
-        report_processor.report(raw_file_error_report(e))
