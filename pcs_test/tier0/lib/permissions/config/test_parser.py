@@ -3,7 +3,7 @@ from unittest import TestCase
 
 from pcs.common.interface.dto import to_dict
 from pcs.common.permissions.types import (
-    PermissionAccessType,
+    PermissionGrantedType,
     PermissionTargetType,
 )
 from pcs.lib.interface.config import ParserErrorException
@@ -88,14 +88,14 @@ class ParserV2Test(TestCase):
                     PermissionEntry(
                         name="user1",
                         type=PermissionTargetType.USER,
-                        allow=[PermissionAccessType.READ],
+                        allow=[PermissionGrantedType.READ],
                     ),
                     PermissionEntry(
                         name="group1",
                         type=PermissionTargetType.GROUP,
                         allow=[
-                            PermissionAccessType.GRANT,
-                            PermissionAccessType.WRITE,
+                            PermissionGrantedType.GRANT,
+                            PermissionGrantedType.WRITE,
                         ],
                     ),
                 ]

@@ -446,8 +446,8 @@ EXTRA_DIST		= \
 			  lib/permissions/config/types.py \
 			  lib/permissions/const.py \
 			  lib/permissions/__init__.py \
-			  lib/permissions/__init__.py \
 			  lib/permissions/tools.py \
+			  lib/permissions/types.py \
 			  lib/resource_agent/const.py \
 			  lib/resource_agent/error.py \
 			  lib/resource_agent/facade.py \

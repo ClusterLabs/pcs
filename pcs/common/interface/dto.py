@@ -244,7 +244,7 @@ def from_dict(
                 async_tasks_types.TaskFinishType,
                 async_tasks_types.TaskState,
                 async_tasks_types.TaskKillReason,
-                permissions_types.PermissionAccessType,
+                permissions_types.PermissionGrantedType,
                 permissions_types.PermissionTargetType,
             ],
             type_hooks={

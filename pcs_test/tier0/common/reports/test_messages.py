@@ -3698,6 +3698,19 @@ class FileIoError(NameBuildTest):
         )
 
 
+class FileDoesNotExistUsingDefault(NameBuildTest):
+    def test_success(self):
+        self.assert_message_from_report(
+            (
+                "Corosync authkey file '/corosync_conf/path' does not exist, "
+                "using default configuration"
+            ),
+            reports.FileDoesNotExistUsingDefault(
+                "COROSYNC_AUTHKEY", "/corosync_conf/path"
+            ),
+        )
+
+
 class UnsupportedOperationOnNonSystemdSystems(NameBuildTest):
     def test_all(self):
         self.assert_message_from_report(

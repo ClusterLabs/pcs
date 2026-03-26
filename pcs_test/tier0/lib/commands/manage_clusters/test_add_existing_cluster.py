@@ -8,8 +8,8 @@ from pcs.common.host import Destination, PcsKnownHost
 from pcs.lib.commands import manage_clusters
 from pcs.lib.permissions.config.types import (
     ClusterEntry,
-    PermissionAccessType,
     PermissionEntry,
+    PermissionGrantedType,
     PermissionTargetType,
 )
 
@@ -487,9 +487,9 @@ class AddExistingClusterLocalNodeNotInCluster(FixtureMixin, TestCase):
                         name=settings.pacemaker_gname,
                         type=PermissionTargetType.GROUP,
                         allow=[
-                            PermissionAccessType.READ,
-                            PermissionAccessType.WRITE,
-                            PermissionAccessType.GRANT,
+                            PermissionGrantedType.READ,
+                            PermissionGrantedType.WRITE,
+                            PermissionGrantedType.GRANT,
                         ],
                     )
                 ],

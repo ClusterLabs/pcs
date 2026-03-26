@@ -5107,6 +5107,30 @@ class FileIoError(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class FileDoesNotExistUsingDefault(ReportItemMessage):
+    """
+    The file does not exist, using default configuration
+
+    file_type_code -- file type, item of pcs.common.file_type_codes
+    file_path -- file path, optional for cases when unknown (GhostFiles)
+    """
+
+    file_type_code: file_type_codes.FileTypeCode
+    file_path: str
+    _code = codes.FILE_DOES_NOT_EXIST_USING_DEFAULT
+
+    @property
+    def message(self) -> str:
+        return (
+            "{file_role} file '{file_path}' does not exist, using default "
+            "configuration"
+        ).format(
+            file_path=self.file_path,
+            file_role=format_file_role(self.file_type_code),
+        )
+
+
+@dataclass(frozen=True)
 class UnsupportedOperationOnNonSystemdSystems(ReportItemMessage):
     _code = codes.UNSUPPORTED_OPERATION_ON_NON_SYSTEMD_SYSTEMS
 
