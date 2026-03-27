@@ -6,7 +6,13 @@ from .config import (
     get_corosync_conf_struct,
 )
 from .link import add_link, remove_links, update_link
-from .misc import corosync_authkey_change, rename, verify, wait_for_pcmk_idle
+from .misc import (
+    corosync_authkey_change,
+    rename,
+    set_permissions,
+    verify,
+    wait_for_pcmk_idle,
+)
 from .node import (
     node_clear,
     remove_nodes,
@@ -33,6 +39,7 @@ __all__ = [
     "rename",
     "rename_node_cib",
     "rename_node_corosync",
+    "set_permissions",
     "setup",
     "setup_local",
     "update_link",

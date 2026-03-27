@@ -2,7 +2,7 @@ from pcs.common.reports import ReportItem
 from pcs.common.reports.messages import CibUpgradeSuccessful
 from pcs.daemon.async_tasks.worker.command_mapping import _Cmd
 from pcs.lib.errors import LibraryError
-from pcs.lib.permissions.config.types import PermissionAccessType as p
+from pcs.lib.permissions.config.types import PermissionGrantedType as p
 
 RESULT = "I'm done."
 

@@ -31,7 +31,6 @@ def remote(params, request, auth_user)
       :set_configs => method(:set_configs),
       :set_certs => method(:set_certs),
       :get_permissions => method(:get_permissions_remote),
-      :set_permissions => method(:set_permissions_remote),
       :cluster_start => method(:cluster_start),
       :cluster_stop => method(:cluster_stop),
       :config_restore => method(:config_restore),
@@ -499,98 +498,6 @@ def get_permissions_remote(params, request, auth_user)
     'users_permissions' => pcs_config.permissions_local.to_hash(),
   }
   return [200, JSON.generate(data)]
-end
-
-def set_permissions_remote(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::GRANT)
-    return 403, 'Permission denied'
-  end
-
-  begin
-    data = JSON.parse(params['json_data'])
-  rescue JSON::ParserError
-    return 400, JSON.generate({'status' => 'bad_json'})
-  end
-
-  user_set = {}
-  perm_list = []
-  full_users_new = Set.new
-  perm_deps = Permissions.permissions_dependencies
-  if data['permissions']
-    data['permissions'].each { |key, perm|
-      name = (perm['name'] || '').strip
-      type = (perm['type'] || '').strip
-      return [400, 'Missing user name'] if '' == name
-      return [400, 'Missing user type'] if '' == type
-      if not Permissions::is_user_type(type)
-        return [400, "Unknown user type '#{type}'"]
-      end
-
-      if user_set.key?([name, type])
-        return [400, "Duplicate permissions for #{type} #{name}"]
-      end
-      user_set[[name, type]] = true
-
-      allow = []
-      if perm['allow']
-        perm['allow'].each { |perm_allow, enabled|
-          next if "1" != enabled
-          if not Permissions::is_permission_type(perm_allow)
-            return [400, "Unknown permission '#{perm_allow}'"]
-          end
-          if Permissions::FULL == perm_allow
-            full_users_new << [type, name]
-          end
-          allow << perm_allow
-          # Explicitly save dependant permissions. That way if the dependency is
-          # changed in the future it won't revoke permissions which were once
-          # granted.
-          if perm_deps['also_allows'] and perm_deps['also_allows'][perm_allow]
-            allow += perm_deps['also_allows'][perm_allow]
-          end
-        }
-      end
-
-      perm_list << Permissions::EntityPermissions.new(type, name, allow.uniq())
-    }
-  end
-  perm_set = Permissions::PermissionsSet.new(perm_list)
-
-  full_users_old = Set.new
-  pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
-  pcs_config.permissions_local.entity_permissions_list.each{ |entity_perm|
-    if entity_perm.allow_list.include?(Permissions::FULL)
-      full_users_old << [entity_perm.type, entity_perm.name]
-    end
-  }
-
-  if full_users_new != full_users_old
-    label = 'Full'
-    Permissions.get_permission_types.each { |perm_type|
-      if Permissions::FULL == perm_type['code']
-        label = perm_type['label']
-        break
-      end
-    }
-    if not allowed_for_local_cluster(auth_user, Permissions::FULL)
-      return [
-        403,
-        "Permission denied\nOnly #{SUPERUSER} and users with #{label} "\
-          + "permission can grant or revoke #{label} permission."
-      ]
-    end
-  end
-
-  2.times {
-    pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
-    pcs_config.permissions_local = perm_set
-    sync_config = Cfgsync::PcsdSettings.from_text(pcs_config.text())
-    pushed, _ = Cfgsync::save_sync_new_version(
-      sync_config, get_corosync_nodes_names(), $cluster_name, true
-    )
-    return [200, 'Permissions saved'] if pushed
-  }
-  return 400, 'Unable to save permissions'
 end
 
 def remote_pacemaker_node_status(params, request, auth_user)

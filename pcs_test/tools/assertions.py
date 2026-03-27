@@ -531,6 +531,12 @@ def __report_item_equal(
             report_dto.severity.force_code
             == (None if len(report_item_info) < 4 else report_item_info[3])
         )
+        # TODO: Fix
+        # ReportItemFixture has context typed as Mapping[str, Any], but this
+        # comparison compares it to ReportItemContextDto.
+        # Use pcs.common.interface.to_dict on the context from real report,
+        # so we can compare it to the expected Mapping[str, Any].
+        # Then fix all of the tests that use context in reports.
         and report_dto.context
         == (report_item_info[4] if len(report_item_info) >= 5 else None)
     )

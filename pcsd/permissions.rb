@@ -49,14 +49,6 @@ module Permissions
     ]
   end
 
-  def self.is_user_type(type)
-    return [TYPE_USER, TYPE_GROUP].include?(type)
-  end
-
-  def self.is_permission_type(permission)
-    return [READ, WRITE, GRANT, FULL].include?(permission)
-  end
-
   def self.permissions_dependencies()
     return {
       'also_allows' => {

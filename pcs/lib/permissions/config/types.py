@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Collection, Sequence
 
 from pcs.common.permissions.types import (
-    PermissionAccessType,
+    PermissionGrantedType,
     PermissionTargetType,
 )
 
@@ -17,7 +17,7 @@ class ClusterEntry:
 class PermissionEntry:
     name: str
     type: PermissionTargetType
-    allow: Collection[PermissionAccessType]
+    allow: Collection[PermissionGrantedType]
 
 
 @dataclass(frozen=True)

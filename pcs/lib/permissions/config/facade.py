@@ -1,6 +1,7 @@
 from dataclasses import replace
-from typing import Optional, cast
+from typing import Optional, Sequence, cast
 
+from pcs.common.permissions.types import PermissionGrantedType
 from pcs.lib.interface.config import SyncVersionFacadeInterface
 
 from .types import (
@@ -28,10 +29,12 @@ class FacadeV2(SyncVersionFacadeInterface):
     def create(
         cls,
         data_version: int = 1,
-        permissions: Optional[list[PermissionEntry]] = None,
+        permissions: Optional[Sequence[PermissionEntry]] = None,
     ) -> "FacadeV2":
         return cls(
-            ConfigV2(data_version, [], ClusterPermissions(permissions or []))
+            ConfigV2(
+                data_version, [], ClusterPermissions(list(permissions or ()))
+            )
         )
 
     @property
@@ -63,6 +66,13 @@ class FacadeV2(SyncVersionFacadeInterface):
                 return entry
         return None
 
+    def get_entries_with_allow_full(self) -> list[PermissionEntry]:
+        return [
+            entry
+            for entry in self.config.permissions.local_cluster
+            if PermissionGrantedType.FULL in entry.allow
+        ]
+
     def _ensure_not_present(self, entry: PermissionEntry) -> None:
         self._set_permissions(
             [
@@ -72,18 +82,21 @@ class FacadeV2(SyncVersionFacadeInterface):
             ]
         )
 
-    def remove_permission(self, entry: PermissionEntry) -> None:
+    def remove_entry(self, entry: PermissionEntry) -> None:
         if entry not in self.config.permissions.local_cluster:
             raise PermissionEntryNotFound()
         self._ensure_not_present(entry)
 
-    def set_permission(self, entry: PermissionEntry) -> None:
+    def set_entry(self, entry: PermissionEntry) -> None:
         existing_entry = self.get_entry(entry.name, entry.type)
         if existing_entry is not None:
             self._ensure_not_present(existing_entry)
         self._set_permissions(
             list(self.config.permissions.local_cluster) + [entry]
         )
+
+    def set_permissions(self, permissions: Sequence[PermissionEntry]) -> None:
+        self._set_permissions(list(permissions))
 
     def is_cluster_name_in_use(self, cluster_name: str) -> bool:
         return any(

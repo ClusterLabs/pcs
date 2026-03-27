@@ -8,8 +8,8 @@ from pcs.common.host import Destination, PcsKnownHost
 from pcs.lib.commands import manage_clusters
 from pcs.lib.permissions.config.types import (
     ClusterEntry,
-    PermissionAccessType,
     PermissionEntry,
+    PermissionGrantedType,
     PermissionTargetType,
 )
 
@@ -19,6 +19,7 @@ from pcs_test.tools.command_env.mock_node_communicator import (
     NodeCommunicatorType,
 )
 from pcs_test.tools.fixture_pcs_cfgsync import (
+    fixture_expected_save_sync_reports,
     fixture_known_hosts_file_content,
     fixture_pcs_settings_file_content,
     fixture_save_sync_new_known_hosts_conflict,
@@ -486,9 +487,9 @@ class AddExistingClusterLocalNodeNotInCluster(FixtureMixin, TestCase):
                         name=settings.pacemaker_gname,
                         type=PermissionTargetType.GROUP,
                         allow=[
-                            PermissionAccessType.READ,
-                            PermissionAccessType.WRITE,
-                            PermissionAccessType.GRANT,
+                            PermissionGrantedType.READ,
+                            PermissionGrantedType.WRITE,
+                            PermissionGrantedType.GRANT,
                         ],
                     )
                 ],
@@ -535,59 +536,8 @@ class AddExistingClusterLocalNodeNotInCluster(FixtureMixin, TestCase):
 class AddExistingClusterLocalNodeInCluster(FixtureMixin, TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
-        self.config.env.set_known_nodes(["node1", "node2", "node3"])
-
-    def fixture_cfgsync_send_files_reports(
-        self,
-        file_type: file_type_codes.FileTypeCode,
-        expected_result: Literal["ok", "conflict", "error"] = "ok",
-        conflict_is_error: bool = True,
-    ):
-        _report_code_map = {
-            "ok": reports.codes.PCS_CFGSYNC_CONFIG_ACCEPTED,
-            "conflict": reports.codes.PCS_CFGSYNC_CONFIG_REJECTED,
-            "error": reports.codes.PCS_CFGSYNC_CONFIG_SAVE_ERROR,
-        }
-
-        first_node_report = (
-            fixture.error(
-                _report_code_map[expected_result],
-                file_type_code=file_type,
-                context=reports.dto.ReportItemContextDto("node1"),
-            )
-            if expected_result == "error"
-            or (expected_result == "conflict" and conflict_is_error)
-            else fixture.info(
-                _report_code_map[expected_result],
-                file_type_code=file_type,
-                context=reports.dto.ReportItemContextDto("node1"),
-            )
-        )
-
-        report_list = [
-            fixture.info(
-                reports.codes.PCS_CFGSYNC_SENDING_CONFIGS_TO_NODES,
-                file_type_code_list=[file_type],
-                node_name_list=["node1", "node2", "node3"],
-            ),
-            first_node_report,
-        ] + [
-            fixture.info(
-                reports.codes.PCS_CFGSYNC_CONFIG_ACCEPTED,
-                file_type_code=file_type,
-                context=reports.dto.ReportItemContextDto(node),
-            )
-            for node in ["node2", "node3"]
-        ]
-        if expected_result == "conflict":
-            return report_list + [
-                fixture.info(
-                    reports.codes.PCS_CFGSYNC_FETCHING_NEWEST_CONFIG,
-                    file_type_code_list=[file_type],
-                    node_name_list=["node1", "node2", "node3"],
-                )
-            ]
-        return report_list
+        self.node_labels = ["node1", "node2", "node3"]
+        self.config.env.set_known_nodes(self.node_labels)
 
     def test_success_no_new_hosts(self):
         self.fixture_get_cluster_info(new_hosts={})
@@ -603,8 +553,9 @@ class AddExistingClusterLocalNodeInCluster(FixtureMixin, TestCase):
         manage_clusters.add_existing_cluster(self.env_assist.get_env(), "node1")
 
         self.env_assist.assert_reports(
-            self.fixture_cfgsync_send_files_reports(
-                file_type=file_type_codes.PCS_SETTINGS_CONF
+            fixture_expected_save_sync_reports(
+                file_type=file_type_codes.PCS_SETTINGS_CONF,
+                node_labels=self.node_labels,
             )
         )
 
@@ -626,14 +577,14 @@ class AddExistingClusterLocalNodeInCluster(FixtureMixin, TestCase):
         fixture_save_sync_new_known_hosts_success(
             self.config,
             cluster_name="test99",
-            node_labels=["node1", "node2", "node3"],
+            node_labels=self.node_labels,
             file_data_version=2,
             known_hosts=self.EXPECTED_KNOWN_HOSTS,
         )
         fixture_save_sync_new_version_success(
             self.config,
             cluster_name="test99",
-            node_labels=["node1", "node2", "node3"],
+            node_labels=self.node_labels,
             file_contents={
                 file_type_codes.PCS_SETTINGS_CONF: self.fixture_expected_pcs_settings_file_content()
             },
@@ -642,11 +593,13 @@ class AddExistingClusterLocalNodeInCluster(FixtureMixin, TestCase):
         manage_clusters.add_existing_cluster(self.env_assist.get_env(), "node1")
 
         self.env_assist.assert_reports(
-            self.fixture_cfgsync_send_files_reports(
-                file_type=file_type_codes.PCS_KNOWN_HOSTS
+            fixture_expected_save_sync_reports(
+                file_type=file_type_codes.PCS_KNOWN_HOSTS,
+                node_labels=self.node_labels,
             )
-            + self.fixture_cfgsync_send_files_reports(
-                file_type=file_type_codes.PCS_SETTINGS_CONF
+            + fixture_expected_save_sync_reports(
+                file_type=file_type_codes.PCS_SETTINGS_CONF,
+                node_labels=self.node_labels,
             )
         )
 
@@ -658,7 +611,7 @@ class AddExistingClusterLocalNodeInCluster(FixtureMixin, TestCase):
         fixture_save_sync_new_version_conflict(
             self.config,
             cluster_name="test99",
-            node_labels=["node1", "node2", "node3"],
+            node_labels=self.node_labels,
             file_type_code=file_type_codes.PCS_SETTINGS_CONF,
             local_file_content=self.fixture_expected_pcs_settings_file_content(),
             fetch_after_conflict=True,
@@ -679,13 +632,11 @@ class AddExistingClusterLocalNodeInCluster(FixtureMixin, TestCase):
         )
 
         self.env_assist.assert_reports(
-            self.fixture_cfgsync_send_files_reports(
+            fixture_expected_save_sync_reports(
                 file_type=file_type_codes.PCS_SETTINGS_CONF,
                 expected_result="conflict",
+                node_labels=self.node_labels,
             )
-            + [
-                fixture.error(reports.codes.PCS_CFGSYNC_CONFLICT_REPEAT_ACTION),
-            ]
         )
 
     def test_conflict_syncing_pcs_settings_file_error_writing(self):
@@ -696,7 +647,7 @@ class AddExistingClusterLocalNodeInCluster(FixtureMixin, TestCase):
         fixture_save_sync_new_version_conflict(
             self.config,
             cluster_name="test99",
-            node_labels=["node1", "node2", "node3"],
+            node_labels=self.node_labels,
             file_type_code=file_type_codes.PCS_SETTINGS_CONF,
             local_file_content=self.fixture_expected_pcs_settings_file_content(),
             fetch_after_conflict=True,
@@ -718,9 +669,10 @@ class AddExistingClusterLocalNodeInCluster(FixtureMixin, TestCase):
         )
 
         self.env_assist.assert_reports(
-            self.fixture_cfgsync_send_files_reports(
+            fixture_expected_save_sync_reports(
                 file_type=file_type_codes.PCS_SETTINGS_CONF,
                 expected_result="conflict",
+                node_labels=self.node_labels,
             )
             + [
                 fixture.error(
@@ -729,8 +681,7 @@ class AddExistingClusterLocalNodeInCluster(FixtureMixin, TestCase):
                     operation="write",
                     reason="Something bad",
                     file_path=settings.pcsd_settings_conf_location,
-                ),
-                fixture.error(reports.codes.PCS_CFGSYNC_CONFLICT_REPEAT_ACTION),
+                )
             ]
         )
 
@@ -738,7 +689,7 @@ class AddExistingClusterLocalNodeInCluster(FixtureMixin, TestCase):
         self.fixture_get_cluster_info(new_hosts={})
         fixture_save_sync_new_version_error(
             self.config,
-            node_labels=["node1", "node2", "node3"],
+            node_labels=self.node_labels,
             file_type_code=file_type_codes.PCS_SETTINGS_CONF,
             local_file_content=self.fixture_expected_pcs_settings_file_content(),
         )
@@ -750,17 +701,11 @@ class AddExistingClusterLocalNodeInCluster(FixtureMixin, TestCase):
         )
 
         self.env_assist.assert_reports(
-            self.fixture_cfgsync_send_files_reports(
+            fixture_expected_save_sync_reports(
                 file_type=file_type_codes.PCS_SETTINGS_CONF,
                 expected_result="error",
+                node_labels=self.node_labels,
             )
-            + [
-                fixture.error(
-                    reports.codes.PCS_CFGSYNC_SENDING_CONFIGS_TO_NODES_FAILED,
-                    file_type_code_list=[file_type_codes.PCS_SETTINGS_CONF],
-                    node_name_list=["node1"],
-                ),
-            ]
         )
 
     def test_conflict_syncing_known_hosts_file(self):
@@ -781,7 +726,7 @@ class AddExistingClusterLocalNodeInCluster(FixtureMixin, TestCase):
         new_file = fixture_save_sync_new_known_hosts_conflict(
             self.config,
             cluster_name="test99",
-            node_labels=["node1", "node2", "node3"],
+            node_labels=self.node_labels,
             initial_local_known_hosts=self.LOCAL_KNOWN_HOSTS,
             new_hosts=self.REMOTE_KNOWN_HOSTS,
         )
@@ -799,19 +744,18 @@ class AddExistingClusterLocalNodeInCluster(FixtureMixin, TestCase):
         )
 
         self.env_assist.assert_reports(
-            self.fixture_cfgsync_send_files_reports(
+            fixture_expected_save_sync_reports(
                 file_type=file_type_codes.PCS_KNOWN_HOSTS,
                 expected_result="conflict",
                 conflict_is_error=False,
+                node_labels=self.node_labels,
             )
-            + self.fixture_cfgsync_send_files_reports(
+            + fixture_expected_save_sync_reports(
                 file_type=file_type_codes.PCS_KNOWN_HOSTS,
                 expected_result="conflict",
                 conflict_is_error=True,
+                node_labels=self.node_labels,
             )
-            + [
-                fixture.error(reports.codes.PCS_CFGSYNC_CONFLICT_REPEAT_ACTION),
-            ]
         )
 
     def test_conflict_syncing_known_hosts_file_error_writing(self):
@@ -851,15 +795,17 @@ class AddExistingClusterLocalNodeInCluster(FixtureMixin, TestCase):
         )
 
         self.env_assist.assert_reports(
-            self.fixture_cfgsync_send_files_reports(
+            fixture_expected_save_sync_reports(
                 file_type=file_type_codes.PCS_KNOWN_HOSTS,
                 expected_result="conflict",
                 conflict_is_error=False,
+                node_labels=self.node_labels,
             )
-            + self.fixture_cfgsync_send_files_reports(
+            + fixture_expected_save_sync_reports(
                 file_type=file_type_codes.PCS_KNOWN_HOSTS,
                 expected_result="conflict",
                 conflict_is_error=True,
+                node_labels=self.node_labels,
             )
             + [
                 fixture.error(
@@ -869,7 +815,6 @@ class AddExistingClusterLocalNodeInCluster(FixtureMixin, TestCase):
                     reason="Something bad",
                     file_path=settings.pcsd_known_hosts_location,
                 ),
-                fixture.error(reports.codes.PCS_CFGSYNC_CONFLICT_REPEAT_ACTION),
             ]
         )
 
@@ -902,15 +847,9 @@ class AddExistingClusterLocalNodeInCluster(FixtureMixin, TestCase):
         )
 
         self.env_assist.assert_reports(
-            self.fixture_cfgsync_send_files_reports(
+            fixture_expected_save_sync_reports(
                 file_type=file_type_codes.PCS_KNOWN_HOSTS,
                 expected_result="error",
+                node_labels=self.node_labels,
             )
-            + [
-                fixture.error(
-                    reports.codes.PCS_CFGSYNC_SENDING_CONFIGS_TO_NODES_FAILED,
-                    file_type_code_list=[file_type_codes.PCS_KNOWN_HOSTS],
-                    node_name_list=["node1"],
-                )
-            ]
         )

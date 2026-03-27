@@ -4,25 +4,21 @@ import os
 import os.path
 import shutil
 from functools import partial
+from typing import Optional
 from unittest import mock
 
 from pcs.common.file import RawFile
 from pcs.common.node_communicator import NodeCommunicatorFactory
+from pcs.common.types import StringIterable
 from pcs.lib.env import LibraryEnvironment
 
 from pcs_test.tools import fixture
-from pcs_test.tools.assertions import (
-    assert_raise_library_error,
-    prepare_diff,
-)
+from pcs_test.tools.assertions import assert_raise_library_error, prepare_diff
 from pcs_test.tools.case_analysis import test_failed
 from pcs_test.tools.command_env import spy
 from pcs_test.tools.command_env.calls import Queue as CallQueue
 from pcs_test.tools.command_env.config import Config
-from pcs_test.tools.command_env.mock_fs import (
-    get_fs_mock,
-    is_fs_call_in,
-)
+from pcs_test.tools.command_env.mock_fs import get_fs_mock, is_fs_call_in
 from pcs_test.tools.command_env.mock_get_local_corosync_conf import (
     get_get_local_corosync_conf,
 )
@@ -265,7 +261,12 @@ class EnvAssistant:
                     )
                 )
 
-    def get_env(self, is_systemd=True):
+    def get_env(
+        self,
+        is_systemd=True,
+        user_login: Optional[str] = None,
+        user_groups: Optional[StringIterable] = None,
+    ):
         self.__call_queue = CallQueue(self.__config.calls)
         # pylint: disable=attribute-defined-outside-init
         self._env = LibraryEnvironment(
@@ -279,6 +280,8 @@ class EnvAssistant:
                 else self.__config.env.known_hosts_getter
             ),
             booth_files_data=self.__config.env.booth,
+            user_login=user_login,
+            user_groups=user_groups,
         )
         self.__unpatch = patch_env(
             self.__call_queue,

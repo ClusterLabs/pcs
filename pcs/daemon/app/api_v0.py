@@ -265,6 +265,68 @@ class SetSyncOptionsHandler(_BaseApiV0Handler):
         self.write("Sync thread options updated successfully")
 
 
+class SetPermissionsHandler(_BaseApiV0Handler):
+    """
+    Input format:
+    {
+        "cluster_name": "name" # ignored
+        "cluster": "name" # ignored
+        "permissions": {
+            "arbitrary-key": {
+                "name": "username",
+                "type": "user|group",
+                "allow": {
+                    "read": "1",
+                    "write": "1",
+                    "grant": "1",
+                    "full": "1",
+                }
+            }
+        }
+    }
+    """
+
+    async def _handle_request(self) -> None:
+        data_json = self.get_argument("json_data", "")
+
+        permissions = []
+        try:
+            permissions_raw = json.loads(data_json)
+        except (json.JSONDecodeError, TypeError) as e:
+            raise self._error("{'status': 'bad_json'}") from e
+
+        try:
+            permissions = [
+                {
+                    "name": perm.get("name", ""),
+                    "type": perm.get("type", ""),
+                    "allow": [
+                        perm_name
+                        for perm_name, enabled in perm.get("allow", {}).items()
+                        if enabled == "1"
+                    ],
+                }
+                for perm in permissions_raw.get("permissions", {}).values()
+            ]
+        except AttributeError as e:
+            raise self._error("{'status': 'bad_json'}") from e
+
+        result = await self._run_library_command(
+            "cluster.set_permissions", {"permissions": permissions}
+        )
+
+        for report in result.reports:
+            if (
+                report.message.code
+                == reports.codes.NOT_AUTHORIZED_TO_CHANGE_FULL_PERMISSION
+            ):
+                raise self._error(http_code=403, message=report.message.message)
+
+        if not result.success:
+            raise self._error(reports_to_str(result.reports))
+        self.write("Permissions saved")
+
+
 def get_routes(
     api_auth_provider_factory: ApiAuthProviderFactoryInterface,
     scheduler: Scheduler,
@@ -316,4 +378,6 @@ def get_routes(
             SetSyncOptionsHandler,
             {**params, "sync_config_lock": sync_config_lock},
         ),
+        # permissions
+        (r("set_permissions"), SetPermissionsHandler, params),
     ]

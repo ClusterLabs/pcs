@@ -302,6 +302,10 @@ class LibraryEnvironment:
             return get_local_corosync_conf()
         return self._corosync_conf_data
 
+    @property
+    def has_corosync_conf(self) -> bool:
+        return FileInstance.for_corosync_conf().raw_file.exists()
+
     def get_corosync_conf(self) -> CorosyncConfigFacade:
         # TODO The architecture of working with corosync.conf needs to be
         # overhauled to match the new file framework. The code below is

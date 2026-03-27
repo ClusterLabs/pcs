@@ -291,6 +291,7 @@ EXTRA_DIST		= \
 			  tier0/lib/commands/cluster_property/test_set_properties.py \
 			  tier0/lib/commands/cluster_property/test_set_properties_stonith_watchdog_timeout.py \
 			  tier0/lib/commands/cluster/test_rename.py \
+			  tier0/lib/commands/cluster/test_set_permissions.py \
 			  tier0/lib/commands/cluster/test_setup.py \
 			  tier0/lib/commands/cluster/test_update_link.py \
 			  tier0/lib/commands/cluster/test_verify.py \
@@ -419,11 +420,13 @@ EXTRA_DIST		= \
 			  tier0/lib/pcs_cfgsync/test_fetcher.py \
 			  tier0/lib/pcs_cfgsync/test_save_sync.py \
 			  tier0/lib/pcs_cfgsync/test_validations.py \
-			  tier0/lib/permissions/__init__.py \
 			  tier0/lib/permissions/config/__init__.py \
 			  tier0/lib/permissions/config/test_facade.py \
 			  tier0/lib/permissions/config/test_parser.py \
+			  tier0/lib/permissions/__init__.py \
 			  tier0/lib/permissions/test_checker.py \
+			  tier0/lib/permissions/test_tools.py \
+			  tier0/lib/permissions/test_validations.py \
 			  tier0/lib/resource_agent/__init__.py \
 			  tier0/lib/resource_agent/test_facade.py \
 			  tier0/lib/resource_agent/test_list.py \
