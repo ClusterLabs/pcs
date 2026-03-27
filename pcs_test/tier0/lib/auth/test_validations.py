@@ -352,7 +352,15 @@ class ValidateKnownHostsChange(TestCase):
     def test_nothing_to_add_or_remove(self):
         report_list = validations.validate_known_hosts_change({}, [])
         assert_report_item_list_equal(
-            report_list, [fixture.error(reports.codes.NO_HOST_SPECIFIED)]
+            report_list,
+            [
+                fixture.error(
+                    reports.codes.ADD_REMOVE_ITEMS_NOT_SPECIFIED,
+                    container_type=None,
+                    container_id=None,
+                    item_type=reports.const.ADD_REMOVE_ITEM_TYPE_HOST,
+                )
+            ],
         )
 
     def test_invalid_hosts_to_add(self):
@@ -400,8 +408,11 @@ class ValidateKnownHostsChange(TestCase):
             report_list,
             [
                 fixture.error(
-                    reports.codes.KNOWN_HOSTS_CHANGE_CANNOT_ADD_AND_REMOVE_AT_THE_SAME_TIME,
-                    host_labels=["node2", "nodeX"],
+                    reports.codes.ADD_REMOVE_CANNOT_ADD_AND_REMOVE_ITEMS_AT_THE_SAME_TIME,
+                    container_type=None,
+                    container_id=None,
+                    item_type=reports.const.ADD_REMOVE_ITEM_TYPE_HOST,
+                    item_list=["node2", "nodeX"],
                 )
             ],
         )

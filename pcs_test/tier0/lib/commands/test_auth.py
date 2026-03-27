@@ -1269,8 +1269,11 @@ class KnownHostsChangeNotInCluster(TestCase):
         self.env_assist.assert_reports(
             [
                 fixture.error(
-                    reports.codes.KNOWN_HOSTS_CHANGE_CANNOT_ADD_AND_REMOVE_AT_THE_SAME_TIME,
-                    host_labels=["node1"],
+                    reports.codes.ADD_REMOVE_CANNOT_ADD_AND_REMOVE_ITEMS_AT_THE_SAME_TIME,
+                    container_type=None,
+                    container_id=None,
+                    item_type=reports.const.ADD_REMOVE_ITEM_TYPE_HOST,
+                    item_list=["node1"],
                 )
             ]
         )

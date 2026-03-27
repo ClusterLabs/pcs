@@ -111,23 +111,15 @@ def validate_known_hosts_change(
     hosts_to_add: Mapping[str, HostWithTokenAuthData],
     hosts_to_remove: list[str],
 ) -> reports.ReportItemList:
-    report_list = []
-    if not hosts_to_add and not hosts_to_remove:
-        report_list.append(
-            reports.ReportItem.error(reports.messages.NoHostSpecified())
-        )
-        return report_list
-
+    add_remove_validator = validate.ValidateAddRemoveInput(
+        list(hosts_to_add),
+        hosts_to_remove,
+        item_type=reports.const.ADD_REMOVE_ITEM_TYPE_HOST,
+    )
+    report_list = (
+        add_remove_validator.validate_add_or_remove_specified()
+        + add_remove_validator.validate_item_not_both_added_and_removed()
+    )
     if hosts_to_add:
         report_list.extend(validate_hosts_with_token(hosts_to_add))
-
-    add_and_remove = set(hosts_to_add) & set(hosts_to_remove)
-    if add_and_remove:
-        report_list.append(
-            reports.ReportItem.error(
-                reports.messages.KnownHostsChangeCannotAddAndRemoveAtTheSameTime(
-                    sorted(add_and_remove)
-                )
-            )
-        )
     return report_list

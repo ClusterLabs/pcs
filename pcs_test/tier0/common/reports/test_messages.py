@@ -5821,6 +5821,16 @@ class AddRemoveItemsNotSpecified(NameBuildTest):
             ),
         )
 
+    def test_message_without_container(self):
+        self.assert_message_from_report(
+            "No devices to add or remove specified",
+            reports.AddRemoveItemsNotSpecified(
+                container_type=None,
+                item_type=const.ADD_REMOVE_ITEM_TYPE_DEVICE,
+                container_id=None,
+            ),
+        )
+
 
 class AddRemoveItemsDuplication(NameBuildTest):
     def test_message(self):
@@ -6826,17 +6836,4 @@ class NotAuthorizedToChangeFullPermission(NameBuildTest):
                 "revoke Full permission."
             ),
             reports.NotAuthorizedToChangeFullPermission(),
-        )
-
-
-class KnownHostsChangeCannotAddAndRemoveAtTheSameTime(NameBuildTest):
-    def test_success(self):
-        self.assert_message_from_report(
-            (
-                "Hosts cannot be added and removed at the same time: 'node1', "
-                "'nodeX'"
-            ),
-            reports.KnownHostsChangeCannotAddAndRemoveAtTheSameTime(
-                ["nodeX", "node1"]
-            ),
         )
