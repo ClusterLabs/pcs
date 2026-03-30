@@ -20,6 +20,7 @@ ADD_REMOVE_ITEM_TYPE_DEVICE = AddRemoveItemType("device")
 ADD_REMOVE_ITEM_TYPE_PROPERTY = AddRemoveItemType("property")
 ADD_REMOVE_ITEM_TYPE_RESOURCE = AddRemoveItemType("resource")
 ADD_REMOVE_ITEM_TYPE_HOST = AddRemoveItemType("host")
+ADD_REMOVE_ITEM_TYPE_CLUSTER = AddRemoveItemType("cluster")
 
 BOOTH_CONFIG_USED_IN_CLUSTER_RESOURCE = BoothConfigUsedWhere(
     "in a cluster resource"

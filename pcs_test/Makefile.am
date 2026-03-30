@@ -268,6 +268,8 @@ EXTRA_DIST		= \
 			  tier0/lib/cib/test_status.py \
 			  tier0/lib/cib/test_tag.py \
 			  tier0/lib/cib/test_tools.py \
+			  tier0/lib/cluster/__init__.py \
+			  tier0/lib/cluster/test_validations.py \
 			  tier0/lib/commands/cluster/common.py \
 			  tier0/lib/commands/cluster/__init__.py \
 			  tier0/lib/commands/cluster/test_add_link.py \
@@ -306,6 +308,7 @@ EXTRA_DIST		= \
 			  tier0/lib/commands/__init__.py \
 			  tier0/lib/commands/manage_clusters/__init__.py \
 			  tier0/lib/commands/manage_clusters/test_add_existing_cluster.py \
+			  tier0/lib/commands/manage_clusters/test_add_remove_clusters.py \
 			  tier0/lib/commands/remote_node/fixtures_add.py \
 			  tier0/lib/commands/remote_node/fixtures_remove.py \
 			  tier0/lib/commands/remote_node/__init__.py \

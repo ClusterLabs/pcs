@@ -118,6 +118,18 @@ class FacadeV2AddCluster(TestCase):
         )
 
 
+class FacadeV2RemoveCluster(TestCase):
+    def test_remove_existing(self):
+        facade = FacadeV2(_CONFIG)
+        facade.remove_cluster(_CLUSTER1.name)
+        self.assertEqual(facade.config.clusters, [_CLUSTER2])
+
+    def test_remove_nonexistent(self):
+        facade = FacadeV2(_CONFIG)
+        facade.remove_cluster("not_present")
+        self.assertEqual(facade.config.clusters, [_CLUSTER1, _CLUSTER2])
+
+
 class FacadeV2GetEntriesWithAllowFull(TestCase):
     def test_success(self):
         facade = FacadeV2(_CONFIG)

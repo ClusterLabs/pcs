@@ -334,6 +334,8 @@ EXTRA_DIST		= \
 			  lib/cib/status.py \
 			  lib/cib/tag.py \
 			  lib/cib/tools.py \
+			  lib/cluster/__init__.py \
+			  lib/cluster/validations.py \
 			  lib/cluster_property.py \
 			  lib/commands/acl.py \
 			  lib/commands/alert.py \
