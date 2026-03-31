@@ -1239,7 +1239,7 @@ def matches_regexp(value: TypeOptionValue, regexp: Union[str, Pattern]) -> bool:
 ### complex
 
 
-class ValidateAddRemoveInput:
+class ValidateAddRemove:
     def __init__(
         self,
         add_item_list: StringCollection,
@@ -1323,7 +1323,7 @@ class ValidateAddRemoveInput:
         return report_list
 
 
-class _ValidateAddRemoveOperationBase(ValidateAddRemoveInput):
+class _ValidateAddRemoveWithExistingItems(ValidateAddRemove):
     def __init__(  # noqa: PLR0913
         self,
         add_item_list: StringCollection,
@@ -1488,7 +1488,7 @@ def validate_add_remove_items(
     adjacent_item_id -- an adjacent item in the container
     container_can_be_empty -- flag to decide if container can be left empty
     """
-    validator = _ValidateAddRemoveOperationBase(
+    validator = _ValidateAddRemoveWithExistingItems(
         add_item_list,
         remove_item_list,
         current_item_list,
@@ -1529,7 +1529,7 @@ def validate_set_unset_items(
     container_id -- id of the container
     severity -- severity of produced reports, defaults to error
     """
-    validator = _ValidateAddRemoveOperationBase(
+    validator = _ValidateAddRemoveWithExistingItems(
         add_item_list,
         remove_item_list,
         current_item_list,

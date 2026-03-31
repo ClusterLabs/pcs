@@ -111,7 +111,7 @@ def validate_known_hosts_change(
     hosts_to_add: Mapping[str, HostWithTokenAuthData],
     hosts_to_remove: list[str],
 ) -> reports.ReportItemList:
-    add_remove_validator = validate.ValidateAddRemoveInput(
+    add_remove_validator = validate.ValidateAddRemove(
         list(hosts_to_add),
         hosts_to_remove,
         item_type=reports.const.ADD_REMOVE_ITEM_TYPE_HOST,
