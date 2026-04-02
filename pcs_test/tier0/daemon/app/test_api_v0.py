@@ -352,6 +352,236 @@ class ApiV0HandlerTest(ApiV0Test):
         )
 
 
+class ManageServicesHandler(ApiV0HandlerTest):
+    url = "/remote/manage_services"
+
+    def fixture_body(self, data_json: str) -> str:
+        return urlencode({"data_json": data_json})
+
+    @staticmethod
+    def fixture_action(
+        type: str = "service_command",  # noqa: A002 `type` is shadowing a builtin
+        service: str = "pacemaker_remote",
+        command: str = "start",
+    ) -> dict[str, str]:
+        return {"type": type, "service": service, "command": command}
+
+    def test_missing_data_json(self):
+        response = self.fetch(self.url)
+        self.assert_body(
+            response.body, "Required parameters missing: 'data_json'"
+        )
+        self.assertEqual(response.code, 400)
+        self.mock_run_library_command.assert_not_called()
+
+    def test_invalid_json(self):
+        response = self.fetch(
+            self.url, body=self.fixture_body("not valid json")
+        )
+        self.assert_body(response.body, "Invalid input data format")
+        self.assertEqual(response.code, 400)
+        self.mock_run_library_command.assert_not_called()
+
+    def test_actions_not_dict(self):
+        response = self.fetch(self.url, body=self.fixture_body("[]"))
+        self.assert_body(
+            response.body,
+            "Invalid input data format: actions should be 'dict'. "
+            "But it is 'list': []",
+        )
+        self.assertEqual(response.code, 400)
+        self.mock_run_library_command.assert_not_called()
+
+    def test_action_not_dict(self):
+        response = self.fetch(
+            self.url, body=self.fixture_body(json.dumps({"a1": "string"}))
+        )
+        self.assert_body(
+            response.body,
+            "Invalid input data format: action (key: a1): "
+            "should be 'dict'. But it is 'str': \"string\"",
+        )
+        self.assertEqual(response.code, 400)
+        self.mock_run_library_command.assert_not_called()
+
+    def test_missing_required_key(self):
+        for missing_key in self.fixture_action():
+            with self.subTest(missing_key=missing_key):
+                self.mock_run_library_command.reset_mock()
+                action = self.fixture_action()
+                del action[missing_key]
+                response = self.fetch(
+                    self.url,
+                    body=self.fixture_body(json.dumps({"a1": action})),
+                )
+                self.assert_body(
+                    response.body,
+                    f"Invalid input data format: action (key: a1): "
+                    f"'{missing_key}' is missing",
+                )
+                self.assertEqual(response.code, 400)
+                self.mock_run_library_command.assert_not_called()
+
+    def test_unsupported_value(self):
+        supported_values = {
+            "type": "'service_command'",
+            "service": "'pacemaker_remote'",
+            "command": "'disable', 'enable', 'start', 'stop'",
+        }
+        for key, supported in supported_values.items():
+            with self.subTest(key=key):
+                self.mock_run_library_command.reset_mock()
+                action = self.fixture_action(**{key: "unknown"})
+                response = self.fetch(
+                    self.url,
+                    body=self.fixture_body(json.dumps({"a1": action})),
+                )
+                self.assert_body(
+                    response.body,
+                    f"Invalid input data format: action (key: a1): "
+                    f"unsupported '{key}' ('unknown'), "
+                    f"supported are: {supported}",
+                )
+                self.assertEqual(response.code, 400)
+                self.mock_run_library_command.assert_not_called()
+
+    def test_unsupported_combination(self):
+        response = self.fetch(
+            self.url,
+            body=self.fixture_body(
+                json.dumps(
+                    {
+                        "a1": self.fixture_action(command="enable"),
+                        "a2": self.fixture_action(command="stop"),
+                    }
+                )
+            ),
+        )
+        self.assert_body(
+            response.body,
+            "Invalid input data format: unsupported combination of actions: "
+            "'enable', 'stop'",
+        )
+        self.assertEqual(response.code, 400)
+        self.mock_run_library_command.assert_not_called()
+
+    def test_success_on(self):
+        self.mock_run_library_command.return_value = self.result_success()
+        response = self.fetch(
+            self.url,
+            body=self.fixture_body(
+                json.dumps(
+                    {
+                        "a1": self.fixture_action(command="enable"),
+                        "a2": self.fixture_action(command="start"),
+                    }
+                )
+            ),
+        )
+        self.assertEqual(response.code, 200)
+        self.assert_body(
+            response.body,
+            json.dumps(
+                {
+                    "actions": {
+                        "a1": {"code": "success", "message": ""},
+                        "a2": {"code": "success", "message": ""},
+                    }
+                }
+            ),
+        )
+        self.mock_run_library_command.assert_called_once_with(
+            "services.pacemaker_remote_on_local", {}
+        )
+
+    def test_success_off(self):
+        self.mock_run_library_command.return_value = self.result_success()
+        response = self.fetch(
+            self.url,
+            body=self.fixture_body(
+                json.dumps(
+                    {
+                        "a1": self.fixture_action(command="stop"),
+                        "a2": self.fixture_action(command="disable"),
+                    }
+                )
+            ),
+        )
+        self.assertEqual(response.code, 200)
+        self.assert_body(
+            response.body,
+            json.dumps(
+                {
+                    "actions": {
+                        "a1": {"code": "success", "message": ""},
+                        "a2": {"code": "success", "message": ""},
+                    }
+                }
+            ),
+        )
+        self.mock_run_library_command.assert_called_once_with(
+            "services.pacemaker_remote_off_local", {}
+        )
+
+    def test_failure_on(self):
+        self.mock_run_library_command.return_value = self.result_failure()
+        response = self.fetch(
+            self.url,
+            body=self.fixture_body(
+                json.dumps(
+                    {
+                        "a1": self.fixture_action(command="enable"),
+                        "a2": self.fixture_action(command="start"),
+                    }
+                )
+            ),
+        )
+        self.assertEqual(response.code, 200)
+        self.assert_body(
+            response.body,
+            json.dumps(
+                {
+                    "actions": {
+                        "a1": {"code": "fail", "message": ""},
+                        "a2": {"code": "fail", "message": ""},
+                    }
+                }
+            ),
+        )
+        self.mock_run_library_command.assert_called_once_with(
+            "services.pacemaker_remote_on_local", {}
+        )
+
+    def test_failure_off(self):
+        self.mock_run_library_command.return_value = self.result_failure()
+        response = self.fetch(
+            self.url,
+            body=self.fixture_body(
+                json.dumps(
+                    {
+                        "a1": self.fixture_action(command="stop"),
+                        "a2": self.fixture_action(command="disable"),
+                    }
+                )
+            ),
+        )
+        self.assertEqual(response.code, 200)
+        self.assert_body(
+            response.body,
+            json.dumps(
+                {
+                    "actions": {
+                        "a1": {"code": "fail", "message": ""},
+                        "a2": {"code": "fail", "message": ""},
+                    }
+                }
+            ),
+        )
+        self.mock_run_library_command.assert_called_once_with(
+            "services.pacemaker_remote_off_local", {}
+        )
+
+
 class ResourceManageUnmanageMixin:
     body_data = {"resource_list_json": json.dumps(["resource1", "resource2"])}
     command_data = {"resource_or_tag_ids": ["resource1", "resource2"]}
