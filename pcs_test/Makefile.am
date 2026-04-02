@@ -192,6 +192,8 @@ EXTRA_DIST		= \
 			  tier0/daemon/app/ui_manage/test_auth_gui_against_nodes.py \
 			  tier0/daemon/app/ui_manage/test_base.py \
 			  tier0/daemon/app/ui_manage/test_existing_cluster.py \
+			  tier0/daemon/app/ui_manage/test_remember_cluster.py \
+			  tier0/daemon/app/ui_manage/test_remove_cluster.py \
 			  tier0/daemon/async_tasks/__init__.py \
 			  tier0/daemon/async_tasks/dummy_commands.py \
 			  tier0/daemon/async_tasks/helpers.py \

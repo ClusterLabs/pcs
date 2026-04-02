@@ -230,6 +230,8 @@ EXTRA_DIST		= \
 			  daemon/app/ui_manage/base_handler.py \
 			  daemon/app/ui_manage/existing_cluster.py \
 			  daemon/app/ui_manage/__init__.py \
+			  daemon/app/ui_manage/remember_cluster.py \
+			  daemon/app/ui_manage/remove_cluster.py \
 			  daemon/app/ui_manage/routes.py \
 			  daemon/app/webui/__init__.py \
 			  daemon/app/webui/auth_provider.py \
