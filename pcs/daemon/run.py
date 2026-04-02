@@ -9,6 +9,16 @@ from typing import (
     Optional,
 )
 
+try:
+    from tornado.httputil import (
+        ParseBodyConfig,
+        ParseMultipartConfig,
+        set_parse_body_config,
+    )
+
+    _TORNADO_SUPPORTS_DISABLE_MULTIPART = True
+except ImportError:
+    _TORNADO_SUPPORTS_DISABLE_MULTIPART = False
 from tornado.ioloop import (
     IOLoop,
     PeriodicCallback,
@@ -101,21 +111,13 @@ def configure_app(  # noqa: PLR0913
             reload its SSL certificates). A relevant handler should get this
             object via the method `initialize`.
         """
-        try:
+        if _TORNADO_SUPPORTS_DISABLE_MULTIPART:
             # Disable multipart requests to enhance security due to recent CVEs
             # but only if Tornado supports it (added in Tornado 6.5.5)
             # https://www.tornadoweb.org/en/stable/httputil.html#tornado.httputil.set_parse_body_config
-            from tornado.httputil import (
-                ParseBodyConfig,
-                ParseMultipartConfig,
-                set_parse_body_config,
-            )
-
             set_parse_body_config(
                 ParseBodyConfig(multipart=ParseMultipartConfig(enabled=False))
             )
-        except ImportError:
-            pass
 
         routes = api_v2.get_routes(async_scheduler, auth_provider)
         routes.extend(api_v1.get_routes(async_scheduler, auth_provider))
