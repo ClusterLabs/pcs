@@ -1239,43 +1239,31 @@ def matches_regexp(value: TypeOptionValue, regexp: Union[str, Pattern]) -> bool:
 ### complex
 
 
-class _ValidateAddRemoveBase:
-    # pylint: disable=too-many-instance-attributes
-    def __init__(  # noqa: PLR0913
+class ValidateAddRemove:
+    def __init__(
         self,
         add_item_list: StringCollection,
         remove_item_list: StringCollection,
-        current_item_list: StringCollection,
-        container_type: reports.types.AddRemoveContainerType,
         item_type: reports.types.AddRemoveItemType,
-        container_id: str,
-        *,
-        adjacent_item_id: Optional[str] = None,
-        container_can_be_empty: bool = False,
+        container_type: Optional[reports.types.AddRemoveContainerType] = None,
+        container_id: Optional[str] = None,
         severity: Optional[ReportItemSeverity] = None,
     ):
         """
-        Validate if items can be added or removed to or from a container.
+        Validate the arguments of add remove operation.
 
         add_item_list -- items to be added
         remove_item_list -- items to be removed
-        current_item_list -- items currently in the container
         container_type -- container type
         item_type -- item type
         container_id -- id of the container
-        adjacent_item_id -- an adjacent item in the container
-        container_can_be_empty -- flag to decide if container can be left empty
         severity -- severity of produced reports, defaults to error
         """
-        # pylint: disable=too-many-arguments
         self._add_item_list = add_item_list
         self._remove_item_list = remove_item_list
-        self._current_item_list = current_item_list
         self._container_type = container_type
         self._item_type = item_type
         self._container_id = container_id
-        self._adjacent_item_id = adjacent_item_id
-        self._container_can_be_empty = container_can_be_empty
         self._severity = (
             ReportItemSeverity.error() if severity is None else severity
         )
@@ -1318,6 +1306,67 @@ class _ValidateAddRemoveBase:
             )
         return report_list
 
+    def validate_item_not_both_added_and_removed(self) -> ReportItemList:
+        report_list: ReportItemList = []
+        common_items = set(self._add_item_list) & set(self._remove_item_list)
+        if common_items:
+            report_list.append(
+                ReportItem.error(
+                    reports.messages.AddRemoveCannotAddAndRemoveItemsAtTheSameTime(
+                        self._container_type,
+                        self._item_type,
+                        self._container_id,
+                        sorted(common_items),
+                    )
+                )
+            )
+        return report_list
+
+
+class _ValidateAddRemoveWithExistingItems(ValidateAddRemove):
+    def __init__(  # noqa: PLR0913
+        self,
+        add_item_list: StringCollection,
+        remove_item_list: StringCollection,
+        current_item_list: StringCollection,
+        container_type: reports.types.AddRemoveContainerType,
+        item_type: reports.types.AddRemoveItemType,
+        container_id: str,
+        *,
+        adjacent_item_id: Optional[str] = None,
+        container_can_be_empty: bool = False,
+        severity: Optional[ReportItemSeverity] = None,
+    ):
+        """
+        Validate if items can be added or removed to or from a container.
+
+        add_item_list -- items to be added
+        remove_item_list -- items to be removed
+        current_item_list -- items currently in the container
+        container_type -- container type
+        item_type -- item type
+        container_id -- id of the container
+        adjacent_item_id -- an adjacent item in the container
+        container_can_be_empty -- flag to decide if container can be left empty
+        severity -- severity of produced reports, defaults to error
+        """
+        super().__init__(
+            add_item_list,
+            remove_item_list,
+            item_type,
+            container_type,
+            container_id,
+            severity,
+        )
+        self._current_item_list = current_item_list
+        self._adjacent_item_id = adjacent_item_id
+        self._container_can_be_empty = container_can_be_empty
+        # so that mypy sees that these two are really not None
+        self._container_type: reports.types.AddRemoveContainerType = (
+            container_type
+        )
+        self._container_id: str = container_id
+
     def validate_add_items_not_yet_present(self) -> ReportItemList:
         report_list: ReportItemList = []
         already_present = set(self._add_item_list).intersection(
@@ -1353,22 +1402,6 @@ class _ValidateAddRemoveBase:
                         self._container_id,
                         sorted(missing_items),
                     ),
-                )
-            )
-        return report_list
-
-    def validate_item_not_both_added_and_removed(self) -> ReportItemList:
-        report_list: ReportItemList = []
-        common_items = set(self._add_item_list) & set(self._remove_item_list)
-        if common_items:
-            report_list.append(
-                ReportItem.error(
-                    reports.messages.AddRemoveCannotAddAndRemoveItemsAtTheSameTime(
-                        self._container_type,
-                        self._item_type,
-                        self._container_id,
-                        sorted(common_items),
-                    )
                 )
             )
         return report_list
@@ -1455,7 +1488,7 @@ def validate_add_remove_items(
     adjacent_item_id -- an adjacent item in the container
     container_can_be_empty -- flag to decide if container can be left empty
     """
-    validator = _ValidateAddRemoveBase(
+    validator = _ValidateAddRemoveWithExistingItems(
         add_item_list,
         remove_item_list,
         current_item_list,
@@ -1496,7 +1529,7 @@ def validate_set_unset_items(
     container_id -- id of the container
     severity -- severity of produced reports, defaults to error
     """
-    validator = _ValidateAddRemoveBase(
+    validator = _ValidateAddRemoveWithExistingItems(
         add_item_list,
         remove_item_list,
         current_item_list,

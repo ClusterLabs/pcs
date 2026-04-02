@@ -5821,6 +5821,16 @@ class AddRemoveItemsNotSpecified(NameBuildTest):
             ),
         )
 
+    def test_message_without_container(self):
+        self.assert_message_from_report(
+            "No devices to add or remove specified",
+            reports.AddRemoveItemsNotSpecified(
+                container_type=None,
+                item_type=const.ADD_REMOVE_ITEM_TYPE_DEVICE,
+                container_id=None,
+            ),
+        )
+
 
 class AddRemoveItemsDuplication(NameBuildTest):
     def test_message(self):

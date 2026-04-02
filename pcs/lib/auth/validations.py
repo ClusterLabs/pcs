@@ -105,3 +105,21 @@ def validate_hosts(
         )
 
     return report_list
+
+
+def validate_known_hosts_change(
+    hosts_to_add: Mapping[str, HostWithTokenAuthData],
+    hosts_to_remove: list[str],
+) -> reports.ReportItemList:
+    add_remove_validator = validate.ValidateAddRemove(
+        list(hosts_to_add),
+        hosts_to_remove,
+        item_type=reports.const.ADD_REMOVE_ITEM_TYPE_HOST,
+    )
+    report_list = (
+        add_remove_validator.validate_add_or_remove_specified()
+        + add_remove_validator.validate_item_not_both_added_and_removed()
+    )
+    if hosts_to_add:
+        report_list.extend(validate_hosts_with_token(hosts_to_add))
+    return report_list

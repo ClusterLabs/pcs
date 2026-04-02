@@ -119,6 +119,7 @@ _add_remove_container_translation = {
 _add_remove_item_translation = {
     const.ADD_REMOVE_ITEM_TYPE_DEVICE: "device",
     const.ADD_REMOVE_ITEM_TYPE_PROPERTY: "property",
+    const.ADD_REMOVE_ITEM_TYPE_HOST: "host",
 }
 
 
@@ -8102,19 +8103,21 @@ class AddRemoveItemsNotSpecified(ReportItemMessage):
     container_id -- id of a container
     """
 
-    container_type: types.AddRemoveContainerType
+    container_type: Optional[types.AddRemoveContainerType]
     item_type: types.AddRemoveItemType
-    container_id: str
+    container_id: Optional[str]
     _code = codes.ADD_REMOVE_ITEMS_NOT_SPECIFIED
 
     @property
     def message(self) -> str:
-        container = _add_remove_container_str(self.container_type)
         items = get_plural(_add_remove_item_str(self.item_type))
-        return (
-            f"Cannot modify {container} '{self.container_id}', no {items} to "
-            "add or remove specified"
-        )
+        if self.container_type is not None and self.container_id is not None:
+            container = _add_remove_container_str(self.container_type)
+            return (
+                f"Cannot modify {container} '{self.container_id}', no {items} "
+                "to add or remove specified"
+            )
+        return f"No {items} to add or remove specified"
 
 
 @dataclass(frozen=True)
@@ -8128,9 +8131,9 @@ class AddRemoveItemsDuplication(ReportItemMessage):
     duplicate_items_list -- list of duplicate items
     """
 
-    container_type: types.AddRemoveContainerType
+    container_type: Optional[types.AddRemoveContainerType]
     item_type: types.AddRemoveItemType
-    container_id: str
+    container_id: Optional[str]
     duplicate_items_list: List[str]
     _code = codes.ADD_REMOVE_ITEMS_DUPLICATION
 
@@ -8223,9 +8226,9 @@ class AddRemoveCannotAddAndRemoveItemsAtTheSameTime(ReportItemMessage):
     item_list -- common items from add and remove item lists
     """
 
-    container_type: types.AddRemoveContainerType
+    container_type: Optional[types.AddRemoveContainerType]
     item_type: types.AddRemoveItemType
-    container_id: str
+    container_id: Optional[str]
     item_list: List[str]
     _code = codes.ADD_REMOVE_CANNOT_ADD_AND_REMOVE_ITEMS_AT_THE_SAME_TIME
 

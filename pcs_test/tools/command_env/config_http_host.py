@@ -150,7 +150,7 @@ class HostShortcuts:
                     json.dumps(
                         dict(
                             known_hosts_add=add_with_token,
-                            known_hosts_remove={},
+                            known_hosts_remove=[],
                         )
                     ),
                 )

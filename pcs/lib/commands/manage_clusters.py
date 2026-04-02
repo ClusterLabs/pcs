@@ -107,6 +107,7 @@ def add_existing_cluster(  # noqa: PLR0912, PLR0915
             sync_known_hosts_in_cluster(
                 known_hosts,
                 new_hosts,
+                [],
                 local_cluster_name,
                 local_request_targets,
                 no_privilege_transition_node_communicator,
@@ -114,7 +115,7 @@ def add_existing_cluster(  # noqa: PLR0912, PLR0915
             )
         else:
             update_known_hosts_locally(
-                known_hosts, new_hosts, env.report_processor
+                known_hosts, new_hosts, [], env.report_processor
             )
 
     if env.report_processor.has_errors:

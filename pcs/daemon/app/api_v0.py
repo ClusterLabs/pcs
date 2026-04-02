@@ -4,6 +4,7 @@ from typing import Any, Mapping, cast
 from tornado.locks import Lock
 from tornado.web import Finish
 
+from pcs import settings
 from pcs.common import file_type_codes, reports
 from pcs.common.async_tasks.dto import CommandDto, CommandOptionsDto
 from pcs.common.pcs_cfgsync_dto import SyncConfigsDto
@@ -327,6 +328,66 @@ class SetPermissionsHandler(_BaseApiV0Handler):
         self.write("Permissions saved")
 
 
+class KnownHostsChangeHandler(_BaseApiV0Handler):
+    """
+    Input format:
+    {
+        "known_hosts_add": {
+            "hostname1": {
+                "token": "auth_token_string",
+                "dest_list": [
+                    {"addr": "192.168.1.100", "port": 2224},
+                    ...
+                ]
+            },
+            ...
+        },
+        "known_hosts_remove": [
+            "hostname_to_remove1",
+            ...
+        ]
+    }
+    """
+
+    async def _handle_request(self) -> None:
+        data_json = self.get_argument("data_json", "")
+        try:
+            hosts_raw = json.loads(data_json)
+        except (json.JSONDecodeError, TypeError) as e:
+            raise self._error(f"Incorrect format of request data: {e}") from e
+
+        try:
+            hosts_to_add = {
+                host_name: {
+                    "token": host_data.get("token", ""),
+                    "dest_list": [
+                        {
+                            "addr": dest.get("addr") or host_name,
+                            "port": (
+                                dest.get("port") or settings.pcsd_default_port
+                            ),
+                        }
+                        for dest in host_data.get("dest_list", [])
+                    ],
+                }
+                for host_name, host_data in hosts_raw.get(
+                    "known_hosts_add", {}
+                ).items()
+            }
+
+            hosts_to_remove = list(hosts_raw.get("known_hosts_remove", []))
+        except (AttributeError, TypeError, ValueError) as e:
+            raise self._error(f"Incorrect format of request data: {e}") from e
+
+        result = await self._run_library_command(
+            "auth.known_hosts_change",
+            {"hosts_to_add": hosts_to_add, "hosts_to_remove": hosts_to_remove},
+        )
+
+        if not result.success:
+            raise self._error(reports_to_str(result.reports))
+
+
 def get_routes(
     api_auth_provider_factory: ApiAuthProviderFactoryInterface,
     scheduler: Scheduler,
@@ -380,4 +441,6 @@ def get_routes(
         ),
         # permissions
         (r("set_permissions"), SetPermissionsHandler, params),
+        # known hosts
+        (r("known_hosts_change"), KnownHostsChangeHandler, params),
     ]

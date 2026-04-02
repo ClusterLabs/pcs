@@ -189,6 +189,12 @@ class ValidateHostsWithToken(TestCase):
             ],
         )
 
+    def test_no_hosts(self):
+        report_list = validations.validate_hosts_with_token({})
+        assert_report_item_list_equal(
+            report_list, [fixture.error(reports.codes.NO_HOST_SPECIFIED)]
+        )
+
 
 class ValidateHosts(TestCase):
     def test_valid_no_reports(self):
@@ -277,7 +283,7 @@ class ValidateHosts(TestCase):
         )
 
     def test_invalid_port_number(self):
-        report_list = validations.validate_hosts_with_token(
+        report_list = validations.validate_hosts(
             {
                 "node1": HostAuthData(
                     "username",
@@ -318,5 +324,95 @@ class ValidateHosts(TestCase):
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),
+            ],
+        )
+
+    def test_no_hosts(self):
+        report_list = validations.validate_hosts({})
+        assert_report_item_list_equal(
+            report_list, [fixture.error(reports.codes.NO_HOST_SPECIFIED)]
+        )
+
+
+class ValidateKnownHostsChange(TestCase):
+    def test_success(self):
+        report_list = validations.validate_known_hosts_change(
+            {
+                "node1": HostWithTokenAuthData(
+                    "TOKEN", [Destination("node1", 2224)]
+                ),
+                "node2": HostWithTokenAuthData(
+                    "TOKEN", [Destination("node2", 2224)]
+                ),
+            },
+            ["nodeX", "nodeY"],
+        )
+        assert_report_item_list_equal(report_list, [])
+
+    def test_nothing_to_add_or_remove(self):
+        report_list = validations.validate_known_hosts_change({}, [])
+        assert_report_item_list_equal(
+            report_list,
+            [
+                fixture.error(
+                    reports.codes.ADD_REMOVE_ITEMS_NOT_SPECIFIED,
+                    container_type=None,
+                    container_id=None,
+                    item_type=reports.const.ADD_REMOVE_ITEM_TYPE_HOST,
+                )
+            ],
+        )
+
+    def test_invalid_hosts_to_add(self):
+        report_list = validations.validate_known_hosts_change(
+            {
+                "node1": HostWithTokenAuthData(
+                    "TOKEN", [Destination("node1", 2224)]
+                ),
+                "": HostWithTokenAuthData(
+                    "TOKEN", [Destination("node2", 2224)]
+                ),
+            },
+            ["nodeX", "nodeY"],
+        )
+        assert_report_item_list_equal(
+            report_list,
+            [
+                fixture.error(
+                    reports.codes.INVALID_OPTION_VALUE,
+                    option_name="host name",
+                    option_value="",
+                    allowed_values="",
+                    cannot_be_empty=True,
+                    forbidden_characters=None,
+                )
+            ],
+        )
+
+    def test_add_and_remove_the_same_hosts(self):
+        report_list = validations.validate_known_hosts_change(
+            {
+                "node1": HostWithTokenAuthData(
+                    "TOKEN", [Destination("node1", 2224)]
+                ),
+                "node2": HostWithTokenAuthData(
+                    "TOKEN", [Destination("node2", 2224)]
+                ),
+                "nodeX": HostWithTokenAuthData(
+                    "TOKEN", [Destination("nodeX", 2224)]
+                ),
+            },
+            ["node2", "nodeX", "nodeY"],
+        )
+        assert_report_item_list_equal(
+            report_list,
+            [
+                fixture.error(
+                    reports.codes.ADD_REMOVE_CANNOT_ADD_AND_REMOVE_ITEMS_AT_THE_SAME_TIME,
+                    container_type=None,
+                    container_id=None,
+                    item_type=reports.const.ADD_REMOVE_ITEM_TYPE_HOST,
+                    item_list=["node2", "nodeX"],
+                )
             ],
         )

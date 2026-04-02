@@ -218,9 +218,10 @@ def fixture_save_sync_new_known_hosts_conflict(
         NodeCommunicatorType.NO_PRIVILEGE_TRANSITION
     ),
 ) -> str:
-    if new_hosts and hosts_to_remove:
+    if set(new_hosts) & set(hosts_to_remove):
         raise AssertionError(
-            "Do not use this fixture to add and remove hosts at the same time"
+            "Do not use this fixture to add and remove the same hosts at the "
+            "same time"
         )
 
     def __construct_expected_hosts(
