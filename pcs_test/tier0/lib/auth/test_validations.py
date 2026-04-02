@@ -94,7 +94,7 @@ class ValidateHostsWithToken(TestCase):
                     option_name="token",
                     option_value=bad_token,
                     allowed_values="a string (min length: 1) (max length: 512)",
-                    cannot_be_empty=True,
+                    cannot_be_empty=False,
                     forbidden_characters=None,
                 )
             ],

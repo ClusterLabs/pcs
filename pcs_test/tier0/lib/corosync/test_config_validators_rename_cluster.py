@@ -22,10 +22,10 @@ class RenameCluster(TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_name="cluster name",
                     option_value="",
-                    allowed_values=None,
+                    allowed_values="a string (min length: 1) (max length: 256)",
                     cannot_be_empty=True,
                     forbidden_characters=None,
-                )
+                ),
             ],
         )
 

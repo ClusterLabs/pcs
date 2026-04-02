@@ -895,11 +895,13 @@ class ValueStringLength(ValuePredicateBase):
         )
         self._min_len = min_len
         self._max_len = max_len
-        self._value_cannot_be_empty = (
-            self._min_len is not None and self._min_len > 0
-        )
 
     def _is_valid(self, value: TypeOptionValue) -> bool:
+        self._value_cannot_be_empty = (
+            self._min_len is not None
+            and self._min_len > 0
+            and is_empty_string(value)
+        )
         return is_string_length(value, self._min_len, self._max_len)
 
     def _get_allowed_values(self) -> Any:

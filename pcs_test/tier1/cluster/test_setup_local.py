@@ -3,6 +3,7 @@ from textwrap import dedent
 from unittest import TestCase
 
 from pcs import settings
+from pcs.lib.corosync.constants import CLUSTER_NAME_LENGTH_MAX
 
 from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.misc import (
@@ -290,6 +291,21 @@ class SetupLocal(AssertPcsMixin, TestCase):
                 Error: If quorum option 'last_man_standing_window' is enabled, quorum option 'last_man_standing' must be enabled as well
                 Error: Errors have occurred, therefore pcs is unable to continue
                 """
+            ),
+        )
+        self.assertEqual(self.corosync_conf_file.read(), "")
+
+    def test_long_cluster_name(self):
+        self.fixture_known_hosts([])
+        cluster_name_too_long = (CLUSTER_NAME_LENGTH_MAX + 1) * "x"
+        self.assert_pcs_fail(
+            (
+                f"cluster setup {cluster_name_too_long} "
+                "node1 node2 --force --overwrite --no-cluster-uuid"
+            ).split(),
+            stderr_regexp=(
+                f"Error: '{cluster_name_too_long}' is not a valid cluster name"
+                r" value, use a string \(min length: 1\) \(max length: 256\)"
             ),
         )
         self.assertEqual(self.corosync_conf_file.read(), "")

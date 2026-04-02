@@ -114,3 +114,9 @@ QUORUM_OPTIONS_INCOMPATIBLE_WITH_QDEVICE = (
 
 OPTION_NAME_RE = re.compile(r"^[-_/a-zA-Z0-9]+$")
 QUORUM_DEVICE_HEURISTICS_EXEC_NAME_RE = re.compile(r"^exec_[-_/a-zA-Z0-9]+$")
+
+# Length of the line within config is 512 characters.
+# However, we do not know the offset of the line and cluster name length.
+# Therefore I am setting the limit to 256,
+# which should be more than enough for a cluster name.
+CLUSTER_NAME_LENGTH_MAX = 256

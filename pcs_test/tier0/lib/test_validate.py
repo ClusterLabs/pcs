@@ -1476,6 +1476,21 @@ class ValueStringLength(TestCase):
                     [],
                 )
 
+    def test_report_invalid_value_cannot_be_empty(self):
+        assert_report_item_list_equal(
+            validate.ValueStringLength("key", 2, 3).validate({"key": ""}),
+            [
+                fixture.error(
+                    reports.codes.INVALID_OPTION_VALUE,
+                    option_name="key",
+                    option_value="",
+                    allowed_values="a string (min length: 2) (max length: 3)",
+                    cannot_be_empty=True,
+                    forbidden_characters=None,
+                ),
+            ],
+        )
+
     def test_report_invalid_value_min_max(self):
         for value in ["a", "aaaa"]:
             with self.subTest(value=value):
@@ -1489,7 +1504,7 @@ class ValueStringLength(TestCase):
                             option_name="key",
                             option_value=value,
                             allowed_values="a string (min length: 2) (max length: 3)",
-                            cannot_be_empty=True,
+                            cannot_be_empty=False,
                             forbidden_characters=None,
                         ),
                     ],
@@ -1504,7 +1519,7 @@ class ValueStringLength(TestCase):
                     option_name="key",
                     option_value="a",
                     allowed_values="a string (min length: 2)",
-                    cannot_be_empty=True,
+                    cannot_be_empty=False,
                     forbidden_characters=None,
                 ),
             ],

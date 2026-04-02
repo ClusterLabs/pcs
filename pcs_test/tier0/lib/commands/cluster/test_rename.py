@@ -7,6 +7,7 @@ from pcs import settings
 from pcs.common import reports
 from pcs.common.reports import codes as report_codes
 from pcs.lib.commands import cluster
+from pcs.lib.corosync.constants import CLUSTER_NAME_LENGTH_MAX
 
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
@@ -147,7 +148,36 @@ class RenameCluster(FixtureMixin, TestCase):
             + self.fixture_remove_name_prop_reports()
         )
 
-    def test_invalid_name(self):
+    def test_name_too_long_force(self):
+        cluster_name = (CLUSTER_NAME_LENGTH_MAX + 1) * "x"
+
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.rename(
+                self.env_assist.get_env(),
+                cluster_name,
+                force_flags=[report_codes.FORCE],
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    report_codes.COROSYNC_CLUSTER_NAME_INVALID_FOR_GFS2,
+                    cluster_name=cluster_name,
+                    max_length=32,
+                    allowed_characters="a-z A-Z 0-9 _-",
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="cluster name",
+                    option_value=cluster_name,
+                    allowed_values="a string (min length: 1) (max length: 256)",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+            ]
+        )
+
+    def test_empty_name(self):
         self.env_assist.assert_raise_library_error(
             lambda: cluster.rename(self.env_assist.get_env(), "")
         )
@@ -157,10 +187,10 @@ class RenameCluster(FixtureMixin, TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_name="cluster name",
                     option_value="",
-                    allowed_values=None,
+                    allowed_values="a string (min length: 1) (max length: 256)",
                     cannot_be_empty=True,
                     forbidden_characters=None,
-                )
+                ),
             ]
         )
 

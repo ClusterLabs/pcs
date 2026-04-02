@@ -99,7 +99,7 @@ class Create(TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="",
                     option_name="cluster name",
-                    allowed_values=None,
+                    allowed_values="a string (min length: 1) (max length: 256)",
                     cannot_be_empty=True,
                     forbidden_characters=None,
                 ),

@@ -1,5 +1,7 @@
 from unittest import TestCase
 
+from pcs.lib.corosync.constants import CLUSTER_NAME_LENGTH_MAX
+
 from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.misc import get_test_resource
 from pcs_test.tools.pcs_runner import PcsRunner
@@ -13,6 +15,20 @@ class ClusterRename(AssertPcsMixin, TestCase):
         self.assert_pcs_fail(
             ["cluster", "rename"],
             stderr_start="\nUsage: pcs cluster rename...\n",
+        )
+
+    def test_too_long_arg(self):
+        cluster_name_too_long = (CLUSTER_NAME_LENGTH_MAX + 1) * "x"
+        self.assert_pcs_fail(
+            [
+                "cluster",
+                "rename",
+                cluster_name_too_long,
+            ],
+            stderr_regexp=(
+                f"Error: '{cluster_name_too_long}' is not a valid cluster name"
+                r" value, use a string \(min length: 1\) \(max length: 256\)"
+            ),
         )
 
     def test_too_many_args(self):

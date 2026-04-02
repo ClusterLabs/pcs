@@ -277,9 +277,6 @@ def _get_cluster_name_validators(
     force_cluster_name: bool,
 ) -> list[validate.ValidatorInterface]:
     return [
-        validate.ValueNotEmpty(
-            "name", None, option_name_for_report="cluster name"
-        ),
         _ClusterNameGfs2Validator(
             "name",
             option_name_for_report="cluster name",
@@ -289,6 +286,12 @@ def _get_cluster_name_validators(
         ),
         validate.ValueCorosyncValue(
             "name", option_name_for_report="cluster name"
+        ),
+        validate.ValueStringLength(
+            "name",
+            option_name_for_report="cluster name",
+            min_len=1,
+            max_len=constants.CLUSTER_NAME_LENGTH_MAX,
         ),
     ]
 

@@ -10,6 +10,7 @@ from pcs.common.host import Destination
 from pcs.common.ssl import dump_cert, dump_key, generate_cert, generate_key
 from pcs.lib.commands import cluster
 from pcs.lib.corosync import constants
+from pcs.lib.corosync.constants import CLUSTER_NAME_LENGTH_MAX
 
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
@@ -970,7 +971,7 @@ class Validation(TestCase):
                     reports.codes.INVALID_OPTION_VALUE,
                     option_value="",
                     option_name="cluster name",
-                    allowed_values=None,
+                    allowed_values="a string (min length: 1) (max length: 256)",
                     cannot_be_empty=True,
                     forbidden_characters=None,
                 ),
@@ -983,6 +984,46 @@ class Validation(TestCase):
                     forbidden_characters=None,
                 ),
                 fixture.error(reports.codes.COROSYNC_NODES_MISSING),
+            ]
+        )
+
+    def test_cluster_name_too_long_force(self):
+        cluster_name = (CLUSTER_NAME_LENGTH_MAX + 1) * "x"
+
+        self.config.http.host.get_host_info(
+            NODE_LIST,
+            output_data=self.get_host_info_ok,
+        )
+        self.config.fs.isfile(settings.pcsd_config)
+        self.config.fs.open(
+            settings.pcsd_config,
+            mock.mock_open(read_data="PCSD_SSL_CERT_SYNC_ENABLED=false\n")(),
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.setup(
+                self.env_assist.get_env(),
+                cluster_name,
+                self.command_node_list,
+                force_flags=[reports.codes.FORCE],
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.COROSYNC_CLUSTER_NAME_INVALID_FOR_GFS2,
+                    cluster_name=cluster_name,
+                    max_length=32,
+                    allowed_characters="a-z A-Z 0-9 _-",
+                ),
+                fixture.error(
+                    reports.codes.INVALID_OPTION_VALUE,
+                    option_name="cluster name",
+                    option_value=cluster_name,
+                    allowed_values="a string (min length: 1) (max length: 256)",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
             ]
         )
 
@@ -3577,7 +3618,7 @@ class SetupLocal(TestCase):
                     reports.codes.INVALID_OPTION_VALUE,
                     option_value="",
                     option_name="cluster name",
-                    allowed_values=None,
+                    allowed_values="a string (min length: 1) (max length: 256)",
                     cannot_be_empty=True,
                     forbidden_characters=None,
                 ),
