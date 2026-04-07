@@ -11,16 +11,8 @@ from pcs.lib.cib.remove_elements import (
     ensure_resources_stopped,
     remove_specified_elements,
 )
-from pcs.lib.cib.resource import (
-    guest_node,
-    primitive,
-    remote_node,
-)
-from pcs.lib.cib.tools import (
-    ElementSearcher,
-    IdProvider,
-    get_resources,
-)
+from pcs.lib.cib.resource import guest_node, primitive, remote_node
+from pcs.lib.cib.tools import ElementSearcher, IdProvider, get_resources
 
 # TODO lib.commands should never import each other. This is to be removed when
 # the 'resource create' commands are overhauled.
@@ -35,10 +27,7 @@ from pcs.lib.communication.nodes import (
 )
 from pcs.lib.communication.tools import run as run_com
 from pcs.lib.communication.tools import run_and_raise
-from pcs.lib.env import (
-    LibraryEnvironment,
-    WaitType,
-)
+from pcs.lib.env import LibraryEnvironment, WaitType
 from pcs.lib.errors import LibraryError
 from pcs.lib.file.instance import FileInstance
 from pcs.lib.file.raw_file import raw_file_error_report

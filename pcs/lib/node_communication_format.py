@@ -1,12 +1,8 @@
 import base64
 from collections import namedtuple
-from typing import (
-    Any,
-    Dict,
-)
+from typing import Any
 
 from pcs.common import reports
-from pcs.common.reports.item import ReportItem
 from pcs.lib.errors import LibraryError
 
 
@@ -53,7 +49,7 @@ def corosync_conf_file(corosync_conf_content):
     return {"corosync.conf": corosync_conf_format(corosync_conf_content)}
 
 
-def pcs_dr_config_format(dr_conf_content: bytes) -> Dict[str, Any]:
+def pcs_dr_config_format(dr_conf_content: bytes) -> dict[str, Any]:
     return {
         "type": "pcs_disaster_recovery_conf",
         "data": base64.b64encode(dr_conf_content).decode("utf-8"),
@@ -61,7 +57,7 @@ def pcs_dr_config_format(dr_conf_content: bytes) -> Dict[str, Any]:
     }
 
 
-def pcs_dr_config_file(dr_conf_content: bytes) -> Dict[str, Any]:
+def pcs_dr_config_file(dr_conf_content: bytes) -> dict[str, Any]:
     return {"disaster-recovery config": pcs_dr_config_format(dr_conf_content)}
 
 
@@ -104,7 +100,9 @@ def unpack_items_from_response(main_response, main_key, node_label):
 
     if not is_in_expected_format:
         raise LibraryError(
-            ReportItem.error(reports.messages.InvalidResponseFormat(node_label))
+            reports.ReportItem.error(
+                reports.messages.InvalidResponseFormat(node_label)
+            )
         )
 
     return main_response[main_key]
@@ -124,7 +122,9 @@ def response_items_to_result(response_items, expected_keys, node_label):
     """
     if set(expected_keys) != set(response_items.keys()):
         raise LibraryError(
-            ReportItem.error(reports.messages.InvalidResponseFormat(node_label))
+            reports.ReportItem.error(
+                reports.messages.InvalidResponseFormat(node_label)
+            )
         )
 
     for result in response_items.values():
@@ -134,7 +134,7 @@ def response_items_to_result(response_items, expected_keys, node_label):
             or "message" not in result
         ):
             raise LibraryError(
-                ReportItem.error(
+                reports.ReportItem.error(
                     reports.messages.InvalidResponseFormat(node_label)
                 )
             )
