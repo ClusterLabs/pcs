@@ -10,15 +10,6 @@ from pcs.common.reports.item import ReportItem
 from pcs.lib.errors import LibraryError
 
 
-def create_pcmk_remote_actions(action_list):
-    return {
-        f"pacemaker_remote {action}": service_cmd_format(
-            "pacemaker_remote", action
-        )
-        for action in action_list
-    }
-
-
 def pcmk_authkey_format(authkey_content):
     """
     Return a dict usable in the communication with a remote/put_file
@@ -84,19 +75,6 @@ def pcs_settings_conf_format(content):
 
 def pcs_settings_conf_file(content):
     return {"pcs_settings.conf": pcs_settings_conf_format(content)}
-
-
-def service_cmd_format(service, command):
-    """
-    Return a dict usable in the communication with a remote/run_action
-    string service is name of requested service (eg. pacemaker_remote)
-    string command specifies an action on service (eg. start)
-    """
-    return {
-        "type": "service_command",
-        "service": service,
-        "command": command,
-    }
 
 
 class Result(namedtuple("Result", "code message")):

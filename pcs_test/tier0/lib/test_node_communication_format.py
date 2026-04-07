@@ -24,18 +24,6 @@ class PcmkAuthkeyFormat(TestCase, SetupPatchMixin):
         )
 
 
-class ServiceCommandFormat(TestCase):
-    def test_create_expected_dict(self):
-        self.assertEqual(
-            node_communication_format.service_cmd_format("pcsd", "start"),
-            {
-                "type": "service_command",
-                "service": "pcsd",
-                "command": "start",
-            },
-        )
-
-
 def fixture_invalid_response_format(node_label):
     return (
         severity.ERROR,
