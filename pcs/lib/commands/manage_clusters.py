@@ -214,27 +214,16 @@ def __add_remove_clusters_common(
     corosync_conf = env.get_corosync_conf()
     cluster_name = corosync_conf.get_cluster_name()
     corosync_nodes, _ = get_existing_nodes_names(corosync_conf)
-    report_list, request_targets = (
-        env.get_node_target_factory().get_target_list_with_reports(
-            corosync_nodes, allow_skip=False
-        )
+    request_targets = env.get_node_target_factory().get_target_list(
+        corosync_nodes, allow_skip=False
     )
-    env.report_processor.report_list(report_list)
-    if not request_targets:
-        if env.report_processor.has_errors:
-            raise LibraryError()
-        return
 
-    nodes_with_missing_token = set(corosync_nodes) - {
-        target.label for target in request_targets
-    }
     sync_pcs_settings_in_cluster(
         pcs_settings_conf,
         cluster_name,
         request_targets,
         env.get_node_communicator_no_privilege_transition(),
         env.report_processor,
-        nodes_with_missing_token,
     )
     if env.report_processor.has_errors:
         raise LibraryError()

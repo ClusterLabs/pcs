@@ -357,15 +357,6 @@ class AddRemoveInClusterBase:
     def test_some_cluster_nodes_not_known_to_pcs(self):
         self.config.env.set_known_nodes(["node1"])
         self.fixture_read_local_files()
-        fixture_save_sync_new_version_success(
-            self.config,
-            node_labels=["node1"],
-            file_contents={
-                file_type_codes.PCS_SETTINGS_CONF: fixture_pcs_settings_file_content(
-                    data_version=2, clusters=self.CLUSTERS_AFTER_OPERATION
-                )
-            },
-        )
 
         self.env_assist.assert_raise_library_error(self.get_lib_command_call())
 
@@ -373,18 +364,7 @@ class AddRemoveInClusterBase:
             [
                 fixture.error(
                     reports.codes.HOST_NOT_FOUND, host_list=["node2", "node3"]
-                ),
-            ]
-            + fixture_expected_save_sync_reports(
-                file_type=file_type_codes.PCS_SETTINGS_CONF,
-                node_labels=["node1"],
-            )
-            + [
-                fixture.error(
-                    reports.codes.PCS_CFGSYNC_SENDING_CONFIGS_TO_NODES_FAILED,
-                    file_type_code_list=[file_type_codes.PCS_SETTINGS_CONF],
-                    node_name_list=["node2", "node3"],
-                ),
+                )
             ]
         )
 
