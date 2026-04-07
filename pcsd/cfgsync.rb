@@ -606,25 +606,6 @@ module Cfgsync
     end
   end
 
-  def self.get_failed_nodes_from_sync_responses(sync_responses)
-    sync_failed_nodes = []
-    not_authorized_nodes = []
-    sync_responses.each { |node, response|
-      if response['status'] == 'notauthorized'
-        not_authorized_nodes << node
-      elsif response['status'] != 'ok'
-        sync_failed_nodes << node
-      else
-        response['result'].each { |config_name, node_result|
-          if not ['accepted', 'rejected'].include?(node_result)
-            sync_failed_nodes << node
-          end
-        }
-      end
-    }
-    return not_authorized_nodes, sync_failed_nodes
-  end
-
   def self.get_integer_value(value, default, minimum)
     return default if value.nil?
     if value.respond_to?(:match)

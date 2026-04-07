@@ -142,10 +142,6 @@ class PCSConfig
     return JSON.pretty_generate(out_hash, {indent: '    '})
   end
 
-  def remove_cluster(cluster_name)
-    @clusters.delete_if { |c| c.name == cluster_name }
-  end
-
   def is_cluster_name_in_use(cname)
     @clusters.each {|c|
       if c.name == cname

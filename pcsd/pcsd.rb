@@ -29,17 +29,6 @@ def __msg_node_name_already_used(node_name, cluster_name)
   return "The node '#{node_name}' is already a part of the '#{cluster_name}' cluster. You may not add a node to two different clusters."
 end
 
-def __msg_sync_conflict_detected(please_repeat=nil)
-  if not please_repeat
-    please_repeat = 'Please repeat the last action if appropriate.'
-  end
-  return "Configuration conflict detected.\n\nSome nodes had a newer configuration than the local node. Local node's configuration was updated. #{please_repeat}"
-end
-
-def __msg_sync_nodes_error(node_name_list)
-  return "Unable to save settings on local cluster node(s) #{node_name_list.join(', ')}. Make sure pcsd is running on the nodes and the nodes are authorized."
-end
-
 def getAuthUser()
   return {
     :username => Thread.current[:tornado_username],
@@ -357,70 +346,12 @@ post '/manage/api/v1/cluster-setup' do
   end
 end
 
-
-
 # use case:
 # - js instructs us to add the just created cluster to our list of clusters
-post '/manage/remember-cluster' do
-  auth_user = getAuthUser()
-  if not allowed_for_superuser(auth_user)
-    return 403, 'Permission denied.'
-  end
-  no_conflict = false
-  sync_responses = {}
-  2.times {
-    # Add the new cluster to our config and publish the config.
-    # If this host is a node of the new cluster, another node may send its own
-    # PcsdSettings. To handle it we just need to reload the config, as we are
-    # waiting for the request to finish, so no locking is needed.
-    # If we are in a different cluster we just try twice to update the config,
-    # dealing with any updates in between.
-    pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
-    pcs_config.clusters << Cluster.new(params[:cluster_name], params[:nodes])
-    sync_config = Cfgsync::PcsdSettings.from_text(pcs_config.text())
-    no_conflict, sync_responses = Cfgsync::save_sync_new_version(
-      sync_config, get_corosync_nodes_names(), $cluster_name, true
-    )
-    break if no_conflict
-  }
-  sync_notauthorized_nodes, sync_failed_nodes = (
-    Cfgsync::get_failed_nodes_from_sync_responses(sync_responses)
-  )
-  sync_all_failures = (sync_notauthorized_nodes + sync_failed_nodes).sort
-  if not sync_all_failures.empty?
-    return 400, __msg_sync_nodes_error(sync_all_failures)
-  end
-  if not no_conflict
-    return 400, __msg_sync_conflict_detected(
-      'Please add the cluster manually if appropriate.'
-    )
-  end
-end
+#
+# post /manage/remember-cluster - moved into Python
 
 ### urls related to creating a new cluster - end
-
-post '/manage/removecluster' do
-  pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
-  params.each { |k,v|
-    if k.start_with?("clusterid-")
-      pcs_config.remove_cluster(k.sub("clusterid-",""))
-    end
-  }
-  sync_config = Cfgsync::PcsdSettings.from_text(pcs_config.text())
-  no_conflict, sync_responses = Cfgsync::save_sync_new_version(
-    sync_config, get_corosync_nodes_names(), $cluster_name, true
-  )
-  sync_notauthorized_nodes, sync_failed_nodes = (
-    Cfgsync::get_failed_nodes_from_sync_responses(sync_responses)
-  )
-  sync_all_failures = (sync_notauthorized_nodes + sync_failed_nodes).sort
-  if not sync_all_failures.empty?
-    return 400, __msg_sync_nodes_error(sync_all_failures)
-  end
-  if not no_conflict
-    return 400, __msg_sync_conflict_detected()
-  end
-end
 
 get '/manage/check_auth_against_nodes' do
   auth_user = getAuthUser()

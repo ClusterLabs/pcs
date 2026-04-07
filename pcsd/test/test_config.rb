@@ -580,35 +580,6 @@ class TestConfig < Test::Unit::TestCase
     )
   end
 
-  def test_remove_cluster()
-    cfg = PCSConfig.new(File.open(CFG_PCSD_SETTINGS).read)
-    assert_equal(
-      ["rh71-node1", "rh71-node2"],
-      cfg.get_nodes('cluster71')
-    )
-    assert_equal(
-      ["rh67-node1", "rh67-node2", "rh67-node3"],
-      cfg.get_nodes('cluster67')
-    )
-
-    cfg.remove_cluster('nonexistent')
-    assert_equal(
-      ["rh71-node1", "rh71-node2"],
-      cfg.get_nodes('cluster71')
-    )
-    assert_equal(
-      ["rh67-node1", "rh67-node2", "rh67-node3"],
-      cfg.get_nodes('cluster67')
-    )
-
-    cfg.remove_cluster('cluster71')
-    assert(! cfg.is_cluster_name_in_use('cluster71'))
-    assert_equal(
-      ["rh67-node1", "rh67-node2", "rh67-node3"],
-      cfg.get_nodes('cluster67')
-    )
-  end
-
   def test_cluster_nodes_equal?()
     text =
 '{
