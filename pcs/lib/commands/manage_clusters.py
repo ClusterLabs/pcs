@@ -97,7 +97,7 @@ def add_existing_cluster(  # noqa: PLR0912, PLR0915
         # this was previously not done, so we are keeping it this way
         local_corosync_nodes, _ = get_existing_nodes_names(corosync_conf)
         local_request_targets = env.get_node_target_factory().get_target_list(
-            local_corosync_nodes
+            local_corosync_nodes, allow_skip=False
         )
 
     if new_hosts:

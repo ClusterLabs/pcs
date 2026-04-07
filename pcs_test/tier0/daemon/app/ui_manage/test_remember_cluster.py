@@ -49,8 +49,8 @@ class RememberClusterHandlerTest(UiManageHandlerTest):
     def test_success_conflict_retry(self):
         # First call returns conflict, second call succeeds
         self.mock_run_library_command.side_effect = [
-            self.result_success(
-                reports=[
+            self.result_failure(
+                report_items=[
                     reports.ReportItem.error(
                         reports.messages.PcsCfgsyncConflictRepeatAction()
                     ).to_dto()

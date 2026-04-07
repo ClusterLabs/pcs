@@ -21,7 +21,7 @@ def validate_add_cluster(
             )
         )
 
-    seen = set()
+    seen_node_names = set()
     node_name_duplicates = set()
     for node_name in nodes:
         report_list.extend(
@@ -29,9 +29,9 @@ def validate_add_cluster(
                 "node_name", None, option_name_for_report="node name"
             ).validate({"node_name": node_name})
         )
-        if node_name in seen:
+        if node_name in seen_node_names:
             node_name_duplicates.add(node_name)
-        seen.add(node_name)
+        seen_node_names.add(node_name)
     if node_name_duplicates:
         report_list.append(
             reports.ReportItem.error(

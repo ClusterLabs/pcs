@@ -27,11 +27,11 @@ class RememberClusterHandler(BaseAjaxProtectedManageHandler):
             "manage_clusters.add_cluster", lib_command_arguments
         )
 
-        # The command fetches the newest file and saves it locally when
-        # conflict is detected. Running the command second time will add
+        # The lib command fetches the newest file and saves it locally when
+        # conflict is detected. Running the lib command second time will add
         # the cluster to the newest config, possibly resolving the conflict.
         # This is how the original Ruby handler behaved.
-        if any(
+        if not result.success and any(
             rep.message.code == reports.codes.PCS_CFGSYNC_CONFLICT_REPEAT_ACTION
             for rep in result.reports
         ):
