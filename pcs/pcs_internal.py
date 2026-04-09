@@ -1,29 +1,20 @@
 import json
 import logging
 import sys
-from typing import (
-    Any,
-    Optional,
-)
+from typing import Any, Optional
 
 from dacite import DaciteError
 
-from pcs import (
-    settings,
-    utils,
-)
+from pcs import settings, utils
 from pcs.cli.common.env_cli import Env
 from pcs.cli.common.lib_wrapper import Library
 from pcs.common import communication
 from pcs.common.interface import dto
-from pcs.common.reports import (
-    ReportItem,
-    ReportItemList,
-    ReportProcessor,
-)
+from pcs.common.reports import ReportItem, ReportItemList, ReportProcessor
 from pcs.lib.errors import LibraryError
 
 SUPPORTED_COMMANDS = {
+    "pcs_cfgsync.save_sync_pcs_settings_internal",
     "services.disable_service",
     "services.enable_service",
     "services.get_services_info",

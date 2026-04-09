@@ -181,12 +181,21 @@ def _update_pcsd_settings(config, cluster_name, new_nodes)
   )
 
   config.update_cluster(cluster_name, new_nodes)
-  sync_config = Cfgsync::PcsdSettings.from_text(config.text())
+
+  # Save and sync via Python
+  result = run_pcs_internal(
+    PCSAuth.getSuperuserAuth(),
+    "pcs_cfgsync.save_sync_pcs_settings_internal",
+    {:config_text => config.text()},
+  )
+
   # on version conflict just go on, config will be corrected eventually
   # by displaying the cluster in the web UI
-  Cfgsync::save_sync_new_version(
-    sync_config, get_corosync_nodes_names(), $cluster_name, true
-  )
+  if result[:status] != 'success'
+    $logger.error(
+      "Failed to sync pcs_settings to cluster: #{result[:status_msg]}"
+    )
+  end
 end
 
 # get cluster status and return it to a remote gui or other client
