@@ -68,16 +68,17 @@ class RememberClusterHandlerTest(UiManageHandlerTest):
 
         self.assert_body(response.body, "")
         self.assertEqual(response.code, 200)
-        self.assertEqual(self.mock_run_library_command.call_count, 2)
         expected_args = {
             "cluster_name": "test-cluster",
             "cluster_nodes": ["node1"],
         }
-        self.mock_run_library_command.assert_has_calls(
-            [
-                mock.call(self.command_name, expected_args),
-                mock.call(self.command_name, expected_args),
-            ]
+        expected_calls = [
+            mock.call(self.command_name, expected_args),
+            mock.call(self.command_name, expected_args),
+        ]
+        self.mock_run_library_command.assert_has_calls(expected_calls)
+        self.assertEqual(
+            self.mock_run_library_command.call_count, len(expected_calls)
         )
 
     def test_generic_errors(self):

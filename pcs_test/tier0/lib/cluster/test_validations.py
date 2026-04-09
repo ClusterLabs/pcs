@@ -7,7 +7,7 @@ from pcs_test.tools import fixture
 from pcs_test.tools.assertions import assert_report_item_list_equal
 
 
-class ValidateClusterEntry(TestCase):
+class ValidateAddCluster(TestCase):
     def test_valid_no_reports(self):
         report_list = validations.validate_add_cluster(
             "NAME", ["NODE1", "NODE2", "NODE3"]

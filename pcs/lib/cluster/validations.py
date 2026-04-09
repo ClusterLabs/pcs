@@ -52,4 +52,6 @@ def validate_remove_clusters(
         clusters_to_remove,
         reports.const.ADD_REMOVE_ITEM_TYPE_CLUSTER,
     )
+    # To match the original Ruby implementation, there is is intentionally no
+    # validation - not validating duplicates, or if the removed clusters exist
     return add_remove_validator.validate_add_or_remove_specified()
