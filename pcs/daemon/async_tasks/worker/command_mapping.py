@@ -264,8 +264,18 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
         cmd=fencing_topology.verify,
         required_permission=p.WRITE,
     ),
+    "manage_clusters.add_cluster": _Cmd(
+        cmd=manage_clusters.add_cluster,
+        required_permission=p.SUPERUSER,
+    ),
     "manage_clusters.add_existing_cluster": _Cmd(
         cmd=manage_clusters.add_existing_cluster,
+        # needs to be NONE for backwards compatibility with
+        # the original handler in ruby
+        required_permission=p.NONE,
+    ),
+    "manage_clusters.remove_clusters": _Cmd(
+        cmd=manage_clusters.remove_clusters,
         # needs to be NONE for backwards compatibility with
         # the original handler in ruby
         required_permission=p.NONE,
@@ -503,6 +513,8 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
 LEGACY_API_COMMANDS = (
     "auth.known_hosts_change",
     "cluster.set_permissions",
+    "manage_clusters.add_cluster",
+    "manage_clusters.remove_clusters",
     "pcs_cfgsync.update_sync_options",
     "qdevice.qdevice_net_get_ca_certificate",
     "resource_agent.describe_agent",

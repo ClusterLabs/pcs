@@ -6,6 +6,8 @@ from pcs.daemon.app.ui_manage.auth_gui_against_nodes import (
 from pcs.daemon.app.ui_manage.existing_cluster import (
     ManageExistingClusterHandler,
 )
+from pcs.daemon.app.ui_manage.remember_cluster import RememberClusterHandler
+from pcs.daemon.app.ui_manage.remove_cluster import RemoveClusterHandler
 from pcs.daemon.async_tasks.scheduler import Scheduler
 
 
@@ -23,4 +25,6 @@ def get_routes(
             params,
         ),
         (r"/manage/existingcluster", ManageExistingClusterHandler, params),
+        (r"/manage/remember-cluster", RememberClusterHandler, params),
+        (r"/manage/removecluster", RemoveClusterHandler, params),
     ]

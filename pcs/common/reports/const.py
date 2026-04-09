@@ -16,10 +16,11 @@ ADD_REMOVE_CONTAINER_TYPE_PROPERTY_SET = AddRemoveContainerType("property_set")
 ADD_REMOVE_CONTAINER_TYPE_STONITH_RESOURCE = AddRemoveContainerType("stonith")
 ADD_REMOVE_CONTAINER_TYPE_GROUP = AddRemoveContainerType("group")
 
+ADD_REMOVE_ITEM_TYPE_CLUSTER = AddRemoveItemType("cluster")
 ADD_REMOVE_ITEM_TYPE_DEVICE = AddRemoveItemType("device")
+ADD_REMOVE_ITEM_TYPE_HOST = AddRemoveItemType("host")
 ADD_REMOVE_ITEM_TYPE_PROPERTY = AddRemoveItemType("property")
 ADD_REMOVE_ITEM_TYPE_RESOURCE = AddRemoveItemType("resource")
-ADD_REMOVE_ITEM_TYPE_HOST = AddRemoveItemType("host")
 
 BOOTH_CONFIG_USED_IN_CLUSTER_RESOURCE = BoothConfigUsedWhere(
     "in a cluster resource"

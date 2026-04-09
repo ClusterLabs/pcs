@@ -192,6 +192,8 @@ EXTRA_DIST		= \
 			  tier0/daemon/app/ui_manage/test_auth_gui_against_nodes.py \
 			  tier0/daemon/app/ui_manage/test_base.py \
 			  tier0/daemon/app/ui_manage/test_existing_cluster.py \
+			  tier0/daemon/app/ui_manage/test_remember_cluster.py \
+			  tier0/daemon/app/ui_manage/test_remove_cluster.py \
 			  tier0/daemon/async_tasks/__init__.py \
 			  tier0/daemon/async_tasks/dummy_commands.py \
 			  tier0/daemon/async_tasks/helpers.py \
@@ -268,6 +270,8 @@ EXTRA_DIST		= \
 			  tier0/lib/cib/test_status.py \
 			  tier0/lib/cib/test_tag.py \
 			  tier0/lib/cib/test_tools.py \
+			  tier0/lib/cluster/__init__.py \
+			  tier0/lib/cluster/test_validations.py \
 			  tier0/lib/commands/cluster/common.py \
 			  tier0/lib/commands/cluster/__init__.py \
 			  tier0/lib/commands/cluster/test_add_link.py \
@@ -306,6 +310,7 @@ EXTRA_DIST		= \
 			  tier0/lib/commands/__init__.py \
 			  tier0/lib/commands/manage_clusters/__init__.py \
 			  tier0/lib/commands/manage_clusters/test_add_existing_cluster.py \
+			  tier0/lib/commands/manage_clusters/test_add_remove_clusters.py \
 			  tier0/lib/commands/remote_node/fixtures_add.py \
 			  tier0/lib/commands/remote_node/fixtures_remove.py \
 			  tier0/lib/commands/remote_node/__init__.py \
