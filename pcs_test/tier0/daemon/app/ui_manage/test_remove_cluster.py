@@ -19,7 +19,7 @@ class RemoveClusterHandlerTest(UiManageHandlerTest):
         self.assert_body(response.body, "")
         self.assertEqual(response.code, 200)
         self.mock_run_library_command.assert_called_once_with(
-            self.command_name, {"clusters_to_remove": ["test-cluster"]}
+            self.command_name, {"cluster_names": ["test-cluster"]}
         )
 
     def test_success_multiple_clusters(self):
@@ -40,7 +40,7 @@ class RemoveClusterHandlerTest(UiManageHandlerTest):
         self.assertEqual(response.code, 200)
         self.mock_run_library_command.assert_called_once_with(
             self.command_name,
-            {"clusters_to_remove": ["cluster1", "cluster2", "cluster3"]},
+            {"cluster_names": ["cluster1", "cluster2", "cluster3"]},
         )
 
     def test_mixed_parameters(self):
@@ -61,7 +61,7 @@ class RemoveClusterHandlerTest(UiManageHandlerTest):
         self.assertEqual(response.code, 200)
         self.mock_run_library_command.assert_called_once_with(
             self.command_name,
-            {"clusters_to_remove": ["cluster1", "cluster2"]},
+            {"cluster_names": ["cluster1", "cluster2"]},
         )
 
     def test_generic_errors(self):

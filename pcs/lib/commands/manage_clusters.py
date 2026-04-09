@@ -171,17 +171,15 @@ def add_cluster(
     __add_remove_clusters_common(env, pcs_settings_conf)
 
 
-def remove_clusters(
-    env: LibraryEnvironment, clusters_to_remove: list[str]
-) -> None:
+def remove_clusters(env: LibraryEnvironment, cluster_names: list[str]) -> None:
     """
     Remove clusters from local pcsd settings. Synchronize the pcs_settings file
     to all cluster nodes if the local node is in a cluster.
 
-    clusters_to_remove -- names of clusters to be removed
+    cluster_names -- names of clusters to be removed
     """
     if env.report_processor.report_list(
-        validations.validate_remove_clusters(clusters_to_remove)
+        validations.validate_remove_clusters(cluster_names)
     ).has_errors:
         raise LibraryError()
 
@@ -189,7 +187,7 @@ def remove_clusters(
     if env.report_processor.report_list(report_list).has_errors:
         raise LibraryError()
 
-    for cluster_name in clusters_to_remove:
+    for cluster_name in cluster_names:
         pcs_settings_conf.remove_cluster(cluster_name)
 
     __add_remove_clusters_common(env, pcs_settings_conf)

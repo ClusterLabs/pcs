@@ -24,7 +24,7 @@ class RemoveClusterHandler(BaseAjaxProtectedManageHandler):
 
         result = await self._run_library_command(
             "manage_clusters.remove_clusters",
-            {"clusters_to_remove": cluster_names},
+            {"cluster_names": cluster_names},
         )
 
         if not result.success:
