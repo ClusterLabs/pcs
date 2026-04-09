@@ -465,8 +465,38 @@ class ManageServicesHandler(ApiV0HandlerTest):
         self.assertEqual(response.code, 400)
         self.mock_run_library_command.assert_not_called()
 
+    def _fixture_service_action_succeeded_report(
+        self, action: reports.types.ServiceAction
+    ) -> reports.dto.ReportItemDto:
+        return reports.ReportItem.info(
+            reports.messages.ServiceActionSucceeded(
+                action,
+                "pacemaker_remote",
+            )
+        ).to_dto()
+
+    def _fixture_service_action_failed_report(
+        self, action: reports.types.ServiceAction
+    ) -> reports.dto.ReportItemDto:
+        return reports.ReportItem.error(
+            reports.messages.ServiceActionFailed(
+                action,
+                "pacemaker_remote",
+                "some error",
+            )
+        ).to_dto()
+
     def test_success_on(self):
-        self.mock_run_library_command.return_value = self.result_success()
+        self.mock_run_library_command.return_value = self.result_success(
+            reports=[
+                self._fixture_service_action_succeeded_report(
+                    reports.const.SERVICE_ACTION_ENABLE
+                ),
+                self._fixture_service_action_succeeded_report(
+                    reports.const.SERVICE_ACTION_START
+                ),
+            ]
+        )
         response = self.fetch(
             self.url,
             body=self.fixture_body(
@@ -495,7 +525,16 @@ class ManageServicesHandler(ApiV0HandlerTest):
         )
 
     def test_success_off(self):
-        self.mock_run_library_command.return_value = self.result_success()
+        self.mock_run_library_command.return_value = self.result_success(
+            reports=[
+                self._fixture_service_action_succeeded_report(
+                    reports.const.SERVICE_ACTION_STOP
+                ),
+                self._fixture_service_action_succeeded_report(
+                    reports.const.SERVICE_ACTION_DISABLE
+                ),
+            ]
+        )
         response = self.fetch(
             self.url,
             body=self.fixture_body(
@@ -524,62 +563,122 @@ class ManageServicesHandler(ApiV0HandlerTest):
         )
 
     def test_failure_on(self):
-        self.mock_run_library_command.return_value = self.result_failure()
-        response = self.fetch(
-            self.url,
-            body=self.fixture_body(
-                json.dumps(
-                    {
-                        "a1": self.fixture_action(command="enable"),
-                        "a2": self.fixture_action(command="start"),
-                    }
+        for failing_action, report_items, expected_enable_code in (
+            (
+                "enable",
+                [
+                    self._fixture_service_action_failed_report(
+                        reports.const.SERVICE_ACTION_ENABLE
+                    ),
+                ],
+                "fail",
+            ),
+            (
+                "start",
+                [
+                    self._fixture_service_action_succeeded_report(
+                        reports.const.SERVICE_ACTION_ENABLE
+                    ),
+                    self._fixture_service_action_failed_report(
+                        reports.const.SERVICE_ACTION_START
+                    ),
+                ],
+                "success",
+            ),
+        ):
+            with self.subTest(failing_action=failing_action):
+                self.mock_run_library_command.reset_mock()
+                self.mock_run_library_command.return_value = (
+                    self.result_failure(report_items=report_items)
                 )
-            ),
-        )
-        self.assertEqual(response.code, 200)
-        self.assert_body(
-            response.body,
-            json.dumps(
-                {
-                    "actions": {
-                        "a1": {"code": "fail", "message": ""},
-                        "a2": {"code": "fail", "message": ""},
-                    }
-                }
-            ),
-        )
-        self.mock_run_library_command.assert_called_once_with(
-            "services.pacemaker_remote_on_local", {}
-        )
+                response = self.fetch(
+                    self.url,
+                    body=self.fixture_body(
+                        json.dumps(
+                            {
+                                "a1": self.fixture_action(command="enable"),
+                                "a2": self.fixture_action(command="start"),
+                            }
+                        )
+                    ),
+                )
+                self.assertEqual(response.code, 200)
+                self.assert_body(
+                    response.body,
+                    json.dumps(
+                        {
+                            "actions": {
+                                "a1": {
+                                    "code": expected_enable_code,
+                                    "message": "",
+                                },
+                                "a2": {"code": "fail", "message": ""},
+                            }
+                        }
+                    ),
+                )
+                self.mock_run_library_command.assert_called_once_with(
+                    "services.pacemaker_remote_on_local", {}
+                )
 
     def test_failure_off(self):
-        self.mock_run_library_command.return_value = self.result_failure()
-        response = self.fetch(
-            self.url,
-            body=self.fixture_body(
-                json.dumps(
-                    {
-                        "a1": self.fixture_action(command="stop"),
-                        "a2": self.fixture_action(command="disable"),
-                    }
+        for failing_action, report_items, expected_stop_code in (
+            (
+                "stop",
+                [
+                    self._fixture_service_action_failed_report(
+                        reports.const.SERVICE_ACTION_STOP
+                    ),
+                ],
+                "fail",
+            ),
+            (
+                "disable",
+                [
+                    self._fixture_service_action_succeeded_report(
+                        reports.const.SERVICE_ACTION_STOP
+                    ),
+                    self._fixture_service_action_failed_report(
+                        reports.const.SERVICE_ACTION_DISABLE
+                    ),
+                ],
+                "success",
+            ),
+        ):
+            with self.subTest(failing_action=failing_action):
+                self.mock_run_library_command.reset_mock()
+                self.mock_run_library_command.return_value = (
+                    self.result_failure(report_items=report_items)
                 )
-            ),
-        )
-        self.assertEqual(response.code, 200)
-        self.assert_body(
-            response.body,
-            json.dumps(
-                {
-                    "actions": {
-                        "a1": {"code": "fail", "message": ""},
-                        "a2": {"code": "fail", "message": ""},
-                    }
-                }
-            ),
-        )
-        self.mock_run_library_command.assert_called_once_with(
-            "services.pacemaker_remote_off_local", {}
-        )
+                response = self.fetch(
+                    self.url,
+                    body=self.fixture_body(
+                        json.dumps(
+                            {
+                                "a1": self.fixture_action(command="stop"),
+                                "a2": self.fixture_action(command="disable"),
+                            }
+                        )
+                    ),
+                )
+                self.assertEqual(response.code, 200)
+                self.assert_body(
+                    response.body,
+                    json.dumps(
+                        {
+                            "actions": {
+                                "a1": {
+                                    "code": expected_stop_code,
+                                    "message": "",
+                                },
+                                "a2": {"code": "fail", "message": ""},
+                            }
+                        }
+                    ),
+                )
+                self.mock_run_library_command.assert_called_once_with(
+                    "services.pacemaker_remote_off_local", {}
+                )
 
 
 class ResourceManageUnmanageMixin:

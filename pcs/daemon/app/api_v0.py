@@ -105,8 +105,14 @@ class _BaseApiV0Handler(LegacyApiHandler):
 
 
 class ManageServicesHandler(_BaseApiV0Handler):
+    _REPORT_ACTION_TO_COMMAND = {
+        reports.const.SERVICE_ACTION_START: "start",
+        reports.const.SERVICE_ACTION_STOP: "stop",
+        reports.const.SERVICE_ACTION_ENABLE: "enable",
+        reports.const.SERVICE_ACTION_DISABLE: "disable",
+    }
+    _SUPPORTED_COMMANDS = set(_REPORT_ACTION_TO_COMMAND.values())
     _SUPPORTED_SERVICES = {"pacemaker_remote"}
-    _SUPPORTED_COMMANDS = {"disable", "enable", "start", "stop"}
 
     def _check_supported_value(
         self,
@@ -176,13 +182,28 @@ class ManageServicesHandler(_BaseApiV0Handler):
             )
 
         result = await self._run_library_command(cmd_name, {})
+        # Report per-action success based on individual service action reports,
+        # the overall result status is ignored. This is fine since the lib
+        # command doesn't do anything else than service management.
+        succeeded_actions = {
+            self._REPORT_ACTION_TO_COMMAND[
+                report_item.message.payload["action"]
+            ]
+            for report_item in result.reports
+            if report_item.message.code
+            == reports.codes.SERVICE_ACTION_SUCCEEDED
+        }
         response = {
             "actions": {
                 action_id: {
-                    "code": "success" if result.success else "fail",
+                    "code": (
+                        "success"
+                        if action_data["command"] in succeeded_actions
+                        else "fail"
+                    ),
                     "message": "",
                 }
-                for action_id in actions
+                for action_id, action_data in actions.items()
             }
         }
         self.write(json.dumps(response))
