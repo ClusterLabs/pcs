@@ -9,10 +9,12 @@ from pcs.common import file_type_codes
 from pcs.common.file import RawFileError
 from pcs.common.reports import ReportItemSeverity as severity
 from pcs.common.reports import codes as report_codes
+from pcs.common.tools import Version
 from pcs.lib.corosync import live as lib
 from pcs.lib.external import CommandRunner
 
 from pcs_test.tools.assertions import assert_raise_library_error
+from pcs_test.tools.custom_mock import get_runner_mock as get_runner
 from pcs_test.tools.misc import get_test_resource as rc
 
 
@@ -794,3 +796,28 @@ class QuorumStatusQuorumLossLocal(TestCase):
             )
         )
         self.assertEqual(facade.stopping_local_node_cause_quorum_loss(), True)
+
+
+class GetCorosyncVersion(TestCase):
+    def test_success(self):
+        mock_runner = get_runner(
+            stdout="Corosync Cluster Engine, version '3.1.7'\n",
+            stderr="",
+            returncode=0,
+        )
+        self.assertEqual(
+            lib.get_corosync_version(mock_runner), Version(3, 1, 7)
+        )
+        mock_runner.run.assert_called_once_with([settings.corosync_exec, "-v"])
+
+    def test_error(self):
+        mock_runner = get_runner(stdout="", stderr="some error", returncode=1)
+        self.assertIsNone(lib.get_corosync_version(mock_runner))
+        mock_runner.run.assert_called_once_with([settings.corosync_exec, "-v"])
+
+    def test_version_not_found_in_output(self):
+        mock_runner = get_runner(
+            stdout="no version here", stderr="", returncode=0
+        )
+        self.assertIsNone(lib.get_corosync_version(mock_runner))
+        mock_runner.run.assert_called_once_with([settings.corosync_exec, "-v"])

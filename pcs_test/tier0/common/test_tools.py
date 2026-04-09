@@ -144,3 +144,36 @@ class TimeoutToSecondsTest(TestCase):
         self.assertEqual(None, tools.timeout_to_seconds("10mim"))
         self.assertEqual(None, tools.timeout_to_seconds("aaa"))
         self.assertEqual(None, tools.timeout_to_seconds(""))
+
+
+class GetVersionFromStringTest(TestCase):
+    def test_match(self):
+        test_cases = [
+            ("1.2", tools.Version(1, 2, None)),
+            ("1.2.3", tools.Version(1, 2, 3)),
+            ("0.0.0", tools.Version(0, 0, 0)),
+            ("100.200.300", tools.Version(100, 200, 300)),
+            ("1.2.", tools.Version(1, 2, None)),
+            ("Pacemaker 2.1.5-rc1", tools.Version(2, 1, 5)),
+            ("version 3.0.1 released", tools.Version(3, 0, 1)),
+            ("1.2.3 and 4.5.6", tools.Version(1, 2, 3)),
+            ("line one\n2.1.5\nline three", tools.Version(2, 1, 5)),
+            ("no version\non this line 3.4\n", tools.Version(3, 4, None)),
+        ]
+        for value, expected in test_cases:
+            with self.subTest(value=value):
+                self.assertEqual(tools.get_version_from_string(value), expected)
+
+    def test_no_match(self):
+        test_cases = [
+            "",
+            "no version here",
+            "123",
+            "abc",
+            ".",
+            ".1",
+            "no version\non any\nline\n",
+        ]
+        for value in test_cases:
+            with self.subTest(value=value):
+                self.assertIsNone(tools.get_version_from_string(value))

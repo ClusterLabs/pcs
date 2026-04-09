@@ -1,4 +1,5 @@
 import os
+from textwrap import dedent
 from typing import Mapping, Optional
 
 from pcs import settings
@@ -1418,4 +1419,39 @@ class PcmkShortcuts:
                 stderr=stderr,
                 returncode=returncode,
             ),
+        )
+
+    def version(
+        self,
+        name="runner.pcmk.version",
+        version="3.0.1",
+        returncode=0,
+        instead=None,
+        before=None,
+    ):
+        """
+        Create a call for `pacemakerd -$` to get a pacemaker version
+
+        string name -- the key of this call
+        string version -- pacemaker version to use in stdout
+        int returncode -- pacemakerd's returncode
+        string instead -- the key of a call instead of which this new call is
+            to be placed
+        string before -- the key of a call before which this new call is to be
+            placed
+        """
+        self.__calls.place(
+            name,
+            RunnerCall(
+                [settings.pacemakerd_exec, "-$"],
+                stdout=dedent(
+                    f"""\
+                    Pacemaker {version}.el10
+                    Written by...
+                    """
+                ),
+                returncode=returncode,
+            ),
+            before=before,
+            instead=instead,
         )

@@ -311,15 +311,15 @@ class CheckHostHandler(_BaseApiV0Handler):
     def _convert_to_legacy_format(
         command_result: CheckHostResultDto,
     ) -> dict[str, Union[bool, dict[str, dict[str, Union[bool, str, None]]]]]:
-        services_dict: dict[str, dict[str, Union[bool, str, None]]] = {}
-
-        for service_status_dto in command_result.services:
-            services_dict[service_status_dto.service] = {
+        services_dict: dict[str, dict[str, Union[bool, str, None]]] = {
+            service_status_dto.service: {
                 "installed": service_status_dto.installed,
                 "enabled": service_status_dto.enabled,
                 "running": service_status_dto.running,
                 "version": None,
             }
+            for service_status_dto in command_result.services
+        }
 
         version_mapping = {
             "corosync": command_result.versions.corosync,

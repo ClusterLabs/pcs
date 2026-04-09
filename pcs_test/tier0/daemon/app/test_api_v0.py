@@ -21,8 +21,11 @@ from pcs.common.async_tasks.types import (
     TaskKillReason,
     TaskState,
 )
+from pcs.common.check_host_dto import CheckHostResultDto
 from pcs.common.file import RawFileError
 from pcs.common.pcs_cfgsync_dto import SyncConfigsDto
+from pcs.common.services_dto import ServiceStatusDto
+from pcs.common.version_dto import ClusterComponentVersionDto, VersionDto
 from pcs.daemon.app import api_v0
 from pcs.daemon.async_tasks.scheduler import Scheduler, TaskNotFoundError
 from pcs.daemon.async_tasks.types import Command
@@ -854,6 +857,69 @@ class QdeviceNetClientDestroyHandler(ApiV0HandlerTest):
         self.assert_error_with_report(self.url)
         self.mock_run_library_command.assert_called_once_with(
             "qdevice.client_net_destroy", {}
+        )
+
+
+class CheckHostHandler(ApiV0HandlerTest):
+    url = "/remote/check_host"
+
+    def test_success(self):
+        dto = CheckHostResultDto(
+            cluster_configuration_exists=True,
+            services=[
+                ServiceStatusDto(
+                    service="pacemaker",
+                    installed=True,
+                    enabled=False,
+                    running=True,
+                ),
+                ServiceStatusDto(
+                    service="corosync",
+                    installed=True,
+                    enabled=False,
+                    running=True,
+                ),
+            ],
+            versions=ClusterComponentVersionDto(
+                corosync=VersionDto(major=0, minor=0, revision=0),
+                pacemaker=VersionDto(major=3, minor=0, revision=1),
+                pcsd=VersionDto(major=0, minor=12, revision=2),
+            ),
+        )
+
+        self.mock_run_library_command.return_value = self.result_success(dto)
+        response = self.fetch(self.url)
+        self.assertEqual(response.code, 200)
+        self.assert_body(
+            response.body,
+            json.dumps(
+                {
+                    "services": {
+                        "pacemaker": {
+                            "installed": True,
+                            "enabled": False,
+                            "running": True,
+                            "version": "3.0.1",
+                        },
+                        "corosync": {
+                            "installed": True,
+                            "enabled": False,
+                            "running": True,
+                            "version": None,
+                        },
+                    },
+                    "cluster_configuration_exists": True,
+                }
+            ),
+        )
+        self.mock_run_library_command.assert_called_once_with(
+            "check_host.check_host", {}
+        )
+
+    def test_failure(self):
+        self.assert_error_with_report(self.url)
+        self.mock_run_library_command.assert_called_once_with(
+            "check_host.check_host", {}
         )
 
 
