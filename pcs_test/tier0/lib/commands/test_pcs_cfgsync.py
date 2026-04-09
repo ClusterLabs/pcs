@@ -8,6 +8,13 @@ from pcs.lib.commands import pcs_cfgsync as lib
 
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
+from pcs_test.tools.fixture_pcs_cfgsync import (
+    fixture_expected_save_sync_reports,
+    fixture_pcs_settings_file_content,
+    fixture_save_sync_new_version_conflict,
+    fixture_save_sync_new_version_error,
+    fixture_save_sync_new_version_success,
+)
 
 
 class GetConfigs(TestCase):
@@ -346,4 +353,208 @@ class UpdateSyncOptions(TestCase):
                     file_path=settings.pcs_cfgsync_ctl_location,
                 )
             ]
+        )
+
+
+class SaveSyncPcsSettingsInternalNotInCluster(TestCase):
+    FILE_DATA_VERSION = 123
+
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+
+    def test_invalid_config_text(self):
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.save_sync_pcs_settings_internal(
+                self.env_assist.get_env(), "{}"
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.PARSE_ERROR_INVALID_FILE_STRUCTURE,
+                    reason="'format_version' not defined",
+                    file_type_code=file_type_codes.PCS_SETTINGS_CONF,
+                    file_path=settings.pcsd_settings_conf_location,
+                )
+            ]
+        )
+
+    def test_success(self):
+        self.config.raw_file.exists(
+            file_type_codes.COROSYNC_CONF,
+            settings.corosync_conf_file,
+            exists=False,
+        )
+        self.config.raw_file.write(
+            file_type_codes.PCS_SETTINGS_CONF,
+            settings.pcsd_settings_conf_location,
+            fixture_pcs_settings_file_content(
+                self.FILE_DATA_VERSION + 1
+            ).encode(),
+            can_overwrite=True,
+        )
+
+        lib.save_sync_pcs_settings_internal(
+            self.env_assist.get_env(),
+            fixture_pcs_settings_file_content(self.FILE_DATA_VERSION),
+        )
+
+    def test_error_writing_pcs_settings_conf(self):
+        self.config.raw_file.exists(
+            file_type_codes.COROSYNC_CONF,
+            settings.corosync_conf_file,
+            exists=False,
+        )
+        self.config.raw_file.write(
+            file_type_codes.PCS_SETTINGS_CONF,
+            settings.pcsd_settings_conf_location,
+            fixture_pcs_settings_file_content(
+                self.FILE_DATA_VERSION + 1
+            ).encode(),
+            can_overwrite=True,
+            exception_msg="Something bad",
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.save_sync_pcs_settings_internal(
+                self.env_assist.get_env(),
+                fixture_pcs_settings_file_content(self.FILE_DATA_VERSION),
+            )
+        )
+
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.FILE_IO_ERROR,
+                    file_type_code=file_type_codes.PCS_SETTINGS_CONF,
+                    operation="write",
+                    reason="Something bad",
+                    file_path=settings.pcsd_settings_conf_location,
+                )
+            ]
+        )
+
+
+class SaveSyncPcsSettingsInternalInCluster(TestCase):
+    FILE_DATA_VERSION = 123
+    NODE_LABELS = ["node1", "node2", "node3"]
+
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+        self.config.env.set_known_nodes(self.NODE_LABELS)
+        self.config.raw_file.exists(
+            file_type_codes.COROSYNC_CONF,
+            settings.corosync_conf_file,
+        )
+        self.config.corosync_conf.load(self.NODE_LABELS)
+
+    def test_success(self):
+        fixture_save_sync_new_version_success(
+            self.config,
+            node_labels=self.NODE_LABELS,
+            file_contents={
+                file_type_codes.PCS_SETTINGS_CONF: fixture_pcs_settings_file_content(
+                    self.FILE_DATA_VERSION + 1
+                )
+            },
+        )
+
+        lib.save_sync_pcs_settings_internal(
+            self.env_assist.get_env(),
+            fixture_pcs_settings_file_content(self.FILE_DATA_VERSION),
+        )
+
+        self.env_assist.assert_reports(
+            fixture_expected_save_sync_reports(
+                file_type_codes.PCS_SETTINGS_CONF, self.NODE_LABELS
+            )
+        )
+
+    def test_no_tokens_for_some_nodes(self):
+        self.config.env.set_known_nodes(self.NODE_LABELS[:1])
+        fixture_save_sync_new_version_success(
+            self.config,
+            node_labels=self.NODE_LABELS[:1],
+            file_contents={
+                file_type_codes.PCS_SETTINGS_CONF: fixture_pcs_settings_file_content(
+                    self.FILE_DATA_VERSION + 1
+                )
+            },
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.save_sync_pcs_settings_internal(
+                self.env_assist.get_env(),
+                fixture_pcs_settings_file_content(self.FILE_DATA_VERSION),
+            )
+        )
+
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.HOST_NOT_FOUND, host_list=["node2", "node3"]
+                )
+            ]
+            + fixture_expected_save_sync_reports(
+                file_type_codes.PCS_SETTINGS_CONF, self.NODE_LABELS[:1]
+            )
+        )
+
+    def test_sync_conflict(self):
+        cluster_newest_file = fixture_pcs_settings_file_content(1000000)
+        fixture_save_sync_new_version_conflict(
+            self.config,
+            node_labels=self.NODE_LABELS,
+            file_type_code=file_type_codes.PCS_SETTINGS_CONF,
+            local_file_content=fixture_pcs_settings_file_content(
+                self.FILE_DATA_VERSION + 1
+            ),
+            fetch_after_conflict=True,
+            remote_file_content=cluster_newest_file,
+        )
+        self.config.raw_file.write(
+            file_type_codes.PCS_SETTINGS_CONF,
+            settings.pcsd_settings_conf_location,
+            cluster_newest_file.encode(),
+            can_overwrite=True,
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.save_sync_pcs_settings_internal(
+                self.env_assist.get_env(),
+                fixture_pcs_settings_file_content(self.FILE_DATA_VERSION),
+            )
+        )
+
+        self.env_assist.assert_reports(
+            fixture_expected_save_sync_reports(
+                file_type_codes.PCS_SETTINGS_CONF,
+                self.NODE_LABELS,
+                expected_result="conflict",
+            )
+        )
+
+    def test_sync_error(self):
+        fixture_save_sync_new_version_error(
+            self.config,
+            node_labels=self.NODE_LABELS,
+            file_type_code=file_type_codes.PCS_SETTINGS_CONF,
+            local_file_content=fixture_pcs_settings_file_content(
+                self.FILE_DATA_VERSION + 1
+            ),
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.save_sync_pcs_settings_internal(
+                self.env_assist.get_env(),
+                fixture_pcs_settings_file_content(self.FILE_DATA_VERSION),
+            )
+        )
+
+        self.env_assist.assert_reports(
+            fixture_expected_save_sync_reports(
+                file_type_codes.PCS_SETTINGS_CONF,
+                self.NODE_LABELS,
+                expected_result="error",
+            )
         )
