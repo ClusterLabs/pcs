@@ -54,7 +54,6 @@ def remote(params, request, auth_user)
       :booth_get_config => method(:booth_get_config),
       :put_file => method(:put_file),
       :remove_file => method(:remove_file),
-      :check_host => method(:check_host),
       :reload_corosync_conf => method(:reload_corosync_conf),
       :remove_nodes_from_cib => method(:remove_nodes_from_cib),
   }
@@ -1657,46 +1656,6 @@ def check_request_data_for_json(params, auth_user)
   rescue JSON::ParserError
     raise PcsdRequestException.new('Invalid input data format')
   end
-end
-
-def check_host(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::READ)
-    return 403, 'Permission denied'
-  end
-  service_list = [
-    :pacemaker, :pacemaker_remote, :corosync, :pcsd, :sbd, :qdevice, :booth
-  ]
-  service_version_getter = {
-    :pacemaker => method(:get_pacemaker_version),
-    :corosync => method(:get_corosync_version),
-    :pcsd => method(:get_pcsd_version),
-    # TODO: add version getters for all services
-  }
-  output = {
-    :services => {},
-    :cluster_configuration_exists => (
-      File.exist?(Cfgsync::CorosyncConf.file_path) or File.exist?(CIB_PATH)
-    )
-  }
-
-  service_checker = ServiceChecker.new(
-    service_list.map {|item| item.to_s},
-    installed: true,
-    enabled: true,
-    running: true,
-  )
-  service_list.each do |service|
-    output[:services][service] = service_checker.get_info(service.to_s).merge(
-      {:version => nil}
-    )
-  end
-  service_version_getter.each do |service, version_getter|
-    version = version_getter.call()
-    output[:services][service][:version] = (
-      version == nil ? version : version.join('.')
-    )
-  end
-  return [200, JSON.generate(output)]
 end
 
 def reload_corosync_conf(params, request, auth_user)
