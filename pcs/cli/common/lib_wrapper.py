@@ -362,6 +362,7 @@ def load_module(env, middleware_factory, name):  # noqa: PLR0911, PLR0912
             env,
             middleware.build(),
             {
+                # internal use only, called from pcsd
                 "save_sync_pcs_settings_internal": pcs_cfgsync.save_sync_pcs_settings_internal
             },
         )

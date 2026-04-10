@@ -148,7 +148,7 @@ def save_sync_pcs_settings_internal(
     )
     # report errors about missing tokens, but continue to attempt sync to
     # available nodes
-    # compatibility with the original Ruby implemetation
+    # compatibility with the original Ruby implementation
     env.report_processor.report_list(report_list)
 
     sync_pcs_settings_in_cluster(
