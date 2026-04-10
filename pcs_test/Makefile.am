@@ -365,6 +365,7 @@ EXTRA_DIST		= \
 			  tier0/lib/commands/test_quorum.py \
 			  tier0/lib/commands/test_resource_agent.py \
 			  tier0/lib/commands/test_sbd.py \
+			  tier0/lib/commands/test_services.py \
 			  tier0/lib/commands/test_scsi.py \
 			  tier0/lib/commands/test_status.py \
 			  tier0/lib/commands/test_stonith.py \

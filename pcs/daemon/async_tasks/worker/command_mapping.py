@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Any, Callable, Mapping
 
-from pcs.lib.commands import (  # services,
+from pcs.lib.commands import (
     acl,
     alert,
     auth,
@@ -21,6 +21,7 @@ from pcs.lib.commands import (  # services,
     resource_agent,
     sbd,
     scsi,
+    services,
     status,
     stonith,
     stonith_agent,
@@ -458,6 +459,14 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
         cmd=resource.unmove_unban,
         required_permission=p.WRITE,
     ),
+    "services.pacemaker_remote_on_local": _Cmd(
+        cmd=services.pacemaker_remote_on_local,
+        required_permission=p.WRITE,
+    ),
+    "services.pacemaker_remote_off_local": _Cmd(
+        cmd=services.pacemaker_remote_off_local,
+        required_permission=p.WRITE,
+    ),
     "sbd.disable_sbd": _Cmd(
         cmd=sbd.disable_sbd,
         required_permission=p.WRITE,
@@ -522,6 +531,12 @@ LEGACY_API_COMMANDS = (
     "resource_agent.list_agents_for_standard_and_provider",
     "resource_agent.list_ocf_providers",
     "resource_agent.list_standards",
+    # There is a lot of url handlers managing cluster services and they should
+    # be consolidated eventually. These are considered temporary implementation
+    # for the purpose of removing ruby code. Therefore, they are not exposed in
+    # the API.
+    "services.pacemaker_remote_on_local",
+    "services.pacemaker_remote_off_local",
     "status.full_cluster_status_plaintext",
     "stonith_agent.describe_agent",
     "stonith_agent.list_agents",

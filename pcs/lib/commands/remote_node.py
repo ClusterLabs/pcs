@@ -11,16 +11,8 @@ from pcs.lib.cib.remove_elements import (
     ensure_resources_stopped,
     remove_specified_elements,
 )
-from pcs.lib.cib.resource import (
-    guest_node,
-    primitive,
-    remote_node,
-)
-from pcs.lib.cib.tools import (
-    ElementSearcher,
-    IdProvider,
-    get_resources,
-)
+from pcs.lib.cib.resource import guest_node, primitive, remote_node
+from pcs.lib.cib.tools import ElementSearcher, IdProvider, get_resources
 
 # TODO lib.commands should never import each other. This is to be removed when
 # the 'resource create' commands are overhauled.
@@ -29,15 +21,13 @@ from pcs.lib.communication.nodes import (
     DistributeFiles,
     GetHostInfo,
     GetOnlineTargets,
+    PcmkRemoteServiceOff,
+    PcmkRemoteServiceOn,
     RemoveFiles,
-    ServiceAction,
 )
 from pcs.lib.communication.tools import run as run_com
 from pcs.lib.communication.tools import run_and_raise
-from pcs.lib.env import (
-    LibraryEnvironment,
-    WaitType,
-)
+from pcs.lib.env import LibraryEnvironment, WaitType
 from pcs.lib.errors import LibraryError
 from pcs.lib.file.instance import FileInstance
 from pcs.lib.file.raw_file import raw_file_error_report
@@ -227,16 +217,7 @@ def _prepare_pacemaker_remote_environment(
 
     # start and enable pacemaker_remote
     if online_new_target_list:
-        com_cmd = ServiceAction(
-            report_processor,
-            node_communication_format.create_pcmk_remote_actions(
-                [
-                    "start",
-                    "enable",
-                ]
-            ),
-            allow_fails=allow_fails,
-        )
+        com_cmd = PcmkRemoteServiceOn(report_processor, allow_fails=allow_fails)
         com_cmd.set_targets(online_new_target_list)
         run_and_raise(env.get_node_communicator(), com_cmd)
 
@@ -656,12 +637,6 @@ def _find_resources_to_remove(
 def _destroy_pcmk_remote_env(
     env, node_names_list, skip_offline_nodes, allow_fails
 ):
-    actions = node_communication_format.create_pcmk_remote_actions(
-        [
-            "stop",
-            "disable",
-        ]
-    )
     files = {
         "pacemaker_remote authkey": {"type": "pcmk_remote_authkey"},
     }
@@ -670,9 +645,8 @@ def _destroy_pcmk_remote_env(
         skip_non_existing=skip_offline_nodes,
     )
 
-    com_cmd = ServiceAction(
+    com_cmd = PcmkRemoteServiceOff(
         env.report_processor,
-        actions,
         skip_offline_targets=skip_offline_nodes,
         allow_fails=allow_fails,
     )

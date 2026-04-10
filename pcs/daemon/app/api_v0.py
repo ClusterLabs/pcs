@@ -104,6 +104,111 @@ class _BaseApiV0Handler(LegacyApiHandler):
         )
 
 
+class ManageServicesHandler(_BaseApiV0Handler):
+    _REPORT_ACTION_TO_COMMAND = {
+        reports.const.SERVICE_ACTION_START: "start",
+        reports.const.SERVICE_ACTION_STOP: "stop",
+        reports.const.SERVICE_ACTION_ENABLE: "enable",
+        reports.const.SERVICE_ACTION_DISABLE: "disable",
+    }
+    _SUPPORTED_COMMANDS = set(_REPORT_ACTION_TO_COMMAND.values())
+    _SUPPORTED_SERVICES = {"pacemaker_remote"}
+
+    def _check_supported_value(
+        self,
+        action_id: str,
+        key: str,
+        action_data: dict[str, str],
+        supported: set[str],
+    ) -> None:
+        if action_data[key] not in supported:
+            raise self._error(
+                f"Invalid input data format: action (key: {action_id}): "
+                f"unsupported '{key}' ('{action_data[key]}'), "
+                f"supported are: {format_list(supported)}"
+            )
+
+    async def _handle_request(self) -> None:
+        # load JSON
+        self._check_required_params({"data_json"})
+        try:
+            actions = json.loads(self.get_argument("data_json"))
+        except json.JSONDecodeError as e:
+            raise self._error("Invalid input data format") from e
+
+        # JSON structure validation
+        if not isinstance(actions, dict):
+            raise self._error(
+                f"Invalid input data format: actions should be 'dict'. "
+                f"But it is '{type(actions).__name__}': "
+                f"{json.dumps(actions)}"
+            )
+
+        action_data_required_keys = ["type", "service", "command"]
+        for action_id, action_data in actions.items():
+            if not isinstance(action_data, dict):
+                raise self._error(
+                    f"Invalid input data format: action (key: {action_id}): "
+                    f"should be 'dict'. But it is "
+                    f"'{type(action_data).__name__}': "
+                    f"{json.dumps(action_data)}"
+                )
+            for required_key in action_data_required_keys:
+                if required_key not in action_data:
+                    raise self._error(
+                        f"Invalid input data format: action (key: {action_id}): "
+                        f"'{required_key}' is missing"
+                    )
+            self._check_supported_value(
+                action_id, "type", action_data, {"service_command"}
+            )
+            self._check_supported_value(
+                action_id, "service", action_data, self._SUPPORTED_SERVICES
+            )
+            self._check_supported_value(
+                action_id, "command", action_data, self._SUPPORTED_COMMANDS
+            )
+
+        # take actions
+        commands = {action_data["command"] for action_data in actions.values()}
+        if commands == {"enable", "start"}:
+            cmd_name = "services.pacemaker_remote_on_local"
+        elif commands == {"disable", "stop"}:
+            cmd_name = "services.pacemaker_remote_off_local"
+        else:
+            raise self._error(
+                "Invalid input data format: unsupported combination of "
+                f"actions: {format_list(commands)}"
+            )
+
+        result = await self._run_library_command(cmd_name, {})
+        # Report per-action success based on individual service action reports,
+        # the overall result status is ignored. This is fine since the lib
+        # command doesn't do anything else than service management.
+        succeeded_actions = {
+            self._REPORT_ACTION_TO_COMMAND[
+                report_item.message.payload["action"]
+            ]
+            for report_item in result.reports
+            if report_item.message.code
+            == reports.codes.SERVICE_ACTION_SUCCEEDED
+        }
+        response = {
+            "actions": {
+                action_id: {
+                    "code": (
+                        "success"
+                        if action_data["command"] in succeeded_actions
+                        else "fail"
+                    ),
+                    "message": "",
+                }
+                for action_id, action_data in actions.items()
+            }
+        }
+        self.write(json.dumps(response))
+
+
 class ResourceManageUnmanageHandler(_BaseApiV0Handler):
     async def _handle_request(self) -> None:
         self._check_required_params({"resource_list_json"})
@@ -401,6 +506,8 @@ def get_routes(
         api_auth_provider_factory=api_auth_provider_factory, scheduler=scheduler
     )
     return [
+        # services
+        (r("manage_services"), ManageServicesHandler, params),
         # resources
         (r("manage_resource"), ResourceManageHandler, params),
         (r("unmanage_resource"), ResourceUnmanageHandler, params),

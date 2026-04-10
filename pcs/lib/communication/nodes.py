@@ -306,7 +306,15 @@ class RunActionBase(
         return self._key_to_report.get(key, key)
 
 
-class ServiceAction(RunActionBase):
+class _ServiceAction(RunActionBase):
+    # Deprecated
+    # The endpoint was only ever used for pacemaker remote, it never supported
+    # anything else. When it was moved from ruby to python, the extra
+    # complexity got removed so it only supports pacemaker remote. Calling it
+    # with the intention of managing other services will not succeed.
+    #
+    # The class was made private to discourage anyone from using it and is only
+    # used as a base for specific uses of the endpoint.
     def _init_properties(self):
         self._request_url = "remote/manage_services"
         self._response_key = "actions"
@@ -337,6 +345,49 @@ class ServiceAction(RunActionBase):
 
     def _is_success(self, action_response):
         return action_response.code == "success"
+
+
+class _PcmkRemoteServiceAction(_ServiceAction):
+    @staticmethod
+    def create_pcmk_remote_actions(action_list):
+        return {
+            f"pacemaker_remote {action}": {
+                "type": "service_command",
+                "service": "pacemaker_remote",
+                "command": action,
+            }
+            for action in action_list
+        }
+
+
+class PcmkRemoteServiceOn(_PcmkRemoteServiceAction):
+    def __init__(
+        self,
+        report_processor,
+        skip_offline_targets=False,
+        allow_fails=False,
+    ):
+        super().__init__(
+            report_processor,
+            self.create_pcmk_remote_actions(["start", "enable"]),
+            skip_offline_targets=skip_offline_targets,
+            allow_fails=allow_fails,
+        )
+
+
+class PcmkRemoteServiceOff(_PcmkRemoteServiceAction):
+    def __init__(
+        self,
+        report_processor,
+        skip_offline_targets=False,
+        allow_fails=False,
+    ):
+        super().__init__(
+            report_processor,
+            self.create_pcmk_remote_actions(["stop", "disable"]),
+            skip_offline_targets=skip_offline_targets,
+            allow_fails=allow_fails,
+        )
 
 
 class FileActionBase(RunActionBase):

@@ -17,7 +17,6 @@ require 'permissions.rb'
 require 'auth.rb'
 require 'pcsd_file'
 require 'pcsd_remove_file'
-require 'pcsd_action_command'
 require 'pcsd_exchange_format.rb'
 
 # Commands for remote access
@@ -55,7 +54,6 @@ def remote(params, request, auth_user)
       :booth_get_config => method(:booth_get_config),
       :put_file => method(:put_file),
       :remove_file => method(:remove_file),
-      :manage_services => method(:manage_services),
       :check_host => method(:check_host),
       :reload_corosync_conf => method(:reload_corosync_conf),
       :remove_nodes_from_cib => method(:remove_nodes_from_cib),
@@ -1612,28 +1610,6 @@ def remove_file(params, request, auth_user)
   end
 end
 
-
-def manage_services(params, request, auth_user)
-  begin
-    check_permissions(auth_user, Permissions::WRITE)
-
-    actions = check_request_data_for_json(params, auth_user)
-    PcsdExchangeFormat::validate_item_map_is_Hash('actions', actions)
-
-    return pcsd_success(
-      JSON.generate({"actions" => Hash[actions.map{|id, action_data|
-        PcsdExchangeFormat::validate_item_is_Hash("action", id, action_data)
-        [id, PcsdExchangeFormat::run_action(
-          PcsdActionCommand::TYPES, "action", id, action_data
-        )]
-      }]})
-    )
-  rescue PcsdRequestException => e
-    return e.code, e.message
-  rescue PcsdExchangeFormat::Error => e
-    return 400, "Invalid input data format: #{e.message}"
-  end
-end
 
 def pcsd_success(msg)
   $logger.info(msg)

@@ -48,7 +48,6 @@ dist_pcsd_DATA		= \
 			  cluster.rb \
 			  config.rb \
 			  corosyncconf.rb \
-			  pcsd_action_command.rb \
 			  pcsd-cli-main.rb \
 			  pcsd_exchange_format.rb \
 			  pcsd_file.rb \
