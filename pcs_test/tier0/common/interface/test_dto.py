@@ -10,6 +10,7 @@ from dacite.exceptions import WrongTypeError
 import pcs
 from pcs.common.interface.dto import (
     DataTransferObject,
+    PayloadConversionError,
     from_dict,
     meta,
     to_dict,
@@ -66,6 +67,14 @@ class TypeHooksDto(DataTransferObject):
     list_of_tuple_str_str_str: list[tuple[str, str, str]]
     sequence_of_tuple_str_str: Sequence[tuple[str, str]]
     optional_tuple_str_str: Optional[tuple[str, str]]
+
+
+@dataclass
+class EnumDto(DataTransferObject):
+    field_a: CorosyncNodeAddressType
+    field_b: list[CorosyncNodeAddressType]
+    field_c: dict[str, CorosyncNodeAddressType]
+    field_d: Optional[CorosyncNodeAddressType]
 
 
 class DictName(TestCase):
@@ -184,6 +193,40 @@ class FromDictConversion(TestCase):
                 # misleading messages for type hook failures
                 with self.assertRaises(WrongTypeError):
                     from_dict(TypeHooksDto, payload)
+
+
+class FromDictEnumConversion(TestCase):
+    _VALID_PAYLOAD = dict(
+        field_a="IPv4",
+        field_b=["IPv6", "FQDN"],
+        field_c=dict(foo="unresolvable"),
+        field_d="IPv4",
+    )
+
+    def test_success_from_raw_values(self):
+        self.assertEqual(
+            EnumDto(
+                CorosyncNodeAddressType.IPV4,
+                [CorosyncNodeAddressType.IPV6, CorosyncNodeAddressType.FQDN],
+                {"foo": CorosyncNodeAddressType.UNRESOLVABLE},
+                CorosyncNodeAddressType.IPV4,
+            ),
+            from_dict(EnumDto, self._VALID_PAYLOAD),
+        )
+
+    def test_error_bad_value(self):
+        bad_values = dict(
+            field_a="bad value",
+            field_b=["IPv6", "bad value"],
+            field_c=dict(foo="bad value"),
+            field_d="bad value",
+        )
+
+        for field_name, bad_value in bad_values.items():
+            with self.subTest(field=field_name):
+                payload = {**self._VALID_PAYLOAD, field_name: bad_value}
+                with self.assertRaises(PayloadConversionError):
+                    from_dict(EnumDto, payload)
 
 
 @dataclass
