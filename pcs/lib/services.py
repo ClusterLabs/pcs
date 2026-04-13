@@ -76,6 +76,9 @@ class _NoOpDriver(services.interfaces.ServiceManagerInterface):
     def is_current_system_supported(self) -> bool:
         return True
 
+    def is_instances_supported(self) -> bool:
+        return True
+
 
 def get_service_manager(
     cmd_runner: CommandRunner,
@@ -131,21 +134,17 @@ def service_exception_to_report(
     )
 
 
-def is_systemd(
+def ensure_service_instances_support(
     service_manager: services.interfaces.ServiceManagerInterface,
-) -> bool:
-    return isinstance(service_manager, services.drivers.SystemdDriver)
-
-
-def ensure_is_systemd(
-    service_manager: services.interfaces.ServiceManagerInterface,
+    report_processor: reports.ReportProcessor,
 ) -> None:
     """
-    Raise a LibraryError if the current system is not a systemd system
+    Raise a LibraryError if the current init system does not support service instances
     """
-    if not is_systemd(service_manager):
-        raise LibraryError(
+    if not service_manager.is_instances_supported():
+        report_processor.report(
             reports.ReportItem.error(
-                reports.messages.UnsupportedOperationOnNonSystemdSystems()
+                reports.messages.InitSystemDoesNotSupportServiceInstances()
             )
         )
+        raise LibraryError()

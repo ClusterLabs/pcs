@@ -5140,12 +5140,12 @@ class FileDoesNotExistUsingDefault(ReportItemMessage):
 
 
 @dataclass(frozen=True)
-class UnsupportedOperationOnNonSystemdSystems(ReportItemMessage):
-    _code = codes.UNSUPPORTED_OPERATION_ON_NON_SYSTEMD_SYSTEMS
+class InitSystemDoesNotSupportServiceInstances(ReportItemMessage):
+    _code = codes.INIT_SYSTEM_DOES_NOT_SUPPORT_SERVICE_INSTANCES
 
     @property
     def message(self) -> str:
-        return "unsupported operation on non systemd systems"
+        return "service instances are not supported on your system"
 
 
 @dataclass(frozen=True)
@@ -7433,7 +7433,7 @@ class BoothConfigIsUsed(ReportItemMessage):
 
     name -- booth instance name
     detail -- provides more details (for example booth instance is used as
-        cluster resource or is started/enabled under systemd)
+        cluster resource or is started/enabled under init system)
     resource_name -- which resource uses the booth instance, only valid if
         detail == BOOTH_CONFIG_USED_IN_CLUSTER_RESOURCE
     """
@@ -7445,17 +7445,15 @@ class BoothConfigIsUsed(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        detail_map = {
-            const.BOOTH_CONFIG_USED_IN_CLUSTER_RESOURCE: "in a cluster resource",
-            const.BOOTH_CONFIG_USED_ENABLED_IN_SYSTEMD: "- it is enabled in systemd",
-            const.BOOTH_CONFIG_USED_RUNNING_IN_SYSTEMD: "- it is running by systemd",
-        }
-        detail = detail_map.get(self.detail, str(self.detail))
-        if (
-            self.detail == const.BOOTH_CONFIG_USED_IN_CLUSTER_RESOURCE
-            and self.resource_name
-        ):
-            detail = f"in cluster resource '{self.resource_name}'"
+        if self.detail == const.BOOTH_CONFIG_USED_IN_CLUSTER_RESOURCE:
+            if self.resource_name:
+                detail = f"in cluster resource '{self.resource_name}'"
+            else:
+                detail = self.detail
+        else:
+            # strings like "running in ...", "enabled in ..."
+            detail = f"- it is {self.detail}"
+
         return f"booth instance '{self.name}' is used {detail}"
 
 

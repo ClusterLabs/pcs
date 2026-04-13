@@ -259,24 +259,24 @@ class AtbHasToBeEnabledTest(TestCase):
         )
 
 
-@mock.patch("pcs.lib.sbd.is_systemd")
+@mock.patch("pcs.lib.sbd.is_instances_support")
 class GetSbdServiceNameTest(TestCase):
     def setUp(self):
         self.service_manager = mock.MagicMock()
 
-    def test_systemctl(self, mock_is_systemd):
-        mock_is_systemd.return_value = True
+    def test_systemctl(self, mock_is_instances_support):
+        mock_is_instances_support.return_value = True
         self.assertEqual(
             "sbd", lib_sbd.get_sbd_service_name(self.service_manager)
         )
-        mock_is_systemd.assert_called_once_with(self.service_manager)
+        mock_is_instances_support.assert_called_once_with(self.service_manager)
 
-    def test_not_systemctl(self, mock_is_systemd):
-        mock_is_systemd.return_value = False
+    def test_not_systemctl(self, mock_is_instances_support):
+        mock_is_instances_support.return_value = False
         self.assertEqual(
             "sbd_helper", lib_sbd.get_sbd_service_name(self.service_manager)
         )
-        mock_is_systemd.assert_called_once_with(self.service_manager)
+        mock_is_instances_support.assert_called_once_with(self.service_manager)
 
 
 @mock.patch("pcs.lib.sbd.get_sbd_service_name")

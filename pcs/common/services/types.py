@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from .common import join_multilines
+from pcs.common.str_tools import join_multilines
 
 
 @dataclass(frozen=True)

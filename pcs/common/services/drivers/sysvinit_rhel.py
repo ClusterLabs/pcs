@@ -90,3 +90,6 @@ class SysVInitRhelDriver(ServiceManagerInterface):
             os.path.isfile(binary)
             for binary in (self._service_bin, self._chkconfig_bin)
         )
+
+    def is_instances_supported(self) -> bool:
+        return False

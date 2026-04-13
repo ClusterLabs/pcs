@@ -136,6 +136,9 @@ class SystemdDriver(ServiceManagerInterface):
             os.path.isdir(path) for path in self._systemd_unit_paths
         ) and os.path.isfile(self._systemctl_bin)
 
+    def is_instances_supported(self) -> bool:
+        return True
+
 
 def _format_service_name(service: str, instance: Optional[str]) -> str:
     instance_str = f"@{instance}" if instance else ""

@@ -572,6 +572,7 @@ class ConfigDestroy(TestCase, FixtureMixin):
     def fixture_config_booth_not_used(self, instance_name="booth"):
         self.config.fs.exists(self.cib_path, True)
         self.config.runner.cib.load()
+        self.config.services.is_instances_supported()
         self.config.services.is_running(
             "booth", instance=instance_name, return_value=False
         )
@@ -610,6 +611,7 @@ class ConfigDestroy(TestCase, FixtureMixin):
         elif pcmk_running or pcmk_remote_running:
             self.config.runner.cib.load(resources=self.fixture_cib_resources())
         if not cib_load_exception:
+            self.config.services.is_instances_supported()
             self.config.services.is_running(
                 "booth", instance=instance_name, return_value=booth_running
             )
@@ -810,7 +812,7 @@ class ConfigDestroy(TestCase, FixtureMixin):
                 fixture.error(
                     reports.codes.BOOTH_CONFIG_IS_USED,
                     name=instance_name,
-                    detail=reports.const.BOOTH_CONFIG_USED_RUNNING_IN_SYSTEMD,
+                    detail=reports.const.BOOTH_CONFIG_USED_RUNNING_IN_SERVICE_MANAGER,
                     resource_name=None,
                 ),
             ]
@@ -829,7 +831,7 @@ class ConfigDestroy(TestCase, FixtureMixin):
                 fixture.error(
                     reports.codes.BOOTH_CONFIG_IS_USED,
                     name=instance_name,
-                    detail=reports.const.BOOTH_CONFIG_USED_ENABLED_IN_SYSTEMD,
+                    detail=reports.const.BOOTH_CONFIG_USED_ENABLED_IN_SERVICE_MANAGER,
                     resource_name=None,
                 ),
             ]
@@ -3205,6 +3207,7 @@ class EnableDisableStartStopMixin(FixtureMixin):
 
     def test_invalid_instance(self):
         instance_name = "/tmp/booth/booth"
+        self.config.services.is_instances_supported()
         self.env_assist.assert_raise_library_error(
             lambda: self.command(
                 self.env_assist.get_env(), instance_name=instance_name
@@ -3215,15 +3218,17 @@ class EnableDisableStartStopMixin(FixtureMixin):
             expected_in_processor=False,
         )
 
-    def test_not_systemd(self):
+    def test_not_supported_init_system(self):
+        self.config.services.is_instances_supported(return_value=False)
         self.env_assist.assert_raise_library_error(
-            lambda: self.command(self.env_assist.get_env(is_systemd=False)),
+            lambda: self.command(self.env_assist.get_env()),
+        )
+        self.env_assist.assert_reports(
             [
                 fixture.error(
-                    reports.codes.UNSUPPORTED_OPERATION_ON_NON_SYSTEMD_SYSTEMS,
+                    reports.codes.INIT_SYSTEM_DOES_NOT_SUPPORT_SERVICE_INSTANCES,
                 ),
             ],
-            expected_in_processor=False,
         )
 
     def test_not_live(self):
@@ -3235,6 +3240,7 @@ class EnableDisableStartStopMixin(FixtureMixin):
             }
         )
         self.config.env.set_cib_data("<cib/>")
+        self.config.services.is_instances_supported()
         self.env_assist.assert_raise_library_error(
             lambda: self.command(self.env_assist.get_env()),
             [
@@ -3251,6 +3257,7 @@ class EnableDisableStartStopMixin(FixtureMixin):
         )
 
     def test_success_default_instance(self):
+        self.config.services.is_instances_supported()
         self.get_external_call()("booth", instance="booth")
         self.command(self.env_assist.get_env())
         self.env_assist.assert_reports(
@@ -3267,6 +3274,7 @@ class EnableDisableStartStopMixin(FixtureMixin):
 
     def test_success_custom_instance(self):
         instance_name = "my_booth"
+        self.config.services.is_instances_supported()
         self.get_external_call()("booth", instance="my_booth")
         self.command(self.env_assist.get_env(), instance_name=instance_name)
         self.env_assist.assert_reports(
@@ -3283,6 +3291,7 @@ class EnableDisableStartStopMixin(FixtureMixin):
 
     def test_fail(self):
         err_msg = "some stderr\nsome stdout"
+        self.config.services.is_instances_supported()
         self.get_external_call()("booth", instance="booth", failure_msg=err_msg)
         self.env_assist.assert_raise_library_error(
             lambda: self.command(self.env_assist.get_env()),

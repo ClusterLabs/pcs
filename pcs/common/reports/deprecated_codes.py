@@ -90,3 +90,12 @@ STOPPING_RESOURCES_BEFORE_DELETING_SKIPPED = _D(
 CANNOT_STOP_RESOURCES_BEFORE_DELETING = _D(
     "CANNOT_STOP_RESOURCES_BEFORE_DELETING"
 )
+
+# Removed after 0.12.2
+# Replaced by INIT_SYSTEM_DOES_NOT_SUPPORT_SERVICE_INSTANCES,
+# Previously, service instances were supported only in systemd service driver.
+# Then the driver interface has been rewritten to indicate
+# whether a driver supports service instances.
+UNSUPPORTED_OPERATION_ON_NON_SYSTEMD_SYSTEMS = _D(
+    "UNSUPPORTED_OPERATION_ON_NON_SYSTEMD_SYSTEMS"
+)

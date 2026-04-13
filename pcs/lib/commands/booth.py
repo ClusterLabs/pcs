@@ -85,8 +85,7 @@ from pcs.lib.resource_agent import (
     resource_agent_error_to_report_item,
 )
 from pcs.lib.services import (
-    ensure_is_systemd,
-    is_systemd,
+    ensure_service_instances_support,
     service_exception_to_report,
 )
 
@@ -207,15 +206,13 @@ def config_destroy(  # noqa: PLR0912
                     )
                 )
             )
-    # Only systemd is currently supported. Initd does not supports multiple
-    # instances (here specified by name)
-    if is_systemd(env.service_manager):
+    if env.service_manager.is_instances_supported():
         if env.service_manager.is_running("booth", found_instance_name):
             report_processor.report(
                 ReportItem.error(
                     reports.messages.BoothConfigIsUsed(
                         found_instance_name,
-                        reports.const.BOOTH_CONFIG_USED_RUNNING_IN_SYSTEMD,
+                        reports.const.BOOTH_CONFIG_USED_RUNNING_IN_SERVICE_MANAGER,
                     )
                 )
             )
@@ -225,7 +222,7 @@ def config_destroy(  # noqa: PLR0912
                 ReportItem.error(
                     reports.messages.BoothConfigIsUsed(
                         found_instance_name,
-                        reports.const.BOOTH_CONFIG_USED_ENABLED_IN_SYSTEMD,
+                        reports.const.BOOTH_CONFIG_USED_ENABLED_IN_SERVICE_MANAGER,
                     )
                 )
             )
@@ -1000,7 +997,7 @@ def enable_booth(
     env
     instance_name -- booth instance name
     """
-    ensure_is_systemd(env.service_manager)
+    ensure_service_instances_support(env.service_manager, env.report_processor)
     booth_env = env.get_booth_env(instance_name)
     _ensure_live_env(env, booth_env)
     instance_name = booth_env.instance_name
@@ -1029,7 +1026,7 @@ def disable_booth(
     env
     instance_name -- booth instance name
     """
-    ensure_is_systemd(env.service_manager)
+    ensure_service_instances_support(env.service_manager, env.report_processor)
     booth_env = env.get_booth_env(instance_name)
     _ensure_live_env(env, booth_env)
     instance_name = booth_env.instance_name
@@ -1060,7 +1057,7 @@ def start_booth(
     env
     instance_name -- booth instance name
     """
-    ensure_is_systemd(env.service_manager)
+    ensure_service_instances_support(env.service_manager, env.report_processor)
     booth_env = env.get_booth_env(instance_name)
     _ensure_live_env(env, booth_env)
     instance_name = booth_env.instance_name
@@ -1089,7 +1086,7 @@ def stop_booth(
     env
     instance_name -- booth instance name
     """
-    ensure_is_systemd(env.service_manager)
+    ensure_service_instances_support(env.service_manager, env.report_processor)
     booth_env = env.get_booth_env(instance_name)
     _ensure_live_env(env, booth_env)
     instance_name = booth_env.instance_name

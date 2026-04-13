@@ -25,11 +25,24 @@ ADD_REMOVE_ITEM_TYPE_RESOURCE = AddRemoveItemType("resource")
 BOOTH_CONFIG_USED_IN_CLUSTER_RESOURCE = BoothConfigUsedWhere(
     "in a cluster resource"
 )
+
+# Removed after version 0.12.2
+# Next two constants are deprecated as the service driver interface has been
+# rewritten to indicate if a driver supports service instances,
+# only systemd driver supported it before.
+# They are replaced by BOOTH_CONFIG_USED_ENABLED_IN_SERVICE_MANAGER and
+# BOOTH_CONFIG_USED_RUNNING_IN_SERVICE_MANAGER
 BOOTH_CONFIG_USED_ENABLED_IN_SYSTEMD = BoothConfigUsedWhere(
     "enabled in systemd"
 )
 BOOTH_CONFIG_USED_RUNNING_IN_SYSTEMD = BoothConfigUsedWhere(
     "running in systemd"
+)
+BOOTH_CONFIG_USED_ENABLED_IN_SERVICE_MANAGER = BoothConfigUsedWhere(
+    "enabled in service manager"
+)
+BOOTH_CONFIG_USED_RUNNING_IN_SERVICE_MANAGER = BoothConfigUsedWhere(
+    "running in service manager"
 )
 
 CIB_SECRET_REASON_CANNOT_READ_VALUE_FILE = CibResourceSecretErrorReason(

@@ -77,3 +77,6 @@ class ServiceManagerMock(ServiceManagerInterface):
 
     def is_current_system_supported(self):
         return self._assert_call("is_current_system_supported")
+
+    def is_instances_supported(self):
+        return self._assert_call("is_instances_supported")

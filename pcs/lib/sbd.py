@@ -15,7 +15,7 @@ from pcs.lib import validate
 from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfFacade
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
-from pcs.lib.services import is_systemd
+from pcs.lib.services import is_instances_support
 from pcs.lib.tools import (
     dict_to_environment_file,
     environment_file_to_dict,
@@ -263,7 +263,7 @@ def get_local_sbd_config() -> str:
 
 
 def get_sbd_service_name(service_manager: ServiceManagerInterface) -> str:
-    return "sbd" if is_systemd(service_manager) else "sbd_helper"
+    return "sbd" if is_instances_support(service_manager) else "sbd_helper"
 
 
 def is_sbd_enabled(service_manager: ServiceManagerInterface) -> bool:

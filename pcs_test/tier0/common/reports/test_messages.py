@@ -3712,11 +3712,11 @@ class FileDoesNotExistUsingDefault(NameBuildTest):
         )
 
 
-class UnsupportedOperationOnNonSystemdSystems(NameBuildTest):
+class InitSystemDoesNotSupportServiceInstances(NameBuildTest):
     def test_all(self):
         self.assert_message_from_report(
-            "unsupported operation on non systemd systems",
-            reports.UnsupportedOperationOnNonSystemdSystems(),
+            "service instances are not supported on your system",
+            reports.InitSystemDoesNotSupportServiceInstances(),
         )
 
 
@@ -5310,19 +5310,39 @@ class BoothConfigIsUsed(NameBuildTest):
             ),
         )
 
+    def test_service_manager_enabled(self):
+        self.assert_message_from_report(
+            "booth instance 'name' is used - it is enabled in service manager",
+            reports.BoothConfigIsUsed(
+                "name",
+                reports.const.BOOTH_CONFIG_USED_ENABLED_IN_SERVICE_MANAGER,
+            ),
+        )
+
+    def test_service_manager_running(self):
+        self.assert_message_from_report(
+            "booth instance 'name' is used - it is running in service manager",
+            reports.BoothConfigIsUsed(
+                "name",
+                reports.const.BOOTH_CONFIG_USED_RUNNING_IN_SERVICE_MANAGER,
+            ),
+        )
+
     def test_systemd_enabled(self):
         self.assert_message_from_report(
             "booth instance 'name' is used - it is enabled in systemd",
             reports.BoothConfigIsUsed(
-                "name", reports.const.BOOTH_CONFIG_USED_ENABLED_IN_SYSTEMD
+                "name",
+                reports.const.BOOTH_CONFIG_USED_ENABLED_IN_SYSTEMD,
             ),
         )
 
     def test_systemd_running(self):
         self.assert_message_from_report(
-            "booth instance 'name' is used - it is running by systemd",
+            "booth instance 'name' is used - it is running in systemd",
             reports.BoothConfigIsUsed(
-                "name", reports.const.BOOTH_CONFIG_USED_RUNNING_IN_SYSTEMD
+                "name",
+                reports.const.BOOTH_CONFIG_USED_RUNNING_IN_SYSTEMD,
             ),
         )
 

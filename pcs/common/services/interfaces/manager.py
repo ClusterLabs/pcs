@@ -86,3 +86,10 @@ class ServiceManagerInterface:
         init system.
         """
         raise NotImplementedError()
+
+    def is_instances_supported(self) -> bool:
+        """
+        Returns True if the init system supports service instances
+        (e.g. systemd), False otherwise.
+        """
+        raise NotImplementedError()

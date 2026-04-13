@@ -96,3 +96,6 @@ class OpenRcDriver(ServiceManagerInterface):
             os.path.isfile(binary)
             for binary in (self._rc_service_bin, self._rc_update_bin)
         )
+
+    def is_instances_supported(self) -> bool:
+        return False

@@ -138,6 +138,24 @@ class ServiceManagerConfig:
             instead=instead,
         )
 
+    def is_instances_supported(
+        self,
+        return_value=True,
+        name="services.is_instances_supported",
+        before=None,
+        instead=None,
+    ):
+        self.__calls.place(
+            name,
+            Call(
+                "is_instances_supported",
+                None,
+                return_value=return_value,
+            ),
+            before=before,
+            instead=instead,
+        )
+
     def is_enabled(
         self,
         service,
