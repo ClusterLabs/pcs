@@ -498,6 +498,13 @@ class SaveSyncPcsSettingsInternalInCluster(TestCase):
             + fixture_expected_save_sync_reports(
                 file_type_codes.PCS_SETTINGS_CONF, self.NODE_LABELS[:1]
             )
+            + [
+                fixture.error(
+                    reports.codes.PCS_CFGSYNC_SENDING_CONFIGS_TO_NODES_FAILED,
+                    file_type_code_list=[file_type_codes.PCS_SETTINGS_CONF],
+                    node_name_list=["node2", "node3"],
+                ),
+            ]
         )
 
     def test_sync_conflict(self):

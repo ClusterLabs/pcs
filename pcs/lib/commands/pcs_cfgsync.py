@@ -150,6 +150,9 @@ def save_sync_pcs_settings_internal(
     # available nodes
     # compatibility with the original Ruby implementation
     env.report_processor.report_list(report_list)
+    nodes_with_missing_token = set(corosync_nodes) - {
+        target.label for target in request_targets
+    }
 
     sync_pcs_settings_in_cluster(
         pcs_settings_conf,
@@ -157,6 +160,7 @@ def save_sync_pcs_settings_internal(
         request_targets,
         env.get_node_communicator_no_privilege_transition(),
         env.report_processor,
+        local_nodes_with_missing_token=nodes_with_missing_token,
     )
     if env.report_processor.has_errors:
         raise LibraryError()
