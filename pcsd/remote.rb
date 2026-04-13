@@ -192,8 +192,11 @@ def _update_pcsd_settings(config, cluster_name, new_nodes)
   # on version conflict just go on, config will be corrected eventually
   # by displaying the cluster in the web UI
   if result[:status] != 'success'
+    report_messages = (result[:report_list] || []).map { |r|
+      r.dig(:message, :message)
+    }.compact
     $logger.error(
-      "Failed to sync pcs_settings to cluster: #{result[:status_msg]}"
+      "Failed to sync pcs_settings to cluster: #{report_messages.join('; ')}"
     )
   end
 end
