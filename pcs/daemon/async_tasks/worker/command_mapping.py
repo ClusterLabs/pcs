@@ -6,7 +6,6 @@ from pcs.lib.commands import (
     alert,
     auth,
     booth,
-    check_host,
     cib,
     cib_options,
     cluster,
@@ -138,10 +137,6 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
         cmd=booth.ticket_unstandby,
         required_permission=p.WRITE,
     ),
-    "check_host.check_host": _Cmd(
-        cmd=check_host.check_host,
-        required_permission=p.READ,
-    ),
     "cluster.add_nodes": _Cmd(
         cmd=cluster.add_nodes,
         required_permission=p.FULL,
@@ -152,6 +147,10 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
     ),
     "cluster.get_corosync_conf_struct": _Cmd(
         cmd=cluster.get_corosync_conf_struct,
+        required_permission=p.READ,
+    ),
+    "cluster.get_host_daemons_info": _Cmd(
+        cmd=cluster.get_host_daemons_info,
         required_permission=p.READ,
     ),
     "cluster.node_clear": _Cmd(

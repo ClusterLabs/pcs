@@ -125,7 +125,7 @@ EXTRA_DIST		= \
 			  cli/tag/output.py \
 			  cluster.py \
 			  common/auth.py \
-			  common/check_host_dto.py \
+			  common/cluster_dto.py \
 			  common/corosync_conf.py \
 			  common/const.py \
 			  common/dr.py \
@@ -345,7 +345,6 @@ EXTRA_DIST		= \
 			  lib/commands/alert.py \
 			  lib/commands/auth.py \
 			  lib/commands/booth.py \
-			  lib/commands/check_host.py \
 			  lib/commands/cib.py \
 			  lib/commands/cib_options.py \
 			  lib/commands/cluster/config.py \

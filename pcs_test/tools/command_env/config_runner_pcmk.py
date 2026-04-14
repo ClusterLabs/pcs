@@ -1443,7 +1443,7 @@ class PcmkShortcuts:
         self.__calls.place(
             name,
             RunnerCall(
-                [settings.pacemakerd_exec, "-$"],
+                [settings.pacemakerd_exec, "--version"],
                 stdout=dedent(
                     f"""\
                     Pacemaker {version}.el10

@@ -11,10 +11,3 @@ class VersionDto(DataTransferObject):
 
     def __str__(self) -> str:
         return f"{self.major}.{self.minor}.{self.revision}"
-
-
-@dataclass(frozen=True)
-class ClusterComponentVersionDto(DataTransferObject):
-    corosync: VersionDto
-    pacemaker: VersionDto
-    pcsd: VersionDto

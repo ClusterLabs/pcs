@@ -1181,10 +1181,8 @@ def get_pacemaker_version(runner: CommandRunner) -> Optional[Version]:
     """
     Return the installed pacemaker version or None if version cannot be
     determined.
-
-    runner -- CommandRunner instance
     """
-    stdout, stderr, retval = runner.run([settings.pacemakerd_exec, "-$"])
+    stdout, stderr, retval = runner.run([settings.pacemakerd_exec, "--version"])
     if retval != 0:
         return None
     return get_version_from_string(stdout)

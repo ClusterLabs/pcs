@@ -2193,14 +2193,14 @@ class GetPacemakerVersion(TestCase):
             lib.get_pacemaker_version(mock_runner), Version(2, 1, 6)
         )
         mock_runner.run.assert_called_once_with(
-            [settings.pacemakerd_exec, "-$"]
+            [settings.pacemakerd_exec, "--version"]
         )
 
     def test_error(self):
         mock_runner = get_runner(stdout="", stderr="some error", returncode=1)
         self.assertIsNone(lib.get_pacemaker_version(mock_runner))
         mock_runner.run.assert_called_once_with(
-            [settings.pacemakerd_exec, "-$"]
+            [settings.pacemakerd_exec, "--version"]
         )
 
     def test_version_not_found_in_output(self):
@@ -2209,5 +2209,5 @@ class GetPacemakerVersion(TestCase):
         )
         self.assertIsNone(lib.get_pacemaker_version(mock_runner))
         mock_runner.run.assert_called_once_with(
-            [settings.pacemakerd_exec, "-$"]
+            [settings.pacemakerd_exec, "--version"]
         )

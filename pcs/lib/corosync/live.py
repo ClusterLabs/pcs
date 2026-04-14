@@ -256,8 +256,6 @@ def get_corosync_version(runner: CommandRunner) -> Optional[Version]:
     """
     Return the installed corosync version or None if version cannot be
     determined.
-
-    runner -- CommandRunner instance
     """
     stdout, stderr, retval = runner.run([settings.corosync_exec, "-v"])
     if retval != 0:

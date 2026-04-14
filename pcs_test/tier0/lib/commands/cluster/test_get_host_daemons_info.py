@@ -3,20 +3,20 @@ from dataclasses import replace
 from unittest import TestCase, mock
 
 from pcs import settings
-from pcs.common.check_host_dto import CheckHostResultDto
-from pcs.common.services_dto import ServiceStatusDto
-from pcs.common.tools import Version
-from pcs.common.version_dto import (
+from pcs.common import file_type_codes
+from pcs.common.cluster_dto import (
     ClusterComponentVersionDto,
-    VersionDto,
+    ClusterDaemonsInfoDto,
 )
-from pcs.lib.commands import check_host
+from pcs.common.services_dto import ServiceStatusDto
+from pcs.common.version_dto import VersionDto
+from pcs.lib.commands import cluster
 
 from pcs_test.tools.command_env import get_env_tools
 
 FIXTURE_PCSD_VERSION = "0.12.2"
 
-FIXTURE_CHECK_HOST_RESULT_DTO = CheckHostResultDto(
+FIXTURE_CHECK_HOST_RESULT_DTO = ClusterDaemonsInfoDto(
     cluster_configuration_exists=True,
     services=[
         ServiceStatusDto(
@@ -30,6 +30,12 @@ FIXTURE_CHECK_HOST_RESULT_DTO = CheckHostResultDto(
             installed=True,
             enabled=False,
             running=True,
+        ),
+        ServiceStatusDto(
+            service="corosync-qdevice",
+            installed=False,
+            enabled=False,
+            running=False,
         ),
         ServiceStatusDto(
             service="pacemaker",
@@ -50,12 +56,6 @@ FIXTURE_CHECK_HOST_RESULT_DTO = CheckHostResultDto(
             running=True,
         ),
         ServiceStatusDto(
-            service="corosync-qdevice",
-            installed=False,
-            enabled=False,
-            running=False,
-        ),
-        ServiceStatusDto(
             service="sbd",
             installed=False,
             enabled=False,
@@ -70,21 +70,21 @@ FIXTURE_CHECK_HOST_RESULT_DTO = CheckHostResultDto(
 )
 
 
-class CheckHost(TestCase):
+class GetHostDaemonsInfo(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
 
     def command(self):
-        return check_host.check_host(self.env_assist.get_env())
+        return cluster.get_host_daemons_info(self.env_assist.get_env())
 
     def _configure_all_services(self, **service_states):
         all_services = [
             "booth",
             "corosync",
+            "corosync-qdevice",
             "pacemaker",
             "pacemaker_remote",
             "pcsd",
-            "corosync-qdevice",
             "sbd",
         ]
 
@@ -116,10 +116,11 @@ class CheckHost(TestCase):
         )
 
     def _configure_cluster_configs(self, corosync_conf=True, cib=True):
-        self.config.fs.exists(
+        self.config.raw_file.exists(
+            file_type_codes.COROSYNC_CONF,
             settings.corosync_conf_file,
-            return_value=corosync_conf,
-            name="fs.exists.corosync_conf",
+            exists=corosync_conf,
+            name="raw_file.exists.corosync_conf",
         )
         if not corosync_conf:
             self.config.fs.exists(
@@ -142,25 +143,29 @@ class CheckHost(TestCase):
         )
 
     @mock.patch(
-        "pcs.lib.commands.check_host.settings.pcs_version", FIXTURE_PCSD_VERSION
+        "pcs.lib.commands.cluster.node.settings.pcs_version",
+        FIXTURE_PCSD_VERSION,
     )
     def test_cluster_configured_corosync_conf(self):
         self._test_cluster_configuration()
 
     @mock.patch(
-        "pcs.lib.commands.check_host.settings.pcs_version", FIXTURE_PCSD_VERSION
+        "pcs.lib.commands.cluster.node.settings.pcs_version",
+        FIXTURE_PCSD_VERSION,
     )
     def test_cluster_configured_cib_only(self):
         self._test_cluster_configuration(corosync_conf=False)
 
     @mock.patch(
-        "pcs.lib.commands.check_host.settings.pcs_version", FIXTURE_PCSD_VERSION
+        "pcs.lib.commands.cluster.node.settings.pcs_version",
+        FIXTURE_PCSD_VERSION,
     )
     def test_cluster_not_configured(self):
         self._test_cluster_configuration(corosync_conf=False, cib=False)
 
     @mock.patch(
-        "pcs.lib.commands.check_host.settings.pcs_version", FIXTURE_PCSD_VERSION
+        "pcs.lib.commands.cluster.node.settings.pcs_version",
+        FIXTURE_PCSD_VERSION,
     )
     def test_versions_unavailable(self):
         self._configure_cluster_configs()
@@ -180,7 +185,7 @@ class CheckHost(TestCase):
             ),
         )
 
-    @mock.patch("pcs.lib.commands.check_host.settings.pcs_version", "")
+    @mock.patch("pcs.lib.commands.cluster.node.settings.pcs_version", "")
     def test_unable_to_parse_versions(self):
         self._configure_cluster_configs()
         self._configure_services_from_fixture()
@@ -198,13 +203,3 @@ class CheckHost(TestCase):
                 ),
             ),
         )
-
-
-class VersionToDto(TestCase):
-    def test_with_version(self):
-        result = check_host._version_to_dto(Version(3, 0, 1))
-        self.assertEqual(result, VersionDto(3, 0, 1))
-
-    def test_with_none(self):
-        result = check_host._version_to_dto(None)
-        self.assertEqual(result, VersionDto(0, 0, 0))

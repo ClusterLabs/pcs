@@ -7,7 +7,7 @@ from tornado.web import Finish
 from pcs import settings
 from pcs.common import file_type_codes, reports
 from pcs.common.async_tasks.dto import CommandDto, CommandOptionsDto
-from pcs.common.check_host_dto import CheckHostResultDto
+from pcs.common.cluster_dto import ClusterDaemonsInfoDto
 from pcs.common.pcs_cfgsync_dto import SyncConfigsDto
 from pcs.common.str_tools import format_list
 from pcs.daemon import log
@@ -298,21 +298,26 @@ class QdeviceNetClientDestroyHandler(_BaseApiV0Handler):
 
 class CheckHostHandler(_BaseApiV0Handler):
     async def _handle_request(self) -> None:
-        result = await self._run_library_command("check_host.check_host", {})
+        result = await self._run_library_command(
+            "cluster.get_host_daemons_info", {}
+        )
         if not result.success:
             raise self._error(reports_to_str(result.reports))
         self.write(
             self._convert_to_legacy_format(
-                cast(CheckHostResultDto, result.result)
+                cast(ClusterDaemonsInfoDto, result.result)
             )
         )
 
     @staticmethod
     def _convert_to_legacy_format(
-        command_result: CheckHostResultDto,
+        command_result: ClusterDaemonsInfoDto,
     ) -> dict[str, Union[bool, dict[str, dict[str, Union[bool, str, None]]]]]:
+        service_name_mapping = {"corosync-qdevice": "qdevice"}
         services_dict: dict[str, dict[str, Union[bool, str, None]]] = {
-            service_status_dto.service: {
+            service_name_mapping.get(
+                service_status_dto.service, service_status_dto.service
+            ): {
                 "installed": service_status_dto.installed,
                 "enabled": service_status_dto.enabled,
                 "running": service_status_dto.running,

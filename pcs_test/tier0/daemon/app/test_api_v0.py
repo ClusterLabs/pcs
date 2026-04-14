@@ -21,11 +21,14 @@ from pcs.common.async_tasks.types import (
     TaskKillReason,
     TaskState,
 )
-from pcs.common.check_host_dto import CheckHostResultDto
+from pcs.common.cluster_dto import (
+    ClusterComponentVersionDto,
+    ClusterDaemonsInfoDto,
+)
 from pcs.common.file import RawFileError
 from pcs.common.pcs_cfgsync_dto import SyncConfigsDto
 from pcs.common.services_dto import ServiceStatusDto
-from pcs.common.version_dto import ClusterComponentVersionDto, VersionDto
+from pcs.common.version_dto import VersionDto
 from pcs.daemon.app import api_v0
 from pcs.daemon.async_tasks.scheduler import Scheduler, TaskNotFoundError
 from pcs.daemon.async_tasks.types import Command
@@ -864,7 +867,7 @@ class CheckHostHandler(ApiV0HandlerTest):
     url = "/remote/check_host"
 
     def test_success(self):
-        dto = CheckHostResultDto(
+        dto = ClusterDaemonsInfoDto(
             cluster_configuration_exists=True,
             services=[
                 ServiceStatusDto(
@@ -878,6 +881,12 @@ class CheckHostHandler(ApiV0HandlerTest):
                     installed=True,
                     enabled=False,
                     running=True,
+                ),
+                ServiceStatusDto(
+                    service="corosync-qdevice",
+                    installed=False,
+                    enabled=False,
+                    running=False,
                 ),
             ],
             versions=ClusterComponentVersionDto(
@@ -907,19 +916,25 @@ class CheckHostHandler(ApiV0HandlerTest):
                             "running": True,
                             "version": None,
                         },
+                        "qdevice": {
+                            "installed": False,
+                            "enabled": False,
+                            "running": False,
+                            "version": None,
+                        },
                     },
                     "cluster_configuration_exists": True,
                 }
             ),
         )
         self.mock_run_library_command.assert_called_once_with(
-            "check_host.check_host", {}
+            "cluster.get_host_daemons_info", {}
         )
 
     def test_failure(self):
         self.assert_error_with_report(self.url)
         self.mock_run_library_command.assert_called_once_with(
-            "check_host.check_host", {}
+            "cluster.get_host_daemons_info", {}
         )
 
 

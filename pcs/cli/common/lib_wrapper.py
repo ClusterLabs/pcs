@@ -8,7 +8,6 @@ from pcs.lib.commands import (
     alert,
     auth,
     booth,
-    check_host,
     cib,
     cib_options,
     cluster,
@@ -222,6 +221,7 @@ def load_module(env, middleware_factory, name):  # noqa: PLR0911, PLR0912
                 "config_update": cluster.config_update,
                 "config_update_local": cluster.config_update_local,
                 "get_corosync_conf_struct": cluster.get_corosync_conf_struct,
+                "get_host_daemons_info": cluster.get_host_daemons_info,
                 "node_clear": cluster.node_clear,
                 "remove_links": cluster.remove_links,
                 "remove_nodes": cluster.remove_nodes,
@@ -600,11 +600,6 @@ def load_module(env, middleware_factory, name):  # noqa: PLR0911, PLR0912
                 "get_properties_metadata": cluster_property.get_properties_metadata,
                 "get_cluster_properties_definition_legacy": cluster_property.get_cluster_properties_definition_legacy,
             },
-        )
-
-    if name == "check_host":
-        return bind_all(
-            env, middleware.build(), {"check_host": check_host.check_host}
         )
 
     raise ValueError(f"No library part '{name}'")
