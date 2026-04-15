@@ -631,23 +631,6 @@ def disable_cluster(auth_user, all)
   return true
 end
 
-def get_corosync_version()
-  begin
-    stdout, stderror, retval = run_cmd(
-      PCSAuth.getSuperuserAuth(), COROSYNC, "-v"
-    )
-  rescue
-    stdout = []
-  end
-  if retval == 0
-    match = /version\D+(\d+)\.(\d+)\.(\d+)/.match(stdout.join())
-    if match
-      return match[1..3].collect { | x | x.to_i }
-    end
-  end
-  return nil
-end
-
 def pacemaker_running?()
   return ServiceChecker.new(
     ['pacemaker'], running: true
@@ -658,27 +641,6 @@ def pacemaker_remote_running?()
   return ServiceChecker.new(
     ['pacemaker_remote'], running: true
   ).is_running?('pacemaker_remote')
-end
-
-def get_pacemaker_version()
-  begin
-    stdout, stderror, retval = run_cmd(
-      PCSAuth.getSuperuserAuth(), PACEMAKERD, "-$"
-    )
-  rescue
-    stdout = []
-  end
-  if retval == 0
-    match = /(\d+)\.(\d+)\.(\d+)/.match(stdout.join())
-    if match
-      return match[1..3].collect { | x | x.to_i }
-    end
-  end
-  return nil
-end
-
-def get_pcsd_version()
-  return PCS_VERSION.split(".").collect { | x | x.to_i }
 end
 
 def run_cmd(auth_user, *args)

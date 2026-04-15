@@ -1,5 +1,5 @@
 import json
-from typing import Any, Mapping, cast
+from typing import Any, Mapping, Union, cast
 
 from tornado.locks import Lock
 from tornado.web import Finish
@@ -7,6 +7,7 @@ from tornado.web import Finish
 from pcs import settings
 from pcs.common import file_type_codes, reports
 from pcs.common.async_tasks.dto import CommandDto, CommandOptionsDto
+from pcs.common.cluster_dto import ClusterDaemonsInfoDto
 from pcs.common.pcs_cfgsync_dto import SyncConfigsDto
 from pcs.common.str_tools import format_list
 from pcs.daemon import log
@@ -295,6 +296,53 @@ class QdeviceNetClientDestroyHandler(_BaseApiV0Handler):
             raise self._error(reports_to_str(result.reports))
 
 
+class CheckHostHandler(_BaseApiV0Handler):
+    async def _handle_request(self) -> None:
+        result = await self._run_library_command(
+            "cluster.get_host_daemons_info", {}
+        )
+        if not result.success:
+            raise self._error(reports_to_str(result.reports))
+        self.write(
+            self._convert_to_legacy_format(
+                cast(ClusterDaemonsInfoDto, result.result)
+            )
+        )
+
+    @staticmethod
+    def _convert_to_legacy_format(
+        command_result: ClusterDaemonsInfoDto,
+    ) -> dict[str, Union[bool, dict[str, dict[str, Union[bool, str, None]]]]]:
+        service_name_mapping = {"corosync-qdevice": "qdevice"}
+        services_dict: dict[str, dict[str, Union[bool, str, None]]] = {
+            service_name_mapping.get(
+                service_status_dto.service, service_status_dto.service
+            ): {
+                "installed": service_status_dto.installed,
+                "enabled": service_status_dto.enabled,
+                "running": service_status_dto.running,
+                "version": None,
+            }
+            for service_status_dto in command_result.services
+        }
+
+        version_mapping = {
+            "corosync": command_result.versions.corosync,
+            "pacemaker": command_result.versions.pacemaker,
+            "pcsd": command_result.versions.pcsd,
+        }
+
+        for service_name, version_dto in version_mapping.items():
+            version_str = str(version_dto)
+            if service_name in services_dict and version_str != "0.0.0":
+                services_dict[service_name]["version"] = version_str
+
+        return {
+            "services": services_dict,
+            "cluster_configuration_exists": command_result.cluster_configuration_exists,
+        }
+
+
 class GetConfigsHandler(_BaseApiV0Handler):
     _FILE_TYPE_CODE_TO_LEGACY = {
         file_type_codes.PCS_SETTINGS_CONF: "pcs_settings.conf",
@@ -550,4 +598,6 @@ def get_routes(
         (r("set_permissions"), SetPermissionsHandler, params),
         # known hosts
         (r("known_hosts_change"), KnownHostsChangeHandler, params),
+        # check_host
+        (r("check_host"), CheckHostHandler, params),
     ]

@@ -14,6 +14,7 @@ from .misc import (
     wait_for_pcmk_idle,
 )
 from .node import (
+    get_host_daemons_info,
     node_clear,
     remove_nodes,
     remove_nodes_from_cib,
@@ -29,6 +30,7 @@ __all__ = [
     "config_update",
     "config_update_local",
     "corosync_authkey_change",
+    "get_host_daemons_info",
     "generate_cluster_uuid",
     "generate_cluster_uuid_local",
     "get_corosync_conf_struct",

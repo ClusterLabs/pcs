@@ -2182,3 +2182,32 @@ class GetResourceSecretValue(TestCase):
             report_const.CIB_SECRET_REASON_CANNOT_READ_VALUE_FILE,
             use_mock_spec=False,
         )
+
+
+class GetPacemakerVersion(TestCase):
+    def test_success(self):
+        mock_runner = get_runner(
+            stdout="Pacemaker 2.1.6-9.el9\n", stderr="", returncode=0
+        )
+        self.assertEqual(
+            lib.get_pacemaker_version(mock_runner), Version(2, 1, 6)
+        )
+        mock_runner.run.assert_called_once_with(
+            [settings.pacemakerd_exec, "--version"]
+        )
+
+    def test_error(self):
+        mock_runner = get_runner(stdout="", stderr="some error", returncode=1)
+        self.assertIsNone(lib.get_pacemaker_version(mock_runner))
+        mock_runner.run.assert_called_once_with(
+            [settings.pacemakerd_exec, "--version"]
+        )
+
+    def test_version_not_found_in_output(self):
+        mock_runner = get_runner(
+            stdout="no version here", stderr="", returncode=0
+        )
+        self.assertIsNone(lib.get_pacemaker_version(mock_runner))
+        mock_runner.run.assert_called_once_with(
+            [settings.pacemakerd_exec, "--version"]
+        )

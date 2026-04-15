@@ -149,6 +149,10 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
         cmd=cluster.get_corosync_conf_struct,
         required_permission=p.READ,
     ),
+    "cluster.get_host_daemons_info": _Cmd(
+        cmd=cluster.get_host_daemons_info,
+        required_permission=p.READ,
+    ),
     "cluster.node_clear": _Cmd(
         cmd=cluster.node_clear,
         required_permission=p.WRITE,

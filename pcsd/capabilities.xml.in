@@ -245,6 +245,13 @@
         daemon urls: cluster_destroy (parameter all=1)
       </description>
     </capability>
+    <capability id="cluster.node.get-host-daemons-info" in-pcs="0" in-pcsd="1">
+      <description>
+        Get cluster daemons info from a host.
+
+        API v2: cluster.get_host_daemons_info
+      </description>
+    </capability>
     <capability id="cluster.node.rename-cib" in-pcs="1" in-pcsd="1">
       <description>
         Rename a cluster node in the CIB.

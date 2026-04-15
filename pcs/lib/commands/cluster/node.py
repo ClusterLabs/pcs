@@ -1,6 +1,15 @@
+from typing import Optional
+
 from pcs import settings
 from pcs.common import file_type_codes, reports
+from pcs.common.cluster_dto import (
+    ClusterComponentVersionDto,
+    ClusterDaemonsInfoDto,
+)
+from pcs.common.services_dto import ServiceStatusDto
 from pcs.common.str_tools import join_multilines
+from pcs.common.tools import Version, get_version_from_string
+from pcs.common.version_dto import VersionDto
 from pcs.lib import sbd
 from pcs.lib.cib.node_rename import rename_in_cib
 from pcs.lib.commands.cluster.utils import ensure_live_env, verify_corosync_conf
@@ -14,10 +23,16 @@ from pcs.lib.communication.nodes import GetOnlineTargets, RemoveNodesFromCib
 from pcs.lib.communication.tools import AllSameDataMixin, run_and_raise
 from pcs.lib.communication.tools import run as run_com
 from pcs.lib.corosync import config_validators
+from pcs.lib.corosync.live import get_corosync_version
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 from pcs.lib.node import get_existing_nodes_names
-from pcs.lib.pacemaker.live import get_cib_file_runner_env, remove_node
+from pcs.lib.pacemaker.live import (
+    get_cib_file_runner_env,
+    get_pacemaker_version,
+    has_cib_xml,
+    remove_node,
+)
 
 
 def node_clear(
@@ -447,4 +462,41 @@ def rename_node_corosync(
     env.push_corosync_conf(
         corosync_conf,
         skip_offline_nodes=(reports.codes.SKIP_OFFLINE_NODES in force_flags),
+    )
+
+
+def get_host_daemons_info(env: LibraryEnvironment) -> ClusterDaemonsInfoDto:
+    def _version_to_dto(version: Optional[Version]) -> VersionDto:
+        return (
+            VersionDto(*version.as_full_tuple)
+            if version
+            else VersionDto(0, 0, 0)
+        )
+
+    all_cluster_services = [
+        "booth",
+        "corosync",
+        "corosync-qdevice",
+        "pacemaker",
+        "pacemaker_remote",
+        "pcsd",
+        "sbd",
+    ]
+
+    return ClusterDaemonsInfoDto(
+        cluster_configuration_exists=(env.has_corosync_conf or has_cib_xml()),
+        services=[
+            ServiceStatusDto(
+                service=service,
+                installed=env.service_manager.is_installed(service),
+                enabled=env.service_manager.is_enabled(service),
+                running=env.service_manager.is_running(service),
+            )
+            for service in all_cluster_services
+        ],
+        versions=ClusterComponentVersionDto(
+            corosync=_version_to_dto(get_corosync_version(env.cmd_runner())),
+            pacemaker=_version_to_dto(get_pacemaker_version(env.cmd_runner())),
+            pcsd=_version_to_dto(get_version_from_string(settings.pcs_version)),
+        ),
     )

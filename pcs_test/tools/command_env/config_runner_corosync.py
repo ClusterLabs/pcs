@@ -23,19 +23,21 @@ class CorosyncShortcuts:
         self,
         name="runner.corosync.version",
         version="2.4.0",
+        returncode=0,
         instead=None,
         before=None,
     ):
         self.__calls.place(
             name,
             RunnerCall(
-                ["corosync", "-v"],
+                [settings.corosync_exec, "-v"],
                 stdout=dedent(
                     f"""\
                     Corosync Cluster Engine, version '{version}'
                     Copyright...
                     """
                 ),
+                returncode=returncode,
             ),
             before=before,
             instead=instead,

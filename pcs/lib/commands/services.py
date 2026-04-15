@@ -76,17 +76,17 @@ def get_services_info(
                 (
                     env.service_manager.is_installed(service)
                     if installed
-                    else None
+                    else False
                 ),
                 (
                     env.service_manager.is_enabled(service)
                     if enabled and service in service_set
-                    else None
+                    else False
                 ),
                 (
                     env.service_manager.is_running(service)
                     if running and service in service_set
-                    else None
+                    else False
                 ),
             )
             for service in service_set

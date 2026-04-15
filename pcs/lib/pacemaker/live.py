@@ -20,6 +20,7 @@ from pcs.common.str_tools import join_multilines
 from pcs.common.tools import (
     Version,
     format_os_error,
+    get_version_from_string,
     xml_fromstring,
 )
 from pcs.common.types import (
@@ -1174,3 +1175,14 @@ def get_resource_secret_value(resource_id: str, attribute_name: str) -> str:
             reports.const.CIB_SECRET_REASON_BAD_CHECKSUM
         )
     return secret_value
+
+
+def get_pacemaker_version(runner: CommandRunner) -> Optional[Version]:
+    """
+    Return the installed pacemaker version or None if version cannot be
+    determined.
+    """
+    stdout, stderr, retval = runner.run([settings.pacemakerd_exec, "--version"])
+    if retval != 0:
+        return None
+    return get_version_from_string(stdout)
