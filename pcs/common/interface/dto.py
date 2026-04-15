@@ -4,6 +4,7 @@ from types import NoneType, UnionType
 from typing import (
     TYPE_CHECKING,
     Any,
+    Callable,
     Iterable,
     NewType,
     TypeVar,
@@ -37,6 +38,24 @@ T = TypeVar("T")
 
 ToDictMetaKey = NewType("ToDictMetaKey", str)
 META_NAME = ToDictMetaKey("META_NAME")
+
+
+DTO_TYPE_HOOKS_MAP: dict[type[Any], Callable[[Any], Any]] = {
+    # JSON does not support tuples, only lists. However, tuples are
+    # used e.g. to express fixed-length structures. If a tuple is
+    # expected and a list is provided, we convert it to a tuple.
+    # Unfortunately, we cannot apply this rule generically to all
+    # tuples, so we must handle specific cases manually.
+    #
+    # Covered cases:
+    # * acl.create_role:
+    #   permission_info_list: list[tuple[str, str, str]]
+    tuple[str, str, str]: lambda v: tuple(v) if isinstance(v, list) else v,
+    # Covered cases:
+    # * resource.get_cibsecrets:
+    #   queries: Sequence[tuple[str, str]]
+    tuple[str, str]: lambda v: tuple(v) if isinstance(v, list) else v,
+}
 
 
 class PayloadConversionError(Exception):
@@ -247,20 +266,7 @@ def from_dict(
                 permissions_types.PermissionGrantedType,
                 permissions_types.PermissionTargetType,
             ],
-            type_hooks={
-                # JSON does not support tuples, only lists. However, tuples are
-                # used e.g. to express fixed-length structures. If a tuple is
-                # expected and a list is provided, we convert it to a tuple.
-                # Unfortunately, we cannot apply this rule generically to all
-                # tuples, so we must handle specific cases manually.
-                #
-                # Covered cases:
-                # * acl.create_role:
-                #   permission_info_list: list[tuple[str, str, str]]
-                tuple[str, str, str]: (
-                    lambda v: tuple(v) if isinstance(v, list) else v
-                ),
-            },
+            type_hooks=DTO_TYPE_HOOKS_MAP,
             strict=strict,
         ),
     )
