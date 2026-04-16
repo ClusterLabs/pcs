@@ -259,60 +259,6 @@ class AtbHasToBeEnabledTest(TestCase):
         )
 
 
-@mock.patch("pcs.lib.sbd.is_instances_support")
-class GetSbdServiceNameTest(TestCase):
-    def setUp(self):
-        self.service_manager = mock.MagicMock()
-
-    def test_systemctl(self, mock_is_instances_support):
-        mock_is_instances_support.return_value = True
-        self.assertEqual(
-            "sbd", lib_sbd.get_sbd_service_name(self.service_manager)
-        )
-        mock_is_instances_support.assert_called_once_with(self.service_manager)
-
-    def test_not_systemctl(self, mock_is_instances_support):
-        mock_is_instances_support.return_value = False
-        self.assertEqual(
-            "sbd_helper", lib_sbd.get_sbd_service_name(self.service_manager)
-        )
-        mock_is_instances_support.assert_called_once_with(self.service_manager)
-
-
-@mock.patch("pcs.lib.sbd.get_sbd_service_name")
-class IsSbdEnabledTest(TestCase):
-    def test_success(self, mock_sbd_name):
-        mock_obj = mock.MagicMock()
-        mock_obj.is_enabled.return_value = True
-        service = "sbd"
-        mock_sbd_name.return_value = service
-        self.assertTrue(lib_sbd.is_sbd_enabled(mock_obj))
-        mock_obj.is_enabled.assert_called_once_with(service)
-        mock_sbd_name.assert_called_once_with(mock_obj)
-
-
-@mock.patch("pcs.lib.sbd.get_sbd_service_name")
-class IsSbdInstalledTest(TestCase):
-    def setUp(self):
-        self.service = "sbd"
-
-    def test_installed(self, mock_sbd_name):
-        mock_obj = mock.MagicMock()
-        mock_obj.is_installed.return_value = True
-        mock_sbd_name.return_value = self.service
-        self.assertTrue(lib_sbd.is_sbd_installed(mock_obj))
-        mock_obj.is_installed.assert_called_once_with(self.service)
-        mock_sbd_name.assert_called_once_with(mock_obj)
-
-    def test_not_installed(self, mock_sbd_name):
-        mock_obj = mock.MagicMock()
-        mock_obj.is_installed.return_value = False
-        mock_sbd_name.return_value = self.service
-        self.assertFalse(lib_sbd.is_sbd_installed(mock_obj))
-        mock_obj.is_installed.assert_called_once_with(self.service)
-        mock_sbd_name.assert_called_once_with(mock_obj)
-
-
 class InitializeBlockDeviceTest(TestCase):
     def setUp(self):
         self.mock_runner = mock.MagicMock()

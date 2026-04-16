@@ -59,7 +59,6 @@ from pcs.lib.pacemaker.status import (
     cluster_status_parsing_error_to_report,
 )
 from pcs.lib.resource_agent.const import STONITH_ACTION_REPLACED_BY
-from pcs.lib.sbd import get_sbd_service_name
 
 
 class _ServiceStatus(NamedTuple):
@@ -350,7 +349,7 @@ def _get_local_services_status(
         ("pacemaker", True),
         ("pacemaker_remote", False),
         ("pcsd", True),
-        (get_sbd_service_name(service_manager), False),
+        (settings.sbd_service_name, False),
     ]
     service_status_list = []
     for service, display_always in service_def:

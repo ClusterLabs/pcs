@@ -1337,14 +1337,6 @@ def get_parsed_local_sbd_config()
   end
 end
 
-def get_sbd_service_name()
-  if ISSYSTEMCTL
-    return 'sbd'
-  else
-    return 'sbd_helper'
-  end
-end
-
 def read_booth_config(config)
   if config.include?('/')
     raise InvalidFileNameException.new(config)

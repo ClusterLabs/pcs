@@ -180,6 +180,7 @@ fence_agent_execs = "@FASEXECPREFIX@/sbin"
 # sbd
 sbd_exec = "@SBDEXECPREFIX@/sbin/sbd"
 sbd_config = "@SBDCONFDIR@/sbd"
+sbd_service_name = "sbd"
 # this limit is also mentioned in docs, change there as well
 sbd_max_device_num = 3
 # message types are also mentioned in docs, change there as well

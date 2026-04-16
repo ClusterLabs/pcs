@@ -1164,12 +1164,11 @@ def check_sbd(param, request, auth_user)
   unless allowed_for_local_cluster(auth_user, Permissions::READ)
     return 403, 'Permission denied'
   end
-  sbd_name = get_sbd_service_name()
   service_checker = ServiceChecker.new(
-    [sbd_name], installed: true, enabled: true, running: true
+    [SBD_SERVICE_NAME], installed: true, enabled: true, running: true
   )
   out = {
-    :sbd => service_checker.get_info(sbd_name),
+    :sbd => service_checker.get_info(SBD_SERVICE_NAME),
   }
   watchdog = param[:watchdog]
   if not watchdog.to_s.empty?
@@ -1264,7 +1263,7 @@ def sbd_disable(param, request, auth_user)
   unless allowed_for_local_cluster(auth_user, Permissions::WRITE)
     return 403, 'Permission denied'
   end
-  if disable_service(get_sbd_service_name())
+  if disable_service(SBD_SERVICE_NAME)
     return pcsd_success('SBD disabled')
   else
     return pcsd_error("Disabling SBD failed")
@@ -1275,7 +1274,7 @@ def sbd_enable(param, request, auth_user)
   unless allowed_for_local_cluster(auth_user, Permissions::WRITE)
     return 403, 'Permission denied'
   end
-  if enable_service(get_sbd_service_name())
+  if enable_service(SBD_SERVICE_NAME)
     return pcsd_success('SBD enabled')
   else
     return pcsd_error("Enabling SBD failed")

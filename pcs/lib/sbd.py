@@ -15,7 +15,6 @@ from pcs.lib import validate
 from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfFacade
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
-from pcs.lib.services import is_instances_support
 from pcs.lib.tools import (
     dict_to_environment_file,
     environment_file_to_dict,
@@ -262,16 +261,12 @@ def get_local_sbd_config() -> str:
         ) from e
 
 
-def get_sbd_service_name(service_manager: ServiceManagerInterface) -> str:
-    return "sbd" if is_instances_support(service_manager) else "sbd_helper"
-
-
 def is_sbd_enabled(service_manager: ServiceManagerInterface) -> bool:
     """
     Check if SBD service is enabled in local system.
     Return True if SBD service is enabled, False otherwise.
     """
-    return service_manager.is_enabled(get_sbd_service_name(service_manager))
+    return service_manager.is_enabled(settings.sbd_service_name)
 
 
 def is_sbd_installed(service_manager: ServiceManagerInterface) -> bool:
@@ -279,7 +274,7 @@ def is_sbd_installed(service_manager: ServiceManagerInterface) -> bool:
     Check if SBD service is installed in local system.
     Returns True id SBD service is installed. False otherwise.
     """
-    return service_manager.is_installed(get_sbd_service_name(service_manager))
+    return service_manager.is_installed(settings.sbd_service_name)
 
 
 def initialize_block_devices(

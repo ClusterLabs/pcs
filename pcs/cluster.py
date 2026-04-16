@@ -42,7 +42,6 @@ from pcs.common.node_communicator import HostNotFound, Request, RequestData
 from pcs.common.str_tools import format_list, indent, join_multilines
 from pcs.common.tools import format_os_error
 from pcs.common.types import StringCollection, StringIterable
-from pcs.lib import sbd as lib_sbd
 from pcs.lib.commands.remote_node import _destroy_pcmk_remote_env
 from pcs.lib.communication.nodes import CheckAuth
 from pcs.lib.communication.pcs_cfgsync import SetConfigs
@@ -1389,9 +1388,7 @@ def cluster_destroy(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  #
         # it's not a big deal if sbd disable fails
         with contextlib.suppress(Exception):
             service_manager = utils.get_service_manager()
-            service_manager.disable(
-                lib_sbd.get_sbd_service_name(service_manager)
-            )
+            service_manager.disable(settings.sbd_service_name)
 
         print_to_stderr("Removing all cluster configuration files...")
         dummy_output, dummy_retval = utils.run(
