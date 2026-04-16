@@ -175,6 +175,7 @@ class FromDictConversion(TestCase):
         cases = {
             "list_of_tuple_str_str_str": ["a b c"],
             "sequence_of_tuple_str_str": ["a b"],
+            "optional_tuple_str_str": "a b",
         }
         for field_name, bad_value in cases.items():
             with self.subTest(field=field_name):

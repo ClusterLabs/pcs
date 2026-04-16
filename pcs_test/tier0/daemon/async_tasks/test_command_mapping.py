@@ -8,6 +8,7 @@ from typing import (
     Iterable,
     get_args,
     get_origin,
+    get_type_hints,
 )
 from unittest import TestCase
 
@@ -27,8 +28,11 @@ def prohibited_types_used(_type, prohibited_types):
             for arg in get_args(_type)
         )
     if is_dataclass(_type):
+        # resolve forward references in type hints, because type-detecting
+        # functions do not work with forward references
+        type_hints = get_type_hints(_type)
         return any(
-            prohibited_types_used(field.type, prohibited_types)
+            prohibited_types_used(type_hints[field.name], prohibited_types)
             for field in fields(_type)
         )
     return False
@@ -62,10 +66,13 @@ def _find_disallowed_types(_type, allowed_types, hooked_origins, _seen=None):
                 )
             )
     if is_dataclass(_type):
+        # resolve forward references in type hints, because type-detecting
+        # functions do not work with forward references
+        type_hints = get_type_hints(_type)
         for field in fields(_type):
             disallowed.update(
                 _find_disallowed_types(
-                    field.type, allowed_types, hooked_origins, _seen
+                    type_hints[field.name], allowed_types, hooked_origins, _seen
                 )
             )
     return disallowed
