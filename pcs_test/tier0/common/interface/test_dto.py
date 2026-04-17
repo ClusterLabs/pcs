@@ -1,7 +1,8 @@
 import importlib
 import pkgutil
+from collections.abc import Sequence
 from dataclasses import dataclass, field, is_dataclass
-from typing import Any
+from typing import Any, Optional
 from unittest import TestCase
 
 from dacite.exceptions import WrongTypeError
@@ -61,8 +62,10 @@ class MyDto3(DataTransferObject):
 
 
 @dataclass
-class AclCreateLike(DataTransferObject):
-    permission_info_list: list[tuple[str, str, str]]
+class TypeHooksDto(DataTransferObject):
+    list_of_tuple_str_str_str: list[tuple[str, str, str]]
+    sequence_of_tuple_str_str: Sequence[tuple[str, str]]
+    optional_tuple_str_str: Optional[tuple[str, str]]
 
 
 class DictName(TestCase):
@@ -117,52 +120,70 @@ class DictName(TestCase):
         self.assertEqual(self.nested_dto, from_dict(MyDto3, self.nested_dict))
 
 
-class FromDictTupleConversion(TestCase):
+class FromDictConversion(TestCase):
+    _valid_payload = dict(
+        list_of_tuple_str_str_str=[["a", "b", "c"]],
+        sequence_of_tuple_str_str=[["a", "b"]],
+        optional_tuple_str_str=["a", "b"],
+    )
+    _valid_dto = TypeHooksDto(
+        list_of_tuple_str_str_str=[("a", "b", "c")],
+        sequence_of_tuple_str_str=[("a", "b")],
+        optional_tuple_str_str=("a", "b"),
+    )
+
     def test_success(self):
         self.assertEqual(
-            AclCreateLike([("read", "xpath", "/cib")]),
-            from_dict(
-                AclCreateLike,
-                dict(permission_info_list=[["read", "xpath", "/cib"]]),
-            ),
+            self._valid_dto,
+            from_dict(TypeHooksDto, self._valid_payload),
         )
 
-    def test_fail_on_different_list_length(self):
-        # Not worth to test misleading exception message:
-        # wrong value type for field "permission_info_list" - should be "list"
-        # instead of value "[('read', 'xpath', '/cib', 'extra string')]" of type
-        # "list"
-        with self.assertRaises(WrongTypeError):
-            from_dict(
-                AclCreateLike,
-                dict(
-                    permission_info_list=[
-                        ["read", "xpath", "/cib", "extra string"]
-                    ]
-                ),
-            )
+    def test_success_optional_none(self):
+        payload = {**self._valid_payload, "optional_tuple_str_str": None}
+        dto = from_dict(TypeHooksDto, payload)
+        self.assertIsNone(dto.optional_tuple_str_str)
 
-    def test_fail_on_different_list_item_type(self):
-        # Not worth to test misleading exception message:
-        # wrong value type for field "permission_info_list" - should be "list"
-        # instead of value "[('read', 'id', 1)]" of type "list"
-        with self.assertRaises(WrongTypeError):
-            from_dict(
-                AclCreateLike,
-                dict(permission_info_list=[["read", "id", 1]]),
-            )
+    def test_fail_on_wrong_length(self):
+        cases = {
+            "list_of_tuple_str_str_str": [["a", "b", "c", "d"]],
+            "sequence_of_tuple_str_str": [["a", "b", "c"]],
+            "optional_tuple_str_str": ["a", "b", "c"],
+        }
+        for field_name, bad_value in cases.items():
+            with self.subTest(field=field_name):
+                payload = {**self._valid_payload, field_name: bad_value}
+                # Not worth testing exception message as dacite produces
+                # misleading messages for type hook failures
+                with self.assertRaises(WrongTypeError):
+                    from_dict(TypeHooksDto, payload)
 
-    def test_fail_on_no_list(self):
-        # Not worth to test misleading exception message:
-        # wrong value type for field "permission_info_list" - should be "list"
-        # instead of value "['<generator object
-        # _build_value_for_collection.<locals>.<genexpr> at 0x7f7718f5b010>']"
-        # of type "list"
-        with self.assertRaises(WrongTypeError):
-            from_dict(
-                AclCreateLike,
-                dict(permission_info_list=["read xpath /cib"]),
-            )
+    def test_fail_on_wrong_item_type(self):
+        cases = {
+            "list_of_tuple_str_str_str": [["a", "b", 1]],
+            "sequence_of_tuple_str_str": [["a", 1]],
+            "optional_tuple_str_str": ["a", 1],
+        }
+        for field_name, bad_value in cases.items():
+            with self.subTest(field=field_name):
+                payload = {**self._valid_payload, field_name: bad_value}
+                # Not worth testing exception message as dacite produces
+                # misleading messages for type hook failures
+                with self.assertRaises(WrongTypeError):
+                    from_dict(TypeHooksDto, payload)
+
+    def test_fail_on_plain_string(self):
+        cases = {
+            "list_of_tuple_str_str_str": ["a b c"],
+            "sequence_of_tuple_str_str": ["a b"],
+            "optional_tuple_str_str": "a b",
+        }
+        for field_name, bad_value in cases.items():
+            with self.subTest(field=field_name):
+                payload = {**self._valid_payload, field_name: bad_value}
+                # Not worth testing exception message as dacite produces
+                # misleading messages for type hook failures
+                with self.assertRaises(WrongTypeError):
+                    from_dict(TypeHooksDto, payload)
 
 
 @dataclass
