@@ -1,18 +1,15 @@
 # pylint: disable=too-many-lines
 import base64
-import fcntl
 import getpass
 import json
 import logging
 import os
 import re
 import signal
-import struct
 import subprocess
 import sys
 import tarfile
 import tempfile
-import termios
 import threading
 import time
 import xml.dom.minidom
@@ -1783,28 +1780,6 @@ def set_node_attribute(prop, value, node):
 
     if r != 0:
         err("unable to set attribute %s\n%s" % (prop, o))
-
-
-def getTerminalSize(fd=1):
-    """
-    Returns height and width of current terminal. First tries to get
-    size via termios.TIOCGWINSZ, then from environment. Defaults to 25
-    lines x 80 columns if both methods fail.
-
-    :param fd: file descriptor (default: 1=stdout)
-
-    Commandline options: no options
-    """
-    try:
-        hw = struct.unpack(
-            str("hh"), fcntl.ioctl(fd, termios.TIOCGWINSZ, "1234")
-        )
-    except OSError:
-        try:
-            hw = (os.environ["LINES"], os.environ["COLUMNS"])
-        except KeyError:
-            hw = (25, 80)
-    return hw
 
 
 def get_terminal_input(message=None):

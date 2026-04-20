@@ -2,7 +2,6 @@
 import json
 import re
 import sys
-import textwrap
 from functools import partial
 from typing import TYPE_CHECKING, Any, Callable, Mapping, Optional
 from xml.dom.minidom import parseString
@@ -12,6 +11,7 @@ import pcs.lib.resource_agent as lib_ra
 from pcs import constraint, utils
 from pcs.cli.cluster_property.output import PropertyConfigurationFacade
 from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.common.output import format_wrap_for_terminal
 from pcs.cli.common.parse_args import (
     FUTURE_OPTION,
     OUTPUT_FORMAT_VALUE_CMD,
@@ -505,12 +505,10 @@ def resource_list_available(
         name = agent_info["name"]
         shortdesc = agent_info["shortdesc"]
         if shortdesc:
+            normalized_desc = " ".join(shortdesc.split())
             print(
-                "{0} - {1}".format(
-                    name,
-                    _format_desc(
-                        len(name + " - "), shortdesc.replace("\n", " ")
-                    ),
+                "\n".join(
+                    format_wrap_for_terminal(f"{name} - {normalized_desc}")
                 )
             )
         else:
@@ -556,30 +554,6 @@ def resource_list_options(
             )
         )
     )
-
-
-# Return the string formatted with a line length of terminal width  and indented
-def _format_desc(indentation: int, desc: str) -> str:
-    """
-    Commandline options: no options
-    """
-    desc = " ".join(desc.split())
-    dummy_rows, columns = utils.getTerminalSize()
-    columns = max(int(columns), 40)
-    afterindent = columns - indentation
-    if afterindent < 1:
-        afterindent = columns
-
-    output = ""
-    first = True
-    for line in textwrap.wrap(desc, afterindent):
-        if not first:
-            output += " " * indentation
-        output += line
-        output += "\n"
-        first = False
-
-    return output.rstrip()
 
 
 def resource_create(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  # noqa: PLR0912

@@ -1,15 +1,10 @@
 import json
-from typing import (
-    Any,
-    Optional,
-)
+from typing import Any, Optional
 
-from pcs import (
-    resource,
-    utils,
-)
+from pcs import resource, utils
 from pcs.cli.common import parse_args
 from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.common.output import format_wrap_for_terminal
 from pcs.cli.common.parse_args import (
     Argv,
     InputModifiers,
@@ -17,9 +12,7 @@ from pcs.cli.common.parse_args import (
     ensure_unique_args,
 )
 from pcs.cli.fencing_topology import target_type_map_cli_to_lib
-from pcs.cli.reports.output import (
-    print_to_stderr,
-)
+from pcs.cli.reports.output import print_to_stderr
 from pcs.cli.resource.output import resource_agent_metadata_to_text
 from pcs.cli.resource.parse_args import (
     parse_primitive as parse_primitive_resource,
@@ -33,11 +26,7 @@ from pcs.common.pacemaker.resource.list import (
     get_stonith_resources_ids,
 )
 from pcs.common.resource_agent.dto import ResourceAgentNameDto
-from pcs.common.str_tools import (
-    format_list,
-    format_plural,
-    indent,
-)
+from pcs.common.str_tools import format_list, format_plural, indent
 
 
 def stonith_status_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
@@ -81,13 +70,10 @@ def stonith_list_available(
         name = agent_info["type"]
         shortdesc = agent_info["shortdesc"]
         if shortdesc:
+            normalized_desc = " ".join(shortdesc.split())
             print(
-                "{0} - {1}".format(
-                    name,
-                    # pylint: disable=protected-access
-                    resource._format_desc(  # noqa: SLF001
-                        len(name + " - "), shortdesc.replace("\n", " ")
-                    ),
+                "\n".join(
+                    format_wrap_for_terminal(f"{name} - {normalized_desc}")
                 )
             )
         else:

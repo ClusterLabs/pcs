@@ -11,6 +11,7 @@
 ### Fixed
 - Upgrade CIB schema version when creating a colocation constraint with
   `influence` option to be able to create such constraint ([RHEL-84511])
+- Fixed a crash in `pcs resource | stonith list` commands ([rhbz#2458608])
 
 ### Deprecated
 - Commands `pcs pcsd certkey` and `pcs pcsd sync-certificates` ([RHEL-149608])
@@ -25,6 +26,7 @@
 [RHEL-7604]: https://issues.redhat.com/browse/RHEL-7604
 [RHEL-84511]: https://issues.redhat.com/browse/RHEL-84511
 [RHEL-149608]: https://issues.redhat.com/browse/RHEL-149608
+[rhbz#2458608]: https://bugzilla.redhat.com/show_bug.cgi?id=2458608
 
 
 ## [0.12.2] - 2026-01-06
