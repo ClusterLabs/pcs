@@ -1,12 +1,15 @@
+from pcs import settings
 from pcs.common.file import (
     FileAlreadyExists,
     RawFileError,
     RawFileInterface,
 )
 
+CALL_TYPE_RAW_FILE_BACKUP = "CALL_TYPE_RAW_FILE_BACKUP"
 CALL_TYPE_RAW_FILE_EXISTS = "CALL_TYPE_RAW_FILE_EXISTS"
 CALL_TYPE_RAW_FILE_READ = "CALL_TYPE_RAW_FILE_READ"
 CALL_TYPE_RAW_FILE_REMOVE = "CALL_TYPE_RAW_FILE_REMOVE"
+CALL_TYPE_RAW_FILE_REMOVE_OLD_BACKUPS = "CALL_TYPE_RAW_FILE_REMOVE_OLD_BACKUPS"
 CALL_TYPE_RAW_FILE_WRITE = "CALL_TYPE_RAW_FILE_WRITE"
 
 
@@ -19,6 +22,35 @@ class RawFileCall:
         return "<RawFile.{_method}> file_type_code={ftc} path={path}".format(
             _method=method, ftc=self.file_type_code, path=self.path
         )
+
+
+class RawFileBackupCall(RawFileCall):
+    type = CALL_TYPE_RAW_FILE_BACKUP
+
+    def __init__(self, file_type_code, path, exception_msg=None):
+        super().__init__(file_type_code, path)
+        self.exception_msg = exception_msg
+
+    def __repr__(self):
+        return super()._repr("backup")
+
+
+class RawFileRemoveOldBackupsCall(RawFileCall):
+    type = CALL_TYPE_RAW_FILE_REMOVE_OLD_BACKUPS
+
+    def __init__(
+        self,
+        file_type_code,
+        path,
+        backup_count=settings.pcs_cfgsync_file_backup_count_default,
+        exception_msg=None,
+    ):
+        super().__init__(file_type_code, path)
+        self.backup_count = backup_count
+        self.exception_msg = exception_msg
+
+    def __repr__(self):
+        return super()._repr("remove_old_backups")
 
 
 class RawFileExistsCall(RawFileCall):
@@ -239,7 +271,48 @@ def get_raw_file_mock(call_queue):
                 )
 
         def backup(self):
-            # TODO implement
-            raise NotImplementedError()
+            call_index, expected_call = call_queue.take(
+                CALL_TYPE_RAW_FILE_BACKUP
+            )
+            _check_file_type_code_and_path(
+                "backup", self.metadata, call_index, expected_call
+            )
+            if expected_call.exception_msg:
+                raise RawFileError(
+                    self.metadata,
+                    RawFileError.ACTION_BACKUP,
+                    expected_call.exception_msg,
+                )
+
+        def remove_old_backups(
+            self,
+            backup_count=settings.pcs_cfgsync_file_backup_count_default,
+        ):
+            call_index, expected_call = call_queue.take(
+                CALL_TYPE_RAW_FILE_REMOVE_OLD_BACKUPS
+            )
+            _check_file_type_code_and_path(
+                "remove_old_backups", self.metadata, call_index, expected_call
+            )
+            if backup_count != expected_call.backup_count:
+                raise AssertionError(
+                    (
+                        "Trying to call RawFile.remove_old_backups "
+                        "(call no. {index}) for '{real_ftc}', real "
+                        "backup_count is '{real_count}' but expected "
+                        "backup_count is '{expected_count}'"
+                    ).format(
+                        expected_count=expected_call.backup_count,
+                        index=call_index,
+                        real_ftc=self.metadata.file_type_code,
+                        real_count=backup_count,
+                    )
+                )
+            if expected_call.exception_msg:
+                raise RawFileError(
+                    self.metadata,
+                    RawFileError.ACTION_REMOVE_BACKUP,
+                    expected_call.exception_msg,
+                )
 
     return RawFileMock
