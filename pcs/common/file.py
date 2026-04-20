@@ -1,6 +1,9 @@
 import fcntl
+import glob
 import os
+import re
 import shutil
+import time
 from contextlib import (
     AbstractContextManager,
     contextmanager,
@@ -15,6 +18,7 @@ from typing import (
     Optional,
 )
 
+from pcs import settings
 from pcs.common.file_type_codes import FileTypeCode
 from pcs.common.tools import format_os_error
 
@@ -40,10 +44,12 @@ class RawFileError(Exception):
     # action. Actions must be passed in a report and we certainely do not want
     # a separate report for each action.
 
+    ACTION_BACKUP = FileAction("backup")
     ACTION_CHMOD = FileAction("chmod")
     ACTION_CHOWN = FileAction("chown")
     ACTION_READ = FileAction("read")
     ACTION_REMOVE = FileAction("remove")
+    ACTION_REMOVE_BACKUP = FileAction("remove_backup")
     ACTION_UPDATE = FileAction("update")
     ACTION_WRITE = FileAction("write")
 
@@ -249,8 +255,44 @@ class RawFile(RawFileInterface):
             raise self.__get_raw_file_error(e) from e
 
     def backup(self) -> None:
-        # TODO implement
-        raise NotImplementedError()
+        try:
+            shutil.copy2(
+                self.metadata.path,
+                f"{self.metadata.path}.{int(time.time())}",
+            )
+        except OSError as e:
+            raise RawFileError(
+                self.metadata, RawFileError.ACTION_BACKUP, format_os_error(e)
+            ) from e
+
+    def remove_old_backups(
+        self,
+        backup_count: int = settings.pcs_cfgsync_file_backup_count_default,
+    ) -> None:
+        pattern = re.compile(
+            r"^" + re.escape(self.metadata.path) + r"\.(\d+)$"
+        )
+        backup_files = []
+        for path in glob.glob(glob.escape(self.metadata.path) + ".*"):
+            if os.path.isfile(path):
+                match = pattern.match(path)
+                if match:
+                    backup_files.append((int(match.group(1)), path))
+        backup_files.sort()
+        to_delete = (
+            backup_files
+            if backup_count == 0
+            else backup_files[:-backup_count]
+        )
+        for _, path in to_delete:
+            try:
+                os.remove(path)
+            except OSError as e:
+                raise RawFileError(
+                    self.metadata,
+                    RawFileError.ACTION_REMOVE_BACKUP,
+                    format_os_error(e),
+                ) from e
 
     def __get_raw_file_error(self, e: OSError) -> RawFileError:
         return RawFileError(
