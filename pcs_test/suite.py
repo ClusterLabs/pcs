@@ -1,4 +1,5 @@
 # ruff: noqa: PLC0415 `import` should be at the top-level of a file
+import argparse
 import multiprocessing as mp
 import os
 import sys
@@ -149,8 +150,13 @@ def run_tier1_fixtures(
     return cleanup
 
 
-def parallel_run(tests: list[str], result_class, verbosity: int) -> bool:
-    # pylint: disable=import-outside-toplevel
+def parallel_run(
+    tests: list[str],
+    result_class,
+    verbosity: int,
+    vanilla: bool,
+    last_slash: bool,
+) -> bool:
     from pcs_test.tools.parallel_test_runner import (
         ParallelTestManager,
         aggregate_test_results,
@@ -169,8 +175,8 @@ def parallel_run(tests: list[str], result_class, verbosity: int) -> bool:
 
     test_result.print_summary(
         end_time - start_time,
-        vanilla="--vanilla" in sys.argv,
-        last_slash="--last-slash" in sys.argv,
+        vanilla=vanilla,
+        last_slash=last_slash,
     )
     return test_result.was_successful
 
@@ -186,9 +192,115 @@ def non_parallel_run(tests: list[str], result_class, verbosity: int) -> bool:
     return test_result.wasSuccessful()
 
 
+def _parse_args() -> argparse.Namespace:
+    arg_parser = argparse.ArgumentParser(
+        prog="pcs_test/suite",
+        description="Script for running pcs tests",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""\
+Examples:
+
+  Assume that we are in pcs root directory and want to run tests, then we can run:
+
+    pcs_test/suite                           - run all tests
+    pcs_test/suite test_module               - run tests from test_module
+    pcs_test/suite module.TestClass          - run tests from module.TestClass
+    pcs_test/suite module.Class.test_method  - run specified test method
+    pcs_test/suite path/to/test_file.py      - run tests from test_file.py
+    pcs_test/suite --all-but test_module \\
+        module.TestClass \\
+        module.Class.test_method \\
+        path/to/test_file.py                 - run all tests except the specified ones
+
+""",
+        allow_abbrev=False,
+    )
+    arg_parser.add_argument(
+        "tests",
+        nargs="*",
+        help="A list of any number of test modules, classes and test methods",
+    )
+    arg_parser.add_argument(
+        "-v",
+        "--verbose",
+        dest="verbosity",
+        action="store_const",
+        default=1,
+        const=2,
+        help="Verbose output - print test names",
+    )
+    arg_parser.add_argument(
+        "--traditional-verbose",
+        action="store_true",
+        help="Use traditional verbose output",
+    )
+    tier_group = arg_parser.add_mutually_exclusive_group()
+    tier_group.add_argument(
+        "--tier0",
+        dest="tier",
+        action="store_const",
+        const=0,
+        help="Run only tier 0 tests",
+    )
+    tier_group.add_argument(
+        "--tier1",
+        dest="tier",
+        action="store_const",
+        const=1,
+        help="Run only tier 1 tests",
+    )
+    arg_parser.add_argument(
+        "--all-but",
+        action="store_true",
+        help="Run all tests except the specified ones",
+    )
+    arg_parser.add_argument(
+        "--fast-info",
+        action="store_true",
+        help="Show a traceback immediately after the test fails",
+    )
+    arg_parser.add_argument(
+        "--last-slash",
+        action="store_true",
+        help="Add trailing backslash to last fail in overview",
+    )
+    arg_parser.add_argument(
+        "--list",
+        action="store_true",
+        dest="list_tests",
+        help="List discovered tests without running them",
+    )
+    arg_parser.add_argument(
+        "--no-parallel",
+        action="store_true",
+        help="Disable parallel test execution",
+    )
+    arg_parser.add_argument(
+        "--traceback-highlight",
+        action="store_true",
+        help="Highlight tracebacks in output",
+    )
+    arg_parser.add_argument(
+        "--vanilla",
+        action="store_true",
+        help="Remove extra features, use vanilla test runner",
+    )
+    arg_parser.add_argument(
+        "--installed",
+        action="store_true",
+        help="Test against installed pcs instead of local source",
+    )
+    arg_parser.add_argument(
+        "--time",
+        action="store_true",
+        dest="measure_time",
+        help="Measure each test execution time",
+    )
+    return arg_parser.parse_args()
+
+
 def main() -> None:
-    # pylint: disable=import-outside-toplevel
-    # pylint: disable=too-many-locals
+    args = _parse_args()
 
     # explicitly set start method for multiprocessing to "fork"
     # https://docs.python.org/3.14/whatsnew/3.14.html#incompatible-changes
@@ -196,7 +308,7 @@ def main() -> None:
     if "BUNDLED_LIB_LOCATION" in os.environ:
         sys.path.insert(0, os.environ["BUNDLED_LIB_LOCATION"])
 
-    if "--installed" in sys.argv:
+    if args.installed:
         sys.path.append(PACKAGE_DIR)
 
         from pcs import settings
@@ -213,44 +325,19 @@ def main() -> None:
 
         settings.pcs_data_dir = os.path.join(PACKAGE_DIR, "data")
 
-    measure_test_time = "--time" in sys.argv
-
     explicitly_enumerated_tests = [
-        prepare_test_name(arg)
-        for arg in sys.argv[1:]
-        if arg
-        not in (
-            "-v",
-            "--all-but",
-            "--fast-info",  # show a traceback immediately after the test fails
-            "--last-slash",
-            "--list",
-            "--no-parallel",
-            "--traceback-highlight",
-            "--traditional-verbose",
-            "--vanilla",
-            "--installed",
-            "--tier0",
-            "--tier1",
-            "--time",
-        )
+        prepare_test_name(test) for test in args.tests
     ]
 
-    tier = None
-    if "--tier0" in sys.argv:
-        tier = 0
-    elif "--tier1" in sys.argv:
-        tier = 1
-
     discovered_tests = discover_tests(
-        explicitly_enumerated_tests, "--all-but" in sys.argv, tier=tier
+        explicitly_enumerated_tests, args.all_but, tier=args.tier
     )
-    if "--list" in sys.argv:
+    if args.list_tests:
         print("\n".join(sorted(discovered_tests)))
         print("{0} tests found".format(len(discovered_tests)))
         sys.exit()
 
-    run_concurrently = "--no-parallel" not in sys.argv and not measure_test_time
+    run_concurrently = not args.no_parallel and not args.measure_time
     tier1_fixtures_cleanup = run_tier1_fixtures(
         tier1_fixtures_needed(discovered_tests),
         run_concurrently=run_concurrently,
@@ -259,29 +346,34 @@ def main() -> None:
     from pcs_test.tools.parallel_test_runner import VanillaTextTestResult
 
     ResultClass = VanillaTextTestResult
-    if "--vanilla" not in sys.argv:
+    if not args.vanilla:
         from pcs_test.tools.color_text_runner import get_text_test_result_class
 
         ResultClass = get_text_test_result_class(
-            slash_last_fail_in_overview=("--last-slash" in sys.argv),
-            traditional_verbose=("--traditional-verbose" in sys.argv),
-            traceback_highlight=("--traceback-highlight" in sys.argv),
-            fast_info=("--fast-info" in sys.argv),
+            slash_last_fail_in_overview=args.last_slash,
+            traditional_verbose=args.traditional_verbose,
+            traceback_highlight=args.traceback_highlight,
+            fast_info=args.fast_info,
             rich_format=(
                 sys.stdout is not None
                 and sys.stderr is not None
                 and sys.stdout.isatty()
                 and sys.stderr.isatty()
             ),
-            measure_time=("--time" in sys.argv),
+            measure_time=args.measure_time,
         )
 
-    verbosity = 2 if "-v" in sys.argv else 1
     if run_concurrently:
-        test_success = parallel_run(discovered_tests, ResultClass, verbosity)
+        test_success = parallel_run(
+            discovered_tests,
+            ResultClass,
+            args.verbosity,
+            args.vanilla,
+            args.last_slash,
+        )
     else:
         test_success = non_parallel_run(
-            discovered_tests, ResultClass, verbosity
+            discovered_tests, ResultClass, args.verbosity
         )
     tier1_fixtures_cleanup()
     if not test_success:
@@ -290,23 +382,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
-
-# assume that we are in pcs root dir
-#
-# run all tests:
-# ./pcs_test/suite.py
-#
-# run and print tests' names:
-# pcs_test/suite.py -v
-#
-# run specific test:
-# IMPORTANT: in 2.6 module.class.method doesn't work but module.class works fine
-# pcs_test/suite.py pcs_test.tier0.test_acl.ACLTest -v
-# pcs_test/suite.py pcs_test.tier0.test_acl.ACLTest.testAutoUpgradeofCIB
-#
-# run all tests except some:
-# pcs_test/suite.py pcs_test.tier0.test_acl.ACLTest --all-but
-#
-# remove extra features
-# pcs_test/suite.py --vanilla
