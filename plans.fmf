@@ -8,7 +8,7 @@ prepare:
   # https://docs.testing-farm.io/Testing%20Farm/0.1/test-environment.html#_tag_repository
   - name: Disable testing-farm RHEL repos that may contain packages of
           different versions than we want
-    when: distro == rhel
+    when: distro == rhel, centos-stream
     how: shell
     script:
       - |
@@ -21,14 +21,17 @@ prepare:
         done
 
   - name: Enable testing-farm HighAvailability RHEL repo
-    when: distro == rhel
+    when: distro == rhel, centos-stream
     how: shell
     script:
       - |
-        if dnf repolist --disabled -v |
-            grep "^Repo-id\s*:\s*rhel-HighAvailability$"; then
-          dnf config-manager --set-enabled rhel-HighAvailability
-        fi
+        for repo in rhel-HighAvailability \
+            highavailability; do
+          if dnf repolist --disabled -v |
+              grep "^Repo-id\s*:\s*${repo}$"; then
+            dnf config-manager --set-enabled "${repo}"
+          fi;
+        done
 
   - name: Install common packages required for pcs
     how: install
@@ -90,14 +93,14 @@ prepare:
       - booth-site
 
   - name: Install python3-pycurl system package
-    when: distro == fedora, rhel-9
+    when: distro == fedora, rhel-9, centos-stream-9
     how: install
     package:
       - python3-pycurl
 
   - name: Install dependencies for bundled python3-pycurl
     # autotools_rpmbuild also bundles pycurl on fedora
-    when: distro >= rhel-10, fedora
+    when: distro >= rhel-10, fedora, centos-stream-10
     how: install
     package:
       - libcurl
@@ -105,7 +108,7 @@ prepare:
       - openssl-devel
 
   - name: Install dependencies for bundled rubygem-ffi
-    when: distro == rhel-9, rhel-10
+    when: distro == rhel-9, rhel-10, centos-stream-10, centos-stream-9
     how: install
     package:
       - gcc
@@ -126,6 +129,17 @@ prepare:
       - rubygem-rack-test
       - rubygem-sinatra
       - rubygem-tilt
+
+  - name: Install corosync-qdevice-devel on CentOS-Stream-9
+    # required dependency for the rpm build on CentOS-Stream9 / RHEL-9.*
+    # provided by rhel-buildroot repository on RHEL-9.*
+    # missing in standard CentOS-Stream-9 repositories
+    # installing from 'testing-farm-tag-repository'
+    when: distro == centos-stream-9
+    how: shell
+    script:
+      - dnf install -y --enablerepo=testing-farm-tag-repository
+        corosync-qdevice-devel
 
 # https://tmt.readthedocs.io/en/stable/spec/plans.html#execute
 execute:
