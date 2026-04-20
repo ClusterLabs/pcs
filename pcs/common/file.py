@@ -116,6 +116,21 @@ class RawFileInterface:
         """
         raise NotImplementedError()
 
+    def backup(self) -> None:
+        """
+        Create a timestamped backup copy of the file
+        """
+        raise NotImplementedError()
+
+    def remove_old_backups(
+        self,
+        backup_count: int = settings.pcs_cfgsync_file_backup_count_default,
+    ) -> None:
+        """
+        Remove old backup copies, keeping only the most recent backup_count
+        """
+        raise NotImplementedError()
+
 
 class RawFile(RawFileInterface):
     def exists(self) -> bool:
