@@ -4,19 +4,10 @@ import os
 import re
 import shutil
 import time
-from contextlib import (
-    AbstractContextManager,
-    contextmanager,
-)
+from contextlib import AbstractContextManager, contextmanager
 from dataclasses import dataclass
 from io import BytesIO
-from typing import (
-    IO,
-    Any,
-    Iterator,
-    NewType,
-    Optional,
-)
+from typing import IO, Any, Iterator, NewType, Optional
 
 from pcs import settings
 from pcs.common.file_type_codes import FileTypeCode
@@ -269,6 +260,11 @@ class RawFile(RawFileInterface):
         except OSError as e:
             raise self.__get_raw_file_error(e) from e
 
+    def __get_raw_file_error(self, e: OSError) -> RawFileError:
+        return RawFileError(
+            self.metadata, RawFileError.ACTION_REMOVE, format_os_error(e)
+        )
+
     def backup(self) -> None:
         try:
             shutil.copy2(
@@ -284,20 +280,18 @@ class RawFile(RawFileInterface):
         self,
         backup_count: int = settings.pcs_cfgsync_file_backup_count_default,
     ) -> None:
-        pattern = re.compile(
-            r"^" + re.escape(self.metadata.path) + r"\.(\d+)$"
-        )
+        pattern = re.compile(r"^" + re.escape(self.metadata.path) + r"\.(\d+)$")
         backup_files = []
         for path in glob.glob(glob.escape(self.metadata.path) + ".*"):
             if os.path.isfile(path):
                 match = pattern.match(path)
                 if match:
                     backup_files.append((int(match.group(1)), path))
+
         backup_files.sort()
+
         to_delete = (
-            backup_files
-            if backup_count == 0
-            else backup_files[:-backup_count]
+            backup_files if backup_count == 0 else backup_files[:-backup_count]
         )
         for _, path in to_delete:
             try:
@@ -308,8 +302,3 @@ class RawFile(RawFileInterface):
                     RawFileError.ACTION_REMOVE_BACKUP,
                     format_os_error(e),
                 ) from e
-
-    def __get_raw_file_error(self, e: OSError) -> RawFileError:
-        return RawFileError(
-            self.metadata, RawFileError.ACTION_REMOVE, format_os_error(e)
-        )

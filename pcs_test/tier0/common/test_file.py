@@ -1,10 +1,7 @@
 import errno
 import fcntl
 import os.path
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
 from pcs.common.file import (
     FileAlreadyExists,
@@ -614,14 +611,17 @@ class RawFileBackup(TestCase):
 @patch_file("os.path.isfile")
 @patch_file("glob.glob")
 class RawFileRemoveOldBackups(TestCase):
-    backup_paths = [
-        f"{FILE_PATH}.1",
-        f"{FILE_PATH}.2",
+    file_paths = [
+        f"{FILE_PATH}",  # current file
+        f"{FILE_PATH}.1",  # backups
         f"{FILE_PATH}.3",
+        f"{FILE_PATH}.2",
     ]
 
-    def test_removes_oldest_beyond_count(self, mock_glob, mock_isfile, mock_remove):
-        mock_glob.return_value = self.backup_paths
+    def test_removes_oldest_beyond_count(
+        self, mock_glob, mock_isfile, mock_remove
+    ):
+        mock_glob.return_value = self.file_paths
         mock_isfile.return_value = True
         RawFile(fixture_metadata()).remove_old_backups(backup_count=1)
         mock_glob.assert_called_once_with(f"{FILE_PATH}.*")
@@ -630,8 +630,10 @@ class RawFileRemoveOldBackups(TestCase):
         )
         self.assertEqual(mock_remove.call_count, 2)
 
-    def test_removes_all_when_count_zero(self, mock_glob, mock_isfile, mock_remove):
-        mock_glob.return_value = self.backup_paths
+    def test_removes_all_when_count_zero(
+        self, mock_glob, mock_isfile, mock_remove
+    ):
+        mock_glob.return_value = self.file_paths
         mock_isfile.return_value = True
         RawFile(fixture_metadata()).remove_old_backups(backup_count=0)
         self.assertEqual(mock_remove.call_count, 3)
@@ -639,7 +641,7 @@ class RawFileRemoveOldBackups(TestCase):
     def test_keeps_all_when_count_exceeds_backups(
         self, mock_glob, mock_isfile, mock_remove
     ):
-        mock_glob.return_value = self.backup_paths
+        mock_glob.return_value = self.file_paths
         mock_isfile.return_value = True
         RawFile(fixture_metadata()).remove_old_backups(backup_count=10)
         mock_remove.assert_not_called()
@@ -671,6 +673,4 @@ class RawFileRemoveOldBackups(TestCase):
         mock_remove.assert_called_once_with(f"{FILE_PATH}.1")
         self.assertEqual(cm.exception.metadata, raw_file.metadata)
         self.assertEqual(cm.exception.action, RawFileError.ACTION_REMOVE_BACKUP)
-        self.assertEqual(
-            cm.exception.reason, f"some error: '{FILE_PATH}.1'"
-        )
+        self.assertEqual(cm.exception.reason, f"some error: '{FILE_PATH}.1'")
