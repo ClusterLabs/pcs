@@ -43,9 +43,7 @@ def _get_generic(annotation):
     return getattr(annotation, "__origin__", None)
 
 
-def _find_disallowed_types(
-    _type, allowed_types, hooked_generic_origins, _seen=None
-):
+def _find_disallowed_types(_type, allowed_types, _seen=None):
     if _seen is None:
         _seen = set()
     type_id = id(_type)
@@ -60,22 +58,15 @@ def _find_disallowed_types(
         if isinstance(_type, EnumType) and _type not in allowed_types:
             disallowed.add(_type)
     else:
-        # flag as disallowed if types' origin needs a hook but this specific
-        # instantiation does not have a type hook
-        # e.g. we found a tuple, that does not have explicit type hook, so
-        # we flag it as disallowed
+        # tuples apart from tuple with ellipsis must have explicit type hooks
         if (
-            generic in hooked_generic_origins
+            generic is tuple
             and Ellipsis not in get_args(_type)
             and _type not in allowed_types
         ):
             disallowed.add(_type)
         for arg in get_args(_type):
-            disallowed.update(
-                _find_disallowed_types(
-                    arg, allowed_types, hooked_generic_origins, _seen
-                )
-            )
+            disallowed.update(_find_disallowed_types(arg, allowed_types, _seen))
 
     if is_dataclass(_type):
         # resolve forward references in type hints, because type-detecting
@@ -84,10 +75,7 @@ def _find_disallowed_types(
         for field in fields(_type):
             disallowed.update(
                 _find_disallowed_types(
-                    type_hints[field.name],
-                    allowed_types,
-                    hooked_generic_origins,
-                    _seen,
+                    type_hints[field.name], allowed_types, _seen
                 )
             )
     return disallowed
@@ -113,11 +101,6 @@ class DaciteTypingCompatibilityTest(TestCase):
 
     def test_check_type_hooks_map_types_in_commands(self):
         allowed_types = set(DTO_TYPE_HOOKS_MAP.keys())
-        hooked_generic_origins = {
-            origin
-            for _type in allowed_types
-            if (origin := get_origin(_type)) is not None
-        }
         for cmd_name, cmd in COMMAND_MAP.items():
             for param in list(inspect.signature(cmd.cmd).parameters.values())[
                 1:
@@ -125,7 +108,7 @@ class DaciteTypingCompatibilityTest(TestCase):
                 if param.annotation == inspect.Parameter.empty:
                     continue
                 disallowed = _find_disallowed_types(
-                    param.annotation, allowed_types, hooked_generic_origins
+                    param.annotation, allowed_types
                 )
                 self.assertFalse(
                     disallowed,
