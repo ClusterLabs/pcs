@@ -280,6 +280,9 @@ class RawFile(RawFileInterface):
         self,
         backup_count: int = settings.pcs_cfgsync_file_backup_count_default,
     ) -> None:
+        if backup_count < 0:
+            raise AssertionError("Backup count cannot be negative")
+
         pattern = re.compile(r"^" + re.escape(self.metadata.path) + r"\.(\d+)$")
         backup_files = []
         for path in glob.glob(glob.escape(self.metadata.path) + ".*"):
@@ -293,12 +296,19 @@ class RawFile(RawFileInterface):
         to_delete = (
             backup_files if backup_count == 0 else backup_files[:-backup_count]
         )
+        first_os_error: Optional[OSError] = None
         for _, path in to_delete:
             try:
                 os.remove(path)
             except OSError as e:
-                raise RawFileError(
-                    self.metadata,
-                    RawFileError.ACTION_REMOVE_BACKUP,
-                    format_os_error(e),
-                ) from e
+                # try to remove all files, even when there is an error when
+                # removing any of them.
+                if first_os_error is None:
+                    first_os_error = e
+
+        if first_os_error is not None:
+            raise RawFileError(
+                self.metadata,
+                RawFileError.ACTION_REMOVE_BACKUP,
+                format_os_error(first_os_error),
+            ) from first_os_error
