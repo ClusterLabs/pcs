@@ -185,7 +185,7 @@ def task_executor(task: WorkerCommand) -> None:
                 TaskFinished(TaskFinishType.FAIL, None),
             )
         )
-        logger.exception("Task %s raised a LibraryError.", task.task_ident)
+        logger.error("Task %s raised a LibraryError: %s.", task.task_ident, e)
         _pause_worker()
         return
     except Exception as e:  # pylint: disable=broad-except
