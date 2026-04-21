@@ -36,12 +36,22 @@ SerializableType = Union[
 ]
 
 T = TypeVar("T")
+E = TypeVar("E", bound=Enum)
 
 ToDictMetaKey = NewType("ToDictMetaKey", str)
 META_NAME = ToDictMetaKey("META_NAME")
 
 
-E = TypeVar("E", bound=Enum)
+class PayloadConversionError(Exception):
+    pass
+
+
+class _UnionNotAllowed(Exception):
+    pass
+
+
+class DataTransferObject(DataclassInstance):
+    pass
 
 
 def _safe_enum_cast(enum_class: type[E]) -> Callable[[Any], E]:
@@ -52,7 +62,7 @@ def _safe_enum_cast(enum_class: type[E]) -> Callable[[Any], E]:
             valid_values = format_list([f.value for f in enum_class])
             raise PayloadConversionError(
                 f"Invalid value '{value}' for Enum '{enum_class.__name__}', "
-                f"use one of {valid_values}"
+                f"expected one of {valid_values}"
             ) from e
 
     return _cast_value
@@ -97,18 +107,6 @@ DTO_TYPE_HOOKS_MAP: dict[type[Any], Callable[[Any], Any]] = {
     #   queries: Sequence[tuple[str, str]]
     tuple[str, str]: lambda v: tuple(v) if isinstance(v, list) else v,
 }
-
-
-class PayloadConversionError(Exception):
-    pass
-
-
-class _UnionNotAllowed(Exception):
-    pass
-
-
-class DataTransferObject(DataclassInstance):
-    pass
 
 
 def meta(name: str) -> dict[str, str]:

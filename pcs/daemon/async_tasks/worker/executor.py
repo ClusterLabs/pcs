@@ -184,15 +184,9 @@ def task_executor(task: WorkerCommand) -> None:
                 command_dto.params,
                 strict=True,
             ).__dict__  # type: ignore
-        except dacite.DaciteError as e:
+        except (dacite.DaciteError, dto.PayloadConversionError) as e:
             # TODO: make custom message from exception without mentioning
             # dataclasses and fields
-            raise LibraryError(
-                reports.ReportItem.error(
-                    reports.messages.CommandInvalidPayload(str(e))
-                )
-            ) from e
-        except dto.PayloadConversionError as e:
             raise LibraryError(
                 reports.ReportItem.error(
                     reports.messages.CommandInvalidPayload(str(e))

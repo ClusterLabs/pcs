@@ -69,14 +69,6 @@ class TypeHooksDto(DataTransferObject):
     optional_tuple_str_str: Optional[tuple[str, str]]
 
 
-@dataclass
-class EnumDto(DataTransferObject):
-    field_a: CorosyncNodeAddressType
-    field_b: list[CorosyncNodeAddressType]
-    field_c: dict[str, CorosyncNodeAddressType]
-    field_d: Optional[CorosyncNodeAddressType]
-
-
 class DictName(TestCase):
     maxDiff = None
     simple_dto = MyDto1(1, 2, 3)
@@ -193,6 +185,14 @@ class FromDictConversion(TestCase):
                 # misleading messages for type hook failures
                 with self.assertRaises(WrongTypeError):
                     from_dict(TypeHooksDto, payload)
+
+
+@dataclass
+class EnumDto(DataTransferObject):
+    field_a: CorosyncNodeAddressType
+    field_b: list[CorosyncNodeAddressType]
+    field_c: dict[str, CorosyncNodeAddressType]
+    field_d: Optional[CorosyncNodeAddressType]
 
 
 class FromDictEnumConversion(TestCase):
