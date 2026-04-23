@@ -3,15 +3,8 @@ import inspect
 import multiprocessing as mp
 import os
 import signal
-from logging import (
-    Logger,
-    getLogger,
-)
-from typing import (
-    Any,
-    Tuple,
-    Union,
-)
+from logging import Logger, getLogger
+from typing import Any, Union
 
 import dacite
 
@@ -19,32 +12,18 @@ from pcs.common import reports
 from pcs.common.async_tasks.dto import CommandOptionsDto
 from pcs.common.async_tasks.types import TaskFinishType
 from pcs.common.interface import dto
-from pcs.lib.auth.tools import (
-    DesiredUser,
-    get_effective_user,
-)
+from pcs.lib.auth.tools import DesiredUser, get_effective_user
 from pcs.lib.auth.types import AuthUser
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 from pcs.lib.permissions.checker import PermissionsChecker
 from pcs.utils import read_known_hosts_file_not_cached
 
-from .command_mapping import (
-    COMMAND_MAP,
-    LEGACY_API_COMMANDS,
-)
+from .command_mapping import COMMAND_MAP, LEGACY_API_COMMANDS
 from .communicator import WorkerCommunicator
-from .logging import (
-    WORKER_LOGGER,
-    setup_worker_logger,
-)
+from .logging import WORKER_LOGGER, setup_worker_logger
 from .report_processor import WorkerReportProcessor
-from .types import (
-    Message,
-    TaskExecuted,
-    TaskFinished,
-    WorkerCommand,
-)
+from .types import Message, TaskExecuted, TaskFinished, WorkerCommand
 
 worker_com: WorkerCommunicator
 
@@ -184,18 +163,12 @@ def task_executor(task: WorkerCommand) -> None:
                 command_dto.params,
                 strict=True,
             ).__dict__  # type: ignore
-        except dacite.DaciteError as e:
+        except (dacite.DaciteError, dto.PayloadConversionError) as e:
             # TODO: make custom message from exception without mentioning
             # dataclasses and fields
             raise LibraryError(
                 reports.ReportItem.error(
                     reports.messages.CommandInvalidPayload(str(e))
-                )
-            ) from e
-        except dto.PayloadConversionError as e:
-            raise LibraryError(
-                reports.ReportItem.error(
-                    reports.messages.CommandInvalidPayload("")
                 )
             ) from e
 
@@ -212,7 +185,7 @@ def task_executor(task: WorkerCommand) -> None:
                 TaskFinished(TaskFinishType.FAIL, None),
             )
         )
-        logger.exception("Task %s raised a LibraryError.", task.task_ident)
+        logger.error("Task %s raised a LibraryError: %s.", task.task_ident, e)
         _pause_worker()
         return
     except Exception as e:  # pylint: disable=broad-except
@@ -240,7 +213,7 @@ def task_executor(task: WorkerCommand) -> None:
 
 def _param_to_field_tuple(
     param: inspect.Parameter,
-) -> Union[Tuple[str, Any], Tuple[str, Any, dataclasses.Field]]:
+) -> Union[tuple[str, Any], tuple[str, Any, dataclasses.Field]]:
     field_type = Any
     if param.annotation != inspect.Parameter.empty:
         field_type = param.annotation

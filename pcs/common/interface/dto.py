@@ -19,6 +19,7 @@ import dacite
 import pcs.common.async_tasks.types as async_tasks_types
 import pcs.common.permissions.types as permissions_types
 from pcs.common import types
+from pcs.common.str_tools import format_list
 
 if TYPE_CHECKING:
     from _typeshed import DataclassInstance  # pylint: disable=import-error
@@ -35,12 +36,62 @@ SerializableType = Union[
 ]
 
 T = TypeVar("T")
+E = TypeVar("E", bound=Enum)
 
 ToDictMetaKey = NewType("ToDictMetaKey", str)
 META_NAME = ToDictMetaKey("META_NAME")
 
 
+class PayloadConversionError(Exception):
+    pass
+
+
+class _UnionNotAllowed(Exception):
+    pass
+
+
+class DataTransferObject(DataclassInstance):
+    pass
+
+
+def _safe_enum_cast(enum_class: type[E]) -> Callable[[Any], E]:
+    def _cast_value(value: Any) -> E:
+        try:
+            return enum_class(value)
+        except ValueError as e:
+            valid_values = format_list([f.value for f in enum_class])
+            raise PayloadConversionError(
+                f"Invalid value '{value}' for Enum '{enum_class.__name__}', "
+                f"expected one of {valid_values}"
+            ) from e
+
+    return _cast_value
+
+
 DTO_TYPE_HOOKS_MAP: dict[type[Any], Callable[[Any], Any]] = {
+    # Dacite does not convert Enums automatically. We previously used simple
+    # casting: https://github.com/konradhalas/dacite#casting, but that is not
+    # sufficient, since it does not do proper handling of values that cannot
+    # be converted to enums.
+    #
+    # All enum types used in lib command parameters must be listed here!
+    **{
+        enum_type: _safe_enum_cast(enum_type)
+        for enum_type in [
+            types.CibRuleExpressionType,
+            types.CibRuleInEffectStatus,
+            types.CorosyncNodeAddressType,
+            types.CorosyncTransportType,
+            types.DrRole,
+            types.ResourceRelationType,
+            async_tasks_types.TaskFinishType,
+            async_tasks_types.TaskState,
+            async_tasks_types.TaskKillReason,
+            permissions_types.PermissionGrantedType,
+            permissions_types.PermissionTargetType,
+        ]
+    },
+    #
     # JSON does not support tuples, only lists. However, tuples are
     # used e.g. to express fixed-length structures. If a tuple is
     # expected and a list is provided, we convert it to a tuple.
@@ -56,18 +107,6 @@ DTO_TYPE_HOOKS_MAP: dict[type[Any], Callable[[Any], Any]] = {
     #   queries: Sequence[tuple[str, str]]
     tuple[str, str]: lambda v: tuple(v) if isinstance(v, list) else v,
 }
-
-
-class PayloadConversionError(Exception):
-    pass
-
-
-class _UnionNotAllowed(Exception):
-    pass
-
-
-class DataTransferObject(DataclassInstance):
-    pass
 
 
 def meta(name: str) -> dict[str, str]:
@@ -250,22 +289,7 @@ def from_dict(
     return dacite.from_dict(
         data_class=cls,
         data=_convert_payload(cls, data),
-        # NOTE: all enum types has to be listed here in key cast
-        # see: https://github.com/konradhalas/dacite#casting
         config=dacite.Config(
-            cast=[
-                types.CibRuleExpressionType,
-                types.CibRuleInEffectStatus,
-                types.CorosyncNodeAddressType,
-                types.CorosyncTransportType,
-                types.DrRole,
-                types.ResourceRelationType,
-                async_tasks_types.TaskFinishType,
-                async_tasks_types.TaskState,
-                async_tasks_types.TaskKillReason,
-                permissions_types.PermissionGrantedType,
-                permissions_types.PermissionTargetType,
-            ],
             type_hooks=DTO_TYPE_HOOKS_MAP,
             strict=strict,
         ),

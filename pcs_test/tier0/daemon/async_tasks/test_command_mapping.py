@@ -3,6 +3,7 @@ from dataclasses import (
     fields,
     is_dataclass,
 )
+from enum import EnumType
 from typing import (
     Container,
     Iterable,
@@ -42,7 +43,7 @@ def _get_generic(annotation):
     return getattr(annotation, "__origin__", None)
 
 
-def _find_disallowed_types(_type, allowed_types, hooked_origins, _seen=None):
+def _find_disallowed_types(_type, allowed_types, _seen=None):
     if _seen is None:
         _seen = set()
     type_id = id(_type)
@@ -52,19 +53,21 @@ def _find_disallowed_types(_type, allowed_types, hooked_origins, _seen=None):
 
     disallowed = set()
     generic = get_origin(_type)
-    if (
-        generic in hooked_origins
-        and Ellipsis not in get_args(_type)
-        and _type not in allowed_types
-    ):
-        disallowed.add(_type)
-    if generic:
+
+    if generic is None:
+        if isinstance(_type, EnumType) and _type not in allowed_types:
+            disallowed.add(_type)
+    else:
+        # tuples apart from tuple with ellipsis must have explicit type hooks
+        if (
+            generic is tuple
+            and Ellipsis not in get_args(_type)
+            and _type not in allowed_types
+        ):
+            disallowed.add(_type)
         for arg in get_args(_type):
-            disallowed.update(
-                _find_disallowed_types(
-                    arg, allowed_types, hooked_origins, _seen
-                )
-            )
+            disallowed.update(_find_disallowed_types(arg, allowed_types, _seen))
+
     if is_dataclass(_type):
         # resolve forward references in type hints, because type-detecting
         # functions do not work with forward references
@@ -72,7 +75,7 @@ def _find_disallowed_types(_type, allowed_types, hooked_origins, _seen=None):
         for field in fields(_type):
             disallowed.update(
                 _find_disallowed_types(
-                    type_hints[field.name], allowed_types, hooked_origins, _seen
+                    type_hints[field.name], allowed_types, _seen
                 )
             )
     return disallowed
@@ -98,7 +101,6 @@ class DaciteTypingCompatibilityTest(TestCase):
 
     def test_check_type_hooks_map_types_in_commands(self):
         allowed_types = set(DTO_TYPE_HOOKS_MAP.keys())
-        hooked_origins = {get_origin(_type) for _type in allowed_types}
         for cmd_name, cmd in COMMAND_MAP.items():
             for param in list(inspect.signature(cmd.cmd).parameters.values())[
                 1:
@@ -106,7 +108,7 @@ class DaciteTypingCompatibilityTest(TestCase):
                 if param.annotation == inspect.Parameter.empty:
                     continue
                 disallowed = _find_disallowed_types(
-                    param.annotation, allowed_types, hooked_origins
+                    param.annotation, allowed_types
                 )
                 self.assertFalse(
                     disallowed,
