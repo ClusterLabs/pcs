@@ -1,10 +1,7 @@
 import errno
 import fcntl
 import os.path
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
 from pcs.common.file import (
     FileAlreadyExists,
@@ -585,3 +582,142 @@ class RawFileRemove(TestCase):
         self.assertEqual(cm.exception.metadata, raw_file.metadata)
         self.assertEqual(cm.exception.action, RawFileError.ACTION_REMOVE)
         self.assertEqual(cm.exception.reason, f"some error: '{FILE_PATH}'")
+
+
+@patch_file("shutil.copy2")
+@patch_file("time.time")
+class RawFileBackup(TestCase):
+    timestamp = 12345
+    backup_path = f"{FILE_PATH}.{timestamp}"
+
+    def test_success(self, mock_time, mock_copy2):
+        mock_time.return_value = self.timestamp
+        RawFile(fixture_metadata()).backup()
+        mock_copy2.assert_called_once_with(FILE_PATH, self.backup_path)
+
+    def test_copy_failure(self, mock_time, mock_copy2):
+        mock_time.return_value = self.timestamp
+        raw_file = RawFile(fixture_metadata())
+        mock_copy2.side_effect = OSError(1, "some error", FILE_PATH)
+        with self.assertRaises(RawFileError) as cm:
+            raw_file.backup()
+        mock_copy2.assert_called_once_with(FILE_PATH, self.backup_path)
+        self.assertEqual(cm.exception.metadata, raw_file.metadata)
+        self.assertEqual(cm.exception.action, RawFileError.ACTION_BACKUP)
+        self.assertEqual(cm.exception.reason, f"some error: '{FILE_PATH}'")
+
+
+@patch_file("os.remove")
+@patch_file("os.path.isfile")
+@patch_file("glob.glob")
+class RawFileRemoveOldBackups(TestCase):
+    file_paths = [
+        f"{FILE_PATH}",  # current file
+        f"{FILE_PATH}.1",  # backups
+        f"{FILE_PATH}.3",
+        f"{FILE_PATH}.2",
+    ]
+
+    def assert_remove_all_files_calls(self, mock_remove):
+        calls = [
+            mock.call(f"{FILE_PATH}.1"),
+            mock.call(f"{FILE_PATH}.2"),
+            mock.call(f"{FILE_PATH}.3"),
+        ]
+        mock_remove.assert_has_calls(calls)
+        self.assertEqual(mock_remove.call_count, len(calls))
+
+    def test_removes_oldest_beyond_count(
+        self, mock_glob, mock_isfile, mock_remove
+    ):
+        mock_glob.return_value = self.file_paths
+        mock_isfile.return_value = True
+        RawFile(fixture_metadata()).remove_old_backups(backup_count=1)
+        mock_glob.assert_called_once_with(f"{FILE_PATH}.*")
+        calls = [mock.call(f"{FILE_PATH}.1"), mock.call(f"{FILE_PATH}.2")]
+        mock_remove.assert_has_calls(calls)
+        self.assertEqual(mock_remove.call_count, len(calls))
+
+    def test_removes_all_when_count_zero(
+        self, mock_glob, mock_isfile, mock_remove
+    ):
+        mock_glob.return_value = self.file_paths
+        mock_isfile.return_value = True
+        RawFile(fixture_metadata()).remove_old_backups(backup_count=0)
+        self.assert_remove_all_files_calls(mock_remove)
+
+    def test_keeps_all_when_count_exceeds_backups(
+        self, mock_glob, mock_isfile, mock_remove
+    ):
+        mock_glob.return_value = self.file_paths
+        mock_isfile.return_value = True
+        RawFile(fixture_metadata()).remove_old_backups(backup_count=10)
+        mock_remove.assert_not_called()
+
+    def test_ignores_non_timestamp_files(
+        self, mock_glob, mock_isfile, mock_remove
+    ):
+        mock_glob.return_value = [
+            f"{FILE_PATH}.1",
+            f"{FILE_PATH}.not_a_timestamp",
+        ]
+        mock_isfile.return_value = True
+        RawFile(fixture_metadata()).remove_old_backups(backup_count=0)
+        mock_remove.assert_called_once_with(f"{FILE_PATH}.1")
+
+    def test_ignores_directories(self, mock_glob, mock_isfile, mock_remove):
+        mock_glob.return_value = [f"{FILE_PATH}.1", f"{FILE_PATH}.2"]
+        mock_isfile.side_effect = [True, False]
+        RawFile(fixture_metadata()).remove_old_backups(backup_count=0)
+        mock_remove.assert_called_once_with(f"{FILE_PATH}.1")
+
+    def test_remove_failure(self, mock_glob, mock_isfile, mock_remove):
+        mock_glob.return_value = [f"{FILE_PATH}.1"]
+        mock_isfile.return_value = True
+        raw_file = RawFile(fixture_metadata())
+        mock_remove.side_effect = OSError(1, "some error", f"{FILE_PATH}.1")
+        with self.assertRaises(RawFileError) as cm:
+            raw_file.remove_old_backups(backup_count=0)
+        mock_remove.assert_called_once_with(f"{FILE_PATH}.1")
+        self.assertEqual(cm.exception.metadata, raw_file.metadata)
+        self.assertEqual(cm.exception.action, RawFileError.ACTION_REMOVE_BACKUP)
+        self.assertEqual(cm.exception.reason, f"some error: '{FILE_PATH}.1'")
+
+    def test_remove_multiple_failures(
+        self, mock_glob, mock_isfile, mock_remove
+    ):
+        mock_glob.return_value = self.file_paths
+        mock_isfile.return_value = True
+        raw_file = RawFile(fixture_metadata())
+        mock_remove.side_effect = [
+            OSError(1, "some error", f"{FILE_PATH}.1"),
+            None,
+            OSError(1, "some error", f"{FILE_PATH}.3"),
+        ]
+        with self.assertRaises(RawFileError) as cm:
+            raw_file.remove_old_backups(backup_count=0)
+        self.assert_remove_all_files_calls(mock_remove)
+        self.assertEqual(cm.exception.metadata, raw_file.metadata)
+        self.assertEqual(cm.exception.action, RawFileError.ACTION_REMOVE_BACKUP)
+        self.assertEqual(cm.exception.reason, f"some error: '{FILE_PATH}.1'")
+
+    def test_error_negative_count(self, _mock_glob, _mock_isfile, _mock_remove):
+        self.assertRaises(
+            AssertionError,
+            lambda: RawFile(fixture_metadata()).remove_old_backups(
+                backup_count=-1
+            ),
+        )
+
+    def test_glob_escape(self, mock_glob, mock_isfile, mock_remove):
+        special_file_path = "a[abc]ab?c*"
+        mock_glob.return_value = [
+            f"{special_file_path}.1",
+            f"{special_file_path}.3",
+        ]
+        mock_isfile.return_value = True
+        RawFile(
+            fixture_metadata(file_path=special_file_path)
+        ).remove_old_backups(backup_count=1)
+        mock_glob.assert_called_once_with("a[[]abc]ab[?]c[*].*")
+        mock_remove.assert_called_once_with(f"{special_file_path}.1")

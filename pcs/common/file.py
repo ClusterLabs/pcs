@@ -1,20 +1,15 @@
 import fcntl
+import glob
 import os
+import re
 import shutil
-from contextlib import (
-    AbstractContextManager,
-    contextmanager,
-)
+import time
+from contextlib import AbstractContextManager, contextmanager
 from dataclasses import dataclass
 from io import BytesIO
-from typing import (
-    IO,
-    Any,
-    Iterator,
-    NewType,
-    Optional,
-)
+from typing import IO, Any, Iterator, NewType, Optional
 
+from pcs import settings
 from pcs.common.file_type_codes import FileTypeCode
 from pcs.common.tools import format_os_error
 
@@ -40,10 +35,12 @@ class RawFileError(Exception):
     # action. Actions must be passed in a report and we certainely do not want
     # a separate report for each action.
 
+    ACTION_BACKUP = FileAction("backup")
     ACTION_CHMOD = FileAction("chmod")
     ACTION_CHOWN = FileAction("chown")
     ACTION_READ = FileAction("read")
     ACTION_REMOVE = FileAction("remove")
+    ACTION_REMOVE_BACKUP = FileAction("remove_backup")
     ACTION_UPDATE = FileAction("update")
     ACTION_WRITE = FileAction("write")
 
@@ -107,6 +104,21 @@ class RawFileInterface:
         filled with file data and stores data from the returned buffer to the
         same file once __exit__ method is called. Context manager holds an
         exclusive lock on the file between __enter__ and __exit__ calls.
+        """
+        raise NotImplementedError()
+
+    def backup(self) -> None:
+        """
+        Create a timestamped backup copy of the file
+        """
+        raise NotImplementedError()
+
+    def remove_old_backups(
+        self,
+        backup_count: int = settings.pcs_cfgsync_file_backup_count_default,
+    ) -> None:
+        """
+        Remove old backup copies, keeping only the most recent backup_count
         """
         raise NotImplementedError()
 
@@ -248,11 +260,55 @@ class RawFile(RawFileInterface):
         except OSError as e:
             raise self.__get_raw_file_error(e) from e
 
-    def backup(self) -> None:
-        # TODO implement
-        raise NotImplementedError()
-
     def __get_raw_file_error(self, e: OSError) -> RawFileError:
         return RawFileError(
             self.metadata, RawFileError.ACTION_REMOVE, format_os_error(e)
         )
+
+    def backup(self) -> None:
+        try:
+            shutil.copy2(
+                self.metadata.path,
+                f"{self.metadata.path}.{int(time.time())}",
+            )
+        except OSError as e:
+            raise RawFileError(
+                self.metadata, RawFileError.ACTION_BACKUP, format_os_error(e)
+            ) from e
+
+    def remove_old_backups(
+        self,
+        backup_count: int = settings.pcs_cfgsync_file_backup_count_default,
+    ) -> None:
+        if backup_count < 0:
+            raise AssertionError("Backup count cannot be negative")
+
+        pattern = re.compile(r"^" + re.escape(self.metadata.path) + r"\.(\d+)$")
+        backup_files = []
+        for path in glob.glob(glob.escape(self.metadata.path) + ".*"):
+            if os.path.isfile(path):
+                match = pattern.match(path)
+                if match:
+                    backup_files.append((int(match.group(1)), path))
+
+        backup_files.sort()
+
+        to_delete = (
+            backup_files if backup_count == 0 else backup_files[:-backup_count]
+        )
+        first_os_error: Optional[OSError] = None
+        for _, path in to_delete:
+            try:
+                os.remove(path)
+            except OSError as e:
+                # try to remove all files, even when there is an error when
+                # removing any of them.
+                if first_os_error is None:
+                    first_os_error = e
+
+        if first_os_error is not None:
+            raise RawFileError(
+                self.metadata,
+                RawFileError.ACTION_REMOVE_BACKUP,
+                format_os_error(first_os_error),
+            ) from first_os_error

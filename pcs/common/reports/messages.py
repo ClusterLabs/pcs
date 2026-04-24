@@ -170,9 +170,11 @@ def _format_file_action(action: FileAction) -> str:
 
 
 _file_operation_translation = {
+    RawFileError.ACTION_BACKUP: "create backup of",
     RawFileError.ACTION_CHMOD: "change permissions of",
     RawFileError.ACTION_CHOWN: "change ownership of",
     RawFileError.ACTION_READ: "read",
+    RawFileError.ACTION_REMOVE_BACKUP: "remove old backups of",
     RawFileError.ACTION_REMOVE: "remove",
     RawFileError.ACTION_UPDATE: "update",
     RawFileError.ACTION_WRITE: "write",
