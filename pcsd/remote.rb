@@ -51,7 +51,6 @@ def remote(params, request, auth_user)
       :qdevice_client_stop => method(:qdevice_client_stop),
       :booth_set_config => method(:booth_set_config),
       :booth_save_files => method(:booth_save_files),
-      :booth_get_config => method(:booth_get_config),
       :put_file => method(:put_file),
       :remove_file => method(:remove_file),
       :reload_corosync_conf => method(:reload_corosync_conf),
@@ -1523,51 +1522,6 @@ def booth_save_files(params, request, auth_user)
     return e.code, e.message
   rescue PcsdExchangeFormat::Error => e
     return 400, "Invalid input data format: #{e.message}"
-  end
-end
-
-def booth_get_config(params, request, auth_user)
-  unless allowed_for_local_cluster(auth_user, Permissions::READ)
-    return 403, 'Permission denied'
-  end
-  name = params[:name]
-  if name
-    config_file_name = "#{name}.conf"
-  else
-    config_file_name = 'booth.conf'
-  end
-  if config_file_name.include?('/')
-    return [400, 'Invalid name of booth configuration']
-  end
-  begin
-    config_data = read_booth_config(config_file_name)
-    unless config_data
-      return [400, "Config doesn't exist"]
-    end
-    authfile_name = nil
-    authfile_data = nil
-    authfile_path = get_authfile_from_booth_config(config_data)
-    if authfile_path
-      if File.dirname(authfile_path) != BOOTH_CONFIG_DIR
-        return [
-          400, "Authfile of specified config is not in '#{BOOTH_CONFIG_DIR}'"
-        ]
-      end
-      authfile_name = File.basename(authfile_path)
-      authfile_data = read_booth_authfile(authfile_name)
-    end
-    return [200, JSON.generate({
-      :config => {
-        :name => config_file_name,
-        :data => config_data
-      },
-      :authfile => {
-        :name => authfile_name,
-        :data => authfile_data
-      }
-    })]
-  rescue => e
-    return [400, "Unable to read booth config/key file: #{e.message}"]
   end
 end
 

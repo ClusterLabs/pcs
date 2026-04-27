@@ -10,6 +10,7 @@ from tornado.locks import Lock
 from tornado.util import TimeoutError as TornadoTimeoutError
 from tornado.web import Application
 
+from pcs import settings
 from pcs.common import file_type_codes, reports
 from pcs.common.async_tasks.dto import (
     CommandDto,
@@ -20,6 +21,10 @@ from pcs.common.async_tasks.types import (
     TaskFinishType,
     TaskKillReason,
     TaskState,
+)
+from pcs.common.booth_dto import (
+    BoothConfigAndAuthfileDto,
+    BoothConfigFileDto,
 )
 from pcs.common.cluster_dto import (
     ClusterComponentVersionDto,
@@ -860,6 +865,93 @@ class QdeviceNetClientDestroyHandler(ApiV0HandlerTest):
         self.assert_error_with_report(self.url)
         self.mock_run_library_command.assert_called_once_with(
             "qdevice.client_net_destroy", {}
+        )
+
+
+class BoothGetConfigHandler(ApiV0HandlerTest):
+    url = "/remote/booth_get_config"
+
+    def test_success(self):
+        result_dto = BoothConfigAndAuthfileDto(
+            config=BoothConfigFileDto(name="booth.conf", data="some config"),
+            authfile=BoothConfigFileDto(name="booth.key", data="base64data"),
+        )
+        self.mock_run_library_command.return_value = self.result_success(
+            result_dto
+        )
+        response = self.fetch(self.url)
+        self.assertEqual(response.code, 200)
+        self.assert_body(
+            response.body,
+            json.dumps(
+                {
+                    "config": {"name": "booth.conf", "data": "some config"},
+                    "authfile": {"name": "booth.key", "data": "base64data"},
+                }
+            ),
+        )
+        self.mock_run_library_command.assert_called_once_with(
+            "booth.get_config_and_authfile", dict(instance_name=None)
+        )
+
+    def test_success_with_name(self):
+        result_dto = BoothConfigAndAuthfileDto(
+            config=BoothConfigFileDto(name="my_booth.conf", data="some config"),
+            authfile=None,
+        )
+        self.mock_run_library_command.return_value = self.result_success(
+            result_dto
+        )
+        response = self.fetch(self.url, body=urlencode({"name": "my_booth"}))
+        self.assertEqual(response.code, 200)
+        self.assert_body(
+            response.body,
+            json.dumps(
+                {
+                    "config": {
+                        "name": "my_booth.conf",
+                        "data": "some config",
+                    },
+                    "authfile": None,
+                }
+            ),
+        )
+        self.mock_run_library_command.assert_called_once_with(
+            "booth.get_config_and_authfile", dict(instance_name="my_booth")
+        )
+
+    def test_failure(self):
+        self.assert_error_with_report(self.url)
+        self.mock_run_library_command.assert_called_once_with(
+            "booth.get_config_and_authfile", dict(instance_name=None)
+        )
+
+    def test_authfile_not_in_booth_dir(self):
+        result_dto = BoothConfigAndAuthfileDto(
+            config=BoothConfigFileDto(name="booth.conf", data="some config"),
+            authfile=None,
+        )
+        self.mock_run_library_command.return_value = self.result_success(
+            result_dto,
+            reports=[
+                reports.ReportItem.warning(
+                    reports.messages.BoothUnsupportedFileLocation(
+                        "/etc/my_booth.key",
+                        settings.booth_config_dir,
+                        file_type_codes.BOOTH_KEY,
+                    )
+                ).to_dto()
+            ],
+        )
+        response = self.fetch(self.url)
+        self.assertEqual(response.code, 400)
+        self.assert_body(
+            response.body,
+            "Warning: Booth key '/etc/my_booth.key' is outside of supported "
+            f"booth config directory '{settings.booth_config_dir}', ignoring the file",
+        )
+        self.mock_run_library_command.assert_called_once_with(
+            "booth.get_config_and_authfile", dict(instance_name=None)
         )
 
 

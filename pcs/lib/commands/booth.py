@@ -6,27 +6,19 @@ from typing import Mapping, Optional, cast
 from lxml.etree import _Element
 
 from pcs import settings
-from pcs.common import (
-    file_type_codes,
-    reports,
+from pcs.common import file_type_codes, reports
+from pcs.common.booth_dto import (
+    BoothConfigAndAuthfileDto,
+    BoothConfigFileDto,
 )
-from pcs.common.file import (
-    FileAlreadyExists,
-    RawFileError,
-)
+from pcs.common.file import FileAlreadyExists, RawFileError
 from pcs.common.reports import ReportProcessor
 from pcs.common.reports import codes as report_codes
-from pcs.common.reports.item import (
-    ReportItem,
-    get_severity,
-)
+from pcs.common.reports.item import ReportItem, get_severity
 from pcs.common.services.errors import ManageServiceError
 from pcs.common.str_tools import join_multilines
 from pcs.common.types import StringSequence
-from pcs.lib import (
-    tools,
-    validate,
-)
+from pcs.lib import tools, validate
 from pcs.lib.booth import (
     config_files,
     config_validators,
@@ -44,35 +36,18 @@ from pcs.lib.cib.remove_elements import (
     ensure_resources_stopped,
     remove_specified_elements,
 )
-from pcs.lib.cib.resource import (
-    group,
-    hierarchy,
-    primitive,
-)
-from pcs.lib.cib.tools import (
-    IdProvider,
-    get_resources,
-)
-from pcs.lib.communication.booth import (
-    BoothGetConfig,
-    BoothSendConfig,
-)
+from pcs.lib.cib.resource import group, hierarchy, primitive
+from pcs.lib.cib.tools import IdProvider, get_resources
+from pcs.lib.communication.booth import BoothGetConfig, BoothSendConfig
 from pcs.lib.communication.tools import run_and_raise
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
 from pcs.lib.file.instance import FileInstance
-from pcs.lib.file.raw_file import (
-    GhostFile,
-    RealFile,
-    raw_file_error_report,
-)
+from pcs.lib.file.raw_file import GhostFile, RealFile, raw_file_error_report
 from pcs.lib.interface.config import ParserErrorException
 from pcs.lib.node import get_existing_nodes_names
-from pcs.lib.pacemaker.live import (
-    has_cib_xml,
-    resource_restart,
-)
+from pcs.lib.pacemaker.live import has_cib_xml, resource_restart
 from pcs.lib.pacemaker.live import ticket_cleanup as live_ticket_cleanup
 from pcs.lib.pacemaker.live import ticket_standby as live_ticket_standby
 from pcs.lib.pacemaker.live import ticket_unstandby as live_ticket_unstandby
@@ -376,6 +351,58 @@ def config_text(
                 reports.messages.InvalidResponseFormat(str(node_name))
             )
         ) from e
+
+
+def get_config_and_authfile(
+    env: LibraryEnvironment,
+    instance_name: Optional[str] = None,
+) -> BoothConfigAndAuthfileDto:
+    """
+    Read booth config and its authfile and return their content.
+
+    instance_name -- booth instance name
+    """
+    report_processor = env.report_processor
+    booth_env = env.get_booth_env(instance_name)
+    _ensure_live_booth_env(booth_env)
+
+    try:
+        config_raw_data = booth_env.config.read_raw()
+        booth_conf = booth_env.config.raw_to_facade(config_raw_data)
+    except RawFileError as e:
+        report_processor.report(raw_file_error_report(e))
+        raise LibraryError() from e
+    except ParserErrorException as e:
+        report_processor.report_list(
+            booth_env.config.parser_exception_to_report_list(e)
+        )
+        raise LibraryError() from e
+
+    try:
+        (
+            authfile_name,
+            authfile_data,
+            authfile_report_list,
+        ) = config_files.get_authfile_name_and_data(booth_conf)
+    except RawFileError as e:
+        report_processor.report(raw_file_error_report(e))
+        raise LibraryError() from e
+    report_processor.report_list(authfile_report_list)
+
+    authfile: Optional[BoothConfigFileDto] = None
+    if authfile_name and authfile_data is not None:
+        authfile = BoothConfigFileDto(
+            name=authfile_name,
+            data=base64.b64encode(authfile_data).decode("utf-8"),
+        )
+
+    return BoothConfigAndAuthfileDto(
+        config=BoothConfigFileDto(
+            name=f"{booth_env.instance_name}.conf",
+            data=config_raw_data.decode("utf-8"),
+        ),
+        authfile=authfile,
+    )
 
 
 def config_ticket_add(

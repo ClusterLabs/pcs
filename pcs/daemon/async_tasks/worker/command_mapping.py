@@ -121,6 +121,10 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
         cmd=auth.known_hosts_change,
         required_permission=p.FULL,
     ),
+    "booth.get_config_and_authfile": _Cmd(
+        cmd=booth.get_config_and_authfile,
+        required_permission=p.READ,
+    ),
     "booth.ticket_cleanup": _Cmd(
         cmd=booth.ticket_cleanup,
         required_permission=p.WRITE,
@@ -525,6 +529,7 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
 
 LEGACY_API_COMMANDS = (
     "auth.known_hosts_change",
+    "booth.get_config",
     "cluster.set_permissions",
     "manage_clusters.add_cluster",
     "manage_clusters.remove_clusters",
