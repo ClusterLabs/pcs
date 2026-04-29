@@ -7,6 +7,8 @@
   for cluster node renaming ([RHEL-7585])
 - Support for displaying secret resource attributes in `pcs config` and `pcs
   resource | stonith config` commands ([RHEL-7604])
+- Add validation for cluster name length. Corosync can not process 
+  too long names. The maximum length is set to 256 chars to prevent this error.
 
 ### Fixed
 - Upgrade CIB schema version when creating a colocation constraint with
