@@ -1,6 +1,36 @@
 ---
 # yamllint disable rule:line-length
 
+# ########################################################################
+# WARNING: This workflow uses the pull_request_target event trigger
+# because it needs access to the TESTING_FARM_API_TOKEN secret to test
+# pull requests from forks.
+#
+# GitHub does not provide a way to restrict who can trigger
+# pull_request_target. As a workaround, this workflow uses GitHub
+# deployment environments to gate execution - fork PRs require manual
+# approval before the job runs.
+#
+# Two environments must be created in the GitHub UI under
+# Settings -> Environments:
+#
+#   1. "testing-farm-approval"
+#      - Set up required reviewers
+#
+#   2. "testing-farm-apikey"
+#      - Add environment secret TESTING_FARM_API_TOKEN
+#      - Set the main branch under "Deployment branches and tags"
+#
+# Without this setup, fork PRs could access secrets unsafely.
+#
+# For documentation on configuring environments, see:
+# - https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments
+#
+# See also:
+# - https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions
+# - https://securitylab.github.com/research/github-actions-preventing-pwn-requests/
+# ########################################################################
+
 name: Testing Farm Tests
 # yamllint disable-line rule:truthy
 on:
@@ -12,9 +42,16 @@ on:
         type: string
         default: ''
       branch:
-        description: 'Branch name to test (ignored if pr_number is set)'
+        description: 'Branch name to test (ignored if pr_number is set, set target_branch accordingly)'
         type: string
         default: ''
+      target_branch:
+        description: 'Target branch for matrix selection (must be set when branch is used)'
+        type: choice
+        default: 'main'
+        options:
+          - 'main'
+          - 'pcs-0.11'
       custom_tmt_plan_regex:
         description: 'Custom tmt plan regex'
         type: choice
@@ -27,26 +64,14 @@ on:
           - 'linters|tier0'
           - 'linters|tier0|tier1'
 
-  # NOTE: Use pull_request_target to allow secret access for PRs from forks.
-  # WARNING: pull_request_target requires GitHub Environment with approval!
-  # Setup: Settings -> Environments -> Create:
-  #   * "testing-farm-approval"
-  #     * set up required reviewers
-  #   * "testing-farm-apikey"
-  #     * set environment secret TESTING_FARM_API_TOKEN
-  #     * set the main branch under "Deployment branches and tags"
-  # Without this, fork PRs can access secrets unsafely.
-  # See:
-  # - https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#understanding-the-risk-of-script-injections
-  # - https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment
-  # - https://securitylab.github.com/research/github-actions-preventing-pwn-requests/
+  # Run on any PR open, update, or reopen (see WARNING at the top of the file)
   pull_request_target:
     types: [opened, synchronize, reopened]
 
-  # Allow triggering workflow via PR comment for PRs from forks;
-  # runs with the privileges of the comment author
+  # Allow triggering workflow via PR comment; author's association
+  # is checked in the setup-matrix if condition and environment selection
   issue_comment:
-    types: [created, edited]
+    types: [created]
 
 permissions:
   contents: read
@@ -55,6 +80,16 @@ permissions:
 
 jobs:
   setup-matrix:
+    # Determine whether the job should run based on the trigger event:
+    # - workflow_dispatch: always run, only users with write access (owners
+    #   or members) can trigger it manually
+    # - issue_comment: must be a PR comment containing '[tf-tests' from an
+    #   owner or member, since any user can comment on a PR
+    # - pull_request_target: always run, since the event fires on any PR
+    #   and GitHub provides no official way to restrict who can trigger it.
+    #   As a workaround, two environments are used - the environment
+    #   selection later in this job gates execution by requiring manual
+    #   approval for untrusted authors (e.g. PRs from forks).
     if: |
       github.event_name == 'workflow_dispatch' ||
       github.event_name == 'pull_request_target' ||
@@ -69,32 +104,40 @@ jobs:
           github.event.comment.author_association
         ))
 
-    # Environments:
-    #   * testing-farm-approval - needs approval (used for fork PRs)
-    #   * testing-farm-apikey - no approval (used for members)
+    # Select environment using short-circuit evaluation. If the user who
+    # triggered the event has write access (owner or member), the
+    # "testing-farm-apikey" environment is selected, which does not require
+    # approval. Otherwise, the "testing-farm-approval" environment is
+    # selected, which requires manual approval. This is typically the case
+    # when the workflow is triggered by pull requests from forks.
     environment: >-
       ${{
-        github.event_name == 'workflow_dispatch'
-        && 'testing-farm-apikey'
-        || github.event_name == 'pull_request_target'
-        && contains(
-          fromJson('["OWNER", "MEMBER"]'),
-          github.event.pull_request.author_association
+        (
+          github.event_name == 'workflow_dispatch'
+          && 'testing-farm-apikey'
         )
-        && 'testing-farm-apikey'
-        || github.event_name == 'issue_comment'
-        && contains(
-          fromJson('["OWNER", "MEMBER"]'),
-          github.event.comment.author_association
+        || (
+          github.event_name == 'pull_request_target'
+          && contains(
+            fromJson('["OWNER", "MEMBER"]'),
+            github.event.pull_request.author_association
+          )
+          && 'testing-farm-apikey'
         )
-        && 'testing-farm-apikey'
+        || (
+          github.event_name == 'issue_comment'
+          && contains(
+            fromJson('["OWNER", "MEMBER"]'),
+            github.event.comment.author_association
+          )
+          && 'testing-farm-apikey'
+        )
         || 'testing-farm-approval'
       }}
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
       git_ref: ${{ steps.set-matrix.outputs.git_ref }}
-      allow_update: ${{ steps.set-matrix.outputs.allow_update }}
       custom_tmt_plan_regex: >-
         ${{ steps.parse-comment.outputs.custom_tmt_plan_regex }}
     steps:
@@ -110,7 +153,8 @@ jobs:
               || echo ""
           )
           echo "custom_tmt_plan_regex=${CUSTOM_REGEX}" >> "$GITHUB_OUTPUT"
-      - id: set-matrix
+      - name: Resolve git ref and build test matrix
+        id: set-matrix
         env:
           GH_TOKEN: ${{ github.token }}
           EVENT_NAME: ${{ github.event_name }}
@@ -118,25 +162,52 @@ jobs:
           REPO: ${{ github.repository }}
           INPUT_BRANCH: ${{ inputs.branch }}
           INPUT_PR_NUMBER: ${{ inputs.pr_number }}
+          INPUT_TARGET_BRANCH: ${{ inputs.target_branch }}
           PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
-          PR_HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
         run: |
           USE_PCS_011=false
           GIT_REF="${GIT_REF_INPUT}"
-          ALLOW_UPDATE=true
+
+          get_pr_base_ref() {
+            local pr_number=$1
+            local pr_json
+            pr_json=$(
+              gh api \
+                "repos/${REPO}/pulls/${pr_number}" \
+                2>/dev/null
+            )
+            if [[ -z "$pr_json" ]]; then
+              echo "ERROR: Failed to fetch PR #${pr_number} from API"
+              exit 1
+            fi
+            local base_ref
+            base_ref=$(echo "$pr_json" | jq -r '.base.ref // empty')
+            if [[ -z "$base_ref" ]]; then
+              echo "ERROR: Could not determine base ref for PR #${pr_number}"
+              exit 1
+            fi
+            echo "$base_ref"
+          }
 
           case "${EVENT_NAME}" in
             workflow_dispatch)
-              if [[ -n "$INPUT_BRANCH" ]]; then
-                GIT_REF="refs/heads/${INPUT_BRANCH}"
+              if [[ -z "$INPUT_BRANCH" && -z "$INPUT_PR_NUMBER" ]]; then
+                echo "ERROR: Either 'pr_number' or 'branch' must be set"
+                exit 1
               fi
               if [[ -n "$INPUT_PR_NUMBER" ]]; then
                 GIT_REF="refs/pull/${INPUT_PR_NUMBER}/head"
-              fi
-              if [[ "$GIT_REF" == refs/heads/pcs-0.11_* ]]; then
-                USE_PCS_011=true
+                BASE_REF=$(get_pr_base_ref "$INPUT_PR_NUMBER")
+                if [[ "$BASE_REF" == "pcs-0.11" ]]; then
+                  USE_PCS_011=true
+                fi
+              else
+                GIT_REF="refs/heads/${INPUT_BRANCH}"
+                if [[ "$INPUT_TARGET_BRANCH" == "pcs-0.11" ]]; then
+                  USE_PCS_011=true
+                fi
               fi
               ;;
             pull_request_target)
@@ -146,12 +217,7 @@ jobs:
               GIT_REF="refs/pull/${PR_NUMBER}/head"
               ;;
             issue_comment)
-              PR_JSON=$(
-                gh api \
-                  "repos/${REPO}/pulls/${ISSUE_NUMBER}" \
-                  2>/dev/null || echo "{}"
-              )
-              BASE_REF=$(echo "$PR_JSON" | jq -r '.base.ref // ""')
+              BASE_REF=$(get_pr_base_ref "$ISSUE_NUMBER")
               GIT_REF="refs/pull/${ISSUE_NUMBER}/head"
               if [[ "$BASE_REF" == "pcs-0.11" ]]; then
                 USE_PCS_011=true
@@ -184,7 +250,6 @@ jobs:
 
           echo "matrix=$(echo "$MATRIX" | jq -c .)" >> "$GITHUB_OUTPUT"
           echo "git_ref=${GIT_REF}" >> "$GITHUB_OUTPUT"
-          echo "allow_update=${ALLOW_UPDATE}" >> "$GITHUB_OUTPUT"
 
   tf-tests:
     # The setup-matrix job may block and require approval if
@@ -197,7 +262,7 @@ jobs:
       matrix: ${{ fromJson(needs.setup-matrix.outputs.matrix) }}
     steps:
       - name: Run tests on Testing-Farm
-        uses: sclorg/testing-farm-as-github-action@v4
+        uses: sclorg/testing-farm-as-github-action@b23f0de29ac969d12411215a983da264b4ced149  # v4.2.0
         with:
           api_key: ${{ secrets.TESTING_FARM_API_TOKEN }}
           git_url: ${{ github.server_url }}/${{ github.repository }}
@@ -212,6 +277,5 @@ jobs:
           tmt_context: ${{ matrix.tmt_context }}
           variables: ${{ matrix.variables }}
           pull_request_status_name: ${{ matrix.compose }}
-          update_pull_request_status: >-
-            ${{ needs.setup-matrix.outputs.allow_update }}
-          create_issue_comment: ${{ needs.setup-matrix.outputs.allow_update }}
+          update_pull_request_status: true
+          create_issue_comment: true
