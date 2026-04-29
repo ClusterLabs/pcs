@@ -3,6 +3,7 @@ EXTRA_DIST		= \
 			  CHANGELOG.md \
 			  CONTRIBUTING.md \
 			  dev_requirements.txt \
+			  .github/workflows/testing-farm.yml \
 			  .gitlab-ci.yml \
 			  make/gitlog-to-changelog \
 			  make/git-version-gen \

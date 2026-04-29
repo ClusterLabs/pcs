@@ -1,0 +1,217 @@
+---
+# yamllint disable rule:line-length
+
+name: Testing Farm Tests
+# yamllint disable-line rule:truthy
+on:
+  # Run workflow manually from the GitHub UI
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to test (uses refs/pull/<number>/head)'
+        type: string
+        default: ''
+      branch:
+        description: 'Branch name to test (ignored if pr_number is set)'
+        type: string
+        default: ''
+      custom_tmt_plan_regex:
+        description: 'Custom tmt plan regex'
+        type: choice
+        default: ''
+        options:
+          - ''
+          - 'linters'
+          - 'tier0'
+          - 'tier1'
+          - 'linters|tier0'
+          - 'linters|tier0|tier1'
+
+  # NOTE: Use pull_request_target to allow secret access for PRs from forks.
+  # WARNING: pull_request_target requires GitHub Environment with approval!
+  # Setup: Settings -> Environments -> Create:
+  #   * "testing-farm-approval"
+  #     * set up required reviewers
+  #   * "testing-farm-apikey"
+  #     * set environment secret TESTING_FARM_API_TOKEN
+  #     * set the main branch under "Deployment branches and tags"
+  # Without this, fork PRs can access secrets unsafely.
+  # See:
+  # - https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#understanding-the-risk-of-script-injections
+  # - https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment
+  # - https://securitylab.github.com/research/github-actions-preventing-pwn-requests/
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+  # Allow triggering workflow via PR comment for PRs from forks;
+  # runs with the privileges of the comment author
+  issue_comment:
+    types: [created, edited]
+
+permissions:
+  contents: read
+  pull-requests: write
+  statuses: write
+
+jobs:
+  setup-matrix:
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'pull_request_target' ||
+      (github.event_name == 'issue_comment' &&
+        github.event.issue.pull_request &&
+        contains(
+          github.event.comment.body,
+          '[tf-tests'
+        ) &&
+        contains(
+          fromJson('["OWNER", "MEMBER"]'),
+          github.event.comment.author_association
+        ))
+
+    # Environments:
+    #   * testing-farm-approval - needs approval (used for fork PRs)
+    #   * testing-farm-apikey - no approval (used for members)
+    environment: >-
+      ${{
+        github.event_name == 'workflow_dispatch'
+        && 'testing-farm-apikey'
+        || github.event_name == 'pull_request_target'
+        && contains(
+          fromJson('["OWNER", "MEMBER"]'),
+          github.event.pull_request.author_association
+        )
+        && 'testing-farm-apikey'
+        || github.event_name == 'issue_comment'
+        && contains(
+          fromJson('["OWNER", "MEMBER"]'),
+          github.event.comment.author_association
+        )
+        && 'testing-farm-apikey'
+        || 'testing-farm-approval'
+      }}
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      git_ref: ${{ steps.set-matrix.outputs.git_ref }}
+      allow_update: ${{ steps.set-matrix.outputs.allow_update }}
+      custom_tmt_plan_regex: >-
+        ${{ steps.parse-comment.outputs.custom_tmt_plan_regex }}
+    steps:
+      - name: Parse custom tmt plan regex from comment
+        id: parse-comment
+        if: github.event_name == 'issue_comment'
+        env:
+          COMMENT_BODY: ${{ github.event.comment.body }}
+        run: |
+          CUSTOM_REGEX=$(
+            echo "$COMMENT_BODY" \
+              | grep -oP '\[tf-tests:\K[^\]]+' \
+              || echo ""
+          )
+          echo "custom_tmt_plan_regex=${CUSTOM_REGEX}" >> "$GITHUB_OUTPUT"
+      - id: set-matrix
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          GIT_REF_INPUT: ${{ github.ref }}
+          REPO: ${{ github.repository }}
+          INPUT_BRANCH: ${{ inputs.branch }}
+          INPUT_PR_NUMBER: ${{ inputs.pr_number }}
+          PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
+          PR_HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          USE_PCS_011=false
+          GIT_REF="${GIT_REF_INPUT}"
+          ALLOW_UPDATE=true
+
+          case "${EVENT_NAME}" in
+            workflow_dispatch)
+              if [[ -n "$INPUT_BRANCH" ]]; then
+                GIT_REF="refs/heads/${INPUT_BRANCH}"
+              fi
+              if [[ -n "$INPUT_PR_NUMBER" ]]; then
+                GIT_REF="refs/pull/${INPUT_PR_NUMBER}/head"
+              fi
+              if [[ "$GIT_REF" == refs/heads/pcs-0.11_* ]]; then
+                USE_PCS_011=true
+              fi
+              ;;
+            pull_request_target)
+              if [[ "$PR_BASE_REF" == "pcs-0.11" ]]; then
+                USE_PCS_011=true
+              fi
+              GIT_REF="refs/pull/${PR_NUMBER}/head"
+              ;;
+            issue_comment)
+              PR_JSON=$(
+                gh api \
+                  "repos/${REPO}/pulls/${ISSUE_NUMBER}" \
+                  2>/dev/null || echo "{}"
+              )
+              BASE_REF=$(echo "$PR_JSON" | jq -r '.base.ref // ""')
+              GIT_REF="refs/pull/${ISSUE_NUMBER}/head"
+              if [[ "$BASE_REF" == "pcs-0.11" ]]; then
+                USE_PCS_011=true
+              fi
+              ;;
+          esac
+
+          MAIN_MATRIX='{
+            "include": [{
+              "compose": "CentOS-Stream-10",
+              "tmt_plan_regex": "linters",
+              "tmt_context": "distro=centos-stream-10",
+              "variables": "COMPOSE_NAME=CentOSStream10"
+            }]
+          }'
+          PCS_011_MATRIX='{
+            "include": [{
+              "compose": "CentOS-Stream-9",
+              "tmt_plan_regex": "linters",
+              "tmt_context": "distro=centos-stream-9",
+              "variables": "COMPOSE_NAME=CentOSStream9"
+            }]
+          }'
+
+          if [[ "$USE_PCS_011" == "true" ]]; then
+            MATRIX="$PCS_011_MATRIX"
+          else
+            MATRIX="$MAIN_MATRIX"
+          fi
+
+          echo "matrix=$(echo "$MATRIX" | jq -c .)" >> "$GITHUB_OUTPUT"
+          echo "git_ref=${GIT_REF}" >> "$GITHUB_OUTPUT"
+          echo "allow_update=${ALLOW_UPDATE}" >> "$GITHUB_OUTPUT"
+
+  tf-tests:
+    # The setup-matrix job may block and require approval if
+    # 'testing-farm-approval' environment is used
+    needs: setup-matrix
+    environment: 'testing-farm-apikey'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.setup-matrix.outputs.matrix) }}
+    steps:
+      - name: Run tests on Testing-Farm
+        uses: sclorg/testing-farm-as-github-action@v4
+        with:
+          api_key: ${{ secrets.TESTING_FARM_API_TOKEN }}
+          git_url: ${{ github.server_url }}/${{ github.repository }}
+          git_ref: ${{ needs.setup-matrix.outputs.git_ref }}
+          tmt_plan_regex: >-
+            ${{
+              needs.setup-matrix.outputs.custom_tmt_plan_regex
+              || inputs.custom_tmt_plan_regex
+              || matrix.tmt_plan_regex
+            }}
+          compose: ${{ matrix.compose }}
+          tmt_context: ${{ matrix.tmt_context }}
+          variables: ${{ matrix.variables }}
+          pull_request_status_name: ${{ matrix.compose }}
+          update_pull_request_status: >-
+            ${{ needs.setup-matrix.outputs.allow_update }}
+          create_issue_comment: ${{ needs.setup-matrix.outputs.allow_update }}
