@@ -30,8 +30,8 @@ def get_configs(env: LibraryEnvironment, cluster_name: str) -> SyncConfigsDto:
     """
     Get contents of synced configuration files from node
 
-    cluster_name -- expected cluster name. End with an error if the requested
-        node is not in the cluster with the expected name.
+    cluster_name -- expected cluster name. End with an error if the local
+        cluster name does not match cluster_name.
     """
     current_cluster_name = env.get_corosync_conf().get_cluster_name()
     if current_cluster_name != cluster_name:
@@ -71,8 +71,8 @@ def set_configs(
     """
     Save configuration files locally.
 
-    cluster_name -- expected cluster name. End with an error if the requested
-        node is not in the cluster with the expected name.
+    cluster_name -- expected cluster name. End with an error if the local
+        cluster name does not match cluster_name.
     configs -- contents of files to be saved
     force_flags -- list of flags codes
     """
