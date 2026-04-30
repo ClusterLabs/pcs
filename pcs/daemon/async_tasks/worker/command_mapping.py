@@ -309,6 +309,10 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
         cmd=pcs_cfgsync.get_configs,
         required_permission=p.FULL,
     ),
+    "pcs_cfgsync.set_configs": _Cmd(
+        cmd=pcs_cfgsync.set_configs,
+        required_permission=p.FULL,
+    ),
     "pcs_cfgsync.update_sync_options": _Cmd(
         cmd=pcs_cfgsync.update_sync_options,
         required_permission=p.FULL,
@@ -533,6 +537,7 @@ LEGACY_API_COMMANDS = (
     "cluster.set_permissions",
     "manage_clusters.add_cluster",
     "manage_clusters.remove_clusters",
+    "pcs_cfgsync.set_configs",
     "pcs_cfgsync.update_sync_options",
     "qdevice.qdevice_net_get_ca_certificate",
     "resource_agent.describe_agent",

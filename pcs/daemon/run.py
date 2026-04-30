@@ -180,10 +180,7 @@ def configure_app(  # noqa: PLR0913
         )
         routes.extend(
             sinatra_remote.get_routes(
-                api_auth_factory,
-                ruby_pcsd_wrapper,
-                sync_config_lock,
-                https_server_manage,
+                api_auth_factory, ruby_pcsd_wrapper, https_server_manage
             )
         )
 

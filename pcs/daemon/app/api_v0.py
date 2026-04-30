@@ -444,6 +444,98 @@ class SetSyncOptionsHandler(_BaseApiV0Handler):
         self.write("Sync thread options updated successfully")
 
 
+class SetConfigsHandler(_BaseApiV0Handler):
+    _REPORT_CODE_TO_RESULT = {
+        reports.codes.PCS_CFGSYNC_CONFIG_ACCEPTED: "accepted",
+        reports.codes.PCS_CFGSYNC_CONFIG_REJECTED: "rejected",
+        reports.codes.PCS_CFGSYNC_CONFIG_SAVE_ERROR: "error",
+        reports.codes.PCS_CFGSYNC_CONFIG_UNSUPPORTED: "not_supported",
+    }
+
+    _LEGACY_TO_FILE_TYPE_CODE = {
+        "pcs_settings.conf": file_type_codes.PCS_SETTINGS_CONF,
+        "known-hosts": file_type_codes.PCS_KNOWN_HOSTS,
+    }
+    _FILE_TYPE_CODE_TO_LEGACY = {
+        v: k for k, v in _LEGACY_TO_FILE_TYPE_CODE.items()
+    }
+
+    _sync_config_lock: Lock
+
+    def initialize(  # type: ignore[override]
+        self,
+        api_auth_provider_factory: ApiAuthProviderFactoryInterface,
+        scheduler: Scheduler,
+        sync_config_lock: Lock,
+    ) -> None:
+        super().initialize(api_auth_provider_factory, scheduler)
+        self._sync_config_lock = sync_config_lock
+
+    async def _handle_request(self) -> None:
+        try:
+            configs_json = json.loads(self.get_argument("configs", ""))
+        except json.JSONDecodeError:
+            # original handler returned 200 in this case
+            self.write({"status": "bad_json"})
+            return
+
+        try:
+            cluster_name = configs_json.get("cluster_name", "")
+            force = bool(configs_json.get("force", False))
+
+            configs_raw = configs_json.get("configs", {})
+            configs = {}
+            non_file_configs = []
+            for name, data in configs_raw.items():
+                if data.get("type") == "file":
+                    configs[self._LEGACY_TO_FILE_TYPE_CODE.get(name, name)] = (
+                        str(data.get("text", ""))
+                    )
+                else:
+                    non_file_configs.append(name)
+        except AttributeError:
+            # original handler returned 200 in this case
+            self.write({"status": "bad_json"})
+            return
+
+        async with self._sync_config_lock:
+            result = await self._run_library_command(
+                "pcs_cfgsync.set_configs",
+                {
+                    "cluster_name": cluster_name,
+                    "configs": configs,
+                    "force_flags": [reports.codes.FORCE] if force else [],
+                },
+            )
+
+        if any(
+            rep.message.code
+            == reports.codes.NODE_REPORTS_UNEXPECTED_CLUSTER_NAME
+            for rep in result.reports
+        ):
+            self.write({"status": "wrong_cluster_name"})
+            return
+
+        not_file_results = dict.fromkeys(non_file_configs, "not_supported")
+        real_results = {
+            self._FILE_TYPE_CODE_TO_LEGACY.get(
+                rep.message.payload["file_type_code"],
+                rep.message.payload["file_type_code"],
+            ): self._REPORT_CODE_TO_RESULT[rep.message.code]
+            for rep in result.reports
+            if rep.message.code in self._REPORT_CODE_TO_RESULT
+        }
+        # default to "error" for any file that received no status report
+        for file_type in configs:
+            legacy_name = self._FILE_TYPE_CODE_TO_LEGACY.get(
+                file_type, file_type
+            )
+            if legacy_name not in real_results:
+                real_results[legacy_name] = "error"
+
+        self.write({"status": "ok", "result": not_file_results | real_results})
+
+
 class SetPermissionsHandler(_BaseApiV0Handler):
     """
     Input format:
@@ -616,6 +708,11 @@ def get_routes(
         (r("booth_get_config"), BoothGetConfigHandler, params),
         # cfgsync
         (r("get_configs"), GetConfigsHandler, params),
+        (
+            r("set_configs"),
+            SetConfigsHandler,
+            {**params, "sync_config_lock": sync_config_lock},
+        ),
         (
             r("set_sync_options"),
             SetSyncOptionsHandler,
