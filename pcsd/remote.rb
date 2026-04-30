@@ -27,7 +27,6 @@ def remote(params, request, auth_user)
       :get_quorum_info => method(:get_quorum_info),
       :get_corosync_conf => method(:get_corosync_conf_remote),
       :set_corosync_conf => method(:set_corosync_conf),
-      :set_configs => method(:set_configs),
       :set_certs => method(:set_certs),
       :get_permissions => method(:get_permissions_remote),
       :cluster_start => method(:cluster_start),
@@ -412,51 +411,6 @@ def set_corosync_conf(params, request, auth_user)
     $logger.info "Invalid corosync.conf file"
     return 400, "Failed"
   end
-end
-
-def set_configs(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::FULL)
-    return 403, 'Permission denied'
-  end
-  return JSON.generate({'status' => 'bad_json'}) if not params['configs']
-  begin
-    configs_json = JSON.parse(params['configs'])
-  rescue JSON::ParserError
-    return JSON.generate({'status' => 'bad_json'})
-  end
-  has_cluster = !($cluster_name == nil or $cluster_name.empty?)
-  if has_cluster and $cluster_name != configs_json['cluster_name']
-    return JSON.generate({'status' => 'wrong_cluster_name'})
-  end
-
-  force = configs_json['force']
-  remote_configs, unknown_cfg_names = Cfgsync::sync_msg_to_configs(configs_json)
-  local_configs = Cfgsync::get_configs_local
-
-  result = {}
-  unknown_cfg_names.each { |name| result[name] = 'not_supported' }
-  remote_configs.each { |name, remote_cfg|
-    begin
-      # Save a remote config if it is a newer version than local. If the config
-      # is not present on a local node, the node is being added to a cluster,
-      # so we need to save the config as well.
-      if force or not local_configs.key?(name) or remote_cfg > local_configs[name]
-        local_configs[name].class.backup() if local_configs.key?(name)
-        remote_cfg.save()
-        result[name] = 'accepted'
-      elsif remote_cfg == local_configs[name]
-        # Someone wants this node to have a config that it already has.
-        # So the desired state is met and the result is a success then.
-        result[name] = 'accepted'
-      else
-        result[name] = 'rejected'
-      end
-    rescue => e
-      $logger.error("Error saving config '#{name}': #{e}")
-      result[name] = 'error'
-    end
-  }
-  return JSON.generate({'status' => 'ok', 'result' => result})
 end
 
 def set_certs(params, request, auth_user)

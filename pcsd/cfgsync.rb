@@ -277,47 +277,6 @@ module Cfgsync
     return CorosyncConf
   end
 
-  def self.get_cfg_classes()
-    return [PcsdSettings, PcsdKnownHosts]
-    # return [PcsdSettings, self.cluster_cfg_class]
-  end
-
-  def self.get_cfg_classes_by_name()
-    classes = {}
-    self.get_cfg_classes.each { |cfgclass|
-      classes[cfgclass.name] = cfgclass
-    }
-    return classes
-  end
-
-  def self.sync_msg_to_configs(sync_msg)
-    cfg_classes = self.get_cfg_classes_by_name
-    configs = {}
-    unknown_config_names = []
-    sync_msg['configs'].each { |name, data|
-      if cfg_classes[name]
-        if 'file' == data['type'] and data['text']
-          configs[name] = cfg_classes[name].from_text(data['text'])
-        end
-      else
-        unknown_config_names << name
-      end
-    }
-    return configs, unknown_config_names
-  end
-
-  def self.get_configs_local(with_missing=false)
-    default = with_missing ? '' : nil
-    configs = {}
-    self.get_cfg_classes.each { |cfg_class|
-      begin
-        configs[cfg_class.name] = cfg_class.from_file(default)
-      rescue
-      end
-    }
-    return configs
-  end
-
   def self.get_integer_value(value, default, minimum)
     return default if value.nil?
     if value.respond_to?(:match)
