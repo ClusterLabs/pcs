@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ### Added
+- test github PR
 - Commands `pcs cluster node rename-corosync` and `pcs cluster node rename-cib`
   for cluster node renaming ([RHEL-7585])
 - Support for displaying secret resource attributes in `pcs config` and `pcs
