@@ -1,7 +1,11 @@
+from pcs import settings
+
 from pcs_test.tools.command_env.mock_raw_file import (
+    RawFileBackupCall,
     RawFileExistsCall,
     RawFileReadCall,
     RawFileRemoveCall,
+    RawFileRemoveOldBackupsCall,
     RawFileWriteCall,
 )
 
@@ -139,5 +143,66 @@ class RawFileConfig:
             fail_if_file_not_found=fail_if_file_not_found,
             exception_msg=exception_msg,
             file_not_found_exception=file_not_found_exception,
+        )
+        self.__calls.place(name, call, before, instead)
+
+    def backup(
+        self,
+        file_type_code,
+        path,
+        *,
+        exception_msg=None,
+        name="raw_file.backup",
+        before=None,
+        instead=None,
+    ):
+        """
+        Create a call for backing up a file
+
+        string file_type_code -- item from pcs.common.file_type_codes
+        string path -- expected file path
+        string exception_msg -- resulting error in case of unsuccessful backup
+        string name -- the key of the call
+        string before -- the key of a call before which this call is to be
+            placed
+        string instead -- the key of a call instead of which this new call is to
+            be placed
+        """
+        call = RawFileBackupCall(
+            file_type_code,
+            path,
+            exception_msg=exception_msg,
+        )
+        self.__calls.place(name, call, before, instead)
+
+    def remove_old_backups(
+        self,
+        file_type_code,
+        path,
+        *,
+        backup_count=settings.pcs_cfgsync_file_backup_count_default,
+        exception_msg=None,
+        name="raw_file.remove_old_backups",
+        before=None,
+        instead=None,
+    ):
+        """
+        Create a call for removing old backups of a file
+
+        string file_type_code -- item from pcs.common.file_type_codes
+        string path -- expected file path
+        int backup_count -- expected number of backups to keep
+        string exception_msg -- resulting error in case of unsuccessful removal
+        string name -- the key of the call
+        string before -- the key of a call before which this call is to be
+            placed
+        string instead -- the key of a call instead of which this new call is to
+            be placed
+        """
+        call = RawFileRemoveOldBackupsCall(
+            file_type_code,
+            path,
+            backup_count=backup_count,
+            exception_msg=exception_msg,
         )
         self.__calls.place(name, call, before, instead)

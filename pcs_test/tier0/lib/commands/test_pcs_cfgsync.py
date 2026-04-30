@@ -10,6 +10,7 @@ from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.fixture_pcs_cfgsync import (
     fixture_expected_save_sync_reports,
+    fixture_known_hosts_file_content,
     fixture_pcs_settings_file_content,
     fixture_save_sync_new_version_conflict,
     fixture_save_sync_new_version_error,
@@ -564,4 +565,572 @@ class SaveSyncPcsSettingsInternalInCluster(TestCase):
                 self.NODE_LABELS,
                 expected_result="error",
             )
+        )
+
+
+class SetConfigs(TestCase):
+    CLUSTER_NAME = "test99"
+    DATA_VERSION = 5
+    CFGSYNC_CTL_BACKUP_COUNT = 123
+
+    KNOWN_HOSTS_V5 = fixture_known_hosts_file_content(DATA_VERSION)
+    KNOWN_HOSTS_V6 = fixture_known_hosts_file_content(DATA_VERSION + 1)
+    PCS_SETTINGS_V5 = fixture_pcs_settings_file_content(DATA_VERSION)
+    PCS_SETTINGS_V6 = fixture_pcs_settings_file_content(DATA_VERSION + 1)
+
+    REPORT_KNOWN_HOSTS_SAVE_SUCCESS = fixture.info(
+        reports.codes.PCS_CFGSYNC_CONFIG_ACCEPTED,
+        file_type_code=file_type_codes.PCS_KNOWN_HOSTS,
+    )
+
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+
+    def _fixture_not_in_cluster(self):
+        self.config.raw_file.exists(
+            file_type_codes.COROSYNC_CONF,
+            settings.corosync_conf_file,
+            exists=False,
+            name="corosync_conf.exists",
+        )
+
+    def _fixture_in_cluster(self):
+        self.config.raw_file.exists(
+            file_type_codes.COROSYNC_CONF,
+            settings.corosync_conf_file,
+            name="corosync_conf.exists",
+        )
+        self.config.corosync_conf.load()
+
+    def _fixture_cfgsync_ctl_not_exists(self):
+        self.config.raw_file.exists(
+            file_type_codes.PCS_CFGSYNC_CTL,
+            settings.pcs_cfgsync_ctl_location,
+            exists=False,
+            name="cfgsync_ctl.exists",
+        )
+
+    def _fixture_cfgsync_ctl_exists(self):
+        self.config.raw_file.exists(
+            file_type_codes.PCS_CFGSYNC_CTL,
+            settings.pcs_cfgsync_ctl_location,
+            name="cfgsync_ctl.exists",
+        )
+        self.config.raw_file.read(
+            file_type_codes.PCS_CFGSYNC_CTL,
+            settings.pcs_cfgsync_ctl_location,
+            json.dumps({"file_backup_count": self.CFGSYNC_CTL_BACKUP_COUNT}),
+            name="cfgsync_ctl.read",
+        )
+
+    def test_cluster_name_mismatch(self):
+        self._fixture_in_cluster()
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.set_configs(
+                self.env_assist.get_env(),
+                "wrong-cluster-name",
+                {},
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.NODE_REPORTS_UNEXPECTED_CLUSTER_NAME,
+                    cluster_name="wrong-cluster-name",
+                )
+            ]
+        )
+
+    def test_not_in_cluster_skips_name_check(self):
+        self._fixture_not_in_cluster()
+        self._fixture_cfgsync_ctl_not_exists()
+        lib.set_configs(self.env_assist.get_env(), "any-cluster-name", {})
+
+    def test_unsupported_file_types(self):
+        self._fixture_not_in_cluster()
+        self._fixture_cfgsync_ctl_not_exists()
+        lib.set_configs(
+            self.env_assist.get_env(),
+            self.CLUSTER_NAME,
+            {
+                file_type_codes.COROSYNC_CONF: "some content",
+                "foo": "some content",
+            },
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.PCS_CFGSYNC_CONFIG_UNSUPPORTED,
+                    file_type_code=file_type_codes.COROSYNC_CONF,
+                ),
+                fixture.warn(
+                    reports.codes.PCS_CFGSYNC_CONFIG_UNSUPPORTED,
+                    file_type_code="foo",
+                ),
+            ]
+        )
+
+    def test_local_file_not_exist_accepted(self):
+        self._fixture_not_in_cluster()
+        self._fixture_cfgsync_ctl_not_exists()
+        self.config.raw_file.exists(
+            file_type_codes.PCS_KNOWN_HOSTS,
+            settings.pcsd_known_hosts_location,
+            exists=False,
+            name="known_hosts.exists",
+        )
+        self.config.raw_file.write(
+            file_type_codes.PCS_KNOWN_HOSTS,
+            settings.pcsd_known_hosts_location,
+            self.KNOWN_HOSTS_V5.encode(),
+            can_overwrite=True,
+            name="known_hosts.write",
+        )
+        lib.set_configs(
+            self.env_assist.get_env(),
+            self.CLUSTER_NAME,
+            {file_type_codes.PCS_KNOWN_HOSTS: self.KNOWN_HOSTS_V5},
+        )
+        self.env_assist.assert_reports([self.REPORT_KNOWN_HOSTS_SAVE_SUCCESS])
+
+    def test_same_version_and_hash_accepted_without_write(self):
+        self._fixture_not_in_cluster()
+        self._fixture_cfgsync_ctl_not_exists()
+        self.config.raw_file.exists(
+            file_type_codes.PCS_KNOWN_HOSTS,
+            settings.pcsd_known_hosts_location,
+            name="known_hosts.exists",
+        )
+        self.config.raw_file.read(
+            file_type_codes.PCS_KNOWN_HOSTS,
+            settings.pcsd_known_hosts_location,
+            content=self.KNOWN_HOSTS_V5.encode(),
+            name="known_hosts.read",
+        )
+        lib.set_configs(
+            self.env_assist.get_env(),
+            self.CLUSTER_NAME,
+            {file_type_codes.PCS_KNOWN_HOSTS: self.KNOWN_HOSTS_V5},
+        )
+        self.env_assist.assert_reports([self.REPORT_KNOWN_HOSTS_SAVE_SUCCESS])
+
+    def test_remote_newer_version_accepted_with_backup(self):
+        self._fixture_not_in_cluster()
+        self._fixture_cfgsync_ctl_exists()
+        self.config.raw_file.exists(
+            file_type_codes.PCS_SETTINGS_CONF,
+            settings.pcsd_settings_conf_location,
+            name="pcs_settings.exists",
+        )
+        self.config.raw_file.read(
+            file_type_codes.PCS_SETTINGS_CONF,
+            settings.pcsd_settings_conf_location,
+            content=self.PCS_SETTINGS_V5.encode(),
+            name="pcs_settings.read",
+        )
+        self.config.raw_file.backup(
+            file_type_codes.PCS_SETTINGS_CONF,
+            settings.pcsd_settings_conf_location,
+            name="pcs_settings.backup",
+        )
+        self.config.raw_file.remove_old_backups(
+            file_type_codes.PCS_SETTINGS_CONF,
+            settings.pcsd_settings_conf_location,
+            backup_count=self.CFGSYNC_CTL_BACKUP_COUNT,
+            name="pcs_settings.remove_old_backups",
+        )
+        self.config.raw_file.write(
+            file_type_codes.PCS_SETTINGS_CONF,
+            settings.pcsd_settings_conf_location,
+            self.PCS_SETTINGS_V6.encode(),
+            can_overwrite=True,
+            name="pcs_settings.write",
+        )
+        lib.set_configs(
+            self.env_assist.get_env(),
+            self.CLUSTER_NAME,
+            {file_type_codes.PCS_SETTINGS_CONF: self.PCS_SETTINGS_V6},
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    reports.codes.PCS_CFGSYNC_CONFIG_ACCEPTED,
+                    file_type_code=file_type_codes.PCS_SETTINGS_CONF,
+                )
+            ]
+        )
+
+    def test_local_newer_version_rejected(self):
+        self._fixture_not_in_cluster()
+        self._fixture_cfgsync_ctl_not_exists()
+        self.config.raw_file.exists(
+            file_type_codes.PCS_KNOWN_HOSTS,
+            settings.pcsd_known_hosts_location,
+            name="known_hosts.exists",
+        )
+        self.config.raw_file.read(
+            file_type_codes.PCS_KNOWN_HOSTS,
+            settings.pcsd_known_hosts_location,
+            content=self.KNOWN_HOSTS_V6.encode(),
+            name="known_hosts.read",
+        )
+        lib.set_configs(
+            self.env_assist.get_env(),
+            self.CLUSTER_NAME,
+            {file_type_codes.PCS_KNOWN_HOSTS: self.KNOWN_HOSTS_V5},
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.PCS_CFGSYNC_CONFIG_REJECTED,
+                    file_type_code=file_type_codes.PCS_KNOWN_HOSTS,
+                )
+            ]
+        )
+
+    def test_force_flag_overrides_rejection(self):
+        self._fixture_not_in_cluster()
+        self._fixture_cfgsync_ctl_not_exists()
+        self.config.raw_file.exists(
+            file_type_codes.PCS_KNOWN_HOSTS,
+            settings.pcsd_known_hosts_location,
+            name="known_hosts.exists",
+        )
+        self.config.raw_file.read(
+            file_type_codes.PCS_KNOWN_HOSTS,
+            settings.pcsd_known_hosts_location,
+            content=self.KNOWN_HOSTS_V6.encode(),
+            name="known_hosts.read",
+        )
+        # no backup, because known-hosts should not have backups
+        self.config.raw_file.write(
+            file_type_codes.PCS_KNOWN_HOSTS,
+            settings.pcsd_known_hosts_location,
+            self.KNOWN_HOSTS_V5.encode(),
+            can_overwrite=True,
+            name="known_hosts.write",
+        )
+        lib.set_configs(
+            self.env_assist.get_env(),
+            self.CLUSTER_NAME,
+            {file_type_codes.PCS_KNOWN_HOSTS: self.KNOWN_HOSTS_V5},
+            force_flags=(reports.codes.FORCE,),
+        )
+        self.env_assist.assert_reports([self.REPORT_KNOWN_HOSTS_SAVE_SUCCESS])
+
+    def test_remote_parse_error(self):
+        self._fixture_not_in_cluster()
+        self._fixture_cfgsync_ctl_not_exists()
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.set_configs(
+                self.env_assist.get_env(),
+                self.CLUSTER_NAME,
+                {file_type_codes.PCS_KNOWN_HOSTS: "{"},
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.PARSE_ERROR_JSON_FILE,
+                    file_type_code=file_type_codes.PCS_KNOWN_HOSTS,
+                    line_number=1,
+                    column_number=2,
+                    position=1,
+                    reason="Expecting property name enclosed in double quotes",
+                    full_msg=(
+                        "Expecting property name enclosed in double quotes: "
+                        "line 1 column 2 (char 1)"
+                    ),
+                    file_path=settings.pcsd_known_hosts_location,
+                ),
+                fixture.error(
+                    reports.codes.PCS_CFGSYNC_CONFIG_SAVE_ERROR,
+                    file_type_code=file_type_codes.PCS_KNOWN_HOSTS,
+                ),
+            ]
+        )
+
+    def test_local_file_read_error(self):
+        self._fixture_not_in_cluster()
+        self._fixture_cfgsync_ctl_exists()
+        self.config.raw_file.exists(
+            file_type_codes.PCS_SETTINGS_CONF,
+            settings.pcsd_settings_conf_location,
+            name="pcs_settings.exists",
+        )
+        self.config.raw_file.read(
+            file_type_codes.PCS_SETTINGS_CONF,
+            settings.pcsd_settings_conf_location,
+            exception_msg="Read error",
+            name="pcs_settings.read",
+        )
+        # no backup, because the file is considered to be "nonexistent"
+        self.config.raw_file.write(
+            file_type_codes.PCS_SETTINGS_CONF,
+            settings.pcsd_settings_conf_location,
+            self.PCS_SETTINGS_V6.encode(),
+            can_overwrite=True,
+            name="pcs_settings.write",
+        )
+        lib.set_configs(
+            self.env_assist.get_env(),
+            self.CLUSTER_NAME,
+            {file_type_codes.PCS_SETTINGS_CONF: self.PCS_SETTINGS_V6},
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.FILE_IO_ERROR,
+                    file_type_code=file_type_codes.PCS_SETTINGS_CONF,
+                    operation="read",
+                    reason="Read error",
+                    file_path=settings.pcsd_settings_conf_location,
+                ),
+                fixture.info(
+                    reports.codes.PCS_CFGSYNC_CONFIG_ACCEPTED,
+                    file_type_code=file_type_codes.PCS_SETTINGS_CONF,
+                ),
+            ]
+        )
+
+    def test_cfgsync_ctl_read_error_continues_as_warning(self):
+        self._fixture_not_in_cluster()
+        self.config.raw_file.exists(
+            file_type_codes.PCS_CFGSYNC_CTL,
+            settings.pcs_cfgsync_ctl_location,
+            name="cfgsync_ctl.exists",
+        )
+        self.config.raw_file.read(
+            file_type_codes.PCS_CFGSYNC_CTL,
+            settings.pcs_cfgsync_ctl_location,
+            exception_msg="Read error",
+            name="cfgsync_ctl.read",
+        )
+        self.config.raw_file.exists(
+            file_type_codes.PCS_KNOWN_HOSTS,
+            settings.pcsd_known_hosts_location,
+            exists=False,
+            name="known_hosts.exists",
+        )
+        self.config.raw_file.write(
+            file_type_codes.PCS_KNOWN_HOSTS,
+            settings.pcsd_known_hosts_location,
+            self.KNOWN_HOSTS_V5.encode(),
+            can_overwrite=True,
+            name="known_hosts.write",
+        )
+        lib.set_configs(
+            self.env_assist.get_env(),
+            self.CLUSTER_NAME,
+            {file_type_codes.PCS_KNOWN_HOSTS: self.KNOWN_HOSTS_V5},
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.FILE_IO_ERROR,
+                    file_type_code=file_type_codes.PCS_CFGSYNC_CTL,
+                    operation="read",
+                    reason="Read error",
+                    file_path=settings.pcs_cfgsync_ctl_location,
+                ),
+                self.REPORT_KNOWN_HOSTS_SAVE_SUCCESS,
+            ]
+        )
+
+    def test_cfgsync_ctl_parse_error_continues_as_warning(self):
+        self._fixture_not_in_cluster()
+        self.config.raw_file.exists(
+            file_type_codes.PCS_CFGSYNC_CTL,
+            settings.pcs_cfgsync_ctl_location,
+            name="cfgsync_ctl.exists",
+        )
+        self.config.raw_file.read(
+            file_type_codes.PCS_CFGSYNC_CTL,
+            settings.pcs_cfgsync_ctl_location,
+            "{",
+            name="cfgsync_ctl.read",
+        )
+        self.config.raw_file.exists(
+            file_type_codes.PCS_KNOWN_HOSTS,
+            settings.pcsd_known_hosts_location,
+            exists=False,
+            name="known_hosts.exists",
+        )
+        self.config.raw_file.write(
+            file_type_codes.PCS_KNOWN_HOSTS,
+            settings.pcsd_known_hosts_location,
+            self.KNOWN_HOSTS_V5.encode(),
+            can_overwrite=True,
+            name="known_hosts.write",
+        )
+        lib.set_configs(
+            self.env_assist.get_env(),
+            self.CLUSTER_NAME,
+            {file_type_codes.PCS_KNOWN_HOSTS: self.KNOWN_HOSTS_V5},
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.PARSE_ERROR_JSON_FILE,
+                    file_type_code=file_type_codes.PCS_CFGSYNC_CTL,
+                    line_number=1,
+                    column_number=2,
+                    position=1,
+                    reason="Expecting property name enclosed in double quotes",
+                    full_msg=(
+                        "Expecting property name enclosed in double quotes: "
+                        "line 1 column 2 (char 1)"
+                    ),
+                    file_path=settings.pcs_cfgsync_ctl_location,
+                ),
+                self.REPORT_KNOWN_HOSTS_SAVE_SUCCESS,
+            ]
+        )
+
+    def test_backup_error(self):
+        self._fixture_not_in_cluster()
+        self._fixture_cfgsync_ctl_not_exists()
+        self.config.raw_file.exists(
+            file_type_codes.PCS_SETTINGS_CONF,
+            settings.pcsd_settings_conf_location,
+            name="pcs_settings.exists",
+        )
+        self.config.raw_file.read(
+            file_type_codes.PCS_SETTINGS_CONF,
+            settings.pcsd_settings_conf_location,
+            content=self.PCS_SETTINGS_V5.encode(),
+            name="pcs_settings.read",
+        )
+        self.config.raw_file.backup(
+            file_type_codes.PCS_SETTINGS_CONF,
+            settings.pcsd_settings_conf_location,
+            exception_msg="Backup error",
+            name="pcs_settings.backup",
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.set_configs(
+                self.env_assist.get_env(),
+                self.CLUSTER_NAME,
+                {file_type_codes.PCS_SETTINGS_CONF: self.PCS_SETTINGS_V6},
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.FILE_IO_ERROR,
+                    file_type_code=file_type_codes.PCS_SETTINGS_CONF,
+                    operation="backup",
+                    reason="Backup error",
+                    file_path=settings.pcsd_settings_conf_location,
+                ),
+                fixture.error(
+                    reports.codes.PCS_CFGSYNC_CONFIG_SAVE_ERROR,
+                    file_type_code=file_type_codes.PCS_SETTINGS_CONF,
+                ),
+            ]
+        )
+
+    def test_old_backup_removal_error(self):
+        self._fixture_not_in_cluster()
+        self._fixture_cfgsync_ctl_not_exists()
+        self.config.raw_file.exists(
+            file_type_codes.PCS_SETTINGS_CONF,
+            settings.pcsd_settings_conf_location,
+            name="pcs_settings.exists",
+        )
+        self.config.raw_file.read(
+            file_type_codes.PCS_SETTINGS_CONF,
+            settings.pcsd_settings_conf_location,
+            content=self.PCS_SETTINGS_V5.encode(),
+            name="pcs_settings.read",
+        )
+        self.config.raw_file.backup(
+            file_type_codes.PCS_SETTINGS_CONF,
+            settings.pcsd_settings_conf_location,
+            name="pcs_settings.backup",
+        )
+        self.config.raw_file.remove_old_backups(
+            file_type_codes.PCS_SETTINGS_CONF,
+            settings.pcsd_settings_conf_location,
+            backup_count=settings.pcs_cfgsync_file_backup_count_default,
+            exception_msg="Old backup removal error",
+            name="pcs_settings.remove_old_backups",
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.set_configs(
+                self.env_assist.get_env(),
+                self.CLUSTER_NAME,
+                {file_type_codes.PCS_SETTINGS_CONF: self.PCS_SETTINGS_V6},
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.FILE_IO_ERROR,
+                    file_type_code=file_type_codes.PCS_SETTINGS_CONF,
+                    operation="remove_backup",
+                    reason="Old backup removal error",
+                    file_path=settings.pcsd_settings_conf_location,
+                ),
+                fixture.error(
+                    reports.codes.PCS_CFGSYNC_CONFIG_SAVE_ERROR,
+                    file_type_code=file_type_codes.PCS_SETTINGS_CONF,
+                ),
+            ]
+        )
+
+    def test_multiple_files(self):
+        self._fixture_not_in_cluster()
+        self._fixture_cfgsync_ctl_exists()
+        self.config.raw_file.exists(
+            file_type_codes.PCS_SETTINGS_CONF,
+            settings.pcsd_settings_conf_location,
+            name="pcs_settings.exists",
+        )
+        self.config.raw_file.read(
+            file_type_codes.PCS_SETTINGS_CONF,
+            settings.pcsd_settings_conf_location,
+            content=self.PCS_SETTINGS_V6.encode(),
+            name="pcs_settings.read",
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.set_configs(
+                self.env_assist.get_env(),
+                self.CLUSTER_NAME,
+                {
+                    file_type_codes.PCS_SETTINGS_CONF: self.PCS_SETTINGS_V5,
+                    file_type_codes.PCS_KNOWN_HOSTS: "{",
+                    "foo": "some content",
+                },
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.PARSE_ERROR_JSON_FILE,
+                    file_type_code=file_type_codes.PCS_KNOWN_HOSTS,
+                    line_number=1,
+                    column_number=2,
+                    position=1,
+                    reason="Expecting property name enclosed in double quotes",
+                    full_msg=(
+                        "Expecting property name enclosed in double quotes: "
+                        "line 1 column 2 (char 1)"
+                    ),
+                    file_path=settings.pcsd_known_hosts_location,
+                ),
+                fixture.warn(
+                    reports.codes.PCS_CFGSYNC_CONFIG_REJECTED,
+                    file_type_code=file_type_codes.PCS_SETTINGS_CONF,
+                ),
+                fixture.error(
+                    reports.codes.PCS_CFGSYNC_CONFIG_SAVE_ERROR,
+                    file_type_code=file_type_codes.PCS_KNOWN_HOSTS,
+                ),
+                fixture.warn(
+                    reports.codes.PCS_CFGSYNC_CONFIG_UNSUPPORTED,
+                    file_type_code="foo",
+                ),
+            ]
         )
