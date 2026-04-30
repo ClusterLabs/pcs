@@ -368,6 +368,8 @@ if test "x$tests_only" != "xyes"; then
 	PCS_CHECK_PYMOD([setuptools], [>= 66.1])
 	# wheel is required if setuptools < 71
 	AC_PIP_MODULE([setuptools], [>= 71], [], [], [need_wheel=yes])
+	# pycurl-7.46.0 requires setuptools >= 77
+	AC_PIP_MODULE([setuptools], [>= 77], [setuptools_77=yes], [setuptools_77=no], [setuptools_77=no])
 	if test "x$need_wheel" = "xyes"; then
 		PCS_CHECK_PYMOD([wheel])
 	fi
@@ -386,7 +388,14 @@ if test "x$tests_only" != "xyes"; then
 		PCS_CHECK_PYMOD([setuptools-scm])
 		PCS_CHECK_PYMOD([six])
 	fi
-	PCS_CHECK_PYMOD([pycurl], [], [yes])
+	# Pycurl-7.46.0 requires setuptools => 77. However, if pycurl is already
+	# installed on the system, use whatever pycurl is installed and don't limit
+	# its version based on setuptools version.
+	if test "x$setuptools_77" != "xyes" && test "x$local_build" = "xyes"; then
+		PCS_CHECK_PYMOD([pycurl], [< 7.46.0], [yes])
+	else
+		PCS_CHECK_PYMOD([pycurl], [], [yes])
+	fi
 	# Building pycurl requires devel packages that contain pkg-config, so devel
 	# packages must be installed for these checks to pass.
 	# This uses variables set by the PCS_CHECK_PYMOD macro, so it must be executed
