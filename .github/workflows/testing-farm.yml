@@ -7,8 +7,12 @@
 # pull requests from forks.
 #
 # GitHub does not provide a way to restrict who can trigger
-# pull_request_target. As a workaround, this workflow uses GitHub
-# deployment environments to gate execution - fork PRs require manual
+# pull_request_target. The author_association value "MEMBER" is
+# insufficient for gating access, as it includes all organization
+# members regardless of their access level to this repository. As
+# a workaround, this workflow checks the actor's repository write
+# access via the GitHub API and uses deployment environments to gate
+# execution - PRs from actors without write access require manual
 # approval before the job runs.
 #
 # Two environments must be created in the GitHub UI under
@@ -22,6 +26,25 @@
 #      - Set the main branch under "Deployment branches and tags"
 #
 # Without this setup, fork PRs could access secrets unsafely.
+#
+# The write-access check uses the GitHub API endpoint
+# repos/{owner}/{repo}/collaborators/{actor}/permission which requires
+# a token with repository metadata read access. The default GITHUB_TOKEN
+# does not have sufficient permissions for this endpoint, so a
+# fine-grained Personal Access Token (PAT) is stored as a repository
+# secret:
+#
+#   3. Repository secret "PCS_REPO_METADATA_GITHUB_API_TOKEN"
+#      - Create a fine-grained PAT at:
+#        https://github.com/settings/personal-access-tokens/new
+#      - Set "Resource owner" to the ClusterLabs organization
+#      - Under "Repository access", select "Only select repositories"
+#        and choose "ClusterLabs/pcs"
+#      - Under "Repository permissions", set "Metadata" to "Read-only"
+#        (this is typically granted by default)
+#      - Save the token and add it as a repository secret under
+#        Settings -> Secrets and variables -> Actions -> New repository
+#        secret with the name PCS_REPO_METADATA_GITHUB_API_TOKEN
 #
 # For documentation on configuring environments, see:
 # - https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments
@@ -68,8 +91,9 @@ on:
   pull_request_target:
     types: [opened, synchronize, reopened]
 
-  # Allow triggering workflow via PR comment; author's association
-  # is checked in the setup-matrix if condition and environment selection
+  # Allow triggering workflow via PR comment; the author's association
+  # is pre-filtered in the check-permissions job and the actor's
+  # repository write access is verified via the GitHub API
   issue_comment:
     types: [created]
 
@@ -79,17 +103,18 @@ permissions:
   statuses: write
 
 jobs:
-  setup-matrix:
-    # Determine whether the job should run based on the trigger event:
+  check-permissions:
+    # Determine whether the job should run based on the trigger event
+    # and check the actor's repository write access via the GitHub API:
     # - workflow_dispatch: always run, only users with write access (owners
     #   or members) can trigger it manually
     # - issue_comment: must be a PR comment containing '[tf-tests' from an
-    #   owner or member, since any user can comment on a PR
+    #   owner, member, or collaborator, since any user can comment on a PR
     # - pull_request_target: always run, since the event fires on any PR
     #   and GitHub provides no official way to restrict who can trigger it.
-    #   As a workaround, two environments are used - the environment
-    #   selection later in this job gates execution by requiring manual
-    #   approval for untrusted authors (e.g. PRs from forks).
+    #   The environment selection in setup-matrix uses the write access
+    #   check output to gate execution by requiring manual approval for
+    #   actors without write access.
     if: |
       github.event_name == 'workflow_dispatch' ||
       github.event_name == 'pull_request_target' ||
@@ -100,16 +125,42 @@ jobs:
           '[tf-tests'
         ) &&
         contains(
-          fromJson('["OWNER", "MEMBER"]'),
+          fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'),
           github.event.comment.author_association
         ))
+    runs-on: ubuntu-latest
+    outputs:
+      has_write_access: ${{ steps.check.outputs.has_write_access }}
+    steps:
+      - name: Check actor's repository write access
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.PCS_REPO_METADATA_GITHUB_API_TOKEN }}
+          REPO: ${{ github.repository }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          PERMISSION=$(
+            gh api "repos/${REPO}/collaborators/${ACTOR}/permission" \
+              --jq '.permission' \
+              || echo "none"
+          )
+          echo "Permission for ${ACTOR}: ${PERMISSION}"
+          if [[ "$PERMISSION" == "admin" \
+            || "$PERMISSION" == "maintain" \
+            || "$PERMISSION" == "write" ]]; then
+            echo "has_write_access=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_write_access=false" >> "$GITHUB_OUTPUT"
+          fi
 
-    # Select environment using short-circuit evaluation. If the user who
-    # triggered the event has write access (owner or member), the
-    # "testing-farm-apikey" environment is selected, which does not require
-    # approval. Otherwise, the "testing-farm-approval" environment is
-    # selected, which requires manual approval. This is typically the case
-    # when the workflow is triggered by pull requests from forks.
+  setup-matrix:
+    needs: check-permissions
+    # Select environment using short-circuit evaluation. If the actor has
+    # write access to the repository (verified by the check-permissions
+    # job via the GitHub API), the "testing-farm-apikey" environment is
+    # selected, which does not require approval. Otherwise, the
+    # "testing-farm-approval" environment is selected, which requires
+    # manual approval.
     environment: >-
       ${{
         (
@@ -118,18 +169,12 @@ jobs:
         )
         || (
           github.event_name == 'pull_request_target'
-          && contains(
-            fromJson('["OWNER", "MEMBER"]'),
-            github.event.pull_request.author_association
-          )
+          && needs.check-permissions.outputs.has_write_access == 'true'
           && 'testing-farm-apikey'
         )
         || (
           github.event_name == 'issue_comment'
-          && contains(
-            fromJson('["OWNER", "MEMBER"]'),
-            github.event.comment.author_association
-          )
+          && needs.check-permissions.outputs.has_write_access == 'true'
           && 'testing-farm-apikey'
         )
         || 'testing-farm-approval'
