@@ -117,7 +117,13 @@ def set_configs(
             )
         except ParserErrorException as e:
             env.report_processor.report_list(
-                file_instance.parser_exception_to_report_list(e)
+                file_instance.toolbox.parser.exception_to_report_list(
+                    e,
+                    file_type,
+                    None,
+                    force_code=None,
+                    is_forced_or_warning=False,
+                )
                 + [
                     reports.ReportItem.error(
                         reports.messages.PcsCfgsyncConfigSaveError(file_type)

@@ -841,7 +841,7 @@ class SetConfigs(TestCase):
                         "Expecting property name enclosed in double quotes: "
                         "line 1 column 2 (char 1)"
                     ),
-                    file_path=settings.pcsd_known_hosts_location,
+                    file_path=None,
                 ),
                 fixture.error(
                     reports.codes.PCS_CFGSYNC_CONFIG_SAVE_ERROR,
@@ -1118,7 +1118,7 @@ class SetConfigs(TestCase):
                         "Expecting property name enclosed in double quotes: "
                         "line 1 column 2 (char 1)"
                     ),
-                    file_path=settings.pcsd_known_hosts_location,
+                    file_path=None,
                 ),
                 fixture.warn(
                     reports.codes.PCS_CFGSYNC_CONFIG_REJECTED,
