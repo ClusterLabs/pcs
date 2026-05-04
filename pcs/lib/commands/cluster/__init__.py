@@ -4,6 +4,7 @@ from .config import (
     generate_cluster_uuid,
     generate_cluster_uuid_local,
     get_corosync_conf_struct,
+    set_corosync_conf,
 )
 from .link import add_link, remove_links, update_link
 from .misc import (
@@ -41,6 +42,7 @@ __all__ = [
     "rename",
     "rename_node_cib",
     "rename_node_corosync",
+    "set_corosync_conf",
     "set_permissions",
     "setup",
     "setup_local",

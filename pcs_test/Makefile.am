@@ -287,6 +287,7 @@ EXTRA_DIST		= \
 			  tier0/lib/commands/cluster/test_remove_links.py \
 			  tier0/lib/commands/cluster/test_remove_nodes_from_cib.py \
 			  tier0/lib/commands/cluster/test_remove_nodes.py \
+			  tier0/lib/commands/cluster/test_set_corosync_conf.py \
 			  tier0/lib/commands/cluster_property/crm_attribute_mixins.py \
 			  tier0/lib/commands/cluster_property/fixtures.py \
 			  tier0/lib/commands/cluster_property/__init__.py \
