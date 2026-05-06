@@ -74,12 +74,12 @@ def set_configs(
     cluster_name -- expected cluster name. End with an error if the local
         cluster name does not match cluster_name.
     configs -- contents of files to be saved
-    force_flags -- list of flags codes
+    force_flags -- list of force flag codes
     """
-    # the node is either in cluster (has_corosync_conf) and the cluster names
-    # must match, or the node is not in cluster and there is no cluster name to
-    # check against - this happens when this command is used on a node that is
-    # being added to a cluster.
+    # the node is either in a cluster (has_corosync_conf) and the cluster names
+    # must match, or the node is not in a cluster and there is no cluster name
+    # to check against - this happens when this command is used on a node that
+    # is being added to a cluster.
     if env.has_corosync_conf:
         local_cluster_name = env.get_corosync_conf().get_cluster_name()
         if local_cluster_name != cluster_name:

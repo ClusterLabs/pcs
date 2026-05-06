@@ -1227,7 +1227,19 @@ class SetConfigs(ApiV0HandlerTest):
                 body=self._request_body({"cluster_name": "", "configs": {}}),
             )
         except TornadoTimeoutError:
+            # The http_client timeouted because of lock and this is how we test
+            # the locking function. However event loop on the server side should
+            # finish. So we release the lock and the request successfully
+            # finish.
             self.sync_config_lock.release()
+            # Now, there is an unfinished request. It was started by calling
+            # fetch("/remote/set_configs") and it was waiting for the lock to be
+            # released.
+            # The lock was released and the request is able to be finished now.
+            # So, io_loop needs an opportunity to execute the rest of request.
+            # Next line runs io_loop to finish hanging request. Without this an
+            # error appears during calling
+            # `self.http_server.close_all_connections` in tearDown...
             self.io_loop.run_sync(lambda: None)
         else:
             raise AssertionError("Timeout not raised")
