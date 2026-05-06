@@ -1056,24 +1056,29 @@ class SetConfigs(TestCase):
             exception_msg="Old backup removal error",
             name="pcs_settings.remove_old_backups",
         )
-        self.env_assist.assert_raise_library_error(
-            lambda: lib.set_configs(
-                self.env_assist.get_env(),
-                self.CLUSTER_NAME,
-                {file_type_codes.PCS_SETTINGS_CONF: self.PCS_SETTINGS_V6},
-            )
+        self.config.raw_file.write(
+            file_type_codes.PCS_SETTINGS_CONF,
+            settings.pcsd_settings_conf_location,
+            self.PCS_SETTINGS_V6.encode(),
+            can_overwrite=True,
+            name="pcs_settings.write",
+        )
+        lib.set_configs(
+            self.env_assist.get_env(),
+            self.CLUSTER_NAME,
+            {file_type_codes.PCS_SETTINGS_CONF: self.PCS_SETTINGS_V6},
         )
         self.env_assist.assert_reports(
             [
-                fixture.error(
+                fixture.warn(
                     reports.codes.FILE_IO_ERROR,
                     file_type_code=file_type_codes.PCS_SETTINGS_CONF,
                     operation="remove_backup",
                     reason="Old backup removal error",
                     file_path=settings.pcsd_settings_conf_location,
                 ),
-                fixture.error(
-                    reports.codes.PCS_CFGSYNC_CONFIG_SAVE_ERROR,
+                fixture.info(
+                    reports.codes.PCS_CFGSYNC_CONFIG_ACCEPTED,
                     file_type_code=file_type_codes.PCS_SETTINGS_CONF,
                 ),
             ]

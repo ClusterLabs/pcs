@@ -273,9 +273,17 @@ def __accept_and_write_file(
     try:
         if create_backup:
             file_instance.raw_file.backup()
-            file_instance.raw_file.remove_old_backups(backup_count)
-        # if any of the backup methods raise RawFileError, we do not
-        # want to try overwriting the file
+            # Remove old backups, but do not treat the errors as fatal so that
+            # the file is actually written if we were at least able to create
+            # the backup
+            try:
+                file_instance.raw_file.remove_old_backups(backup_count)
+            except RawFileError as e:
+                report_list.append(
+                    raw_file_error_report(e, is_forced_or_warning=True)
+                )
+        # if we failed to backup (raised RawFileError), we do not want to try
+        # overwriting the file
         file_instance.write_facade(file, can_overwrite=True)
         report_list.append(
             reports.ReportItem.info(
