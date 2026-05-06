@@ -671,7 +671,7 @@ class SetConfigs(TestCase):
         )
 
     def test_local_file_not_exist_accepted(self):
-        self._fixture_not_in_cluster()
+        self._fixture_in_cluster()
         self._fixture_cfgsync_ctl_not_exists()
         self.config.raw_file.exists(
             file_type_codes.PCS_KNOWN_HOSTS,
@@ -715,7 +715,7 @@ class SetConfigs(TestCase):
         self.env_assist.assert_reports([self.REPORT_KNOWN_HOSTS_SAVE_SUCCESS])
 
     def test_remote_newer_version_accepted_with_backup(self):
-        self._fixture_not_in_cluster()
+        self._fixture_in_cluster()
         self._fixture_cfgsync_ctl_exists()
         self.config.raw_file.exists(
             file_type_codes.PCS_SETTINGS_CONF,
