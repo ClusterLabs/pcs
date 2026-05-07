@@ -286,8 +286,9 @@ def set_corosync_conf(env: LibraryEnvironment, file_content: str) -> None:
 
     corosync_conf_instance = FileInstance.for_corosync_conf()
     try:
-        new_corosync_conf = corosync_conf_instance.raw_to_facade(
-            file_content.encode("utf-8")
+        new_corosync_conf = cast(
+            config_facade.ConfigFacade,
+            corosync_conf_instance.raw_to_facade(file_content.encode("utf-8")),
         )
     except ParserErrorException as e:
         env.report_processor.report_list(
@@ -299,8 +300,9 @@ def set_corosync_conf(env: LibraryEnvironment, file_content: str) -> None:
                 is_forced_or_warning=False,
             )
         )
-    if env.report_processor.has_errors:
-        raise LibraryError()
+        raise LibraryError() from e
+
+    verify_corosync_conf(new_corosync_conf)  # raise if corosync is not valid
 
     try:
         if corosync_conf_instance.raw_file.exists():
@@ -325,8 +327,7 @@ def set_corosync_conf(env: LibraryEnvironment, file_content: str) -> None:
         )
     except RawFileError as e:
         env.report_processor.report(raw_file_error_report(e))
-    if env.report_processor.has_errors:
-        raise LibraryError()
+        raise LibraryError() from e
 
 
 def __read_cfgsync_ctl() -> tuple[CfgsyncCtlFacade, reports.ReportItemList]:

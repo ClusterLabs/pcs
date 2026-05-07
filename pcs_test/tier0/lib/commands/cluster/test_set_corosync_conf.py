@@ -44,15 +44,13 @@ class SetCorosyncConfNotLiveEnv(TestCase):
 
 
 class SetCorosyncConfParseError(TestCase):
-    _INVALID_CONTENT = "totem {\n    version: 2\n"
-
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
 
     def test_parse_error(self):
         self.env_assist.assert_raise_library_error(
             lambda: config.set_corosync_conf(
-                self.env_assist.get_env(), self._INVALID_CONTENT
+                self.env_assist.get_env(), "totem {\n   version: 2\n"
             )
         )
         self.env_assist.assert_reports(
@@ -61,6 +59,22 @@ class SetCorosyncConfParseError(TestCase):
                     reports.codes.PARSE_ERROR_COROSYNC_CONF_MISSING_CLOSING_BRACE,
                 ),
             ]
+        )
+
+    def test_validation_error(self):
+        self.env_assist.assert_raise_library_error(
+            lambda: config.set_corosync_conf(
+                self.env_assist.get_env(), "totem {\n  option.name: value\n}"
+            ),
+            [
+                fixture.error(
+                    reports.codes.COROSYNC_CONFIG_CANNOT_SAVE_INVALID_NAMES_VALUES,
+                    section_name_list=[],
+                    attribute_name_list=["totem.option.name"],
+                    attribute_value_pairs=[],
+                )
+            ],
+            expected_in_processor=False,
         )
 
 
