@@ -1729,3 +1729,20 @@ class SetCorosyncConf(ApiV0HandlerTest):
             "cluster.set_corosync_conf",
             {"file_content": self.body_data["corosync_conf"]},
         )
+
+    def test_empty_corosync_conf(self):
+        empty_data = [
+            "",
+            "  ",  # to test that strip is called
+        ]
+        for data in empty_data:
+            with self.subTest(value=data):
+                response = self.fetch(
+                    self.url, body=urlencode({"corosync_conf": data})
+                )
+                self.assert_body(
+                    response.body,
+                    "Invalid corosync.conf: empty config not allowed",
+                )
+                self.assertEqual(response.code, 400)
+                self.mock_run_library_command.assert_not_called()

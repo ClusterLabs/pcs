@@ -661,9 +661,12 @@ class KnownHostsChangeHandler(_BaseApiV0Handler):
 class SetCorosyncConf(_BaseApiV0Handler):
     async def _handle_request(self) -> None:
         self._check_required_params({"corosync_conf"})
+        corosync_conf = self.get_argument("corosync_conf")
+        if not corosync_conf:
+            raise self._error("Invalid corosync.conf: empty config not allowed")
+
         result = await self._run_library_command(
-            "cluster.set_corosync_conf",
-            {"file_content": self.get_argument("corosync_conf")},
+            "cluster.set_corosync_conf", {"file_content": corosync_conf}
         )
         if not result.success:
             raise self._error(reports_to_str(result.reports))
