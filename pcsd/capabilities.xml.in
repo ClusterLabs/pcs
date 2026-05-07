@@ -2956,6 +2956,15 @@
           sbd_enable, sbd_disable
       </description>
     </capability>
+    <capability id="sbd-node.config.rest-api.v2" in-pcs="0" in-pcsd="1">
+      <description>
+        Get and set SBD configuration on the local node.
+
+        API v2:
+          sbd.get_node_sbd_config_text
+          sbd.set_node_sbd_config_text
+      </description>
+    </capability>
     <capability id="sbd-node.shared-block-device" in-pcs="0" in-pcsd="1">
       <description>
         Configure SBD on the node level with shared block devices:
