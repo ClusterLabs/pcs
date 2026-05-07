@@ -371,7 +371,7 @@ def get_all_constraints(
             CibConstraintOrderSetDto(
                 resource_sets=[
                     CibResourceSetDto(
-                        set_id="order_set_B2R6-cloneSe_set",
+                        set_id="order_set_R6-cloneB2Se_set",
                         sequential=None,
                         require_all=False,
                         ordering=None,
@@ -379,10 +379,10 @@ def get_all_constraints(
                         role=None,
                         score=None,
                         kind=None,
-                        resources_ids=["B2", "R6-clone"],
+                        resources_ids=["R6-clone", "B2"],
                     ),
                     CibResourceSetDto(
-                        set_id="order_set_B2R6-cloneSe_set-1",
+                        set_id="order_set_R6-cloneB2Se_set-1",
                         sequential=False,
                         require_all=None,
                         ordering=None,
@@ -394,7 +394,7 @@ def get_all_constraints(
                     ),
                 ],
                 attributes=CibConstraintOrderAttributesDto(
-                    constraint_id="order_set_B2R6-cloneSe",
+                    constraint_id="order_set_R6-cloneB2Se",
                     symmetrical=None,
                     require_all=None,
                     score=None,

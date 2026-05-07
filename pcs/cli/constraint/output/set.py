@@ -1,7 +1,4 @@
-from typing import (
-    Optional,
-    Sequence,
-)
+from typing import Optional, Sequence
 
 from pcs.cli.common.output import (
     INDENT_STEP,
@@ -12,7 +9,7 @@ from pcs.cli.common.output import (
 from pcs.cli.reports.output import warn
 from pcs.common.pacemaker.constraint import CibResourceSetDto
 from pcs.common.str_tools import (
-    format_list,
+    format_list_dont_sort,
     format_optional,
     indent,
     pairs_to_text,
@@ -56,7 +53,7 @@ def resource_set_to_text(
     ]
     set_options = [
         "Resources: {resources}".format(
-            resources=format_list(resource_set_dto.resources_ids)
+            resources=format_list_dont_sort(resource_set_dto.resources_ids)
         )
     ] + pairs_to_text(_resource_set_options_to_pairs(resource_set_dto))
     output.extend(indent(set_options, indent_step=INDENT_STEP))
