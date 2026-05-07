@@ -1,6 +1,5 @@
 from collections import defaultdict
 from dataclasses import replace
-from hashlib import sha1
 from typing import Iterable, Optional, cast
 
 from pcs.common.file_type_codes import FileTypeCode
@@ -13,12 +12,12 @@ from pcs.lib.communication.tools import run
 from pcs.lib.file.instance import FileInstance
 from pcs.lib.file.raw_file import RawFileError, raw_file_error_report
 from pcs.lib.interface.config import (
-    FacadeInterface,
     ParserErrorException,
     SyncVersionFacadeInterface,
 )
 
 from .const import SYNCED_CONFIGS
+from .tools import get_file_hash
 
 
 class ConfigFetcher:
@@ -85,7 +84,7 @@ class ConfigFetcher:
                 configs_to_update[file_type] = newest_config
             elif local_config.data_version > newest_config.data_version:
                 pass
-            elif _file_hash(instance, local_config) != _file_hash(
+            elif get_file_hash(instance, local_config) != get_file_hash(
                 instance, newest_config
             ):
                 configs_to_update[file_type] = newest_config
@@ -134,15 +133,6 @@ class ConfigFetcher:
         return result
 
 
-def _file_hash(file_instance: FileInstance, facade: FacadeInterface) -> str:
-    # sha1 is used to be compatible with the old ruby implementation.
-    # The hash is only used to compare and sort the files, not for security
-    # reasons
-    return sha1(
-        file_instance.facade_to_raw(facade), usedforsecurity=False
-    ).hexdigest()
-
-
 def _find_newest_config(
     file_instance: FileInstance, configs: Iterable[SyncVersionFacadeInterface]
 ) -> Optional[SyncVersionFacadeInterface]:
@@ -155,7 +145,7 @@ def _find_newest_config(
 
     for cfg in configs:
         if cfg.data_version == max_version:
-            file_hash = _file_hash(file_instance, cfg)
+            file_hash = get_file_hash(file_instance, cfg)
             cfg_hash[file_hash] = cfg
             hash_count[file_hash] += 1
 

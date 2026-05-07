@@ -1,10 +1,6 @@
 import base64
 import logging
 from unittest import mock
-from urllib.parse import urlencode
-
-from tornado.locks import Lock
-from tornado.util import TimeoutError as TornadoTimeoutError
 
 from pcs.daemon import http_server, ruby_pcsd
 from pcs.daemon.app import sinatra_remote
@@ -22,7 +18,6 @@ class AppTest(fixtures_app.AppTest):
         self.https_server_manage = mock.MagicMock(
             spec_set=http_server.HttpsServerManage
         )
-        self.lock = Lock()
         self.api_auth_provider_factory = MockAuthProviderFactory()
         super().setUp()
 
@@ -30,7 +25,6 @@ class AppTest(fixtures_app.AppTest):
         return sinatra_remote.get_routes(
             self.api_auth_provider_factory,
             self.wrapper,
-            self.lock,
             self.https_server_manage,
         )
 
@@ -104,74 +98,3 @@ class SinatraRemote(AppTest):
             self.wrapper.run_ruby_payload,
             {"username": "foo", "groups": ["haclient", "wheel", "square"]},
         )
-
-
-class SyncConfigMutualExclusive(AppTest):
-    """
-    This class contains tests that the request handler of url
-    `/remote/set_sync_options` waits until current synchronization is done (i.e.
-    respects lock).
-
-    Every test simply calls url `/remote/set_sync_options`. If there is no lock
-    (it means that synchronization is not in progress) the handler gives
-    response. If there is a lock handler waits and the request fails because of
-    timeout and test detects an expected timeout error.
-    """
-
-    def fetch_set_sync_options(self, method):
-        def fetch_sync_options():
-            return self.http_client.fetch(
-                self.get_url("/remote/set_configs"), **kwargs
-            )
-
-        kwargs = (
-            dict(method=method, body=urlencode({}))
-            if method == "POST"
-            else dict(method=method)
-        )
-        kwargs["headers"] = {"Cookie": "token=1234"}
-
-        # Without lock the timeout should be enough to finish task. With the
-        # lock it should raise because of timeout. The same timeout is used for
-        # noticing differences between test with and test without lock.
-        # The timeout needs to be long enough for the test to fit into it even
-        # if running on a slower machine. And it should be short enough not to
-        # make the test run unnecessary long.
-        return self.io_loop.run_sync(fetch_sync_options, timeout=2.5)
-
-    def check_call_wrapper_without_lock(self, method):
-        self.assert_wrappers_response(self.fetch_set_sync_options(method))
-
-    def check_locked(self, method):
-        self.lock.acquire()
-        try:
-            self.fetch_set_sync_options(method)
-        except TornadoTimeoutError:
-            # The http_client timeouted because of lock and this is how we test
-            # the locking function. However event loop on the server side should
-            # finish. So we release the lock and the request successfully
-            # finish.
-            self.lock.release()
-            # Now, there is an unfinished request. It was started by calling
-            # fetch("/remote/set_sync_options") (in self.fetch_set_sync_options)
-            # and it was waiting for the lock to be released.
-            # The lock was released and the request is able to be finished now.
-            # So, io_loop needs an opportunity to execute the rest of request.
-            # Next line runs io_loop to finish hanging request. Without this an
-            # error appears during calling
-            # `self.http_server.close_all_connections` in tearDown...
-            self.io_loop.run_sync(lambda: None)
-        else:
-            raise AssertionError("Timeout not raised")
-
-    def test_get_not_locked(self):
-        self.check_call_wrapper_without_lock("GET")
-
-    def test_get_locked(self):
-        self.check_locked("GET")
-
-    def test_post_not_locked(self):
-        self.check_call_wrapper_without_lock("POST")
-
-    def test_post_locked(self):
-        self.check_locked("POST")

@@ -1,7 +1,5 @@
 from typing import Optional
 
-from tornado.locks import Lock
-
 from pcs.daemon import log, ruby_pcsd
 from pcs.daemon.app.auth_provider import (
     ApiAuthProviderFactoryInterface,
@@ -64,29 +62,6 @@ class SinatraRemote(LegacyApiHandler, SinatraMixin):
         self.send_sinatra_result(result)
 
 
-class SyncConfigMutualExclusive(SinatraRemote):
-    """
-    SyncConfigMutualExclusive handles urls which should be directed to the
-    Sinatra remote (non-GUI) functions that can not run at the same time as
-    config synchronization. The exclusivity is achieved by sync_config_lock.
-    """
-
-    __sync_config_lock: Lock
-
-    def initialize(  # type: ignore[override]
-        self,
-        api_auth_provider_factory: ApiAuthProviderFactoryInterface,
-        ruby_pcsd_wrapper: ruby_pcsd.Wrapper,
-        sync_config_lock: Lock,
-    ) -> None:
-        super().initialize(api_auth_provider_factory, ruby_pcsd_wrapper)
-        self.__sync_config_lock = sync_config_lock
-
-    async def _handle_request(self) -> None:
-        async with self.__sync_config_lock:
-            await super()._handle_request()
-
-
 class SetCerts(SinatraRemote):
     """
     SetCerts handles url for setting new certificate and key. It calls the
@@ -117,7 +92,6 @@ class SetCerts(SinatraRemote):
 def get_routes(
     api_auth_provider_factory: ApiAuthProviderFactoryInterface,
     ruby_pcsd_wrapper: ruby_pcsd.Wrapper,
-    sync_config_lock: Lock,
     https_server_manage: HttpsServerManage,
 ) -> RoutesType:
     sinatra_remote_options = dict(
@@ -135,11 +109,6 @@ def get_routes(
                 **sinatra_remote_options,
                 https_server_manage=https_server_manage,
             ),
-        ),
-        (
-            r"/remote/set_configs",
-            SyncConfigMutualExclusive,
-            dict(**sinatra_remote_options, sync_config_lock=sync_config_lock),
         ),
         (r"/remote/.*", SinatraRemote, sinatra_remote_options),
     ]

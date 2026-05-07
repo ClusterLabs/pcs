@@ -1211,6 +1211,269 @@ class SetSyncOptions(ApiV0HandlerTest):
         )
 
 
+class SetConfigs(ApiV0HandlerTest):
+    url = "/remote/set_configs"
+    command = "pcs_cfgsync.set_configs"
+
+    def _request_body(self, data: dict) -> str:
+        return urlencode({"configs": json.dumps(data)})
+
+    def test_locked(self):
+        self.sync_config_lock.acquire()
+
+        try:
+            self.fetch(
+                self.url,
+                body=self._request_body({"cluster_name": "", "configs": {}}),
+            )
+        except TornadoTimeoutError:
+            # The http_client timeouted because of lock and this is how we test
+            # the locking function. However event loop on the server side should
+            # finish. So we release the lock and the request successfully
+            # finish.
+            self.sync_config_lock.release()
+            # Now, there is an unfinished request. It was started by calling
+            # fetch("/remote/set_configs") and it was waiting for the lock to be
+            # released.
+            # The lock was released and the request is able to be finished now.
+            # So, io_loop needs an opportunity to execute the rest of request.
+            # Next line runs io_loop to finish hanging request. Without this an
+            # error appears during calling
+            # `self.http_server.close_all_connections` in tearDown...
+            self.io_loop.run_sync(lambda: None)
+        else:
+            raise AssertionError("Timeout not raised")
+
+    def test_bad_json(self):
+        bad_inputs = [
+            "not a valid json",
+            [],
+            {"configs": "not a dict"},
+            {"configs": []},
+            {"configs": {"known-hosts": "not a dict"}},
+            {"configs": {"known-hosts": []}},
+        ]
+
+        for data in bad_inputs:
+            with self.subTest(value=data):
+                self.mock_run_library_command.reset_mock()
+                response = self.fetch(
+                    self.url, body=urlencode({"configs": data})
+                )
+                self.assert_body(
+                    response.body, json.dumps({"status": "bad_json"})
+                )
+                self.assertEqual(response.code, 200)
+                self.mock_run_library_command.assert_not_called()
+
+    def test_success_empty(self):
+        self.mock_run_library_command.return_value = self.result_success()
+        response = self.fetch(
+            self.url,
+            body=self._request_body({"cluster_name": "test", "configs": {}}),
+        )
+        self.assertEqual(response.code, 200)
+        self.assert_body(
+            response.body, json.dumps({"status": "ok", "result": {}})
+        )
+        self.mock_run_library_command.assert_called_once_with(
+            self.command,
+            {"cluster_name": "test", "configs": {}, "force_flags": []},
+        )
+
+    def test_success_multiple_files(self):
+        self.mock_run_library_command.return_value = self.result_success(
+            reports=[
+                reports.ReportItem.info(
+                    reports.messages.PcsCfgsyncConfigAccepted(
+                        file_type_codes.PCS_KNOWN_HOSTS
+                    )
+                ).to_dto(),
+                reports.ReportItem.info(
+                    reports.messages.PcsCfgsyncConfigAccepted(
+                        file_type_codes.PCS_SETTINGS_CONF
+                    )
+                ).to_dto(),
+                reports.ReportItem.warning(
+                    reports.messages.PcsCfgsyncConfigUnsupported(
+                        file_type_codes.FileTypeCode("some-other-file")
+                    )
+                ).to_dto(),
+            ],
+        )
+        response = self.fetch(
+            self.url,
+            body=self._request_body(
+                {
+                    "cluster_name": "test",
+                    "configs": {
+                        "known-hosts": {
+                            "type": "file",
+                            "text": "known-hosts content",
+                        },
+                        "pcs_settings.conf": {
+                            "type": "file",
+                            "text": "settings content",
+                        },
+                        "some-other-file": {
+                            "type": "file",
+                            # missing text, default empty string used
+                        },
+                    },
+                }
+            ),
+        )
+        self.assertEqual(response.code, 200)
+        self.assert_body(
+            response.body,
+            json.dumps(
+                {
+                    "status": "ok",
+                    "result": {
+                        "known-hosts": "accepted",
+                        "pcs_settings.conf": "accepted",
+                        "some-other-file": "not_supported",
+                    },
+                }
+            ),
+        )
+        self.mock_run_library_command.assert_called_once_with(
+            self.command,
+            {
+                "cluster_name": "test",
+                "configs": {
+                    file_type_codes.PCS_KNOWN_HOSTS: "known-hosts content",
+                    file_type_codes.PCS_SETTINGS_CONF: "settings content",
+                    "some-other-file": "",
+                },
+                "force_flags": [],
+            },
+        )
+
+    def test_success_with_force(self):
+        self.mock_run_library_command.return_value = self.result_success()
+        response = self.fetch(
+            self.url,
+            body=self._request_body(
+                {"cluster_name": "test", "force": True, "configs": {}}
+            ),
+        )
+        self.assertEqual(response.code, 200)
+        self.assert_body(
+            response.body, json.dumps({"status": "ok", "result": {}})
+        )
+        self.mock_run_library_command.assert_called_once_with(
+            self.command,
+            {
+                "cluster_name": "test",
+                "configs": {},
+                "force_flags": [reports.codes.FORCE],
+            },
+        )
+
+    def test_success_not_type_file(self):
+        self.mock_run_library_command.return_value = self.result_success()
+        response = self.fetch(
+            self.url,
+            body=self._request_body(
+                {
+                    "cluster_name": "test",
+                    "configs": {
+                        "known-hosts": {"type": "other", "text": "content"},
+                    },
+                }
+            ),
+        )
+        self.assertEqual(response.code, 200)
+        self.assert_body(
+            response.body,
+            json.dumps(
+                {"status": "ok", "result": {"known-hosts": "not_supported"}}
+            ),
+        )
+        self.mock_run_library_command.assert_called_once_with(
+            self.command,
+            {"cluster_name": "test", "configs": {}, "force_flags": []},
+        )
+
+    def test_success_missing_report_for_file(self):
+        self.mock_run_library_command.return_value = self.result_success(
+            reports=[
+                # success report for only one of the files
+                reports.ReportItem.info(
+                    reports.messages.PcsCfgsyncConfigAccepted(
+                        file_type_codes.PCS_KNOWN_HOSTS
+                    )
+                ).to_dto()
+            ],
+        )
+        response = self.fetch(
+            self.url,
+            body=self._request_body(
+                {
+                    "cluster_name": "test",
+                    "configs": {
+                        "known-hosts": {
+                            "type": "file",
+                            "text": "known-hosts content",
+                        },
+                        "pcs_settings.conf": {
+                            "type": "file",
+                            "text": "settings content",
+                        },
+                    },
+                }
+            ),
+        )
+        self.assertEqual(response.code, 200)
+        self.assert_body(
+            response.body,
+            json.dumps(
+                {
+                    "status": "ok",
+                    "result": {
+                        "known-hosts": "accepted",
+                        # should default to "error", since no report for this
+                        # file was returned from the lib command
+                        "pcs_settings.conf": "error",
+                    },
+                }
+            ),
+        )
+        self.mock_run_library_command.assert_called_once_with(
+            self.command,
+            {
+                "cluster_name": "test",
+                "configs": {
+                    file_type_codes.PCS_KNOWN_HOSTS: "known-hosts content",
+                    file_type_codes.PCS_SETTINGS_CONF: "settings content",
+                },
+                "force_flags": [],
+            },
+        )
+
+    def test_wrong_cluster_name(self):
+        self.mock_run_library_command.return_value = self.result_failure(
+            report_items=[
+                reports.ReportItem.error(
+                    reports.messages.NodeReportsUnexpectedClusterName("test")
+                ).to_dto()
+            ],
+        )
+        response = self.fetch(
+            self.url,
+            body=self._request_body({"cluster_name": "test", "configs": {}}),
+        )
+        self.assertEqual(response.code, 200)
+        self.assert_body(
+            response.body, json.dumps({"status": "wrong_cluster_name"})
+        )
+        self.mock_run_library_command.assert_called_once_with(
+            self.command,
+            {"cluster_name": "test", "configs": {}, "force_flags": []},
+        )
+
+
 class SetPermissions(ApiV0HandlerTest):
     url = "/remote/set_permissions"
     command = "cluster.set_permissions"
