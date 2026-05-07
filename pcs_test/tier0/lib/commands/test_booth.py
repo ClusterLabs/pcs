@@ -1,10 +1,15 @@
 # pylint: disable=too-many-lines
+import base64
 import os
 from textwrap import dedent
 from unittest import TestCase, mock
 
 from pcs import settings
 from pcs.common import file_type_codes, reports
+from pcs.common.booth_dto import (
+    BoothConfigAndAuthfileDto,
+    BoothConfigFileDto,
+)
 from pcs.common.file import RawFileError
 from pcs.lib.booth import constants
 from pcs.lib.commands import booth as commands
@@ -1292,6 +1297,226 @@ class ConfigText(TestCase, FixtureMixin):
                     node=node_name,
                     command="remote/booth_get_config",
                     reason=error,
+                ),
+            ]
+        )
+
+
+class GetConfig(TestCase, FixtureMixin):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+
+    def test_invalid_instance(self):
+        instance_name = "/tmp/booth/booth"
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.get_config_and_authfile(
+                self.env_assist.get_env(), instance_name=instance_name
+            ),
+            [
+                fixture_report_invalid_name(instance_name),
+            ],
+            expected_in_processor=False,
+        )
+
+    def test_not_live(self):
+        self.config.env.set_booth(
+            {
+                "config_data": "some config".encode("utf-8"),
+                "key_data": "some key data".encode("utf-8"),
+                "key_path": "/tmp/pcs_test/booth.key",
+            }
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.get_config_and_authfile(self.env_assist.get_env()),
+            [
+                fixture.error(
+                    reports.codes.LIVE_ENVIRONMENT_REQUIRED,
+                    forbidden_options=[
+                        file_type_codes.BOOTH_CONFIG,
+                        file_type_codes.BOOTH_KEY,
+                    ],
+                ),
+            ],
+            expected_in_processor=False,
+        )
+
+    def test_success_default_instance(self):
+        config_content = self.fixture_cfg_content()
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_CONFIG,
+            self.fixture_cfg_path(),
+            content=config_content,
+            name="raw_file.read.conf",
+        )
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_KEY,
+            self.fixture_key_path(),
+            content=RANDOM_KEY,
+            name="raw_file.read.key",
+        )
+        result = commands.get_config_and_authfile(self.env_assist.get_env())
+        self.assertEqual(
+            result,
+            BoothConfigAndAuthfileDto(
+                config=BoothConfigFileDto(
+                    name="booth.conf",
+                    data=config_content.decode("utf-8"),
+                ),
+                authfile=BoothConfigFileDto(
+                    name="booth.key",
+                    data=base64.b64encode(RANDOM_KEY).decode("utf-8"),
+                ),
+            ),
+        )
+
+    def test_success_custom_instance(self):
+        instance_name = "my_booth"
+        config_content = self.fixture_cfg_content(
+            self.fixture_key_path(instance_name)
+        )
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_CONFIG,
+            self.fixture_cfg_path(instance_name),
+            content=config_content,
+            name="raw_file.read.conf",
+        )
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_KEY,
+            self.fixture_key_path(instance_name),
+            content=RANDOM_KEY,
+            name="raw_file.read.key",
+        )
+        result = commands.get_config_and_authfile(
+            self.env_assist.get_env(), instance_name=instance_name
+        )
+        self.assertEqual(
+            result,
+            BoothConfigAndAuthfileDto(
+                config=BoothConfigFileDto(
+                    name=f"{instance_name}.conf",
+                    data=config_content.decode("utf-8"),
+                ),
+                authfile=BoothConfigFileDto(
+                    name=f"{instance_name}.key",
+                    data=base64.b64encode(RANDOM_KEY).decode("utf-8"),
+                ),
+            ),
+        )
+
+    def test_success_no_authfile(self):
+        config_content = bytes()
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_CONFIG,
+            self.fixture_cfg_path(),
+            content=config_content,
+        )
+        result = commands.get_config_and_authfile(self.env_assist.get_env())
+        self.assertEqual(
+            result,
+            BoothConfigAndAuthfileDto(
+                config=BoothConfigFileDto(
+                    name="booth.conf",
+                    data="",
+                ),
+                authfile=None,
+            ),
+        )
+
+    def test_cannot_read_config(self):
+        error = "an error"
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_CONFIG,
+            self.fixture_cfg_path(),
+            exception_msg=error,
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.get_config_and_authfile(self.env_assist.get_env()),
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.FILE_IO_ERROR,
+                    file_type_code=file_type_codes.BOOTH_CONFIG,
+                    file_path=self.fixture_cfg_path(),
+                    reason=error,
+                    operation=RawFileError.ACTION_READ,
+                ),
+            ]
+        )
+
+    def test_cannot_read_authfile(self):
+        error = "an error"
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_CONFIG,
+            self.fixture_cfg_path(),
+            content=self.fixture_cfg_content(),
+            name="raw_file.read.conf",
+        )
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_KEY,
+            self.fixture_key_path(),
+            exception_msg=error,
+            name="raw_file.read.key",
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.get_config_and_authfile(self.env_assist.get_env()),
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.FILE_IO_ERROR,
+                    file_type_code=file_type_codes.BOOTH_KEY,
+                    file_path=self.fixture_key_path(),
+                    reason=error,
+                    operation=RawFileError.ACTION_READ,
+                ),
+            ]
+        )
+
+    def test_authfile_not_in_booth_dir(self):
+        config_content = "authfile=/etc/my_booth.key"
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_CONFIG,
+            self.fixture_cfg_path(),
+            content=config_content.encode("utf-8"),
+        )
+        result = commands.get_config_and_authfile(self.env_assist.get_env())
+        self.assertEqual(
+            result,
+            BoothConfigAndAuthfileDto(
+                config=BoothConfigFileDto(
+                    name="booth.conf",
+                    data=config_content,
+                ),
+                authfile=None,
+            ),
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.BOOTH_UNSUPPORTED_FILE_LOCATION,
+                    file_type_code=file_type_codes.BOOTH_KEY,
+                    file_path="/etc/my_booth.key",
+                    expected_dir=settings.booth_config_dir,
+                ),
+            ]
+        )
+
+    def test_config_parse_error(self):
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_CONFIG,
+            self.fixture_cfg_path(),
+            content="invalid config".encode("utf-8"),
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: commands.get_config_and_authfile(self.env_assist.get_env()),
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.BOOTH_CONFIG_UNEXPECTED_LINES,
+                    line_list=["invalid config"],
+                    file_path=self.fixture_cfg_path(),
                 ),
             ]
         )

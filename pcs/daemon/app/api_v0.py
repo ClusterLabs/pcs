@@ -7,7 +7,9 @@ from tornado.web import Finish
 from pcs import settings
 from pcs.common import file_type_codes, reports
 from pcs.common.async_tasks.dto import CommandDto, CommandOptionsDto
+from pcs.common.booth_dto import BoothConfigAndAuthfileDto
 from pcs.common.cluster_dto import ClusterDaemonsInfoDto
+from pcs.common.interface.dto import to_dict
 from pcs.common.pcs_cfgsync_dto import SyncConfigsDto
 from pcs.common.str_tools import format_list
 from pcs.daemon import log
@@ -294,6 +296,29 @@ class QdeviceNetClientDestroyHandler(_BaseApiV0Handler):
         )
         if not result.success:
             raise self._error(reports_to_str(result.reports))
+
+
+class BoothGetConfigHandler(_BaseApiV0Handler):
+    async def _handle_request(self) -> None:
+        instance_name = self.get_argument("name", None)
+        result = await self._run_library_command(
+            "booth.get_config_and_authfile",
+            dict(instance_name=instance_name),
+        )
+        if not result.success:
+            raise self._error(reports_to_str(result.reports))
+
+        # Here we convert warning to an error. The overall goal was to convert
+        # the ruby behaviour to python (ruby produced error) and at the same
+        # time we wanted to use function which had exactly the behaviour that
+        # we wanted (except it produced warning instead of error).
+        # This is the compromise.
+        if any(
+            rep.message.code == reports.codes.BOOTH_UNSUPPORTED_FILE_LOCATION
+            for rep in result.reports
+        ):
+            raise self._error(reports_to_str(result.reports))
+        self.write(to_dict(cast(BoothConfigAndAuthfileDto, result.result)))
 
 
 class CheckHostHandler(_BaseApiV0Handler):
@@ -587,6 +612,8 @@ def get_routes(
             QdeviceNetSignNodeCertificateHandler,
             params,
         ),
+        # booth
+        (r("booth_get_config"), BoothGetConfigHandler, params),
         # cfgsync
         (r("get_configs"), GetConfigsHandler, params),
         (
