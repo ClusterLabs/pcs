@@ -1,3 +1,4 @@
+import fcntl
 import re
 from os import path
 from typing import (
@@ -257,6 +258,27 @@ def get_local_sbd_config() -> str:
         raise LibraryError(
             reports.ReportItem.error(
                 reports.messages.UnableToGetSbdConfig("local node", str(e))
+            )
+        ) from e
+
+
+def set_local_sbd_config(config: str) -> None:
+    """
+    Write SBD configuration to local SBD config file. Raise LibraryError on
+    any failure.
+
+    config -- SBD configuration as string
+    """
+    try:
+        with open(settings.sbd_config, "w") as sbd_cfg:
+            # the lock is released when the file gets closed on leaving the
+            # with statement
+            fcntl.flock(sbd_cfg.fileno(), fcntl.LOCK_EX)
+            sbd_cfg.write(config)
+    except EnvironmentError as e:
+        raise LibraryError(
+            reports.ReportItem.error(
+                reports.messages.UnableToSetSbdConfig(str(e))
             )
         ) from e
 

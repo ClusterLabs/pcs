@@ -427,6 +427,61 @@ class GetLocalSbdConfigTest(TestCase):
         )
 
 
+@mock.patch("pcs.lib.sbd.fcntl")
+class SetNodeSbdConfigTextTest(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+        self.mock_file = mock.mock_open()()
+        self.mock_file.fileno.return_value = 123
+
+    def test_success(self, mock_fcntl):
+        config_data = "SBD_WATCHDOG_TIMEOUT=5\n"
+        self.config.fs.open(settings.sbd_config, self.mock_file, mode="w")
+        cmd_sbd.set_node_sbd_config_text(self.env_assist.get_env(), config_data)
+        mock_fcntl.flock.assert_called_once_with(123, mock_fcntl.LOCK_EX)
+        self.mock_file.write.assert_called_once_with(config_data)
+
+    def _assert_failure(self, reason):
+        self.env_assist.assert_raise_library_error(
+            lambda: cmd_sbd.set_node_sbd_config_text(
+                self.env_assist.get_env(), "config"
+            ),
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.UNABLE_TO_SET_SBD_CONFIG,
+                    reason=reason,
+                ),
+            ]
+        )
+
+    def test_open_failure(self, mock_fcntl):
+        reason = "reason"
+        self.config.fs.open(
+            settings.sbd_config,
+            side_effect=EnvironmentError(reason),
+            mode="w",
+        )
+        self._assert_failure(reason)
+        mock_fcntl.flock.assert_not_called()
+
+    def test_flock_failure(self, mock_fcntl):
+        reason = "flock error"
+        mock_fcntl.flock.side_effect = OSError(reason)
+        self.config.fs.open(settings.sbd_config, self.mock_file, mode="w")
+        self._assert_failure(reason)
+        mock_fcntl.flock.assert_called_once_with(123, mock_fcntl.LOCK_EX)
+        self.mock_file.write.assert_not_called()
+
+    def test_write_failure(self, mock_fcntl):
+        reason = "write error"
+        self.mock_file.write.side_effect = OSError(reason)
+        self.config.fs.open(settings.sbd_config, self.mock_file, mode="w")
+        self._assert_failure(reason)
+        mock_fcntl.flock.assert_called_once_with(123, mock_fcntl.LOCK_EX)
+
+
 class InitializeBlockDevicesTest(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)

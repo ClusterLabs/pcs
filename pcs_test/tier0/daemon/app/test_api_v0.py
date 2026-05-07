@@ -1746,3 +1746,30 @@ class SetCorosyncConf(ApiV0HandlerTest):
                 )
                 self.assertEqual(response.code, 400)
                 self.mock_run_library_command.assert_not_called()
+
+
+class SetSbdConfigHandler(ApiV0HandlerTest):
+    url = "/remote/set_sbd_config"
+    body_data = {"config": "sbd config text data\n"}
+    command_data = {"config": body_data["config"].strip()}
+
+    def test_success(self):
+        self.mock_run_library_command.return_value = self.result_success()
+        response = self.fetch(self.url, body=urlencode(self.body_data))
+        self.assert_body(response.body, "SBD configuration saved.")
+        self.assertEqual(response.code, 200)
+        self.mock_run_library_command.assert_called_once_with(
+            "sbd.set_node_sbd_config_text", self.command_data
+        )
+
+    def test_missing_params(self):
+        response = self.fetch(self.url)
+        self.assert_body(response.body, "Required parameters missing: 'config'")
+        self.assertEqual(response.code, 400)
+        self.mock_run_library_command.assert_not_called()
+
+    def test_failure(self):
+        self.assert_error_with_report(self.url, body=urlencode(self.body_data))
+        self.mock_run_library_command.assert_called_once_with(
+            "sbd.set_node_sbd_config_text", self.command_data
+        )
