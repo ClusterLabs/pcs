@@ -129,7 +129,7 @@ class SetCorosyncConfSuccess(TestCase):
             self.env_assist.get_env(), _COROSYNC_CONF_CONTENT
         )
 
-    def test_corosync_conf_existing_cfgsync_ctl_existing(self):
+    def fixture_success_with_cfgsyncctl(self):
         self.config.raw_file.exists(
             file_type_codes.COROSYNC_CONF,
             settings.corosync_conf_file,
@@ -144,6 +144,7 @@ class SetCorosyncConfSuccess(TestCase):
             file_type_codes.PCS_CFGSYNC_CTL,
             settings.pcs_cfgsync_ctl_location,
             content=_CFGSYNC_CTL_CUSTOM_CONTENT,
+            name="cfgsync_ctl.read",
         )
         self.config.raw_file.backup(
             file_type_codes.COROSYNC_CONF,
@@ -160,40 +161,26 @@ class SetCorosyncConfSuccess(TestCase):
             file_data=_COROSYNC_CONF_WRITE_BYTES,
             can_overwrite=True,
         )
+
+    def test_corosync_conf_existing_cfgsync_ctl_existing(self):
+        self.fixture_success_with_cfgsyncctl()
         config.set_corosync_conf(
             self.env_assist.get_env(), _COROSYNC_CONF_CONTENT
         )
 
     def test_corosync_conf_existing_cfgsync_read_failure(self):
-        self.config.raw_file.exists(
-            file_type_codes.COROSYNC_CONF,
-            settings.corosync_conf_file,
-            name="corosync_conf.exists",
-        )
-        self.config.raw_file.exists(
-            file_type_codes.PCS_CFGSYNC_CTL,
-            settings.pcs_cfgsync_ctl_location,
-            name="cfgsync_ctl.exists",
-        )
+        self.fixture_success_with_cfgsyncctl()
         self.config.raw_file.read(
             file_type_codes.PCS_CFGSYNC_CTL,
             settings.pcs_cfgsync_ctl_location,
             exception_msg="read failed",
-        )
-        self.config.raw_file.backup(
-            file_type_codes.COROSYNC_CONF,
-            settings.corosync_conf_file,
+            instead="cfgsync_ctl.read",
         )
         self.config.raw_file.remove_old_backups(
             file_type_codes.COROSYNC_CONF,
             settings.corosync_conf_file,
             backup_count=settings.pcs_cfgsync_file_backup_count_default,
-        )
-        self.config.raw_file.write(
-            file_type_codes.COROSYNC_CONF,
-            settings.corosync_conf_file,
-            file_data=_COROSYNC_CONF_WRITE_BYTES,
-            can_overwrite=True,
+            instead="raw_file.remove_old_backups",
         )
         config.set_corosync_conf(
             self.env_assist.get_env(), _COROSYNC_CONF_CONTENT
@@ -207,6 +194,38 @@ class SetCorosyncConfSuccess(TestCase):
                     reason="read failed",
                     file_path=settings.pcs_cfgsync_ctl_location,
                 ),
+            ]
+        )
+
+    def test_corosync_conf_existing_cfgsync_parse_failure(self):
+        self.fixture_success_with_cfgsyncctl()
+        self.config.raw_file.read(
+            file_type_codes.PCS_CFGSYNC_CTL,
+            settings.pcs_cfgsync_ctl_location,
+            content="",
+            instead="cfgsync_ctl.read",
+        )
+        self.config.raw_file.remove_old_backups(
+            file_type_codes.COROSYNC_CONF,
+            settings.corosync_conf_file,
+            backup_count=settings.pcs_cfgsync_file_backup_count_default,
+            instead="raw_file.remove_old_backups",
+        )
+        config.set_corosync_conf(
+            self.env_assist.get_env(), _COROSYNC_CONF_CONTENT
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.warn(
+                    reports.codes.PARSE_ERROR_JSON_FILE,
+                    file_type_code=file_type_codes.PCS_CFGSYNC_CTL,
+                    line_number=1,
+                    column_number=1,
+                    position=0,
+                    reason="Expecting value",
+                    full_msg=("Expecting value: line 1 column 1 (char 0)"),
+                    file_path=settings.pcs_cfgsync_ctl_location,
+                )
             ]
         )
 
