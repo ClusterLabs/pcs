@@ -1,18 +1,12 @@
+import importlib
 import inspect
-from dataclasses import (
-    fields,
-    is_dataclass,
-)
+import pkgutil
+from dataclasses import fields, is_dataclass
 from enum import EnumType
-from typing import (
-    Container,
-    Iterable,
-    get_args,
-    get_origin,
-    get_type_hints,
-)
+from typing import Container, Iterable, get_args, get_origin, get_type_hints
 from unittest import TestCase
 
+import pcs.lib.commands as lib_command_package
 from pcs.common.interface.dto import DTO_TYPE_HOOKS_MAP
 from pcs.daemon.async_tasks.worker.command_mapping import COMMAND_MAP
 
@@ -37,10 +31,6 @@ def prohibited_types_used(_type, prohibited_types):
             for field in fields(_type)
         )
     return False
-
-
-def _get_generic(annotation):
-    return getattr(annotation, "__origin__", None)
 
 
 def _find_disallowed_types(_type, allowed_types, _seen=None):
@@ -121,3 +111,79 @@ class DaciteTypingCompatibilityTest(TestCase):
                     "and update FromDictConversion tests in "
                     "test_dto.py accordingly.",
                 )
+
+
+def _find_disallowed_return_type_enums(_type, allowed_enum_bases, _seen=None):
+    disallowed = set()
+
+    if _seen is None:
+        _seen = set()
+    type_id = id(_type)
+    if type_id in _seen:
+        return disallowed
+    _seen.add(type_id)
+
+    generic = get_origin(_type)
+    if generic is None:
+        if isinstance(_type, EnumType) and not any(
+            issubclass(_type, base) for base in allowed_enum_bases
+        ):
+            disallowed.add(_type)
+    else:
+        for arg in get_args(_type):
+            disallowed.update(
+                _find_disallowed_return_type_enums(
+                    arg, allowed_enum_bases, _seen
+                )
+            )
+
+    if is_dataclass(_type):
+        # resolve forward references in type hints, because type-detecting
+        # functions do not work with forward references
+        type_hints = get_type_hints(_type)
+        for field in fields(_type):
+            disallowed.update(
+                _find_disallowed_return_type_enums(
+                    type_hints[field.name], allowed_enum_bases, _seen
+                )
+            )
+
+    return disallowed
+
+
+class ReturnTypeCompatibilityTest(TestCase):
+    def test_return_value_enums(self):
+        allowed_enum_bases = (int, str, float)
+
+        for _, module_name, _ in pkgutil.walk_packages(
+            lib_command_package.__path__, lib_command_package.__name__ + "."
+        ):
+            try:
+                module = importlib.import_module(module_name)
+            except ImportError:
+                continue
+
+            for cmd_name, cmd in inspect.getmembers(module, inspect.isfunction):
+                if cmd_name.startswith("_"):
+                    continue
+
+                return_type = inspect.signature(cmd).return_annotation
+                if (
+                    return_type == inspect.Parameter.empty
+                    or return_type is None
+                ):
+                    continue
+
+                with self.subTest(value=cmd_name):
+                    disallowed = _find_disallowed_return_type_enums(
+                        return_type, allowed_enum_bases
+                    )
+                    if disallowed:
+                        raise AssertionError(
+                            f"Type(s) {disallowed} in return type of command: {cmd_name}\n"
+                            f"All Enums must also be subclasses of {allowed_enum_bases} "
+                            "to allow for easy serialization.\n"
+                            "Either use 'pcs.common.types.AutoNameEnum' or make sure "
+                            "your enum is also a sublclass of one of the allowed "
+                            "types: class MyEnum(<allowed_type>, Enum)"
+                        )
