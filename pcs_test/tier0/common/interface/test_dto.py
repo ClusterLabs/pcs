@@ -1,7 +1,7 @@
 import importlib
 import pkgutil
 from collections.abc import Sequence
-from dataclasses import dataclass, field, is_dataclass
+from dataclasses import dataclass, is_dataclass
 from typing import Any, Optional
 from unittest import TestCase
 
@@ -12,7 +12,6 @@ from pcs.common.interface.dto import (
     DataTransferObject,
     PayloadConversionError,
     from_dict,
-    meta,
     to_dict,
 )
 from pcs.common.types import CorosyncNodeAddressType
@@ -44,22 +43,21 @@ class DatatransferObjectTest(TestCase):
 @dataclass
 class MyDto1(DataTransferObject):
     field_a: int
-    field_b: int = field(metadata=meta(name="field-b"))
-    field_c: int
+    field_b: int
 
 
 @dataclass
 class MyDto2(DataTransferObject):
     field_d: int
-    field_e: MyDto1 = field(metadata=meta(name="field-e"))
+    field_e: MyDto1
     field_f: CorosyncNodeAddressType  # tests converting an Enum class
 
 
 @dataclass
 class MyDto3(DataTransferObject):
-    field_g: MyDto2 = field(metadata=meta(name="field-g"))
+    field_g: MyDto2
     field_h: list[MyDto2]
-    field_i: int = field(metadata=meta(name="field-i"))
+    field_i: int
 
 
 @dataclass
@@ -71,41 +69,35 @@ class TypeHooksDto(DataTransferObject):
 
 class DictName(TestCase):
     maxDiff = None
-    simple_dto = MyDto1(1, 2, 3)
-    simple_dict = {"field_a": 1, "field-b": 2, "field_c": 3}
+    simple_dto = MyDto1(1, 2)
+    simple_dict = {"field_a": 1, "field_b": 2}
     nested_dto = MyDto3(
-        MyDto2(0, MyDto1(1, 2, 3), CorosyncNodeAddressType.IPV4),
+        MyDto2(0, MyDto1(1, 2), CorosyncNodeAddressType.IPV4),
         [
-            MyDto2(5, MyDto1(6, 7, 8), CorosyncNodeAddressType.FQDN),
-            MyDto2(
-                10, MyDto1(11, 12, 13), CorosyncNodeAddressType.UNRESOLVABLE
-            ),
+            MyDto2(3, MyDto1(4, 5), CorosyncNodeAddressType.FQDN),
+            MyDto2(6, MyDto1(7, 8), CorosyncNodeAddressType.UNRESOLVABLE),
         ],
-        15,
+        9,
     )
     nested_dict = {
-        "field-g": {
+        "field_g": {
             "field_d": 0,
-            "field-e": {"field_a": 1, "field-b": 2, "field_c": 3},
+            "field_e": {"field_a": 1, "field_b": 2},
             "field_f": "IPv4",
         },
         "field_h": [
             {
-                "field_d": 5,
-                "field-e": {"field_a": 6, "field-b": 7, "field_c": 8},
+                "field_d": 3,
+                "field_e": {"field_a": 4, "field_b": 5},
                 "field_f": "FQDN",
             },
             {
-                "field_d": 10,
-                "field-e": {
-                    "field_a": 11,
-                    "field-b": 12,
-                    "field_c": 13,
-                },
+                "field_d": 6,
+                "field_e": {"field_a": 7, "field_b": 8},
                 "field_f": "unresolvable",
             },
         ],
-        "field-i": 15,
+        "field_i": 9,
     }
 
     def test_simple_to_dict(self):
@@ -195,26 +187,27 @@ class EnumDto(DataTransferObject):
     field_d: Optional[CorosyncNodeAddressType]
 
 
-class FromDictEnumConversion(TestCase):
+class EnumConversion(TestCase):
+    _DTO = EnumDto(
+        field_a=CorosyncNodeAddressType.IPV4,
+        field_b=[CorosyncNodeAddressType.IPV6, CorosyncNodeAddressType.FQDN],
+        field_c={"foo": CorosyncNodeAddressType.UNRESOLVABLE},
+        field_d=CorosyncNodeAddressType.IPV4,
+    )
     _VALID_PAYLOAD = dict(
         field_a="IPv4",
         field_b=["IPv6", "FQDN"],
-        field_c=dict(foo="unresolvable"),
+        field_c={"foo": "unresolvable"},
         field_d="IPv4",
     )
 
-    def test_success_from_raw_values(self):
-        self.assertEqual(
-            EnumDto(
-                CorosyncNodeAddressType.IPV4,
-                [CorosyncNodeAddressType.IPV6, CorosyncNodeAddressType.FQDN],
-                {"foo": CorosyncNodeAddressType.UNRESOLVABLE},
-                CorosyncNodeAddressType.IPV4,
-            ),
-            from_dict(EnumDto, self._VALID_PAYLOAD),
-        )
+    def test_success_from_dict(self):
+        self.assertEqual(self._DTO, from_dict(EnumDto, self._VALID_PAYLOAD))
 
-    def test_error_bad_value(self):
+    def test_success_to_dict(self):
+        self.assertEqual(self._VALID_PAYLOAD, to_dict(self._DTO))
+
+    def test_from_dict_error_bad_value(self):
         bad_values = dict(
             field_a="bad value",
             field_b=["IPv6", "bad value"],

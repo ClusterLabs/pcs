@@ -1,16 +1,7 @@
-from dataclasses import (
-    dataclass,
-    field,
-)
-from typing import (
-    List,
-    Optional,
-)
+from dataclasses import dataclass
+from typing import Optional
 
-from pcs.common.interface.dto import (
-    DataTransferObject,
-    meta,
-)
+from pcs.common.interface.dto import DataTransferObject
 
 
 @dataclass(frozen=True)
@@ -30,7 +21,7 @@ def get_resource_agent_full_name(agent_name: ResourceAgentNameDto) -> str:
 
 @dataclass(frozen=True)
 class ListResourceAgentNameDto(DataTransferObject):
-    names: List[ResourceAgentNameDto]
+    names: list[ResourceAgentNameDto]
 
 
 @dataclass(frozen=True)
@@ -47,7 +38,7 @@ class ResourceAgentActionDto(DataTransferObject):
     # not allowed by OCF 1.0, defined in OCF 1.0 agents anyway
     role: Optional[str]
     # OCF name: 'start-delay', optional by both OCF 1.0 and 1.1
-    start_delay: Optional[str] = field(metadata=meta(name="start-delay"))
+    start_delay: Optional[str]
     # optional by both OCF 1.0 and 1.1
     depth: Optional[str]
     # not allowed by any OCF, defined in OCF 1.0 agents anyway
@@ -71,7 +62,7 @@ class ResourceAgentParameterDto(DataTransferObject):
     # default value of the parameter
     default: Optional[str]
     # allowed values, only defined if type == 'select'
-    enum_values: Optional[List[str]]
+    enum_values: Optional[list[str]]
     # True if it is a required parameter, False otherwise
     required: bool
     # True if the parameter is meant for advanced users
@@ -79,7 +70,7 @@ class ResourceAgentParameterDto(DataTransferObject):
     # True if the parameter is deprecated, False otherwise
     deprecated: bool
     # list of parameters deprecating this one
-    deprecated_by: List[str]
+    deprecated_by: list[str]
     # text describing / explaining the deprecation
     deprecated_desc: Optional[str]
     # should the parameter's value be unique across same agent resources?
@@ -93,8 +84,8 @@ class ResourceAgentMetadataDto(DataTransferObject):
     name: ResourceAgentNameDto
     shortdesc: Optional[str]
     longdesc: Optional[str]
-    parameters: List[ResourceAgentParameterDto]
-    actions: List[ResourceAgentActionDto]
+    parameters: list[ResourceAgentParameterDto]
+    actions: list[ResourceAgentActionDto]
 
 
 @dataclass(frozen=True)
