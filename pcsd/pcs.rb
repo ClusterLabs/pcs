@@ -726,10 +726,32 @@ def is_cib_true(var)
   return ['true', 'on', 'yes', 'y', '1'].include?(var.downcase)
 end
 
+def _read_config_file(config_name, file_path, not_exist_default, file_read_error_default)
+  begin
+    return not_exist_default if not File::exist?(file_path)
+    file = nil
+    file = File.open(file_path, File::RDONLY)
+    file.flock(File::LOCK_SH)
+    return file.read()
+  rescue => e
+    $logger.warn("Cannot read config '#{config_name}' from '#{file_path}': #{e.message}")
+    return file_read_error_default
+  ensure
+    unless file.nil?
+      file.flock(File::LOCK_UN)
+      file.close()
+    end
+  end
+end
+
 def get_known_hosts()
-  return CfgKnownHosts.new(
-    Cfgsync::PcsdKnownHosts.from_file().text()
-  ).known_hosts
+  if Process.uid == 0
+    file_path = File.join(PCSD_VAR_LOCATION, KNOWN_HOSTS_FILE_NAME)
+  else
+    file_path = File.join(File.expand_path('~/.pcs'), KNOWN_HOSTS_FILE_NAME)
+  end
+  known_hosts_file = _read_config_file(KNOWN_HOSTS_FILE_NAME, file_path, nil, nil)
+  return CfgKnownHosts.new(known_hosts_file).known_hosts
 end
 
 def is_auth_against_nodes(auth_user, node_names, timeout=10)
