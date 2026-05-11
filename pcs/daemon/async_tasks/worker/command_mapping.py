@@ -177,6 +177,10 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
         cmd=cluster.rename_node_corosync,
         required_permission=p.WRITE,
     ),
+    "cluster.set_corosync_conf": _Cmd(
+        cmd=cluster.set_corosync_conf,
+        required_permission=p.FULL,
+    ),
     "cluster.set_permissions": _Cmd(
         cmd=cluster.set_permissions,
         required_permission=p.GRANT,
@@ -534,6 +538,7 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
 LEGACY_API_COMMANDS = (
     "auth.known_hosts_change",
     "booth.get_config",
+    "cluster.set_corosync_conf",
     "cluster.set_permissions",
     "manage_clusters.add_cluster",
     "manage_clusters.remove_clusters",

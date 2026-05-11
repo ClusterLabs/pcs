@@ -5,6 +5,7 @@ from pcs.common.corosync_conf import (
     CorosyncConfDto,
     CorosyncQuorumDeviceSettingsDto,
 )
+from pcs.common.file import RawFileError
 from pcs.common.types import (
     CorosyncTransportType,
     UnknownCorosyncTransportTypeException,
@@ -15,7 +16,9 @@ from pcs.lib.corosync import constants as corosync_constants
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 from pcs.lib.file.instance import FileInstance
+from pcs.lib.file.raw_file import raw_file_error_report
 from pcs.lib.interface.config import ParserErrorException
+from pcs.lib.pcs_cfgsync.config.facade import Facade as CfgsyncCtlFacade
 from pcs.lib.tools import generate_uuid
 
 
@@ -93,6 +96,7 @@ def config_update(
     env.push_corosync_conf(corosync_conf)
 
 
+# TODO: this command will not work through API, `bytes` not json serializable
 def config_update_local(
     env: LibraryEnvironment,
     corosync_conf_content: bytes,
@@ -229,6 +233,7 @@ def generate_cluster_uuid(
     env.push_corosync_conf(corosync_conf)
 
 
+# TODO: this command will not work through API, `bytes` not json serializable
 def generate_cluster_uuid_local(
     env: LibraryEnvironment,
     corosync_conf_content: bytes,
@@ -267,3 +272,79 @@ def generate_cluster_uuid_local(
         raise LibraryError()
 
     return corosync_conf_instance.facade_to_raw(corosync_conf)
+
+
+def set_corosync_conf(env: LibraryEnvironment, file_content: str) -> None:
+    """
+    Replace corosync.conf on this node with provided file_content. Low level
+    command used for distributing the file to cluster nodes.
+
+    file_content -- new contents of corosync.conf
+    """
+
+    ensure_live_env(env)
+
+    corosync_conf_instance = FileInstance.for_corosync_conf()
+    try:
+        new_corosync_conf = cast(
+            config_facade.ConfigFacade,
+            corosync_conf_instance.raw_to_facade(file_content.encode("utf-8")),
+        )
+    except ParserErrorException as e:
+        env.report_processor.report_list(
+            corosync_conf_instance.toolbox.parser.exception_to_report_list(
+                e,
+                corosync_conf_instance.toolbox.file_type_code,
+                None,
+                force_code=None,
+                is_forced_or_warning=False,
+            )
+        )
+        raise LibraryError() from e
+
+    verify_corosync_conf(new_corosync_conf)  # raise if corosync is not valid
+
+    try:
+        if corosync_conf_instance.raw_file.exists():
+            cfgsyncctl, report_list = __read_cfgsync_ctl()
+            env.report_processor.report_list(report_list)
+
+            corosync_conf_instance.raw_file.backup()
+            # Remove old backups, but do not treat the errors as fatal so that
+            # the file is actually written if we were at least able to create
+            # the backup
+            try:
+                corosync_conf_instance.raw_file.remove_old_backups(
+                    cfgsyncctl.file_backup_count
+                )
+            except RawFileError as e:
+                env.report_processor.report(
+                    raw_file_error_report(e, is_forced_or_warning=True)
+                )
+
+        corosync_conf_instance.write_facade(
+            new_corosync_conf, can_overwrite=True
+        )
+    except RawFileError as e:
+        env.report_processor.report(raw_file_error_report(e))
+        raise LibraryError() from e
+
+
+def __read_cfgsync_ctl() -> tuple[CfgsyncCtlFacade, reports.ReportItemList]:
+    report_list: reports.ReportItemList = []
+    cfgsyncctl_instance = FileInstance.for_pcs_cfgsync_ctl()
+    if not cfgsyncctl_instance.raw_file.exists():
+        return CfgsyncCtlFacade.create(), report_list
+    try:
+        return cast(
+            CfgsyncCtlFacade, cfgsyncctl_instance.read_to_facade()
+        ), report_list
+    except RawFileError as e:
+        report_list.append(raw_file_error_report(e, is_forced_or_warning=True))
+    except ParserErrorException as e:
+        report_list.extend(
+            cfgsyncctl_instance.parser_exception_to_report_list(
+                e, is_forced_or_warning=True
+            )
+        )
+    return CfgsyncCtlFacade.create(), report_list

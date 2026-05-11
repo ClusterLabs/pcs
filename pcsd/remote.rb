@@ -26,7 +26,6 @@ def remote(params, request, auth_user)
       :cluster_status => method(:cluster_status_remote),
       :get_quorum_info => method(:get_quorum_info),
       :get_corosync_conf => method(:get_corosync_conf_remote),
-      :set_corosync_conf => method(:set_corosync_conf),
       :set_certs => method(:set_certs),
       :get_permissions => method(:get_permissions_remote),
       :cluster_start => method(:cluster_start),
@@ -394,22 +393,6 @@ def get_corosync_conf_remote(params, request, auth_user)
     return get_corosync_conf()
   rescue
     return 400, 'Unable to read corosync.conf'
-  end
-end
-
-# deprecated, use /remote/put_file (note that put_file doesn't support backup
-# yet)
-def set_corosync_conf(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::FULL)
-    return 403, 'Permission denied'
-  end
-  if params[:corosync_conf] != nil and params[:corosync_conf].strip != ""
-    Cfgsync::CorosyncConf.backup()
-    Cfgsync::CorosyncConf.from_text(params[:corosync_conf]).save()
-    return 200, "Succeeded"
-  else
-    $logger.info "Invalid corosync.conf file"
-    return 400, "Failed"
   end
 end
 

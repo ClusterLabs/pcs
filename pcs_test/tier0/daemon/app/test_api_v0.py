@@ -1699,3 +1699,50 @@ class KnownHostsChange(ApiV0HandlerTest):
                     )
                 )
                 self.mock_run_library_command.assert_not_called()
+
+
+class SetCorosyncConf(ApiV0HandlerTest):
+    url = "/remote/set_corosync_conf"
+    body_data = {"corosync_conf": "corosyn conf data"}
+
+    def test_success(self):
+        self.mock_run_library_command.return_value = self.result_success()
+        response = self.fetch(self.url, body=urlencode(self.body_data))
+        self.assertEqual(response.code, 200)
+        self.assert_body(response.body, "Succeeded")
+        self.mock_run_library_command.assert_called_once_with(
+            "cluster.set_corosync_conf",
+            {"file_content": self.body_data["corosync_conf"]},
+        )
+
+    def test_missing_params(self):
+        response = self.fetch(self.url)
+        self.assert_body(
+            response.body, "Required parameters missing: 'corosync_conf'"
+        )
+        self.assertEqual(response.code, 400)
+        self.mock_run_library_command.assert_not_called()
+
+    def test_failure(self):
+        self.assert_error_with_report(self.url, body=urlencode(self.body_data))
+        self.mock_run_library_command.assert_called_once_with(
+            "cluster.set_corosync_conf",
+            {"file_content": self.body_data["corosync_conf"]},
+        )
+
+    def test_empty_corosync_conf(self):
+        empty_data = [
+            "",
+            "  ",  # to test that strip is called
+        ]
+        for data in empty_data:
+            with self.subTest(value=data):
+                response = self.fetch(
+                    self.url, body=urlencode({"corosync_conf": data})
+                )
+                self.assert_body(
+                    response.body,
+                    "Invalid corosync.conf: empty config not allowed",
+                )
+                self.assertEqual(response.code, 400)
+                self.mock_run_library_command.assert_not_called()
