@@ -8,7 +8,6 @@ require 'corosyncconf.rb'
 
 # trick with defined? allows to prefill this constants in tests
 CFG_COROSYNC_CONF = COROSYNC_CONF unless defined? CFG_COROSYNC_CONF
-CFG_PCSD_SETTINGS = PCSD_SETTINGS_CONF_LOCATION unless defined? CFG_PCSD_SETTINGS
 
 CFG_SYNC_CONTROL = File.join(PCSD_VAR_LOCATION, 'cfgsync_ctl') unless defined? CFG_SYNC_CONTROL
 
@@ -161,36 +160,6 @@ module Cfgsync
 
     def get_hash()
       return Digest::SHA1.hexdigest(self.text || '')
-    end
-  end
-
-
-  class PcsdSettings < Config
-    @name = "pcs_settings.conf"
-    @file_path = ::CFG_PCSD_SETTINGS
-    @file_perm = 0644
-
-    protected
-
-    def self.on_file_missing(default)
-      return self.from_text(nil)
-    end
-
-    def self.on_file_read_error(exception, default)
-      $logger.warn(
-        "Cannot read config '#{@name}' from '#{@file_path}': #{exception.message}"
-      )
-      return self.from_text('')
-    end
-
-    def get_version()
-      return PCSConfig.new(self.text).data_version
-    end
-
-    def set_version(new_version)
-      parsed = PCSConfig.new(self.text)
-      parsed.data_version = new_version
-      return parsed.text
     end
   end
 

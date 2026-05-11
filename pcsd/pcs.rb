@@ -162,7 +162,7 @@ end
 
 # Gets all of the nodes specified in the pcs config file for the cluster
 def get_cluster_nodes(cluster_name)
-  pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
+  pcs_config = PCSConfig.new(get_pcs_settings_conf())
   clusters = pcs_config.clusters
   cluster = nil
   for c in clusters
@@ -400,6 +400,10 @@ def get_local_node_id()
   else
     return out[0].split(/ = /)[1].strip()
   end
+end
+
+def get_pcs_settings_conf()
+  return _read_config_file("pcs_settings.conf", PCSD_SETTINGS_CONF_LOCATION, nil, "")
 end
 
 def has_corosync_conf()
@@ -1207,7 +1211,7 @@ def get_cib_dom(auth_user)
 end
 
 def allowed_for_local_cluster(auth_user, action)
-  pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
+  pcs_config = PCSConfig.new(get_pcs_settings_conf())
   return pcs_config.permissions_local.allows?(
     auth_user[:username], auth_user[:usergroups], action
   )

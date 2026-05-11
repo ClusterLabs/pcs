@@ -304,7 +304,7 @@ get '/manage/can-add-cluster-or-nodes' do
     return 403, 'Permission denied.'
   end
 
-  pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
+  pcs_config = PCSConfig.new(get_pcs_settings_conf())
   errors = []
 
   if params.include?(:cluster)
