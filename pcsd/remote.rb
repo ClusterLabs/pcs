@@ -36,8 +36,6 @@ def remote(params, request, auth_user)
       :get_cluster_known_hosts => method(:get_cluster_known_hosts),
       :get_cluster_properties_definition => method(:get_cluster_properties_definition),
       :check_sbd => method(:check_sbd),
-      :set_sbd_config => method(:set_sbd_config),
-      :get_sbd_config => method(:get_sbd_config),
       :sbd_disable => method(:sbd_disable),
       :sbd_enable => method(:sbd_enable),
       :remove_stonith_watchdog_timeout=> method(:remove_stonith_watchdog_timeout),
@@ -1146,52 +1144,6 @@ def check_sbd(param, request, auth_user)
     return [400, 'Invalid input data format']
   end
   return [200, JSON.generate(out)]
-end
-
-def set_sbd_config(param, request, auth_user)
-  unless allowed_for_local_cluster(auth_user, Permissions::WRITE)
-    return 403, 'Permission denied'
-  end
-  config = param[:config]
-  unless config
-    return [400, 'Parameter "config" required']
-  end
-
-  file = nil
-  begin
-    file = File.open(SBD_CONFIG, 'w')
-    file.flock(File::LOCK_EX)
-    file.write(config)
-  rescue => e
-    return pcsd_error("Unable to save SBD configuration: #{e}")
-  ensure
-    if file
-      file.flock(File::LOCK_UN)
-      file.close()
-    end
-  end
-  return pcsd_success('SBD configuration saved.')
-end
-
-def get_sbd_config(param, request, auth_user)
-  unless allowed_for_local_cluster(auth_user, Permissions::READ)
-    return 403, 'Permission denied'
-  end
-  out = []
-  file = nil
-  begin
-    file = File.open(SBD_CONFIG, 'r')
-    file.flock(File::LOCK_SH)
-    out = file.readlines()
-  rescue => e
-    return pcsd_error("Unable to get SBD configuration: #{e}")
-  ensure
-    if file
-      file.flock(File::LOCK_UN)
-      file.close()
-    end
-  end
-  return [200, out.join('')]
 end
 
 def sbd_disable(param, request, auth_user)
