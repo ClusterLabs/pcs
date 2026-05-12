@@ -253,6 +253,7 @@ def get_local_sbd_config() -> str:
     """
     try:
         with open(settings.sbd_config, "r") as sbd_cfg:
+            fcntl.flock(sbd_cfg.fileno(), fcntl.LOCK_SH)
             return sbd_cfg.read()
     except EnvironmentError as e:
         raise LibraryError(

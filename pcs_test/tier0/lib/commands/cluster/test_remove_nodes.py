@@ -416,6 +416,9 @@ class SuccessAtbRequired(TestCase):
         self.nodes_to_stay = []
         self.expected_reports = []
         self.config.local.set_expected_reports_list(self.expected_reports)
+        patcher = mock.patch("pcs.lib.sbd.fcntl")
+        self.mock_fcntl = patcher.start()
+        self.addCleanup(patcher.stop)
 
     def set_up(self, staying_num, removing_num):
         self.existing_nodes = [
@@ -450,9 +453,11 @@ class SuccessAtbRequired(TestCase):
         self.config.services.is_installed("sbd", return_value=True)
         self.config.services.is_enabled("sbd", return_value=True)
         self.config.fs.exists(settings.sbd_config, return_value=True)
+        mock_file = mock.mock_open(read_data=sbd_config_data)()
+        mock_file.fileno.return_value = fixture.FIXTURE_FILENO
         self.config.fs.open(
             settings.sbd_config,
-            mock.mock_open(read_data=sbd_config_data)(),
+            mock_file,
         )
         self.config.http.corosync.check_corosync_offline(
             node_labels=self.nodes_to_stay,
@@ -512,45 +517,37 @@ class SuccessAtbRequired(TestCase):
             ]
         )
 
-    def test_2_staying_1_removed(self):
-        self.set_up(2, 1)
+    def _run_and_assert(self, staying_num, removing_num):
+        self.set_up(staying_num, removing_num)
         cluster.remove_nodes(self.env_assist.get_env(), self.nodes_to_remove)
         self.env_assist.assert_reports(self.expected_reports)
+        self.mock_fcntl.flock.assert_called_once_with(
+            fixture.FIXTURE_FILENO, self.mock_fcntl.LOCK_SH
+        )
+
+    def test_2_staying_1_removed(self):
+        self._run_and_assert(2, 1)
 
     def test_2_staying_2_removed(self):
-        self.set_up(2, 2)
-        cluster.remove_nodes(self.env_assist.get_env(), self.nodes_to_remove)
-        self.env_assist.assert_reports(self.expected_reports)
+        self._run_and_assert(2, 2)
 
     def test_2_staying_3_removed(self):
-        self.set_up(2, 3)
-        cluster.remove_nodes(self.env_assist.get_env(), self.nodes_to_remove)
-        self.env_assist.assert_reports(self.expected_reports)
+        self._run_and_assert(2, 3)
 
     def test_4_staying_1_removed(self):
-        self.set_up(4, 1)
-        cluster.remove_nodes(self.env_assist.get_env(), self.nodes_to_remove)
-        self.env_assist.assert_reports(self.expected_reports)
+        self._run_and_assert(4, 1)
 
     def test_4_staying_2_removed(self):
-        self.set_up(4, 2)
-        cluster.remove_nodes(self.env_assist.get_env(), self.nodes_to_remove)
-        self.env_assist.assert_reports(self.expected_reports)
+        self._run_and_assert(4, 2)
 
     def test_4_staying_3_removed(self):
-        self.set_up(4, 3)
-        cluster.remove_nodes(self.env_assist.get_env(), self.nodes_to_remove)
-        self.env_assist.assert_reports(self.expected_reports)
+        self._run_and_assert(4, 3)
 
     def test_4_staying_4_removed(self):
-        self.set_up(4, 4)
-        cluster.remove_nodes(self.env_assist.get_env(), self.nodes_to_remove)
-        self.env_assist.assert_reports(self.expected_reports)
+        self._run_and_assert(4, 4)
 
     def test_4_staying_5_removed(self):
-        self.set_up(4, 5)
-        cluster.remove_nodes(self.env_assist.get_env(), self.nodes_to_remove)
-        self.env_assist.assert_reports(self.expected_reports)
+        self._run_and_assert(4, 5)
 
 
 class FailureAtbRequired(TestCase):
@@ -581,6 +578,9 @@ class FailureAtbRequired(TestCase):
             node_fixture(node, i)
             for i, node in enumerate(self.existing_nodes, 1)
         ]
+        patcher = mock.patch("pcs.lib.sbd.fcntl")
+        self.mock_fcntl = patcher.start()
+        self.addCleanup(patcher.stop)
         self.config.env.set_known_nodes(self.existing_nodes)
         self.config.corosync_conf.load_content(
             corosync_conf_fixture(
@@ -592,9 +592,11 @@ class FailureAtbRequired(TestCase):
         self.config.services.is_installed("sbd", return_value=True)
         self.config.services.is_enabled("sbd", return_value=True)
         self.config.fs.exists(settings.sbd_config, return_value=True)
+        mock_file = mock.mock_open(read_data=sbd_config_data)()
+        mock_file.fileno.return_value = fixture.FIXTURE_FILENO
         self.config.fs.open(
             settings.sbd_config,
-            mock.mock_open(read_data=sbd_config_data)(),
+            mock_file,
         )
         self.expected_reports.extend(
             [
@@ -646,6 +648,9 @@ class FailureAtbRequired(TestCase):
                 ),
             ]
         )
+        self.mock_fcntl.flock.assert_called_once_with(
+            fixture.FIXTURE_FILENO, self.mock_fcntl.LOCK_SH
+        )
 
     def test_cluster_is_running_everywhere(self):
         self.config.http.corosync.check_corosync_offline(
@@ -679,6 +684,9 @@ class FailureAtbRequired(TestCase):
                     report_codes.COROSYNC_QUORUM_ATB_WILL_BE_ENABLED_DUE_TO_SBD_CLUSTER_IS_RUNNING
                 ),
             ]
+        )
+        self.mock_fcntl.flock.assert_called_once_with(
+            fixture.FIXTURE_FILENO, self.mock_fcntl.LOCK_SH
         )
 
     def test_failed_on_some(self):
@@ -738,6 +746,9 @@ class FailureAtbRequired(TestCase):
                 ),
             ]
         )
+        self.mock_fcntl.flock.assert_called_once_with(
+            fixture.FIXTURE_FILENO, self.mock_fcntl.LOCK_SH
+        )
 
     def test_failed_all(self):
         err_output = "an error"
@@ -783,6 +794,9 @@ class FailureAtbRequired(TestCase):
                     report_codes.COROSYNC_QUORUM_ATB_WILL_BE_ENABLED_DUE_TO_SBD
                 ),
             ]
+        )
+        self.mock_fcntl.flock.assert_called_once_with(
+            fixture.FIXTURE_FILENO, self.mock_fcntl.LOCK_SH
         )
 
 

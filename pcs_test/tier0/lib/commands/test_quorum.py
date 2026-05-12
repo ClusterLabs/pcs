@@ -524,15 +524,15 @@ class SetQuorumOptionsTest(TestCase):
         lib.set_options(self.env_assist.get_env(), new_options)
         self.env_assist.assert_reports(self.success_reports)
 
-    def test_disable_atb_sbd_requires_atb(self):
+    @mock.patch("pcs.lib.sbd.fcntl")
+    def test_disable_atb_sbd_requires_atb(self, mock_fcntl):
+        mock_file = mock.mock_open(read_data=self.fixture_sbd_config())()
+        mock_file.fileno.return_value = fixture.FIXTURE_FILENO
         self.config.corosync_conf.load(auto_tie_breaker=True)
         self.config.services.is_installed("sbd", return_value=True)
         self.config.services.is_enabled("sbd", return_value=True)
         self.config.fs.exists(settings.sbd_config)
-        self.config.fs.open(
-            settings.sbd_config,
-            mock.mock_open(read_data=self.fixture_sbd_config())(),
-        )
+        self.config.fs.open(settings.sbd_config, mock_file)
 
         new_options = {"auto_tie_breaker": "0"}
         assert_raise_library_error(
@@ -546,8 +546,15 @@ class SetQuorumOptionsTest(TestCase):
                 )
             ]
         )
+        mock_fcntl.flock.assert_called_once_with(
+            fixture.FIXTURE_FILENO, mock_fcntl.LOCK_SH
+        )
+        mock_file.read.assert_called_once()
 
-    def test_force_disable_atb_sbd_requires_atb(self):
+    @mock.patch("pcs.lib.sbd.fcntl")
+    def test_force_disable_atb_sbd_requires_atb(self, mock_fcntl):
+        mock_file = mock.mock_open(read_data=self.fixture_sbd_config())()
+        mock_file.fileno.return_value = fixture.FIXTURE_FILENO
         expected_conf = self.original_corosync_conf.replace(
             "   two_node: 1", "   two_node: 1\n    auto_tie_breaker: 0"
         )
@@ -555,10 +562,7 @@ class SetQuorumOptionsTest(TestCase):
         self.config.services.is_installed("sbd", return_value=True)
         self.config.services.is_enabled("sbd", return_value=True)
         self.config.fs.exists(settings.sbd_config)
-        self.config.fs.open(
-            settings.sbd_config,
-            mock.mock_open(read_data=self.fixture_sbd_config())(),
-        )
+        self.config.fs.open(settings.sbd_config, mock_file)
         self.config.http.corosync.check_corosync_offline(
             node_labels=self.node_labels
         )
@@ -576,6 +580,10 @@ class SetQuorumOptionsTest(TestCase):
                 )
             ]
         )
+        mock_fcntl.flock.assert_called_once_with(
+            fixture.FIXTURE_FILENO, mock_fcntl.LOCK_SH
+        )
+        mock_file.read.assert_called_once()
 
     def test_not_live(self):
         original_conf = self.original_corosync_conf.replace(

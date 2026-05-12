@@ -14,6 +14,7 @@ from pcs.common import reports
 from pcs.common.str_tools import format_list
 
 ALL_RESOURCE_XML_TAGS = ["bundle", "clone", "group", "master", "primitive"]
+FIXTURE_FILENO = 123
 
 
 # Previously, a report item fixture was a plain tuple. That was, however, not
