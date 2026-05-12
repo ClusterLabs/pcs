@@ -491,6 +491,10 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
         cmd=services.pacemaker_remote_off_local,
         required_permission=p.WRITE,
     ),
+    "sbd.check_sbd": _Cmd(
+        cmd=sbd.check_sbd,
+        required_permission=p.READ,
+    ),
     "sbd.disable_sbd": _Cmd(
         cmd=sbd.disable_sbd,
         required_permission=p.WRITE,
@@ -570,6 +574,7 @@ LEGACY_API_COMMANDS = (
     "resource_agent.list_standards",
     # The sbd URLs are ready to be exposed in APIv2, just waiting for all the
     # other URLs to get moved to APIv2
+    "sbd.check_sbd",
     "sbd.get_node_sbd_config_text",
     "sbd.set_node_sbd_config_text",
     # There is a lot of url handlers managing cluster services and they should

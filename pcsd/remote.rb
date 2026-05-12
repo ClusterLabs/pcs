@@ -34,7 +34,6 @@ def remote(params, request, auth_user)
       :cluster_destroy => method(:cluster_destroy),
       :get_cluster_known_hosts => method(:get_cluster_known_hosts),
       :get_cluster_properties_definition => method(:get_cluster_properties_definition),
-      :check_sbd => method(:check_sbd),
       :sbd_disable => method(:sbd_disable),
       :sbd_enable => method(:sbd_enable),
       :remove_stonith_watchdog_timeout=> method(:remove_stonith_watchdog_timeout),
@@ -1075,59 +1074,6 @@ def get_cluster_properties_definition(params, request, auth_user)
     return [200, stdout]
   end
   return [400, '{}']
-end
-
-def check_sbd(param, request, auth_user)
-  unless allowed_for_local_cluster(auth_user, Permissions::READ)
-    return 403, 'Permission denied'
-  end
-  service_checker = ServiceChecker.new(
-    [SBD_SERVICE_NAME], installed: true, enabled: true, running: true
-  )
-  out = {
-    :sbd => service_checker.get_info(SBD_SERVICE_NAME),
-  }
-  watchdog = param[:watchdog]
-  if not watchdog.to_s.empty?
-    stdout, stderr, ret_val = run_cmd(
-      auth_user, PCS, '--', 'stonith', 'sbd', 'watchdog', 'list_json'
-    )
-    if ret_val != 0
-      return [400, "Unable to get list of watchdogs: #{stderr.join("\n")}"]
-    end
-    begin
-      available_watchdogs = JSON.parse(stdout.join("\n"))
-      exists = available_watchdogs.include?(watchdog)
-      out[:watchdog] = {
-        :path => watchdog,
-        :exist => exists,
-        :is_supported => (
-          # this method is not reliable so all watchdog devices listed by SBD
-          # will be listed as supported for now
-          # exists and available_watchdogs[watchdog]['caution'] == nil
-          exists
-        ),
-      }
-    rescue JSON::ParserError
-      return [400, "Unable to get list of watchdogs: unable to parse JSON"]
-    end
-  end
-  begin
-    device_list = JSON.parse(param[:device_list])
-    if device_list and device_list.respond_to?('each')
-      out[:device_list] = []
-      device_list.each { |device|
-        out[:device_list] << {
-          :path => device,
-          :exist => File.exist?(device),
-          :block_device => File.blockdev?(device),
-        }
-      }
-    end
-  rescue JSON::ParserError
-    return [400, 'Invalid input data format']
-  end
-  return [200, JSON.generate(out)]
 end
 
 def sbd_disable(param, request, auth_user)

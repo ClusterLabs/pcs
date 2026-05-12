@@ -3,12 +3,15 @@ from typing import Any, Iterable, Mapping, Optional
 from pcs import settings
 from pcs.common import reports
 from pcs.common.node_communicator import RequestTarget
+from pcs.common.sbd_dto import (
+    SbdCheckResultDto,
+    SbdDeviceStatusDto,
+    SbdWatchdogStatusDto,
+)
+from pcs.common.services_dto import ServiceStatusDto
 from pcs.common.types import StringSequence
 from pcs.common.validate import is_integer
-from pcs.lib import (
-    sbd,
-    validate,
-)
+from pcs.lib import sbd, validate
 from pcs.lib.cib.tools import get_resources
 from pcs.lib.communication.nodes import GetOnlineTargets
 from pcs.lib.communication.sbd import (
@@ -151,6 +154,57 @@ def _get_full_target_dict[T](
         target.label: node_value_dict.get(target.label, default_value)
         for target in target_list
     }
+
+
+def check_sbd(
+    lib_env: LibraryEnvironment,
+    watchdog: Optional[str] = None,
+    device_list: Optional[StringSequence] = None,
+) -> SbdCheckResultDto:
+    """
+    Check whether sbd is installed, enabled and running.
+    - If watchdog is specified, also check whether the watchdog exists on the
+      local node.
+    - If device_list is specified, also check whether paths specified in the
+      list exist on the local node and if they are block devices.
+
+    watchdog -- watchdog path to check
+    device_list -- list of paths to check
+    """
+    sbd_status = ServiceStatusDto(
+        service=settings.sbd_service_name,
+        installed=lib_env.service_manager.is_installed(
+            settings.sbd_service_name
+        ),
+        enabled=lib_env.service_manager.is_enabled(settings.sbd_service_name),
+        running=lib_env.service_manager.is_running(settings.sbd_service_name),
+    )
+
+    watchdog_dto: Optional[SbdWatchdogStatusDto] = None
+    if watchdog:
+        available_watchdogs = sbd.get_available_watchdogs(lib_env.cmd_runner())
+        exists = watchdog in available_watchdogs
+        # The support status provided by sbd is unreliable, so we are reporting
+        # every device as supported for now
+        # https://bugzilla.redhat.com/show_bug.cgi?id=1578891
+        # https://github.com/ClusterLabs/pcs/commit/1ca412e151bf531533a525640899fbd109aa
+        watchdog_dto = SbdWatchdogStatusDto(
+            path=watchdog,
+            exists=exists,
+            is_supported=exists,
+        )
+
+    device_list_dto: Optional[list[SbdDeviceStatusDto]] = None
+    if device_list:
+        device_list_dto = [
+            sbd.check_sbd_device_exists(device) for device in device_list
+        ]
+
+    return SbdCheckResultDto(
+        sbd_service=sbd_status,
+        watchdog=watchdog_dto,
+        device_list=device_list_dto,
+    )
 
 
 def enable_sbd(  # noqa: PLR0913

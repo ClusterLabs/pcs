@@ -343,6 +343,7 @@ EXTRA_DIST		= \
 			  tier0/lib/commands/resource/test_restart.py \
 			  tier0/lib/commands/resource/test_stop.py \
 			  tier0/lib/commands/sbd/__init__.py \
+			  tier0/lib/commands/sbd/test_check_sbd.py \
 			  tier0/lib/commands/sbd/test_disable_sbd.py \
 			  tier0/lib/commands/sbd/test_enable_sbd.py \
 			  tier0/lib/commands/sbd/test_get_cluster_sbd_config.py \

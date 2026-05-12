@@ -1,14 +1,12 @@
 import fcntl
+import os
 import re
-from os import path
-from typing import (
-    Mapping,
-    Optional,
-    Union,
-)
+import stat
+from typing import Mapping, Optional, Union
 
 from pcs import settings
 from pcs.common import reports
+from pcs.common.sbd_dto import SbdDeviceStatusDto
 from pcs.common.services.interfaces import ServiceManagerInterface
 from pcs.common.types import StringSequence
 from pcs.common.validate import is_integer
@@ -16,10 +14,7 @@ from pcs.lib import validate
 from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfFacade
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
-from pcs.lib.tools import (
-    dict_to_environment_file,
-    environment_file_to_dict,
-)
+from pcs.lib.tools import dict_to_environment_file, environment_file_to_dict
 
 DEVICE_INITIALIZATION_OPTIONS_MAPPING = {
     "watchdog-timeout": "-1",
@@ -212,7 +207,7 @@ def validate_nodes_devices(
                 reports.messages.SbdDevicePathNotAbsolute(device, node_label)
             )
             for device in device_list
-            if not device or not path.isabs(device)
+            if not device or not os.path.isabs(device)
         )
     return report_item_list
 
@@ -341,11 +336,34 @@ def initialize_block_devices(
     )
 
 
+def check_sbd_device_exists(
+    device: str,
+) -> SbdDeviceStatusDto:
+    """
+    Check whether a path exists on the local node and if it is a block device.
+
+    device -- device path to be checked
+    """
+    try:
+        mode = os.stat(device).st_mode
+        return SbdDeviceStatusDto(
+            path=device,
+            exists=True,
+            is_block_device=stat.S_ISBLK(mode),
+        )
+    except OSError:
+        return SbdDeviceStatusDto(
+            path=device,
+            exists=False,
+            is_block_device=False,
+        )
+
+
 def get_local_sbd_device_list() -> list[str]:
     """
     Returns list of devices specified in local SBD config
     """
-    if not path.exists(settings.sbd_config):
+    if not os.path.exists(settings.sbd_config):
         return []
 
     cfg = environment_file_to_dict(get_local_sbd_config())
@@ -403,7 +421,7 @@ def _get_local_sbd_watchdog_timeout() -> int:
     """
     Return the value of SBD_WATCHDOG_TIMEOUT used in local SBD config
     """
-    if not path.exists(settings.sbd_config):
+    if not os.path.exists(settings.sbd_config):
         return _DEFAULT_SBD_WATCHDOG_TIMEOUT
 
     cfg = environment_file_to_dict(get_local_sbd_config())

@@ -380,18 +380,6 @@ def sbd_watchdog_list(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
         print_to_stderr("No available watchdog")
 
 
-def sbd_watchdog_list_json(
-    lib: Any, argv: Argv, modifiers: InputModifiers
-) -> None:
-    """
-    Options: no options
-    """
-    modifiers.ensure_only_supported()
-    if argv:
-        raise CmdLineInputError()
-    print(json.dumps(lib.sbd.get_local_available_watchdogs()))
-
-
 def sbd_watchdog_test(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:

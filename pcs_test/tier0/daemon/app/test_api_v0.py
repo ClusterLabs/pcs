@@ -22,10 +22,7 @@ from pcs.common.async_tasks.types import (
     TaskKillReason,
     TaskState,
 )
-from pcs.common.booth_dto import (
-    BoothConfigAndAuthfileDto,
-    BoothConfigFileDto,
-)
+from pcs.common.booth_dto import BoothConfigAndAuthfileDto, BoothConfigFileDto
 from pcs.common.cluster_dto import (
     ClusterComponentVersionDto,
     ClusterDaemonsInfoDto,
@@ -43,6 +40,11 @@ from pcs.common.permissions.dto import (
 from pcs.common.permissions.types import (
     PermissionGrantedType,
     PermissionTargetType,
+)
+from pcs.common.sbd_dto import (
+    SbdCheckResultDto,
+    SbdDeviceStatusDto,
+    SbdWatchdogStatusDto,
 )
 from pcs.common.services_dto import ServiceStatusDto
 from pcs.common.version_dto import VersionDto
@@ -1039,6 +1041,188 @@ class CheckHostHandler(ApiV0HandlerTest):
         self.assert_error_with_report(self.url)
         self.mock_run_library_command.assert_called_once_with(
             "cluster.get_host_daemons_info", {}
+        )
+
+
+class CheckSbdHandler(ApiV0HandlerTest):
+    url = "/remote/check_sbd"
+    watchdog_path = "/dev/watchdog"
+    device_path = "/dev/sdb"
+
+    def test_success(self):
+        result_dto = SbdCheckResultDto(
+            sbd_service=ServiceStatusDto(
+                service="sbd",
+                installed=True,
+                enabled=True,
+                running=True,
+            ),
+            watchdog=SbdWatchdogStatusDto(
+                path=self.watchdog_path,
+                exists=True,
+                is_supported=True,
+            ),
+            device_list=[
+                SbdDeviceStatusDto(
+                    path=self.device_path,
+                    exists=True,
+                    is_block_device=True,
+                ),
+            ],
+        )
+        self.mock_run_library_command.return_value = self.result_success(
+            result_dto
+        )
+        response = self.fetch(
+            self.url,
+            body=urlencode(
+                {
+                    "watchdog": self.watchdog_path,
+                    "device_list": json.dumps([self.device_path]),
+                }
+            ),
+        )
+        self.assertEqual(response.code, 200)
+        self.assert_body(
+            response.body,
+            json.dumps(
+                {
+                    "sbd": {
+                        "installed": True,
+                        "enabled": True,
+                        "running": True,
+                    },
+                    "watchdog": {
+                        "path": self.watchdog_path,
+                        "exist": True,
+                        "is_supported": True,
+                    },
+                    "device_list": [
+                        {
+                            "path": self.device_path,
+                            "exist": True,
+                            "block_device": True,
+                        },
+                    ],
+                }
+            ),
+        )
+        self.mock_run_library_command.assert_called_once_with(
+            "sbd.check_sbd",
+            dict(watchdog=self.watchdog_path, device_list=[self.device_path]),
+        )
+
+    def test_success_diskless_sbd(self):
+        result_dto = SbdCheckResultDto(
+            sbd_service=ServiceStatusDto(
+                service="sbd",
+                installed=True,
+                enabled=True,
+                running=True,
+            ),
+            watchdog=SbdWatchdogStatusDto(
+                path=self.watchdog_path,
+                exists=True,
+                is_supported=True,
+            ),
+        )
+        self.mock_run_library_command.return_value = self.result_success(
+            result_dto
+        )
+        response = self.fetch(
+            self.url,
+            body=urlencode(
+                {
+                    "watchdog": self.watchdog_path,
+                }
+            ),
+        )
+        self.assertEqual(response.code, 200)
+        self.assert_body(
+            response.body,
+            json.dumps(
+                {
+                    "sbd": {
+                        "installed": True,
+                        "enabled": True,
+                        "running": True,
+                    },
+                    "watchdog": {
+                        "path": self.watchdog_path,
+                        "exist": True,
+                        "is_supported": True,
+                    },
+                }
+            ),
+        )
+        self.mock_run_library_command.assert_called_once_with(
+            "sbd.check_sbd",
+            dict(watchdog=self.watchdog_path, device_list=[]),
+        )
+
+    def test_success_default_params(self):
+        result_dto = SbdCheckResultDto(
+            sbd_service=ServiceStatusDto(
+                service="sbd",
+                installed=True,
+                enabled=False,
+                running=False,
+            ),
+        )
+        self.mock_run_library_command.return_value = self.result_success(
+            result_dto
+        )
+        response = self.fetch(self.url)
+        self.assertEqual(response.code, 200)
+        self.assert_body(
+            response.body,
+            json.dumps(
+                {
+                    "sbd": {
+                        "installed": True,
+                        "enabled": False,
+                        "running": False,
+                    }
+                }
+            ),
+        )
+        self.mock_run_library_command.assert_called_once_with(
+            "sbd.check_sbd",
+            dict(watchdog="", device_list=[]),
+        )
+
+    def test_invalid_device_list_json(self):
+        response = self.fetch(
+            self.url,
+            body=urlencode({"device_list": "not valid json"}),
+        )
+        self.assertEqual(response.code, 400)
+        self.assert_body(response.body, "Invalid input data format")
+        self.mock_run_library_command.assert_not_called()
+
+    def test_device_list_not_a_list(self):
+        response = self.fetch(
+            self.url,
+            body=urlencode({"device_list": '"not a list"'}),
+        )
+        self.assertEqual(response.code, 400)
+        self.assert_body(response.body, "Invalid input data format")
+        self.mock_run_library_command.assert_not_called()
+
+    def test_device_list_elements_not_strings(self):
+        response = self.fetch(
+            self.url,
+            body=urlencode({"device_list": "[1, null, {}]"}),
+        )
+        self.assertEqual(response.code, 400)
+        self.assert_body(response.body, "Invalid input data format")
+        self.mock_run_library_command.assert_not_called()
+
+    def test_failure(self):
+        self.assert_error_with_report(self.url)
+        self.mock_run_library_command.assert_called_once_with(
+            "sbd.check_sbd",
+            dict(watchdog="", device_list=[]),
         )
 
 

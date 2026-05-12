@@ -16,6 +16,7 @@ from pcs.common.permissions.dto import (
     PermissionMetadataDependenciesDto,
     PermissionMetadataDto,
 )
+from pcs.common.sbd_dto import SbdCheckResultDto
 from pcs.common.str_tools import format_list
 from pcs.daemon import log
 from pcs.daemon.app.api_v0_tools import (
@@ -699,6 +700,56 @@ class KnownHostsChangeHandler(_BaseApiV0Handler):
             raise self._error(reports_to_str(result.reports))
 
 
+class CheckSbdHandler(_BaseApiV0Handler):
+    async def _handle_request(self) -> None:
+        watchdog = self.get_argument("watchdog", "")
+        device_list_json = self.get_argument("device_list", "[]")
+        try:
+            device_list = json.loads(device_list_json)
+        except json.JSONDecodeError as e:
+            raise self._error("Invalid input data format") from e
+        if not isinstance(device_list, list) or not all(
+            isinstance(device, str) for device in device_list
+        ):
+            raise self._error("Invalid input data format")
+
+        result = await self._run_library_command(
+            "sbd.check_sbd",
+            dict(watchdog=watchdog, device_list=device_list),
+        )
+        if not result.success:
+            raise self._error(reports_to_str(result.reports))
+        # Not using to_dict to keep backward compatibility with older
+        # pcs versions which don't expect watchdog and device_list keys
+        # to be present in the response when they have no values. Also the
+        # response was different than our DTOs so we make them into legacy
+        # format by hand.
+        sbd_status = cast(SbdCheckResultDto, result.result)
+        response: dict[str, Any] = dict(
+            sbd=dict(
+                installed=sbd_status.sbd_service.installed,
+                enabled=sbd_status.sbd_service.enabled,
+                running=sbd_status.sbd_service.running,
+            ),
+        )
+        if sbd_status.watchdog is not None:
+            response["watchdog"] = dict(
+                path=sbd_status.watchdog.path,
+                exist=sbd_status.watchdog.exists,
+                is_supported=sbd_status.watchdog.is_supported,
+            )
+        if sbd_status.device_list is not None:
+            response["device_list"] = [
+                dict(
+                    path=device.path,
+                    exist=device.exists,
+                    block_device=device.is_block_device,
+                )
+                for device in sbd_status.device_list
+            ]
+        self.write(json.dumps(response))
+
+
 class SetCorosyncConf(_BaseApiV0Handler):
     async def _handle_request(self) -> None:
         self._check_required_params({"corosync_conf"})
@@ -806,6 +857,7 @@ def get_routes(
         # cluster config
         (r("set_corosync_conf"), SetCorosyncConf, params),
         # sbd
+        (r("check_sbd"), CheckSbdHandler, params),
         (r("get_sbd_config"), GetSbdConfigHandler, params),
         (r("set_sbd_config"), SetSbdConfigHandler, params),
     ]

@@ -198,6 +198,7 @@ EXTRA_DIST		= \
 			  common/services/drivers/openrc.py \
 			  common/services/drivers/systemd.py \
 			  common/services/drivers/sysvinit_rhel.py \
+			  common/sbd_dto.py \
 			  common/services_dto.py \
 			  common/services/errors.py \
 			  common/services/__init__.py \

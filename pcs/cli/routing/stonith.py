@@ -1,10 +1,6 @@
 import pcs.cli.stonith.command as stonith_cli
 import pcs.cli.stonith.levels.command as levels_cli
-from pcs import (
-    resource,
-    stonith,
-    usage,
-)
+from pcs import resource, stonith, usage
 from pcs.cli.cib.element import command as cib_element_cmd
 from pcs.cli.common.routing import create_router
 
@@ -79,8 +75,6 @@ stonith_cmd = create_router(
                     {
                         "list": stonith.sbd_watchdog_list,
                         "test": stonith.sbd_watchdog_test,
-                        # internal use only
-                        "list_json": stonith.sbd_watchdog_list_json,
                     },
                     ["stonith", "sbd", "watchdog"],
                 ),
