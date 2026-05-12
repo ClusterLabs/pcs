@@ -105,25 +105,8 @@ def from_dict(
     )
 
 
-# TODO:
-# This actually might not be needed, if we make sure all Enums in the code
-# are (str, Enum) or (int, Enum) or similar. In that case, json.dumps
-# will transform the values correctly.
-def _enum_converter_factory(data: list[tuple[str, Any]]) -> dict[str, Any]:
-    def convert(obj: Any) -> Any:
-        if isinstance(obj, Enum):
-            return obj.value
-        if isinstance(obj, (list, tuple)):
-            return [convert(item) for item in obj]
-        if isinstance(obj, dict):
-            return {k: convert(v) for k, v in obj.items()}
-        return obj
-
-    return {k: convert(v) for k, v in data}
-
-
 def to_dict(obj: DataTransferObject) -> DtoPayload:
-    return asdict(obj, dict_factory=_enum_converter_factory)
+    return asdict(obj)
 
 
 class ImplementsToDto:

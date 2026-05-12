@@ -184,6 +184,7 @@ class ReturnTypeCompatibilityTest(TestCase):
                             f"All Enums must also be subclasses of {allowed_enum_bases} "
                             "to allow for easy serialization.\n"
                             "Either use 'pcs.common.types.AutoNameEnum' or make sure "
-                            "your enum is also a sublclass of one of the allowed "
-                            "types: class MyEnum(<allowed_type>, Enum)"
+                            "your enum is also a subclass of one of the allowed "
+                            "types: use enum.StrEnum for strings, or "
+                            "MyEnum(<allowed_type>, Enum) for other types"
                         )
