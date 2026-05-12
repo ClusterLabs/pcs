@@ -458,6 +458,17 @@ def get_local_sbd_config(lib_env: LibraryEnvironment) -> dict[str, str]:
     return environment_file_to_dict(sbd.get_local_sbd_config())
 
 
+def get_node_sbd_config_text(lib_env: LibraryEnvironment) -> str:
+    """
+    Returns local SBD configuration as a raw string.
+    """
+    try:
+        return sbd.get_local_sbd_config()
+    except LibraryError as e:
+        lib_env.report_processor.report_list(list(e.args))
+        raise LibraryError() from e
+
+
 def set_node_sbd_config_text(lib_env: LibraryEnvironment, config: str) -> None:
     """
     Set SBD configuration on local node from a config string.

@@ -673,6 +673,16 @@ class SetCorosyncConf(_BaseApiV0Handler):
         self.write("Succeeded")
 
 
+class GetSbdConfigHandler(_BaseApiV0Handler):
+    async def _handle_request(self) -> None:
+        result = await self._run_library_command(
+            "sbd.get_node_sbd_config_text", {}
+        )
+        if not result.success:
+            raise self._error(reports_to_str(result.reports))
+        self.write(result.result)
+
+
 class SetSbdConfigHandler(_BaseApiV0Handler):
     async def _handle_request(self) -> None:
         self._check_required_params({"config"})
@@ -754,5 +764,6 @@ def get_routes(
         # cluster config
         (r("set_corosync_conf"), SetCorosyncConf, params),
         # sbd
+        (r("get_sbd_config"), GetSbdConfigHandler, params),
         (r("set_sbd_config"), SetSbdConfigHandler, params),
     ]

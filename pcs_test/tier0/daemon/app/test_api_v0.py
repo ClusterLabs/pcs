@@ -1748,6 +1748,28 @@ class SetCorosyncConf(ApiV0HandlerTest):
                 self.mock_run_library_command.assert_not_called()
 
 
+class GetSbdConfigHandler(ApiV0HandlerTest):
+    url = "/remote/get_sbd_config"
+    body_data = "sbd config text data\n"
+
+    def test_success(self):
+        self.mock_run_library_command.return_value = self.result_success(
+            self.body_data
+        )
+        response = self.fetch(self.url)
+        self.assert_body(response.body, self.body_data)
+        self.assertEqual(response.code, 200)
+        self.mock_run_library_command.assert_called_once_with(
+            "sbd.get_node_sbd_config_text", {}
+        )
+
+    def test_failure(self):
+        self.assert_error_with_report(self.url)
+        self.mock_run_library_command.assert_called_once_with(
+            "sbd.get_node_sbd_config_text", {}
+        )
+
+
 class SetSbdConfigHandler(ApiV0HandlerTest):
     url = "/remote/set_sbd_config"
     body_data = {"config": "sbd config text data\n"}
