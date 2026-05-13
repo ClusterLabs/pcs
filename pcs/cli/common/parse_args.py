@@ -44,6 +44,75 @@ OUTPUT_FORMAT_VALUES: Final = frozenset(
     )
 )
 
+MODIFIER_OPTIONS_BOOL: Final[frozenset[str]] = frozenset(
+    (
+        "--all",
+        "--agent-validation",
+        # TODO remove
+        # used only in acl commands and it is deprecated there
+        "--autodelete",
+        "--brief",
+        "--config",
+        "--corosync",
+        "--debug",
+        "--defaults",
+        "--disabled",
+        "--enable",
+        "--expired",
+        "--force",
+        "--full",
+        "--quiet",
+        FUTURE_OPTION,
+        # TODO remove
+        # used only in deprecated 'pcs resource|stonith show'
+        "--groups",
+        "--hide-inactive",
+        "--local",
+        "--monitor",
+        "--no-default-ops",
+        "--nodesc",
+        "--no-expire-check",
+        "--no-cluster-uuid",
+        "--no-keys-sync",
+        "--no-stop",
+        "--no-strict",
+        "--no-watchdog-validation",
+        "--off",
+        "--overwrite",
+        "--pacemaker",
+        "--promoted",
+        "--safe",
+        "--show-secrets",
+        "--simulate",
+        "--skip-offline",
+        "--start",
+        "--strict",
+        "--yes",
+    )
+)
+
+MODIFIER_OPTIONS_VAL: Final[frozenset[str]] = frozenset(
+    (
+        "--after",
+        "--before",
+        "--booth-conf",
+        "--booth-key",
+        "--corosync_conf",
+        "--from",
+        # TODO remove
+        # used in resource create and stonith create, deprecated in both
+        "--group",
+        "--name",
+        "--node",
+        "--request-timeout",
+        "--to",
+        "--token",
+        "-f",
+        "-p",
+        "-u",
+    )
+)
+
 ARG_TYPE_DELIMITER: Final = "%"
 
 # h = help, f = file,
@@ -527,74 +596,17 @@ class InputModifiers:
         self._defined_options = set(options.keys())
         self._options = dict(options)
         self._options.update(
+            {opt: opt in options for opt in MODIFIER_OPTIONS_BOOL}
+        )
+        self._options.update(
+            {opt: options.get(opt, None) for opt in MODIFIER_OPTIONS_VAL}
+        )
+        self._options.update(
             {
-                # boolean values
-                "--all": "--all" in options,
-                "--agent-validation": "--agent-validation" in options,
-                # TODO remove
-                # used only in acl commands and it is deprecated there
-                "--autodelete": "--autodelete" in options,
-                "--brief": "--brief" in options,
-                "--config": "--config" in options,
-                "--corosync": "--corosync" in options,
-                "--debug": "--debug" in options,
-                "--defaults": "--defaults" in options,
-                "--disabled": "--disabled" in options,
-                "--enable": "--enable" in options,
-                "--expired": "--expired" in options,
-                "--force": "--force" in options,
-                "--full": "--full" in options,
-                "--quiet": "--quiet" in options,
-                FUTURE_OPTION: FUTURE_OPTION in options,
-                # TODO remove
-                # used only in deprecated 'pcs resource|stonith show'
-                "--groups": "--groups" in options,
-                "--hide-inactive": "--hide-inactive" in options,
-                "--local": "--local" in options,
-                "--monitor": "--monitor" in options,
-                "--no-default-ops": "--no-default-ops" in options,
-                "--nodesc": "--nodesc" in options,
-                "--no-expire-check": "--no-expire-check" in options,
-                "--no-cluster-uuid": "--no-cluster-uuid" in options,
-                "--no-keys-sync": "--no-keys-sync" in options,
-                "--no-stop": "--no-stop" in options,
-                "--no-strict": "--no-strict" in options,
-                "--no-watchdog-validation": (
-                    "--no-watchdog-validation" in options
-                ),
-                "--off": "--off" in options,
-                "--overwrite": "--overwrite" in options,
-                "--pacemaker": "--pacemaker" in options,
-                "--promoted": "--promoted" in options,
-                "--safe": "--safe" in options,
-                "--show-secrets": "--show-secrets" in options,
-                "--simulate": "--simulate" in options,
-                "--skip-offline": "--skip-offline" in options,
-                "--start": "--start" in options,
-                "--strict": "--strict" in options,
-                "--yes": "--yes" in options,
-                # string values
-                "--after": options.get("--after", None),
-                "--before": options.get("--before", None),
-                "--booth-conf": options.get("--booth-conf", None),
-                "--booth-key": options.get("--booth-key", None),
-                "--corosync_conf": options.get("--corosync_conf", None),
-                "--from": options.get("--from", None),
-                # TODO remove
-                # used in resource create and stonith create, deprecated in both
-                "--group": options.get("--group", None),
-                "--name": options.get("--name", None),
-                "--node": options.get("--node", None),
                 OUTPUT_FORMAT_OPTION: options.get(
                     OUTPUT_FORMAT_OPTION, OUTPUT_FORMAT_VALUE_TEXT
                 ),
-                "--request-timeout": options.get("--request-timeout", None),
-                "--to": options.get("--to", None),
-                "--token": options.get("--token", None),
                 "--wait": options.get("--wait", False),
-                "-f": options.get("-f", None),
-                "-p": options.get("-p", None),
-                "-u": options.get("-u", None),
             }
         )
 

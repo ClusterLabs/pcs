@@ -2,6 +2,8 @@ from unittest import TestCase
 
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import (
+    MODIFIER_OPTIONS_BOOL,
+    MODIFIER_OPTIONS_VAL,
     ArgsByKeywords,
     InputModifiers,
     KeyValueParser,
@@ -621,54 +623,10 @@ class InputModifiersTest(TestCase):
     # pylint: disable=too-many-public-methods
     def setUp(self):
         self.supported = ["a", "b", "c"]
-        self.bool_opts = [
-            "--all",
-            "--autodelete",
-            "--config",
-            "--corosync",
-            "--debug",
-            "--defaults",
-            "--disabled",
-            "--enable",
-            "--force",
-            "--full",
-            # TODO remove
-            # used only in deprecated 'pcs resource|stonith show'
-            "--groups",
-            "--hide-inactive",
-            "--local",
-            "--monitor",
-            "--no-default-ops",
-            "--no-expire-check",
-            "--no-strict",
-            "--no-watchdog-validation",
-            "--nodesc",
-            "--off",
-            "--pacemaker",
-            "--promoted",
-            "--safe",
-            "--show-secrets",
-            "--simulate",
-            "--skip-offline",
-            "--start",
-        ]
-        self.val_opts = [
-            "--after",
-            "--before",
-            "--booth-conf",
-            "--booth-key",
-            "--corosync_conf",
-            "--from",
-            "--group",
-            "--name",
-            "--node",
-            "--request-timeout",
-            "--to",
-            # "--wait", # --wait is a special case, it has its own tests
-            "-f",
-            "-p",
-            "-u",
-        ]
+        # --debug is implicitly supported in all commands, tested separately
+        # in test_debug_implicit
+        self.bool_opts = sorted(MODIFIER_OPTIONS_BOOL - {"--debug"})
+        self.val_opts = sorted(MODIFIER_OPTIONS_VAL)
 
     def _get_specified(self, *keys):
         # pylint: disable=no-self-use
