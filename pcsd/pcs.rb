@@ -406,21 +406,8 @@ def get_pcs_settings_conf()
   return _read_config_file("pcs_settings.conf", PCSD_SETTINGS_CONF_LOCATION, nil, "")
 end
 
-def has_corosync_conf()
-  return Cfgsync::cluster_cfg_class.exist?()
-end
-
 def get_corosync_conf()
-  return Cfgsync::cluster_cfg_class.from_file().text()
-end
-
-def get_corosync_nodes_names()
-  if has_corosync_conf()
-    return CorosyncConf::get_corosync_nodes_names(
-      CorosyncConf::parse_string(get_corosync_conf())
-    )
-  end
-  return []
+  return read_file_lock(COROSYNC_CONF)
 end
 
 def get_nodes()
@@ -482,10 +469,8 @@ def get_nodes_status()
 end
 
 def get_cluster_name_and_uuid()
-  if has_corosync_conf()
-    corosync_conf = CorosyncConf::parse_string(
-      Cfgsync::CorosyncConf.from_file().text()
-    )
+  if File::exist?(COROSYNC_CONF)
+    corosync_conf = CorosyncConf::parse_string(get_corosync_conf())
     # mimic corosync behavior - the last value is used
     cluster_name = ''
     cluster_uuid = ''

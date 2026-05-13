@@ -6,9 +6,6 @@ require 'settings.rb'
 require 'config.rb'
 require 'corosyncconf.rb'
 
-# trick with defined? allows to prefill this constants in tests
-CFG_COROSYNC_CONF = COROSYNC_CONF unless defined? CFG_COROSYNC_CONF
-
 CFG_SYNC_CONTROL = File.join(PCSD_VAR_LOCATION, 'cfgsync_ctl') unless defined? CFG_SYNC_CONTROL
 
 module Cfgsync
@@ -163,39 +160,6 @@ module Cfgsync
     end
   end
 
-
-  class CorosyncConf < Config
-    @name = "corosync.conf"
-    @file_path = ::CFG_COROSYNC_CONF
-    @file_perm = 0644
-
-    protected
-
-    def get_version()
-      parsed = ::CorosyncConf::parse_string(self.text)
-      # mimic corosync behavior - the last config_version found is used
-      version = nil
-      parsed.sections('totem').each { |totem|
-        totem.attributes('config_version').each { |attrib|
-          version = attrib[1].to_i
-        }
-      }
-      return version ? version : 0
-    end
-
-    def set_version(new_version)
-      parsed = ::CorosyncConf::parse_string(self.text)
-      parsed.sections('totem').each { |totem|
-        totem.set_attribute('config_version', new_version)
-      }
-      return parsed.text
-    end
-  end
-
-
-  def self.cluster_cfg_class()
-    return CorosyncConf
-  end
 
   def self.get_integer_value(value, default, minimum)
     return default if value.nil?
