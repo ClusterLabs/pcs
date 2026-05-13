@@ -16,7 +16,6 @@ require 'openssl'
 require 'stringio'
 
 require 'config.rb'
-require 'cfgsync.rb'
 require 'corosyncconf.rb'
 require 'resource.rb'
 require 'cluster_entity.rb'

@@ -11,7 +11,6 @@ EXTRA_DIST		= \
 			  test/pcsd_test_utils.rb \
 			  test/pcs_settings.conf \
 			  test/test_all_suite.rb \
-			  test/test_cfgsync.rb \
 			  test/test_cluster_entity.rb \
 			  test/test_cluster.rb \
 			  test/test_config.rb \
@@ -43,7 +42,6 @@ dist_pcsd_DATA		= \
 			  bootstrap.rb \
 			  capabilities.rng \
 			  capabilities.xml \
-			  cfgsync.rb \
 			  cluster_entity.rb \
 			  cluster.rb \
 			  config.rb \

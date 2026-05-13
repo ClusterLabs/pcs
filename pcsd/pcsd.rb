@@ -12,7 +12,6 @@ require 'cluster.rb'
 require 'config.rb'
 require 'pcs.rb'
 require 'auth.rb'
-require 'cfgsync.rb'
 require 'permissions.rb'
 
 use Rack::CommonLogger
