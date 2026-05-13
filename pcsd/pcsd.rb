@@ -39,6 +39,11 @@ before do
   @auth_user = getAuthUser()
   begin
     $cluster_name, $cluster_uuid = get_cluster_name_and_uuid()
+  rescue SystemCallError => e
+    $logger.error("Unable to read corosync.conf: #{e.message}")
+    $logger.warn("Continuing request processing as if this node is not in a cluster")
+    $cluster_name = ''
+    $cluster_uuid = ''
   rescue CorosyncConf::ParseErrorException => e
     $logger.error("Unable to parse corosync.conf: #{e.message}")
     $logger.warn("Continuing request processing as if this node is not in a cluster")
