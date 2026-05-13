@@ -647,6 +647,7 @@ class InputModifiersTest(TestCase):
             "--pacemaker",
             "--promoted",
             "--safe",
+            "--show-secrets",
             "--simulate",
             "--skip-offline",
             "--start",

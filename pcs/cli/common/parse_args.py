@@ -567,7 +567,7 @@ class InputModifiers:
                 "--pacemaker": "--pacemaker" in options,
                 "--promoted": "--promoted" in options,
                 "--safe": "--safe" in options,
-                "--show-secrets": "--show-secretes" in options,
+                "--show-secrets": "--show-secrets" in options,
                 "--simulate": "--simulate" in options,
                 "--skip-offline": "--skip-offline" in options,
                 "--start": "--start" in options,
