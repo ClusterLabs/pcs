@@ -491,14 +491,6 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
         cmd=sbd.enable_sbd,
         required_permission=p.WRITE,
     ),
-    "sbd.get_node_sbd_config_text": _Cmd(
-        cmd=sbd.get_node_sbd_config_text,
-        required_permission=p.READ,
-    ),
-    "sbd.set_node_sbd_config_text": _Cmd(
-        cmd=sbd.set_node_sbd_config_text,
-        required_permission=p.WRITE,
-    ),
     "scsi.unfence_node": _Cmd(
         cmd=scsi.unfence_node,
         required_permission=p.WRITE,
@@ -558,6 +550,10 @@ LEGACY_API_COMMANDS = (
     "resource_agent.list_agents_for_standard_and_provider",
     "resource_agent.list_ocf_providers",
     "resource_agent.list_standards",
+    # The sbd URLs are ready to be exposed in APIv2, just waiting for all the
+    # other URLs to get moved to APIv2
+    "sbd.get_node_sbd_config_text",
+    "sbd.set_node_sbd_config_text",
     # There is a lot of url handlers managing cluster services and they should
     # be consolidated eventually. These are considered temporary implementation
     # for the purpose of removing ruby code. Therefore, they are not exposed in
