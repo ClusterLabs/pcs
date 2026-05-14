@@ -31,7 +31,19 @@ from pcs.common.cluster_dto import (
     ClusterDaemonsInfoDto,
 )
 from pcs.common.file import RawFileError
+from pcs.common.interface.dto import to_dict
 from pcs.common.pcs_cfgsync_dto import SyncConfigsDto
+from pcs.common.permissions.dto import (
+    PermissionEntryDto,
+    PermissionMetadataDependenciesDto,
+    PermissionMetadataDto,
+    PermissionMetadataPermissionTypeDto,
+    PermissionMetadataUserTypeDto,
+)
+from pcs.common.permissions.types import (
+    PermissionGrantedType,
+    PermissionTargetType,
+)
 from pcs.common.services_dto import ServiceStatusDto
 from pcs.common.version_dto import VersionDto
 from pcs.daemon.app import api_v0
@@ -1604,6 +1616,138 @@ class SetPermissions(ApiV0HandlerTest):
         )
         self.mock_run_library_command.assert_called_once_with(
             self.command, self.lib_command_call_arguments
+        )
+
+
+class GetPermissionsHandler(ApiV0HandlerTest):
+    url = "/remote/get_permissions"
+
+    _PERMISSION_ENTRY = PermissionEntryDto(
+        "alice", PermissionTargetType.USER, [PermissionGrantedType.READ]
+    )
+    _PERMISSION_METADATA = PermissionMetadataDto(
+        user_types=[
+            PermissionMetadataUserTypeDto(
+                PermissionTargetType.USER, "User", ""
+            ),
+        ],
+        permission_types=[
+            PermissionMetadataPermissionTypeDto(
+                PermissionGrantedType.READ,
+                "Read",
+                "Allows to view cluster settings",
+            ),
+        ],
+        permissions_dependencies=PermissionMetadataDependenciesDto(
+            {PermissionGrantedType.WRITE: [PermissionGrantedType.READ]}
+        ),
+    )
+
+    def test_success(self):
+        self.mock_run_library_command.side_effect = [
+            self.result_success([self._PERMISSION_ENTRY]),
+            self.result_success(self._PERMISSION_METADATA),
+        ]
+
+        response = self.fetch(self.url)
+
+        self.assertEqual(response.code, 200)
+        self.assert_body(
+            response.body,
+            json.dumps(
+                {
+                    "user_types": [
+                        {
+                            "code": "user",
+                            "label": "User",
+                            "description": "",
+                        }
+                    ],
+                    "permission_types": [
+                        {
+                            "code": "read",
+                            "label": "Read",
+                            "description": "Allows to view cluster settings",
+                        }
+                    ],
+                    "permissions_dependencies": {
+                        "also_allows": {"write": ["read"]}
+                    },
+                    "users_permissions": [
+                        {"name": "alice", "type": "user", "allow": ["read"]}
+                    ],
+                }
+            ),
+        )
+        mock_calls = [
+            mock.call("cluster.get_permissions", {}),
+            mock.call("cluster.get_permissions_metadata", {}),
+        ]
+        self.mock_run_library_command.assert_has_calls(mock_calls)
+        self.assertEqual(
+            self.mock_run_library_command.call_count, len(mock_calls)
+        )
+
+    def test_get_permissions_failure_returns_empty_list(self):
+        # Ruby compatibility: errors from get_permissions are silently ignored
+        self.mock_run_library_command.side_effect = [
+            self.result_failure(),
+            self.result_success(self._PERMISSION_METADATA),
+        ]
+
+        response = self.fetch(self.url)
+
+        self.assertEqual(response.code, 200)
+        self.assert_body(
+            response.body,
+            json.dumps(
+                {
+                    **to_dict(self._PERMISSION_METADATA),
+                    "users_permissions": [],
+                }
+            ),
+        )
+
+    def test_get_permissions_metadata_failure_returns_empty_metadata(self):
+        self.mock_run_library_command.side_effect = [
+            self.result_success([self._PERMISSION_ENTRY]),
+            self.result_failure(),
+        ]
+
+        response = self.fetch(self.url)
+
+        self.assertEqual(response.code, 200)
+        self.assert_body(
+            response.body,
+            json.dumps(
+                {
+                    "user_types": [],
+                    "permission_types": [],
+                    "permissions_dependencies": {"also_allows": {}},
+                    "users_permissions": [to_dict(self._PERMISSION_ENTRY)],
+                }
+            ),
+        )
+
+    def test_both_commands_fail_returns_empty_response(self):
+        self.mock_run_library_command.side_effect = [
+            self.result_failure(),
+            self.result_failure(),
+        ]
+
+        response = self.fetch(self.url)
+
+        self.assertEqual(response.code, 200)
+        self.assert_body(
+            response.body,
+            json.dumps(
+                {
+                    "user_types": [],
+                    "permission_types": [],
+                    "permissions_dependencies": {"also_allows": {}},
+                    "users_permissions": [],
+                }
+            ),
         )
 
 
