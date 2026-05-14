@@ -4,8 +4,17 @@ from lxml.etree import _Element
 
 from pcs import settings
 from pcs.common import reports
-from pcs.common.permissions.dto import PermissionEntryDto
-from pcs.common.permissions.types import PermissionGrantedType
+from pcs.common.permissions.dto import (
+    PermissionEntryDto,
+    PermissionMetadataDependenciesDto,
+    PermissionMetadataDto,
+    PermissionMetadataPermissionTypeDto,
+    PermissionMetadataUserTypeDto,
+)
+from pcs.common.permissions.types import (
+    PermissionGrantedType,
+    PermissionTargetType,
+)
 from pcs.lib import node_communication_format
 from pcs.lib.auth.types import AuthUser
 from pcs.lib.cib import fencing_topology
@@ -381,3 +390,53 @@ def set_permissions(
     )
     if env.report_processor.has_errors:
         raise LibraryError()
+
+
+def get_permissions(env: LibraryEnvironment) -> list[PermissionEntryDto]:
+    """
+    Return local cluster permissions
+    """
+    ensure_live_env(env)
+
+    pcs_settings, report_list = read_pcs_settings_conf()
+    if env.report_processor.report_list(report_list).has_errors:
+        raise LibraryError()
+
+    return [
+        entry.to_dto()
+        for entry in sorted(
+            pcs_settings.config.permissions.local_cluster,
+            key=lambda p: (p.type, p.name),
+        )
+    ]
+
+
+def get_permissions_metadata(env: LibraryEnvironment) -> PermissionMetadataDto:
+    """
+    Return metadata about cluster permissions
+    """
+    del env
+
+    return PermissionMetadataDto(
+        user_types=[
+            PermissionMetadataUserTypeDto(
+                user_type, user_type.label, user_type.description
+            )
+            for user_type in PermissionTargetType
+        ],
+        permission_types=[
+            PermissionMetadataPermissionTypeDto(
+                permission_type,
+                permission_type.label,
+                permission_type.description,
+            )
+            for permission_type in PermissionGrantedType
+        ],
+        permissions_dependencies=PermissionMetadataDependenciesDto(
+            {
+                permission: permission.dependencies
+                for permission in PermissionGrantedType
+                if permission.dependencies
+            }
+        ),
+    )

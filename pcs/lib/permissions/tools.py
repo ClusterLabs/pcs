@@ -13,14 +13,10 @@ from .const import DEFAULT_PERMISSIONS
 def complete_access_list(
     access_list: Collection[PermissionGrantedType],
 ) -> set[PermissionGrantedType]:
-    permission_set = set(access_list)
-    if PermissionGrantedType.FULL in permission_set:
-        permission_set.update(
-            (PermissionGrantedType.WRITE, PermissionGrantedType.GRANT)
-        )
-    if PermissionGrantedType.WRITE in permission_set:
-        permission_set.add(PermissionGrantedType.READ)
-    return permission_set
+    final_permission_set = set(access_list)
+    for permission in set(access_list):
+        final_permission_set.update(permission.dependencies)
+    return final_permission_set
 
 
 def read_pcs_settings_conf() -> tuple[

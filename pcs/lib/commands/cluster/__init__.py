@@ -9,6 +9,8 @@ from .config import (
 from .link import add_link, remove_links, update_link
 from .misc import (
     corosync_authkey_change,
+    get_permissions,
+    get_permissions_metadata,
     rename,
     set_permissions,
     verify,
@@ -31,10 +33,12 @@ __all__ = [
     "config_update",
     "config_update_local",
     "corosync_authkey_change",
-    "get_host_daemons_info",
     "generate_cluster_uuid",
     "generate_cluster_uuid_local",
     "get_corosync_conf_struct",
+    "get_host_daemons_info",
+    "get_permissions",
+    "get_permissions_metadata",
     "node_clear",
     "remove_links",
     "remove_nodes",
