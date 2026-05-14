@@ -173,12 +173,12 @@
       </rsc_location>
       <rsc_order first="R7" then="G2" score="-123" require-all="false" first-action="stop" then-action="stop" symmetrical="false" id="order-R7-G2-mandatory"/>
       <rsc_order first="G2" then="B2" kind="Optional" first-action="start" then-action="start" id="order-G2-B2-Optional"/>
-      <rsc_order kind="Optional" id="order_set_B2R6-cloneSe">
-        <resource_set action="stop" require-all="false" id="order_set_B2R6-cloneSe_set">
-          <resource_ref id="B2"/>
+      <rsc_order kind="Optional" id="order_set_R6-cloneB2Se">
+        <resource_set action="stop" require-all="false" id="order_set_R6-cloneB2Se_set">
           <resource_ref id="R6-clone"/>
+          <resource_ref id="B2"/>
         </resource_set>
-        <resource_set action="promote" sequential="false" id="order_set_B2R6-cloneSe_set-1">
+        <resource_set action="promote" sequential="false" id="order_set_R6-cloneB2Se_set-1">
           <resource_ref id="G1-clone"/>
         </resource_set>
       </rsc_order>

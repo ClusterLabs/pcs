@@ -22,9 +22,9 @@ pcs -- constraint order stop R7 then stop G2 \
 pcs -- constraint order start G2 then start B2 \
   id=order-G2-B2-Optional kind=Optional;
 pcs -- constraint order \
-  set B2 R6-clone require-all=0 action=stop \
+  set R6-clone B2 require-all=0 action=stop \
   set G1-clone sequential=0 action=promote \
-  setoptions id=order_set_B2R6-cloneSe kind=Optional;
+  setoptions id=order_set_R6-cloneB2Se kind=Optional;
 pcs -- constraint ticket add custom-ticket1 Promoted G1-clone \
   id=ticket-custom-ticket1-G1-clone-Promoted loss-policy=demote;
 pcs -- constraint ticket \

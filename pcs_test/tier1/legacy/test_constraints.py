@@ -2380,13 +2380,13 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
                   Set Constraint: colocation_set_s1d1
                     score=INFINITY
                     Resource Set: colocation_set_s1d1_set
-                      Resources: 'dummy1', 'stateful1'
+                      Resources: 'stateful1', 'dummy1'
                 Order Constraints:
                   start resource 'stateful1' then start resource 'dummy1' (id: order-stateful1-dummy1-mandatory)
                 Order Set Constraints:
                   Set Constraint: order_set_s1d1
                     Resource Set: order_set_s1d1_set
-                      Resources: 'dummy1', 'stateful1'
+                      Resources: 'stateful1', 'dummy1'
                 """
             ),
         )
@@ -2625,13 +2625,13 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
                   Set Constraint: colocation_set_d1dy
                     score=INFINITY
                     Resource Set: colocation_set_d1dy_set
-                      Resources: 'dummy', 'dummy1'
+                      Resources: 'dummy1', 'dummy'
                 Order Constraints:
                   start resource 'dummy' then start resource 'dummy1' (id: order-dummy-dummy1-mandatory)
                 Order Set Constraints:
                   Set Constraint: order_set_d1dy
                     Resource Set: order_set_d1dy_set
-                      Resources: 'dummy', 'dummy1'
+                      Resources: 'dummy1', 'dummy'
                 """
             ),
         )
@@ -3422,7 +3422,7 @@ Error: duplicate constraint already exists, use --force to override
                   Set Constraint: colocation_set_D6D1
                     score=INFINITY
                     Resource Set: colocation_set_D6D1_set
-                      Resources: 'D1', 'D6'
+                      Resources: 'D6', 'D1'
                 Order Set Constraints:
                   Set Constraint: order_set_D1D2
                     Resource Set: order_set_D1D2_set
@@ -3442,7 +3442,7 @@ Error: duplicate constraint already exists, use --force to override
                       Resources: 'D5', 'D6'
                   Set Constraint: order_set_D6D1
                     Resource Set: order_set_D6D1_set
-                      Resources: 'D1', 'D6'
+                      Resources: 'D6', 'D1'
                 """
             ),
         )
@@ -3789,7 +3789,7 @@ Error: duplicate constraint already exists, use --force to override
                   Set Constraint: id4
                     score=100
                     Resource Set: id4_set
-                      Resources: 'D1', 'D2'
+                      Resources: 'D2', 'D1'
                 Order Constraints:
                   start resource 'D1' then start resource 'D2' (id: id7)
                   start resource 'D2' then start resource 'D1' (id: id8)
@@ -3801,7 +3801,7 @@ Error: duplicate constraint already exists, use --force to override
                   Set Constraint: id6
                     kind=Mandatory
                     Resource Set: id6_set
-                      Resources: 'D1', 'D2'
+                      Resources: 'D2', 'D1'
                 """
             ),
         )

@@ -69,7 +69,7 @@ class TestRemoveConstraint(TestCase):
             "loc_constr_with_expired_rule-rule",
             "loc_constr_with_not_expired_rule-rule-1",
             "colocation-G1-clone-R6-clone--100",
-            "order_set_B2R6-cloneSe",
+            "order_set_R6-cloneB2Se",
             "ticket_set_R7B2G2",
         ]
         self._call_cmd(constraint_or_rule_ids)

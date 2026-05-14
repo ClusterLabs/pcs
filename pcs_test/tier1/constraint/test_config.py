@@ -282,7 +282,7 @@ class ConstraintConfigText(TestCase):
               Set Constraint:
                 score=-1
                 Resource Set:
-                  Resources: 'G2', 'R7'
+                  Resources: 'R7', 'G2'
                   role=Started
                 Resource Set:
                   Resources: 'B2', 'R6-clone'
@@ -296,7 +296,7 @@ class ConstraintConfigText(TestCase):
               Set Constraint:
                 kind=Optional
                 Resource Set:
-                  Resources: 'B2', 'R6-clone'
+                  Resources: 'R6-clone', 'B2'
                   require-all=0 action=stop
                 Resource Set:
                   Resources: 'G1-clone'
@@ -308,7 +308,7 @@ class ConstraintConfigText(TestCase):
               Set Constraint:
                 ticket=ticket2
                 Resource Set:
-                  Resources: 'B2', 'G2', 'R7'
+                  Resources: 'R7', 'B2', 'G2'
                   role=Stopped
             """
         )
@@ -348,7 +348,7 @@ class ConstraintConfigText(TestCase):
               Set Constraint:
                 score=-1
                 Resource Set:
-                  Resources: 'G2', 'R7'
+                  Resources: 'R7', 'G2'
                   role=Started
                 Resource Set:
                   Resources: 'B2', 'R6-clone'
@@ -362,7 +362,7 @@ class ConstraintConfigText(TestCase):
               Set Constraint:
                 kind=Optional
                 Resource Set:
-                  Resources: 'B2', 'R6-clone'
+                  Resources: 'R6-clone', 'B2'
                   require-all=0 action=stop
                 Resource Set:
                   Resources: 'G1-clone'
@@ -374,7 +374,7 @@ class ConstraintConfigText(TestCase):
               Set Constraint:
                 ticket=ticket2
                 Resource Set:
-                  Resources: 'B2', 'G2', 'R7'
+                  Resources: 'R7', 'B2', 'G2'
                   role=Stopped
             """
         )
@@ -410,7 +410,7 @@ class ConstraintConfigText(TestCase):
               Set Constraint: colocation_set_R7G2B2
                 score=-1
                 Resource Set: colocation_set_R7G2B2_set
-                  Resources: 'G2', 'R7'
+                  Resources: 'R7', 'G2'
                   role=Started
                 Resource Set: colocation_set_R7G2B2_set-1
                   Resources: 'B2', 'R6-clone'
@@ -421,12 +421,12 @@ class ConstraintConfigText(TestCase):
               start resource 'G2' then start resource 'B2' (id: order-G2-B2-Optional)
                 kind=Optional
             Order Set Constraints:
-              Set Constraint: order_set_B2R6-cloneSe
+              Set Constraint: order_set_R6-cloneB2Se
                 kind=Optional
-                Resource Set: order_set_B2R6-cloneSe_set
-                  Resources: 'B2', 'R6-clone'
+                Resource Set: order_set_R6-cloneB2Se_set
+                  Resources: 'R6-clone', 'B2'
                   require-all=0 action=stop
-                Resource Set: order_set_B2R6-cloneSe_set-1
+                Resource Set: order_set_R6-cloneB2Se_set-1
                   Resources: 'G1-clone'
                   sequential=0 action=promote
             Ticket Constraints:
@@ -436,7 +436,7 @@ class ConstraintConfigText(TestCase):
               Set Constraint: ticket_set_R7B2G2
                 ticket=ticket2
                 Resource Set: ticket_set_R7B2G2_set
-                  Resources: 'B2', 'G2', 'R7'
+                  Resources: 'R7', 'B2', 'G2'
                   role=Stopped
             """
         )
@@ -476,7 +476,7 @@ class ConstraintConfigText(TestCase):
               Set Constraint: colocation_set_R7G2B2
                 score=-1
                 Resource Set: colocation_set_R7G2B2_set
-                  Resources: 'G2', 'R7'
+                  Resources: 'R7', 'G2'
                   role=Started
                 Resource Set: colocation_set_R7G2B2_set-1
                   Resources: 'B2', 'R6-clone'
@@ -487,12 +487,12 @@ class ConstraintConfigText(TestCase):
               start resource 'G2' then start resource 'B2' (id: order-G2-B2-Optional)
                 kind=Optional
             Order Set Constraints:
-              Set Constraint: order_set_B2R6-cloneSe
+              Set Constraint: order_set_R6-cloneB2Se
                 kind=Optional
-                Resource Set: order_set_B2R6-cloneSe_set
-                  Resources: 'B2', 'R6-clone'
+                Resource Set: order_set_R6-cloneB2Se_set
+                  Resources: 'R6-clone', 'B2'
                   require-all=0 action=stop
-                Resource Set: order_set_B2R6-cloneSe_set-1
+                Resource Set: order_set_R6-cloneB2Se_set-1
                   Resources: 'G1-clone'
                   sequential=0 action=promote
             Ticket Constraints:
@@ -502,7 +502,7 @@ class ConstraintConfigText(TestCase):
               Set Constraint: ticket_set_R7B2G2
                 ticket=ticket2
                 Resource Set: ticket_set_R7B2G2_set
-                  Resources: 'B2', 'G2', 'R7'
+                  Resources: 'R7', 'B2', 'G2'
                   role=Stopped
             """
         )

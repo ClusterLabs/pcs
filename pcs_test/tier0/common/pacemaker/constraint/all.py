@@ -29,7 +29,7 @@ class GetAllConstraintsIds(TestCase):
                 "location-R7-non-existing-node--10000",
                 "order-G2-B2-Optional",
                 "order-R7-G2-mandatory",
-                "order_set_B2R6-cloneSe",
+                "order_set_R6-cloneB2Se",
                 "ticket-custom-ticket1-G1-clone-Promoted",
                 "ticket_set_R7B2G2",
             },
