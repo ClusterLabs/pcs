@@ -8,47 +8,6 @@ module Permissions
   GRANT = 'grant'
   FULL = 'full'
 
-  def self.get_user_types()
-    return [
-      {
-        'code' => TYPE_USER,
-        'label' => 'User',
-        'description' => '',
-      },
-      {
-        'code' => TYPE_GROUP,
-        'label' => 'Group',
-        'description' => '',
-      }
-    ]
-  end
-
-  def self.get_permission_types()
-    return [
-      {
-        'code' => READ,
-        'label' => 'Read',
-        'description' => 'Allows to view cluster settings',
-      },
-      {
-        'code' => WRITE,
-        'label' => 'Write',
-        'description' => 'Allows to modify cluster settings except permissions and ACLs',
-      },
-      {
-        'code' => GRANT,
-        'label' => 'Grant',
-        'description' => 'Allows to modify cluster permissions and ACLs',
-      },
-      {
-        'code' => FULL,
-        'label' => 'Full',
-        'description' => ('Allows unrestricted access to a cluster except for'\
-          + ' adding nodes'),
-      }
-    ]
-  end
-
   def self.permissions_dependencies()
     return {
       'also_allows' => {
