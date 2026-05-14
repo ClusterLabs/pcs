@@ -1,3 +1,4 @@
+import itertools
 import json
 from collections import Counter
 from typing import (
@@ -9,12 +10,19 @@ from typing import (
     TypeVar,
     overload,
 )
+from unittest import mock
 
 from pcs.common import reports
 from pcs.common.str_tools import format_list
 
 ALL_RESOURCE_XML_TAGS = ["bundle", "clone", "group", "master", "primitive"]
-FIXTURE_FILENO = 123
+_fileno_counter = itertools.count(100)
+
+
+def get_mock_file(*, read_data=None):
+    mock_file = mock.mock_open(read_data=read_data)()
+    mock_file.fileno.return_value = next(_fileno_counter)
+    return mock_file
 
 
 # Previously, a report item fixture was a plain tuple. That was, however, not

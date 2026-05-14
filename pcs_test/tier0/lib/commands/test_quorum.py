@@ -526,8 +526,7 @@ class SetQuorumOptionsTest(TestCase):
 
     @mock.patch("pcs.lib.sbd.fcntl")
     def test_disable_atb_sbd_requires_atb(self, mock_fcntl):
-        mock_file = mock.mock_open(read_data=self.fixture_sbd_config())()
-        mock_file.fileno.return_value = fixture.FIXTURE_FILENO
+        mock_file = fixture.get_mock_file(read_data=self.fixture_sbd_config())
         self.config.corosync_conf.load(auto_tie_breaker=True)
         self.config.services.is_installed("sbd", return_value=True)
         self.config.services.is_enabled("sbd", return_value=True)
@@ -547,14 +546,13 @@ class SetQuorumOptionsTest(TestCase):
             ]
         )
         mock_fcntl.flock.assert_called_once_with(
-            fixture.FIXTURE_FILENO, mock_fcntl.LOCK_SH
+            mock_file.fileno.return_value, mock_fcntl.LOCK_SH
         )
         mock_file.read.assert_called_once()
 
     @mock.patch("pcs.lib.sbd.fcntl")
     def test_force_disable_atb_sbd_requires_atb(self, mock_fcntl):
-        mock_file = mock.mock_open(read_data=self.fixture_sbd_config())()
-        mock_file.fileno.return_value = fixture.FIXTURE_FILENO
+        mock_file = fixture.get_mock_file(read_data=self.fixture_sbd_config())
         expected_conf = self.original_corosync_conf.replace(
             "   two_node: 1", "   two_node: 1\n    auto_tie_breaker: 0"
         )
@@ -581,7 +579,7 @@ class SetQuorumOptionsTest(TestCase):
             ]
         )
         mock_fcntl.flock.assert_called_once_with(
-            fixture.FIXTURE_FILENO, mock_fcntl.LOCK_SH
+            mock_file.fileno.return_value, mock_fcntl.LOCK_SH
         )
         mock_file.read.assert_called_once()
 

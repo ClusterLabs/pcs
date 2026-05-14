@@ -224,8 +224,7 @@ class LocalConfig:
     def read_sbd_config(self, config_content="", name_suffix=""):
         self.expected_flock_count += 1
         local_prefix = "local.read_sbd_config."
-        mock_file = mock.mock_open(read_data=config_content)()
-        mock_file.fileno.return_value = fixture.FIXTURE_FILENO
+        self.mock_file = fixture.get_mock_file(read_data=config_content)
         (
             self.config.fs.exists(
                 settings.sbd_config,
@@ -233,7 +232,7 @@ class LocalConfig:
                 name=f"{local_prefix}fs.exists.sbd_config{name_suffix}",
             ).fs.open(
                 settings.sbd_config,
-                return_value=mock_file,
+                return_value=self.mock_file,
                 name=f"{local_prefix}fs.open.sbd_config_read{name_suffix}",
             )
         )
@@ -283,12 +282,11 @@ class LocalConfig:
     def setup_sbd(self, local_config, config_generator, node_labels):
         self.expected_flock_count += 1
         local_prefix = "local.setup_sbd."
-        mock_file = mock.mock_open(read_data=local_config)()
-        mock_file.fileno.return_value = fixture.FIXTURE_FILENO
+        self.mock_file = fixture.get_mock_file(read_data=local_config)
         (
             self.config.fs.open(
                 settings.sbd_config,
-                return_value=mock_file,
+                return_value=self.mock_file,
                 name=f"{local_prefix}fs.open.sbd_config",
             )
             .http.sbd.set_sbd_config(
@@ -1283,7 +1281,8 @@ class AddNodeFull(TestCase):
             self.config.local.expected_flock_count,
         )
         self.mock_fcntl.flock.assert_called_with(
-            fixture.FIXTURE_FILENO, self.mock_fcntl.LOCK_SH
+            self.config.local.mock_file.fileno.return_value,
+            self.mock_fcntl.LOCK_SH,
         )
 
     def test_watchdog_not_supported(self):
@@ -1362,7 +1361,8 @@ class AddNodeFull(TestCase):
             self.config.local.expected_flock_count,
         )
         self.mock_fcntl.flock.assert_called_with(
-            fixture.FIXTURE_FILENO, self.mock_fcntl.LOCK_SH
+            self.config.local.mock_file.fileno.return_value,
+            self.mock_fcntl.LOCK_SH,
         )
 
     def test_no_watchdog_validation(self):
@@ -1456,7 +1456,8 @@ class AddNodeFull(TestCase):
             self.config.local.expected_flock_count,
         )
         self.mock_fcntl.flock.assert_called_with(
-            fixture.FIXTURE_FILENO, self.mock_fcntl.LOCK_SH
+            self.config.local.mock_file.fileno.return_value,
+            self.mock_fcntl.LOCK_SH,
         )
 
     def test_atb_needed(self):
@@ -1518,7 +1519,8 @@ class AddNodeFull(TestCase):
             self.config.local.expected_flock_count,
         )
         self.mock_fcntl.flock.assert_called_with(
-            fixture.FIXTURE_FILENO, self.mock_fcntl.LOCK_SH
+            self.config.local.mock_file.fileno.return_value,
+            self.mock_fcntl.LOCK_SH,
         )
 
 
@@ -3575,16 +3577,12 @@ class FailureEnableSbd(TestCase):
             expected_in_processor=False,
         )
 
-    def _mock_sbd_config_file(self):
-        mock_file = mock.mock_open(read_data=self.sbd_config)()
-        mock_file.fileno.return_value = fixture.FIXTURE_FILENO
-        return mock_file
-
     def test_enable_communication_failure(self):
+        self._sbd_mock_file = fixture.get_mock_file(read_data=self.sbd_config)
         (
             self.config.fs.open(
                 settings.sbd_config,
-                return_value=self._mock_sbd_config_file(),
+                return_value=self._sbd_mock_file,
                 name="fs.open.sbd_config",
             )
             .http.sbd.set_sbd_config(
@@ -3646,21 +3644,21 @@ class FailureEnableSbd(TestCase):
                 for node in self.unsuccessful_nodes
             ]
         )
-        # +1 for fs.open of sbd_config in _mock_sbd_config_file (not via
-        # LocalConfig helper)
         self.assertEqual(
             self.mock_fcntl.flock.call_count,
             self.config.local.expected_flock_count + 1,
         )
         self.mock_fcntl.flock.assert_called_with(
-            fixture.FIXTURE_FILENO, self.mock_fcntl.LOCK_SH
+            self._sbd_mock_file.fileno.return_value,
+            self.mock_fcntl.LOCK_SH,
         )
 
     def test_send_config_communication_failure(self):
+        self._sbd_mock_file = fixture.get_mock_file(read_data=self.sbd_config)
         (
             self.config.fs.open(
                 settings.sbd_config,
-                return_value=self._mock_sbd_config_file(),
+                return_value=self._sbd_mock_file,
                 name="fs.open.sbd_config",
             ).http.sbd.set_sbd_config(
                 communication_list=[
@@ -3714,14 +3712,13 @@ class FailureEnableSbd(TestCase):
                 for node in self.unsuccessful_nodes
             ]
         )
-        # +1 for fs.open of sbd_config in _mock_sbd_config_file (not via
-        # LocalConfig helper)
         self.assertEqual(
             self.mock_fcntl.flock.call_count,
             self.config.local.expected_flock_count + 1,
         )
         self.mock_fcntl.flock.assert_called_with(
-            fixture.FIXTURE_FILENO, self.mock_fcntl.LOCK_SH
+            self._sbd_mock_file.fileno.return_value,
+            self.mock_fcntl.LOCK_SH,
         )
 
     def test_read_config_failure(self):
@@ -3747,7 +3744,8 @@ class FailureEnableSbd(TestCase):
 
         self.env_assist.assert_reports(self.expected_reports)
         self.mock_fcntl.flock.assert_called_once_with(
-            fixture.FIXTURE_FILENO, self.mock_fcntl.LOCK_SH
+            self.config.local.mock_file.fileno.return_value,
+            self.mock_fcntl.LOCK_SH,
         )
 
 

@@ -390,8 +390,7 @@ class GetLocalSbdConfigTest(TestCase):
             SBD_WATCHDOG_TIMEOUT=0
             """
         )
-        mock_file = mock.mock_open(read_data=config_content)()
-        mock_file.fileno.return_value = fixture.FIXTURE_FILENO
+        mock_file = fixture.get_mock_file(read_data=config_content)
         self.config.fs.open(
             settings.sbd_config,
             mock_file,
@@ -406,7 +405,7 @@ class GetLocalSbdConfigTest(TestCase):
             cmd_sbd.get_local_sbd_config(self.env_assist.get_env()),
         )
         mock_fcntl.flock.assert_called_once_with(
-            fixture.FIXTURE_FILENO, mock_fcntl.LOCK_SH
+            mock_file.fileno.return_value, mock_fcntl.LOCK_SH
         )
         mock_file.read.assert_called_once()
 
@@ -438,8 +437,7 @@ class GetLocalSbdConfigTest(TestCase):
 class GetNodeSbdConfigTextTest(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
-        self.mock_file = mock.mock_open()()
-        self.mock_file.fileno.return_value = fixture.FIXTURE_FILENO
+        self.mock_file = fixture.get_mock_file()
 
     def test_success(self, mock_fcntl):
         config_content = outdent(
@@ -450,15 +448,14 @@ class GetNodeSbdConfigTextTest(TestCase):
             SBD_WATCHDOG_TIMEOUT=0
             """
         )
-        self.mock_file = mock.mock_open(read_data=config_content)()
-        self.mock_file.fileno.return_value = fixture.FIXTURE_FILENO
+        self.mock_file = fixture.get_mock_file(read_data=config_content)
         self.config.fs.open(settings.sbd_config, self.mock_file)
         self.assertEqual(
             config_content,
             cmd_sbd.get_node_sbd_config_text(self.env_assist.get_env()),
         )
         mock_fcntl.flock.assert_called_once_with(
-            fixture.FIXTURE_FILENO, mock_fcntl.LOCK_SH
+            self.mock_file.fileno.return_value, mock_fcntl.LOCK_SH
         )
         self.mock_file.read.assert_called_once()
 
@@ -488,7 +485,7 @@ class GetNodeSbdConfigTextTest(TestCase):
         self.config.fs.open(settings.sbd_config, self.mock_file)
         self._assert_failure(reason)
         mock_fcntl.flock.assert_called_once_with(
-            fixture.FIXTURE_FILENO, mock_fcntl.LOCK_SH
+            self.mock_file.fileno.return_value, mock_fcntl.LOCK_SH
         )
         self.mock_file.read.assert_not_called()
 
@@ -498,7 +495,7 @@ class GetNodeSbdConfigTextTest(TestCase):
         self.config.fs.open(settings.sbd_config, self.mock_file)
         self._assert_failure(reason)
         mock_fcntl.flock.assert_called_once_with(
-            fixture.FIXTURE_FILENO, mock_fcntl.LOCK_SH
+            self.mock_file.fileno.return_value, mock_fcntl.LOCK_SH
         )
         self.mock_file.read.assert_called_once()
 
@@ -507,15 +504,14 @@ class GetNodeSbdConfigTextTest(TestCase):
 class SetNodeSbdConfigTextTest(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
-        self.mock_file = mock.mock_open()()
-        self.mock_file.fileno.return_value = fixture.FIXTURE_FILENO
+        self.mock_file = fixture.get_mock_file()
 
     def test_success(self, mock_fcntl):
         config_data = "SBD_WATCHDOG_TIMEOUT=5\n"
         self.config.fs.open(settings.sbd_config, self.mock_file, mode="w")
         cmd_sbd.set_node_sbd_config_text(self.env_assist.get_env(), config_data)
         mock_fcntl.flock.assert_called_once_with(
-            fixture.FIXTURE_FILENO, mock_fcntl.LOCK_EX
+            self.mock_file.fileno.return_value, mock_fcntl.LOCK_EX
         )
         self.mock_file.write.assert_called_once_with(config_data)
 
@@ -550,7 +546,7 @@ class SetNodeSbdConfigTextTest(TestCase):
         self.config.fs.open(settings.sbd_config, self.mock_file, mode="w")
         self._assert_failure(reason)
         mock_fcntl.flock.assert_called_once_with(
-            fixture.FIXTURE_FILENO, mock_fcntl.LOCK_EX
+            self.mock_file.fileno.return_value, mock_fcntl.LOCK_EX
         )
         self.mock_file.write.assert_not_called()
 
@@ -560,7 +556,7 @@ class SetNodeSbdConfigTextTest(TestCase):
         self.config.fs.open(settings.sbd_config, self.mock_file, mode="w")
         self._assert_failure(reason)
         mock_fcntl.flock.assert_called_once_with(
-            fixture.FIXTURE_FILENO, mock_fcntl.LOCK_EX
+            self.mock_file.fileno.return_value, mock_fcntl.LOCK_EX
         )
         self.mock_file.write.assert_called_once()
 
@@ -683,8 +679,7 @@ class GetLocalDevicesInfoTest(TestCase):
     @mock.patch("pcs.lib.sbd.fcntl")
     def test_success(self, mock_fcntl):
         config_data = 'SBD_DEVICE="/dev1;/dev2"\n'
-        mock_file = mock.mock_open(read_data=config_data)()
-        mock_file.fileno.return_value = fixture.FIXTURE_FILENO
+        mock_file = fixture.get_mock_file(read_data=config_data)
         self.config.services.is_enabled("sbd")
         self.config.fs.exists(settings.sbd_config, return_value=True)
         self.config.fs.open(settings.sbd_config, mock_file)
@@ -709,15 +704,14 @@ class GetLocalDevicesInfoTest(TestCase):
             cmd_sbd.get_local_devices_info(self.env_assist.get_env()),
         )
         mock_fcntl.flock.assert_called_once_with(
-            fixture.FIXTURE_FILENO, mock_fcntl.LOCK_SH
+            mock_file.fileno.return_value, mock_fcntl.LOCK_SH
         )
         mock_file.read.assert_called_once()
 
     @mock.patch("pcs.lib.sbd.fcntl")
     def test_with_dump(self, mock_fcntl):
         config_data = 'SBD_DEVICE="/dev1;/dev2"\n'
-        mock_file = mock.mock_open(read_data=config_data)()
-        mock_file.fileno.return_value = fixture.FIXTURE_FILENO
+        mock_file = fixture.get_mock_file(read_data=config_data)
         self.config.services.is_enabled("sbd")
         self.config.fs.exists(settings.sbd_config, return_value=True)
         self.config.fs.open(settings.sbd_config, mock_file)
@@ -748,7 +742,7 @@ class GetLocalDevicesInfoTest(TestCase):
             ),
         )
         mock_fcntl.flock.assert_called_once_with(
-            fixture.FIXTURE_FILENO, mock_fcntl.LOCK_SH
+            mock_file.fileno.return_value, mock_fcntl.LOCK_SH
         )
         mock_file.read.assert_called_once()
 
@@ -768,8 +762,7 @@ class GetLocalDevicesInfoTest(TestCase):
     @mock.patch("pcs.lib.sbd.fcntl")
     def test_with_failures(self, mock_fcntl):
         config_data = 'SBD_DEVICE="/dev1;/dev2;/dev3"\n'
-        mock_file = mock.mock_open(read_data=config_data)()
-        mock_file.fileno.return_value = fixture.FIXTURE_FILENO
+        mock_file = fixture.get_mock_file(read_data=config_data)
         self.config.services.is_enabled("sbd")
         self.config.fs.exists(settings.sbd_config, return_value=True)
         self.config.fs.open(settings.sbd_config, mock_file)
@@ -826,7 +819,7 @@ class GetLocalDevicesInfoTest(TestCase):
             ]
         )
         mock_fcntl.flock.assert_called_once_with(
-            fixture.FIXTURE_FILENO, mock_fcntl.LOCK_SH
+            mock_file.fileno.return_value, mock_fcntl.LOCK_SH
         )
         mock_file.read.assert_called_once()
 

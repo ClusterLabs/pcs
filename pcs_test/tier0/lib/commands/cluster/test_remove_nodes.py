@@ -453,11 +453,10 @@ class SuccessAtbRequired(TestCase):
         self.config.services.is_installed("sbd", return_value=True)
         self.config.services.is_enabled("sbd", return_value=True)
         self.config.fs.exists(settings.sbd_config, return_value=True)
-        mock_file = mock.mock_open(read_data=sbd_config_data)()
-        mock_file.fileno.return_value = fixture.FIXTURE_FILENO
+        self.sbd_mock_file = fixture.get_mock_file(read_data=sbd_config_data)
         self.config.fs.open(
             settings.sbd_config,
-            mock_file,
+            self.sbd_mock_file,
         )
         self.config.http.corosync.check_corosync_offline(
             node_labels=self.nodes_to_stay,
@@ -522,7 +521,8 @@ class SuccessAtbRequired(TestCase):
         cluster.remove_nodes(self.env_assist.get_env(), self.nodes_to_remove)
         self.env_assist.assert_reports(self.expected_reports)
         self.mock_fcntl.flock.assert_called_once_with(
-            fixture.FIXTURE_FILENO, self.mock_fcntl.LOCK_SH
+            self.sbd_mock_file.fileno.return_value,
+            self.mock_fcntl.LOCK_SH,
         )
 
     def test_2_staying_1_removed(self):
@@ -592,11 +592,10 @@ class FailureAtbRequired(TestCase):
         self.config.services.is_installed("sbd", return_value=True)
         self.config.services.is_enabled("sbd", return_value=True)
         self.config.fs.exists(settings.sbd_config, return_value=True)
-        mock_file = mock.mock_open(read_data=sbd_config_data)()
-        mock_file.fileno.return_value = fixture.FIXTURE_FILENO
+        self.sbd_mock_file = fixture.get_mock_file(read_data=sbd_config_data)
         self.config.fs.open(
             settings.sbd_config,
-            mock_file,
+            self.sbd_mock_file,
         )
         self.expected_reports.extend(
             [
@@ -649,7 +648,8 @@ class FailureAtbRequired(TestCase):
             ]
         )
         self.mock_fcntl.flock.assert_called_once_with(
-            fixture.FIXTURE_FILENO, self.mock_fcntl.LOCK_SH
+            self.sbd_mock_file.fileno.return_value,
+            self.mock_fcntl.LOCK_SH,
         )
 
     def test_cluster_is_running_everywhere(self):
@@ -686,7 +686,8 @@ class FailureAtbRequired(TestCase):
             ]
         )
         self.mock_fcntl.flock.assert_called_once_with(
-            fixture.FIXTURE_FILENO, self.mock_fcntl.LOCK_SH
+            self.sbd_mock_file.fileno.return_value,
+            self.mock_fcntl.LOCK_SH,
         )
 
     def test_failed_on_some(self):
@@ -747,7 +748,8 @@ class FailureAtbRequired(TestCase):
             ]
         )
         self.mock_fcntl.flock.assert_called_once_with(
-            fixture.FIXTURE_FILENO, self.mock_fcntl.LOCK_SH
+            self.sbd_mock_file.fileno.return_value,
+            self.mock_fcntl.LOCK_SH,
         )
 
     def test_failed_all(self):
@@ -796,7 +798,8 @@ class FailureAtbRequired(TestCase):
             ]
         )
         self.mock_fcntl.flock.assert_called_once_with(
-            fixture.FIXTURE_FILENO, self.mock_fcntl.LOCK_SH
+            self.sbd_mock_file.fileno.return_value,
+            self.mock_fcntl.LOCK_SH,
         )
 
 

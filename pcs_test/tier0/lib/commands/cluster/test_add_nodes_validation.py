@@ -716,7 +716,8 @@ class Inputs(TestCase):
             ]
         )
         mock_fcntl.flock.assert_called_once_with(
-            fixture.FIXTURE_FILENO, mock_fcntl.LOCK_SH
+            self.config.local.mock_file.fileno.return_value,
+            mock_fcntl.LOCK_SH,
         )
 
     @mock.patch("pcs.lib.sbd.fcntl")
@@ -826,7 +827,8 @@ class Inputs(TestCase):
             ]
         )
         mock_fcntl.flock.assert_called_once_with(
-            fixture.FIXTURE_FILENO, mock_fcntl.LOCK_SH
+            self.config.local.mock_file.fileno.return_value,
+            mock_fcntl.LOCK_SH,
         )
 
     def test_wait_without_start(self):
@@ -1250,7 +1252,8 @@ class ClusterStatus(TestCase):
             self.config.local.expected_flock_count,
         )
         mock_fcntl.flock.assert_called_with(
-            fixture.FIXTURE_FILENO, mock_fcntl.LOCK_SH
+            self.config.local.mock_file.fileno.return_value,
+            mock_fcntl.LOCK_SH,
         )
 
     @staticmethod
@@ -1654,7 +1657,8 @@ class ClusterStatus(TestCase):
             ]
         )
         mock_fcntl.flock.assert_called_once_with(
-            fixture.FIXTURE_FILENO, mock_fcntl.LOCK_SH
+            self.config.local.mock_file.fileno.return_value,
+            mock_fcntl.LOCK_SH,
         )
 
     @mock.patch("pcs.lib.sbd.fcntl")
@@ -1758,5 +1762,6 @@ class ClusterStatus(TestCase):
             ]
         )
         mock_fcntl.flock.assert_called_once_with(
-            fixture.FIXTURE_FILENO, mock_fcntl.LOCK_SH
+            self.config.local.mock_file.fileno.return_value,
+            mock_fcntl.LOCK_SH,
         )
