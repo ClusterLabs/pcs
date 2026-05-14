@@ -3,7 +3,7 @@
 import json
 import re
 from functools import partial
-from unittest import TestCase, mock
+from unittest import TestCase
 
 from pcs import settings
 from pcs.common import reports
@@ -620,8 +620,7 @@ class Inputs(TestCase):
             ]
         )
 
-    @mock.patch("pcs.lib.sbd.fcntl")
-    def test_sbd_enabled_without_device(self, mock_fcntl):
+    def test_sbd_enabled_without_device(self):
         existing_nodes = ["node1", "node2"]
         new_nodes = ["new1", "new2", "new3"]
         patch_getaddrinfo(self, new_nodes)
@@ -715,13 +714,8 @@ class Inputs(TestCase):
                 for node in new_nodes
             ]
         )
-        mock_fcntl.flock.assert_called_once_with(
-            self.config.local.mock_file.fileno.return_value,
-            mock_fcntl.LOCK_SH,
-        )
 
-    @mock.patch("pcs.lib.sbd.fcntl")
-    def test_sbd_enabled_with_device(self, mock_fcntl):
+    def test_sbd_enabled_with_device(self):
         existing_nodes = ["node1", "node2"]
         new_nodes = ["new1", "new2", "new3"]
         patch_getaddrinfo(self, new_nodes)
@@ -825,10 +819,6 @@ class Inputs(TestCase):
                 fixture.info(reports.codes.SBD_CHECK_SUCCESS, node=node)
                 for node in new_nodes
             ]
-        )
-        mock_fcntl.flock.assert_called_once_with(
-            self.config.local.mock_file.fileno.return_value,
-            mock_fcntl.LOCK_SH,
         )
 
     def test_wait_without_start(self):
@@ -1125,8 +1115,7 @@ class ClusterStatus(TestCase):
             ]
         )
 
-    @mock.patch("pcs.lib.sbd.fcntl")
-    def test_atb_will_be_enable_cluster_not_offline(self, mock_fcntl):
+    def test_atb_will_be_enable_cluster_not_offline(self):
         existing_nodes = ["node1", "node2", "node3", "node4", "node5"]
         new_nodes = ["new1"]
         patch_getaddrinfo(self, new_nodes)
@@ -1246,14 +1235,6 @@ class ClusterStatus(TestCase):
                 fixture.info(reports.codes.SBD_CHECK_STARTED),
                 fixture.info(reports.codes.SBD_CHECK_SUCCESS, node="new1"),
             ]
-        )
-        self.assertEqual(
-            mock_fcntl.flock.call_count,
-            self.config.local.expected_flock_count,
-        )
-        mock_fcntl.flock.assert_called_with(
-            self.config.local.mock_file.fileno.return_value,
-            mock_fcntl.LOCK_SH,
         )
 
     @staticmethod
@@ -1496,8 +1477,7 @@ class ClusterStatus(TestCase):
             }
         return json.dumps(result)
 
-    @mock.patch("pcs.lib.sbd.fcntl")
-    def test_sbd_check(self, mock_fcntl):
+    def test_sbd_check(self):
         existing_nodes = ["node1", "node2", "node3", "node4"]
         new_nodes = [f"new{i}" for i in range(1, 10)]
         patch_getaddrinfo(self, new_nodes)
@@ -1656,13 +1636,8 @@ class ClusterStatus(TestCase):
                 ),
             ]
         )
-        mock_fcntl.flock.assert_called_once_with(
-            self.config.local.mock_file.fileno.return_value,
-            mock_fcntl.LOCK_SH,
-        )
 
-    @mock.patch("pcs.lib.sbd.fcntl")
-    def test_sbd_check_forced(self, mock_fcntl):
+    def test_sbd_check_forced(self):
         existing_nodes = ["node1", "node2", "node3", "node4"]
         new_nodes = [f"new{i}" for i in range(1, 4)]
         patch_getaddrinfo(self, new_nodes)
@@ -1760,8 +1735,4 @@ class ClusterStatus(TestCase):
                 fixture.info(reports.codes.SBD_CHECK_SUCCESS, node="new3"),
                 fixture.warn(reports.codes.SBD_WATCHDOG_VALIDATION_INACTIVE),
             ]
-        )
-        mock_fcntl.flock.assert_called_once_with(
-            self.config.local.mock_file.fileno.return_value,
-            mock_fcntl.LOCK_SH,
         )

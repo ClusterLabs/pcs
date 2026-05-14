@@ -1,5 +1,6 @@
 # pylint: disable=too-many-lines
 import base64
+import fcntl
 import logging
 import os.path
 import re
@@ -524,14 +525,14 @@ class SetQuorumOptionsTest(TestCase):
         lib.set_options(self.env_assist.get_env(), new_options)
         self.env_assist.assert_reports(self.success_reports)
 
-    @mock.patch("pcs.lib.sbd.fcntl")
-    def test_disable_atb_sbd_requires_atb(self, mock_fcntl):
+    def test_disable_atb_sbd_requires_atb(self):
         mock_file = fixture.get_mock_file(read_data=self.fixture_sbd_config())
         self.config.corosync_conf.load(auto_tie_breaker=True)
         self.config.services.is_installed("sbd", return_value=True)
         self.config.services.is_enabled("sbd", return_value=True)
         self.config.fs.exists(settings.sbd_config)
         self.config.fs.open(settings.sbd_config, mock_file)
+        self.config.fcntl.flock(mock_file, fcntl.LOCK_SH)
 
         new_options = {"auto_tie_breaker": "0"}
         assert_raise_library_error(
@@ -545,13 +546,9 @@ class SetQuorumOptionsTest(TestCase):
                 )
             ]
         )
-        mock_fcntl.flock.assert_called_once_with(
-            mock_file.fileno.return_value, mock_fcntl.LOCK_SH
-        )
         mock_file.read.assert_called_once()
 
-    @mock.patch("pcs.lib.sbd.fcntl")
-    def test_force_disable_atb_sbd_requires_atb(self, mock_fcntl):
+    def test_force_disable_atb_sbd_requires_atb(self):
         mock_file = fixture.get_mock_file(read_data=self.fixture_sbd_config())
         expected_conf = self.original_corosync_conf.replace(
             "   two_node: 1", "   two_node: 1\n    auto_tie_breaker: 0"
@@ -561,6 +558,7 @@ class SetQuorumOptionsTest(TestCase):
         self.config.services.is_enabled("sbd", return_value=True)
         self.config.fs.exists(settings.sbd_config)
         self.config.fs.open(settings.sbd_config, mock_file)
+        self.config.fcntl.flock(mock_file, fcntl.LOCK_SH)
         self.config.http.corosync.check_corosync_offline(
             node_labels=self.node_labels
         )
@@ -577,9 +575,6 @@ class SetQuorumOptionsTest(TestCase):
                     reports.codes.COROSYNC_QUORUM_ATB_CANNOT_BE_DISABLED_DUE_TO_SBD
                 )
             ]
-        )
-        mock_fcntl.flock.assert_called_once_with(
-            mock_file.fileno.return_value, mock_fcntl.LOCK_SH
         )
         mock_file.read.assert_called_once()
 

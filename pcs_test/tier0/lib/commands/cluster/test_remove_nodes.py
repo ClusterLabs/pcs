@@ -1,13 +1,11 @@
 # pylint: disable=too-many-lines
 # pylint: disable=no-member
+import fcntl
 import json
 import re
 from functools import partial
 from textwrap import dedent
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase
 
 from pcs import settings
 from pcs.common.reports import codes as report_codes
@@ -416,9 +414,6 @@ class SuccessAtbRequired(TestCase):
         self.nodes_to_stay = []
         self.expected_reports = []
         self.config.local.set_expected_reports_list(self.expected_reports)
-        patcher = mock.patch("pcs.lib.sbd.fcntl")
-        self.mock_fcntl = patcher.start()
-        self.addCleanup(patcher.stop)
 
     def set_up(self, staying_num, removing_num):
         self.existing_nodes = [
@@ -453,11 +448,9 @@ class SuccessAtbRequired(TestCase):
         self.config.services.is_installed("sbd", return_value=True)
         self.config.services.is_enabled("sbd", return_value=True)
         self.config.fs.exists(settings.sbd_config, return_value=True)
-        self.sbd_mock_file = fixture.get_mock_file(read_data=sbd_config_data)
-        self.config.fs.open(
-            settings.sbd_config,
-            self.sbd_mock_file,
-        )
+        sbd_mock_file = fixture.get_mock_file(read_data=sbd_config_data)
+        self.config.fs.open(settings.sbd_config, sbd_mock_file)
+        self.config.fcntl.flock(sbd_mock_file, fcntl.LOCK_SH)
         self.config.http.corosync.check_corosync_offline(
             node_labels=self.nodes_to_stay,
         )
@@ -520,10 +513,6 @@ class SuccessAtbRequired(TestCase):
         self.set_up(staying_num, removing_num)
         cluster.remove_nodes(self.env_assist.get_env(), self.nodes_to_remove)
         self.env_assist.assert_reports(self.expected_reports)
-        self.mock_fcntl.flock.assert_called_once_with(
-            self.sbd_mock_file.fileno.return_value,
-            self.mock_fcntl.LOCK_SH,
-        )
 
     def test_2_staying_1_removed(self):
         self._run_and_assert(2, 1)
@@ -578,9 +567,6 @@ class FailureAtbRequired(TestCase):
             node_fixture(node, i)
             for i, node in enumerate(self.existing_nodes, 1)
         ]
-        patcher = mock.patch("pcs.lib.sbd.fcntl")
-        self.mock_fcntl = patcher.start()
-        self.addCleanup(patcher.stop)
         self.config.env.set_known_nodes(self.existing_nodes)
         self.config.corosync_conf.load_content(
             corosync_conf_fixture(
@@ -592,11 +578,9 @@ class FailureAtbRequired(TestCase):
         self.config.services.is_installed("sbd", return_value=True)
         self.config.services.is_enabled("sbd", return_value=True)
         self.config.fs.exists(settings.sbd_config, return_value=True)
-        self.sbd_mock_file = fixture.get_mock_file(read_data=sbd_config_data)
-        self.config.fs.open(
-            settings.sbd_config,
-            self.sbd_mock_file,
-        )
+        sbd_mock_file = fixture.get_mock_file(read_data=sbd_config_data)
+        self.config.fs.open(settings.sbd_config, sbd_mock_file)
+        self.config.fcntl.flock(sbd_mock_file, fcntl.LOCK_SH)
         self.expected_reports.extend(
             [
                 fixture.info(report_codes.COROSYNC_NOT_RUNNING_CHECK_STARTED),
@@ -647,10 +631,6 @@ class FailureAtbRequired(TestCase):
                 ),
             ]
         )
-        self.mock_fcntl.flock.assert_called_once_with(
-            self.sbd_mock_file.fileno.return_value,
-            self.mock_fcntl.LOCK_SH,
-        )
 
     def test_cluster_is_running_everywhere(self):
         self.config.http.corosync.check_corosync_offline(
@@ -684,10 +664,6 @@ class FailureAtbRequired(TestCase):
                     report_codes.COROSYNC_QUORUM_ATB_WILL_BE_ENABLED_DUE_TO_SBD_CLUSTER_IS_RUNNING
                 ),
             ]
-        )
-        self.mock_fcntl.flock.assert_called_once_with(
-            self.sbd_mock_file.fileno.return_value,
-            self.mock_fcntl.LOCK_SH,
         )
 
     def test_failed_on_some(self):
@@ -747,10 +723,6 @@ class FailureAtbRequired(TestCase):
                 ),
             ]
         )
-        self.mock_fcntl.flock.assert_called_once_with(
-            self.sbd_mock_file.fileno.return_value,
-            self.mock_fcntl.LOCK_SH,
-        )
 
     def test_failed_all(self):
         err_output = "an error"
@@ -796,10 +768,6 @@ class FailureAtbRequired(TestCase):
                     report_codes.COROSYNC_QUORUM_ATB_WILL_BE_ENABLED_DUE_TO_SBD
                 ),
             ]
-        )
-        self.mock_fcntl.flock.assert_called_once_with(
-            self.sbd_mock_file.fileno.return_value,
-            self.mock_fcntl.LOCK_SH,
         )
 
 
