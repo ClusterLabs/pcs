@@ -1,3 +1,4 @@
+import fcntl
 import inspect
 import logging
 import os
@@ -18,6 +19,10 @@ from pcs_test.tools.case_analysis import test_failed
 from pcs_test.tools.command_env import spy
 from pcs_test.tools.command_env.calls import Queue as CallQueue
 from pcs_test.tools.command_env.config import Config
+from pcs_test.tools.command_env.mock_fcntl import (
+    get_fcntl_mock,
+    is_fcntl_call_in,
+)
 from pcs_test.tools.command_env.mock_fs import get_fs_mock, is_fs_call_in
 from pcs_test.tools.command_env.mock_get_local_corosync_conf import (
     get_get_local_corosync_conf,
@@ -105,6 +110,11 @@ def patch_env(call_queue, config, init_env):
             "_get_service_manager", lambda _: ServiceManagerMock(call_queue)
         ),
     ]
+    if is_fcntl_call_in(call_queue):
+        fcntl_mock = get_fcntl_mock(call_queue)
+        patcher_list.append(
+            mock.patch("fcntl.flock", fcntl_mock("flock", fcntl.flock)),
+        )
     if is_fs_call_in(call_queue):
         fs_mock = get_fs_mock(call_queue)
         patcher_list.extend(
