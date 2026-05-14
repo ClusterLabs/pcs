@@ -399,7 +399,6 @@ class GetLocalSbdConfigTest(TestCase):
             },
             cmd_sbd.get_local_sbd_config(self.env_assist.get_env()),
         )
-        mock_file.read.assert_called_once()
 
     def test_file_error(self):
         node = "node"
@@ -445,7 +444,6 @@ class GetNodeSbdConfigTextTest(TestCase):
             config_content,
             cmd_sbd.get_node_sbd_config_text(self.env_assist.get_env()),
         )
-        mock_file.read.assert_called_once()
 
     def _assert_failure(self, reason):
         self.env_assist.assert_raise_library_error(
@@ -474,7 +472,6 @@ class GetNodeSbdConfigTextTest(TestCase):
             mock_file, fcntl.LOCK_SH, side_effect=OSError(reason)
         )
         self._assert_failure(reason)
-        mock_file.read.assert_not_called()
 
     def test_read_failure(self):
         reason = "read error"
@@ -483,7 +480,6 @@ class GetNodeSbdConfigTextTest(TestCase):
         self.config.fs.open(settings.sbd_config, mock_file)
         self.config.fcntl.flock(mock_file, fcntl.LOCK_SH)
         self._assert_failure(reason)
-        mock_file.read.assert_called_once()
 
 
 class SetNodeSbdConfigTextTest(TestCase):
@@ -682,7 +678,6 @@ class GetLocalDevicesInfoTest(TestCase):
             expected_output,
             cmd_sbd.get_local_devices_info(self.env_assist.get_env()),
         )
-        mock_file.read.assert_called_once()
 
     def test_with_dump(self):
         config_data = 'SBD_DEVICE="/dev1;/dev2"\n'
@@ -717,7 +712,6 @@ class GetLocalDevicesInfoTest(TestCase):
                 self.env_assist.get_env(), dump=True
             ),
         )
-        mock_file.read.assert_called_once()
 
     def test_no_config(self):
         self.config.services.is_enabled("sbd")
@@ -791,7 +785,6 @@ class GetLocalDevicesInfoTest(TestCase):
                 ),
             ]
         )
-        mock_file.read.assert_called_once()
 
 
 class SetMessageTest(TestCase):

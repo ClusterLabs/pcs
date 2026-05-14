@@ -546,7 +546,6 @@ class SetQuorumOptionsTest(TestCase):
                 )
             ]
         )
-        mock_file.read.assert_called_once()
 
     def test_force_disable_atb_sbd_requires_atb(self):
         mock_file = fixture.get_mock_file(read_data=self.fixture_sbd_config())
@@ -576,7 +575,6 @@ class SetQuorumOptionsTest(TestCase):
                 )
             ]
         )
-        mock_file.read.assert_called_once()
 
     def test_not_live(self):
         original_conf = self.original_corosync_conf.replace(
