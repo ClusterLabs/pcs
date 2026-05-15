@@ -10,6 +10,15 @@ PCS (Pacemaker/Corosync Configuration System) is a command-line tool and daemon 
 - **pcsd**: Daemon (HTTP API server) that enables remote cluster management
 - Mixed Python/Ruby codebase supporting Pacemaker 3.x and Corosync 3.x
 
+## Git Branches
+
+- The project has multiple production branches: 'main' branch and several
+  'pcs-$version' (e.g. pcs-0.10, pcs-0.11, pcs-1.0) branches.
+- A branch which is supposed to be merged to a 'pcs-$version' branch is
+  supposed to be prefixed with that branch name, e.g. `pcs-0.11_new-feature`. A
+  branch which is supposed to be merged to the main branch is not prefixed like
+  this.
+
 ## Key Concepts
 Read about key concepts in @.claude/key-concepts/* files.
 
