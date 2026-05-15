@@ -1,44 +1,19 @@
 from collections.abc import Set
-from enum import (
-    Enum,
-    auto,
-)
-from typing import (
-    Generator,
-    Literal,
-    MutableSequence,
-    Optional,
-    Type,
-    TypeVar,
-    Union,
-)
+from enum import StrEnum, auto
+from typing import Generator, Literal, MutableSequence, Union
 
 StringSequence = Union[MutableSequence[str], tuple[str, ...]]
 StringCollection = Union[StringSequence, Set[str]]
 StringIterable = Union[StringCollection, Generator[str, None, None]]
 
 
-class AutoNameEnum(str, Enum):
+class AutoNameEnum(StrEnum):
     @staticmethod
     def _generate_next_value_(
-        name: str,
-        start: int,
-        count: int,
-        last_values: list[int],
+        name: str, start: int, count: int, last_values: list[str]
     ) -> str:
         del start, count, last_values
         return name
-
-
-T = TypeVar("T", bound=AutoNameEnum)
-
-
-def str_to_enum(enum_type: Type[T], value: Optional[str]) -> Optional[T]:
-    if value:
-        value = value.upper()
-        if value in {item.value for item in enum_type}:
-            return enum_type(value)
-    return None
 
 
 PcmkScore = Union[int, Literal["INFINITY", "+INFINITY", "-INFINITY"]]
@@ -95,7 +70,7 @@ class CorosyncTransportType(AutoNameEnum):
             raise UnknownCorosyncTransportTypeException(transport) from None
 
 
-class CorosyncNodeAddressType(str, Enum):
+class CorosyncNodeAddressType(StrEnum):
     IPV4 = "IPv4"
     IPV6 = "IPv6"
     FQDN = "FQDN"
