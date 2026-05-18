@@ -491,6 +491,14 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
         cmd=sbd.enable_sbd,
         required_permission=p.WRITE,
     ),
+    "sbd.get_node_sbd_config_text": _Cmd(
+        cmd=sbd.get_node_sbd_config_text,
+        required_permission=p.READ,
+    ),
+    "sbd.set_node_sbd_config_text": _Cmd(
+        cmd=sbd.set_node_sbd_config_text,
+        required_permission=p.WRITE,
+    ),
     "scsi.unfence_node": _Cmd(
         cmd=scsi.unfence_node,
         required_permission=p.WRITE,
