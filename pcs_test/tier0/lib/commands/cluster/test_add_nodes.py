@@ -1,6 +1,7 @@
 # pylint: disable=too-many-lines
 # pylint: disable=no-member
 import base64
+import fcntl
 import json
 import os.path
 from functools import partial
@@ -222,15 +223,22 @@ class LocalConfig:
 
     def read_sbd_config(self, config_content="", name_suffix=""):
         local_prefix = "local.read_sbd_config."
+        mock_file = fixture.get_mock_file(read_data=config_content)
         (
             self.config.fs.exists(
                 settings.sbd_config,
                 return_value=True,
                 name=f"{local_prefix}fs.exists.sbd_config{name_suffix}",
-            ).fs.open(
+            )
+            .fs.open(
                 settings.sbd_config,
-                return_value=mock.mock_open(read_data=config_content)(),
+                return_value=mock_file,
                 name=f"{local_prefix}fs.open.sbd_config_read{name_suffix}",
+            )
+            .fcntl.flock(
+                mock_file,
+                fcntl.LOCK_SH,
+                name=f"{local_prefix}fcntl.flock.sbd_config{name_suffix}",
             )
         )
 
@@ -278,11 +286,17 @@ class LocalConfig:
 
     def setup_sbd(self, local_config, config_generator, node_labels):
         local_prefix = "local.setup_sbd."
+        mock_file = fixture.get_mock_file(read_data=local_config)
         (
             self.config.fs.open(
                 settings.sbd_config,
-                return_value=mock.mock_open(read_data=local_config)(),
+                return_value=mock_file,
                 name=f"{local_prefix}fs.open.sbd_config",
+            )
+            .fcntl.flock(
+                mock_file,
+                fcntl.LOCK_SH,
+                name=f"{local_prefix}fcntl.flock.sbd_config",
             )
             .http.sbd.set_sbd_config(
                 config_generator=config_generator,
@@ -3534,11 +3548,15 @@ class FailureEnableSbd(TestCase):
         )
 
     def test_enable_communication_failure(self):
+        sbd_mock_file = fixture.get_mock_file(read_data=self.sbd_config)
         (
             self.config.fs.open(
                 settings.sbd_config,
-                return_value=mock.mock_open(read_data=self.sbd_config)(),
+                return_value=sbd_mock_file,
                 name="fs.open.sbd_config",
+            )
+            .fcntl.flock(
+                sbd_mock_file, fcntl.LOCK_SH, name="fcntl.flock.sbd_config"
             )
             .http.sbd.set_sbd_config(
                 config_generator=lambda node: sbd_config_generator(
@@ -3601,12 +3619,17 @@ class FailureEnableSbd(TestCase):
         )
 
     def test_send_config_communication_failure(self):
+        sbd_mock_file = fixture.get_mock_file(read_data=self.sbd_config)
         (
             self.config.fs.open(
                 settings.sbd_config,
-                return_value=mock.mock_open(read_data=self.sbd_config)(),
+                return_value=sbd_mock_file,
                 name="fs.open.sbd_config",
-            ).http.sbd.set_sbd_config(
+            )
+            .fcntl.flock(
+                sbd_mock_file, fcntl.LOCK_SH, name="fcntl.flock.sbd_config"
+            )
+            .http.sbd.set_sbd_config(
                 communication_list=[
                     dict(
                         label=node,

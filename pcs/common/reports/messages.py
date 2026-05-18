@@ -4319,6 +4319,24 @@ class UnableToGetSbdConfig(ReportItemMessage):
 
 
 @dataclass(frozen=True)
+class UnableToSetSbdConfig(ReportItemMessage):
+    """
+    Unable to set SBD configuration
+
+    reason -- reason of failure
+    """
+
+    reason: str
+    _code = codes.UNABLE_TO_SET_SBD_CONFIG
+
+    @property
+    def message(self) -> str:
+        return "Unable to set SBD configuration{reason}".format(
+            reason=format_optional(self.reason, ": {}"),
+        )
+
+
+@dataclass(frozen=True)
 class SbdDeviceInitializationStarted(ReportItemMessage):
     """
     Initialization of SBD device(s) started

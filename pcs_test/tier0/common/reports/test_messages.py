@@ -3104,6 +3104,20 @@ class UnableToGetSbdConfig(NameBuildTest):
         )
 
 
+class UnableToSetSbdConfig(NameBuildTest):
+    def test_no_reason(self):
+        self.assert_message_from_report(
+            "Unable to set SBD configuration",
+            reports.UnableToSetSbdConfig(""),
+        )
+
+    def test_all(self):
+        self.assert_message_from_report(
+            "Unable to set SBD configuration: reason",
+            reports.UnableToSetSbdConfig("reason"),
+        )
+
+
 class SbdDeviceInitializationStarted(NameBuildTest):
     def test_more_devices(self):
         self.assert_message_from_report(

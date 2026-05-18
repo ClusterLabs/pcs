@@ -557,6 +557,7 @@ EXTRA_DIST		= \
 			  tools/command_env/calls.py \
 			  tools/command_env/config_corosync_conf.py \
 			  tools/command_env/config_env.py \
+			  tools/command_env/config_fcntl.py \
 			  tools/command_env/config_fs.py \
 			  tools/command_env/config_http_booth.py \
 			  tools/command_env/config_http_corosync.py \
@@ -579,6 +580,7 @@ EXTRA_DIST		= \
 			  tools/command_env/config_runner_scsi.py \
 			  tools/command_env/config_services.py \
 			  tools/command_env/__init__.py \
+			  tools/command_env/mock_fcntl.py \
 			  tools/command_env/mock_fs.py \
 			  tools/command_env/mock_get_local_corosync_conf.py \
 			  tools/command_env/mock_node_communicator.py \
