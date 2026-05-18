@@ -2,7 +2,6 @@ require 'base64'
 require 'pcs.rb' #write_file_lock, read_file_lock
 require 'settings.rb'
 require 'pcsd_exchange_format.rb'
-require 'cfgsync.rb' # CFG_PCSD_SETTINGS
 
 
 module PcsdFile
@@ -182,7 +181,7 @@ module PcsdFile
 
   class PutPcsSettingsConf < PutFile
     def full_file_name
-      @full_file_name ||= CFG_PCSD_SETTINGS
+      @full_file_name ||= PCSD_SETTINGS_CONF_LOCATION
     end
 
     def binary?()

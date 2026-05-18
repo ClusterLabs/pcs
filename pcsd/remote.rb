@@ -11,7 +11,6 @@ require 'pcs.rb'
 require 'resource.rb'
 require 'settings.rb'
 require 'config.rb'
-require 'cfgsync.rb'
 require 'cluster_entity.rb'
 require 'permissions.rb'
 require 'auth.rb'
@@ -120,7 +119,7 @@ end
 
 # provides remote cluster status to a local gui
 def cluster_status_gui(auth_user, cluster_name, dont_update_config=false)
-  config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
+  config = PCSConfig.new(get_pcs_settings_conf())
   unless config.is_cluster_name_in_use(cluster_name)
     return 404, 'Unknown cluster'
   end
@@ -434,7 +433,7 @@ def get_permissions_remote(params, request, auth_user)
     return 403, 'Permission denied'
   end
 
-  pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
+  pcs_config = PCSConfig.new(get_pcs_settings_conf())
   data = {
     'user_types' => Permissions::get_user_types(),
     'permission_types' => Permissions::get_permission_types(),
@@ -524,7 +523,7 @@ def node_status(params, request, auth_user)
 end
 
 def imported_cluster_list(params, request, auth_user)
-  config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
+  config = PCSConfig.new(get_pcs_settings_conf())
   imported_clusters = {"cluster_list" => []}
   config.clusters.each { |cluster|
     imported_clusters["cluster_list"] << { "name": cluster.name }

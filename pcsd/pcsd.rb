@@ -12,7 +12,6 @@ require 'cluster.rb'
 require 'config.rb'
 require 'pcs.rb'
 require 'auth.rb'
-require 'cfgsync.rb'
 require 'permissions.rb'
 
 use Rack::CommonLogger
@@ -40,6 +39,11 @@ before do
   @auth_user = getAuthUser()
   begin
     $cluster_name, $cluster_uuid = get_cluster_name_and_uuid()
+  rescue SystemCallError => e
+    $logger.error("Unable to read corosync.conf: #{e.message}")
+    $logger.warn("Continuing request processing as if this node is not in a cluster")
+    $cluster_name = ''
+    $cluster_uuid = ''
   rescue CorosyncConf::ParseErrorException => e
     $logger.error("Unable to parse corosync.conf: #{e.message}")
     $logger.warn("Continuing request processing as if this node is not in a cluster")
@@ -304,7 +308,7 @@ get '/manage/can-add-cluster-or-nodes' do
     return 403, 'Permission denied.'
   end
 
-  pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
+  pcs_config = PCSConfig.new(get_pcs_settings_conf())
   errors = []
 
   if params.include?(:cluster)

@@ -5,6 +5,8 @@ require 'pcsd_test_utils.rb'
 require 'config.rb'
 require 'permissions.rb'
 
+CFG_PCSD_SETTINGS = File.join(CURRENT_DIR, "pcs_settings.conf.tmp")
+
 def assert_equal_json(json1, json2)
   # https://bugzilla.redhat.com/show_bug.cgi?id=2331005
   assert_equal(

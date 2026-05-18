@@ -16,7 +16,6 @@ require 'openssl'
 require 'stringio'
 
 require 'config.rb'
-require 'cfgsync.rb'
 require 'corosyncconf.rb'
 require 'resource.rb'
 require 'cluster_entity.rb'
@@ -162,7 +161,7 @@ end
 
 # Gets all of the nodes specified in the pcs config file for the cluster
 def get_cluster_nodes(cluster_name)
-  pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
+  pcs_config = PCSConfig.new(get_pcs_settings_conf())
   clusters = pcs_config.clusters
   cluster = nil
   for c in clusters
@@ -402,21 +401,12 @@ def get_local_node_id()
   end
 end
 
-def has_corosync_conf()
-  return Cfgsync::cluster_cfg_class.exist?()
+def get_pcs_settings_conf()
+  return _read_config_file("pcs_settings.conf", PCSD_SETTINGS_CONF_LOCATION, nil, "")
 end
 
 def get_corosync_conf()
-  return Cfgsync::cluster_cfg_class.from_file().text()
-end
-
-def get_corosync_nodes_names()
-  if has_corosync_conf()
-    return CorosyncConf::get_corosync_nodes_names(
-      CorosyncConf::parse_string(get_corosync_conf())
-    )
-  end
-  return []
+  return read_file_lock(COROSYNC_CONF)
 end
 
 def get_nodes()
@@ -478,10 +468,8 @@ def get_nodes_status()
 end
 
 def get_cluster_name_and_uuid()
-  if has_corosync_conf()
-    corosync_conf = CorosyncConf::parse_string(
-      Cfgsync::CorosyncConf.from_file().text()
-    )
+  if File::exist?(COROSYNC_CONF)
+    corosync_conf = CorosyncConf::parse_string(get_corosync_conf())
     # mimic corosync behavior - the last value is used
     cluster_name = ''
     cluster_uuid = ''
@@ -726,10 +714,32 @@ def is_cib_true(var)
   return ['true', 'on', 'yes', 'y', '1'].include?(var.downcase)
 end
 
+def _read_config_file(config_name, file_path, not_exist_default, file_read_error_default)
+  begin
+    return not_exist_default if not File::exist?(file_path)
+    file = nil
+    file = File.open(file_path, File::RDONLY)
+    file.flock(File::LOCK_SH)
+    return file.read()
+  rescue => e
+    $logger.warn("Cannot read config '#{config_name}' from '#{file_path}': #{e.message}")
+    return file_read_error_default
+  ensure
+    unless file.nil?
+      file.flock(File::LOCK_UN)
+      file.close()
+    end
+  end
+end
+
 def get_known_hosts()
-  return CfgKnownHosts.new(
-    Cfgsync::PcsdKnownHosts.from_file().text()
-  ).known_hosts
+  if Process.uid == 0
+    file_path = File.join(PCSD_VAR_LOCATION, KNOWN_HOSTS_FILE_NAME)
+  else
+    file_path = File.join(File.expand_path('~/.pcs'), KNOWN_HOSTS_FILE_NAME)
+  end
+  known_hosts_file = _read_config_file(KNOWN_HOSTS_FILE_NAME, file_path, nil, nil)
+  return CfgKnownHosts.new(known_hosts_file).known_hosts
 end
 
 def is_auth_against_nodes(auth_user, node_names, timeout=10)
@@ -1185,7 +1195,7 @@ def get_cib_dom(auth_user)
 end
 
 def allowed_for_local_cluster(auth_user, action)
-  pcs_config = PCSConfig.new(Cfgsync::PcsdSettings.from_file().text())
+  pcs_config = PCSConfig.new(get_pcs_settings_conf())
   return pcs_config.permissions_local.allows?(
     auth_user[:username], auth_user[:usergroups], action
   )
