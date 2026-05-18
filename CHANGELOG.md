@@ -16,7 +16,7 @@
 - Fixed a crash in `pcs resource | stonith list` commands ([rhbz#2458608])
 - `pcs constraint config` (and its variants for each constraint type) now list
   resources in sets in the order defined in the CIB, instead of sorting them
-  alphabetically ([rhbz#2461143])
+  alphabetically ([rhbz#2461143]) ([RHEL-176475])
 
 ### Deprecated
 - Commands `pcs pcsd certkey` and `pcs pcsd sync-certificates` ([RHEL-149608])
@@ -31,6 +31,7 @@
 [RHEL-7604]: https://issues.redhat.com/browse/RHEL-7604
 [RHEL-84511]: https://issues.redhat.com/browse/RHEL-84511
 [RHEL-149608]: https://issues.redhat.com/browse/RHEL-149608
+[RHEL-176475]: https://redhat.atlassian.net/browse/RHEL-176475
 [rhbz#2458608]: https://bugzilla.redhat.com/show_bug.cgi?id=2458608
 [rhbz#2461143]: https://bugzilla.redhat.com/show_bug.cgi?id=2461143
 
