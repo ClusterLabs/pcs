@@ -352,6 +352,7 @@ EXTRA_DIST		= \
 			  lib/commands/cluster/link.py \
 			  lib/commands/cluster/misc.py \
 			  lib/commands/cluster/node.py \
+			  lib/commands/cluster/permissions.py \
 			  lib/commands/cluster_property.py \
 			  lib/commands/cluster/setup_cluster.py \
 			  lib/commands/cluster/setup_node.py \

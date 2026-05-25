@@ -7,15 +7,7 @@ from .config import (
     set_corosync_conf,
 )
 from .link import add_link, remove_links, update_link
-from .misc import (
-    corosync_authkey_change,
-    get_permissions,
-    get_permissions_metadata,
-    rename,
-    set_permissions,
-    verify,
-    wait_for_pcmk_idle,
-)
+from .misc import corosync_authkey_change, rename, verify, wait_for_pcmk_idle
 from .node import (
     get_host_daemons_info,
     node_clear,
@@ -23,6 +15,11 @@ from .node import (
     remove_nodes_from_cib,
     rename_node_cib,
     rename_node_corosync,
+)
+from .permissions import (
+    get_permissions,
+    get_permissions_metadata,
+    set_permissions,
 )
 from .setup_cluster import setup, setup_local
 from .setup_node import add_nodes
