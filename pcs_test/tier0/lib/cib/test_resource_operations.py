@@ -41,9 +41,9 @@ patch_operations = create_patcher("pcs.lib.cib.resource.operations")
 @patch_operations("_get_remaining_defaults")
 @patch_operations("complete_operations_options")
 @patch_operations("validate_different_intervals")
-@patch_operations("_validate_operation_list")
-@patch_operations("_normalized_to_operations")
-@patch_operations("_operations_to_normalized")
+@patch_operations("validate_operation_list")
+@patch_operations("normalized_to_operations")
+@patch_operations("operations_to_normalized")
 class Prepare(TestCase):
     def test_prepare(
         self,
@@ -299,9 +299,8 @@ class Normalize(TestCase):
 class ValidateOperation(TestCase):
     def assert_operation_produces_report(self, operation, report_list):
         # pylint: disable=no-self-use
-        # pylint: disable=protected-access
         assert_report_item_list_equal(
-            operations._validate_operation_list(
+            operations.validate_operation_list(
                 [operation],
                 ["monitor"],
             ),

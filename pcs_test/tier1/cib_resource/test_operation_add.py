@@ -159,7 +159,9 @@ class OperationAdd(TestCase, get_assert_pcs_effect_mixin(get_cib_resources)):
         self.assert_pcs_fail(
             "resource op add R start timeout=30 requires=quorum".split(),
             (
-                "Error: requires is not a valid op option (use --force to "
-                "override)\n"
+                "Error: invalid resource operation option 'requires', allowed "
+                "options are: 'OCF_CHECK_LEVEL', 'description', 'enabled', "
+                "'id', 'interval', 'interval-origin', 'name', 'on-fail', "
+                "'record-pending', 'role', 'start-delay', 'timeout'\n"
             ),
         )

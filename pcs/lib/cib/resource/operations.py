@@ -109,16 +109,16 @@ def prepare(
     allowed_operation_name_list -- operation names defined by a resource agent
     allow_invalid -- flag for validation skipping
     """
-    operations_to_validate = _operations_to_normalized(raw_operation_list)
+    operations_to_validate = operations_to_normalized(raw_operation_list)
 
     report_list: ReportItemList = []
     report_list.extend(
-        _validate_operation_list(
+        validate_operation_list(
             operations_to_validate, allowed_operation_name_list, allow_invalid
         )
     )
 
-    operation_list = _normalized_to_operations(
+    operation_list = normalized_to_operations(
         operations_to_validate, new_role_names_supported
     )
 
@@ -146,7 +146,7 @@ def prepare(
     ]
 
 
-def _operations_to_normalized(
+def operations_to_normalized(
     raw_operation_list: Iterable[ResourceOperationFilteredIn],
 ) -> List[validate.TypeOptionNormalizedMap]:
     return [
@@ -154,7 +154,7 @@ def _operations_to_normalized(
     ]
 
 
-def _normalized_to_operations(
+def normalized_to_operations(
     normalized_pairs: Iterable[validate.TypeOptionNormalizedMap],
     new_role_names_supported: bool,
 ) -> List[ResourceOperationFilteredOut]:
@@ -170,7 +170,7 @@ def _normalized_to_operations(
     ]
 
 
-def _validate_operation_list(
+def validate_operation_list(
     operation_list, allowed_operation_name_list, allow_invalid=False
 ):
     severity = reports.item.get_severity(reports.codes.FORCE, allow_invalid)
@@ -179,12 +179,21 @@ def _validate_operation_list(
     validators = [
         validate.NamesIn(ATTRIBUTES, option_type=option_type),
         validate.IsRequiredAll(["name"], option_type=option_type),
-        validate.ValueIn(
-            "name",
-            allowed_operation_name_list,
-            option_name_for_report="operation name",
-            severity=severity,
-        ),
+    ]
+    # None means agent metadata failed to load in pcs resource update or
+    # pcs resource op add - skip name validation for backward compatibility.
+    # pcs resource create always passes a list - empty for void agent when
+    # agent loading error is forced.
+    if allowed_operation_name_list is not None:
+        validators.append(
+            validate.ValueIn(
+                "name",
+                allowed_operation_name_list,
+                option_name_for_report="operation name",
+                severity=severity,
+            ),
+        )
+    validators += [
         validate.ValueIn("role", const.PCMK_ROLES),
         validate.ValueIn("on-fail", ON_FAIL_VALUES),
         validate.ValuePcmkBoolean("record-pending"),
