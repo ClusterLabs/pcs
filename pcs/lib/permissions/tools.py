@@ -7,7 +7,7 @@ from pcs.lib.file.raw_file import RawFileError, raw_file_error_report
 from pcs.lib.interface.config import ParserErrorException
 from pcs.lib.permissions.config.facade import FacadeV2 as PcsSettingsFacade
 
-from .const import DEFAULT_PERMISSIONS
+from .const import DEFAULT_PERMISSIONS, PERMISSION_DEPENDENCIES
 
 
 def complete_access_list(
@@ -15,7 +15,7 @@ def complete_access_list(
 ) -> set[PermissionGrantedType]:
     final_permission_set = set(access_list)
     for permission in set(access_list):
-        final_permission_set.update(permission.dependencies)
+        final_permission_set.update(PERMISSION_DEPENDENCIES[permission])
     return final_permission_set
 
 

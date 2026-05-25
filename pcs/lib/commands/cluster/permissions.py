@@ -8,10 +8,7 @@ from pcs.common.permissions.dto import (
     PermissionMetadataPermissionTypeDto,
     PermissionMetadataTargetTypeDto,
 )
-from pcs.common.permissions.types import (
-    PermissionGrantedType,
-    PermissionTargetType,
-)
+from pcs.common.permissions.types import PermissionGrantedType
 from pcs.lib.auth.types import AuthUser
 from pcs.lib.commands.cluster.utils import ensure_live_env
 from pcs.lib.env import LibraryEnvironment
@@ -21,6 +18,7 @@ from pcs.lib.pcs_cfgsync.sync_files import (
     sync_pcs_settings_in_cluster,
     update_pcs_settings_locally,
 )
+from pcs.lib.permissions import const
 from pcs.lib.permissions.checker import PermissionsChecker
 from pcs.lib.permissions.config.types import PermissionEntry
 from pcs.lib.permissions.tools import (
@@ -151,23 +149,21 @@ def get_permissions_metadata(env: LibraryEnvironment) -> PermissionMetadataDto:
     return PermissionMetadataDto(
         user_types=[
             PermissionMetadataTargetTypeDto(
-                user_type, user_type.label, user_type.description
+                target_type, metadata.label, metadata.description
             )
-            for user_type in PermissionTargetType
+            for target_type, metadata in const.PERMISSION_TARGET_TYPE_METADATA.items()
         ],
         permission_types=[
             PermissionMetadataPermissionTypeDto(
-                permission_type,
-                permission_type.label,
-                permission_type.description,
+                permission_type, metadata.label, metadata.description
             )
-            for permission_type in PermissionGrantedType
+            for permission_type, metadata in const.PERMISSION_GRANTED_TYPE_METADATA.items()
         ],
         permissions_dependencies=PermissionMetadataDependenciesDto(
             {
-                permission: permission.dependencies
-                for permission in PermissionGrantedType
-                if permission.dependencies
+                permission_type: dependencies
+                for permission_type, dependencies in const.PERMISSION_DEPENDENCIES.items()
+                if dependencies
             }
         ),
     )
