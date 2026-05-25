@@ -9,7 +9,7 @@ from pcs.common.permissions.dto import (
     PermissionMetadataDependenciesDto,
     PermissionMetadataDto,
     PermissionMetadataPermissionTypeDto,
-    PermissionMetadataUserTypeDto,
+    PermissionMetadataTargetTypeDto,
 )
 from pcs.common.permissions.types import (
     PermissionGrantedType,
@@ -419,7 +419,7 @@ def get_permissions_metadata(env: LibraryEnvironment) -> PermissionMetadataDto:
 
     return PermissionMetadataDto(
         user_types=[
-            PermissionMetadataUserTypeDto(
+            PermissionMetadataTargetTypeDto(
                 user_type, user_type.label, user_type.description
             )
             for user_type in PermissionTargetType

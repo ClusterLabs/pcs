@@ -7,7 +7,7 @@ from pcs.common.permissions.dto import (
     PermissionMetadataDependenciesDto,
     PermissionMetadataDto,
     PermissionMetadataPermissionTypeDto,
-    PermissionMetadataUserTypeDto,
+    PermissionMetadataTargetTypeDto,
 )
 from pcs.common.permissions.types import (
     PermissionGrantedType,
@@ -178,10 +178,10 @@ class GetPermissionsMetadata(TestCase):
             result,
             PermissionMetadataDto(
                 user_types=[
-                    PermissionMetadataUserTypeDto(
+                    PermissionMetadataTargetTypeDto(
                         PermissionTargetType.USER, "User", ""
                     ),
-                    PermissionMetadataUserTypeDto(
+                    PermissionMetadataTargetTypeDto(
                         PermissionTargetType.GROUP, "Group", ""
                     ),
                 ],

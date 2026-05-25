@@ -38,7 +38,7 @@ from pcs.common.permissions.dto import (
     PermissionMetadataDependenciesDto,
     PermissionMetadataDto,
     PermissionMetadataPermissionTypeDto,
-    PermissionMetadataUserTypeDto,
+    PermissionMetadataTargetTypeDto,
 )
 from pcs.common.permissions.types import (
     PermissionGrantedType,
@@ -1627,7 +1627,7 @@ class GetPermissionsHandler(ApiV0HandlerTest):
     )
     _PERMISSION_METADATA = PermissionMetadataDto(
         user_types=[
-            PermissionMetadataUserTypeDto(
+            PermissionMetadataTargetTypeDto(
                 PermissionTargetType.USER, "User", ""
             ),
         ],

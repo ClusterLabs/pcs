@@ -13,7 +13,7 @@ class PermissionEntryDto(DataTransferObject):
 
 
 @dataclass(frozen=True)
-class PermissionMetadataUserTypeDto(DataTransferObject):
+class PermissionMetadataTargetTypeDto(DataTransferObject):
     code: PermissionTargetType
     label: str
     description: str
@@ -33,6 +33,6 @@ class PermissionMetadataDependenciesDto(DataTransferObject):
 
 @dataclass(frozen=True)
 class PermissionMetadataDto(DataTransferObject):
-    user_types: list[PermissionMetadataUserTypeDto]
+    user_types: list[PermissionMetadataTargetTypeDto]
     permission_types: list[PermissionMetadataPermissionTypeDto]
     permissions_dependencies: PermissionMetadataDependenciesDto
