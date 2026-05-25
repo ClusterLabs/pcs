@@ -1750,6 +1750,53 @@ class GetPermissionsHandler(ApiV0HandlerTest):
             ),
         )
 
+    def test_success_permissions_sorted(self):
+        self.mock_run_library_command.side_effect = [
+            self.result_success(
+                [
+                    PermissionEntryDto(
+                        "bob",
+                        PermissionTargetType.USER,
+                        [PermissionGrantedType.READ],
+                    ),
+                    PermissionEntryDto(
+                        "alice",
+                        PermissionTargetType.USER,
+                        [PermissionGrantedType.READ],
+                    ),
+                    PermissionEntryDto(
+                        "wheel",
+                        PermissionTargetType.GROUP,
+                        [PermissionGrantedType.READ],
+                    ),
+                ]
+            ),
+            self.result_success(
+                PermissionMetadataDto(
+                    [], [], PermissionMetadataDependenciesDto({})
+                )
+            ),
+        ]
+
+        response = self.fetch(self.url)
+
+        self.assertEqual(response.code, 200)
+        self.assert_body(
+            response.body,
+            json.dumps(
+                {
+                    "user_types": [],
+                    "permission_types": [],
+                    "permissions_dependencies": {"also_allows": {}},
+                    "users_permissions": [
+                        {"name": "wheel", "type": "group", "allow": ["read"]},
+                        {"name": "alice", "type": "user", "allow": ["read"]},
+                        {"name": "bob", "type": "user", "allow": ["read"]},
+                    ],
+                }
+            ),
+        )
+
 
 class KnownHostsChange(ApiV0HandlerTest):
     url = "/remote/known_hosts_change"

@@ -623,6 +623,11 @@ class GetPermissionsHandler(_BaseApiV0Handler):
             )
         )
 
+        # Ruby compatibility: sort the permissions
+        # sorted by (type, name): GROUP < USER alphabetically, then by name
+        #
+        # WebUI displays the permissions in the order they were sent from pcsd
+        user_permissions.sort(key=lambda p: (p.type, p.name))
         self.write(
             {
                 **to_dict(permission_metadata),

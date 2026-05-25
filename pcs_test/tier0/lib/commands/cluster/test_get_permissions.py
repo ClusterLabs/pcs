@@ -87,7 +87,7 @@ class GetPermissions(TestCase):
 
         self.assertEqual(result, [])
 
-    def test_success_permissions_sorted(self):
+    def test_success_multiple_permissions(self):
         self.config.raw_file.exists(
             file_type_codes.PCS_SETTINGS_CONF,
             settings.pcsd_settings_conf_location,
@@ -103,11 +103,6 @@ class GetPermissions(TestCase):
                         allow=[PermissionGrantedType.FULL],
                     ),
                     PermissionEntry(
-                        "alice",
-                        PermissionTargetType.USER,
-                        allow=[PermissionGrantedType.WRITE],
-                    ),
-                    PermissionEntry(
                         "wheel",
                         PermissionTargetType.GROUP,
                         allow=[PermissionGrantedType.READ],
@@ -118,24 +113,18 @@ class GetPermissions(TestCase):
 
         result = cluster.get_permissions(self.env_assist.get_env())
 
-        # sorted by (type, name): GROUP < USER alphabetically, then by name
         self.assertEqual(
             result,
             [
                 PermissionEntryDto(
-                    "wheel",
-                    PermissionTargetType.GROUP,
-                    [PermissionGrantedType.READ],
-                ),
-                PermissionEntryDto(
-                    "alice",
-                    PermissionTargetType.USER,
-                    [PermissionGrantedType.WRITE],
-                ),
-                PermissionEntryDto(
                     "bob",
                     PermissionTargetType.USER,
                     [PermissionGrantedType.FULL],
+                ),
+                PermissionEntryDto(
+                    "wheel",
+                    PermissionTargetType.GROUP,
+                    [PermissionGrantedType.READ],
                 ),
             ],
         )

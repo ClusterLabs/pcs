@@ -133,10 +133,7 @@ def get_permissions(env: LibraryEnvironment) -> list[PermissionEntryDto]:
 
     return [
         entry.to_dto()
-        for entry in sorted(
-            pcs_settings.config.permissions.local_cluster,
-            key=lambda p: (p.type, p.name),
-        )
+        for entry in pcs_settings.config.permissions.local_cluster
     ]
 
 
