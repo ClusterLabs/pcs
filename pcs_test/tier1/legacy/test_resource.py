@@ -1,27 +1,18 @@
 # pylint: disable=too-many-lines
 import json
 from textwrap import dedent
-from unittest import (
-    TestCase,
-    skip,
-)
+from unittest import TestCase, skip
 
 from lxml import etree
 
-from pcs import (
-    resource,
-    utils,
-)
+from pcs import resource, utils
 from pcs.common import const
-from pcs.common.str_tools import format_list_custom_last_separator
+from pcs.common.str_tools import format_list
 from pcs.constraint import LOCATION_NODE_VALIDATION_SKIP_MSG
 
 from pcs_test.tier1.cib_resource.common import ResourceTest
 from pcs_test.tier1.legacy.common import FIXTURE_UTILIZATION_WARNING
-from pcs_test.tools.assertions import (
-    AssertPcsMixin,
-    assert_pcs_status,
-)
+from pcs_test.tools.assertions import AssertPcsMixin, assert_pcs_status
 from pcs_test.tools.bin_mock import get_mock_settings
 from pcs_test.tools.cib import get_assert_pcs_effect_mixin
 from pcs_test.tools.fixture_cib import (
@@ -980,10 +971,6 @@ class Resource(TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_success(
-            "resource op add state monitor interval=15 role=Master --force".split()
-        )
-
-        self.assert_pcs_success(
             "resource config state".split(),
             dedent(
                 f"""\
@@ -993,8 +980,6 @@ class Resource(TestCase, AssertPcsMixin):
                       interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED_PRIMARY}
                     monitor: state-monitor-interval-11s
                       interval=11s timeout=20s role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
-                    monitor: state-monitor-interval-15
-                      interval=15 role={const.PCMK_ROLE_PROMOTED_PRIMARY}
                 """
             ),
         )
@@ -1433,6 +1418,12 @@ class Resource(TestCase, AssertPcsMixin):
 
         self.assert_pcs_success(
             "resource update B op monitor interval=100 role=Master".split(),
+            stderr_full=(
+                "Deprecation Warning: Value 'Master' of option role is "
+                "deprecated and might be removed in a future release, "
+                "therefore it should not be used, use 'Promoted' value "
+                "instead\n"
+            ),
         )
 
         self.assert_pcs_success(
@@ -2791,7 +2782,12 @@ class Resource(TestCase, AssertPcsMixin):
 
         self.assert_pcs_fail(
             "resource update B ocf:pcsmock:minimal op monitor interval=30s blah=blah".split(),
-            "Error: blah is not a valid op option (use --force to override)\n",
+            (
+                "Error: invalid resource operation option 'blah', allowed "
+                "options are: 'OCF_CHECK_LEVEL', 'description', 'enabled', "
+                "'id', 'interval', 'interval-origin', 'name', 'on-fail', "
+                "'record-pending', 'role', 'start-delay', 'timeout'\n"
+            ),
         )
 
         self.assert_pcs_success(
@@ -2800,13 +2796,18 @@ class Resource(TestCase, AssertPcsMixin):
 
         self.assert_pcs_fail(
             "resource op add C monitor interval=30s blah=blah".split(),
-            "Error: blah is not a valid op option (use --force to override)\n",
+            (
+                "Error: invalid resource operation option 'blah', allowed "
+                "options are: 'OCF_CHECK_LEVEL', 'description', 'enabled', "
+                "'id', 'interval', 'interval-origin', 'name', 'on-fail', "
+                "'record-pending', 'role', 'start-delay', 'timeout'\n"
+            ),
         )
 
         self.assert_pcs_fail(
             "resource op add C monitor interval=60 role=role".split(),
-            "Error: role must be: {} (use --force to override)\n".format(
-                format_list_custom_last_separator(const.PCMK_ROLES, " or ")
+            "Error: 'role' is not a valid role value, use {}\n".format(
+                format_list(const.PCMK_ROLES)
             ),
         )
 
@@ -2826,15 +2827,33 @@ class Resource(TestCase, AssertPcsMixin):
             ),
         )
 
-        self.assert_pcs_fail(
+        self.assert_pcs_success(
             "resource update B op monitor interval=30s monitor interval=31s role=master".split(),
-            "Error: role must be: {} (use --force to override)\n".format(
-                format_list_custom_last_separator(const.PCMK_ROLES, " or ")
+            stderr_full=(
+                "Deprecation Warning: Value 'master' of option role is "
+                "deprecated and might be removed in a future release, "
+                "therefore it should not be used, use 'Promoted' value "
+                "instead\n"
+            ),
+        )
+
+        self.assert_pcs_fail(
+            "resource update B op monitor interval=30s monitor interval=31s role=promoted".split(),
+            stderr_full=(
+                "Error: operation monitor with interval 31s already specified "
+                "for B:\n"
+                "monitor interval=31s role=Master (B-monitor-interval-31s)\n"
             ),
         )
 
         self.assert_pcs_success(
             "resource update B op monitor interval=30s monitor interval=31s role=Master".split(),
+            stderr_full=(
+                "Deprecation Warning: Value 'Master' of option role is "
+                "deprecated and might be removed in a future release, "
+                "therefore it should not be used, use 'Promoted' value "
+                "instead\n"
+            ),
         )
 
         self.assert_pcs_success(
