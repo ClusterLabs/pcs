@@ -297,12 +297,23 @@ class Normalize(TestCase):
 
 
 class ValidateOperation(TestCase):
-    def assert_operation_produces_report(self, operation, report_list):
+    _DEFAULT = object()
+
+    def assert_operation_produces_report(
+        self,
+        operation,
+        report_list,
+        allowed_operation_name_list=_DEFAULT,
+        allow_invalid=False,
+    ):
         # pylint: disable=no-self-use
+        if allowed_operation_name_list is self._DEFAULT:
+            allowed_operation_name_list = ["monitor"]
         assert_report_item_list_equal(
             operations.validate_operation_list(
                 [operation],
-                ["monitor"],
+                allowed_operation_name_list,
+                allow_invalid=allow_invalid,
             ),
             report_list,
         )
@@ -520,6 +531,44 @@ class ValidateOperation(TestCase):
                     None,
                 ),
             ],
+        )
+
+    def test_skip_name_validation_when_allowed_list_is_none(self):
+        self.assert_operation_produces_report(
+            {"name": "unknown_op"}, [], allowed_operation_name_list=None
+        )
+
+    def test_return_error_on_invalid_name_with_empty_allowed_list(self):
+        self.assert_operation_produces_report(
+            {"name": "monitor"},
+            [
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    force_code=report_codes.FORCE,
+                    option_value="monitor",
+                    option_name="operation name",
+                    allowed_values=[],
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+            ],
+            allowed_operation_name_list=[],
+        )
+
+    def test_invalid_name_forced(self):
+        self.assert_operation_produces_report(
+            {"name": "unknown_op"},
+            [
+                fixture.warn(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_value="unknown_op",
+                    option_name="operation name",
+                    allowed_values=["monitor"],
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+            ],
+            allow_invalid=True,
         )
 
 
