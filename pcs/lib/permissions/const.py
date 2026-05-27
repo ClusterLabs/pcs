@@ -54,6 +54,7 @@ PERMISSION_GRANTED_TYPE_METADATA = {
 }
 
 
+# Must list all transitive dependencies, because the evaluation is non-recursive
 PERMISSION_DEPENDENCIES = {
     PermissionGrantedType.READ: [],
     PermissionGrantedType.WRITE: [PermissionGrantedType.READ],
