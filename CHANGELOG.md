@@ -9,6 +9,10 @@
   resource | stonith config` commands ([RHEL-7604])
 - Add validation for cluster name length. Corosync can not process too long
   names. The maximum length is set to 256 chars to prevent this error.
+- Add validation for operations in `pcs resource update`, `pcs resource op add`,
+  `pcs stonith update`, and `pcs stonith op add commands`. Operation names are
+  now validated against agent metadata, and operation option values are also
+  verified ([RHEL-169571])
 
 ### Fixed
 - Upgrade CIB schema version when creating a colocation constraint with
@@ -31,6 +35,7 @@
 [RHEL-7604]: https://issues.redhat.com/browse/RHEL-7604
 [RHEL-84511]: https://issues.redhat.com/browse/RHEL-84511
 [RHEL-149608]: https://issues.redhat.com/browse/RHEL-149608
+[RHEL-169571]: https://redhat.atlassian.net/browse/RHEL-169571
 [RHEL-176475]: https://redhat.atlassian.net/browse/RHEL-176475
 [rhbz#2458608]: https://bugzilla.redhat.com/show_bug.cgi?id=2458608
 [rhbz#2461143]: https://bugzilla.redhat.com/show_bug.cgi?id=2461143
