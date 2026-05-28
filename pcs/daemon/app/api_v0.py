@@ -11,6 +11,11 @@ from pcs.common.booth_dto import BoothConfigAndAuthfileDto
 from pcs.common.cluster_dto import ClusterDaemonsInfoDto
 from pcs.common.interface.dto import to_dict
 from pcs.common.pcs_cfgsync_dto import SyncConfigsDto
+from pcs.common.permissions.dto import (
+    PermissionEntryDto,
+    PermissionMetadataDependenciesDto,
+    PermissionMetadataDto,
+)
 from pcs.common.str_tools import format_list
 from pcs.daemon import log
 from pcs.daemon.app.api_v0_tools import (
@@ -598,6 +603,42 @@ class SetPermissionsHandler(_BaseApiV0Handler):
         self.write("Permissions saved")
 
 
+class GetPermissionsHandler(_BaseApiV0Handler):
+    async def _handle_request(self) -> None:
+        result = await self._run_library_command("cluster.get_permissions", {})
+        # Ruby compatibility: ignore errors, return empty permissions
+        #
+        # 403 is already returned in _run_library_command if the user does not
+        # have the needed permissions to run this command, so this is safe
+        user_permissions = result.result if result.success else []
+
+        result = await self._run_library_command(
+            "cluster.get_permissions_metadata", {}
+        )
+        permission_metadata = (
+            cast(PermissionMetadataDto, result.result)
+            if result.success
+            else PermissionMetadataDto(
+                [], [], PermissionMetadataDependenciesDto({})
+            )
+        )
+
+        # Ruby compatibility: sort the permissions
+        # sorted by (type, name): GROUP < USER alphabetically, then by name
+        #
+        # WebUI displays the permissions in the order they were sent from pcsd
+        user_permissions.sort(key=lambda p: (p.type, p.name))
+        self.write(
+            {
+                **to_dict(permission_metadata),
+                "users_permissions": [
+                    to_dict(cast(PermissionEntryDto, entry))
+                    for entry in user_permissions
+                ],
+            },
+        )
+
+
 class KnownHostsChangeHandler(_BaseApiV0Handler):
     """
     Input format:
@@ -757,6 +798,7 @@ def get_routes(
         ),
         # permissions
         (r("set_permissions"), SetPermissionsHandler, params),
+        (r("get_permissions"), GetPermissionsHandler, params),
         # known hosts
         (r("known_hosts_change"), KnownHostsChangeHandler, params),
         # check_host

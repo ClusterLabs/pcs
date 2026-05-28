@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import Collection, Sequence
 
+from pcs.common.interface.dto import ImplementsToDto
+from pcs.common.permissions.dto import PermissionEntryDto
 from pcs.common.permissions.types import (
     PermissionGrantedType,
     PermissionTargetType,
@@ -14,10 +16,15 @@ class ClusterEntry:
 
 
 @dataclass(frozen=True)
-class PermissionEntry:
+class PermissionEntry(ImplementsToDto):
     name: str
     type: PermissionTargetType
     allow: Collection[PermissionGrantedType]
+
+    def to_dto(self) -> PermissionEntryDto:
+        return PermissionEntryDto(
+            name=self.name, type=self.type, allow=list(self.allow)
+        )
 
 
 @dataclass(frozen=True)

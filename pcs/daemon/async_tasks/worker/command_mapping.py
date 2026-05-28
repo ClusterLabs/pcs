@@ -157,6 +157,14 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
         cmd=cluster.get_host_daemons_info,
         required_permission=p.READ,
     ),
+    "cluster.get_permissions": _Cmd(
+        cmd=cluster.get_permissions,
+        required_permission=p.GRANT,
+    ),
+    "cluster.get_permissions_metadata": _Cmd(
+        cmd=cluster.get_permissions_metadata,
+        required_permission=p.GRANT,
+    ),
     "cluster.node_clear": _Cmd(
         cmd=cluster.node_clear,
         required_permission=p.WRITE,
@@ -546,6 +554,8 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
 LEGACY_API_COMMANDS = (
     "auth.known_hosts_change",
     "booth.get_config",
+    "cluster.get_permissions",
+    "cluster.get_permissions_metadata",
     "cluster.set_corosync_conf",
     "cluster.set_permissions",
     "manage_clusters.add_cluster",

@@ -26,7 +26,6 @@ def remote(params, request, auth_user)
       :get_quorum_info => method(:get_quorum_info),
       :get_corosync_conf => method(:get_corosync_conf_remote),
       :set_certs => method(:set_certs),
-      :get_permissions => method(:get_permissions_remote),
       :cluster_start => method(:cluster_start),
       :cluster_stop => method(:cluster_stop),
       :config_restore => method(:config_restore),
@@ -424,21 +423,6 @@ def set_certs(params, request, auth_user)
   end
 
   return [200, 'success']
-end
-
-def get_permissions_remote(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::GRANT)
-    return 403, 'Permission denied'
-  end
-
-  pcs_config = PCSConfig.new(get_pcs_settings_conf())
-  data = {
-    'user_types' => Permissions::get_user_types(),
-    'permission_types' => Permissions::get_permission_types(),
-    'permissions_dependencies' => Permissions::permissions_dependencies(),
-    'users_permissions' => pcs_config.permissions_local.to_hash(),
-  }
-  return [200, JSON.generate(data)]
 end
 
 def remote_pacemaker_node_status(params, request, auth_user)
