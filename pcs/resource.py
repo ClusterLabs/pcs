@@ -1129,12 +1129,12 @@ def resource_update(args: Argv, modifiers: InputModifiers) -> None:  # noqa: PLR
         resource, utils.convert_args_to_tuples(meta_values)
     )
 
-    operations = resource.getElementsByTagName("operations")
-    if not operations:
-        operations = dom.createElement("operations")
-        resource.appendChild(operations)
+    operations_el = resource.getElementsByTagName("operations")
+    if not operations_el:
+        operations_el = dom.createElement("operations")
+        resource.appendChild(operations_el)
     else:
-        operations = operations[0]
+        operations_el = operations_el[0]
 
     get_role = partial(
         pacemaker.role.get_value_for_cib,
@@ -1165,7 +1165,7 @@ def resource_update(args: Argv, modifiers: InputModifiers) -> None:  # noqa: PLR
 
         updating_op = None
         updating_op_before = None
-        for existing_op in operations.getElementsByTagName("op"):
+        for existing_op in operations_el.getElementsByTagName("op"):
             if updating_op:
                 updating_op_before = existing_op
                 break
@@ -1294,23 +1294,16 @@ def resource_operation_add(  # noqa: PLR0912, PLR0915
     if "=" in op_name:
         utils.err("%s does not appear to be a valid operation action" % op_name)
 
-    interval = None
-    for key, val in op_properties:
-        if key == "interval":
-            interval = val
-            break
-    if not interval:
-        interval = "60s" if op_name == "monitor" else "0s"
-        op_properties.append(("interval", interval))
-
     op_dict = dict(op_properties)
     if "name" in op_dict:
+        # deprecated since pcs-0.12.3
         deprecation_warning(
             "Specifying an operation name with 'name=<value>' syntax "
             "is deprecated and might be removed in a future release. "
             "Use the operation name as the first argument instead."
         )
-    op_dict.setdefault("name", op_name)
+    else:
+        op_dict["name"] = op_name
 
     normalized = operations.operations_to_normalized([op_dict])
     report_list = operations.validate_operation_list(
@@ -1328,6 +1321,15 @@ def resource_operation_add(  # noqa: PLR0912, PLR0915
         normalized, new_role_names_supported
     )[0]
     op_properties = sorted(op_normalized.items())
+
+    interval = None
+    for key, val in op_properties:
+        if key == "interval":
+            interval = val
+            break
+    if not interval:
+        interval = "60s" if op_name == "monitor" else "0s"
+        op_properties.append(("interval", interval))
 
     generate_id = True
     for name, value in op_properties:

@@ -8,7 +8,7 @@
   resources in sets in the order defined in the CIB, instead of sorting them
   alphabetically ([rhbz#2461143]) ([RHEL-176478])
 - Add validation for operations in `pcs resource update`, `pcs resource op add`,
-  `pcs stonith update`, and `pcs stonith op add commands`. Operation names are
+  `pcs stonith update`, and `pcs stonith op add` commands. Operation names are
   now validated against agent metadata, and operation option values are also
   verified ([RHEL-176268])
 

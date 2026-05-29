@@ -971,6 +971,18 @@ class Resource(TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_success(
+            (
+                "resource op add state monitor interval=15 role=Master --force"
+            ).split(),
+            stderr_full=(
+                "Deprecation Warning: Value 'Master' of option role is "
+                "deprecated and might be removed in a future release, "
+                "therefore it should not be used, use 'Promoted' value "
+                "instead\n"
+            ),
+        )
+
+        self.assert_pcs_success(
             "resource config state".split(),
             dedent(
                 f"""\
@@ -980,6 +992,8 @@ class Resource(TestCase, AssertPcsMixin):
                       interval=10s timeout=20s role={const.PCMK_ROLE_PROMOTED_PRIMARY}
                     monitor: state-monitor-interval-11s
                       interval=11s timeout=20s role={const.PCMK_ROLE_UNPROMOTED_PRIMARY}
+                    monitor: state-monitor-interval-15
+                      interval=15 role={const.PCMK_ROLE_PROMOTED_PRIMARY}
                 """
             ),
         )
