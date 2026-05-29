@@ -1,34 +1,18 @@
 from collections import defaultdict
 from dataclasses import replace as dt_replace
-from typing import (
-    Iterable,
-    List,
-    Optional,
-    Tuple,
-    cast,
-)
+from typing import Iterable, List, Optional, Tuple, cast
 
 from lxml import etree
 from lxml.etree import _Element
 
-from pcs.common import (
-    const,
-    pacemaker,
-    reports,
-)
+from pcs.common import const, pacemaker, reports
 from pcs.common.pacemaker.resource.operations import CibResourceOperationDto
-from pcs.common.reports import (
-    ReportItemList,
-    ReportProcessor,
-)
+from pcs.common.reports import ReportItemList, ReportProcessor
 from pcs.common.reports.item import ReportItem
 from pcs.common.tools import timeout_to_seconds
 from pcs.common.types import StringCollection
 from pcs.lib import validate
-from pcs.lib.cib import (
-    nvpair_multi,
-    rule,
-)
+from pcs.lib.cib import nvpair_multi, rule
 from pcs.lib.cib.nvpair import append_new_instance_attributes
 from pcs.lib.cib.resource.agent import (
     complete_operations_options,
@@ -171,19 +155,31 @@ def normalized_to_operations(
 
 
 def validate_operation_list(
-    operation_list, allowed_operation_name_list, allow_invalid=False
-):
+    operation_list: Iterable[validate.TypeOptionNormalizedMap],
+    allowed_operation_name_list: Optional[StringCollection],
+    allow_invalid: bool = False,
+) -> ReportItemList:
+    """
+    Validate given operation list and return a list of report items.
+
+    operation_list -- operations with normalized option names and values
+    allowed_operation_name_list -- operation names defined by a resource agent,
+        or None if agent metadata failed to load (in pcs resource update or
+        pcs resource op add). When None, operation name validation is skipped
+        for backward compatibility - the user should still be able to configure
+        operations even when the agent metadata is unavailable.
+        In pcs resource create, a list is always passed (empty for a void agent
+        when an agent loading error is forced).
+    allow_invalid -- if True, downgrade unknown operation name errors to
+        warnings (i.e. allow forcing)
+    """
     severity = reports.item.get_severity(reports.codes.FORCE, allow_invalid)
     option_type = "resource operation"
 
-    validators = [
+    validators: list[validate.ValidatorInterface] = [
         validate.NamesIn(ATTRIBUTES, option_type=option_type),
         validate.IsRequiredAll(["name"], option_type=option_type),
     ]
-    # None means agent metadata failed to load in pcs resource update or
-    # pcs resource op add - skip name validation for backward compatibility.
-    # pcs resource create always passes a list - empty for void agent when
-    # agent loading error is forced.
     if allowed_operation_name_list is not None:
         validators.append(
             validate.ValueIn(

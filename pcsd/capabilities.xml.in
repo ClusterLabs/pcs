@@ -1786,17 +1786,6 @@
         pcs commands: resource op add
       </description>
     </capability>
-    <capability id="pcmk.resource.update-operations.validation" in-pcs="1" in-pcsd="0">
-      <description>
-        Validation of operation name based on agent metadata and options values.
-
-        pcs commands:
-          resource update
-          resource op add
-          stonith update
-          stonith op add
-      </description>
-    </capability>
 
     <capability id="pcmk.resource.group" in-pcs="1" in-pcsd="1">
       <description>

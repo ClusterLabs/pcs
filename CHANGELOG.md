@@ -10,7 +10,7 @@
 - Add validation for cluster name length. Corosync can not process too long
   names. The maximum length is set to 256 chars to prevent this error.
 - Add validation for operations in `pcs resource update`, `pcs resource op add`,
-  `pcs stonith update`, and `pcs stonith op add commands`. Operation names are
+  `pcs stonith update`, and `pcs stonith op add` commands. Operation names are
   now validated against agent metadata, and operation option values are also
   verified ([RHEL-169571])
 
