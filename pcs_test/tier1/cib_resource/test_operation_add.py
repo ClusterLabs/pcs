@@ -159,7 +159,59 @@ class OperationAdd(TestCase, get_assert_pcs_effect_mixin(get_cib_resources)):
         self.assert_pcs_fail(
             "resource op add R start timeout=30 requires=quorum".split(),
             (
-                "Error: requires is not a valid op option (use --force to "
-                "override)\n"
+                "Error: invalid resource operation option 'requires', allowed "
+                "options are: 'OCF_CHECK_LEVEL', 'description', 'enabled', "
+                "'id', 'interval', 'interval-origin', 'name', 'on-fail', "
+                "'record-pending', 'role', 'start-delay', 'timeout'\n"
             ),
         )
+
+    def _invalid_operations(self, force=False):
+        forceable = "Warning" if force else "Error"
+        force_opt = "--force" if force else ""
+        use_force = ", use --force to override" if not force else ""
+
+        self.assert_pcs_fail(
+            (
+                "resource op add R status "
+                "id=ab#cd enabled=invalid-bool interval=invalid-number "
+                "interval-origin=value name=status on-fail=invalid-on-fail "
+                "record-pending=invalid-bool role=invalid-role "
+                f"start-delay=value timeout=invalid-timeout {force_opt}"
+            ).split(),
+            (
+                "Deprecation Warning: Specifying an operation name with "
+                "'name=<value>' syntax is deprecated and might be removed in a "
+                "future release. Use the operation name as the first argument "
+                "instead.\n"
+                f"{forceable}: 'status' is not a valid operation name value, "
+                "use 'meta-data', 'migrate_from', 'migrate_to', 'monitor', "
+                "'reload', 'reload-agent', 'start', 'stop', 'validate-all'"
+                f"{use_force}\n"
+                "Error: 'invalid-role' is not a valid role value, use "
+                "'Promoted', 'Started', 'Stopped', 'Unpromoted'\n"
+                "Error: 'invalid-on-fail' is not a valid on-fail value, use "
+                "'block', 'demote', 'fence', 'ignore', 'restart', "
+                "'restart-container', 'standby', 'stop'\n"
+                "Error: 'invalid-bool' is not a valid record-pending value, "
+                "use a pacemaker boolean value: '0', '1', 'false', 'n', 'no', "
+                "'off', 'on', 'true', 'y', 'yes'\n"
+                "Error: 'invalid-bool' is not a valid enabled value, use a "
+                "pacemaker boolean value: '0', '1', 'false', 'n', 'no', 'off', "
+                "'on', 'true', 'y', 'yes'\n"
+                "Error: Only one of resource operation options "
+                "'interval-origin' and 'start-delay' can be used\n"
+                "Error: invalid operation id 'ab#cd', '#' is not a valid "
+                "character for a operation id\n"
+                "Error: 'invalid-number' is not a valid interval value, use "
+                "time interval (e.g. 1, 2s, 3m, 4h, ...)\n"
+                "Error: 'invalid-timeout' is not a valid timeout value, use "
+                "time interval (e.g. 1, 2s, 3m, 4h, ...)\n"
+            ),
+        )
+
+    def test_invalid_operations(self):
+        self._invalid_operations(force=False)
+
+    def test_invalid_operations_force(self):
+        self._invalid_operations(force=True)

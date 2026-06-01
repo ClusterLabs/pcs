@@ -27,7 +27,7 @@ from pcs.cli.common.parse_args import (
 from pcs.cli.common.tools import print_to_stderr, timeout_to_seconds_legacy
 from pcs.cli.nvset import filter_out_expired_nvset, nvset_dto_list_to_lines
 from pcs.cli.reports import process_library_reports
-from pcs.cli.reports.output import error, warn
+from pcs.cli.reports.output import deprecation_warning, error, warn
 from pcs.cli.resource.common import check_is_not_stonith
 from pcs.cli.resource.output import (
     operation_defaults_to_cmd,
@@ -49,9 +49,8 @@ from pcs.common.pacemaker.defaults import CibDefaultsDto
 from pcs.common.pacemaker.resource.operations import (
     OCF_CHECK_LEVEL_INSTANCE_ATTRIBUTE_NAME,
 )
-from pcs.common.str_tools import format_list_custom_last_separator
 from pcs.lib.cib import const as cib_const
-from pcs.lib.cib.resource import guest_node, primitive
+from pcs.lib.cib.resource import guest_node, operations, primitive
 from pcs.lib.cib.tools import get_resources
 from pcs.lib.commands.resource import (
     _get_nodes_to_validate_against,
@@ -426,8 +425,37 @@ def resource_op_add(argv: Argv, modifiers: InputModifiers) -> None:
     if dom is None:
         dom = utils.get_cib_dom()
 
-    # add the requested operation
-    utils.replace_cib_configuration(resource_operation_add(dom, res_id, argv))
+    res_el = utils.dom_get_resource(dom, res_id)
+    if not res_el:
+        utils.err("Unable to find resource: %s" % res_id)
+
+    allowed_operation_name_list = None
+    agent_name = _get_resource_agent_name_from_rsc_el(res_el)
+    try:
+        agent_facade = _get_resource_agent_facade(agent_name)
+        allowed_operation_name_list = [
+            op.name for op in agent_facade.metadata.actions
+        ]
+    except lib_ra.ResourceAgentError as e:
+        # Do not fail with an error to keep backward compatibility.
+        # NOTE: Reconsider when moving operation commands to pcs.lib.
+        process_library_reports(
+            [
+                lib_ra.resource_agent_error_to_report_item(
+                    e,
+                    reports.ReportItemSeverity.warning(),
+                )
+            ]
+        )
+
+    utils.replace_cib_configuration(
+        resource_operation_add(
+            dom,
+            res_id,
+            argv,
+            allowed_operation_name_list=allowed_operation_name_list,
+        )
+    )
 
 
 def op_delete_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
@@ -990,8 +1018,12 @@ def resource_update(args: Argv, modifiers: InputModifiers) -> None:  # noqa: PLR
     params = utils.convert_args_to_tuples(ra_values)
 
     agent_name = _get_resource_agent_name_from_rsc_el(resource)
+    allowed_operation_name_list = None
     try:
         agent_facade = _get_resource_agent_facade(agent_name)
+        allowed_operation_name_list = [
+            op.name for op in agent_facade.metadata.actions
+        ]
         report_list = primitive.validate_resource_instance_attributes_update(
             utils.cmd_runner(),
             agent_facade,
@@ -1052,12 +1084,12 @@ def resource_update(args: Argv, modifiers: InputModifiers) -> None:  # noqa: PLR
         resource, utils.convert_args_to_tuples(meta_values)
     )
 
-    operations = resource.getElementsByTagName("operations")
-    if not operations:
-        operations = dom.createElement("operations")
-        resource.appendChild(operations)
+    operations_el = resource.getElementsByTagName("operations")
+    if not operations_el:
+        operations_el = dom.createElement("operations")
+        resource.appendChild(operations_el)
     else:
-        operations = operations[0]
+        operations_el = operations_el[0]
 
     get_role = partial(
         pacemaker.role.get_value_for_cib,
@@ -1088,7 +1120,7 @@ def resource_update(args: Argv, modifiers: InputModifiers) -> None:  # noqa: PLR
 
         updating_op = None
         updating_op_before = None
-        for existing_op in operations.getElementsByTagName("op"):
+        for existing_op in operations_el.getElementsByTagName("op"):
             if updating_op:
                 updating_op_before = existing_op
                 break
@@ -1106,6 +1138,7 @@ def resource_update(args: Argv, modifiers: InputModifiers) -> None:  # noqa: PLR
             op_argv,
             validate_strict=False,
             before_op=updating_op_before,
+            allowed_operation_name_list=allowed_operation_name_list,
         )
 
     utils.replace_cib_configuration(dom)
@@ -1189,7 +1222,12 @@ def transform_master_to_clone(master_element):
 
 
 def resource_operation_add(  # noqa: PLR0912, PLR0915
-    dom, res_id, argv, validate_strict=True, before_op=None
+    dom,
+    res_id,
+    argv,
+    validate_strict=True,
+    before_op=None,
+    allowed_operation_name_list=None,
 ):
     """
     Commandline options:
@@ -1210,35 +1248,34 @@ def resource_operation_add(  # noqa: PLR0912, PLR0915
 
     if "=" in op_name:
         utils.err("%s does not appear to be a valid operation action" % op_name)
-    if "--force" not in utils.pcs_options:
-        valid_attrs = [
-            "id",
-            "name",
-            "interval",
-            "description",
-            "start-delay",
-            "interval-origin",
-            "timeout",
-            "enabled",
-            "record-pending",
-            "role",
-            "on-fail",
-            OCF_CHECK_LEVEL_INSTANCE_ATTRIBUTE_NAME,
-        ]
-        for key, value in op_properties:
-            if key not in valid_attrs:
-                utils.err(
-                    "%s is not a valid op option (use --force to override)"
-                    % key
-                )
-            if key == "role" and value not in const.PCMK_ROLES:
-                utils.err(
-                    "role must be: {} (use --force to override)".format(
-                        format_list_custom_last_separator(
-                            const.PCMK_ROLES, " or "
-                        )
-                    )
-                )
+
+    op_dict = dict(op_properties)
+    if "name" in op_dict:
+        # deprecated since pcs-0.12.3
+        deprecation_warning(
+            "Specifying an operation name with 'name=<value>' syntax "
+            "is deprecated and might be removed in a future release. "
+            "Use the operation name as the first argument instead."
+        )
+    else:
+        op_dict["name"] = op_name
+
+    normalized = operations.operations_to_normalized([op_dict])
+    report_list = operations.validate_operation_list(
+        normalized,
+        allowed_operation_name_list,
+        allow_invalid="--force" in utils.pcs_options,
+    )
+    if report_list:
+        process_library_reports(report_list)
+
+    new_role_names_supported = utils.isCibVersionSatisfied(
+        dom, const.PCMK_NEW_ROLES_CIB_VERSION
+    )
+    op_normalized = operations.normalized_to_operations(
+        normalized, new_role_names_supported
+    )[0]
+    op_properties = sorted(op_normalized.items())
 
     interval = None
     for key, val in op_properties:
@@ -1248,9 +1285,6 @@ def resource_operation_add(  # noqa: PLR0912, PLR0915
     if not interval:
         interval = "60s" if op_name == "monitor" else "0s"
         op_properties.append(("interval", interval))
-
-    op_properties.sort(key=lambda a: a[0])
-    op_properties.insert(0, ("name", op_name))
 
     generate_id = True
     for name, value in op_properties:
@@ -1285,26 +1319,16 @@ def resource_operation_add(  # noqa: PLR0912, PLR0915
                 "id", utils.find_unique_id(dom, "-".join((op_id, key, val)))
             )
             attrib_el.appendChild(nvpair_el)
-        elif key == "role" and "--force" not in utils.pcs_options:
-            op_el.setAttribute(
-                key,
-                pacemaker.role.get_value_for_cib(
-                    val,
-                    utils.isCibVersionSatisfied(
-                        dom, const.PCMK_NEW_ROLES_CIB_VERSION
-                    ),
-                ),
-            )
         else:
             op_el.setAttribute(key, val)
 
-    operations = res_el.getElementsByTagName("operations")
-    if not operations:
-        operations = dom.createElement("operations")
-        res_el.appendChild(operations)
+    operations_el = res_el.getElementsByTagName("operations")
+    if not operations_el:
+        operations_el = dom.createElement("operations")
+        res_el.appendChild(operations_el)
     else:
-        operations = operations[0]
-        duplicate_op_list = utils.operation_exists(operations, op_el)
+        operations_el = operations_el[0]
+        duplicate_op_list = utils.operation_exists(operations_el, op_el)
         if duplicate_op_list:
             utils.err(
                 "operation %s with interval %ss already specified for %s:\n%s"
@@ -1319,7 +1343,7 @@ def resource_operation_add(  # noqa: PLR0912, PLR0915
             )
         if validate_strict and "--force" not in utils.pcs_options:
             duplicate_op_list = utils.operation_exists_by_name(
-                operations, op_el
+                operations_el, op_el
             )
             if duplicate_op_list:
                 msg = (
@@ -1339,7 +1363,7 @@ def resource_operation_add(  # noqa: PLR0912, PLR0915
                     )
                 )
 
-    operations.insertBefore(op_el, before_op)
+    operations_el.insertBefore(op_el, before_op)
     return dom
 
 
