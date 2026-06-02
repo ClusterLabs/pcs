@@ -23,6 +23,8 @@
   alphabetically ([rhbz#2461143]) ([RHEL-176475])
 - Location constraints with rules can be removed using web UI (broken since
   pcs-0.12.0b1) ([RHEL-183182])
+- Command `pcs cluster node add` with `--force` flag now destroys the existing 
+  cluster on the new node before adding it.
 
 ### Deprecated
 - Commands `pcs pcsd certkey` and `pcs pcsd sync-certificates` ([RHEL-149608])

@@ -752,6 +752,35 @@ class AddNodesSuccessMinimal(TestCase):
     def test_minimal_3_existing_3_new(self):
         self._test_minimal(3, 3)
 
+    def test_add_node_forced(self):
+        self.set_up(2, 1)
+        self.config.http.place_multinode_call(
+            "http.host.cluster_destroy",
+            node_labels=self.new_nodes,
+            action="remote/cluster_destroy",
+            before="http.host.update_known_hosts_requests",
+        )
+
+        cluster.add_nodes(
+            self.env_assist.get_env(),
+            [{"name": node} for node in self.new_nodes],
+            force_flags=[reports.codes.FORCE],
+        )
+
+        self.env_assist.assert_reports(
+            self.expected_reports
+            + [
+                fixture.info(
+                    reports.codes.CLUSTER_DESTROY_STARTED,
+                    host_name_list=list(self.new_nodes),
+                ),
+            ]
+            + [
+                fixture.info(reports.codes.CLUSTER_DESTROY_SUCCESS, node=node)
+                for node in self.new_nodes
+            ]
+        )
+
     def _test_enable(self, existing, new):
         self.set_up(existing, new)
         self.config.http.host.enable_cluster(
@@ -2309,6 +2338,12 @@ class FailureFilesDistribution(TestCase):
         )
 
     def test_read_failure_forced(self):
+        self.config.http.place_multinode_call(
+            "http.host.cluster_destroy",
+            node_labels=self.new_nodes,
+            action="remote/cluster_destroy",
+            before="http.host.update_known_hosts_requests",
+        )
         (
             self.config.fs.open(
                 settings.corosync_authkey_file,
@@ -2360,6 +2395,16 @@ class FailureFilesDistribution(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
+            + [
+                fixture.info(
+                    reports.codes.CLUSTER_DESTROY_STARTED,
+                    host_name_list=list(self.new_nodes),
+                ),
+            ]
+            + [
+                fixture.info(reports.codes.CLUSTER_DESTROY_SUCCESS, node=node)
+                for node in self.new_nodes
+            ]
             + [
                 fixture.warn(
                     reports.codes.FILE_IO_ERROR,
@@ -2750,6 +2795,15 @@ class FailureBoothConfigsDistribution(TestCase):
             )
             for node in self.successful_nodes
         ]
+        self.cluster_destroy_reports = [
+            fixture.info(
+                reports.codes.CLUSTER_DESTROY_STARTED,
+                host_name_list=list(self.new_nodes),
+            ),
+        ] + [
+            fixture.info(reports.codes.CLUSTER_DESTROY_SUCCESS, node=node)
+            for node in self.new_nodes
+        ]
 
     def _set_up_multibooth(self):
         (
@@ -2814,6 +2868,12 @@ class FailureBoothConfigsDistribution(TestCase):
         )
 
     def test_config_read_failure_forced(self):
+        self.config.http.place_multinode_call(
+            "http.host.cluster_destroy",
+            node_labels=self.new_nodes,
+            action="remote/cluster_destroy",
+            before="http.host.update_known_hosts_requests",
+        )
         (
             self.config.raw_file.read(
                 file_type_codes.BOOTH_CONFIG,
@@ -2845,6 +2905,7 @@ class FailureBoothConfigsDistribution(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
+            + self.cluster_destroy_reports
             + [
                 fixture.warn(
                     reports.codes.FILE_IO_ERROR,
@@ -2858,6 +2919,12 @@ class FailureBoothConfigsDistribution(TestCase):
 
     def test_config_read_failure_forced_sends_other_configs(self):
         self._set_up_multibooth()
+        self.config.http.place_multinode_call(
+            "http.host.cluster_destroy",
+            node_labels=self.new_nodes,
+            action="remote/cluster_destroy",
+            before="http.host.update_known_hosts_requests",
+        )
         (
             self.config.raw_file.read(
                 file_type_codes.BOOTH_CONFIG,
@@ -2920,6 +2987,7 @@ class FailureBoothConfigsDistribution(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
+            + self.cluster_destroy_reports
             + [
                 fixture.warn(
                     reports.codes.FILE_IO_ERROR,
@@ -2965,6 +3033,12 @@ class FailureBoothConfigsDistribution(TestCase):
         )
 
     def test_authfile_read_failure_forced(self):
+        self.config.http.place_multinode_call(
+            "http.host.cluster_destroy",
+            node_labels=self.new_nodes,
+            action="remote/cluster_destroy",
+            before="http.host.update_known_hosts_requests",
+        )
         (
             self.config.raw_file.read(
                 file_type_codes.BOOTH_CONFIG,
@@ -3005,6 +3079,7 @@ class FailureBoothConfigsDistribution(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
+            + self.cluster_destroy_reports
             + [
                 fixture.warn(
                     reports.codes.FILE_IO_ERROR,
@@ -3018,6 +3093,12 @@ class FailureBoothConfigsDistribution(TestCase):
 
     def test_authfile_read_failure_forced_sends_other_configs(self):
         self._set_up_multibooth()
+        self.config.http.place_multinode_call(
+            "http.host.cluster_destroy",
+            node_labels=self.new_nodes,
+            action="remote/cluster_destroy",
+            before="http.host.update_known_hosts_requests",
+        )
         (
             self.config.raw_file.read(
                 file_type_codes.BOOTH_CONFIG,
@@ -3086,6 +3167,7 @@ class FailureBoothConfigsDistribution(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
+            + self.cluster_destroy_reports
             + [
                 fixture.warn(
                     reports.codes.FILE_IO_ERROR,
@@ -4242,5 +4324,80 @@ class FailureKnownHostsUpdate(TestCase):
                     reason=self.err_msg,
                 )
                 for node in self.unsuccessful_nodes
+            ]
+        )
+
+
+class AddNodeClusterDestroyFail(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+        existing_nodes, self.new_nodes = generate_nodes(2, 2)
+        self.expected_reports = []
+        self.err_msg = "an error message"
+        patch_getaddrinfo(self, self.new_nodes)
+        existing_corosync_nodes = [
+            node_fixture(node, node_id)
+            for node_id, node in enumerate(existing_nodes, 1)
+        ]
+        self.config.env.set_known_nodes(existing_nodes + self.new_nodes)
+        self.config.services.is_enabled("sbd", return_value=False)
+        self.config.corosync_conf.load_content(
+            corosync_conf_fixture(existing_corosync_nodes)
+        )
+        self.config.runner.cib.load()
+        self.config.http.host.check_auth(node_labels=existing_nodes)
+        self.config.services.is_installed("sbd", return_value=False)
+        self.config.local.get_host_info(self.new_nodes)
+        self.config.local.pcsd_ssl_cert_sync_disabled()
+        self.expected_reports.extend(
+            [
+                fixture.info(
+                    reports.codes.USING_DEFAULT_ADDRESS_FOR_HOST,
+                    host_name=node,
+                    address=node,
+                    address_source=(
+                        reports.const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS
+                    ),
+                )
+                for node in self.new_nodes
+            ]
+        )
+        self.config.http.place_multinode_call(
+            "http.host.cluster_destroy",
+            communication_list=[
+                dict(
+                    label=node,
+                    output=self.err_msg,
+                    response_code=400,
+                )
+                for node in self.new_nodes
+            ],
+            action="remote/cluster_destroy",
+        )
+
+    def test_destroy_failure_aborts_add_nodes(self):
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.add_nodes(
+                self.env_assist.get_env(),
+                [{"name": node} for node in self.new_nodes],
+                force_flags=[reports.codes.FORCE],
+            ),
+        )
+        self.env_assist.assert_reports(
+            self.expected_reports
+            + [
+                fixture.info(
+                    reports.codes.CLUSTER_DESTROY_STARTED,
+                    host_name_list=sorted(self.new_nodes),
+                ),
+            ]
+            + [
+                fixture.error(
+                    reports.codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    node=node,
+                    command="remote/cluster_destroy",
+                    reason=self.err_msg,
+                )
+                for node in self.new_nodes
             ]
         )
