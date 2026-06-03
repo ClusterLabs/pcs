@@ -441,7 +441,7 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
     ),
     "resource.get_cibsecrets": _Cmd(
         cmd=resource.get_cibsecrets,
-        required_permission=p.READ,
+        required_permission=p.SUPERUSER,
     ),
     "resource.get_configured_resources": _Cmd(
         cmd=resource.get_configured_resources,
