@@ -107,9 +107,10 @@ class ApiError(HTTPError):
         self,
         response_code: communication.types.CommunicationResultStatus,
         response_msg: str,
-        http_code: int = 200,
     ) -> None:
-        super().__init__(http_code)
+        # Always return HTTP 200 to signal that the request got processed.
+        # The actual errors are passed in the JSON structure response.
+        super().__init__(200)
         self.response_code = response_code
         self.response_msg = response_msg
 
@@ -159,7 +160,6 @@ class _BaseApiV1Handler(BaseHandler):
             raise ApiError(
                 response_code=communication.const.COM_STATUS_NOT_AUTHORIZED,
                 response_msg="",
-                http_code=401,
             ) from e
         self._desired_user = get_legacy_desired_user_from_request(
             self, log.pcsd
@@ -174,6 +174,8 @@ class _BaseApiV1Handler(BaseHandler):
         self.finish(json.dumps(to_dict(response)))
 
     def write_error(self, status_code: int, **kwargs: Any) -> None:
+        # Always return HTTP 200 to signal that the request got processed.
+        # The actual errors are passed in the JSON structure response.
         del status_code
         response = communication.dto.InternalCommunicationResultDto(
             status=communication.const.COM_STATUS_EXCEPTION,
@@ -189,6 +191,15 @@ class _BaseApiV1Handler(BaseHandler):
                     exc.response_code
                     == communication.const.COM_STATUS_NOT_AUTHORIZED
                 ):
+                    # Mimic original ruby daemon behavior. Authentication was
+                    # done in `before` filter which run before the actual URL
+                    # handler code. Thus specific APIv1 formatted message could
+                    # not be produced.
+                    # Unlike original ruby daemon, we do not return HTTP 401.
+                    # Doing so would causes web UI frontend to display a login
+                    # screen, which is not correct: It makes the user login to
+                    # a web UI backend. It does not fix missing / bad token to
+                    # an actual cluster / cluster node.
                     self.finish(json.dumps({"notauthorized": "true"}))
                     return
                 response = communication.dto.InternalCommunicationResultDto(
@@ -243,7 +254,8 @@ class _BaseApiV1Handler(BaseHandler):
             and not task_result_dto.reports[0].context
         ):
             raise ApiError(
-                communication.const.COM_STATUS_NOT_AUTHORIZED, "Not authorized"
+                communication.const.COM_STATUS_PERMISSION_DENIED,
+                "Permission denied",
             )
 
         status_map = {
