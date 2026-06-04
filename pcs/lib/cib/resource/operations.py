@@ -1,34 +1,18 @@
 from collections import defaultdict
 from dataclasses import replace as dt_replace
-from typing import (
-    Iterable,
-    List,
-    Optional,
-    Tuple,
-    cast,
-)
+from typing import Iterable, List, Optional, Tuple, cast
 
 from lxml import etree
 from lxml.etree import _Element
 
-from pcs.common import (
-    const,
-    pacemaker,
-    reports,
-)
+from pcs.common import const, pacemaker, reports
 from pcs.common.pacemaker.resource.operations import CibResourceOperationDto
-from pcs.common.reports import (
-    ReportItemList,
-    ReportProcessor,
-)
+from pcs.common.reports import ReportItemList, ReportProcessor
 from pcs.common.reports.item import ReportItem
 from pcs.common.tools import timeout_to_seconds
 from pcs.common.types import StringCollection
 from pcs.lib import validate
-from pcs.lib.cib import (
-    nvpair_multi,
-    rule,
-)
+from pcs.lib.cib import nvpair_multi, rule
 from pcs.lib.cib.nvpair import append_new_instance_attributes
 from pcs.lib.cib.resource.agent import (
     complete_operations_options,
@@ -109,16 +93,16 @@ def prepare(
     allowed_operation_name_list -- operation names defined by a resource agent
     allow_invalid -- flag for validation skipping
     """
-    operations_to_validate = _operations_to_normalized(raw_operation_list)
+    operations_to_validate = operations_to_normalized(raw_operation_list)
 
     report_list: ReportItemList = []
     report_list.extend(
-        _validate_operation_list(
+        validate_operation_list(
             operations_to_validate, allowed_operation_name_list, allow_invalid
         )
     )
 
-    operation_list = _normalized_to_operations(
+    operation_list = normalized_to_operations(
         operations_to_validate, new_role_names_supported
     )
 
@@ -146,7 +130,7 @@ def prepare(
     ]
 
 
-def _operations_to_normalized(
+def operations_to_normalized(
     raw_operation_list: Iterable[ResourceOperationFilteredIn],
 ) -> List[validate.TypeOptionNormalizedMap]:
     return [
@@ -154,7 +138,7 @@ def _operations_to_normalized(
     ]
 
 
-def _normalized_to_operations(
+def normalized_to_operations(
     normalized_pairs: Iterable[validate.TypeOptionNormalizedMap],
     new_role_names_supported: bool,
 ) -> List[ResourceOperationFilteredOut]:
@@ -170,21 +154,42 @@ def _normalized_to_operations(
     ]
 
 
-def _validate_operation_list(
-    operation_list, allowed_operation_name_list, allow_invalid=False
-):
+def validate_operation_list(
+    operation_list: Iterable[validate.TypeOptionNormalizedMap],
+    allowed_operation_name_list: Optional[StringCollection],
+    allow_invalid: bool = False,
+) -> ReportItemList:
+    """
+    Validate given operation list and return a list of report items.
+
+    operation_list -- operations with normalized option names and values
+    allowed_operation_name_list -- operation names defined by a resource agent,
+        or None if agent metadata failed to load (in pcs resource update or
+        pcs resource op add). When None, operation name validation is skipped
+        for backward compatibility - the user should still be able to configure
+        operations even when the agent metadata is unavailable.
+        In pcs resource create, a list is always passed (empty for a void agent
+        when an agent loading error is forced).
+    allow_invalid -- if True, downgrade unknown operation name errors to
+        warnings (i.e. allow forcing)
+    """
     severity = reports.item.get_severity(reports.codes.FORCE, allow_invalid)
     option_type = "resource operation"
 
-    validators = [
+    validators: list[validate.ValidatorInterface] = [
         validate.NamesIn(ATTRIBUTES, option_type=option_type),
         validate.IsRequiredAll(["name"], option_type=option_type),
-        validate.ValueIn(
-            "name",
-            allowed_operation_name_list,
-            option_name_for_report="operation name",
-            severity=severity,
-        ),
+    ]
+    if allowed_operation_name_list is not None:
+        validators.append(
+            validate.ValueIn(
+                "name",
+                allowed_operation_name_list,
+                option_name_for_report="operation name",
+                severity=severity,
+            ),
+        )
+    validators += [
         validate.ValueIn("role", const.PCMK_ROLES),
         validate.ValueDeprecated(
             "role",

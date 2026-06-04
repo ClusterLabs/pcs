@@ -7,9 +7,14 @@
 - `pcs constraint config` (and its variants for each constraint type) now list
   resources in sets in the order defined in the CIB, instead of sorting them
   alphabetically ([rhbz#2461143]) ([RHEL-176478])
+- Add validation for operations in `pcs resource update`, `pcs resource op add`,
+  `pcs stonith update`, and `pcs stonith op add` commands. Operation names are
+  now validated against agent metadata, and operation option values are also
+  verified ([RHEL-176268])
 
 
 [RHEL-149172]: https://redhat.atlassian.net/browse/RHEL-149172
+[RHEL-176268]: https://redhat.atlassian.net/browse/RHEL-176268
 [RHEL-176478]: https://redhat.atlassian.net/browse/RHEL-176478
 [rhbz#2461143]: https://bugzilla.redhat.com/show_bug.cgi?id=2461143
 
