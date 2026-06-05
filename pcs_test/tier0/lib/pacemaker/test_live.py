@@ -1977,11 +1977,13 @@ class HandleInstanceAttributesValidateViaPcmkTest(TestCase):
         )
 
 
-class ValidateResourceInstanceAttributesViaPcmkTest(TestCase):
-    # pylint: disable=protected-access
+class ValidateResourceInstanceAttributesViaPcmk(TestCase):
     def setUp(self):
         self.runner = mock.Mock()
-        self.attrs = dict(attra="val1", attrb="val2")
+        self.attrs_input = dict(attra="val1", attrb="lrm://", attrc="val3")
+        self.attrs_validate = dict(
+            attra="val1", attrb="secret-value", attrc="val3"
+        )
         patcher = mock.patch(
             "pcs.lib.pacemaker.live._handle_instance_attributes_validation_via_pcmk"
         )
@@ -1990,13 +1992,13 @@ class ValidateResourceInstanceAttributesViaPcmkTest(TestCase):
         self.ret_val = "ret val"
         self.mock_handler.return_value = self.ret_val
 
-    def test_with_provider(self):
+    def test_resource_with_provider(self):
         agent = ResourceAgentName(
             standard="ocf", provider="pacemaker", type="Dummy"
         )
         self.assertEqual(
-            lib._validate_resource_instance_attributes_via_pcmk(
-                self.runner, agent, self.attrs
+            lib.validate_resource_instance_attributes_via_pcmk(
+                self.runner, agent, self.attrs_input
             ),
             self.ret_val,
         )
@@ -2015,16 +2017,16 @@ class ValidateResourceInstanceAttributesViaPcmkTest(TestCase):
                 "pacemaker",
             ],
             "./resource-agent-action/command/output",
-            self.attrs,
+            self.attrs_validate,
         )
 
-    def test_without_provider(self):
+    def test_resource_without_provider(self):
         agent = ResourceAgentName(
             standard="standard", provider=None, type="Agent"
         )
         self.assertEqual(
-            lib._validate_resource_instance_attributes_via_pcmk(
-                self.runner, agent, self.attrs
+            lib.validate_resource_instance_attributes_via_pcmk(
+                self.runner, agent, self.attrs_input
             ),
             self.ret_val,
         )
@@ -2041,31 +2043,16 @@ class ValidateResourceInstanceAttributesViaPcmkTest(TestCase):
                 "Agent",
             ],
             "./resource-agent-action/command/output",
-            self.attrs,
+            self.attrs_validate,
         )
 
-
-class ValidateStonithInstanceAttributesViaPcmkTest(TestCase):
-    # pylint: disable=protected-access
-
-    def setUp(self):
-        self.runner = mock.Mock()
-        self.attrs = dict(attra="val1", attrb="val2")
-        patcher = mock.patch(
-            "pcs.lib.pacemaker.live._handle_instance_attributes_validation_via_pcmk"
-        )
-        self.mock_handler = patcher.start()
-        self.addCleanup(patcher.stop)
-        self.ret_val = "ret val"
-        self.mock_handler.return_value = self.ret_val
-
-    def test_success(self):
+    def test_stonith(self):
         agent = ResourceAgentName(
             standard="stonith", provider=None, type="Agent"
         )
         self.assertEqual(
-            lib._validate_stonith_instance_attributes_via_pcmk(
-                self.runner, agent, self.attrs
+            lib.validate_resource_instance_attributes_via_pcmk(
+                self.runner, agent, self.attrs_input
             ),
             self.ret_val,
         )
@@ -2080,7 +2067,7 @@ class ValidateStonithInstanceAttributesViaPcmkTest(TestCase):
                 "Agent",
             ],
             "./validate/command/output",
-            self.attrs,
+            self.attrs_validate,
         )
 
 

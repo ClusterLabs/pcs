@@ -1,6 +1,9 @@
 from dataclasses import dataclass
+from typing import Final
 
 from pcs.common.interface.dto import DataTransferObject
+
+CIBSECRET_MARK_VALUE: Final = "lrm://"
 
 
 @dataclass(frozen=True)

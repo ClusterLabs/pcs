@@ -2,18 +2,14 @@ import os.path
 import re
 from hashlib import md5
 from pathlib import Path
-from typing import (
-    Mapping,
-    Optional,
-    Union,
-    cast,
-)
+from typing import Mapping, Optional, Union, cast
 
 from lxml import etree
 from lxml.etree import _Element
 
 from pcs import settings
 from pcs.common import reports
+from pcs.common.pacemaker.cibsecret import CIBSECRET_MARK_VALUE
 from pcs.common.reports import ReportProcessor
 from pcs.common.reports.item import ReportItem
 from pcs.common.str_tools import join_multilines
@@ -1119,16 +1115,46 @@ def validate_resource_instance_attributes_via_pcmk(
     resource_agent_name: ResourceAgentName,
     instance_attributes: Mapping[str, str],
 ) -> tuple[Optional[bool], str]:
+    # If CIBSECRET_MARK_VALUE is passed to the validation, then the validation
+    # fails to run, because pacemaker tries to load the secret value and fails.
+    # To read the secret value, pacemaker needs to know the resource ID. But
+    # the pacemaker tool doesn't accept resource ID as an input in case of
+    # instance attributes validation.
+    #
+    # We cannot load the real secret value and pass it to the validation
+    # either, as that could leak the value in debug output, error messages, or
+    # logs. We cannot omit it either, as that would produce false results in
+    # case it is a mandatory parameter.
+    #
+    # Loading a secret value is only accessible to root user. To read it here,
+    # this code would need to run with root privileges, i.e. in the pcsd
+    # process, which is not currently the case.
+    #
+    # To work around this, we replace CIBSECRET_MARK_VALUE with an arbitrary
+    # string to prevent pacemaker from loading the secret value and failing.
+    #
+    # Passing this arbitrary value is suboptimal, as it may produce false
+    # validation results. On the other hand, the validation is currently on a
+    # best-effort basis (agents are not ready to be used like this, yet) and it
+    # produces merely warnings, not errors.
+    #
+    # This only matters to resource update commands. Resource create commands
+    # are not affected - the resource is just being created, it is not possible
+    # for it to have secret values already defined.
+    instance_attributes_modified = {
+        key: "secret-value" if value == CIBSECRET_MARK_VALUE else value
+        for key, value in instance_attributes.items()
+    }
     if resource_agent_name.is_stonith:
         return _validate_stonith_instance_attributes_via_pcmk(
             cmd_runner,
             resource_agent_name,
-            instance_attributes,
+            instance_attributes_modified,
         )
     return _validate_resource_instance_attributes_via_pcmk(
         cmd_runner,
         resource_agent_name,
-        instance_attributes,
+        instance_attributes_modified,
     )
 
 

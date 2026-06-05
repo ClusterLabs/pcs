@@ -16,7 +16,10 @@ from pcs.cli.nvset import nvset_dto_to_lines
 from pcs.cli.reports.output import warn
 from pcs.cli.resource_agent import is_stonith
 from pcs.common import resource_agent
-from pcs.common.pacemaker.cibsecret import CibResourceSecretListDto
+from pcs.common.pacemaker.cibsecret import (
+    CIBSECRET_MARK_VALUE,
+    CibResourceSecretListDto,
+)
 from pcs.common.pacemaker.defaults import CibDefaultsDto
 from pcs.common.pacemaker.nvset import CibNvsetDto
 from pcs.common.pacemaker.resource.bundle import (
@@ -319,12 +322,11 @@ class ResourcesConfigurationFacade:
             CibResourceBundleDto,
         ],
     ) -> dict[str, dict[str, Optional[str]]]:
-        _CIBSECRET_MARK_VALUE = "lrm://"
         return {
             resource_dto.id: {
                 nvpair_dto.name: None
                 for nvpair_dto in resource_dto.instance_attributes[0].nvpairs
-                if nvpair_dto.value == _CIBSECRET_MARK_VALUE
+                if nvpair_dto.value == CIBSECRET_MARK_VALUE
             }
             for resource_dto in resource_dtos
             if resource_dto.instance_attributes
