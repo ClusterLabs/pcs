@@ -152,8 +152,10 @@ def remove_constraint(auth_user, constraint_id)
 end
 
 def remove_constraint_rule(auth_user, rule_id)
+  # CLI command for removing rules no longer exists in pcs-0.12. Command for
+  # removing constraints is capable of handling that, though.
   stdout, stderror, retval = run_cmd(
-    auth_user, PCS, "--", "constraint", "rule", "remove", rule_id
+    auth_user, PCS, "--", "constraint", "remove", rule_id
   )
   $logger.info stdout
   return retval

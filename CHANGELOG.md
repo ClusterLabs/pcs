@@ -21,6 +21,8 @@
 - `pcs constraint config` (and its variants for each constraint type) now list
   resources in sets in the order defined in the CIB, instead of sorting them
   alphabetically ([rhbz#2461143]) ([RHEL-176475])
+- Location constraints with rules can be removed using web UI (broken since
+  pcs-0.12.0b1) ([RHEL-183182])
 
 ### Deprecated
 - Commands `pcs pcsd certkey` and `pcs pcsd sync-certificates` ([RHEL-149608])
@@ -37,6 +39,7 @@
 [RHEL-149608]: https://issues.redhat.com/browse/RHEL-149608
 [RHEL-169571]: https://redhat.atlassian.net/browse/RHEL-169571
 [RHEL-176475]: https://redhat.atlassian.net/browse/RHEL-176475
+[RHEL-183182]: https://redhat.atlassian.net/browse/RHEL-183182
 [rhbz#2458608]: https://bugzilla.redhat.com/show_bug.cgi?id=2458608
 [rhbz#2461143]: https://bugzilla.redhat.com/show_bug.cgi?id=2461143
 

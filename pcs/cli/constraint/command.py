@@ -52,6 +52,8 @@ def remove(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
         raise CmdLineInputError()
     ensure_unique_args(argv)
     constraints_dto = lib.constraint.get_config(evaluate_rules=False)
+    # /remote/remove_constraint_rule_remote url depends on the fact that rules
+    # in location constraints are allowed here as well
     missing_ids = set(argv) - (
         get_all_constraints_ids(constraints_dto)
         | get_all_location_rules_ids(constraints_dto)
