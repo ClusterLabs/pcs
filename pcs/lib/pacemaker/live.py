@@ -298,13 +298,17 @@ def replace_cib_configuration(runner: CommandRunner, tree: _Element) -> None:
     return replace_cib_configuration_xml(runner, etree_to_str(tree))
 
 
-def push_cib_diff_xml(runner: CommandRunner, cib_diff_xml: str) -> None:
+def push_cib_diff_xml(
+    runner: CommandRunner, cib_diff_xml: str, with_status: bool = False
+) -> None:
     cmd = [
         settings.cibadmin_exec,
         "--patch",
         "--verbose",
         "--xml-pipe",
     ]
+    if with_status:
+        cmd.append("--update-status")
     stdout, stderr, retval = runner.run(cmd, stdin_string=cib_diff_xml)
     if retval != 0:
         raise LibraryError(
@@ -949,6 +953,12 @@ def is_crm_attribute_list_options_supported(runner: CommandRunner) -> bool:
 def is_getting_resource_digest_supported(runner: CommandRunner) -> bool:
     return _is_in_pcmk_tool_help(
         runner, settings.crm_resource_exec, ["--digests"]
+    )
+
+
+def is_cibadmin_update_status_supported(runner: CommandRunner) -> bool:
+    return _is_in_pcmk_tool_help(
+        runner, settings.cibadmin_exec, ["--update-status"]
     )
 
 

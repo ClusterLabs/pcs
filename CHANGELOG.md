@@ -1,5 +1,14 @@
 # Change Log
 
+## Unreleased
+
+### Fixed
+- Command `pcs stonith update-scsi-devices` no longer triggers unnecessary
+  resource restarts when updating SCSI devices. ([RHEL-214140])
+
+[RHEL-214140]: https://redhat.atlassian.net/browse/RHEL-214140
+
+
 ## [0.12.3] - 2026-07-01
 
 ### Added

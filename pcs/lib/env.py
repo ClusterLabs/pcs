@@ -226,15 +226,21 @@ class LibraryEnvironment:
                 ReportItem.error(reports.messages.WaitForIdleNotLiveCluster())
             )
 
-    def push_cib(self, custom_cib=None, wait_timeout: int = -1) -> None:
+    def push_cib(
+        self,
+        custom_cib: _Element | None = None,
+        wait_timeout: int = -1,
+        with_status: bool = False,
+    ) -> None:
         """
         Push previously loaded instance of CIB or a custom CIB
 
-        etree custom_cib -- push a custom CIB instead of a loaded instance
+        custom_cib -- push a custom CIB instead of a loaded instance
             (allows to push an externally provided CIB and replace the one in
             the cluster completely)
         wait_timeout -- wait timeout in seconds, if less than 0 wait will be
             skipped, if 0 wait indefinitely
+        with_status -- push also status section of a CIB
         """
         self._ensure_wait_satisfiable(wait_timeout)
         if custom_cib is not None:
@@ -242,10 +248,14 @@ class LibraryEnvironment:
                 raise AssertionError(
                     "CIB has been loaded, cannot push custom CIB"
                 )
+            if with_status:
+                raise AssertionError(
+                    "Cannot push status section of a custom CIB"
+                )
             return self.__push_cib_full(custom_cib, wait_timeout)
         if self.__loaded_cib_diff_source is None:
             raise AssertionError("CIB has not been loaded")
-        return self.__push_cib_diff(wait_timeout)
+        return self.__push_cib_diff(wait_timeout, with_status)
 
     def __push_cib_full(self, cib_to_push, wait_timeout: int):
         self.__do_push_cib(
@@ -253,20 +263,23 @@ class LibraryEnvironment:
             wait_timeout,
         )
 
-    def __push_cib_diff(self, wait_timeout: int):
+    def __push_cib_diff(self, wait_timeout: int, with_status: bool = False):
         self.__do_push_cib(
-            lambda: self.__main_push_cib_diff(self.cmd_runner()), wait_timeout
+            lambda: self.__main_push_cib_diff(self.cmd_runner(), with_status),
+            wait_timeout,
         )
 
-    def __main_push_cib_diff(self, cmd_runner):
+    def __main_push_cib_diff(
+        self, cmd_runner: CommandRunner, with_status: bool = False
+    ):
         cib_diff_xml = diff_cibs_xml(
             cmd_runner,
             self.report_processor,
-            self.__loaded_cib_diff_source,
-            etree_to_str(self.__loaded_cib_to_modify),
+            cast(str, self.__loaded_cib_diff_source),
+            etree_to_str(cast(_Element, self.__loaded_cib_to_modify)),
         )
         if cib_diff_xml:
-            push_cib_diff_xml(cmd_runner, cib_diff_xml)
+            push_cib_diff_xml(cmd_runner, cib_diff_xml, with_status)
 
     def __do_push_cib(self, push_strategy, wait_timeout: int) -> None:
         push_strategy()
