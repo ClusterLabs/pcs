@@ -89,34 +89,33 @@ class GetTargets(TestCase):
         )
 
     def test_some_existing_nodes_unknown_skipped(self):
-        (
-            self.config.env.set_known_nodes(
-                self.existing_nodes[1:] + self.new_nodes
-            )
-            .http.host.check_auth(node_labels=self.existing_nodes[1:])
-            .services.is_installed("sbd", return_value=False)
-            .local.get_host_info(self.new_nodes)
-            .local.pcsd_ssl_cert_sync_disabled()
-            .http.host.update_known_hosts(
-                node_labels=self.new_nodes,
-                to_add_hosts=self.existing_nodes[1:] + self.new_nodes,
-            )
-            .local.disable_sbd(self.new_nodes)
-            .fs.isdir(settings.booth_config_dir, return_value=False)
-            .local.no_file_sync()
-            .local.distribute_and_reload_corosync_conf(
-                corosync_conf_fixture(
-                    self.existing_corosync_nodes
-                    + [
-                        node_fixture(node, i)
-                        for i, node in enumerate(
-                            self.new_nodes, self.existing_nodes_num + 1
-                        )
-                    ]
-                ),
-                self.existing_nodes[1:],
-                self.new_nodes,
-            )
+        self.config.env.set_known_nodes(
+            self.existing_nodes[1:] + self.new_nodes
+        )
+        self.config.http.host.check_auth(node_labels=self.existing_nodes[1:])
+        self.config.services.is_installed("sbd", return_value=False)
+        self.config.local.get_host_info(self.new_nodes)
+        self.config.local.pcsd_ssl_cert_sync_disabled()
+        self.config.local.destroy_cluster(self.new_nodes)
+        self.config.http.host.update_known_hosts(
+            node_labels=self.new_nodes,
+            to_add_hosts=self.existing_nodes[1:] + self.new_nodes,
+        )
+        self.config.local.disable_sbd(self.new_nodes)
+        self.config.fs.isdir(settings.booth_config_dir, return_value=False)
+        self.config.local.no_file_sync()
+        self.config.local.distribute_and_reload_corosync_conf(
+            corosync_conf_fixture(
+                self.existing_corosync_nodes
+                + [
+                    node_fixture(node, i)
+                    for i, node in enumerate(
+                        self.new_nodes, self.existing_nodes_num + 1
+                    )
+                ]
+            ),
+            self.existing_nodes[1:],
+            self.new_nodes,
         )
 
         self._add_nodes(skip_offline=True)

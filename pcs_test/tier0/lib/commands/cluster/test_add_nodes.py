@@ -555,6 +555,23 @@ class LocalConfig:
             )
         )
 
+    def destroy_cluster(self, new_nodes):
+        self.config.http.host.cluster_destroy(
+            node_labels=new_nodes,
+        )
+        self.expected_reports.extend(
+            [
+                fixture.info(
+                    reports.codes.CLUSTER_DESTROY_STARTED,
+                    host_name_list=list(new_nodes),
+                ),
+            ]
+            + [
+                fixture.info(reports.codes.CLUSTER_DESTROY_SUCCESS, node=node)
+                for node in new_nodes
+            ]
+        )
+
     def pcsd_ssl_cert_sync(self, node_labels):
         local_prefix = "local.pcsd_ssl_cert_sync."
         pcsd_ssl_cert = "pcsd ssl cert"
@@ -662,41 +679,40 @@ class AddNodesSuccessMinimal(TestCase):
         self.config.env.set_known_nodes(self.new_nodes + self.existing_nodes)
         self.config.local.set_expected_reports_list(self.expected_reports)
         is_sbd_installed_name = "_services.is_installed.sbd.False"
-        (
-            self.config.services.is_enabled("sbd", return_value=False)
-            .corosync_conf.load_content(
-                corosync_conf_fixture(
-                    existing_corosync_nodes, get_two_node(existing_nodes_num)
-                )
+        self.config.services.is_enabled("sbd", return_value=False)
+        self.config.corosync_conf.load_content(
+            corosync_conf_fixture(
+                existing_corosync_nodes, get_two_node(existing_nodes_num)
             )
-            .runner.cib.load()
-            .http.host.check_auth(node_labels=self.existing_nodes)
-            .services.is_installed(
-                "sbd", return_value=False, name=is_sbd_installed_name
-            )
-            .local.get_host_info(self.new_nodes)
-            .local.pcsd_ssl_cert_sync_disabled()
-            .http.host.update_known_hosts(
-                node_labels=self.new_nodes,
-                to_add_hosts=self.existing_nodes + self.new_nodes,
-            )
-            .local.disable_sbd(self.new_nodes)
-            .fs.isdir(settings.booth_config_dir, return_value=False)
-            .local.no_file_sync()
-            .local.distribute_and_reload_corosync_conf(
-                corosync_conf_fixture(
-                    existing_corosync_nodes
-                    + [
-                        node_fixture(node, i)
-                        for i, node in enumerate(
-                            self.new_nodes, existing_nodes_num + 1
-                        )
-                    ],
-                    get_two_node(existing_nodes_num + new_nodes_num),
-                ),
-                self.existing_nodes,
-                self.new_nodes,
-            )
+        )
+        self.config.runner.cib.load()
+        self.config.http.host.check_auth(node_labels=self.existing_nodes)
+        self.config.services.is_installed(
+            "sbd", return_value=False, name=is_sbd_installed_name
+        )
+        self.config.local.get_host_info(self.new_nodes)
+        self.config.local.pcsd_ssl_cert_sync_disabled()
+        self.config.local.destroy_cluster(self.new_nodes)
+        self.config.http.host.update_known_hosts(
+            node_labels=self.new_nodes,
+            to_add_hosts=self.existing_nodes + self.new_nodes,
+        )
+        self.config.local.disable_sbd(self.new_nodes)
+        self.config.fs.isdir(settings.booth_config_dir, return_value=False)
+        self.config.local.no_file_sync()
+        self.config.local.distribute_and_reload_corosync_conf(
+            corosync_conf_fixture(
+                existing_corosync_nodes
+                + [
+                    node_fixture(node, i)
+                    for i, node in enumerate(
+                        self.new_nodes, existing_nodes_num + 1
+                    )
+                ],
+                get_two_node(existing_nodes_num + new_nodes_num),
+            ),
+            self.existing_nodes,
+            self.new_nodes,
         )
 
         if (existing_nodes_num + new_nodes_num) % 2 != 0:
@@ -1140,27 +1156,26 @@ class SslCertSync(TestCase):
         )
 
     def _assert_certs_not_synced(self):
-        (
-            self.config.http.host.update_known_hosts(
-                node_labels=self.new_nodes,
-                to_add_hosts=self.existing_nodes + self.new_nodes,
-            )
-            .local.disable_sbd(self.new_nodes)
-            .fs.isdir(settings.booth_config_dir, return_value=False)
-            .local.no_file_sync()
-            .local.distribute_and_reload_corosync_conf(
-                corosync_conf_fixture(
-                    self.existing_corosync_nodes
-                    + [
-                        node_fixture(node, node_id)
-                        for node_id, node in enumerate(
-                            self.new_nodes, len(self.existing_nodes) + 1
-                        )
-                    ],
-                ),
-                self.existing_nodes,
-                self.new_nodes,
-            )
+        self.config.local.destroy_cluster(self.new_nodes)
+        self.config.http.host.update_known_hosts(
+            node_labels=self.new_nodes,
+            to_add_hosts=self.existing_nodes + self.new_nodes,
+        )
+        self.config.local.disable_sbd(self.new_nodes)
+        self.config.fs.isdir(settings.booth_config_dir, return_value=False)
+        self.config.local.no_file_sync()
+        self.config.local.distribute_and_reload_corosync_conf(
+            corosync_conf_fixture(
+                self.existing_corosync_nodes
+                + [
+                    node_fixture(node, node_id)
+                    for node_id, node in enumerate(
+                        self.new_nodes, len(self.existing_nodes) + 1
+                    )
+                ],
+            ),
+            self.existing_nodes,
+            self.new_nodes,
         )
 
         cluster.add_nodes(
@@ -1229,42 +1244,43 @@ class AddNodeFull(TestCase):
     @mock.patch("pcs.lib.corosync.qdevice_net.get_tmp_file")
     def test_with_qdevice(self, mock_get_tmp_file):
         sbd_config = "SBD_DEVICE=/device\n"
-        (
-            self.config.corosync_conf.load_content(
-                corosync_conf_fixture(
-                    self.existing_corosync_nodes,
-                    qdevice_net=True,
-                )
+        self.config.corosync_conf.load_content(
+            corosync_conf_fixture(
+                self.existing_corosync_nodes,
+                qdevice_net=True,
             )
-            .runner.cib.load()
-            .local.read_sbd_config(sbd_config)
-            .http.host.check_auth(node_labels=self.existing_nodes)
-            .local.get_host_info(self.new_nodes)
-            .local.check_sbd(self.new_nodes)
-            .local.pcsd_ssl_cert_sync_enabled()
-            .http.host.update_known_hosts(
-                node_labels=self.new_nodes,
-                to_add_hosts=self.existing_nodes + self.new_nodes,
-            )
-            .local.setup_qdevice(mock_get_tmp_file, self.new_nodes)
-            .local.setup_sbd(sbd_config, sbd_config_generator, self.new_nodes)
-            .local.setup_booth(self.new_nodes)
-            .local.files_sync(self.new_nodes)
-            .local.pcsd_ssl_cert_sync(self.new_nodes)
-            .local.distribute_and_reload_corosync_conf(
-                corosync_conf_fixture(
-                    self.existing_corosync_nodes
-                    + [
-                        corosync_node_fixture(node_id, node, _get_addrs(node))
-                        for node_id, node in enumerate(
-                            self.new_nodes, len(self.existing_nodes) + 1
-                        )
-                    ],
-                    qdevice_net=True,
-                ),
-                self.existing_nodes,
-                self.new_nodes,
-            )
+        )
+        self.config.runner.cib.load()
+        self.config.local.read_sbd_config(sbd_config)
+        self.config.http.host.check_auth(node_labels=self.existing_nodes)
+        self.config.local.get_host_info(self.new_nodes)
+        self.config.local.check_sbd(self.new_nodes)
+        self.config.local.pcsd_ssl_cert_sync_enabled()
+        self.config.local.destroy_cluster(self.new_nodes)
+        self.config.http.host.update_known_hosts(
+            node_labels=self.new_nodes,
+            to_add_hosts=self.existing_nodes + self.new_nodes,
+        )
+        self.config.local.setup_qdevice(mock_get_tmp_file, self.new_nodes)
+        self.config.local.setup_sbd(
+            sbd_config, sbd_config_generator, self.new_nodes
+        )
+        self.config.local.setup_booth(self.new_nodes)
+        self.config.local.files_sync(self.new_nodes)
+        self.config.local.pcsd_ssl_cert_sync(self.new_nodes)
+        self.config.local.distribute_and_reload_corosync_conf(
+            corosync_conf_fixture(
+                self.existing_corosync_nodes
+                + [
+                    corosync_node_fixture(node_id, node, _get_addrs(node))
+                    for node_id, node in enumerate(
+                        self.new_nodes, len(self.existing_nodes) + 1
+                    )
+                ],
+                qdevice_net=True,
+            ),
+            self.existing_nodes,
+            self.new_nodes,
         )
 
         cluster.add_nodes(
@@ -1356,63 +1372,62 @@ class AddNodeFull(TestCase):
 
     def test_no_watchdog_validation(self):
         sbd_config = "SBD_DEVICE=/device\n"
-        (
-            self.config.corosync_conf.load_content(
-                corosync_conf_fixture(self.existing_corosync_nodes)
-            )
-            .runner.cib.load()
-            .local.read_sbd_config(sbd_config)
-            .http.host.check_auth(node_labels=self.existing_nodes)
-            .local.atb_needed(self.existing_nodes)
-            .local.get_host_info(self.new_nodes)
-            .http.sbd.check_sbd(
-                communication_list=[
-                    dict(
-                        label=node,
-                        output=json.dumps(
-                            {
-                                "sbd": {
-                                    "installed": True,
-                                },
-                                "device_list": [
-                                    dict(
-                                        path=dev, exist=True, block_device=True
-                                    )
-                                    for dev in _get_devices(node)
-                                ],
-                            }
-                        ),
-                        param_list=[
-                            ("watchdog", ""),
-                            ("device_list", json.dumps(_get_devices(node))),
-                        ],
-                    )
-                    for node in self.new_nodes
-                ],
-            )
-            .local.pcsd_ssl_cert_sync_enabled()
-            .http.host.update_known_hosts(
-                node_labels=self.new_nodes,
-                to_add_hosts=self.existing_nodes + self.new_nodes,
-            )
-            .local.setup_sbd(sbd_config, sbd_config_generator, self.new_nodes)
-            .fs.isdir(settings.booth_config_dir, return_value=False)
-            .local.no_file_sync()
-            .local.pcsd_ssl_cert_sync(self.new_nodes)
-            .local.distribute_and_reload_corosync_conf(
-                corosync_conf_fixture(
-                    self.existing_corosync_nodes
-                    + [
-                        corosync_node_fixture(node_id, node, _get_addrs(node))
-                        for node_id, node in enumerate(
-                            self.new_nodes, len(self.existing_nodes) + 1
-                        )
+        self.config.corosync_conf.load_content(
+            corosync_conf_fixture(self.existing_corosync_nodes)
+        )
+        self.config.runner.cib.load()
+        self.config.local.read_sbd_config(sbd_config)
+        self.config.http.host.check_auth(node_labels=self.existing_nodes)
+        self.config.local.atb_needed(self.existing_nodes)
+        self.config.local.get_host_info(self.new_nodes)
+        self.config.http.sbd.check_sbd(
+            communication_list=[
+                dict(
+                    label=node,
+                    output=json.dumps(
+                        {
+                            "sbd": {
+                                "installed": True,
+                            },
+                            "device_list": [
+                                dict(path=dev, exist=True, block_device=True)
+                                for dev in _get_devices(node)
+                            ],
+                        }
+                    ),
+                    param_list=[
+                        ("watchdog", ""),
+                        ("device_list", json.dumps(_get_devices(node))),
                     ],
-                    [("auto_tie_breaker", "1")],
-                ),
-                self.existing_nodes,
-                self.new_nodes,
-            )
+                )
+                for node in self.new_nodes
+            ],
+        )
+        self.config.local.pcsd_ssl_cert_sync_enabled()
+        self.config.local.destroy_cluster(self.new_nodes)
+        self.config.http.host.update_known_hosts(
+            node_labels=self.new_nodes,
+            to_add_hosts=self.existing_nodes + self.new_nodes,
+        )
+        self.config.local.setup_sbd(
+            sbd_config, sbd_config_generator, self.new_nodes
+        )
+        self.config.fs.isdir(settings.booth_config_dir, return_value=False)
+        self.config.local.no_file_sync()
+        self.config.local.pcsd_ssl_cert_sync(self.new_nodes)
+        self.config.local.distribute_and_reload_corosync_conf(
+            corosync_conf_fixture(
+                self.existing_corosync_nodes
+                + [
+                    corosync_node_fixture(node_id, node, _get_addrs(node))
+                    for node_id, node in enumerate(
+                        self.new_nodes, len(self.existing_nodes) + 1
+                    )
+                ],
+                [("auto_tie_breaker", "1")],
+            ),
+            self.existing_nodes,
+            self.new_nodes,
         )
 
         cluster.add_nodes(
@@ -1443,43 +1458,42 @@ class AddNodeFull(TestCase):
 
     def test_atb_needed(self):
         sbd_config = ""
-        (
-            self.config.corosync_conf.load_content(
-                corosync_conf_fixture(self.existing_corosync_nodes)
-            )
-            .runner.cib.load()
-            .local.read_sbd_config()
-            .http.host.check_auth(node_labels=self.existing_nodes)
-            .local.atb_needed(self.existing_nodes)
-            .local.get_host_info(self.new_nodes)
-            .local.check_sbd(self.new_nodes, with_devices=False)
-            .local.pcsd_ssl_cert_sync_enabled()
-            .http.host.update_known_hosts(
-                node_labels=self.new_nodes,
-                to_add_hosts=self.existing_nodes + self.new_nodes,
-            )
-            .local.setup_sbd(
-                sbd_config,
-                lambda node: sbd_config_generator(node, with_devices=False),
-                self.new_nodes,
-            )
-            .local.setup_booth(self.new_nodes)
-            .local.files_sync(self.new_nodes)
-            .local.pcsd_ssl_cert_sync(self.new_nodes)
-            .local.distribute_and_reload_corosync_conf(
-                corosync_conf_fixture(
-                    self.existing_corosync_nodes
-                    + [
-                        corosync_node_fixture(node_id, node, _get_addrs(node))
-                        for node_id, node in enumerate(
-                            self.new_nodes, len(self.existing_nodes) + 1
-                        )
-                    ],
-                    [("auto_tie_breaker", "1")],
-                ),
-                self.existing_nodes,
-                self.new_nodes,
-            )
+        self.config.corosync_conf.load_content(
+            corosync_conf_fixture(self.existing_corosync_nodes)
+        )
+        self.config.runner.cib.load()
+        self.config.local.read_sbd_config()
+        self.config.http.host.check_auth(node_labels=self.existing_nodes)
+        self.config.local.atb_needed(self.existing_nodes)
+        self.config.local.get_host_info(self.new_nodes)
+        self.config.local.check_sbd(self.new_nodes, with_devices=False)
+        self.config.local.pcsd_ssl_cert_sync_enabled()
+        self.config.local.destroy_cluster(self.new_nodes)
+        self.config.http.host.update_known_hosts(
+            node_labels=self.new_nodes,
+            to_add_hosts=self.existing_nodes + self.new_nodes,
+        )
+        self.config.local.setup_sbd(
+            sbd_config,
+            lambda node: sbd_config_generator(node, with_devices=False),
+            self.new_nodes,
+        )
+        self.config.local.setup_booth(self.new_nodes)
+        self.config.local.files_sync(self.new_nodes)
+        self.config.local.pcsd_ssl_cert_sync(self.new_nodes)
+        self.config.local.distribute_and_reload_corosync_conf(
+            corosync_conf_fixture(
+                self.existing_corosync_nodes
+                + [
+                    corosync_node_fixture(node_id, node, _get_addrs(node))
+                    for node_id, node in enumerate(
+                        self.new_nodes, len(self.existing_nodes) + 1
+                    )
+                ],
+                [("auto_tie_breaker", "1")],
+            ),
+            self.existing_nodes,
+            self.new_nodes,
         )
 
         cluster.add_nodes(
@@ -1509,37 +1523,36 @@ class FailureReloadCorosyncConf(TestCase):
         ]
         self.config.env.set_known_nodes(self.existing_nodes + self.new_nodes)
         self.config.local.set_expected_reports_list(self.expected_reports)
-        (
-            self.config.services.is_enabled("sbd", return_value=False)
-            .corosync_conf.load_content(
-                corosync_conf_fixture(existing_corosync_nodes)
-            )
-            .runner.cib.load()
-            .http.host.check_auth(
-                node_labels=self.existing_nodes,
-            )
-            .services.is_installed("sbd", return_value=False)
-            .local.get_host_info(self.new_nodes)
-            .local.pcsd_ssl_cert_sync_disabled()
-            .http.host.update_known_hosts(
-                node_labels=self.new_nodes,
-                to_add_hosts=self.existing_nodes + self.new_nodes,
-            )
-            .local.disable_sbd(self.new_nodes)
-            .fs.isdir(settings.booth_config_dir, return_value=False)
-            .local.no_file_sync()
-            .http.corosync.set_corosync_conf(
-                corosync_conf_fixture(
-                    existing_corosync_nodes
-                    + [
-                        node_fixture(node, node_id)
-                        for node_id, node in enumerate(
-                            self.new_nodes, len(self.existing_nodes) + 1
-                        )
-                    ]
-                ),
-                node_labels=self.existing_nodes + self.new_nodes,
-            )
+        self.config.services.is_enabled("sbd", return_value=False)
+        self.config.corosync_conf.load_content(
+            corosync_conf_fixture(existing_corosync_nodes)
+        )
+        self.config.runner.cib.load()
+        self.config.http.host.check_auth(
+            node_labels=self.existing_nodes,
+        )
+        self.config.services.is_installed("sbd", return_value=False)
+        self.config.local.get_host_info(self.new_nodes)
+        self.config.local.pcsd_ssl_cert_sync_disabled()
+        self.config.local.destroy_cluster(self.new_nodes)
+        self.config.http.host.update_known_hosts(
+            node_labels=self.new_nodes,
+            to_add_hosts=self.existing_nodes + self.new_nodes,
+        )
+        self.config.local.disable_sbd(self.new_nodes)
+        self.config.fs.isdir(settings.booth_config_dir, return_value=False)
+        self.config.local.no_file_sync()
+        self.config.http.corosync.set_corosync_conf(
+            corosync_conf_fixture(
+                existing_corosync_nodes
+                + [
+                    node_fixture(node, node_id)
+                    for node_id, node in enumerate(
+                        self.new_nodes, len(self.existing_nodes) + 1
+                    )
+                ]
+            ),
+            node_labels=self.existing_nodes + self.new_nodes,
         )
         self.expected_reports.extend(
             [
@@ -1791,26 +1804,25 @@ class FailureCorosyncConfDistribution(TestCase):
         ]
         self.config.env.set_known_nodes(self.existing_nodes + self.new_nodes)
         self.config.local.set_expected_reports_list(self.expected_reports)
-        (
-            self.config.services.is_enabled("sbd", return_value=False)
-            .corosync_conf.load_content(
-                corosync_conf_fixture(existing_corosync_nodes)
-            )
-            .runner.cib.load()
-            .http.host.check_auth(
-                node_labels=self.existing_nodes,
-            )
-            .services.is_installed("sbd", return_value=False)
-            .local.get_host_info(self.new_nodes)
-            .local.pcsd_ssl_cert_sync_disabled()
-            .http.host.update_known_hosts(
-                node_labels=self.new_nodes,
-                to_add_hosts=self.existing_nodes + self.new_nodes,
-            )
-            .local.disable_sbd(self.new_nodes)
-            .fs.isdir(settings.booth_config_dir, return_value=False)
-            .local.no_file_sync()
+        self.config.services.is_enabled("sbd", return_value=False)
+        self.config.corosync_conf.load_content(
+            corosync_conf_fixture(existing_corosync_nodes)
         )
+        self.config.runner.cib.load()
+        self.config.http.host.check_auth(
+            node_labels=self.existing_nodes,
+        )
+        self.config.services.is_installed("sbd", return_value=False)
+        self.config.local.get_host_info(self.new_nodes)
+        self.config.local.pcsd_ssl_cert_sync_disabled()
+        self.config.local.destroy_cluster(self.new_nodes)
+        self.config.http.host.update_known_hosts(
+            node_labels=self.new_nodes,
+            to_add_hosts=self.existing_nodes + self.new_nodes,
+        )
+        self.config.local.disable_sbd(self.new_nodes)
+        self.config.fs.isdir(settings.booth_config_dir, return_value=False)
+        self.config.local.no_file_sync()
         self.expected_reports.extend(
             [
                 fixture.info(
@@ -1993,26 +2005,25 @@ class FailurePcsdSslCertSync(TestCase):
         ]
         self.config.env.set_known_nodes(self.existing_nodes + self.new_nodes)
         self.config.local.set_expected_reports_list(self.expected_reports)
-        (
-            self.config.services.is_enabled("sbd", return_value=False)
-            .corosync_conf.load_content(
-                corosync_conf_fixture(existing_corosync_nodes)
-            )
-            .runner.cib.load()
-            .http.host.check_auth(
-                node_labels=self.existing_nodes,
-            )
-            .services.is_installed("sbd", return_value=False)
-            .local.get_host_info(self.new_nodes)
-            .local.pcsd_ssl_cert_sync_enabled()
-            .http.host.update_known_hosts(
-                node_labels=self.new_nodes,
-                to_add_hosts=self.existing_nodes + self.new_nodes,
-            )
-            .local.disable_sbd(self.new_nodes)
-            .fs.isdir(settings.booth_config_dir, return_value=False)
-            .local.no_file_sync()
+        self.config.services.is_enabled("sbd", return_value=False)
+        self.config.corosync_conf.load_content(
+            corosync_conf_fixture(existing_corosync_nodes)
         )
+        self.config.runner.cib.load()
+        self.config.http.host.check_auth(
+            node_labels=self.existing_nodes,
+        )
+        self.config.services.is_installed("sbd", return_value=False)
+        self.config.local.get_host_info(self.new_nodes)
+        self.config.local.pcsd_ssl_cert_sync_enabled()
+        self.config.local.destroy_cluster(self.new_nodes)
+        self.config.http.host.update_known_hosts(
+            node_labels=self.new_nodes,
+            to_add_hosts=self.existing_nodes + self.new_nodes,
+        )
+        self.config.local.disable_sbd(self.new_nodes)
+        self.config.fs.isdir(settings.booth_config_dir, return_value=False)
+        self.config.local.no_file_sync()
         self.expected_reports.extend(
             [
                 fixture.info(
@@ -2140,47 +2151,46 @@ class FailureFilesDistribution(TestCase):
         ]
         self.config.env.set_known_nodes(self.existing_nodes + self.new_nodes)
         self.config.local.set_expected_reports_list(self.expected_reports)
-        (
-            self.config.services.is_enabled("sbd", return_value=False)
-            .corosync_conf.load_content(
-                corosync_conf_fixture(self.existing_corosync_nodes)
-            )
-            .runner.cib.load()
-            .http.host.check_auth(
-                node_labels=self.existing_nodes,
-            )
-            .services.is_installed("sbd", return_value=False)
-            .local.get_host_info(self.new_nodes)
-            .local.pcsd_ssl_cert_sync_disabled()
-            .http.host.update_known_hosts(
-                node_labels=self.new_nodes,
-                to_add_hosts=self.existing_nodes + self.new_nodes,
-            )
-            .local.disable_sbd(self.new_nodes)
-            .fs.isdir(settings.booth_config_dir, return_value=False)
-            .fs.isfile(
-                settings.corosync_authkey_file,
-                return_value=True,
-                name="fs.isfile.corosync_authkey",
-            )
-            # open will be inserted here
-            .fs.isfile(
-                settings.pacemaker_authkey_file,
-                return_value=True,
-                name=self.corosync_key_open_before_position,
-            )
-            # open will be inserted here
-            .fs.isfile(
-                settings.pcsd_dr_config_location,
-                return_value=True,
-                name=self.pacemaker_key_open_before_position,
-            )
-            # open will be inserted here
-            .fs.isfile(
-                settings.pcsd_settings_conf_location,
-                return_value=False,
-                name=self.pcsd_dr_config_open_before_position,
-            )
+        self.config.services.is_enabled("sbd", return_value=False)
+        self.config.corosync_conf.load_content(
+            corosync_conf_fixture(self.existing_corosync_nodes)
+        )
+        self.config.runner.cib.load()
+        self.config.http.host.check_auth(
+            node_labels=self.existing_nodes,
+        )
+        self.config.services.is_installed("sbd", return_value=False)
+        self.config.local.get_host_info(self.new_nodes)
+        self.config.local.pcsd_ssl_cert_sync_disabled()
+        self.config.local.destroy_cluster(self.new_nodes)
+        self.config.http.host.update_known_hosts(
+            node_labels=self.new_nodes,
+            to_add_hosts=self.existing_nodes + self.new_nodes,
+        )
+        self.config.local.disable_sbd(self.new_nodes)
+        self.config.fs.isdir(settings.booth_config_dir, return_value=False)
+        self.config.fs.isfile(
+            settings.corosync_authkey_file,
+            return_value=True,
+            name="fs.isfile.corosync_authkey",
+        )
+        # open will be inserted here
+        self.config.fs.isfile(
+            settings.pacemaker_authkey_file,
+            return_value=True,
+            name=self.corosync_key_open_before_position,
+        )
+        # open will be inserted here
+        self.config.fs.isfile(
+            settings.pcsd_dr_config_location,
+            return_value=True,
+            name=self.pacemaker_key_open_before_position,
+        )
+        # open will be inserted here
+        self.config.fs.isfile(
+            settings.pcsd_settings_conf_location,
+            return_value=False,
+            name=self.pcsd_dr_config_open_before_position,
         )
         self.expected_reports.extend(
             [
@@ -2309,53 +2319,45 @@ class FailureFilesDistribution(TestCase):
         )
 
     def test_read_failure_forced(self):
-        self.config.http.place_multinode_call(
-            "http.host.cluster_destroy",
-            node_labels=self.new_nodes,
-            action="remote/cluster_destroy",
-            before="http.host.update_known_hosts_requests",
+        self.config.fs.open(
+            settings.corosync_authkey_file,
+            mode="rb",
+            side_effect=EnvironmentError(
+                1, self.err_msg, settings.corosync_authkey_file
+            ),
+            name="fs.open.corosync_authkey",
+            before=self.corosync_key_open_before_position,
         )
-        (
-            self.config.fs.open(
-                settings.corosync_authkey_file,
-                mode="rb",
-                side_effect=EnvironmentError(
-                    1, self.err_msg, settings.corosync_authkey_file
-                ),
-                name="fs.open.corosync_authkey",
-                before=self.corosync_key_open_before_position,
-            )
-            .fs.open(
-                settings.pacemaker_authkey_file,
-                mode="rb",
-                side_effect=EnvironmentError(
-                    1, self.err_msg, settings.pacemaker_authkey_file
-                ),
-                name="fs.open.pacemaker_authkey",
-                before=self.pacemaker_key_open_before_position,
-            )
-            .fs.open(
-                settings.pcsd_dr_config_location,
-                mode="rb",
-                side_effect=EnvironmentError(
-                    1, self.err_msg, settings.pcsd_dr_config_location
-                ),
-                name="fs.open.pcsd_dr_config",
-                before=self.pcsd_dr_config_open_before_position,
-            )
-            .local.distribute_and_reload_corosync_conf(
-                corosync_conf_fixture(
-                    self.existing_corosync_nodes
-                    + [
-                        node_fixture(node, i)
-                        for i, node in enumerate(
-                            self.new_nodes, len(self.existing_nodes) + 1
-                        )
-                    ],
-                ),
-                self.existing_nodes,
-                self.new_nodes,
-            )
+        self.config.fs.open(
+            settings.pacemaker_authkey_file,
+            mode="rb",
+            side_effect=EnvironmentError(
+                1, self.err_msg, settings.pacemaker_authkey_file
+            ),
+            name="fs.open.pacemaker_authkey",
+            before=self.pacemaker_key_open_before_position,
+        )
+        self.config.fs.open(
+            settings.pcsd_dr_config_location,
+            mode="rb",
+            side_effect=EnvironmentError(
+                1, self.err_msg, settings.pcsd_dr_config_location
+            ),
+            name="fs.open.pcsd_dr_config",
+            before=self.pcsd_dr_config_open_before_position,
+        )
+        self.config.local.distribute_and_reload_corosync_conf(
+            corosync_conf_fixture(
+                self.existing_corosync_nodes
+                + [
+                    node_fixture(node, i)
+                    for i, node in enumerate(
+                        self.new_nodes, len(self.existing_nodes) + 1
+                    )
+                ],
+            ),
+            self.existing_nodes,
+            self.new_nodes,
         )
 
         cluster.add_nodes(
@@ -2366,16 +2368,6 @@ class FailureFilesDistribution(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
-            + [
-                fixture.info(
-                    reports.codes.CLUSTER_DESTROY_STARTED,
-                    host_name_list=list(self.new_nodes),
-                ),
-            ]
-            + [
-                fixture.info(reports.codes.CLUSTER_DESTROY_SUCCESS, node=node)
-                for node in self.new_nodes
-            ]
             + [
                 fixture.warn(
                     reports.codes.FILE_IO_ERROR,
@@ -2718,29 +2710,30 @@ class FailureBoothConfigsDistribution(TestCase):
 
         self.config.env.set_known_nodes(self.existing_nodes + self.new_nodes)
         self.config.local.set_expected_reports_list(self.expected_reports)
-        (
-            self.config.services.is_enabled("sbd", return_value=False)
-            .corosync_conf.load_content(
-                corosync_conf_fixture(self.existing_corosync_nodes)
-            )
-            .runner.cib.load()
-            .http.host.check_auth(
-                node_labels=self.existing_nodes,
-            )
-            .services.is_installed("sbd", return_value=False)
-            .local.get_host_info(self.new_nodes)
-            .local.pcsd_ssl_cert_sync_disabled()
-            .http.host.update_known_hosts(
-                node_labels=self.new_nodes,
-                to_add_hosts=self.existing_nodes + self.new_nodes,
-            )
-            .local.disable_sbd(self.new_nodes)
-            .fs.isdir(settings.booth_config_dir)
-            .fs.listdir(
-                settings.booth_config_dir,
-                [self.config_file, "something", self.authfile],
-            )
-            .fs.isfile(self.config_path, name="fs.isfile.booth_config_file")
+        self.config.services.is_enabled("sbd", return_value=False)
+        self.config.corosync_conf.load_content(
+            corosync_conf_fixture(self.existing_corosync_nodes)
+        )
+        self.config.runner.cib.load()
+        self.config.http.host.check_auth(
+            node_labels=self.existing_nodes,
+        )
+        self.config.services.is_installed("sbd", return_value=False)
+        self.config.local.get_host_info(self.new_nodes)
+        self.config.local.pcsd_ssl_cert_sync_disabled()
+        self.config.local.destroy_cluster(self.new_nodes)
+        self.config.http.host.update_known_hosts(
+            node_labels=self.new_nodes,
+            to_add_hosts=self.existing_nodes + self.new_nodes,
+        )
+        self.config.local.disable_sbd(self.new_nodes)
+        self.config.fs.isdir(settings.booth_config_dir)
+        self.config.fs.listdir(
+            settings.booth_config_dir,
+            [self.config_file, "something", self.authfile],
+        )
+        self.config.fs.isfile(
+            self.config_path, name="fs.isfile.booth_config_file"
         )
         self.expected_reports.extend(
             [
@@ -2766,29 +2759,21 @@ class FailureBoothConfigsDistribution(TestCase):
             )
             for node in self.successful_nodes
         ]
-        self.cluster_destroy_reports = [
-            fixture.info(
-                reports.codes.CLUSTER_DESTROY_STARTED,
-                host_name_list=list(self.new_nodes),
-            ),
-        ] + [
-            fixture.info(reports.codes.CLUSTER_DESTROY_SUCCESS, node=node)
-            for node in self.new_nodes
-        ]
 
     def _set_up_multibooth(self):
-        (
-            self.config.fs.listdir(
-                settings.booth_config_dir,
-                [
-                    self.config_file,
-                    "something",
-                    self.authfile,
-                    self.authfile2,
-                    self.config_file2,
-                ],
-                instead="fs.listdir",
-            ).fs.isfile(self.config_path2, name="fs.isfile.booth_config_file2")
+        self.config.fs.listdir(
+            settings.booth_config_dir,
+            [
+                self.config_file,
+                "something",
+                self.authfile,
+                self.authfile2,
+                self.config_file2,
+            ],
+            instead="fs.listdir",
+        )
+        self.config.fs.isfile(
+            self.config_path2, name="fs.isfile.booth_config_file2"
         )
         self.successful_reports = [
             fixture.info(
@@ -2839,33 +2824,25 @@ class FailureBoothConfigsDistribution(TestCase):
         )
 
     def test_config_read_failure_forced(self):
-        self.config.http.place_multinode_call(
-            "http.host.cluster_destroy",
-            node_labels=self.new_nodes,
-            action="remote/cluster_destroy",
-            before="http.host.update_known_hosts_requests",
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_CONFIG,
+            self.config_path,
+            exception_msg=self.err_msg,
+            name="raw_file.read.booth_config_read",
         )
-        (
-            self.config.raw_file.read(
-                file_type_codes.BOOTH_CONFIG,
-                self.config_path,
-                exception_msg=self.err_msg,
-                name="raw_file.read.booth_config_read",
-            )
-            .local.no_file_sync()
-            .local.distribute_and_reload_corosync_conf(
-                corosync_conf_fixture(
-                    self.existing_corosync_nodes
-                    + [
-                        node_fixture(node, i)
-                        for i, node in enumerate(
-                            self.new_nodes, len(self.existing_nodes) + 1
-                        )
-                    ],
-                ),
-                self.existing_nodes,
-                self.new_nodes,
-            )
+        self.config.local.no_file_sync()
+        self.config.local.distribute_and_reload_corosync_conf(
+            corosync_conf_fixture(
+                self.existing_corosync_nodes
+                + [
+                    node_fixture(node, i)
+                    for i, node in enumerate(
+                        self.new_nodes, len(self.existing_nodes) + 1
+                    )
+                ],
+            ),
+            self.existing_nodes,
+            self.new_nodes,
         )
 
         cluster.add_nodes(
@@ -2876,7 +2853,6 @@ class FailureBoothConfigsDistribution(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
-            + self.cluster_destroy_reports
             + [
                 fixture.warn(
                     reports.codes.FILE_IO_ERROR,
@@ -2890,64 +2866,56 @@ class FailureBoothConfigsDistribution(TestCase):
 
     def test_config_read_failure_forced_sends_other_configs(self):
         self._set_up_multibooth()
-        self.config.http.place_multinode_call(
-            "http.host.cluster_destroy",
-            node_labels=self.new_nodes,
-            action="remote/cluster_destroy",
-            before="http.host.update_known_hosts_requests",
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_CONFIG,
+            self.config_path,
+            exception_msg=self.err_msg,
+            name="raw_file.read.booth_config_read",
         )
-        (
-            self.config.raw_file.read(
-                file_type_codes.BOOTH_CONFIG,
-                self.config_path,
-                exception_msg=self.err_msg,
-                name="raw_file.read.booth_config_read",
-            )
-            .raw_file.read(
-                file_type_codes.BOOTH_CONFIG,
-                self.config_path2,
-                content=self.config_content2.encode("utf-8"),
-                name="raw_file.read.booth_config_read2",
-            )
-            .raw_file.read(
-                file_type_codes.BOOTH_KEY,
-                self.authfile_path2,
-                content=self.authfile_content2,
-                name="raw_file.read.booth_authfile_read2",
-            )
-            .http.booth.save_files(
-                files_data=[
-                    dict(
-                        name=self.config_file2,
-                        data=self.config_content2,
-                        is_authfile=False,
-                    ),
-                    dict(
-                        name=self.authfile2,
-                        data=base64.b64encode(self.authfile_content2).decode(
-                            "utf-8"
-                        ),
-                        is_authfile=True,
-                    ),
-                ],
-                rewrite_existing=True,
-                saved=[self.config_file2, self.authfile2],
-                node_labels=self.new_nodes,
-            )
-            .local.no_file_sync()
-            .local.distribute_and_reload_corosync_conf(
-                corosync_conf_fixture(
-                    self.existing_corosync_nodes
-                    + [
-                        node_fixture(node, i)
-                        for i, node in enumerate(
-                            self.new_nodes, len(self.existing_nodes) + 1
-                        )
-                    ],
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_CONFIG,
+            self.config_path2,
+            content=self.config_content2.encode("utf-8"),
+            name="raw_file.read.booth_config_read2",
+        )
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_KEY,
+            self.authfile_path2,
+            content=self.authfile_content2,
+            name="raw_file.read.booth_authfile_read2",
+        )
+        self.config.http.booth.save_files(
+            files_data=[
+                dict(
+                    name=self.config_file2,
+                    data=self.config_content2,
+                    is_authfile=False,
                 ),
-                self.existing_nodes,
-                self.new_nodes,
-            )
+                dict(
+                    name=self.authfile2,
+                    data=base64.b64encode(self.authfile_content2).decode(
+                        "utf-8"
+                    ),
+                    is_authfile=True,
+                ),
+            ],
+            rewrite_existing=True,
+            saved=[self.config_file2, self.authfile2],
+            node_labels=self.new_nodes,
+        )
+        self.config.local.no_file_sync()
+        self.config.local.distribute_and_reload_corosync_conf(
+            corosync_conf_fixture(
+                self.existing_corosync_nodes
+                + [
+                    node_fixture(node, i)
+                    for i, node in enumerate(
+                        self.new_nodes, len(self.existing_nodes) + 1
+                    )
+                ],
+            ),
+            self.existing_nodes,
+            self.new_nodes,
         )
 
         cluster.add_nodes(
@@ -2958,7 +2926,6 @@ class FailureBoothConfigsDistribution(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
-            + self.cluster_destroy_reports
             + [
                 fixture.warn(
                     reports.codes.FILE_IO_ERROR,
@@ -3004,42 +2971,32 @@ class FailureBoothConfigsDistribution(TestCase):
         )
 
     def test_authfile_read_failure_forced(self):
-        self.config.http.place_multinode_call(
-            "http.host.cluster_destroy",
-            node_labels=self.new_nodes,
-            action="remote/cluster_destroy",
-            before="http.host.update_known_hosts_requests",
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_CONFIG,
+            self.config_path,
+            content=self.config_content.encode("utf-8"),
+            name="raw_file.read.booth_config_read",
         )
-        (
-            self.config.raw_file.read(
-                file_type_codes.BOOTH_CONFIG,
-                self.config_path,
-                content=self.config_content.encode("utf-8"),
-                name="raw_file.read.booth_config_read",
-            )
-            .raw_file.read(
-                file_type_codes.BOOTH_KEY,
-                self.authfile_path,
-                exception_msg=self.err_msg,
-                name="raw_file.read.booth_authfile_read",
-            )
-            .local.no_file_sync()
-            .local.distribute_and_reload_corosync_conf(
-                corosync_conf_fixture(
-                    self.existing_corosync_nodes
-                    + [
-                        node_fixture(node, i)
-                        for i, node in enumerate(
-                            self.new_nodes, len(self.existing_nodes) + 1
-                        )
-                    ],
-                    get_two_node(
-                        len(self.existing_nodes) + len(self.new_nodes)
-                    ),
-                ),
-                self.existing_nodes,
-                self.new_nodes,
-            )
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_KEY,
+            self.authfile_path,
+            exception_msg=self.err_msg,
+            name="raw_file.read.booth_authfile_read",
+        )
+        self.config.local.no_file_sync()
+        self.config.local.distribute_and_reload_corosync_conf(
+            corosync_conf_fixture(
+                self.existing_corosync_nodes
+                + [
+                    node_fixture(node, i)
+                    for i, node in enumerate(
+                        self.new_nodes, len(self.existing_nodes) + 1
+                    )
+                ],
+                get_two_node(len(self.existing_nodes) + len(self.new_nodes)),
+            ),
+            self.existing_nodes,
+            self.new_nodes,
         )
 
         cluster.add_nodes(
@@ -3050,7 +3007,6 @@ class FailureBoothConfigsDistribution(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
-            + self.cluster_destroy_reports
             + [
                 fixture.warn(
                     reports.codes.FILE_IO_ERROR,
@@ -3064,70 +3020,62 @@ class FailureBoothConfigsDistribution(TestCase):
 
     def test_authfile_read_failure_forced_sends_other_configs(self):
         self._set_up_multibooth()
-        self.config.http.place_multinode_call(
-            "http.host.cluster_destroy",
-            node_labels=self.new_nodes,
-            action="remote/cluster_destroy",
-            before="http.host.update_known_hosts_requests",
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_CONFIG,
+            self.config_path,
+            content=self.config_content.encode("utf-8"),
+            name="raw_file.read.booth_config_read",
         )
-        (
-            self.config.raw_file.read(
-                file_type_codes.BOOTH_CONFIG,
-                self.config_path,
-                content=self.config_content.encode("utf-8"),
-                name="raw_file.read.booth_config_read",
-            )
-            .raw_file.read(
-                file_type_codes.BOOTH_KEY,
-                self.authfile_path,
-                exception_msg=self.err_msg,
-                name="raw_file.read.booth_authfile_read",
-            )
-            .raw_file.read(
-                file_type_codes.BOOTH_CONFIG,
-                self.config_path2,
-                content=self.config_content2.encode("utf-8"),
-                name="raw_file.read.booth_config_read2",
-            )
-            .raw_file.read(
-                file_type_codes.BOOTH_KEY,
-                self.authfile_path2,
-                content=self.authfile_content2,
-                name="raw_file.read.booth_authfile_read2",
-            )
-            .http.booth.save_files(
-                files_data=[
-                    dict(
-                        name=self.config_file2,
-                        data=self.config_content2,
-                        is_authfile=False,
-                    ),
-                    dict(
-                        name=self.authfile2,
-                        data=base64.b64encode(self.authfile_content2).decode(
-                            "utf-8"
-                        ),
-                        is_authfile=True,
-                    ),
-                ],
-                rewrite_existing=True,
-                saved=[self.config_file2, self.authfile2],
-                node_labels=self.new_nodes,
-            )
-            .local.no_file_sync()
-            .local.distribute_and_reload_corosync_conf(
-                corosync_conf_fixture(
-                    self.existing_corosync_nodes
-                    + [
-                        node_fixture(node, i)
-                        for i, node in enumerate(
-                            self.new_nodes, len(self.existing_nodes) + 1
-                        )
-                    ],
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_KEY,
+            self.authfile_path,
+            exception_msg=self.err_msg,
+            name="raw_file.read.booth_authfile_read",
+        )
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_CONFIG,
+            self.config_path2,
+            content=self.config_content2.encode("utf-8"),
+            name="raw_file.read.booth_config_read2",
+        )
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_KEY,
+            self.authfile_path2,
+            content=self.authfile_content2,
+            name="raw_file.read.booth_authfile_read2",
+        )
+        self.config.http.booth.save_files(
+            files_data=[
+                dict(
+                    name=self.config_file2,
+                    data=self.config_content2,
+                    is_authfile=False,
                 ),
-                self.existing_nodes,
-                self.new_nodes,
-            )
+                dict(
+                    name=self.authfile2,
+                    data=base64.b64encode(self.authfile_content2).decode(
+                        "utf-8"
+                    ),
+                    is_authfile=True,
+                ),
+            ],
+            rewrite_existing=True,
+            saved=[self.config_file2, self.authfile2],
+            node_labels=self.new_nodes,
+        )
+        self.config.local.no_file_sync()
+        self.config.local.distribute_and_reload_corosync_conf(
+            corosync_conf_fixture(
+                self.existing_corosync_nodes
+                + [
+                    node_fixture(node, i)
+                    for i, node in enumerate(
+                        self.new_nodes, len(self.existing_nodes) + 1
+                    )
+                ],
+            ),
+            self.existing_nodes,
+            self.new_nodes,
         )
 
         cluster.add_nodes(
@@ -3138,7 +3086,6 @@ class FailureBoothConfigsDistribution(TestCase):
 
         self.env_assist.assert_reports(
             self.expected_reports
-            + self.cluster_destroy_reports
             + [
                 fixture.warn(
                     reports.codes.FILE_IO_ERROR,
@@ -3420,20 +3367,19 @@ class FailureDisableSbd(TestCase):
 
         self.config.env.set_known_nodes(self.existing_nodes + self.new_nodes)
         self.config.local.set_expected_reports_list(self.expected_reports)
-        (
-            self.config.services.is_enabled("sbd", return_value=False)
-            .corosync_conf.load_content(
-                corosync_conf_fixture(self.existing_corosync_nodes)
-            )
-            .runner.cib.load()
-            .http.host.check_auth(node_labels=self.existing_nodes)
-            .services.is_installed("sbd", return_value=False)
-            .local.get_host_info(self.new_nodes)
-            .local.pcsd_ssl_cert_sync_disabled()
-            .http.host.update_known_hosts(
-                node_labels=self.new_nodes,
-                to_add_hosts=self.existing_nodes + self.new_nodes,
-            )
+        self.config.services.is_enabled("sbd", return_value=False)
+        self.config.corosync_conf.load_content(
+            corosync_conf_fixture(self.existing_corosync_nodes)
+        )
+        self.config.runner.cib.load()
+        self.config.http.host.check_auth(node_labels=self.existing_nodes)
+        self.config.services.is_installed("sbd", return_value=False)
+        self.config.local.get_host_info(self.new_nodes)
+        self.config.local.pcsd_ssl_cert_sync_disabled()
+        self.config.local.destroy_cluster(self.new_nodes)
+        self.config.http.host.update_known_hosts(
+            node_labels=self.new_nodes,
+            to_add_hosts=self.existing_nodes + self.new_nodes,
         )
         self.expected_reports.extend(
             [
@@ -3555,21 +3501,20 @@ class FailureEnableSbd(TestCase):
         self.sbd_config = ""
         self.config.env.set_known_nodes(self.existing_nodes + self.new_nodes)
         self.config.local.set_expected_reports_list(self.expected_reports)
-        (
-            self.config.services.is_enabled("sbd", return_value=True)
-            .corosync_conf.load_content(
-                corosync_conf_fixture(self.existing_corosync_nodes)
-            )
-            .runner.cib.load()
-            .local.read_sbd_config(self.sbd_config)
-            .http.host.check_auth(node_labels=self.existing_nodes)
-            .local.get_host_info(self.new_nodes)
-            .local.check_sbd(self.new_nodes, with_devices=False)
-            .local.pcsd_ssl_cert_sync_disabled()
-            .http.host.update_known_hosts(
-                node_labels=self.new_nodes,
-                to_add_hosts=self.existing_nodes + self.new_nodes,
-            )
+        self.config.services.is_enabled("sbd", return_value=True)
+        self.config.corosync_conf.load_content(
+            corosync_conf_fixture(self.existing_corosync_nodes)
+        )
+        self.config.runner.cib.load()
+        self.config.local.read_sbd_config(self.sbd_config)
+        self.config.http.host.check_auth(node_labels=self.existing_nodes)
+        self.config.local.get_host_info(self.new_nodes)
+        self.config.local.check_sbd(self.new_nodes, with_devices=False)
+        self.config.local.pcsd_ssl_cert_sync_disabled()
+        self.config.local.destroy_cluster(self.new_nodes)
+        self.config.http.host.update_known_hosts(
+            node_labels=self.new_nodes,
+            to_add_hosts=self.existing_nodes + self.new_nodes,
         )
         self.expected_reports.extend(
             [
@@ -3778,22 +3723,21 @@ class FailureQdevice(TestCase):
             self.existing_nodes + self.new_nodes + [QDEVICE_HOST]
         )
         self.config.local.set_expected_reports_list(self.expected_reports)
-        (
-            self.config.services.is_enabled("sbd", return_value=False)
-            .corosync_conf.load_content(
-                corosync_conf_fixture(
-                    self.existing_corosync_nodes,
-                    qdevice_net=True,
-                )
+        self.config.services.is_enabled("sbd", return_value=False)
+        self.config.corosync_conf.load_content(
+            corosync_conf_fixture(
+                self.existing_corosync_nodes,
+                qdevice_net=True,
             )
-            .runner.cib.load()
-            .http.host.check_auth(node_labels=self.existing_nodes)
-            .local.get_host_info(self.new_nodes)
-            .local.pcsd_ssl_cert_sync_disabled()
-            .http.host.update_known_hosts(
-                node_labels=self.new_nodes,
-                to_add_hosts=self.existing_nodes + self.new_nodes,
-            )
+        )
+        self.config.runner.cib.load()
+        self.config.http.host.check_auth(node_labels=self.existing_nodes)
+        self.config.local.get_host_info(self.new_nodes)
+        self.config.local.pcsd_ssl_cert_sync_disabled()
+        self.config.local.destroy_cluster(self.new_nodes)
+        self.config.http.host.update_known_hosts(
+            node_labels=self.new_nodes,
+            to_add_hosts=self.existing_nodes + self.new_nodes,
         )
         self.expected_reports.extend(
             [
@@ -4202,17 +4146,16 @@ class FailureKnownHostsUpdate(TestCase):
         ]
         self.config.env.set_known_nodes(self.existing_nodes + self.new_nodes)
         self.config.local.set_expected_reports_list(self.expected_reports)
-        (
-            self.config.services.is_enabled("sbd", return_value=False)
-            .corosync_conf.load_content(
-                corosync_conf_fixture(self.existing_corosync_nodes)
-            )
-            .runner.cib.load()
-            .http.host.check_auth(node_labels=self.existing_nodes)
-            .services.is_installed("sbd", return_value=False)
-            .local.get_host_info(self.new_nodes)
-            .local.pcsd_ssl_cert_sync_disabled()
+        self.config.services.is_enabled("sbd", return_value=False)
+        self.config.corosync_conf.load_content(
+            corosync_conf_fixture(self.existing_corosync_nodes)
         )
+        self.config.runner.cib.load()
+        self.config.http.host.check_auth(node_labels=self.existing_nodes)
+        self.config.services.is_installed("sbd", return_value=False)
+        self.config.local.get_host_info(self.new_nodes)
+        self.config.local.pcsd_ssl_cert_sync_disabled()
+        self.config.local.destroy_cluster(self.new_nodes)
         self.expected_reports.extend(
             [
                 fixture.info(
