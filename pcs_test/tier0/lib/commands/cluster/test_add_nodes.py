@@ -563,7 +563,7 @@ class LocalConfig:
             [
                 fixture.info(
                     reports.codes.CLUSTER_DESTROY_STARTED,
-                    host_name_list=list(new_nodes),
+                    host_name_list=sorted(new_nodes),
                 ),
             ]
             + [
