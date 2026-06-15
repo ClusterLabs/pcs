@@ -358,12 +358,12 @@ def add_nodes(  # noqa: PLR0912, PLR0915
     # Validation done. If errors occurred, an exception has been raised and we
     # don't get below this line.
 
-    # First, if force is set, destroy cluster on new nodes. This is needed to
-    # make sure that new nodes are not part of another cluster.
-    if force:
-        com_cmd = cluster.Destroy(env.report_processor)
-        com_cmd.set_targets(new_nodes_target_list)
-        run_and_raise(env.get_node_communicator(), com_cmd)
+    # First, destroy cluster on new nodes. This is needed to make sure that
+    # new nodes are not part of another cluster and that there are no cluster
+    # configs left there which would interfere with the current cluster.
+    com_cmd = cluster.Destroy(env.report_processor)
+    com_cmd.set_targets(new_nodes_target_list)
+    run_and_raise(env.get_node_communicator(), com_cmd)
 
     # Set up everything else than corosync. Once the new nodes are present
     # in corosync.conf, they're considered part of a cluster and the node add
