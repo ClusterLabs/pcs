@@ -752,35 +752,6 @@ class AddNodesSuccessMinimal(TestCase):
     def test_minimal_3_existing_3_new(self):
         self._test_minimal(3, 3)
 
-    def test_add_node_forced(self):
-        self.set_up(2, 1)
-        self.config.http.place_multinode_call(
-            "http.host.cluster_destroy",
-            node_labels=self.new_nodes,
-            action="remote/cluster_destroy",
-            before="http.host.update_known_hosts_requests",
-        )
-
-        cluster.add_nodes(
-            self.env_assist.get_env(),
-            [{"name": node} for node in self.new_nodes],
-            force_flags=[reports.codes.FORCE],
-        )
-
-        self.env_assist.assert_reports(
-            self.expected_reports
-            + [
-                fixture.info(
-                    reports.codes.CLUSTER_DESTROY_STARTED,
-                    host_name_list=list(self.new_nodes),
-                ),
-            ]
-            + [
-                fixture.info(reports.codes.CLUSTER_DESTROY_SUCCESS, node=node)
-                for node in self.new_nodes
-            ]
-        )
-
     def _test_enable(self, existing, new):
         self.set_up(existing, new)
         self.config.http.host.enable_cluster(
@@ -4375,12 +4346,12 @@ class AddNodeClusterDestroyFail(TestCase):
             action="remote/cluster_destroy",
         )
 
-    def test_destroy_failure_aborts_add_nodes(self):
+    def _assert_destroy_failure(self, force_flags=None):
         self.env_assist.assert_raise_library_error(
             lambda: cluster.add_nodes(
                 self.env_assist.get_env(),
                 [{"name": node} for node in self.new_nodes],
-                force_flags=[reports.codes.FORCE],
+                force_flags=force_flags or [],
             ),
         )
         self.env_assist.assert_reports(
@@ -4401,3 +4372,9 @@ class AddNodeClusterDestroyFail(TestCase):
                 for node in self.new_nodes
             ]
         )
+
+    def test_destroy_failure_aborts_add_nodes(self):
+        self._assert_destroy_failure()
+
+    def test_destroy_failure_aborts_add_nodes_forced(self):
+        self._assert_destroy_failure(force_flags=[reports.codes.FORCE])
