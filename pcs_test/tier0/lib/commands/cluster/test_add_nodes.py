@@ -58,35 +58,33 @@ class LocalConfig:
         mock_get_tmp_file.return_value.__enter__.return_value = tempfile_mock
 
         local_prefix = "local.setup_qdevice."
-        (
-            self.config.http.corosync.qdevice_net_get_ca_cert(
-                ca_cert=ca_cert,
-                node_labels=[QDEVICE_HOST],
-                name=f"{local_prefix}http.corosync.qdevice_ca_cert",
-            )
-            .http.corosync.qdevice_net_client_setup(
-                ca_cert=ca_cert,
-                node_labels=new_nodes,
-                name=f"{local_prefix}http.corosync.qdevice_client_setup",
-            )
-            .fs.exists(
-                os.path.join(
-                    settings.corosync_qdevice_net_client_certs_dir, "cert9.db"
-                ),
-                return_value=True,
-                name=f"{local_prefix}fs.exists.corosync_certs_db",
-            )
-            .runner.corosync.qdevice_generate_cert(
-                CLUSTER_NAME,
-                cert_req_path=cert_req_path,
-                name=f"{local_prefix}runner.corosync.qdevice_generate_cert",
-            )
-            .fs.open(
-                cert_req_path,
-                return_value=mock.mock_open(read_data=cert)(),
-                mode="rb",
-                name=f"{local_prefix}fs.open.cert_req_read",
-            )
+        self.config.http.corosync.qdevice_net_get_ca_cert(
+            ca_cert=ca_cert,
+            node_labels=[QDEVICE_HOST],
+            name=f"{local_prefix}http.corosync.qdevice_ca_cert",
+        )
+        self.config.http.corosync.qdevice_net_client_setup(
+            ca_cert=ca_cert,
+            node_labels=new_nodes,
+            name=f"{local_prefix}http.corosync.qdevice_client_setup",
+        )
+        self.config.fs.exists(
+            os.path.join(
+                settings.corosync_qdevice_net_client_certs_dir, "cert9.db"
+            ),
+            return_value=True,
+            name=f"{local_prefix}fs.exists.corosync_certs_db",
+        )
+        self.config.runner.corosync.qdevice_generate_cert(
+            CLUSTER_NAME,
+            cert_req_path=cert_req_path,
+            name=f"{local_prefix}runner.corosync.qdevice_generate_cert",
+        )
+        self.config.fs.open(
+            cert_req_path,
+            return_value=mock.mock_open(read_data=cert)(),
+            mode="rb",
+            name=f"{local_prefix}fs.open.cert_req_read",
         )
         self.expected_reports.extend(
             [
@@ -106,40 +104,38 @@ class LocalConfig:
         mock_get_tmp_file.return_value.__enter__.return_value = tempfile_mock
 
         local_prefix = "local.setup_qdevice."
-        (
-            self.config.http.corosync.qdevice_net_sign_certificate(
-                CLUSTER_NAME,
-                cert=cert,
-                signed_cert=b"signed cert",
-                node_labels=[QDEVICE_HOST],
-                name=f"{local_prefix}http.corosync.qdevice_sign_certificate",
-            )
-            .fs.exists(
-                os.path.join(
-                    settings.corosync_qdevice_net_client_certs_dir, "cert9.db"
-                ),
-                return_value=True,
-                name=f"{local_prefix}fs.exists.corosync_certs_db2",
-            )
-            .runner.corosync.qdevice_get_pk12(
-                cert_path=tmp_file_path,
-                output_path=pk12_cert_path,
-                name=f"{local_prefix}runner.corosync.qdevice_get_pk12",
-            )
-            .fs.open(
-                pk12_cert_path,
-                return_value=mock.mock_open(read_data=pk12_cert)(),
-                mode="rb",
-                name=f"{local_prefix}fs.open.pk12_cert_read",
-            )
-            .http.corosync.qdevice_net_client_import_cert_and_key(
-                cert=pk12_cert,
-                node_labels=new_nodes,
-                name=(
-                    f"{local_prefix}http.corosync"
-                    ".qdevice_client_import_cert_and_key"
-                ),
-            )
+        self.config.http.corosync.qdevice_net_sign_certificate(
+            CLUSTER_NAME,
+            cert=cert,
+            signed_cert=b"signed cert",
+            node_labels=[QDEVICE_HOST],
+            name=f"{local_prefix}http.corosync.qdevice_sign_certificate",
+        )
+        self.config.fs.exists(
+            os.path.join(
+                settings.corosync_qdevice_net_client_certs_dir, "cert9.db"
+            ),
+            return_value=True,
+            name=f"{local_prefix}fs.exists.corosync_certs_db2",
+        )
+        self.config.runner.corosync.qdevice_get_pk12(
+            cert_path=tmp_file_path,
+            output_path=pk12_cert_path,
+            name=f"{local_prefix}runner.corosync.qdevice_get_pk12",
+        )
+        self.config.fs.open(
+            pk12_cert_path,
+            return_value=mock.mock_open(read_data=pk12_cert)(),
+            mode="rb",
+            name=f"{local_prefix}fs.open.pk12_cert_read",
+        )
+        self.config.http.corosync.qdevice_net_client_import_cert_and_key(
+            cert=pk12_cert,
+            node_labels=new_nodes,
+            name=(
+                f"{local_prefix}http.corosync"
+                ".qdevice_client_import_cert_and_key"
+            ),
         )
         self.expected_reports.extend(
             [
@@ -159,15 +155,14 @@ class LocalConfig:
         self, corosync_conf_content, existing_nodes, new_nodes
     ):
         local_prefix = "local.distribute_and_reload_corosync_conf."
-        (
-            self.config.http.corosync.set_corosync_conf(
-                corosync_conf_content,
-                node_labels=existing_nodes + new_nodes,
-                name=f"{local_prefix}http.corosync.set_corosync_conf",
-            ).http.corosync.reload_corosync_conf(
-                node_labels=existing_nodes[:1],
-                name=f"{local_prefix}http.corosync.reload_corosync_conf",
-            )
+        self.config.http.corosync.set_corosync_conf(
+            corosync_conf_content,
+            node_labels=existing_nodes + new_nodes,
+            name=f"{local_prefix}http.corosync.set_corosync_conf",
+        )
+        self.config.http.corosync.reload_corosync_conf(
+            node_labels=existing_nodes[:1],
+            name=f"{local_prefix}http.corosync.reload_corosync_conf",
         )
         self.expected_reports.extend(
             [fixture.info(reports.codes.COROSYNC_CONFIG_DISTRIBUTION_STARTED)]
@@ -188,22 +183,20 @@ class LocalConfig:
 
     def atb_needed(self, node_labels):
         local_prefix = "local.atb_needed."
-        (
-            self.config.services.is_installed(
-                "sbd",
-                return_value=True,
-                name=f"{local_prefix}services.is_installed.sbd",
-            )
-            .services.is_enabled(
-                "sbd",
-                return_value=True,
-                name=f"{local_prefix}services.is_enabled.sbd",
-            )
-            .local.read_sbd_config(name_suffix="-atb_needed")
-            .http.corosync.check_corosync_offline(
-                node_labels=node_labels,
-                name=f"{local_prefix}http.corosync.check_corosync_offline",
-            )
+        self.config.services.is_installed(
+            "sbd",
+            return_value=True,
+            name=f"{local_prefix}services.is_installed.sbd",
+        )
+        self.config.services.is_enabled(
+            "sbd",
+            return_value=True,
+            name=f"{local_prefix}services.is_enabled.sbd",
+        )
+        self.config.local.read_sbd_config(name_suffix="-atb_needed")
+        self.config.http.corosync.check_corosync_offline(
+            node_labels=node_labels,
+            name=f"{local_prefix}http.corosync.check_corosync_offline",
         )
         self.expected_reports.extend(
             [
@@ -224,22 +217,20 @@ class LocalConfig:
     def read_sbd_config(self, config_content="", name_suffix=""):
         local_prefix = "local.read_sbd_config."
         mock_file = fixture.get_mock_file(read_data=config_content)
-        (
-            self.config.fs.exists(
-                settings.sbd_config,
-                return_value=True,
-                name=f"{local_prefix}fs.exists.sbd_config{name_suffix}",
-            )
-            .fs.open(
-                settings.sbd_config,
-                return_value=mock_file,
-                name=f"{local_prefix}fs.open.sbd_config_read{name_suffix}",
-            )
-            .fcntl.flock(
-                mock_file,
-                fcntl.LOCK_SH,
-                name=f"{local_prefix}fcntl.flock.sbd_config{name_suffix}",
-            )
+        self.config.fs.exists(
+            settings.sbd_config,
+            return_value=True,
+            name=f"{local_prefix}fs.exists.sbd_config{name_suffix}",
+        )
+        self.config.fs.open(
+            settings.sbd_config,
+            return_value=mock_file,
+            name=f"{local_prefix}fs.open.sbd_config_read{name_suffix}",
+        )
+        self.config.fcntl.flock(
+            mock_file,
+            fcntl.LOCK_SH,
+            name=f"{local_prefix}fcntl.flock.sbd_config{name_suffix}",
         )
 
     def check_sbd(self, node_labels, with_devices=True):
@@ -287,24 +278,22 @@ class LocalConfig:
     def setup_sbd(self, local_config, config_generator, node_labels):
         local_prefix = "local.setup_sbd."
         mock_file = fixture.get_mock_file(read_data=local_config)
-        (
-            self.config.fs.open(
-                settings.sbd_config,
-                return_value=mock_file,
-                name=f"{local_prefix}fs.open.sbd_config",
-            )
-            .fcntl.flock(
-                mock_file,
-                fcntl.LOCK_SH,
-                name=f"{local_prefix}fcntl.flock.sbd_config",
-            )
-            .http.sbd.set_sbd_config(
-                config_generator=config_generator,
-                node_labels=node_labels,
-                name=f"{local_prefix}http.sbd.set_sbd_config",
-            )
-            .http.sbd.enable_sbd(node_labels=node_labels)
+        self.config.fs.open(
+            settings.sbd_config,
+            return_value=mock_file,
+            name=f"{local_prefix}fs.open.sbd_config",
         )
+        self.config.fcntl.flock(
+            mock_file,
+            fcntl.LOCK_SH,
+            name=f"{local_prefix}fcntl.flock.sbd_config",
+        )
+        self.config.http.sbd.set_sbd_config(
+            config_generator=config_generator,
+            node_labels=node_labels,
+            name=f"{local_prefix}http.sbd.set_sbd_config",
+        )
+        self.config.http.sbd.enable_sbd(node_labels=node_labels)
         self.expected_reports.extend(
             [fixture.info(reports.codes.SBD_CONFIG_DISTRIBUTION_STARTED)]
             + [
@@ -343,49 +332,47 @@ class LocalConfig:
         config_content = "authfile = {}\n".format(authfile_path)
         authfile_content = b"booth authfile"
         local_prefix = "local.setup_booth."
-        (
-            self.config.fs.isdir(
-                settings.booth_config_dir,
-                name=f"{local_prefix}fs.isdir.booth_config_dir",
-            )
-            .fs.listdir(
-                settings.booth_config_dir,
-                [config_file, "something", authfile],
-                name=f"{local_prefix}fs.listdir.booth_config_dir",
-            )
-            .fs.isfile(
-                config_path,
-                name=f"{local_prefix}fs.isfile.booth_config_file",
-            )
-            .raw_file.read(
-                file_type_codes.BOOTH_CONFIG,
-                config_path,
-                content=config_content.encode("utf-8"),
-                name=f"{local_prefix}raw_file.read.booth_config_read",
-            )
-            .raw_file.read(
-                file_type_codes.BOOTH_KEY,
-                authfile_path,
-                content=authfile_content,
-                name=f"{local_prefix}raw_file.read.booth_authfile_read",
-            )
-            .http.booth.save_files(
-                files_data=[
-                    dict(
-                        name=config_file,
-                        data=config_content,
-                        is_authfile=False,
-                    ),
-                    dict(
-                        name=authfile,
-                        data=base64.b64encode(authfile_content).decode("utf-8"),
-                        is_authfile=True,
-                    ),
-                ],
-                saved=[config_file, authfile],
-                node_labels=node_labels,
-                name=f"{local_prefix}http.booth.save_files",
-            )
+        self.config.fs.isdir(
+            settings.booth_config_dir,
+            name=f"{local_prefix}fs.isdir.booth_config_dir",
+        )
+        self.config.fs.listdir(
+            settings.booth_config_dir,
+            [config_file, "something", authfile],
+            name=f"{local_prefix}fs.listdir.booth_config_dir",
+        )
+        self.config.fs.isfile(
+            config_path,
+            name=f"{local_prefix}fs.isfile.booth_config_file",
+        )
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_CONFIG,
+            config_path,
+            content=config_content.encode("utf-8"),
+            name=f"{local_prefix}raw_file.read.booth_config_read",
+        )
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_KEY,
+            authfile_path,
+            content=authfile_content,
+            name=f"{local_prefix}raw_file.read.booth_authfile_read",
+        )
+        self.config.http.booth.save_files(
+            files_data=[
+                dict(
+                    name=config_file,
+                    data=config_content,
+                    is_authfile=False,
+                ),
+                dict(
+                    name=authfile,
+                    data=base64.b64encode(authfile_content).decode("utf-8"),
+                    is_authfile=True,
+                ),
+            ],
+            saved=[config_file, authfile],
+            node_labels=node_labels,
+            name=f"{local_prefix}http.booth.save_files",
         )
         self.expected_reports.extend(
             [fixture.info(reports.codes.BOOTH_CONFIG_DISTRIBUTION_STARTED)]
@@ -414,27 +401,25 @@ class LocalConfig:
 
     def no_file_sync(self):
         local_prefix = "local.no_file_sync."
-        (
-            self.config.fs.isfile(
-                settings.corosync_authkey_file,
-                return_value=False,
-                name=f"{local_prefix}fs.isfile.corosync_authkey",
-            )
-            .fs.isfile(
-                settings.pacemaker_authkey_file,
-                return_value=False,
-                name=f"{local_prefix}fs.isfile.pacemaker_authkey",
-            )
-            .fs.isfile(
-                settings.pcsd_dr_config_location,
-                return_value=False,
-                name=f"{local_prefix}fs.isfile.pcsd_disaster_recovery",
-            )
-            .fs.isfile(
-                settings.pcsd_settings_conf_location,
-                return_value=False,
-                name=f"{local_prefix}fs.isfile.pcsd_settings",
-            )
+        self.config.fs.isfile(
+            settings.corosync_authkey_file,
+            return_value=False,
+            name=f"{local_prefix}fs.isfile.corosync_authkey",
+        )
+        self.config.fs.isfile(
+            settings.pacemaker_authkey_file,
+            return_value=False,
+            name=f"{local_prefix}fs.isfile.pacemaker_authkey",
+        )
+        self.config.fs.isfile(
+            settings.pcsd_dr_config_location,
+            return_value=False,
+            name=f"{local_prefix}fs.isfile.pcsd_disaster_recovery",
+        )
+        self.config.fs.isfile(
+            settings.pcsd_settings_conf_location,
+            return_value=False,
+            name=f"{local_prefix}fs.isfile.pcsd_settings",
         )
 
     def files_sync(self, node_labels):
@@ -449,62 +434,58 @@ class LocalConfig:
             "pcs_settings.conf",
         ]
         local_prefix = "local.files_sync."
-        (
-            self.config.fs.isfile(
-                settings.corosync_authkey_file,
-                return_value=True,
-                name=f"{local_prefix}fs.isfile.corosync_authkey",
-            )
-            .fs.open(
-                settings.corosync_authkey_file,
-                return_value=mock.mock_open(
-                    read_data=corosync_authkey_content
-                )(),
-                mode="rb",
-                name=f"{local_prefix}fs.open.corosync_authkey_read",
-            )
-            .fs.isfile(
-                settings.pacemaker_authkey_file,
-                return_value=True,
-                name=f"{local_prefix}fs.isfile.pacemaker_authkey",
-            )
-            .fs.open(
-                settings.pacemaker_authkey_file,
-                return_value=mock.mock_open(read_data=pcmk_authkey_content)(),
-                mode="rb",
-                name=f"{local_prefix}fs.open.pcmk_authkey_read",
-            )
-            .fs.isfile(
-                settings.pcsd_dr_config_location,
-                return_value=True,
-                name=f"{local_prefix}fs.isfile.pcsd_disaster_recovery",
-            )
-            .fs.open(
-                settings.pcsd_dr_config_location,
-                return_value=(
-                    mock.mock_open(read_data=pcs_disaster_recovery_content)()
-                ),
-                mode="rb",
-                name=f"{local_prefix}fs.open.pcsd_disaster_recovery_read",
-            )
-            .fs.isfile(
-                settings.pcsd_settings_conf_location,
-                return_value=True,
-                name=f"{local_prefix}fs.isfile.pcsd_settings",
-            )
-            .fs.open(
-                settings.pcsd_settings_conf_location,
-                return_value=mock.mock_open(read_data=pcs_settings_content)(),
-                name=f"{local_prefix}fs.open.pcsd_settings_conf_read",
-            )
-            .http.files.put_files(
-                node_labels=node_labels,
-                pcmk_authkey=pcmk_authkey_content,
-                corosync_authkey=corosync_authkey_content,
-                pcs_disaster_recovery_conf=pcs_disaster_recovery_content,
-                pcs_settings_conf=pcs_settings_content,
-                name=f"{local_prefix}http.files.put_files",
-            )
+        self.config.fs.isfile(
+            settings.corosync_authkey_file,
+            return_value=True,
+            name=f"{local_prefix}fs.isfile.corosync_authkey",
+        )
+        self.config.fs.open(
+            settings.corosync_authkey_file,
+            return_value=mock.mock_open(read_data=corosync_authkey_content)(),
+            mode="rb",
+            name=f"{local_prefix}fs.open.corosync_authkey_read",
+        )
+        self.config.fs.isfile(
+            settings.pacemaker_authkey_file,
+            return_value=True,
+            name=f"{local_prefix}fs.isfile.pacemaker_authkey",
+        )
+        self.config.fs.open(
+            settings.pacemaker_authkey_file,
+            return_value=mock.mock_open(read_data=pcmk_authkey_content)(),
+            mode="rb",
+            name=f"{local_prefix}fs.open.pcmk_authkey_read",
+        )
+        self.config.fs.isfile(
+            settings.pcsd_dr_config_location,
+            return_value=True,
+            name=f"{local_prefix}fs.isfile.pcsd_disaster_recovery",
+        )
+        self.config.fs.open(
+            settings.pcsd_dr_config_location,
+            return_value=(
+                mock.mock_open(read_data=pcs_disaster_recovery_content)()
+            ),
+            mode="rb",
+            name=f"{local_prefix}fs.open.pcsd_disaster_recovery_read",
+        )
+        self.config.fs.isfile(
+            settings.pcsd_settings_conf_location,
+            return_value=True,
+            name=f"{local_prefix}fs.isfile.pcsd_settings",
+        )
+        self.config.fs.open(
+            settings.pcsd_settings_conf_location,
+            return_value=mock.mock_open(read_data=pcs_settings_content)(),
+            name=f"{local_prefix}fs.open.pcsd_settings_conf_read",
+        )
+        self.config.http.files.put_files(
+            node_labels=node_labels,
+            pcmk_authkey=pcmk_authkey_content,
+            corosync_authkey=corosync_authkey_content,
+            pcs_disaster_recovery_conf=pcs_disaster_recovery_content,
+            pcs_settings_conf=pcs_settings_content,
+            name=f"{local_prefix}http.files.put_files",
         )
         self.expected_reports.extend(
             [
@@ -527,52 +508,63 @@ class LocalConfig:
 
     def pcsd_ssl_cert_sync_disabled(self):
         local_prefix = "local.pcsd_ssl_cert_sync_disabled."
-        (
-            self.config.fs.isfile(
-                settings.pcsd_config,
-                name=f"{local_prefix}fs.isfile.pcsd_config",
-            ).fs.open(
-                settings.pcsd_config,
-                # Tests for other cases are in SslCertSync class.
-                mock.mock_open(
-                    read_data="PCSD_SSL_CERT_SYNC_ENABLED=false\n"
-                )(),
-                name=f"{local_prefix}fs.open.pcsd_config",
-            )
+        self.config.fs.isfile(
+            settings.pcsd_config,
+            name=f"{local_prefix}fs.isfile.pcsd_config",
+        )
+        self.config.fs.open(
+            settings.pcsd_config,
+            # Tests for other cases are in SslCertSync class.
+            mock.mock_open(read_data="PCSD_SSL_CERT_SYNC_ENABLED=false\n")(),
+            name=f"{local_prefix}fs.open.pcsd_config",
         )
 
     def pcsd_ssl_cert_sync_enabled(self):
         local_prefix = "local.pcsd_ssl_cert_sync_enabled."
-        (
-            self.config.fs.isfile(
-                settings.pcsd_config,
-                name=f"{local_prefix}fs.isfile.pcsd_config",
-            ).fs.open(
-                settings.pcsd_config,
-                # Tests for other cases are in SslCertSync class.
-                mock.mock_open(read_data="PCSD_SSL_CERT_SYNC_ENABLED=true\n")(),
-                name=f"{local_prefix}fs.open.pcsd_config",
-            )
+        self.config.fs.isfile(
+            settings.pcsd_config,
+            name=f"{local_prefix}fs.isfile.pcsd_config",
+        )
+        self.config.fs.open(
+            settings.pcsd_config,
+            # Tests for other cases are in SslCertSync class.
+            mock.mock_open(read_data="PCSD_SSL_CERT_SYNC_ENABLED=true\n")(),
+            name=f"{local_prefix}fs.open.pcsd_config",
+        )
+
+    def destroy_cluster(self, new_nodes):
+        self.config.http.host.cluster_destroy(
+            node_labels=new_nodes,
+        )
+        self.expected_reports.extend(
+            [
+                fixture.info(
+                    reports.codes.CLUSTER_DESTROY_STARTED,
+                    host_name_list=sorted(new_nodes),
+                ),
+            ]
+            + [
+                fixture.info(reports.codes.CLUSTER_DESTROY_SUCCESS, node=node)
+                for node in new_nodes
+            ]
         )
 
     def pcsd_ssl_cert_sync(self, node_labels):
         local_prefix = "local.pcsd_ssl_cert_sync."
         pcsd_ssl_cert = "pcsd ssl cert"
         pcsd_ssl_key = "pcsd ssl key"
-        (
-            self.config.fs.open(
-                settings.pcsd_cert_location,
-                mock.mock_open(read_data=pcsd_ssl_cert)(),
-                name=f"{local_prefix}fs.open.pcsd_ssl_cert",
-            )
-            .fs.open(
-                settings.pcsd_key_location,
-                mock.mock_open(read_data=pcsd_ssl_key)(),
-                name=f"{local_prefix}fs.open.pcsd_ssl_key",
-            )
-            .http.host.send_pcsd_cert(
-                cert=pcsd_ssl_cert, key=pcsd_ssl_key, node_labels=node_labels
-            )
+        self.config.fs.open(
+            settings.pcsd_cert_location,
+            mock.mock_open(read_data=pcsd_ssl_cert)(),
+            name=f"{local_prefix}fs.open.pcsd_ssl_cert",
+        )
+        self.config.fs.open(
+            settings.pcsd_key_location,
+            mock.mock_open(read_data=pcsd_ssl_key)(),
+            name=f"{local_prefix}fs.open.pcsd_ssl_key",
+        )
+        self.config.http.host.send_pcsd_cert(
+            cert=pcsd_ssl_cert, key=pcsd_ssl_key, node_labels=node_labels
         )
         self.expected_reports.extend(
             [
@@ -662,41 +654,40 @@ class AddNodesSuccessMinimal(TestCase):
         self.config.env.set_known_nodes(self.new_nodes + self.existing_nodes)
         self.config.local.set_expected_reports_list(self.expected_reports)
         is_sbd_installed_name = "_services.is_installed.sbd.False"
-        (
-            self.config.services.is_enabled("sbd", return_value=False)
-            .corosync_conf.load_content(
-                corosync_conf_fixture(
-                    existing_corosync_nodes, get_two_node(existing_nodes_num)
-                )
+        self.config.services.is_enabled("sbd", return_value=False)
+        self.config.corosync_conf.load_content(
+            corosync_conf_fixture(
+                existing_corosync_nodes, get_two_node(existing_nodes_num)
             )
-            .runner.cib.load()
-            .http.host.check_auth(node_labels=self.existing_nodes)
-            .services.is_installed(
-                "sbd", return_value=False, name=is_sbd_installed_name
-            )
-            .local.get_host_info(self.new_nodes)
-            .local.pcsd_ssl_cert_sync_disabled()
-            .http.host.update_known_hosts(
-                node_labels=self.new_nodes,
-                to_add_hosts=self.existing_nodes + self.new_nodes,
-            )
-            .local.disable_sbd(self.new_nodes)
-            .fs.isdir(settings.booth_config_dir, return_value=False)
-            .local.no_file_sync()
-            .local.distribute_and_reload_corosync_conf(
-                corosync_conf_fixture(
-                    existing_corosync_nodes
-                    + [
-                        node_fixture(node, i)
-                        for i, node in enumerate(
-                            self.new_nodes, existing_nodes_num + 1
-                        )
-                    ],
-                    get_two_node(existing_nodes_num + new_nodes_num),
-                ),
-                self.existing_nodes,
-                self.new_nodes,
-            )
+        )
+        self.config.runner.cib.load()
+        self.config.http.host.check_auth(node_labels=self.existing_nodes)
+        self.config.services.is_installed(
+            "sbd", return_value=False, name=is_sbd_installed_name
+        )
+        self.config.local.get_host_info(self.new_nodes)
+        self.config.local.pcsd_ssl_cert_sync_disabled()
+        self.config.local.destroy_cluster(self.new_nodes)
+        self.config.http.host.update_known_hosts(
+            node_labels=self.new_nodes,
+            to_add_hosts=self.existing_nodes + self.new_nodes,
+        )
+        self.config.local.disable_sbd(self.new_nodes)
+        self.config.fs.isdir(settings.booth_config_dir, return_value=False)
+        self.config.local.no_file_sync()
+        self.config.local.distribute_and_reload_corosync_conf(
+            corosync_conf_fixture(
+                existing_corosync_nodes
+                + [
+                    node_fixture(node, i)
+                    for i, node in enumerate(
+                        self.new_nodes, existing_nodes_num + 1
+                    )
+                ],
+                get_two_node(existing_nodes_num + new_nodes_num),
+            ),
+            self.existing_nodes,
+            self.new_nodes,
         )
 
         if (existing_nodes_num + new_nodes_num) % 2 != 0:
@@ -854,11 +845,8 @@ class AddNodesSuccessMinimal(TestCase):
 
     def _test_start_wait(self, existing, new):
         self.set_up(existing, new)
-        (
-            self.config.http.host.start_cluster(
-                node_labels=self.new_nodes
-            ).http.host.check_pacemaker_started(self.new_nodes)
-        )
+        self.config.http.host.start_cluster(node_labels=self.new_nodes)
+        self.config.http.host.check_pacemaker_started(self.new_nodes)
 
         with mock.patch("time.sleep", lambda secs: None):
             cluster.add_nodes(
@@ -919,11 +907,8 @@ class AddNodesSuccessMinimal(TestCase):
 
     def _test_enable_start(self, existing, new):
         self.set_up(existing, new)
-        (
-            self.config.http.host.enable_cluster(
-                node_labels=self.new_nodes
-            ).http.host.start_cluster(node_labels=self.new_nodes)
-        )
+        self.config.http.host.enable_cluster(node_labels=self.new_nodes)
+        self.config.http.host.start_cluster(node_labels=self.new_nodes)
 
         cluster.add_nodes(
             self.env_assist.get_env(),
@@ -981,11 +966,9 @@ class AddNodesSuccessMinimal(TestCase):
 
     def _test_enable_start_wait(self, existing, new):
         self.set_up(existing, new)
-        (
-            self.config.http.host.enable_cluster(node_labels=self.new_nodes)
-            .http.host.start_cluster(node_labels=self.new_nodes)
-            .http.host.check_pacemaker_started(self.new_nodes)
-        )
+        self.config.http.host.enable_cluster(node_labels=self.new_nodes)
+        self.config.http.host.start_cluster(node_labels=self.new_nodes)
+        self.config.http.host.check_pacemaker_started(self.new_nodes)
         with mock.patch("time.sleep", lambda secs: None):
             cluster.add_nodes(
                 self.env_assist.get_env(),
@@ -1110,20 +1093,18 @@ class SslCertSync(TestCase):
         ]
 
         patch_getaddrinfo(self, self.new_nodes)
-        (
-            self.config.local.set_expected_reports_list(self.expected_reports)
-            .env.set_known_nodes(
-                self.existing_nodes + self.new_nodes + [QDEVICE_HOST]
-            )
-            .services.is_enabled("sbd", return_value=False)
-            .corosync_conf.load_content(
-                corosync_conf_fixture(self.existing_corosync_nodes)
-            )
-            .runner.cib.load()
-            .http.host.check_auth(node_labels=self.existing_nodes)
-            .services.is_installed("sbd", return_value=False)
-            .local.get_host_info(self.new_nodes)
+        self.config.local.set_expected_reports_list(self.expected_reports)
+        self.config.env.set_known_nodes(
+            self.existing_nodes + self.new_nodes + [QDEVICE_HOST]
         )
+        self.config.services.is_enabled("sbd", return_value=False)
+        self.config.corosync_conf.load_content(
+            corosync_conf_fixture(self.existing_corosync_nodes)
+        )
+        self.config.runner.cib.load()
+        self.config.http.host.check_auth(node_labels=self.existing_nodes)
+        self.config.services.is_installed("sbd", return_value=False)
+        self.config.local.get_host_info(self.new_nodes)
 
         self.expected_reports.extend(
             [
@@ -1140,27 +1121,26 @@ class SslCertSync(TestCase):
         )
 
     def _assert_certs_not_synced(self):
-        (
-            self.config.http.host.update_known_hosts(
-                node_labels=self.new_nodes,
-                to_add_hosts=self.existing_nodes + self.new_nodes,
-            )
-            .local.disable_sbd(self.new_nodes)
-            .fs.isdir(settings.booth_config_dir, return_value=False)
-            .local.no_file_sync()
-            .local.distribute_and_reload_corosync_conf(
-                corosync_conf_fixture(
-                    self.existing_corosync_nodes
-                    + [
-                        node_fixture(node, node_id)
-                        for node_id, node in enumerate(
-                            self.new_nodes, len(self.existing_nodes) + 1
-                        )
-                    ],
-                ),
-                self.existing_nodes,
-                self.new_nodes,
-            )
+        self.config.local.destroy_cluster(self.new_nodes)
+        self.config.http.host.update_known_hosts(
+            node_labels=self.new_nodes,
+            to_add_hosts=self.existing_nodes + self.new_nodes,
+        )
+        self.config.local.disable_sbd(self.new_nodes)
+        self.config.fs.isdir(settings.booth_config_dir, return_value=False)
+        self.config.local.no_file_sync()
+        self.config.local.distribute_and_reload_corosync_conf(
+            corosync_conf_fixture(
+                self.existing_corosync_nodes
+                + [
+                    node_fixture(node, node_id)
+                    for node_id, node in enumerate(
+                        self.new_nodes, len(self.existing_nodes) + 1
+                    )
+                ],
+            ),
+            self.existing_nodes,
+            self.new_nodes,
         )
 
         cluster.add_nodes(
@@ -1179,28 +1159,24 @@ class SslCertSync(TestCase):
         self._assert_certs_not_synced()
 
     def test_certs_not_synced_if_pcsd_config_empty(self):
-        (
-            self.config.fs.isfile(
-                settings.pcsd_config, name="fs.isfile.pcsd_config"
-            ).fs.open(
-                settings.pcsd_config,
-                mock.mock_open(read_data="")(),
-                name="fs.open.pcsd_config",
-            )
+        self.config.fs.isfile(
+            settings.pcsd_config, name="fs.isfile.pcsd_config"
+        )
+        self.config.fs.open(
+            settings.pcsd_config,
+            mock.mock_open(read_data="")(),
+            name="fs.open.pcsd_config",
         )
         self._assert_certs_not_synced()
 
     def test_certs_not_synced_if_pcsd_config_commented(self):
-        (
-            self.config.fs.isfile(
-                settings.pcsd_config, name="fs.isfile.pcsd_config"
-            ).fs.open(
-                settings.pcsd_config,
-                mock.mock_open(
-                    read_data="#PCSD_SSL_CERT_SYNC_ENABLED=true\n"
-                )(),
-                name="fs.open.pcsd_config",
-            )
+        self.config.fs.isfile(
+            settings.pcsd_config, name="fs.isfile.pcsd_config"
+        )
+        self.config.fs.open(
+            settings.pcsd_config,
+            mock.mock_open(read_data="#PCSD_SSL_CERT_SYNC_ENABLED=true\n")(),
+            name="fs.open.pcsd_config",
         )
         self._assert_certs_not_synced()
 
@@ -1218,53 +1194,52 @@ class AddNodeFull(TestCase):
         patch_getaddrinfo(
             self, _flat_list([_get_addrs(node) for node in self.new_nodes])
         )
-        (
-            self.config.local.set_expected_reports_list(self.expected_reports)
-            .env.set_known_nodes(
-                self.existing_nodes + self.new_nodes + [QDEVICE_HOST]
-            )
-            .services.is_enabled("sbd", return_value=True)
+        self.config.local.set_expected_reports_list(self.expected_reports)
+        self.config.env.set_known_nodes(
+            self.existing_nodes + self.new_nodes + [QDEVICE_HOST]
         )
+        self.config.services.is_enabled("sbd", return_value=True)
 
     @mock.patch("pcs.lib.corosync.qdevice_net.get_tmp_file")
     def test_with_qdevice(self, mock_get_tmp_file):
         sbd_config = "SBD_DEVICE=/device\n"
-        (
-            self.config.corosync_conf.load_content(
-                corosync_conf_fixture(
-                    self.existing_corosync_nodes,
-                    qdevice_net=True,
-                )
+        self.config.corosync_conf.load_content(
+            corosync_conf_fixture(
+                self.existing_corosync_nodes,
+                qdevice_net=True,
             )
-            .runner.cib.load()
-            .local.read_sbd_config(sbd_config)
-            .http.host.check_auth(node_labels=self.existing_nodes)
-            .local.get_host_info(self.new_nodes)
-            .local.check_sbd(self.new_nodes)
-            .local.pcsd_ssl_cert_sync_enabled()
-            .http.host.update_known_hosts(
-                node_labels=self.new_nodes,
-                to_add_hosts=self.existing_nodes + self.new_nodes,
-            )
-            .local.setup_qdevice(mock_get_tmp_file, self.new_nodes)
-            .local.setup_sbd(sbd_config, sbd_config_generator, self.new_nodes)
-            .local.setup_booth(self.new_nodes)
-            .local.files_sync(self.new_nodes)
-            .local.pcsd_ssl_cert_sync(self.new_nodes)
-            .local.distribute_and_reload_corosync_conf(
-                corosync_conf_fixture(
-                    self.existing_corosync_nodes
-                    + [
-                        corosync_node_fixture(node_id, node, _get_addrs(node))
-                        for node_id, node in enumerate(
-                            self.new_nodes, len(self.existing_nodes) + 1
-                        )
-                    ],
-                    qdevice_net=True,
-                ),
-                self.existing_nodes,
-                self.new_nodes,
-            )
+        )
+        self.config.runner.cib.load()
+        self.config.local.read_sbd_config(sbd_config)
+        self.config.http.host.check_auth(node_labels=self.existing_nodes)
+        self.config.local.get_host_info(self.new_nodes)
+        self.config.local.check_sbd(self.new_nodes)
+        self.config.local.pcsd_ssl_cert_sync_enabled()
+        self.config.local.destroy_cluster(self.new_nodes)
+        self.config.http.host.update_known_hosts(
+            node_labels=self.new_nodes,
+            to_add_hosts=self.existing_nodes + self.new_nodes,
+        )
+        self.config.local.setup_qdevice(mock_get_tmp_file, self.new_nodes)
+        self.config.local.setup_sbd(
+            sbd_config, sbd_config_generator, self.new_nodes
+        )
+        self.config.local.setup_booth(self.new_nodes)
+        self.config.local.files_sync(self.new_nodes)
+        self.config.local.pcsd_ssl_cert_sync(self.new_nodes)
+        self.config.local.distribute_and_reload_corosync_conf(
+            corosync_conf_fixture(
+                self.existing_corosync_nodes
+                + [
+                    corosync_node_fixture(node_id, node, _get_addrs(node))
+                    for node_id, node in enumerate(
+                        self.new_nodes, len(self.existing_nodes) + 1
+                    )
+                ],
+                qdevice_net=True,
+            ),
+            self.existing_nodes,
+            self.new_nodes,
         )
 
         cluster.add_nodes(
@@ -1284,47 +1259,43 @@ class AddNodeFull(TestCase):
 
     def test_watchdog_not_supported(self):
         sbd_config = "SBD_DEVICE=/device\n"
-        (
-            self.config.corosync_conf.load_content(
-                corosync_conf_fixture(self.existing_corosync_nodes)
-            )
-            .runner.cib.load()
-            .local.read_sbd_config(sbd_config)
-            .http.host.check_auth(node_labels=self.existing_nodes)
-            .local.atb_needed(self.existing_nodes)
-            .local.get_host_info(self.new_nodes)
-            .http.sbd.check_sbd(
-                communication_list=[
-                    dict(
-                        label=node,
-                        output=json.dumps(
-                            {
-                                "sbd": {
-                                    "installed": True,
-                                },
-                                "watchdog": {
-                                    "exist": True,
-                                    "path": _get_watchdog(node),
-                                    "is_supported": False,
-                                },
-                                "device_list": [
-                                    dict(
-                                        path=dev, exist=True, block_device=True
-                                    )
-                                    for dev in _get_devices(node)
-                                ],
-                            }
-                        ),
-                        param_list=[
-                            ("watchdog", _get_watchdog(node)),
-                            ("device_list", json.dumps(_get_devices(node))),
-                        ],
-                    )
-                    for node in self.new_nodes
-                ],
-            )
-            .local.pcsd_ssl_cert_sync_enabled()
+        self.config.corosync_conf.load_content(
+            corosync_conf_fixture(self.existing_corosync_nodes)
         )
+        self.config.runner.cib.load()
+        self.config.local.read_sbd_config(sbd_config)
+        self.config.http.host.check_auth(node_labels=self.existing_nodes)
+        self.config.local.atb_needed(self.existing_nodes)
+        self.config.local.get_host_info(self.new_nodes)
+        self.config.http.sbd.check_sbd(
+            communication_list=[
+                dict(
+                    label=node,
+                    output=json.dumps(
+                        {
+                            "sbd": {
+                                "installed": True,
+                            },
+                            "watchdog": {
+                                "exist": True,
+                                "path": _get_watchdog(node),
+                                "is_supported": False,
+                            },
+                            "device_list": [
+                                dict(path=dev, exist=True, block_device=True)
+                                for dev in _get_devices(node)
+                            ],
+                        }
+                    ),
+                    param_list=[
+                        ("watchdog", _get_watchdog(node)),
+                        ("device_list", json.dumps(_get_devices(node))),
+                    ],
+                )
+                for node in self.new_nodes
+            ],
+        )
+        self.config.local.pcsd_ssl_cert_sync_enabled()
 
         self.env_assist.assert_raise_library_error(
             lambda: cluster.add_nodes(
@@ -1356,63 +1327,62 @@ class AddNodeFull(TestCase):
 
     def test_no_watchdog_validation(self):
         sbd_config = "SBD_DEVICE=/device\n"
-        (
-            self.config.corosync_conf.load_content(
-                corosync_conf_fixture(self.existing_corosync_nodes)
-            )
-            .runner.cib.load()
-            .local.read_sbd_config(sbd_config)
-            .http.host.check_auth(node_labels=self.existing_nodes)
-            .local.atb_needed(self.existing_nodes)
-            .local.get_host_info(self.new_nodes)
-            .http.sbd.check_sbd(
-                communication_list=[
-                    dict(
-                        label=node,
-                        output=json.dumps(
-                            {
-                                "sbd": {
-                                    "installed": True,
-                                },
-                                "device_list": [
-                                    dict(
-                                        path=dev, exist=True, block_device=True
-                                    )
-                                    for dev in _get_devices(node)
-                                ],
-                            }
-                        ),
-                        param_list=[
-                            ("watchdog", ""),
-                            ("device_list", json.dumps(_get_devices(node))),
-                        ],
-                    )
-                    for node in self.new_nodes
-                ],
-            )
-            .local.pcsd_ssl_cert_sync_enabled()
-            .http.host.update_known_hosts(
-                node_labels=self.new_nodes,
-                to_add_hosts=self.existing_nodes + self.new_nodes,
-            )
-            .local.setup_sbd(sbd_config, sbd_config_generator, self.new_nodes)
-            .fs.isdir(settings.booth_config_dir, return_value=False)
-            .local.no_file_sync()
-            .local.pcsd_ssl_cert_sync(self.new_nodes)
-            .local.distribute_and_reload_corosync_conf(
-                corosync_conf_fixture(
-                    self.existing_corosync_nodes
-                    + [
-                        corosync_node_fixture(node_id, node, _get_addrs(node))
-                        for node_id, node in enumerate(
-                            self.new_nodes, len(self.existing_nodes) + 1
-                        )
+        self.config.corosync_conf.load_content(
+            corosync_conf_fixture(self.existing_corosync_nodes)
+        )
+        self.config.runner.cib.load()
+        self.config.local.read_sbd_config(sbd_config)
+        self.config.http.host.check_auth(node_labels=self.existing_nodes)
+        self.config.local.atb_needed(self.existing_nodes)
+        self.config.local.get_host_info(self.new_nodes)
+        self.config.http.sbd.check_sbd(
+            communication_list=[
+                dict(
+                    label=node,
+                    output=json.dumps(
+                        {
+                            "sbd": {
+                                "installed": True,
+                            },
+                            "device_list": [
+                                dict(path=dev, exist=True, block_device=True)
+                                for dev in _get_devices(node)
+                            ],
+                        }
+                    ),
+                    param_list=[
+                        ("watchdog", ""),
+                        ("device_list", json.dumps(_get_devices(node))),
                     ],
-                    [("auto_tie_breaker", "1")],
-                ),
-                self.existing_nodes,
-                self.new_nodes,
-            )
+                )
+                for node in self.new_nodes
+            ],
+        )
+        self.config.local.pcsd_ssl_cert_sync_enabled()
+        self.config.local.destroy_cluster(self.new_nodes)
+        self.config.http.host.update_known_hosts(
+            node_labels=self.new_nodes,
+            to_add_hosts=self.existing_nodes + self.new_nodes,
+        )
+        self.config.local.setup_sbd(
+            sbd_config, sbd_config_generator, self.new_nodes
+        )
+        self.config.fs.isdir(settings.booth_config_dir, return_value=False)
+        self.config.local.no_file_sync()
+        self.config.local.pcsd_ssl_cert_sync(self.new_nodes)
+        self.config.local.distribute_and_reload_corosync_conf(
+            corosync_conf_fixture(
+                self.existing_corosync_nodes
+                + [
+                    corosync_node_fixture(node_id, node, _get_addrs(node))
+                    for node_id, node in enumerate(
+                        self.new_nodes, len(self.existing_nodes) + 1
+                    )
+                ],
+                [("auto_tie_breaker", "1")],
+            ),
+            self.existing_nodes,
+            self.new_nodes,
         )
 
         cluster.add_nodes(
@@ -1443,43 +1413,42 @@ class AddNodeFull(TestCase):
 
     def test_atb_needed(self):
         sbd_config = ""
-        (
-            self.config.corosync_conf.load_content(
-                corosync_conf_fixture(self.existing_corosync_nodes)
-            )
-            .runner.cib.load()
-            .local.read_sbd_config()
-            .http.host.check_auth(node_labels=self.existing_nodes)
-            .local.atb_needed(self.existing_nodes)
-            .local.get_host_info(self.new_nodes)
-            .local.check_sbd(self.new_nodes, with_devices=False)
-            .local.pcsd_ssl_cert_sync_enabled()
-            .http.host.update_known_hosts(
-                node_labels=self.new_nodes,
-                to_add_hosts=self.existing_nodes + self.new_nodes,
-            )
-            .local.setup_sbd(
-                sbd_config,
-                lambda node: sbd_config_generator(node, with_devices=False),
-                self.new_nodes,
-            )
-            .local.setup_booth(self.new_nodes)
-            .local.files_sync(self.new_nodes)
-            .local.pcsd_ssl_cert_sync(self.new_nodes)
-            .local.distribute_and_reload_corosync_conf(
-                corosync_conf_fixture(
-                    self.existing_corosync_nodes
-                    + [
-                        corosync_node_fixture(node_id, node, _get_addrs(node))
-                        for node_id, node in enumerate(
-                            self.new_nodes, len(self.existing_nodes) + 1
-                        )
-                    ],
-                    [("auto_tie_breaker", "1")],
-                ),
-                self.existing_nodes,
-                self.new_nodes,
-            )
+        self.config.corosync_conf.load_content(
+            corosync_conf_fixture(self.existing_corosync_nodes)
+        )
+        self.config.runner.cib.load()
+        self.config.local.read_sbd_config()
+        self.config.http.host.check_auth(node_labels=self.existing_nodes)
+        self.config.local.atb_needed(self.existing_nodes)
+        self.config.local.get_host_info(self.new_nodes)
+        self.config.local.check_sbd(self.new_nodes, with_devices=False)
+        self.config.local.pcsd_ssl_cert_sync_enabled()
+        self.config.local.destroy_cluster(self.new_nodes)
+        self.config.http.host.update_known_hosts(
+            node_labels=self.new_nodes,
+            to_add_hosts=self.existing_nodes + self.new_nodes,
+        )
+        self.config.local.setup_sbd(
+            sbd_config,
+            lambda node: sbd_config_generator(node, with_devices=False),
+            self.new_nodes,
+        )
+        self.config.local.setup_booth(self.new_nodes)
+        self.config.local.files_sync(self.new_nodes)
+        self.config.local.pcsd_ssl_cert_sync(self.new_nodes)
+        self.config.local.distribute_and_reload_corosync_conf(
+            corosync_conf_fixture(
+                self.existing_corosync_nodes
+                + [
+                    corosync_node_fixture(node_id, node, _get_addrs(node))
+                    for node_id, node in enumerate(
+                        self.new_nodes, len(self.existing_nodes) + 1
+                    )
+                ],
+                [("auto_tie_breaker", "1")],
+            ),
+            self.existing_nodes,
+            self.new_nodes,
         )
 
         cluster.add_nodes(
@@ -1509,37 +1478,36 @@ class FailureReloadCorosyncConf(TestCase):
         ]
         self.config.env.set_known_nodes(self.existing_nodes + self.new_nodes)
         self.config.local.set_expected_reports_list(self.expected_reports)
-        (
-            self.config.services.is_enabled("sbd", return_value=False)
-            .corosync_conf.load_content(
-                corosync_conf_fixture(existing_corosync_nodes)
-            )
-            .runner.cib.load()
-            .http.host.check_auth(
-                node_labels=self.existing_nodes,
-            )
-            .services.is_installed("sbd", return_value=False)
-            .local.get_host_info(self.new_nodes)
-            .local.pcsd_ssl_cert_sync_disabled()
-            .http.host.update_known_hosts(
-                node_labels=self.new_nodes,
-                to_add_hosts=self.existing_nodes + self.new_nodes,
-            )
-            .local.disable_sbd(self.new_nodes)
-            .fs.isdir(settings.booth_config_dir, return_value=False)
-            .local.no_file_sync()
-            .http.corosync.set_corosync_conf(
-                corosync_conf_fixture(
-                    existing_corosync_nodes
-                    + [
-                        node_fixture(node, node_id)
-                        for node_id, node in enumerate(
-                            self.new_nodes, len(self.existing_nodes) + 1
-                        )
-                    ]
-                ),
-                node_labels=self.existing_nodes + self.new_nodes,
-            )
+        self.config.services.is_enabled("sbd", return_value=False)
+        self.config.corosync_conf.load_content(
+            corosync_conf_fixture(existing_corosync_nodes)
+        )
+        self.config.runner.cib.load()
+        self.config.http.host.check_auth(
+            node_labels=self.existing_nodes,
+        )
+        self.config.services.is_installed("sbd", return_value=False)
+        self.config.local.get_host_info(self.new_nodes)
+        self.config.local.pcsd_ssl_cert_sync_disabled()
+        self.config.local.destroy_cluster(self.new_nodes)
+        self.config.http.host.update_known_hosts(
+            node_labels=self.new_nodes,
+            to_add_hosts=self.existing_nodes + self.new_nodes,
+        )
+        self.config.local.disable_sbd(self.new_nodes)
+        self.config.fs.isdir(settings.booth_config_dir, return_value=False)
+        self.config.local.no_file_sync()
+        self.config.http.corosync.set_corosync_conf(
+            corosync_conf_fixture(
+                existing_corosync_nodes
+                + [
+                    node_fixture(node, node_id)
+                    for node_id, node in enumerate(
+                        self.new_nodes, len(self.existing_nodes) + 1
+                    )
+                ]
+            ),
+            node_labels=self.existing_nodes + self.new_nodes,
         )
         self.expected_reports.extend(
             [
@@ -1791,26 +1759,25 @@ class FailureCorosyncConfDistribution(TestCase):
         ]
         self.config.env.set_known_nodes(self.existing_nodes + self.new_nodes)
         self.config.local.set_expected_reports_list(self.expected_reports)
-        (
-            self.config.services.is_enabled("sbd", return_value=False)
-            .corosync_conf.load_content(
-                corosync_conf_fixture(existing_corosync_nodes)
-            )
-            .runner.cib.load()
-            .http.host.check_auth(
-                node_labels=self.existing_nodes,
-            )
-            .services.is_installed("sbd", return_value=False)
-            .local.get_host_info(self.new_nodes)
-            .local.pcsd_ssl_cert_sync_disabled()
-            .http.host.update_known_hosts(
-                node_labels=self.new_nodes,
-                to_add_hosts=self.existing_nodes + self.new_nodes,
-            )
-            .local.disable_sbd(self.new_nodes)
-            .fs.isdir(settings.booth_config_dir, return_value=False)
-            .local.no_file_sync()
+        self.config.services.is_enabled("sbd", return_value=False)
+        self.config.corosync_conf.load_content(
+            corosync_conf_fixture(existing_corosync_nodes)
         )
+        self.config.runner.cib.load()
+        self.config.http.host.check_auth(
+            node_labels=self.existing_nodes,
+        )
+        self.config.services.is_installed("sbd", return_value=False)
+        self.config.local.get_host_info(self.new_nodes)
+        self.config.local.pcsd_ssl_cert_sync_disabled()
+        self.config.local.destroy_cluster(self.new_nodes)
+        self.config.http.host.update_known_hosts(
+            node_labels=self.new_nodes,
+            to_add_hosts=self.existing_nodes + self.new_nodes,
+        )
+        self.config.local.disable_sbd(self.new_nodes)
+        self.config.fs.isdir(settings.booth_config_dir, return_value=False)
+        self.config.local.no_file_sync()
         self.expected_reports.extend(
             [
                 fixture.info(
@@ -1993,26 +1960,25 @@ class FailurePcsdSslCertSync(TestCase):
         ]
         self.config.env.set_known_nodes(self.existing_nodes + self.new_nodes)
         self.config.local.set_expected_reports_list(self.expected_reports)
-        (
-            self.config.services.is_enabled("sbd", return_value=False)
-            .corosync_conf.load_content(
-                corosync_conf_fixture(existing_corosync_nodes)
-            )
-            .runner.cib.load()
-            .http.host.check_auth(
-                node_labels=self.existing_nodes,
-            )
-            .services.is_installed("sbd", return_value=False)
-            .local.get_host_info(self.new_nodes)
-            .local.pcsd_ssl_cert_sync_enabled()
-            .http.host.update_known_hosts(
-                node_labels=self.new_nodes,
-                to_add_hosts=self.existing_nodes + self.new_nodes,
-            )
-            .local.disable_sbd(self.new_nodes)
-            .fs.isdir(settings.booth_config_dir, return_value=False)
-            .local.no_file_sync()
+        self.config.services.is_enabled("sbd", return_value=False)
+        self.config.corosync_conf.load_content(
+            corosync_conf_fixture(existing_corosync_nodes)
         )
+        self.config.runner.cib.load()
+        self.config.http.host.check_auth(
+            node_labels=self.existing_nodes,
+        )
+        self.config.services.is_installed("sbd", return_value=False)
+        self.config.local.get_host_info(self.new_nodes)
+        self.config.local.pcsd_ssl_cert_sync_enabled()
+        self.config.local.destroy_cluster(self.new_nodes)
+        self.config.http.host.update_known_hosts(
+            node_labels=self.new_nodes,
+            to_add_hosts=self.existing_nodes + self.new_nodes,
+        )
+        self.config.local.disable_sbd(self.new_nodes)
+        self.config.fs.isdir(settings.booth_config_dir, return_value=False)
+        self.config.local.no_file_sync()
         self.expected_reports.extend(
             [
                 fixture.info(
@@ -2031,16 +1997,15 @@ class FailurePcsdSslCertSync(TestCase):
         )
 
     def test_read_failure(self):
-        (
-            self.config.fs.open(
-                settings.pcsd_cert_location,
-                name="fs.open.pcsd_ssl_cert",
-                side_effect=EnvironmentError(1, "error cert"),
-            ).fs.open(
-                settings.pcsd_key_location,
-                name="fs.open.pcsd_ssl_key",
-                side_effect=EnvironmentError(1, "error key"),
-            )
+        self.config.fs.open(
+            settings.pcsd_cert_location,
+            name="fs.open.pcsd_ssl_cert",
+            side_effect=EnvironmentError(1, "error cert"),
+        )
+        self.config.fs.open(
+            settings.pcsd_key_location,
+            name="fs.open.pcsd_ssl_key",
+            side_effect=EnvironmentError(1, "error key"),
         )
 
         self._add_nodes_with_lib_error()
@@ -2066,30 +2031,28 @@ class FailurePcsdSslCertSync(TestCase):
         )
 
     def test_communication_failure(self):
-        (
-            self.config.fs.open(
-                settings.pcsd_cert_location,
-                mock.mock_open(read_data=self.pcsd_ssl_cert)(),
-                name="fs.open.pcsd_ssl_cert",
-            )
-            .fs.open(
-                settings.pcsd_key_location,
-                mock.mock_open(read_data=self.pcsd_ssl_key)(),
-                name="fs.open.pcsd_ssl_key",
-            )
-            .http.host.send_pcsd_cert(
-                cert=self.pcsd_ssl_cert,
-                key=self.pcsd_ssl_key,
-                communication_list=[
-                    {
-                        "label": node,
-                        "response_code": 400,
-                        "output": self.error,
-                    }
-                    for node in self.unsuccessful_nodes
-                ]
-                + [dict(label=node) for node in self.successful_nodes],
-            )
+        self.config.fs.open(
+            settings.pcsd_cert_location,
+            mock.mock_open(read_data=self.pcsd_ssl_cert)(),
+            name="fs.open.pcsd_ssl_cert",
+        )
+        self.config.fs.open(
+            settings.pcsd_key_location,
+            mock.mock_open(read_data=self.pcsd_ssl_key)(),
+            name="fs.open.pcsd_ssl_key",
+        )
+        self.config.http.host.send_pcsd_cert(
+            cert=self.pcsd_ssl_cert,
+            key=self.pcsd_ssl_key,
+            communication_list=[
+                {
+                    "label": node,
+                    "response_code": 400,
+                    "output": self.error,
+                }
+                for node in self.unsuccessful_nodes
+            ]
+            + [dict(label=node) for node in self.successful_nodes],
         )
 
         self._add_nodes_with_lib_error()
@@ -2140,47 +2103,46 @@ class FailureFilesDistribution(TestCase):
         ]
         self.config.env.set_known_nodes(self.existing_nodes + self.new_nodes)
         self.config.local.set_expected_reports_list(self.expected_reports)
-        (
-            self.config.services.is_enabled("sbd", return_value=False)
-            .corosync_conf.load_content(
-                corosync_conf_fixture(self.existing_corosync_nodes)
-            )
-            .runner.cib.load()
-            .http.host.check_auth(
-                node_labels=self.existing_nodes,
-            )
-            .services.is_installed("sbd", return_value=False)
-            .local.get_host_info(self.new_nodes)
-            .local.pcsd_ssl_cert_sync_disabled()
-            .http.host.update_known_hosts(
-                node_labels=self.new_nodes,
-                to_add_hosts=self.existing_nodes + self.new_nodes,
-            )
-            .local.disable_sbd(self.new_nodes)
-            .fs.isdir(settings.booth_config_dir, return_value=False)
-            .fs.isfile(
-                settings.corosync_authkey_file,
-                return_value=True,
-                name="fs.isfile.corosync_authkey",
-            )
-            # open will be inserted here
-            .fs.isfile(
-                settings.pacemaker_authkey_file,
-                return_value=True,
-                name=self.corosync_key_open_before_position,
-            )
-            # open will be inserted here
-            .fs.isfile(
-                settings.pcsd_dr_config_location,
-                return_value=True,
-                name=self.pacemaker_key_open_before_position,
-            )
-            # open will be inserted here
-            .fs.isfile(
-                settings.pcsd_settings_conf_location,
-                return_value=False,
-                name=self.pcsd_dr_config_open_before_position,
-            )
+        self.config.services.is_enabled("sbd", return_value=False)
+        self.config.corosync_conf.load_content(
+            corosync_conf_fixture(self.existing_corosync_nodes)
+        )
+        self.config.runner.cib.load()
+        self.config.http.host.check_auth(
+            node_labels=self.existing_nodes,
+        )
+        self.config.services.is_installed("sbd", return_value=False)
+        self.config.local.get_host_info(self.new_nodes)
+        self.config.local.pcsd_ssl_cert_sync_disabled()
+        self.config.local.destroy_cluster(self.new_nodes)
+        self.config.http.host.update_known_hosts(
+            node_labels=self.new_nodes,
+            to_add_hosts=self.existing_nodes + self.new_nodes,
+        )
+        self.config.local.disable_sbd(self.new_nodes)
+        self.config.fs.isdir(settings.booth_config_dir, return_value=False)
+        self.config.fs.isfile(
+            settings.corosync_authkey_file,
+            return_value=True,
+            name="fs.isfile.corosync_authkey",
+        )
+        # open will be inserted here
+        self.config.fs.isfile(
+            settings.pacemaker_authkey_file,
+            return_value=True,
+            name=self.corosync_key_open_before_position,
+        )
+        # open will be inserted here
+        self.config.fs.isfile(
+            settings.pcsd_dr_config_location,
+            return_value=True,
+            name=self.pacemaker_key_open_before_position,
+        )
+        # open will be inserted here
+        self.config.fs.isfile(
+            settings.pcsd_settings_conf_location,
+            return_value=False,
+            name=self.pcsd_dr_config_open_before_position,
         )
         self.expected_reports.extend(
             [
@@ -2309,47 +2271,45 @@ class FailureFilesDistribution(TestCase):
         )
 
     def test_read_failure_forced(self):
-        (
-            self.config.fs.open(
-                settings.corosync_authkey_file,
-                mode="rb",
-                side_effect=EnvironmentError(
-                    1, self.err_msg, settings.corosync_authkey_file
-                ),
-                name="fs.open.corosync_authkey",
-                before=self.corosync_key_open_before_position,
-            )
-            .fs.open(
-                settings.pacemaker_authkey_file,
-                mode="rb",
-                side_effect=EnvironmentError(
-                    1, self.err_msg, settings.pacemaker_authkey_file
-                ),
-                name="fs.open.pacemaker_authkey",
-                before=self.pacemaker_key_open_before_position,
-            )
-            .fs.open(
-                settings.pcsd_dr_config_location,
-                mode="rb",
-                side_effect=EnvironmentError(
-                    1, self.err_msg, settings.pcsd_dr_config_location
-                ),
-                name="fs.open.pcsd_dr_config",
-                before=self.pcsd_dr_config_open_before_position,
-            )
-            .local.distribute_and_reload_corosync_conf(
-                corosync_conf_fixture(
-                    self.existing_corosync_nodes
-                    + [
-                        node_fixture(node, i)
-                        for i, node in enumerate(
-                            self.new_nodes, len(self.existing_nodes) + 1
-                        )
-                    ],
-                ),
-                self.existing_nodes,
-                self.new_nodes,
-            )
+        self.config.fs.open(
+            settings.corosync_authkey_file,
+            mode="rb",
+            side_effect=EnvironmentError(
+                1, self.err_msg, settings.corosync_authkey_file
+            ),
+            name="fs.open.corosync_authkey",
+            before=self.corosync_key_open_before_position,
+        )
+        self.config.fs.open(
+            settings.pacemaker_authkey_file,
+            mode="rb",
+            side_effect=EnvironmentError(
+                1, self.err_msg, settings.pacemaker_authkey_file
+            ),
+            name="fs.open.pacemaker_authkey",
+            before=self.pacemaker_key_open_before_position,
+        )
+        self.config.fs.open(
+            settings.pcsd_dr_config_location,
+            mode="rb",
+            side_effect=EnvironmentError(
+                1, self.err_msg, settings.pcsd_dr_config_location
+            ),
+            name="fs.open.pcsd_dr_config",
+            before=self.pcsd_dr_config_open_before_position,
+        )
+        self.config.local.distribute_and_reload_corosync_conf(
+            corosync_conf_fixture(
+                self.existing_corosync_nodes
+                + [
+                    node_fixture(node, i)
+                    for i, node in enumerate(
+                        self.new_nodes, len(self.existing_nodes) + 1
+                    )
+                ],
+            ),
+            self.existing_nodes,
+            self.new_nodes,
         )
 
         cluster.add_nodes(
@@ -2392,61 +2352,57 @@ class FailureFilesDistribution(TestCase):
         )
 
     def test_write_failure(self):
-        (
-            self.config.fs.open(
-                settings.corosync_authkey_file,
-                return_value=mock.mock_open(
-                    read_data=self.corosync_authkey_content
-                )(),
-                mode="rb",
-                name="fs.open.corosync_authkey",
-                before=self.corosync_key_open_before_position,
-            )
-            .fs.open(
-                settings.pacemaker_authkey_file,
-                return_value=mock.mock_open(
-                    read_data=self.pcmk_authkey_content
-                )(),
-                mode="rb",
-                name="fs.open.pacemaker_authkey",
-                before=self.pacemaker_key_open_before_position,
-            )
-            .fs.open(
-                settings.pcsd_dr_config_location,
-                return_value=mock.mock_open(
-                    read_data=self.pcsd_dr_config_content
-                )(),
-                mode="rb",
-                name="fs.open.pcsd_dr_config",
-                before=self.pcsd_dr_config_open_before_position,
-            )
-            .http.files.put_files(
-                pcmk_authkey=self.pcmk_authkey_content,
-                corosync_authkey=self.corosync_authkey_content,
-                pcs_disaster_recovery_conf=self.pcsd_dr_config_content,
-                communication_list=[
-                    dict(
-                        label=node,
-                        output=json.dumps(
-                            dict(
-                                files={
-                                    self.corosync_authkey_file_id: dict(
-                                        code="unexpected", message=self.err_msg
-                                    ),
-                                    self.pcmk_authkey_file_id: dict(
-                                        code="unexpected", message=self.err_msg
-                                    ),
-                                    self.pcsd_dr_config_file_id: dict(
-                                        code="unexpected", message=self.err_msg
-                                    ),
-                                }
-                            )
-                        ),
-                    )
-                    for node in self.unsuccessful_nodes
-                ]
-                + [dict(label=node) for node in self.successful_nodes],
-            )
+        self.config.fs.open(
+            settings.corosync_authkey_file,
+            return_value=mock.mock_open(
+                read_data=self.corosync_authkey_content
+            )(),
+            mode="rb",
+            name="fs.open.corosync_authkey",
+            before=self.corosync_key_open_before_position,
+        )
+        self.config.fs.open(
+            settings.pacemaker_authkey_file,
+            return_value=mock.mock_open(read_data=self.pcmk_authkey_content)(),
+            mode="rb",
+            name="fs.open.pacemaker_authkey",
+            before=self.pacemaker_key_open_before_position,
+        )
+        self.config.fs.open(
+            settings.pcsd_dr_config_location,
+            return_value=mock.mock_open(
+                read_data=self.pcsd_dr_config_content
+            )(),
+            mode="rb",
+            name="fs.open.pcsd_dr_config",
+            before=self.pcsd_dr_config_open_before_position,
+        )
+        self.config.http.files.put_files(
+            pcmk_authkey=self.pcmk_authkey_content,
+            corosync_authkey=self.corosync_authkey_content,
+            pcs_disaster_recovery_conf=self.pcsd_dr_config_content,
+            communication_list=[
+                dict(
+                    label=node,
+                    output=json.dumps(
+                        dict(
+                            files={
+                                self.corosync_authkey_file_id: dict(
+                                    code="unexpected", message=self.err_msg
+                                ),
+                                self.pcmk_authkey_file_id: dict(
+                                    code="unexpected", message=self.err_msg
+                                ),
+                                self.pcsd_dr_config_file_id: dict(
+                                    code="unexpected", message=self.err_msg
+                                ),
+                            }
+                        )
+                    ),
+                )
+                for node in self.unsuccessful_nodes
+            ]
+            + [dict(label=node) for node in self.successful_nodes],
         )
 
         self._add_nodes_with_lib_error()
@@ -2485,48 +2441,44 @@ class FailureFilesDistribution(TestCase):
         )
 
     def test_communication_failure(self):
-        (
-            self.config.fs.open(
-                settings.corosync_authkey_file,
-                return_value=mock.mock_open(
-                    read_data=self.corosync_authkey_content
-                )(),
-                mode="rb",
-                name="fs.open.corosync_authkey",
-                before=self.corosync_key_open_before_position,
-            )
-            .fs.open(
-                settings.pacemaker_authkey_file,
-                return_value=mock.mock_open(
-                    read_data=self.pcmk_authkey_content
-                )(),
-                mode="rb",
-                name="fs.open.pacemaker_authkey",
-                before=self.pacemaker_key_open_before_position,
-            )
-            .fs.open(
-                settings.pcsd_dr_config_location,
-                return_value=mock.mock_open(
-                    read_data=self.pcsd_dr_config_content
-                )(),
-                mode="rb",
-                name="fs.open.pcsd_dr_config",
-                before=self.pcsd_dr_config_open_before_position,
-            )
-            .http.files.put_files(
-                pcmk_authkey=self.pcmk_authkey_content,
-                corosync_authkey=self.corosync_authkey_content,
-                pcs_disaster_recovery_conf=self.pcsd_dr_config_content,
-                communication_list=[
-                    dict(
-                        label=node,
-                        output=self.err_msg,
-                        response_code=400,
-                    )
-                    for node in self.unsuccessful_nodes
-                ]
-                + [dict(label=node) for node in self.successful_nodes],
-            )
+        self.config.fs.open(
+            settings.corosync_authkey_file,
+            return_value=mock.mock_open(
+                read_data=self.corosync_authkey_content
+            )(),
+            mode="rb",
+            name="fs.open.corosync_authkey",
+            before=self.corosync_key_open_before_position,
+        )
+        self.config.fs.open(
+            settings.pacemaker_authkey_file,
+            return_value=mock.mock_open(read_data=self.pcmk_authkey_content)(),
+            mode="rb",
+            name="fs.open.pacemaker_authkey",
+            before=self.pacemaker_key_open_before_position,
+        )
+        self.config.fs.open(
+            settings.pcsd_dr_config_location,
+            return_value=mock.mock_open(
+                read_data=self.pcsd_dr_config_content
+            )(),
+            mode="rb",
+            name="fs.open.pcsd_dr_config",
+            before=self.pcsd_dr_config_open_before_position,
+        )
+        self.config.http.files.put_files(
+            pcmk_authkey=self.pcmk_authkey_content,
+            corosync_authkey=self.corosync_authkey_content,
+            pcs_disaster_recovery_conf=self.pcsd_dr_config_content,
+            communication_list=[
+                dict(
+                    label=node,
+                    output=self.err_msg,
+                    response_code=400,
+                )
+                for node in self.unsuccessful_nodes
+            ]
+            + [dict(label=node) for node in self.successful_nodes],
         )
 
         self._add_nodes_with_lib_error()
@@ -2547,47 +2499,43 @@ class FailureFilesDistribution(TestCase):
         )
 
     def test_invalid_response_format(self):
-        (
-            self.config.fs.open(
-                settings.corosync_authkey_file,
-                return_value=mock.mock_open(
-                    read_data=self.corosync_authkey_content
-                )(),
-                mode="rb",
-                name="fs.open.corosync_authkey",
-                before=self.corosync_key_open_before_position,
-            )
-            .fs.open(
-                settings.pacemaker_authkey_file,
-                return_value=mock.mock_open(
-                    read_data=self.pcmk_authkey_content
-                )(),
-                mode="rb",
-                name="fs.open.pacemaker_authkey",
-                before=self.pacemaker_key_open_before_position,
-            )
-            .fs.open(
-                settings.pcsd_dr_config_location,
-                return_value=mock.mock_open(
-                    read_data=self.pcsd_dr_config_content
-                )(),
-                mode="rb",
-                name="fs.open.pcsd_dr_config",
-                before=self.pcsd_dr_config_open_before_position,
-            )
-            .http.files.put_files(
-                pcmk_authkey=self.pcmk_authkey_content,
-                corosync_authkey=self.corosync_authkey_content,
-                pcs_disaster_recovery_conf=self.pcsd_dr_config_content,
-                communication_list=[
-                    dict(
-                        label=node,
-                        output="not json",
-                    )
-                    for node in self.unsuccessful_nodes
-                ]
-                + [dict(label=node) for node in self.successful_nodes],
-            )
+        self.config.fs.open(
+            settings.corosync_authkey_file,
+            return_value=mock.mock_open(
+                read_data=self.corosync_authkey_content
+            )(),
+            mode="rb",
+            name="fs.open.corosync_authkey",
+            before=self.corosync_key_open_before_position,
+        )
+        self.config.fs.open(
+            settings.pacemaker_authkey_file,
+            return_value=mock.mock_open(read_data=self.pcmk_authkey_content)(),
+            mode="rb",
+            name="fs.open.pacemaker_authkey",
+            before=self.pacemaker_key_open_before_position,
+        )
+        self.config.fs.open(
+            settings.pcsd_dr_config_location,
+            return_value=mock.mock_open(
+                read_data=self.pcsd_dr_config_content
+            )(),
+            mode="rb",
+            name="fs.open.pcsd_dr_config",
+            before=self.pcsd_dr_config_open_before_position,
+        )
+        self.config.http.files.put_files(
+            pcmk_authkey=self.pcmk_authkey_content,
+            corosync_authkey=self.corosync_authkey_content,
+            pcs_disaster_recovery_conf=self.pcsd_dr_config_content,
+            communication_list=[
+                dict(
+                    label=node,
+                    output="not json",
+                )
+                for node in self.unsuccessful_nodes
+            ]
+            + [dict(label=node) for node in self.successful_nodes],
         )
 
         self._add_nodes_with_lib_error()
@@ -2606,49 +2554,45 @@ class FailureFilesDistribution(TestCase):
         )
 
     def test_node_not_responding(self):
-        (
-            self.config.fs.open(
-                settings.corosync_authkey_file,
-                return_value=mock.mock_open(
-                    read_data=self.corosync_authkey_content
-                )(),
-                mode="rb",
-                name="fs.open.corosync_authkey",
-                before=self.corosync_key_open_before_position,
-            )
-            .fs.open(
-                settings.pacemaker_authkey_file,
-                return_value=mock.mock_open(
-                    read_data=self.pcmk_authkey_content
-                )(),
-                mode="rb",
-                name="fs.open.pacemaker_authkey",
-                before=self.pacemaker_key_open_before_position,
-            )
-            .fs.open(
-                settings.pcsd_dr_config_location,
-                return_value=mock.mock_open(
-                    read_data=self.pcsd_dr_config_content
-                )(),
-                mode="rb",
-                name="fs.open.pcsd_dr_config",
-                before=self.pcsd_dr_config_open_before_position,
-            )
-            .http.files.put_files(
-                pcmk_authkey=self.pcmk_authkey_content,
-                corosync_authkey=self.corosync_authkey_content,
-                pcs_disaster_recovery_conf=self.pcsd_dr_config_content,
-                communication_list=[
-                    dict(
-                        label=node,
-                        errno=1,
-                        error_msg=self.err_msg,
-                        was_connected=False,
-                    )
-                    for node in self.unsuccessful_nodes
-                ]
-                + [dict(label=node) for node in self.successful_nodes],
-            )
+        self.config.fs.open(
+            settings.corosync_authkey_file,
+            return_value=mock.mock_open(
+                read_data=self.corosync_authkey_content
+            )(),
+            mode="rb",
+            name="fs.open.corosync_authkey",
+            before=self.corosync_key_open_before_position,
+        )
+        self.config.fs.open(
+            settings.pacemaker_authkey_file,
+            return_value=mock.mock_open(read_data=self.pcmk_authkey_content)(),
+            mode="rb",
+            name="fs.open.pacemaker_authkey",
+            before=self.pacemaker_key_open_before_position,
+        )
+        self.config.fs.open(
+            settings.pcsd_dr_config_location,
+            return_value=mock.mock_open(
+                read_data=self.pcsd_dr_config_content
+            )(),
+            mode="rb",
+            name="fs.open.pcsd_dr_config",
+            before=self.pcsd_dr_config_open_before_position,
+        )
+        self.config.http.files.put_files(
+            pcmk_authkey=self.pcmk_authkey_content,
+            corosync_authkey=self.corosync_authkey_content,
+            pcs_disaster_recovery_conf=self.pcsd_dr_config_content,
+            communication_list=[
+                dict(
+                    label=node,
+                    errno=1,
+                    error_msg=self.err_msg,
+                    was_connected=False,
+                )
+                for node in self.unsuccessful_nodes
+            ]
+            + [dict(label=node) for node in self.successful_nodes],
         )
 
         self._add_nodes_with_lib_error()
@@ -2702,29 +2646,30 @@ class FailureBoothConfigsDistribution(TestCase):
 
         self.config.env.set_known_nodes(self.existing_nodes + self.new_nodes)
         self.config.local.set_expected_reports_list(self.expected_reports)
-        (
-            self.config.services.is_enabled("sbd", return_value=False)
-            .corosync_conf.load_content(
-                corosync_conf_fixture(self.existing_corosync_nodes)
-            )
-            .runner.cib.load()
-            .http.host.check_auth(
-                node_labels=self.existing_nodes,
-            )
-            .services.is_installed("sbd", return_value=False)
-            .local.get_host_info(self.new_nodes)
-            .local.pcsd_ssl_cert_sync_disabled()
-            .http.host.update_known_hosts(
-                node_labels=self.new_nodes,
-                to_add_hosts=self.existing_nodes + self.new_nodes,
-            )
-            .local.disable_sbd(self.new_nodes)
-            .fs.isdir(settings.booth_config_dir)
-            .fs.listdir(
-                settings.booth_config_dir,
-                [self.config_file, "something", self.authfile],
-            )
-            .fs.isfile(self.config_path, name="fs.isfile.booth_config_file")
+        self.config.services.is_enabled("sbd", return_value=False)
+        self.config.corosync_conf.load_content(
+            corosync_conf_fixture(self.existing_corosync_nodes)
+        )
+        self.config.runner.cib.load()
+        self.config.http.host.check_auth(
+            node_labels=self.existing_nodes,
+        )
+        self.config.services.is_installed("sbd", return_value=False)
+        self.config.local.get_host_info(self.new_nodes)
+        self.config.local.pcsd_ssl_cert_sync_disabled()
+        self.config.local.destroy_cluster(self.new_nodes)
+        self.config.http.host.update_known_hosts(
+            node_labels=self.new_nodes,
+            to_add_hosts=self.existing_nodes + self.new_nodes,
+        )
+        self.config.local.disable_sbd(self.new_nodes)
+        self.config.fs.isdir(settings.booth_config_dir)
+        self.config.fs.listdir(
+            settings.booth_config_dir,
+            [self.config_file, "something", self.authfile],
+        )
+        self.config.fs.isfile(
+            self.config_path, name="fs.isfile.booth_config_file"
         )
         self.expected_reports.extend(
             [
@@ -2752,18 +2697,19 @@ class FailureBoothConfigsDistribution(TestCase):
         ]
 
     def _set_up_multibooth(self):
-        (
-            self.config.fs.listdir(
-                settings.booth_config_dir,
-                [
-                    self.config_file,
-                    "something",
-                    self.authfile,
-                    self.authfile2,
-                    self.config_file2,
-                ],
-                instead="fs.listdir",
-            ).fs.isfile(self.config_path2, name="fs.isfile.booth_config_file2")
+        self.config.fs.listdir(
+            settings.booth_config_dir,
+            [
+                self.config_file,
+                "something",
+                self.authfile,
+                self.authfile2,
+                self.config_file2,
+            ],
+            instead="fs.listdir",
+        )
+        self.config.fs.isfile(
+            self.config_path2, name="fs.isfile.booth_config_file2"
         )
         self.successful_reports = [
             fixture.info(
@@ -2814,27 +2760,25 @@ class FailureBoothConfigsDistribution(TestCase):
         )
 
     def test_config_read_failure_forced(self):
-        (
-            self.config.raw_file.read(
-                file_type_codes.BOOTH_CONFIG,
-                self.config_path,
-                exception_msg=self.err_msg,
-                name="raw_file.read.booth_config_read",
-            )
-            .local.no_file_sync()
-            .local.distribute_and_reload_corosync_conf(
-                corosync_conf_fixture(
-                    self.existing_corosync_nodes
-                    + [
-                        node_fixture(node, i)
-                        for i, node in enumerate(
-                            self.new_nodes, len(self.existing_nodes) + 1
-                        )
-                    ],
-                ),
-                self.existing_nodes,
-                self.new_nodes,
-            )
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_CONFIG,
+            self.config_path,
+            exception_msg=self.err_msg,
+            name="raw_file.read.booth_config_read",
+        )
+        self.config.local.no_file_sync()
+        self.config.local.distribute_and_reload_corosync_conf(
+            corosync_conf_fixture(
+                self.existing_corosync_nodes
+                + [
+                    node_fixture(node, i)
+                    for i, node in enumerate(
+                        self.new_nodes, len(self.existing_nodes) + 1
+                    )
+                ],
+            ),
+            self.existing_nodes,
+            self.new_nodes,
         )
 
         cluster.add_nodes(
@@ -2858,58 +2802,56 @@ class FailureBoothConfigsDistribution(TestCase):
 
     def test_config_read_failure_forced_sends_other_configs(self):
         self._set_up_multibooth()
-        (
-            self.config.raw_file.read(
-                file_type_codes.BOOTH_CONFIG,
-                self.config_path,
-                exception_msg=self.err_msg,
-                name="raw_file.read.booth_config_read",
-            )
-            .raw_file.read(
-                file_type_codes.BOOTH_CONFIG,
-                self.config_path2,
-                content=self.config_content2.encode("utf-8"),
-                name="raw_file.read.booth_config_read2",
-            )
-            .raw_file.read(
-                file_type_codes.BOOTH_KEY,
-                self.authfile_path2,
-                content=self.authfile_content2,
-                name="raw_file.read.booth_authfile_read2",
-            )
-            .http.booth.save_files(
-                files_data=[
-                    dict(
-                        name=self.config_file2,
-                        data=self.config_content2,
-                        is_authfile=False,
-                    ),
-                    dict(
-                        name=self.authfile2,
-                        data=base64.b64encode(self.authfile_content2).decode(
-                            "utf-8"
-                        ),
-                        is_authfile=True,
-                    ),
-                ],
-                rewrite_existing=True,
-                saved=[self.config_file2, self.authfile2],
-                node_labels=self.new_nodes,
-            )
-            .local.no_file_sync()
-            .local.distribute_and_reload_corosync_conf(
-                corosync_conf_fixture(
-                    self.existing_corosync_nodes
-                    + [
-                        node_fixture(node, i)
-                        for i, node in enumerate(
-                            self.new_nodes, len(self.existing_nodes) + 1
-                        )
-                    ],
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_CONFIG,
+            self.config_path,
+            exception_msg=self.err_msg,
+            name="raw_file.read.booth_config_read",
+        )
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_CONFIG,
+            self.config_path2,
+            content=self.config_content2.encode("utf-8"),
+            name="raw_file.read.booth_config_read2",
+        )
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_KEY,
+            self.authfile_path2,
+            content=self.authfile_content2,
+            name="raw_file.read.booth_authfile_read2",
+        )
+        self.config.http.booth.save_files(
+            files_data=[
+                dict(
+                    name=self.config_file2,
+                    data=self.config_content2,
+                    is_authfile=False,
                 ),
-                self.existing_nodes,
-                self.new_nodes,
-            )
+                dict(
+                    name=self.authfile2,
+                    data=base64.b64encode(self.authfile_content2).decode(
+                        "utf-8"
+                    ),
+                    is_authfile=True,
+                ),
+            ],
+            rewrite_existing=True,
+            saved=[self.config_file2, self.authfile2],
+            node_labels=self.new_nodes,
+        )
+        self.config.local.no_file_sync()
+        self.config.local.distribute_and_reload_corosync_conf(
+            corosync_conf_fixture(
+                self.existing_corosync_nodes
+                + [
+                    node_fixture(node, i)
+                    for i, node in enumerate(
+                        self.new_nodes, len(self.existing_nodes) + 1
+                    )
+                ],
+            ),
+            self.existing_nodes,
+            self.new_nodes,
         )
 
         cluster.add_nodes(
@@ -2934,18 +2876,17 @@ class FailureBoothConfigsDistribution(TestCase):
         )
 
     def test_authfile_read_failure(self):
-        (
-            self.config.raw_file.read(
-                file_type_codes.BOOTH_CONFIG,
-                self.config_path,
-                content=self.config_content.encode("utf-8"),
-                name="raw_file.read.booth_config_read",
-            ).raw_file.read(
-                file_type_codes.BOOTH_KEY,
-                self.authfile_path,
-                exception_msg=self.err_msg,
-                name="raw_file.read.booth_authfile_read",
-            )
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_CONFIG,
+            self.config_path,
+            content=self.config_content.encode("utf-8"),
+            name="raw_file.read.booth_config_read",
+        )
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_KEY,
+            self.authfile_path,
+            exception_msg=self.err_msg,
+            name="raw_file.read.booth_authfile_read",
         )
 
         self._add_nodes_with_lib_error()
@@ -2965,36 +2906,32 @@ class FailureBoothConfigsDistribution(TestCase):
         )
 
     def test_authfile_read_failure_forced(self):
-        (
-            self.config.raw_file.read(
-                file_type_codes.BOOTH_CONFIG,
-                self.config_path,
-                content=self.config_content.encode("utf-8"),
-                name="raw_file.read.booth_config_read",
-            )
-            .raw_file.read(
-                file_type_codes.BOOTH_KEY,
-                self.authfile_path,
-                exception_msg=self.err_msg,
-                name="raw_file.read.booth_authfile_read",
-            )
-            .local.no_file_sync()
-            .local.distribute_and_reload_corosync_conf(
-                corosync_conf_fixture(
-                    self.existing_corosync_nodes
-                    + [
-                        node_fixture(node, i)
-                        for i, node in enumerate(
-                            self.new_nodes, len(self.existing_nodes) + 1
-                        )
-                    ],
-                    get_two_node(
-                        len(self.existing_nodes) + len(self.new_nodes)
-                    ),
-                ),
-                self.existing_nodes,
-                self.new_nodes,
-            )
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_CONFIG,
+            self.config_path,
+            content=self.config_content.encode("utf-8"),
+            name="raw_file.read.booth_config_read",
+        )
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_KEY,
+            self.authfile_path,
+            exception_msg=self.err_msg,
+            name="raw_file.read.booth_authfile_read",
+        )
+        self.config.local.no_file_sync()
+        self.config.local.distribute_and_reload_corosync_conf(
+            corosync_conf_fixture(
+                self.existing_corosync_nodes
+                + [
+                    node_fixture(node, i)
+                    for i, node in enumerate(
+                        self.new_nodes, len(self.existing_nodes) + 1
+                    )
+                ],
+                get_two_node(len(self.existing_nodes) + len(self.new_nodes)),
+            ),
+            self.existing_nodes,
+            self.new_nodes,
         )
 
         cluster.add_nodes(
@@ -3018,64 +2955,62 @@ class FailureBoothConfigsDistribution(TestCase):
 
     def test_authfile_read_failure_forced_sends_other_configs(self):
         self._set_up_multibooth()
-        (
-            self.config.raw_file.read(
-                file_type_codes.BOOTH_CONFIG,
-                self.config_path,
-                content=self.config_content.encode("utf-8"),
-                name="raw_file.read.booth_config_read",
-            )
-            .raw_file.read(
-                file_type_codes.BOOTH_KEY,
-                self.authfile_path,
-                exception_msg=self.err_msg,
-                name="raw_file.read.booth_authfile_read",
-            )
-            .raw_file.read(
-                file_type_codes.BOOTH_CONFIG,
-                self.config_path2,
-                content=self.config_content2.encode("utf-8"),
-                name="raw_file.read.booth_config_read2",
-            )
-            .raw_file.read(
-                file_type_codes.BOOTH_KEY,
-                self.authfile_path2,
-                content=self.authfile_content2,
-                name="raw_file.read.booth_authfile_read2",
-            )
-            .http.booth.save_files(
-                files_data=[
-                    dict(
-                        name=self.config_file2,
-                        data=self.config_content2,
-                        is_authfile=False,
-                    ),
-                    dict(
-                        name=self.authfile2,
-                        data=base64.b64encode(self.authfile_content2).decode(
-                            "utf-8"
-                        ),
-                        is_authfile=True,
-                    ),
-                ],
-                rewrite_existing=True,
-                saved=[self.config_file2, self.authfile2],
-                node_labels=self.new_nodes,
-            )
-            .local.no_file_sync()
-            .local.distribute_and_reload_corosync_conf(
-                corosync_conf_fixture(
-                    self.existing_corosync_nodes
-                    + [
-                        node_fixture(node, i)
-                        for i, node in enumerate(
-                            self.new_nodes, len(self.existing_nodes) + 1
-                        )
-                    ],
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_CONFIG,
+            self.config_path,
+            content=self.config_content.encode("utf-8"),
+            name="raw_file.read.booth_config_read",
+        )
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_KEY,
+            self.authfile_path,
+            exception_msg=self.err_msg,
+            name="raw_file.read.booth_authfile_read",
+        )
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_CONFIG,
+            self.config_path2,
+            content=self.config_content2.encode("utf-8"),
+            name="raw_file.read.booth_config_read2",
+        )
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_KEY,
+            self.authfile_path2,
+            content=self.authfile_content2,
+            name="raw_file.read.booth_authfile_read2",
+        )
+        self.config.http.booth.save_files(
+            files_data=[
+                dict(
+                    name=self.config_file2,
+                    data=self.config_content2,
+                    is_authfile=False,
                 ),
-                self.existing_nodes,
-                self.new_nodes,
-            )
+                dict(
+                    name=self.authfile2,
+                    data=base64.b64encode(self.authfile_content2).decode(
+                        "utf-8"
+                    ),
+                    is_authfile=True,
+                ),
+            ],
+            rewrite_existing=True,
+            saved=[self.config_file2, self.authfile2],
+            node_labels=self.new_nodes,
+        )
+        self.config.local.no_file_sync()
+        self.config.local.distribute_and_reload_corosync_conf(
+            corosync_conf_fixture(
+                self.existing_corosync_nodes
+                + [
+                    node_fixture(node, i)
+                    for i, node in enumerate(
+                        self.new_nodes, len(self.existing_nodes) + 1
+                    )
+                ],
+            ),
+            self.existing_nodes,
+            self.new_nodes,
         )
 
         cluster.add_nodes(
@@ -3100,52 +3035,50 @@ class FailureBoothConfigsDistribution(TestCase):
         )
 
     def test_write_failure(self):
-        (
-            self.config.raw_file.read(
-                file_type_codes.BOOTH_CONFIG,
-                self.config_path,
-                content=self.config_content.encode("utf-8"),
-                name="raw_file.read.booth_config_read",
-            )
-            .raw_file.read(
-                file_type_codes.BOOTH_KEY,
-                self.authfile_path,
-                content=self.authfile_content,
-                name="raw_file.read.booth_authfile_read",
-            )
-            .http.booth.save_files(
-                files_data=[
-                    dict(
-                        name=self.config_file,
-                        data=self.config_content,
-                        is_authfile=False,
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_CONFIG,
+            self.config_path,
+            content=self.config_content.encode("utf-8"),
+            name="raw_file.read.booth_config_read",
+        )
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_KEY,
+            self.authfile_path,
+            content=self.authfile_content,
+            name="raw_file.read.booth_authfile_read",
+        )
+        self.config.http.booth.save_files(
+            files_data=[
+                dict(
+                    name=self.config_file,
+                    data=self.config_content,
+                    is_authfile=False,
+                ),
+                dict(
+                    name=self.authfile,
+                    data=base64.b64encode(self.authfile_content).decode(
+                        "utf-8"
                     ),
-                    dict(
-                        name=self.authfile,
-                        data=base64.b64encode(self.authfile_content).decode(
-                            "utf-8"
-                        ),
-                        is_authfile=True,
+                    is_authfile=True,
+                ),
+            ],
+            saved=[self.config_file, self.authfile],
+            communication_list=[
+                dict(
+                    label=node,
+                    output=json.dumps(
+                        dict(
+                            saved=[self.authfile],
+                            existing=[],
+                            failed={
+                                self.config_file: self.err_msg,
+                            },
+                        )
                     ),
-                ],
-                saved=[self.config_file, self.authfile],
-                communication_list=[
-                    dict(
-                        label=node,
-                        output=json.dumps(
-                            dict(
-                                saved=[self.authfile],
-                                existing=[],
-                                failed={
-                                    self.config_file: self.err_msg,
-                                },
-                            )
-                        ),
-                    )
-                    for node in self.unsuccessful_nodes
-                ]
-                + [dict(label=node) for node in self.successful_nodes],
-            )
+                )
+                for node in self.unsuccessful_nodes
+            ]
+            + [dict(label=node) for node in self.successful_nodes],
         )
 
         self._add_nodes_with_lib_error()
@@ -3174,45 +3107,43 @@ class FailureBoothConfigsDistribution(TestCase):
         )
 
     def test_communication_failure(self):
-        (
-            self.config.raw_file.read(
-                file_type_codes.BOOTH_CONFIG,
-                self.config_path,
-                content=self.config_content.encode("utf-8"),
-                name="raw_file.read.booth_config_read",
-            )
-            .raw_file.read(
-                file_type_codes.BOOTH_KEY,
-                self.authfile_path,
-                content=self.authfile_content,
-                name="raw_file.read.booth_authfile_read",
-            )
-            .http.booth.save_files(
-                files_data=[
-                    dict(
-                        name=self.config_file,
-                        data=self.config_content,
-                        is_authfile=False,
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_CONFIG,
+            self.config_path,
+            content=self.config_content.encode("utf-8"),
+            name="raw_file.read.booth_config_read",
+        )
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_KEY,
+            self.authfile_path,
+            content=self.authfile_content,
+            name="raw_file.read.booth_authfile_read",
+        )
+        self.config.http.booth.save_files(
+            files_data=[
+                dict(
+                    name=self.config_file,
+                    data=self.config_content,
+                    is_authfile=False,
+                ),
+                dict(
+                    name=self.authfile,
+                    data=base64.b64encode(self.authfile_content).decode(
+                        "utf-8"
                     ),
-                    dict(
-                        name=self.authfile,
-                        data=base64.b64encode(self.authfile_content).decode(
-                            "utf-8"
-                        ),
-                        is_authfile=True,
-                    ),
-                ],
-                saved=[self.config_file, self.authfile],
-                communication_list=[
-                    dict(
-                        label=node,
-                        output=self.err_msg,
-                        response_code=400,
-                    )
-                    for node in self.unsuccessful_nodes
-                ]
-                + [dict(label=node) for node in self.successful_nodes],
-            )
+                    is_authfile=True,
+                ),
+            ],
+            saved=[self.config_file, self.authfile],
+            communication_list=[
+                dict(
+                    label=node,
+                    output=self.err_msg,
+                    response_code=400,
+                )
+                for node in self.unsuccessful_nodes
+            ]
+            + [dict(label=node) for node in self.successful_nodes],
         )
 
         self._add_nodes_with_lib_error()
@@ -3233,44 +3164,42 @@ class FailureBoothConfigsDistribution(TestCase):
         )
 
     def test_invalid_response_format(self):
-        (
-            self.config.raw_file.read(
-                file_type_codes.BOOTH_CONFIG,
-                self.config_path,
-                content=self.config_content.encode("utf-8"),
-                name="raw_file.read.booth_config_read",
-            )
-            .raw_file.read(
-                file_type_codes.BOOTH_KEY,
-                self.authfile_path,
-                content=self.authfile_content,
-                name="raw_file.read.booth_authfile_read",
-            )
-            .http.booth.save_files(
-                files_data=[
-                    dict(
-                        name=self.config_file,
-                        data=self.config_content,
-                        is_authfile=False,
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_CONFIG,
+            self.config_path,
+            content=self.config_content.encode("utf-8"),
+            name="raw_file.read.booth_config_read",
+        )
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_KEY,
+            self.authfile_path,
+            content=self.authfile_content,
+            name="raw_file.read.booth_authfile_read",
+        )
+        self.config.http.booth.save_files(
+            files_data=[
+                dict(
+                    name=self.config_file,
+                    data=self.config_content,
+                    is_authfile=False,
+                ),
+                dict(
+                    name=self.authfile,
+                    data=base64.b64encode(self.authfile_content).decode(
+                        "utf-8"
                     ),
-                    dict(
-                        name=self.authfile,
-                        data=base64.b64encode(self.authfile_content).decode(
-                            "utf-8"
-                        ),
-                        is_authfile=True,
-                    ),
-                ],
-                saved=[self.config_file, self.authfile],
-                communication_list=[
-                    dict(
-                        label=node,
-                        output="not json",
-                    )
-                    for node in self.unsuccessful_nodes
-                ]
-                + [dict(label=node) for node in self.successful_nodes],
-            )
+                    is_authfile=True,
+                ),
+            ],
+            saved=[self.config_file, self.authfile],
+            communication_list=[
+                dict(
+                    label=node,
+                    output="not json",
+                )
+                for node in self.unsuccessful_nodes
+            ]
+            + [dict(label=node) for node in self.successful_nodes],
         )
 
         self._add_nodes_with_lib_error()
@@ -3289,46 +3218,44 @@ class FailureBoothConfigsDistribution(TestCase):
         )
 
     def test_not_connected(self):
-        (
-            self.config.raw_file.read(
-                file_type_codes.BOOTH_CONFIG,
-                self.config_path,
-                content=self.config_content.encode("utf-8"),
-                name="raw_file.read.booth_config_read",
-            )
-            .raw_file.read(
-                file_type_codes.BOOTH_KEY,
-                self.authfile_path,
-                content=self.authfile_content,
-                name="raw_file.read.booth_authfile_read",
-            )
-            .http.booth.save_files(
-                files_data=[
-                    dict(
-                        name=self.config_file,
-                        data=self.config_content,
-                        is_authfile=False,
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_CONFIG,
+            self.config_path,
+            content=self.config_content.encode("utf-8"),
+            name="raw_file.read.booth_config_read",
+        )
+        self.config.raw_file.read(
+            file_type_codes.BOOTH_KEY,
+            self.authfile_path,
+            content=self.authfile_content,
+            name="raw_file.read.booth_authfile_read",
+        )
+        self.config.http.booth.save_files(
+            files_data=[
+                dict(
+                    name=self.config_file,
+                    data=self.config_content,
+                    is_authfile=False,
+                ),
+                dict(
+                    name=self.authfile,
+                    data=base64.b64encode(self.authfile_content).decode(
+                        "utf-8"
                     ),
-                    dict(
-                        name=self.authfile,
-                        data=base64.b64encode(self.authfile_content).decode(
-                            "utf-8"
-                        ),
-                        is_authfile=True,
-                    ),
-                ],
-                saved=[self.config_file, self.authfile],
-                communication_list=[
-                    dict(
-                        label=node,
-                        errno=1,
-                        error_msg=self.err_msg,
-                        was_connected=False,
-                    )
-                    for node in self.unsuccessful_nodes
-                ]
-                + [dict(label=node) for node in self.successful_nodes],
-            )
+                    is_authfile=True,
+                ),
+            ],
+            saved=[self.config_file, self.authfile],
+            communication_list=[
+                dict(
+                    label=node,
+                    errno=1,
+                    error_msg=self.err_msg,
+                    was_connected=False,
+                )
+                for node in self.unsuccessful_nodes
+            ]
+            + [dict(label=node) for node in self.successful_nodes],
         )
 
         self._add_nodes_with_lib_error()
@@ -3367,20 +3294,19 @@ class FailureDisableSbd(TestCase):
 
         self.config.env.set_known_nodes(self.existing_nodes + self.new_nodes)
         self.config.local.set_expected_reports_list(self.expected_reports)
-        (
-            self.config.services.is_enabled("sbd", return_value=False)
-            .corosync_conf.load_content(
-                corosync_conf_fixture(self.existing_corosync_nodes)
-            )
-            .runner.cib.load()
-            .http.host.check_auth(node_labels=self.existing_nodes)
-            .services.is_installed("sbd", return_value=False)
-            .local.get_host_info(self.new_nodes)
-            .local.pcsd_ssl_cert_sync_disabled()
-            .http.host.update_known_hosts(
-                node_labels=self.new_nodes,
-                to_add_hosts=self.existing_nodes + self.new_nodes,
-            )
+        self.config.services.is_enabled("sbd", return_value=False)
+        self.config.corosync_conf.load_content(
+            corosync_conf_fixture(self.existing_corosync_nodes)
+        )
+        self.config.runner.cib.load()
+        self.config.http.host.check_auth(node_labels=self.existing_nodes)
+        self.config.services.is_installed("sbd", return_value=False)
+        self.config.local.get_host_info(self.new_nodes)
+        self.config.local.pcsd_ssl_cert_sync_disabled()
+        self.config.local.destroy_cluster(self.new_nodes)
+        self.config.http.host.update_known_hosts(
+            node_labels=self.new_nodes,
+            to_add_hosts=self.existing_nodes + self.new_nodes,
         )
         self.expected_reports.extend(
             [
@@ -3502,21 +3428,20 @@ class FailureEnableSbd(TestCase):
         self.sbd_config = ""
         self.config.env.set_known_nodes(self.existing_nodes + self.new_nodes)
         self.config.local.set_expected_reports_list(self.expected_reports)
-        (
-            self.config.services.is_enabled("sbd", return_value=True)
-            .corosync_conf.load_content(
-                corosync_conf_fixture(self.existing_corosync_nodes)
-            )
-            .runner.cib.load()
-            .local.read_sbd_config(self.sbd_config)
-            .http.host.check_auth(node_labels=self.existing_nodes)
-            .local.get_host_info(self.new_nodes)
-            .local.check_sbd(self.new_nodes, with_devices=False)
-            .local.pcsd_ssl_cert_sync_disabled()
-            .http.host.update_known_hosts(
-                node_labels=self.new_nodes,
-                to_add_hosts=self.existing_nodes + self.new_nodes,
-            )
+        self.config.services.is_enabled("sbd", return_value=True)
+        self.config.corosync_conf.load_content(
+            corosync_conf_fixture(self.existing_corosync_nodes)
+        )
+        self.config.runner.cib.load()
+        self.config.local.read_sbd_config(self.sbd_config)
+        self.config.http.host.check_auth(node_labels=self.existing_nodes)
+        self.config.local.get_host_info(self.new_nodes)
+        self.config.local.check_sbd(self.new_nodes, with_devices=False)
+        self.config.local.pcsd_ssl_cert_sync_disabled()
+        self.config.local.destroy_cluster(self.new_nodes)
+        self.config.http.host.update_known_hosts(
+            node_labels=self.new_nodes,
+            to_add_hosts=self.existing_nodes + self.new_nodes,
         )
         self.expected_reports.extend(
             [
@@ -3549,32 +3474,30 @@ class FailureEnableSbd(TestCase):
 
     def test_enable_communication_failure(self):
         sbd_mock_file = fixture.get_mock_file(read_data=self.sbd_config)
-        (
-            self.config.fs.open(
-                settings.sbd_config,
-                return_value=sbd_mock_file,
-                name="fs.open.sbd_config",
-            )
-            .fcntl.flock(
-                sbd_mock_file, fcntl.LOCK_SH, name="fcntl.flock.sbd_config"
-            )
-            .http.sbd.set_sbd_config(
-                config_generator=lambda node: sbd_config_generator(
-                    node, with_devices=False
-                ),
-                node_labels=self.new_nodes,
-            )
-            .http.sbd.enable_sbd(
-                communication_list=[
-                    dict(
-                        label=node,
-                        output=self.err_msg,
-                        response_code=400,
-                    )
-                    for node in self.unsuccessful_nodes
-                ]
-                + [dict(label=node) for node in self.successful_nodes]
-            )
+        self.config.fs.open(
+            settings.sbd_config,
+            return_value=sbd_mock_file,
+            name="fs.open.sbd_config",
+        )
+        self.config.fcntl.flock(
+            sbd_mock_file, fcntl.LOCK_SH, name="fcntl.flock.sbd_config"
+        )
+        self.config.http.sbd.set_sbd_config(
+            config_generator=lambda node: sbd_config_generator(
+                node, with_devices=False
+            ),
+            node_labels=self.new_nodes,
+        )
+        self.config.http.sbd.enable_sbd(
+            communication_list=[
+                dict(
+                    label=node,
+                    output=self.err_msg,
+                    response_code=400,
+                )
+                for node in self.unsuccessful_nodes
+            ]
+            + [dict(label=node) for node in self.successful_nodes]
         )
 
         self._add_nodes_with_lib_error()
@@ -3620,43 +3543,41 @@ class FailureEnableSbd(TestCase):
 
     def test_send_config_communication_failure(self):
         sbd_mock_file = fixture.get_mock_file(read_data=self.sbd_config)
-        (
-            self.config.fs.open(
-                settings.sbd_config,
-                return_value=sbd_mock_file,
-                name="fs.open.sbd_config",
-            )
-            .fcntl.flock(
-                sbd_mock_file, fcntl.LOCK_SH, name="fcntl.flock.sbd_config"
-            )
-            .http.sbd.set_sbd_config(
-                communication_list=[
-                    dict(
-                        label=node,
-                        param_list=[
-                            (
-                                "config",
-                                sbd_config_generator(node, with_devices=False),
-                            )
-                        ],
-                        output=self.err_msg,
-                        response_code=400,
-                    )
-                    for node in self.unsuccessful_nodes
-                ]
-                + [
-                    dict(
-                        label=node,
-                        param_list=[
-                            (
-                                "config",
-                                sbd_config_generator(node, with_devices=False),
-                            )
-                        ],
-                    )
-                    for node in self.successful_nodes
-                ]
-            )
+        self.config.fs.open(
+            settings.sbd_config,
+            return_value=sbd_mock_file,
+            name="fs.open.sbd_config",
+        )
+        self.config.fcntl.flock(
+            sbd_mock_file, fcntl.LOCK_SH, name="fcntl.flock.sbd_config"
+        )
+        self.config.http.sbd.set_sbd_config(
+            communication_list=[
+                dict(
+                    label=node,
+                    param_list=[
+                        (
+                            "config",
+                            sbd_config_generator(node, with_devices=False),
+                        )
+                    ],
+                    output=self.err_msg,
+                    response_code=400,
+                )
+                for node in self.unsuccessful_nodes
+            ]
+            + [
+                dict(
+                    label=node,
+                    param_list=[
+                        (
+                            "config",
+                            sbd_config_generator(node, with_devices=False),
+                        )
+                    ],
+                )
+                for node in self.successful_nodes
+            ]
         )
 
         self._add_nodes_with_lib_error()
@@ -3725,22 +3646,21 @@ class FailureQdevice(TestCase):
             self.existing_nodes + self.new_nodes + [QDEVICE_HOST]
         )
         self.config.local.set_expected_reports_list(self.expected_reports)
-        (
-            self.config.services.is_enabled("sbd", return_value=False)
-            .corosync_conf.load_content(
-                corosync_conf_fixture(
-                    self.existing_corosync_nodes,
-                    qdevice_net=True,
-                )
+        self.config.services.is_enabled("sbd", return_value=False)
+        self.config.corosync_conf.load_content(
+            corosync_conf_fixture(
+                self.existing_corosync_nodes,
+                qdevice_net=True,
             )
-            .runner.cib.load()
-            .http.host.check_auth(node_labels=self.existing_nodes)
-            .local.get_host_info(self.new_nodes)
-            .local.pcsd_ssl_cert_sync_disabled()
-            .http.host.update_known_hosts(
-                node_labels=self.new_nodes,
-                to_add_hosts=self.existing_nodes + self.new_nodes,
-            )
+        )
+        self.config.runner.cib.load()
+        self.config.http.host.check_auth(node_labels=self.existing_nodes)
+        self.config.local.get_host_info(self.new_nodes)
+        self.config.local.pcsd_ssl_cert_sync_disabled()
+        self.config.local.destroy_cluster(self.new_nodes)
+        self.config.http.host.update_known_hosts(
+            node_labels=self.new_nodes,
+            to_add_hosts=self.existing_nodes + self.new_nodes,
         )
         self.expected_reports.extend(
             [
@@ -3774,50 +3694,46 @@ class FailureQdevice(TestCase):
         tmp_file_path = "tmp_file_path"
         pk12_cert_path = "pk12_cert_path"
         pk12_cert = b"pk12_cert"
-        (
-            self.config.local.setup_qdevice_part1(
-                mock_get_tmp_file, self.new_nodes
-            )
-            .http.corosync.qdevice_net_sign_certificate(
-                CLUSTER_NAME,
-                cert=cert,
-                signed_cert=b"signed cert",
-                node_labels=[QDEVICE_HOST],
-            )
-            .fs.exists(
-                os.path.join(
-                    settings.corosync_qdevice_net_client_certs_dir, "cert9.db"
-                ),
-                return_value=True,
-                name="fs.exists.corosync_certs_db2",
-            )
-            .runner.corosync.qdevice_get_pk12(
-                cert_path=tmp_file_path,
-                output_path=pk12_cert_path,
-            )
-            .fs.open(
-                pk12_cert_path,
-                return_value=mock.mock_open(read_data=pk12_cert)(),
-                mode="rb",
-                name="fs.open.pk12_cert_read",
-            )
-            .http.corosync.qdevice_net_client_import_cert_and_key(
-                cert=pk12_cert,
-                communication_list=[
-                    dict(
-                        label=node,
-                        output=self.err_msg,
-                        response_code=400,
-                    )
-                    for node in self.unsuccessful_nodes
-                ]
-                + [
-                    dict(
-                        label=node,
-                    )
-                    for node in self.successful_nodes
-                ],
-            )
+        self.config.local.setup_qdevice_part1(mock_get_tmp_file, self.new_nodes)
+        self.config.http.corosync.qdevice_net_sign_certificate(
+            CLUSTER_NAME,
+            cert=cert,
+            signed_cert=b"signed cert",
+            node_labels=[QDEVICE_HOST],
+        )
+        self.config.fs.exists(
+            os.path.join(
+                settings.corosync_qdevice_net_client_certs_dir, "cert9.db"
+            ),
+            return_value=True,
+            name="fs.exists.corosync_certs_db2",
+        )
+        self.config.runner.corosync.qdevice_get_pk12(
+            cert_path=tmp_file_path,
+            output_path=pk12_cert_path,
+        )
+        self.config.fs.open(
+            pk12_cert_path,
+            return_value=mock.mock_open(read_data=pk12_cert)(),
+            mode="rb",
+            name="fs.open.pk12_cert_read",
+        )
+        self.config.http.corosync.qdevice_net_client_import_cert_and_key(
+            cert=pk12_cert,
+            communication_list=[
+                dict(
+                    label=node,
+                    output=self.err_msg,
+                    response_code=400,
+                )
+                for node in self.unsuccessful_nodes
+            ]
+            + [
+                dict(
+                    label=node,
+                )
+                for node in self.successful_nodes
+            ],
         )
 
         self._add_nodes_with_lib_error()
@@ -3847,37 +3763,33 @@ class FailureQdevice(TestCase):
         cert = b"cert"
         tmp_file_path = "tmp_file_path"
         pk12_cert_path = "pk12_cert_path"
-        (
-            self.config.local.setup_qdevice_part1(
-                mock_get_tmp_file, self.new_nodes
-            )
-            .http.corosync.qdevice_net_sign_certificate(
-                CLUSTER_NAME,
-                cert=cert,
-                signed_cert=b"signed cert",
-                node_labels=[QDEVICE_HOST],
-            )
-            .fs.exists(
-                os.path.join(
-                    settings.corosync_qdevice_net_client_certs_dir, "cert9.db"
-                ),
-                return_value=True,
-                name="fs.exists.corosync_certs_db2",
-            )
-            .runner.corosync.qdevice_get_pk12(
-                cert_path=tmp_file_path,
-                output_path=pk12_cert_path,
-            )
-            .fs.open(
+        self.config.local.setup_qdevice_part1(mock_get_tmp_file, self.new_nodes)
+        self.config.http.corosync.qdevice_net_sign_certificate(
+            CLUSTER_NAME,
+            cert=cert,
+            signed_cert=b"signed cert",
+            node_labels=[QDEVICE_HOST],
+        )
+        self.config.fs.exists(
+            os.path.join(
+                settings.corosync_qdevice_net_client_certs_dir, "cert9.db"
+            ),
+            return_value=True,
+            name="fs.exists.corosync_certs_db2",
+        )
+        self.config.runner.corosync.qdevice_get_pk12(
+            cert_path=tmp_file_path,
+            output_path=pk12_cert_path,
+        )
+        self.config.fs.open(
+            pk12_cert_path,
+            side_effect=EnvironmentError(
+                1,
+                self.err_msg,
                 pk12_cert_path,
-                side_effect=EnvironmentError(
-                    1,
-                    self.err_msg,
-                    pk12_cert_path,
-                ),
-                mode="rb",
-                name="fs.open.pk12_cert_read",
-            )
+            ),
+            mode="rb",
+            name="fs.open.pk12_cert_read",
         )
 
         self._add_nodes_with_lib_error(
@@ -3895,30 +3807,26 @@ class FailureQdevice(TestCase):
     def test_transform_to_pk12_failure(self, mock_get_tmp_file):
         cert = b"cert"
         tmp_file_path = "tmp_file_path"
-        (
-            self.config.local.setup_qdevice_part1(
-                mock_get_tmp_file, self.new_nodes
-            )
-            .http.corosync.qdevice_net_sign_certificate(
-                CLUSTER_NAME,
-                cert=cert,
-                signed_cert=b"signed cert",
-                node_labels=[QDEVICE_HOST],
-            )
-            .fs.exists(
-                os.path.join(
-                    settings.corosync_qdevice_net_client_certs_dir, "cert9.db"
-                ),
-                return_value=True,
-                name="fs.exists.corosync_certs_db2",
-            )
-            .runner.corosync.qdevice_get_pk12(
-                cert_path=tmp_file_path,
-                output_path=None,
-                stdout="",
-                stderr=self.err_msg,
-                returncode=1,
-            )
+        self.config.local.setup_qdevice_part1(mock_get_tmp_file, self.new_nodes)
+        self.config.http.corosync.qdevice_net_sign_certificate(
+            CLUSTER_NAME,
+            cert=cert,
+            signed_cert=b"signed cert",
+            node_labels=[QDEVICE_HOST],
+        )
+        self.config.fs.exists(
+            os.path.join(
+                settings.corosync_qdevice_net_client_certs_dir, "cert9.db"
+            ),
+            return_value=True,
+            name="fs.exists.corosync_certs_db2",
+        )
+        self.config.runner.corosync.qdevice_get_pk12(
+            cert_path=tmp_file_path,
+            output_path=None,
+            stdout="",
+            stderr=self.err_msg,
+            returncode=1,
         )
 
         self._add_nodes_with_lib_error(
@@ -3935,19 +3843,16 @@ class FailureQdevice(TestCase):
     @mock.patch("pcs.lib.corosync.qdevice_net.get_tmp_file")
     def test_sign_certificate_failure(self, mock_get_tmp_file):
         cert = b"cert"
-        (
-            self.config.local.setup_qdevice_part1(
-                mock_get_tmp_file, self.new_nodes
-            ).http.corosync.qdevice_net_sign_certificate(
-                CLUSTER_NAME,
-                cert=cert,
-                communication_list=[
-                    {
-                        "label": QDEVICE_HOST,
-                        "output": "invalid base64 encoded certificate data",
-                    },
-                ],
-            )
+        self.config.local.setup_qdevice_part1(mock_get_tmp_file, self.new_nodes)
+        self.config.http.corosync.qdevice_net_sign_certificate(
+            CLUSTER_NAME,
+            cert=cert,
+            communication_list=[
+                {
+                    "label": QDEVICE_HOST,
+                    "output": "invalid base64 encoded certificate data",
+                },
+            ],
         )
 
         self._add_nodes_with_lib_error()
@@ -3965,32 +3870,30 @@ class FailureQdevice(TestCase):
     def test_read_certificate_request_failure(self):
         ca_cert = b"ca_cert"
         cert_req_path = "cert_req_path"
-        (
-            self.config.http.corosync.qdevice_net_get_ca_cert(
-                ca_cert=ca_cert,
-                node_labels=[QDEVICE_HOST],
-            )
-            .http.corosync.qdevice_net_client_setup(
-                ca_cert=ca_cert,
-                node_labels=self.new_nodes,
-            )
-            .fs.exists(
-                os.path.join(
-                    settings.corosync_qdevice_net_client_certs_dir, "cert9.db"
-                ),
-                return_value=True,
-                name="fs.exists.corosync_certs_db",
-            )
-            .runner.corosync.qdevice_generate_cert(
-                CLUSTER_NAME,
-                cert_req_path=cert_req_path,
-            )
-            .fs.open(
-                cert_req_path,
-                side_effect=EnvironmentError(1, self.err_msg, cert_req_path),
-                mode="rb",
-                name="fs.open.cert_req_read",
-            )
+        self.config.http.corosync.qdevice_net_get_ca_cert(
+            ca_cert=ca_cert,
+            node_labels=[QDEVICE_HOST],
+        )
+        self.config.http.corosync.qdevice_net_client_setup(
+            ca_cert=ca_cert,
+            node_labels=self.new_nodes,
+        )
+        self.config.fs.exists(
+            os.path.join(
+                settings.corosync_qdevice_net_client_certs_dir, "cert9.db"
+            ),
+            return_value=True,
+            name="fs.exists.corosync_certs_db",
+        )
+        self.config.runner.corosync.qdevice_generate_cert(
+            CLUSTER_NAME,
+            cert_req_path=cert_req_path,
+        )
+        self.config.fs.open(
+            cert_req_path,
+            side_effect=EnvironmentError(1, self.err_msg, cert_req_path),
+            mode="rb",
+            name="fs.open.cert_req_read",
         )
 
         self._add_nodes_with_lib_error(
@@ -4014,29 +3917,27 @@ class FailureQdevice(TestCase):
 
     def test_generate_certificate_request_failure(self):
         ca_cert = b"ca_cert"
-        (
-            self.config.http.corosync.qdevice_net_get_ca_cert(
-                ca_cert=ca_cert,
-                node_labels=[QDEVICE_HOST],
-            )
-            .http.corosync.qdevice_net_client_setup(
-                ca_cert=ca_cert,
-                node_labels=self.new_nodes,
-            )
-            .fs.exists(
-                os.path.join(
-                    settings.corosync_qdevice_net_client_certs_dir, "cert9.db"
-                ),
-                return_value=True,
-                name="fs.exists.corosync_certs_db",
-            )
-            .runner.corosync.qdevice_generate_cert(
-                CLUSTER_NAME,
-                cert_req_path=None,
-                stdout="",
-                stderr=self.err_msg,
-                returncode=1,
-            )
+        self.config.http.corosync.qdevice_net_get_ca_cert(
+            ca_cert=ca_cert,
+            node_labels=[QDEVICE_HOST],
+        )
+        self.config.http.corosync.qdevice_net_client_setup(
+            ca_cert=ca_cert,
+            node_labels=self.new_nodes,
+        )
+        self.config.fs.exists(
+            os.path.join(
+                settings.corosync_qdevice_net_client_certs_dir, "cert9.db"
+            ),
+            return_value=True,
+            name="fs.exists.corosync_certs_db",
+        )
+        self.config.runner.corosync.qdevice_generate_cert(
+            CLUSTER_NAME,
+            cert_req_path=None,
+            stdout="",
+            stderr=self.err_msg,
+            returncode=1,
         )
 
         self._add_nodes_with_lib_error(
@@ -4060,27 +3961,26 @@ class FailureQdevice(TestCase):
 
     def test_initialize_new_nodes_failure(self):
         ca_cert = b"ca_cert"
-        (
-            self.config.http.corosync.qdevice_net_get_ca_cert(
-                ca_cert=ca_cert,
-                node_labels=[QDEVICE_HOST],
-            ).http.corosync.qdevice_net_client_setup(
-                ca_cert=ca_cert,
-                communication_list=[
-                    dict(
-                        label=node,
-                        output=self.err_msg,
-                        response_code=400,
-                    )
-                    for node in self.unsuccessful_nodes
-                ]
-                + [
-                    dict(
-                        label=node,
-                    )
-                    for node in self.successful_nodes
-                ],
-            )
+        self.config.http.corosync.qdevice_net_get_ca_cert(
+            ca_cert=ca_cert,
+            node_labels=[QDEVICE_HOST],
+        )
+        self.config.http.corosync.qdevice_net_client_setup(
+            ca_cert=ca_cert,
+            communication_list=[
+                dict(
+                    label=node,
+                    output=self.err_msg,
+                    response_code=400,
+                )
+                for node in self.unsuccessful_nodes
+            ]
+            + [
+                dict(
+                    label=node,
+                )
+                for node in self.successful_nodes
+            ],
         )
 
         self._add_nodes_with_lib_error()
@@ -4106,15 +4006,13 @@ class FailureQdevice(TestCase):
         )
 
     def test_get_ca_cert_failure(self):
-        (
-            self.config.http.corosync.qdevice_net_get_ca_cert(
-                communication_list=[
-                    {
-                        "label": QDEVICE_HOST,
-                        "output": "invalid base64 encoded certificate data",
-                    },
-                ]
-            )
+        self.config.http.corosync.qdevice_net_get_ca_cert(
+            communication_list=[
+                {
+                    "label": QDEVICE_HOST,
+                    "output": "invalid base64 encoded certificate data",
+                },
+            ]
         )
 
         self._add_nodes_with_lib_error()
@@ -4149,17 +4047,16 @@ class FailureKnownHostsUpdate(TestCase):
         ]
         self.config.env.set_known_nodes(self.existing_nodes + self.new_nodes)
         self.config.local.set_expected_reports_list(self.expected_reports)
-        (
-            self.config.services.is_enabled("sbd", return_value=False)
-            .corosync_conf.load_content(
-                corosync_conf_fixture(self.existing_corosync_nodes)
-            )
-            .runner.cib.load()
-            .http.host.check_auth(node_labels=self.existing_nodes)
-            .services.is_installed("sbd", return_value=False)
-            .local.get_host_info(self.new_nodes)
-            .local.pcsd_ssl_cert_sync_disabled()
+        self.config.services.is_enabled("sbd", return_value=False)
+        self.config.corosync_conf.load_content(
+            corosync_conf_fixture(self.existing_corosync_nodes)
         )
+        self.config.runner.cib.load()
+        self.config.http.host.check_auth(node_labels=self.existing_nodes)
+        self.config.services.is_installed("sbd", return_value=False)
+        self.config.local.get_host_info(self.new_nodes)
+        self.config.local.pcsd_ssl_cert_sync_disabled()
+        self.config.local.destroy_cluster(self.new_nodes)
         self.expected_reports.extend(
             [
                 fixture.info(
@@ -4244,3 +4141,84 @@ class FailureKnownHostsUpdate(TestCase):
                 for node in self.unsuccessful_nodes
             ]
         )
+
+
+class AddNodeClusterDestroyFail(TestCase):
+    def setUp(self):
+        self.env_assist, self.config = get_env_tools(self)
+        existing_nodes, self.new_nodes = generate_nodes(2, 2)
+        self.expected_reports = []
+        self.err_msg = "an error message"
+        patch_getaddrinfo(self, self.new_nodes)
+        existing_corosync_nodes = [
+            node_fixture(node, node_id)
+            for node_id, node in enumerate(existing_nodes, 1)
+        ]
+        self.config.env.set_known_nodes(existing_nodes + self.new_nodes)
+        self.config.services.is_enabled("sbd", return_value=False)
+        self.config.corosync_conf.load_content(
+            corosync_conf_fixture(existing_corosync_nodes)
+        )
+        self.config.runner.cib.load()
+        self.config.http.host.check_auth(node_labels=existing_nodes)
+        self.config.services.is_installed("sbd", return_value=False)
+        self.config.local.get_host_info(self.new_nodes)
+        self.config.local.pcsd_ssl_cert_sync_disabled()
+        self.expected_reports.extend(
+            [
+                fixture.info(
+                    reports.codes.USING_DEFAULT_ADDRESS_FOR_HOST,
+                    host_name=node,
+                    address=node,
+                    address_source=(
+                        reports.const.DEFAULT_ADDRESS_SOURCE_KNOWN_HOSTS
+                    ),
+                )
+                for node in self.new_nodes
+            ]
+        )
+        self.config.http.place_multinode_call(
+            "http.host.cluster_destroy",
+            communication_list=[
+                dict(
+                    label=node,
+                    output=self.err_msg,
+                    response_code=400,
+                )
+                for node in self.new_nodes
+            ],
+            action="remote/cluster_destroy",
+        )
+
+    def _assert_destroy_failure(self, force_flags=None):
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.add_nodes(
+                self.env_assist.get_env(),
+                [{"name": node} for node in self.new_nodes],
+                force_flags=force_flags or [],
+            ),
+        )
+        self.env_assist.assert_reports(
+            self.expected_reports
+            + [
+                fixture.info(
+                    reports.codes.CLUSTER_DESTROY_STARTED,
+                    host_name_list=sorted(self.new_nodes),
+                ),
+            ]
+            + [
+                fixture.error(
+                    reports.codes.NODE_COMMUNICATION_COMMAND_UNSUCCESSFUL,
+                    node=node,
+                    command="remote/cluster_destroy",
+                    reason=self.err_msg,
+                )
+                for node in self.new_nodes
+            ]
+        )
+
+    def test_destroy_failure_aborts_add_nodes(self):
+        self._assert_destroy_failure()
+
+    def test_destroy_failure_aborts_add_nodes_forced(self):
+        self._assert_destroy_failure(force_flags=[reports.codes.FORCE])

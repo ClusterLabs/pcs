@@ -19,6 +19,7 @@ from pcs.lib.commands.cluster.setup_utils import (
     start_cluster,
 )
 from pcs.lib.commands.cluster.utils import ensure_live_env, verify_corosync_conf
+from pcs.lib.communication import cluster
 from pcs.lib.communication.corosync import (
     CheckCorosyncOffline,
     DistributeCorosyncConf,
@@ -357,7 +358,14 @@ def add_nodes(  # noqa: PLR0912, PLR0915
     # Validation done. If errors occurred, an exception has been raised and we
     # don't get below this line.
 
-    # First set up everything else than corosync. Once the new nodes are present
+    # First, destroy cluster on new nodes. This is needed to make sure that
+    # new nodes are not part of another cluster and that there are no cluster
+    # configs left there which would interfere with the current cluster.
+    com_cmd = cluster.Destroy(env.report_processor)
+    com_cmd.set_targets(new_nodes_target_list)
+    run_and_raise(env.get_node_communicator(), com_cmd)
+
+    # Set up everything else than corosync. Once the new nodes are present
     # in corosync.conf, they're considered part of a cluster and the node add
     # command cannot be run again. So we need to minimize the amount of actions
     # (and therefore possible failures) after adding the nodes to corosync.
