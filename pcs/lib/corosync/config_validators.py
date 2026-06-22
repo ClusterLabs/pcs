@@ -3,18 +3,10 @@ from collections import (
     Counter,
     defaultdict,
 )
-from collections.abc import Collection, Mapping
+from collections.abc import Collection, Mapping, MutableSequence
 from dataclasses import dataclass
 from itertools import zip_longest
-from typing import (
-    Any,
-    Callable,
-    Iterable,
-    MutableSequence,
-    MutableSet,
-    Optional,
-    Sequence,
-)
+from typing import Any, Callable, Iterable, MutableSet, Optional, Sequence
 
 from pcs.common import reports
 from pcs.common.corosync_conf import CorosyncNodeAddressType
