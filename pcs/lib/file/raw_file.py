@@ -1,8 +1,9 @@
 import errno
 import os
+from collections.abc import Iterator
 from contextlib import contextmanager
 from io import BytesIO
-from typing import Iterator, Optional
+from typing import Optional
 
 # the import makes it look like RealFile is implemented here so we don't
 # have to import RawFile from common and Ghost file from here in other

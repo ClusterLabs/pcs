@@ -1,9 +1,6 @@
+from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import (
-    Iterator,
-    Optional,
-    Union,
-)
+from typing import Optional, Union
 
 from lxml.etree import _Element
 

@@ -4,10 +4,11 @@ import os
 import re
 import shutil
 import time
+from collections.abc import Iterator
 from contextlib import AbstractContextManager, contextmanager
 from dataclasses import dataclass
 from io import BytesIO
-from typing import IO, Any, Iterator, NewType, Optional
+from typing import IO, Any, NewType, Optional
 
 from pcs import settings
 from pcs.common.file_type_codes import FileTypeCode

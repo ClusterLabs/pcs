@@ -1,10 +1,7 @@
 import logging
+from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import (
-    Iterator,
-    Optional,
-    cast,
-)
+from typing import Optional, cast
 
 from pcs.common.file import RawFileError
 from pcs.lib.file.instance import FileInstance
