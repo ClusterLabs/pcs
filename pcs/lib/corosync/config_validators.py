@@ -3,12 +3,12 @@ from collections import (
     Counter,
     defaultdict,
 )
+from collections.abc import Collection
 from dataclasses import dataclass
 from itertools import zip_longest
 from typing import (
     Any,
     Callable,
-    Collection,
     Iterable,
     Mapping,
     MutableSequence,

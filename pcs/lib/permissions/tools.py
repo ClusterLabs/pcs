@@ -1,4 +1,5 @@
-from typing import Collection, cast
+from collections.abc import Collection
+from typing import cast
 
 from pcs.common import reports
 from pcs.common.permissions.types import PermissionGrantedType

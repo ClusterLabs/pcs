@@ -1,4 +1,5 @@
-from typing import Collection, NewType
+from collections.abc import Collection
+from typing import NewType
 
 AddRemoveContainerType = NewType("AddRemoveContainerType", str)
 AddRemoveItemType = NewType("AddRemoveItemType", str)
