@@ -1,7 +1,7 @@
 import json
 import logging
 from http.client import responses
-from typing import Any, Optional, Type, cast
+from typing import Any, Optional, cast
 
 from dacite import DaciteError, MissingValueError, UnexpectedDataError
 from tornado.web import HTTPError, MissingArgumentError
@@ -93,7 +93,7 @@ class _BaseApiV2Handler(BaseHandler):
 
     @staticmethod
     def _from_dict_exc_handled(
-        convert_to: Type[DTOTYPE], dictionary: dict[str, Any]
+        convert_to: type[DTOTYPE], dictionary: dict[str, Any]
     ) -> DTOTYPE:
         """
         Dacite conversion to DTO from JSON with handled exceptions

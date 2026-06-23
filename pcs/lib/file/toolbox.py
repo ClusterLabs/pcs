@@ -1,8 +1,5 @@
 from dataclasses import dataclass
-from typing import (
-    Optional,
-    Type,
-)
+from typing import Optional
 
 from pcs.common import file_type_codes as code
 from pcs.common import reports
@@ -37,11 +34,11 @@ class FileToolbox:
     # File type code the toolbox belongs to
     file_type_code: code.FileTypeCode
     # Provides an easy access for reading and modifying data
-    facade: Type[FacadeInterface]
+    facade: type[FacadeInterface]
     # Turns raw data into a structure which the facade is able to process
-    parser: Type[ParserInterface]
+    parser: type[ParserInterface]
     # Turns a structure produced by the parser and the facade to raw data
-    exporter: Type[ExporterInterface]
+    exporter: type[ExporterInterface]
     # Checks that the structure is valid
     validator: None  # TBI
     # Provides means for file syncing based on the file's version

@@ -1,12 +1,5 @@
 from collections.abc import Sequence
-from typing import (
-    Any,
-    Final,
-    Optional,
-    Type,
-    TypeVar,
-    cast,
-)
+from typing import Any, Final, Optional, TypeVar, cast
 
 from lxml import etree
 from lxml.etree import (
@@ -299,7 +292,7 @@ def export(topology_el: _Element) -> list[dict[str, Any]]:
 
 
 def _fencing_level_dto_factory(
-    dto_type: Type[FencingLevelDto],
+    dto_type: type[FencingLevelDto],
     level_el_attrib: _Attrib,
 ) -> FencingLevelDto:
     if dto_type is CibFencingLevelRegexDto:

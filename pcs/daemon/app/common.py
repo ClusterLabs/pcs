@@ -1,7 +1,7 @@
 import base64
 import binascii
 from logging import Logger
-from typing import Any, Iterable, Optional, Type
+from typing import Any, Iterable, Optional
 
 from tornado.web import Finish, HTTPError, RequestHandler
 from tornado.web import RedirectHandler as TornadoRedirectHandler
@@ -9,7 +9,7 @@ from tornado.web import RedirectHandler as TornadoRedirectHandler
 from pcs.lib.auth.tools import DesiredUser
 
 RoutesType = Iterable[
-    tuple[str, Type[RequestHandler], Optional[dict[str, Any]]]
+    tuple[str, type[RequestHandler], Optional[dict[str, Any]]]
 ]
 
 

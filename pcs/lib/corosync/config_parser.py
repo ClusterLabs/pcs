@@ -1,8 +1,4 @@
-from typing import (
-    Mapping,
-    Optional,
-    Type,
-)
+from typing import Mapping, Optional
 
 from pcs.common import (
     file_type_codes,
@@ -206,7 +202,7 @@ class Parser(ParserInterface):
         exception: ParserErrorException,
     ) -> reports.item.ReportItemMessage:
         exc_to_msg: Mapping[
-            Type[ParserErrorException], Type[reports.item.ReportItemMessage]
+            type[ParserErrorException], type[reports.item.ReportItemMessage]
         ] = {
             MissingClosingBraceException: (
                 reports.messages.ParseErrorCorosyncConfMissingClosingBrace
