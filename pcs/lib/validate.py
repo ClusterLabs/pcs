@@ -40,7 +40,6 @@ from typing import (
     Mapping,
     NamedTuple,
     Optional,
-    Set,
     Union,
     cast,
 )
@@ -1285,7 +1284,7 @@ class ValidateAddRemove:
         return report_list
 
     @staticmethod
-    def _get_duplicate_items(item_list: StringIterable) -> Set[str]:
+    def _get_duplicate_items(item_list: StringIterable) -> set[str]:
         return {item for item, count in Counter(item_list).items() if count > 1}
 
     def validate_no_duplicate_items(self) -> ReportItemList:

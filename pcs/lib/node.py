@@ -1,9 +1,4 @@
-from typing import (
-    Iterable,
-    Optional,
-    Set,
-    Tuple,
-)
+from typing import Iterable, Optional, Tuple
 
 from lxml.etree import _Element
 
@@ -36,7 +31,7 @@ def get_existing_nodes_names(
     )
 
 
-def get_pacemaker_node_names(cib: _Element) -> Set[str]:
+def get_pacemaker_node_names(cib: _Element) -> set[str]:
     return get_node_names(cib) | set(get_existing_nodes_names(None, cib)[0])
 
 

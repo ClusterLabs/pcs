@@ -1,9 +1,4 @@
-from typing import (
-    Optional,
-    Set,
-    Tuple,
-    cast,
-)
+from typing import Optional, Tuple, cast
 
 from lxml.etree import _Element
 
@@ -97,7 +92,7 @@ def find_primitives(resource_el: _Element) -> list[_Element]:
     return []
 
 
-def get_all_inner_resources(resource_el: _Element) -> Set[_Element]:
+def get_all_inner_resources(resource_el: _Element) -> set[_Element]:
     """
     Return all inner resources (both direct and indirect) of a resource
     Example: for a clone containing a group, this function will return both
@@ -105,7 +100,7 @@ def get_all_inner_resources(resource_el: _Element) -> Set[_Element]:
 
     resource_el -- resource element to get its inner resources
     """
-    all_inner: Set[_Element] = set()
+    all_inner: set[_Element] = set()
     to_process = {resource_el}
     while to_process:
         new_inner = get_inner_resources(to_process.pop())

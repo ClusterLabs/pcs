@@ -1,14 +1,7 @@
 import sys
 import xml.dom.minidom
 from enum import Enum
-from typing import (
-    Any,
-    Iterable,
-    Optional,
-    Set,
-    TypeVar,
-    cast,
-)
+from typing import Any, Iterable, Optional, TypeVar, cast
 from xml.dom.minidom import parseString
 
 import pcs.cli.constraint_order.command as order_command
@@ -670,7 +663,7 @@ _SetConstraint = TypeVar(
 
 
 def _filter_set_constraints_by_resources(
-    constraints_dto: Iterable[_SetConstraint], resources: Set[str]
+    constraints_dto: Iterable[_SetConstraint], resources: set[str]
 ) -> list[_SetConstraint]:
     return [
         constraint_set_dto

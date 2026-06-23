@@ -11,7 +11,6 @@ from typing import (
     Mapping,
     Optional,
     Sequence,
-    Set,
     Tuple,
     Union,
     cast,
@@ -1325,7 +1324,7 @@ def bundle_update(  # noqa: PLR0913
 
 def _disable_get_element_ids(
     disabled_resource_el_list: Iterable[_Element],
-) -> Tuple[Set[str], Set[str]]:
+) -> Tuple[set[str], set[str]]:
     """
     Turn a list of elements asked by a user to be disabled to a list of their
     IDs and a list of IDs of their inner elements. Remember, the user can
@@ -1356,15 +1355,15 @@ def _disable_get_element_ids(
 def _disable_run_simulate(
     cmd_runner: CommandRunner,
     cib: _Element,
-    disabled_resource_ids: Set[str],
-    inner_resource_ids: Set[str],
+    disabled_resource_ids: set[str],
+    inner_resource_ids: set[str],
     strict: bool,
-) -> Tuple[str, Set[str]]:
+) -> Tuple[str, set[str]]:
     plaintext_status, transitions, dummy_cib = simulate_cib(cmd_runner, cib)
     simulated_operations = simulate_tools.get_operations_from_transitions(
         transitions
     )
-    other_affected: Set[str] = set()
+    other_affected: set[str] = set()
     if strict:
         other_affected = set(
             simulate_tools.get_resources_from_operations(

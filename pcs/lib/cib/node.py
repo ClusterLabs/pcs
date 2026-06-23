@@ -1,5 +1,5 @@
 from collections import namedtuple
-from typing import Optional, Set
+from typing import Optional
 
 from lxml import etree
 from lxml.etree import _Element
@@ -99,7 +99,7 @@ def update_node_instance_attrs(
     append_when_useful(cib_nodes, node_el)
 
 
-def get_node_names(cib: _Element) -> Set[str]:
+def get_node_names(cib: _Element) -> set[str]:
     return {
         str(node.attrib["uname"])
         for node in get_nodes(get_root(cib)).iterfind("./node")

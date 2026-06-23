@@ -6,7 +6,6 @@ from typing import (
     MutableMapping,
     Optional,
     Sequence,
-    Set,
     Tuple,
     cast,
 )
@@ -107,7 +106,7 @@ class ResourceRelationTreeBuilder:
         self._init_structures()
 
     def _init_structures(self) -> None:
-        self._processed_nodes: Set[str] = set()
+        self._processed_nodes: set[str] = set()
         # queue
         self._nodes_to_process: list[ResourceRelationNode] = []
 
@@ -186,7 +185,7 @@ class ResourceRelationsFetcher:
     def _get_all_members(
         relation_list: Iterable[RelationEntityDto],
     ) -> AbstractSet[str]:
-        result: Set[str] = set()
+        result: set[str] = set()
         for relation in relation_list:
             result.update(relation.members)
         return result
@@ -293,7 +292,7 @@ def _get_ordering_set_constraint_relation(
     ord_set_const_el: _Element,
 ) -> RelationEntityDto:
     attrs = cast(Mapping[str, str], ord_set_const_el.attrib)
-    members: Set[str] = set()
+    members: set[str] = set()
     metadata: MutableMapping[str, Any] = dict(attrs)
     metadata["sets"] = []
     for rsc_set_el in ord_set_const_el.findall("resource_set"):

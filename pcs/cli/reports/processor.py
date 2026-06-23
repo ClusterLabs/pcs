@@ -1,9 +1,4 @@
-from typing import (
-    Callable,
-    Iterable,
-    Optional,
-    Set,
-)
+from typing import Callable, Iterable, Optional
 
 from pcs.cli.common.tools import print_to_stderr
 from pcs.common.reports import (
@@ -42,7 +37,7 @@ class ReportProcessorToConsole(ReportProcessor):
 
     def _get_ignored_severities(
         self, suppressed_severity_list: Iterable[SeverityLevel]
-    ) -> Set[SeverityLevel]:
+    ) -> set[SeverityLevel]:
         ignore_severities = set(suppressed_severity_list)
         if self.debug:
             ignore_severities -= {ReportItemSeverity.DEBUG}
