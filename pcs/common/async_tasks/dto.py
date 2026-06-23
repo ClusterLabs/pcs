@@ -1,9 +1,5 @@
 from dataclasses import dataclass
-from typing import (
-    Any,
-    Dict,
-    Optional,
-)
+from typing import Any, Optional
 
 from pcs.common.interface.dto import DataTransferObject
 from pcs.common.reports.dto import ReportItemDto
@@ -25,7 +21,7 @@ class CommandOptionsDto(DataTransferObject):
 @dataclass(frozen=True)
 class CommandDto(DataTransferObject):
     command_name: str
-    params: Dict[str, Any]
+    params: dict[str, Any]
     options: CommandOptionsDto
 
 

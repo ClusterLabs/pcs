@@ -4,7 +4,6 @@ from dataclasses import dataclass, field
 from functools import partial
 from typing import (
     Any,
-    Dict,
     Literal,
     Mapping,
     Optional,
@@ -2016,7 +2015,7 @@ class CorosyncNodeAddressCountMismatch(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        count_node: Dict[int, list[str]] = defaultdict(list)
+        count_node: dict[int, list[str]] = defaultdict(list)
         for node_name, count in self.node_addr_count.items():
             count_node[count].append(node_name)
         parts = ["All nodes must have the same number of addresses"]
@@ -3141,7 +3140,7 @@ class ResourceRunningOnNodes(ReportItemMessage):
     """
 
     resource_id: str
-    roles_with_nodes: Dict[str, list[str]]
+    roles_with_nodes: dict[str, list[str]]
     _code = codes.RESOURCE_RUNNING_ON_NODES
 
     @property
@@ -3149,7 +3148,7 @@ class ResourceRunningOnNodes(ReportItemMessage):
         role_label_map = {
             "Started": "running",
         }
-        state_info: Dict[str, list[str]] = {}
+        state_info: dict[str, list[str]] = {}
         for state, node_list in self.roles_with_nodes.items():
             state_info.setdefault(
                 role_label_map.get(state, state.lower()), []
@@ -5864,7 +5863,7 @@ class ServiceVersionMismatch(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        version_host: Dict[str, list[str]] = defaultdict(list)
+        version_host: dict[str, list[str]] = defaultdict(list)
         for host_name, version in self.hosts_version.items():
             version_host[version].append(host_name)
         parts = [f"Hosts do not have the same version of '{self.service}'"]
@@ -6377,7 +6376,7 @@ class ResourceInstanceAttrGroupValueNotUnique(ReportItemMessage):
     """
 
     group_name: str
-    instance_attrs_map: Dict[str, str]
+    instance_attrs_map: dict[str, str]
     agent_name: str
     resource_id_list: list[str]
     _code = codes.RESOURCE_INSTANCE_ATTR_GROUP_VALUE_NOT_UNIQUE
@@ -8864,7 +8863,7 @@ class NoStonithMeansWouldBeLeftDueToProperties(ReportItemMessage):
     configured
     """
 
-    property_map: Dict[str, str]
+    property_map: dict[str, str]
     _code = codes.NO_STONITH_MEANS_WOULD_BE_LEFT_DUE_TO_PROPERTIES
 
     @property

@@ -1,8 +1,4 @@
-from typing import (
-    Any,
-    Dict,
-    Optional,
-)
+from typing import Any, Optional
 
 from pcs.lib.commands.resource_agent import (
     _agent_metadata_to_dict,
@@ -27,7 +23,7 @@ def list_agents(
     lib_env: LibraryEnvironment,
     describe: bool = True,
     search: Optional[str] = None,
-) -> list[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """
     List all stonith agents on the local host, optionally filtered and described
 
@@ -51,7 +47,7 @@ def list_agents(
 # for now, it is transformed to a dict for backward compatibility
 def describe_agent(
     lib_env: LibraryEnvironment, agent_name: str
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Get agent's description (metadata) in a structure
 

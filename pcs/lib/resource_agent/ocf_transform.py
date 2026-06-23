@@ -1,6 +1,5 @@
 from collections import defaultdict
 from typing import (
-    Dict,
     Iterable,
     Optional,
     Set,
@@ -110,7 +109,7 @@ def _ocf_1_0_parameter_list_to_ocf_unified(
 
     parameter_list -- parameters according OCF 1.0
     """
-    deprecated_by_dict: Dict[str, Set[str]] = defaultdict(set)
+    deprecated_by_dict: dict[str, Set[str]] = defaultdict(set)
     for parameter in parameter_list:
         if parameter.obsoletes:
             deprecated_by_dict[parameter.obsoletes].add(parameter.name)

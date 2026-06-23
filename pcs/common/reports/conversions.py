@@ -1,7 +1,4 @@
-from typing import (
-    Dict,
-    Optional,
-)
+from typing import Optional
 
 from pcs.common.tools import get_all_subclasses
 
@@ -36,8 +33,8 @@ def report_dto_to_item(
     )
 
 
-def _create_report_msg_map() -> Dict[str, type]:
-    result: Dict[str, type] = {}
+def _create_report_msg_map() -> dict[str, type]:
+    result: dict[str, type] = {}
     for report_msg_cls in get_all_subclasses(messages.ReportItemMessage):
         code = report_msg_cls._code  # pylint: disable=protected-access # noqa: SLF001
         if code:

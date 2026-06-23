@@ -2,11 +2,7 @@ import errno
 import os
 from contextlib import contextmanager
 from io import BytesIO
-from typing import (
-    Dict,
-    Iterator,
-    Optional,
-)
+from typing import Iterator, Optional
 
 # the import makes it look like RealFile is implemented here so we don't
 # have to import RawFile from common and Ghost file from here in other
@@ -96,7 +92,7 @@ class GhostFile(RawFileInterface):
         self.write(io_buffer.getvalue(), can_overwrite=True)
 
 
-def export_ghost_file(ghost_file: GhostFile) -> Dict[str, Optional[bytes]]:
+def export_ghost_file(ghost_file: GhostFile) -> dict[str, Optional[bytes]]:
     """
     Export GhostFile so it can be transferred to a client
 

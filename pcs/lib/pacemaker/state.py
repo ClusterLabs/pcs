@@ -4,10 +4,7 @@ Hide information about underlying xml is desired too.
 """
 
 from collections import defaultdict
-from typing import (
-    Any,
-    Dict,
-)
+from typing import Any
 
 from lxml import etree
 
@@ -94,11 +91,11 @@ class _Children:
 
 class _Element:
     # Note: not properly typed
-    required_attrs: Dict[Any, Any] = {}
+    required_attrs: dict[Any, Any] = {}
     # Note: not properly typed
-    children: Dict[Any, Any] = {}
+    children: dict[Any, Any] = {}
     # Note: not properly typed
-    sections: Dict[Any, Any] = {}
+    sections: dict[Any, Any] = {}
 
     def __init__(self, dom_part: etree._Element):
         self.dom_part = dom_part

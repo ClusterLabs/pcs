@@ -2,7 +2,7 @@ import signal
 import subprocess
 from logging import Logger
 from shlex import quote as shell_quote
-from typing import Dict, Mapping, Optional, Tuple
+from typing import Mapping, Optional, Tuple
 
 from pcs import settings
 from pcs.common import reports
@@ -38,7 +38,7 @@ class CommandRunner:
         self._env_vars = env_vars if env_vars else {}
 
     @property
-    def env_vars(self) -> Dict[str, str]:
+    def env_vars(self) -> dict[str, str]:
         return dict(self._env_vars)
 
     def run(

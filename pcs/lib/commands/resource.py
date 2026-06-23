@@ -6,7 +6,6 @@ from functools import partial
 from typing import (
     Any,
     Callable,
-    Dict,
     FrozenSet,
     Iterable,
     Mapping,
@@ -2254,7 +2253,7 @@ def _ensure_resource_moved_and_not_moved_back(
     remove_constraint_cib_diff: str,
     resource_id: str,
     strict: bool,
-    resource_state_before: Dict[str, list[str]],
+    resource_state_before: dict[str, list[str]],
     node: Optional[str],
 ) -> None:
     with get_tmp_cib(report_processor, cib_xml) as rsc_unmove_cib_file:
@@ -2325,7 +2324,7 @@ def ban(env, resource_id, node=None, master=False, lifetime=None, wait=False):
 
 
 def _resource_running_on_nodes(
-    resource_state: Dict[str, list[str]],
+    resource_state: dict[str, list[str]],
 ) -> FrozenSet[str]:
     if resource_state:
         return frozenset(
@@ -2338,8 +2337,8 @@ def _resource_running_on_nodes(
 
 def _was_resource_moved(
     node: Optional[str],
-    resource_state_before: Dict[str, list[str]],
-    resource_state_after: Dict[str, list[str]],
+    resource_state_before: dict[str, list[str]],
+    resource_state_after: dict[str, list[str]],
 ) -> bool:
     running_on_nodes = _resource_running_on_nodes(resource_state_after)
     return not bool(
@@ -2355,8 +2354,8 @@ def _was_resource_moved(
 def _move_wait_report(
     resource_id: str,
     node: Optional[str],
-    resource_state_before: Dict[str, list[str]],
-    resource_state_after: Dict[str, list[str]],
+    resource_state_before: dict[str, list[str]],
+    resource_state_after: dict[str, list[str]],
 ) -> ReportItem:
     severity = reports.item.ReportItemSeverity.info()
     if not _was_resource_moved(

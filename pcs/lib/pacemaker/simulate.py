@@ -2,7 +2,6 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import (
     Container,
-    Dict,
     Iterable,
     NewType,
     Optional,
@@ -123,7 +122,7 @@ def _resources_with_imbalanced_operations(
     exclude_resources: Optional[Container[str]] = None,
 ) -> list[str]:
     exclude_resources = exclude_resources or tuple()
-    counter: Dict[str, int] = defaultdict(int)
+    counter: dict[str, int] = defaultdict(int)
     for res_op in operation_list:
         resource = res_op.primitive_id
         operation = res_op.operation_type

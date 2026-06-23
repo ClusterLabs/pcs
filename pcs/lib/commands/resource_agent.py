@@ -1,6 +1,5 @@
 from typing import (
     Any,
-    Dict,
     Iterable,
     Optional,
     cast,
@@ -98,7 +97,7 @@ def list_agents(
     lib_env: LibraryEnvironment,
     describe: bool = True,
     search: Optional[str] = None,
-) -> list[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """
     List all resource agents on the local host, optionally filtered and
         described
@@ -182,7 +181,7 @@ def _action_to_operation(
 # backward compatibility layer - export agent metadata in the legacy format
 def _agent_metadata_to_dict(
     agent: ResourceAgentMetadata, describe: bool = False
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     agent_dto = agent.to_dto()
     agent_dict = to_dict(agent_dto)
     del agent_dict["name"]
@@ -216,7 +215,7 @@ def _complete_agent_list(
     agent_names: Iterable[ResourceAgentName],
     describe: bool,
     search: Optional[str],
-) -> list[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     agent_factory = ResourceAgentFacadeFactory(runner, report_processor)
     search_lower = search.lower() if search else None
     agent_list = []
@@ -273,7 +272,7 @@ def get_agent_metadata(
 # for now, it is transformed to a dict for backward compatibility
 def describe_agent(
     lib_env: LibraryEnvironment, agent_name: str
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Get agent's description (metadata) in a structure
 

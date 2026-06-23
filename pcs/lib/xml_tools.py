@@ -1,5 +1,4 @@
 from typing import (
-    Dict,
     Iterable,
     Mapping,
     Optional,
@@ -81,7 +80,7 @@ def get_sub_element(
 
 def export_attributes(
     element: _Element, with_id: bool = True
-) -> Dict[str, str]:
+) -> dict[str, str]:
     result = {str(key): str(value) for key, value in element.attrib.items()}
     if not with_id:
         result.pop("id", None)

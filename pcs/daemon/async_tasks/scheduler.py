@@ -5,7 +5,6 @@ from dataclasses import dataclass
 from logging import handlers
 from multiprocessing.pool import worker as mp_worker_init  # type: ignore
 from queue import Empty
-from typing import Dict
 
 from pcs import settings
 from pcs.common.async_tasks.dto import TaskResultDto
@@ -75,7 +74,7 @@ class Scheduler:
             initializer=worker_init,
             initargs=[self._worker_message_q, self._logging_q],
         )
-        self._task_register: Dict[str, Task] = {}
+        self._task_register: dict[str, Task] = {}
         self._logger.info("Scheduler was successfully initialized.")
         self._logger.debug(
             "Scheduler initialized with config: %s", self._config
@@ -151,7 +150,7 @@ class Scheduler:
         return task_ident
 
     def _is_possibly_dead_locked(self) -> bool:
-        counter: Dict[TaskState, list[Task]] = defaultdict(list)
+        counter: dict[TaskState, list[Task]] = defaultdict(list)
         for task in self._task_register.values():
             counter[task.state].append(task)
 

@@ -1,9 +1,5 @@
 from dataclasses import dataclass
-from typing import (
-    Any,
-    Dict,
-    Optional,
-)
+from typing import Any, Optional
 
 from pcs.common.interface.dto import (
     ImplementsFromDto,
@@ -113,7 +109,7 @@ class ReportItemMessage(ImplementsToDto):
         return self._code
 
     def to_dto(self) -> ReportItemMessageDto:
-        payload: Dict[str, Any] = {}
+        payload: dict[str, Any] = {}
         if hasattr(self.__class__, "__annotations__"):
             try:
                 annotations = self.__class__.__annotations__

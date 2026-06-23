@@ -16,7 +16,7 @@ import xml.dom.minidom
 from functools import lru_cache
 from io import BytesIO
 from textwrap import dedent
-from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, cast
+from typing import TYPE_CHECKING, Any, Optional, Tuple, cast
 from urllib.parse import urlencode
 from xml.dom.minidom import Document as DomDocument
 from xml.dom.minidom import parseString
@@ -73,7 +73,7 @@ if TYPE_CHECKING:
 usefile = False
 filename = ""
 # Note: not properly typed
-pcs_options: Dict[Any, Any] = {}
+pcs_options: dict[Any, Any] = {}
 
 
 def _getValidateWithVersion(dom) -> Version:

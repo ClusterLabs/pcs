@@ -1,8 +1,5 @@
 import re
-from typing import (
-    Dict,
-    cast,
-)
+from typing import cast
 
 from lxml.etree import _Element
 
@@ -25,7 +22,7 @@ class RuleToStr:
         normalize -- export in a normalized form
         """
         # The cache prevents evaluating subtrees repeatedly.
-        self._cache: Dict[str, str] = {}
+        self._cache: dict[str, str] = {}
         self._normalize = normalize
 
     def get_str(self, rule_part_element: _Element) -> str:

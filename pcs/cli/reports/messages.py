@@ -1,7 +1,6 @@
 from functools import partial
 from typing import (
     Any,
-    Dict,
     Mapping,
     Optional,
     get_type_hints,
@@ -684,8 +683,8 @@ class ResourceWaitDeprecated(CliReportMessageCustom):
         )
 
 
-def _create_report_msg_map() -> Dict[str, type]:
-    result: Dict[str, type] = {}
+def _create_report_msg_map() -> dict[str, type]:
+    result: dict[str, type] = {}
     for report_msg_cls in get_all_subclasses(CliReportMessageCustom):
         # pylint: disable=protected-access
         code = (
