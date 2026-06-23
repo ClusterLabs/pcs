@@ -16,7 +16,7 @@ import xml.dom.minidom
 from functools import lru_cache
 from io import BytesIO
 from textwrap import dedent
-from typing import TYPE_CHECKING, Any, Optional, Tuple, cast
+from typing import TYPE_CHECKING, Any, Optional, cast
 from urllib.parse import urlencode
 from xml.dom.minidom import Document as DomDocument
 from xml.dom.minidom import parseString
@@ -1927,7 +1927,7 @@ def is_score(var):
     return is_score_value(var)
 
 
-def validate_xml_id(var: str, description: str = "id") -> Tuple[bool, str]:
+def validate_xml_id(var: str, description: str = "id") -> tuple[bool, str]:
     """
     Commandline options: no options
     """

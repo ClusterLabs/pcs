@@ -1,5 +1,4 @@
 import json
-from typing import Tuple
 
 from pcs.common import reports
 from pcs.common.node_communicator import RequestData
@@ -95,7 +94,7 @@ class GetFullClusterStatusPlaintext(
 
         return self._get_next_list()
 
-    def on_complete(self) -> Tuple[bool, str]:
+    def on_complete(self) -> tuple[bool, str]:
         # Usually, pcs.common.messages.UnableToPerformOperationOnAnyNode is
         # reported when the operation was unsuccessful and failed on at least
         # one node.  The only use case this communication command is used does

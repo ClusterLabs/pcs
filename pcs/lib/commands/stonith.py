@@ -1,4 +1,4 @@
-from typing import Collection, Mapping, Optional, Tuple
+from typing import Collection, Mapping, Optional
 
 from lxml.etree import _Element
 
@@ -258,7 +258,7 @@ def _update_scsi_devices_get_element_and_devices(
     report_processor: ReportProcessor,
     cib: _Element,
     stonith_id: str,
-) -> Tuple[_Element, list[str]]:
+) -> tuple[_Element, list[str]]:
     """
     Do checks and return stonith element and list of current scsi devices.
     Raise LibraryError if checks fail.

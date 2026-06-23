@@ -2,7 +2,7 @@ import signal
 import subprocess
 from logging import Logger
 from shlex import quote as shell_quote
-from typing import Mapping, Optional, Tuple
+from typing import Mapping, Optional
 
 from pcs import settings
 from pcs.common import reports
@@ -47,7 +47,7 @@ class CommandRunner:
         stdin_string: Optional[str] = None,
         env_extend: Optional[Mapping[str, str]] = None,
         binary_output: bool = False,
-    ) -> Tuple[str, str, int]:
+    ) -> tuple[str, str, int]:
         # Allow overriding default settings. If a piece of code really wants to
         # set own PATH or CIB_file, we must allow it. I.e. it wants to run
         # a pacemaker tool on a CIB in a file but cannot afford the risk of

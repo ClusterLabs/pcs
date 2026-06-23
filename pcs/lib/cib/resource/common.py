@@ -1,4 +1,4 @@
-from typing import Optional, Tuple, cast
+from typing import Optional, cast
 
 from lxml.etree import _Element
 
@@ -29,7 +29,7 @@ def find_one_resource(
     context_element: _Element,
     resource_id: str,
     resource_tags: Optional[StringCollection] = None,
-) -> Tuple[Optional[_Element], ReportItemList]:
+) -> tuple[Optional[_Element], ReportItemList]:
     """
     Find a single resource or return None if not found
 
@@ -52,7 +52,7 @@ def find_resources(
     context_element: _Element,
     resource_ids: StringCollection,
     resource_tags: Optional[StringCollection] = None,
-) -> Tuple[list[_Element], ReportItemList]:
+) -> tuple[list[_Element], ReportItemList]:
     """
     Find a list of resources
 

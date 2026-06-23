@@ -1,4 +1,4 @@
-from typing import Iterable, Optional, Tuple
+from typing import Iterable, Optional
 
 from lxml.etree import _Element
 
@@ -25,7 +25,7 @@ def get_existing_nodes_names(
     corosync_conf: Optional[CorosyncConfigFacade] = None,
     cib: Optional[_Element] = None,
     error_on_missing_name: bool = False,
-) -> Tuple[list[str], ReportItemList]:
+) -> tuple[list[str], ReportItemList]:
     return __get_nodes_names(
         *__get_nodes(corosync_conf, cib), error_on_missing_name
     )
@@ -52,7 +52,7 @@ def get_existing_nodes_names_addrs(
 def __get_nodes(
     corosync_conf: Optional[CorosyncConfigFacade] = None,
     cib: Optional[_Element] = None,
-) -> Tuple[Iterable[CorosyncNode], Iterable[PacemakerNode]]:
+) -> tuple[Iterable[CorosyncNode], Iterable[PacemakerNode]]:
     corosync_nodes = corosync_conf.get_nodes() if corosync_conf else []
     remote_and_guest_nodes: Iterable[PacemakerNode] = []
     if cib is not None:
@@ -67,7 +67,7 @@ def __get_nodes_names(
     corosync_nodes: Iterable[CorosyncNode],
     remote_and_guest_nodes: Iterable[PacemakerNode],
     error_on_missing_name: bool = False,
-) -> Tuple[list[str], ReportItemList]:
+) -> tuple[list[str], ReportItemList]:
     report_list: ReportItemList = []
     corosync_names = []
     name_missing_in_corosync = False

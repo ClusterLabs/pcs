@@ -1,4 +1,4 @@
-from typing import Any, Iterable, Mapping, Tuple, cast
+from typing import Any, Iterable, Mapping, cast
 
 from pcs.common import (
     file_type_codes,
@@ -282,7 +282,7 @@ def status_all_sites_plaintext(
 
 def _load_dr_config(
     config_file: FileInstance,
-) -> Tuple[ReportItemList, DrConfigFacade]:
+) -> tuple[ReportItemList, DrConfigFacade]:
     if not config_file.raw_file.exists():
         return (
             [

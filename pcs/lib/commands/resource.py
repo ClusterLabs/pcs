@@ -10,7 +10,6 @@ from typing import (
     Mapping,
     Optional,
     Sequence,
-    Tuple,
     Union,
     cast,
 )
@@ -295,7 +294,7 @@ def _validate_guest_change(
 
 def _get_nodes_to_validate_against(
     env: LibraryEnvironment, tree: _Element
-) -> Tuple[list[str], list[str], reports.ReportItemList]:
+) -> tuple[list[str], list[str], reports.ReportItemList]:
     if not env.is_corosync_conf_live and env.is_cib_live:
         raise LibraryError(
             ReportItem.error(
@@ -1323,7 +1322,7 @@ def bundle_update(  # noqa: PLR0913
 
 def _disable_get_element_ids(
     disabled_resource_el_list: Iterable[_Element],
-) -> Tuple[set[str], set[str]]:
+) -> tuple[set[str], set[str]]:
     """
     Turn a list of elements asked by a user to be disabled to a list of their
     IDs and a list of IDs of their inner elements. Remember, the user can
@@ -1357,7 +1356,7 @@ def _disable_run_simulate(
     disabled_resource_ids: set[str],
     inner_resource_ids: set[str],
     strict: bool,
-) -> Tuple[str, set[str]]:
+) -> tuple[str, set[str]]:
     plaintext_status, transitions, dummy_cib = simulate_cib(cmd_runner, cib)
     simulated_operations = simulate_tools.get_operations_from_transitions(
         transitions
@@ -2765,7 +2764,7 @@ def _find_resources_expand_tags(
     cib: _Element,
     resource_or_tag_ids: StringCollection,
     additional_search: Optional[Callable[[_Element], list[_Element]]] = None,
-) -> Tuple[list[_Element], ReportItemList]:
+) -> tuple[list[_Element], ReportItemList]:
     rsc_or_tag_el_list, report_list = resource.common.find_resources(
         cib,
         resource_or_tag_ids,

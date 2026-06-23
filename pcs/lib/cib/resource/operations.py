@@ -1,6 +1,6 @@
 from collections import defaultdict
 from dataclasses import replace as dt_replace
-from typing import Iterable, Optional, Tuple, cast
+from typing import Iterable, Optional, cast
 
 from lxml import etree
 from lxml.etree import _Element
@@ -314,7 +314,7 @@ def op_element_to_dto(
 
 def uniquify_operations_intervals(
     operation_list: Iterable[CibResourceOperationDto],
-) -> Tuple[reports.ReportItemList, list[CibResourceOperationDto]]:
+) -> tuple[reports.ReportItemList, list[CibResourceOperationDto]]:
     """
     Return list of operation where intervals for the same operation are unique
 

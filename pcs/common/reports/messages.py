@@ -2,15 +2,7 @@
 from collections import defaultdict
 from dataclasses import dataclass, field
 from functools import partial
-from typing import (
-    Any,
-    Literal,
-    Mapping,
-    Optional,
-    Tuple,
-    Union,
-    cast,
-)
+from typing import Any, Literal, Mapping, Optional, Union, cast
 
 from pcs.common import file_type_codes
 from pcs.common.fencing_topology import (
@@ -102,7 +94,7 @@ def _format_booth_default(value: Optional[str], template: str) -> str:
     return "" if value in ("booth", "", None) else template.format(value)
 
 
-def _key_numeric(item: str) -> Tuple[int, str]:
+def _key_numeric(item: str) -> tuple[int, str]:
     try:
         return int(item), item
     except ValueError:
@@ -1752,7 +1744,7 @@ class CorosyncConfigCannotSaveInvalidNamesValues(ReportItemMessage):
 
     section_name_list: list[str]
     attribute_name_list: list[str]
-    attribute_value_pairs: list[Tuple[str, str]]
+    attribute_value_pairs: list[tuple[str, str]]
     _code = codes.COROSYNC_CONFIG_CANNOT_SAVE_INVALID_NAMES_VALUES
 
     @property

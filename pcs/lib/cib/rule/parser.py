@@ -1,9 +1,4 @@
-from typing import (
-    Any,
-    Iterator,
-    Optional,
-    Tuple,
-)
+from typing import Any, Iterator, Optional
 
 import pyparsing
 
@@ -117,7 +112,7 @@ def parse_rule(rule_string: str) -> BoolExpr:
 
 def __operator_operands(
     token_list: pyparsing.ParseResults,
-) -> Iterator[Tuple[Any, Any]]:
+) -> Iterator[tuple[Any, Any]]:
     # See pyparsing examples
     # https://github.com/pyparsing/pyparsing/blob/master/examples/eval_arith.py
     token_iterator = iter(token_list)

@@ -2,13 +2,7 @@ from collections import (
     Counter,
     OrderedDict,
 )
-from typing import (
-    Iterable,
-    Optional,
-    Tuple,
-    Union,
-    cast,
-)
+from typing import Iterable, Optional, Union, cast
 
 from lxml import etree
 from lxml.etree import _Element
@@ -528,7 +522,7 @@ def find_constraints_referencing_tag(
 def find_tag_elements_by_ids(
     tags_section: _Element,
     tag_id_list: StringIterable,
-) -> Tuple[list[_Element], ReportItemList]:
+) -> tuple[list[_Element], ReportItemList]:
     """
     Try to find tag elements by ids and return them with non-empty report
     list in case of errors.

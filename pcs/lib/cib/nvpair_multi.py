@@ -1,11 +1,4 @@
-from typing import (
-    Iterable,
-    Mapping,
-    NewType,
-    Optional,
-    Tuple,
-    cast,
-)
+from typing import Iterable, Mapping, NewType, Optional, cast
 
 from lxml import etree
 from lxml.etree import _Element
@@ -125,7 +118,7 @@ def find_nvsets(parent_element: _Element, tag: NvsetTag) -> list[_Element]:
 
 def find_nvsets_by_ids(
     parent_element: _Element, id_list: StringIterable
-) -> Tuple[list[_Element], ReportItemList]:
+) -> tuple[list[_Element], ReportItemList]:
     """
     Find nvset elements by their IDs and return them with non-empty report
     list in case of errors.

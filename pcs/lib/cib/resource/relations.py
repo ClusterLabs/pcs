@@ -6,7 +6,6 @@ from typing import (
     MutableMapping,
     Optional,
     Sequence,
-    Tuple,
     cast,
 )
 
@@ -142,7 +141,7 @@ class ResourceRelationsFetcher:
 
     def get_relations(
         self, resource_id: str
-    ) -> Tuple[IdRelationMap, IdRelationMap]:
+    ) -> tuple[IdRelationMap, IdRelationMap]:
         resources_to_process = {resource_id}
         relations = {}
         resources: MutableMapping[str, RelationEntityDto] = {}

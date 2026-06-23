@@ -1,8 +1,4 @@
-from typing import (
-    Optional,
-    Tuple,
-    Union,
-)
+from typing import Optional, Union
 
 from lxml import etree
 from lxml.etree import _Element
@@ -333,7 +329,7 @@ def _parse_agent_1_1(
 
 def _parse_parameter_content(
     parameter_el: _Element,
-) -> Tuple[str, Optional[str], Optional[list[str]]]:
+) -> tuple[str, Optional[str], Optional[list[str]]]:
     value_type = "string"
     default_value = None
     enum_values = None
