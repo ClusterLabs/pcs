@@ -1,10 +1,10 @@
 import importlib
 import inspect
 import pkgutil
-from collections.abc import Container
+from collections.abc import Container, Iterable
 from dataclasses import fields, is_dataclass
 from enum import EnumType
-from typing import Iterable, get_args, get_origin, get_type_hints
+from typing import get_args, get_origin, get_type_hints
 from unittest import TestCase
 
 import pcs.lib.commands as lib_command_package

@@ -1,5 +1,6 @@
 from collections import defaultdict
-from typing import Iterable, Optional, Union
+from collections.abc import Iterable
+from typing import Optional, Union
 
 from . import const
 from .types import (

@@ -1,11 +1,11 @@
 import contextlib
 import io
 import socket
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from hashlib import md5
 from pathlib import Path
-from typing import Callable, Iterable, Optional, Union
+from typing import Callable, Optional, Union
 from unittest import mock
 
 import pcs.common.pcs_pycurl as pycurl

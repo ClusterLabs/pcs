@@ -1,8 +1,6 @@
 import json
-from typing import (
-    Iterable,
-    TypeVar,
-)
+from collections.abc import Iterable
+from typing import TypeVar
 
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.output import lines_to_str

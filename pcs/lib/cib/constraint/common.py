@@ -1,6 +1,6 @@
 import abc
-from collections.abc import Mapping, Sequence
-from typing import Iterable, TypedDict
+from collections.abc import Iterable, Mapping, Sequence
+from typing import TypedDict
 
 from lxml.etree import SubElement, _Element
 

@@ -1,5 +1,6 @@
 import os
-from typing import Iterable, Optional
+from collections.abc import Iterable
+from typing import Optional
 
 from pcs import settings
 from pcs.common.node_communicator import (

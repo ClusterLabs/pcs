@@ -3,9 +3,10 @@ import os
 import signal
 import socket
 import sys
+from collections.abc import Iterable
 from logging import Logger
 from pathlib import Path
-from typing import Iterable, Optional
+from typing import Optional
 
 try:
     from tornado.httputil import (

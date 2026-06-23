@@ -1,6 +1,7 @@
 from collections import defaultdict
+from collections.abc import Iterable
 from dataclasses import replace
-from typing import Iterable, Optional, cast
+from typing import Optional, cast
 
 from pcs.common.file_type_codes import FileTypeCode
 from pcs.common.node_communicator import Communicator, RequestTarget

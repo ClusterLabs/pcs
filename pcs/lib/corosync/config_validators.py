@@ -5,6 +5,7 @@ from collections import (
 )
 from collections.abc import (
     Collection,
+    Iterable,
     Mapping,
     MutableSequence,
     MutableSet,
@@ -12,7 +13,7 @@ from collections.abc import (
 )
 from dataclasses import dataclass
 from itertools import zip_longest
-from typing import Any, Callable, Iterable, Optional
+from typing import Any, Callable, Optional
 
 from pcs.common import reports
 from pcs.common.corosync_conf import CorosyncNodeAddressType

@@ -1,7 +1,8 @@
 import base64
 import binascii
+from collections.abc import Iterable
 from logging import Logger
-from typing import Any, Iterable, Optional
+from typing import Any, Optional
 
 from tornado.web import Finish, HTTPError, RequestHandler
 from tornado.web import RedirectHandler as TornadoRedirectHandler

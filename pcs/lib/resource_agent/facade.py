@@ -1,6 +1,7 @@
 from collections import defaultdict
+from collections.abc import Iterable
 from dataclasses import replace as dc_replace
-from typing import Iterable, Optional
+from typing import Optional
 
 from pcs.common import reports
 from pcs.common.types import StringIterable

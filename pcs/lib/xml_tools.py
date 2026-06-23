@@ -1,5 +1,5 @@
-from collections.abc import Mapping
-from typing import Iterable, Optional, Union, cast
+from collections.abc import Iterable, Mapping
+from typing import Optional, Union, cast
 
 from lxml import etree
 from lxml.etree import (

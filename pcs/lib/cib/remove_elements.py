@@ -1,8 +1,8 @@
 from collections import defaultdict
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from itertools import chain
-from typing import Iterable, cast
+from typing import cast
 
 from lxml import etree
 from lxml.etree import _Element

@@ -1,7 +1,8 @@
 import sys
 import xml.dom.minidom
+from collections.abc import Iterable
 from enum import Enum
-from typing import Any, Iterable, Optional, TypeVar, cast
+from typing import Any, Optional, TypeVar, cast
 from xml.dom.minidom import parseString
 
 import pcs.cli.constraint_order.command as order_command

@@ -1,6 +1,6 @@
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
-from typing import Iterable, Union
+from typing import Union
 
 from pcs.common.interface.dto import DataTransferObject
 

@@ -1,5 +1,5 @@
-from collections.abc import Mapping
-from typing import Any, Iterable, cast
+from collections.abc import Iterable, Mapping
+from typing import Any, cast
 
 from pcs.common import (
     file_type_codes,

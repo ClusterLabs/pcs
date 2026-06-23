@@ -1,6 +1,7 @@
+from collections.abc import Iterable
 from dataclasses import asdict
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Callable, Iterable, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Callable, TypeVar, Union
 
 import dacite
 

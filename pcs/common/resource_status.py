@@ -1,8 +1,8 @@
 from collections import defaultdict
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Final, Iterable, Literal, Optional, Union, cast
+from typing import Final, Literal, Optional, Union, cast
 
 from pcs.common.const import (
     PCMK_ROLE_STOPPED,

@@ -1,7 +1,7 @@
 from collections import defaultdict
-from collections.abc import Container
+from collections.abc import Container, Iterable
 from dataclasses import dataclass
-from typing import Iterable, NewType, Optional
+from typing import NewType, Optional
 
 from lxml.etree import _Element
 

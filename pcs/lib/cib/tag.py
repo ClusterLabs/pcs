@@ -2,7 +2,8 @@ from collections import (
     Counter,
     OrderedDict,
 )
-from typing import Iterable, Optional, Union, cast
+from collections.abc import Iterable
+from typing import Optional, Union, cast
 
 from lxml import etree
 from lxml.etree import _Element

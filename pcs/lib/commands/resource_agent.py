@@ -1,9 +1,5 @@
-from typing import (
-    Any,
-    Iterable,
-    Optional,
-    cast,
-)
+from collections.abc import Iterable
+from typing import Any, Optional, cast
 
 from pcs.common.interface.dto import to_dict
 from pcs.common.pacemaker.resource.operations import (

@@ -1,6 +1,6 @@
 import time
-from collections.abc import Sequence
-from typing import Iterable, Optional, cast
+from collections.abc import Iterable, Sequence
+from typing import Optional, cast
 
 from pcs.common.tools import get_unique_uuid
 from pcs.lib.interface.config import FacadeInterface

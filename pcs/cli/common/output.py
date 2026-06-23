@@ -1,8 +1,8 @@
 import sys
 import textwrap
+from collections.abc import Iterable
 from shlex import quote
 from shutil import get_terminal_size
-from typing import Iterable
 
 from pcs.common.types import (
     StringIterable,

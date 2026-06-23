@@ -1,6 +1,7 @@
 from collections import defaultdict
+from collections.abc import Iterable
 from dataclasses import replace as dt_replace
-from typing import Iterable, Optional, cast
+from typing import Optional, cast
 
 from lxml import etree
 from lxml.etree import _Element
