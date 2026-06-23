@@ -3,7 +3,7 @@ import re
 from collections.abc import Mapping
 from hashlib import md5
 from pathlib import Path
-from typing import Optional, Union, cast
+from typing import Optional, cast
 
 from lxml import etree
 from lxml.etree import _Element
@@ -540,7 +540,7 @@ def get_local_node_name(runner: CommandRunner) -> str:
     return stdout.strip()
 
 
-def get_local_node_status(runner: CommandRunner) -> dict[str, Union[bool, str]]:
+def get_local_node_status(runner: CommandRunner) -> dict[str, bool | str]:
     try:
         cluster_status = ClusterState(get_cluster_status_dom(runner))
         node_name = get_local_node_name(runner)
@@ -548,7 +548,7 @@ def get_local_node_status(runner: CommandRunner) -> dict[str, Union[bool, str]]:
         return {"offline": True}
     for node_status in cluster_status.node_section.nodes:
         if node_status.attrs.name == node_name:
-            result: dict[str, Union[bool, str]] = {
+            result: dict[str, bool | str] = {
                 "offline": False,
             }
             for attr in (

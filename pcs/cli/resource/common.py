@@ -1,6 +1,6 @@
 from collections import defaultdict
 from collections.abc import Sequence
-from typing import Any, Optional, Union
+from typing import Any, Optional
 
 from pcs.cli.reports.output import error
 from pcs.common import const, reports
@@ -33,7 +33,7 @@ def check_is_not_stonith(
 
 
 def _get_primitive_instance_list_dto(
-    resource_dto: Union[AnyResourceStatusDto],
+    resource_dto: AnyResourceStatusDto,
 ) -> Sequence[PrimitiveStatusDto]:
     """
     Return a list of primitive instances from any resource status DTO.

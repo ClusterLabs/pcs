@@ -1,6 +1,6 @@
 # pylint: disable=too-many-lines
 from collections.abc import Sequence
-from typing import Optional, Union
+from typing import Optional
 from unittest import TestCase
 
 from lxml import etree
@@ -189,9 +189,7 @@ def fixture_clone_dto(
     unique: bool = False,
     description: Optional[str] = None,
     target_role: Optional[str] = None,
-    instances: Union[
-        Sequence[PrimitiveStatusDto], Sequence[GroupStatusDto]
-    ] = (),
+    instances: Sequence[PrimitiveStatusDto] | Sequence[GroupStatusDto] = (),
 ) -> CloneStatusDto:
     return CloneStatusDto(
         resource_id,

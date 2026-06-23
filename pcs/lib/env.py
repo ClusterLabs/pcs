@@ -1,6 +1,6 @@
 from collections.abc import Callable, Mapping
 from logging import Logger
-from typing import Any, Optional, Union, cast
+from typing import Any, Optional, cast
 
 from lxml.etree import _Element
 
@@ -49,7 +49,7 @@ from pcs.lib.services import get_service_manager
 from pcs.lib.tools import create_tmp_cib
 from pcs.lib.xml_tools import etree_to_str
 
-WaitType = Union[None, bool, int, str]
+WaitType = None | bool | int | str
 
 
 def _wait_type_to_int(wait: WaitType) -> int:

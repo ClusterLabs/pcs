@@ -1,5 +1,3 @@
-from typing import Union
-
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import (
     Argv,
@@ -10,7 +8,7 @@ from pcs.cli.common.parse_args import (
 
 def prepare_resource_sets(
     cmdline_args: Argv,
-) -> list[dict[str, Union[list[str], dict[str, str]]]]:
+) -> list[dict[str, list[str] | dict[str, str]]]:
     return [
         {
             "ids": [id_ for id_ in args if "=" not in id_],
@@ -24,7 +22,7 @@ def prepare_resource_sets(
 
 def prepare_set_args(
     argv: Argv,
-) -> tuple[list[dict[str, Union[list[str], dict[str, str]]]], dict[str, str]]:
+) -> tuple[list[dict[str, list[str] | dict[str, str]]], dict[str, str]]:
     args_groups = split_list(argv, "setoptions")
     if len(args_groups) > 2:
         raise CmdLineInputError(

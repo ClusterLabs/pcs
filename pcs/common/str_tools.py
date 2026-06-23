@@ -1,7 +1,7 @@
 import contextlib
 from collections.abc import Iterable as IterableAbc
 from collections.abc import Mapping, Sequence, Sized
-from typing import Any, Optional, TypeVar, Union
+from typing import Any, Optional, TypeVar
 
 from pcs.common.types import (
     StringIterable,
@@ -188,7 +188,7 @@ def format_optional(
     return empty_case
 
 
-def _is_multiple(what: Union[int, Sized]) -> bool:
+def _is_multiple(what: int | Sized) -> bool:
     """
     Return True if 'what' does not mean one item, False otherwise
 
@@ -233,7 +233,7 @@ def get_plural(singular: str) -> str:
 
 
 def format_plural(
-    depends_on: Union[int, Sized],
+    depends_on: int | Sized,
     singular: str,
     plural: Optional[str] = None,
 ) -> str:
@@ -259,5 +259,5 @@ def transform(items: list[T], mapping: Mapping[T, str]) -> list[str]:
     return [mapping.get(item, str(item)) for item in items]
 
 
-def is_iterable_not_str(value: Union[IterableAbc, str]) -> bool:
+def is_iterable_not_str(value: IterableAbc | str) -> bool:
     return isinstance(value, IterableAbc) and not isinstance(value, str)

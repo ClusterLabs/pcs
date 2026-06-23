@@ -1,7 +1,7 @@
 import shlex
 from collections import defaultdict
 from collections.abc import Container, Mapping, Sequence
-from typing import Optional, Union
+from typing import Optional
 
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.output import (
@@ -299,12 +299,10 @@ class ResourcesConfigurationFacade:
     def _get_any_resource_dto(
         self, obj_id: str
     ) -> Optional[
-        Union[
-            CibResourcePrimitiveDto,
-            CibResourceGroupDto,
-            CibResourceCloneDto,
-            CibResourceBundleDto,
-        ]
+        CibResourcePrimitiveDto
+        | CibResourceGroupDto
+        | CibResourceCloneDto
+        | CibResourceBundleDto
     ]:
         return (
             self._primitives_map.get(obj_id)
@@ -315,12 +313,12 @@ class ResourcesConfigurationFacade:
 
     def _create_cibsecrets_map(
         self,
-        *resource_dtos: Union[
-            CibResourcePrimitiveDto,
-            CibResourceGroupDto,
-            CibResourceCloneDto,
-            CibResourceBundleDto,
-        ],
+        *resource_dtos: (
+            CibResourcePrimitiveDto
+            | CibResourceGroupDto
+            | CibResourceCloneDto
+            | CibResourceBundleDto
+        ),
     ) -> dict[str, dict[str, Optional[str]]]:
         return {
             resource_dto.id: {
@@ -1045,7 +1043,7 @@ def _get_stonith_ids_from_group_dto(
 
 
 def _warn_stonith_unsupported(
-    dto: Union[CibResourceBundleDto, CibResourceGroupDto, CibResourceCloneDto],
+    dto: CibResourceBundleDto | CibResourceGroupDto | CibResourceCloneDto,
     stonith_ids: list[str],
 ) -> None:
     resource_pl = format_plural(sorted(stonith_ids), "resource")

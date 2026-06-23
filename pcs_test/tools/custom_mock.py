@@ -5,7 +5,7 @@ from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
 from hashlib import md5
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional
 from unittest import mock
 
 import pcs.common.pcs_pycurl as pycurl
@@ -52,7 +52,7 @@ def patch_getaddrinfo(test_case, addr_list):
     return addr_list
 
 
-FileContentType = Union[str, bytes, None, Exception]
+FileContentType = str | bytes | None | Exception
 
 
 @dataclass(frozen=True)
@@ -353,8 +353,8 @@ class RuleInEffectEvalMock(RuleInEffectEval):
 class CibResourceSecretMockSpec:
     id: str
     name: str
-    value: Union[str, Exception]
-    checksum: Union[Optional[str], Exception]
+    value: str | Exception
+    checksum: Optional[str] | Exception
 
 
 class CibResourceSecretMock:

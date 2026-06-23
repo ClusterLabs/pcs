@@ -1,6 +1,6 @@
 from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import Optional, Union
+from typing import Optional
 
 from lxml.etree import _Element
 
@@ -67,7 +67,7 @@ def _get_tag_elements(
 
 def config(
     env: LibraryEnvironment, tag_filter: StringSequence
-) -> list[dict[str, Union[str, list[str]]]]:
+) -> list[dict[str, str | list[str]]]:
     """
     Get tags specified in tag_filter or if empty, then get all the tags
     configured.

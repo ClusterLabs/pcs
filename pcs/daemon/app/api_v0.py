@@ -1,6 +1,6 @@
 import json
 from collections.abc import Mapping
-from typing import Any, Union, cast
+from typing import Any, cast
 
 from tornado.locks import Lock
 from tornado.web import Finish
@@ -344,9 +344,9 @@ class CheckHostHandler(_BaseApiV0Handler):
     @staticmethod
     def _convert_to_legacy_format(
         command_result: ClusterDaemonsInfoDto,
-    ) -> dict[str, Union[bool, dict[str, dict[str, Union[bool, str, None]]]]]:
+    ) -> dict[str, bool | dict[str, dict[str, bool | str | None]]]:
         service_name_mapping = {"corosync-qdevice": "qdevice"}
-        services_dict: dict[str, dict[str, Union[bool, str, None]]] = {
+        services_dict: dict[str, dict[str, bool | str | None]] = {
             service_name_mapping.get(
                 service_status_dto.service, service_status_dto.service
             ): {

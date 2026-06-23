@@ -4,7 +4,7 @@ from collections import defaultdict
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from contextlib import contextmanager
 from functools import partial
-from typing import Any, Optional, Union, cast
+from typing import Any, Optional, cast
 
 from lxml.etree import _Element
 
@@ -1548,7 +1548,7 @@ def disable_safe(
 
 def disable_simulate(
     env: LibraryEnvironment, resource_or_tag_ids: list[str], strict: bool
-) -> Mapping[str, Union[str, list[str]]]:
+) -> Mapping[str, str | list[str]]:
     """
     Simulate disallowing specified resources to be started by the cluster
 

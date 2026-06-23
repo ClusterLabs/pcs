@@ -2,7 +2,7 @@ import re
 import uuid
 from collections.abc import Generator, MutableSet
 from dataclasses import astuple, dataclass
-from typing import Optional, TypeVar, Union
+from typing import Optional, TypeVar
 
 from lxml import etree
 from lxml.etree import _Element
@@ -59,7 +59,7 @@ def xml_fromstring(xml: str) -> _Element:
     )
 
 
-def timeout_to_seconds(timeout: Union[int, str]) -> Optional[int]:
+def timeout_to_seconds(timeout: int | str) -> Optional[int]:
     """
     Transform pacemaker style timeout to number of seconds. If `timeout` is not
     a valid timeout, `None` is returned.

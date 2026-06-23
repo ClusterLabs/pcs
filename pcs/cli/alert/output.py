@@ -1,6 +1,6 @@
 import shlex
 from collections.abc import Sequence
-from typing import Optional, Union
+from typing import Optional
 
 from pcs.cli.common.output import (
     INDENT_STEP,
@@ -130,7 +130,7 @@ def _nvset_to_cmd(
 
 
 def _desc_instance_meta_to_cmd(
-    dto: Union[CibAlertDto, CibAlertRecipientDto],
+    dto: CibAlertDto | CibAlertRecipientDto,
 ) -> list[str]:
     parts = []
     if dto.description:

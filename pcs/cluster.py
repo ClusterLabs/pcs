@@ -10,7 +10,7 @@ import tempfile
 import time
 import xml.dom.minidom
 from collections.abc import Callable, Iterable, Mapping
-from typing import Any, Optional, Union, cast
+from typing import Any, Optional, cast
 from xml.parsers.expat import ExpatError
 
 import pcs.lib.pacemaker.live as lib_pacemaker
@@ -1647,7 +1647,7 @@ def _parse_node_options(
     options: Argv,
     additional_options: StringCollection = (),
     additional_repeatable_options: StringCollection = (),
-) -> dict[str, Union[str, list[str]]]:
+) -> dict[str, str | list[str]]:
     """
     Commandline options: no options
     """
@@ -1678,7 +1678,7 @@ LINK_KEYWORD = "link"
 
 def _parse_transport(
     transport_args: Argv,
-) -> tuple[str, dict[str, Union[dict[str, str], list[dict[str, str]]]]]:
+) -> tuple[str, dict[str, dict[str, str] | list[dict[str, str]]]]:
     """
     Commandline options: no options
     """
@@ -1694,7 +1694,7 @@ def _parse_transport(
         keywords,
         implicit_first_keyword=TRANSPORT_DEFAULT_SECTION,
     )
-    options: dict[str, Union[dict[str, str], list[dict[str, str]]]] = {
+    options: dict[str, dict[str, str] | list[dict[str, str]]] = {
         section: KeyValueParser(
             parsed_options.get_args_flat(section)
         ).get_unique()
@@ -1768,9 +1768,7 @@ def cluster_setup(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     ]
 
     transport_type = None
-    transport_options: dict[
-        str, Union[dict[str, str], list[dict[str, str]]]
-    ] = {}
+    transport_options: dict[str, dict[str, str] | list[dict[str, str]]] = {}
 
     if parsed_args.has_keyword(TRANSPORT_KEYWORD):
         transport_type, transport_options = _parse_transport(
@@ -2055,7 +2053,7 @@ def _config_get_cmd(corosync_conf: CorosyncConfDto) -> list[str]:
     return lines
 
 
-def _parse_add_node(argv: Argv) -> dict[str, Union[str, list[str]]]:
+def _parse_add_node(argv: Argv) -> dict[str, str | list[str]]:
     DEVICE_KEYWORD = "device"  # pylint: disable=invalid-name
     WATCHDOG_KEYWORD = "watchdog"  # pylint: disable=invalid-name
     hostname, *argv = argv

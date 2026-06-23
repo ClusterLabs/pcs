@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Optional
 
 from lxml import etree
 from lxml.etree import _Element
@@ -264,7 +264,7 @@ def load_crm_resource_metadata(
 
 def parse_metadata(
     name: ResourceAgentName, metadata: _Element
-) -> Union[ResourceAgentMetadataOcf1_0, ResourceAgentMetadataOcf1_1]:
+) -> ResourceAgentMetadataOcf1_0 | ResourceAgentMetadataOcf1_1:
     """
     Parse XML metadata to a dataclass
 

@@ -1,6 +1,6 @@
 from collections import defaultdict
 from collections.abc import Iterable
-from typing import Optional, Union
+from typing import Optional
 
 from . import const
 from .types import (
@@ -17,7 +17,7 @@ from .types import (
 
 
 def ocf_version_to_ocf_unified(
-    metadata: Union[ResourceAgentMetadataOcf1_0, ResourceAgentMetadataOcf1_1],
+    metadata: ResourceAgentMetadataOcf1_0 | ResourceAgentMetadataOcf1_1,
 ) -> ResourceAgentMetadata:
     """
     Transform specific version OCF metadata to a universal format
@@ -74,7 +74,7 @@ def _ocf_1_1_to_ocf_unified(
 
 def _ocf_1_0_action_list_to_ocf_unified(
     action_list: Iterable[
-        Union[ResourceAgentActionOcf1_0, ResourceAgentActionOcf1_1]
+        ResourceAgentActionOcf1_0 | ResourceAgentActionOcf1_1
     ],
 ) -> list[ResourceAgentAction]:
     """

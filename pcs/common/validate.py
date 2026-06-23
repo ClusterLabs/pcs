@@ -1,14 +1,11 @@
 import re
-from typing import (
-    Optional,
-    Union,
-)
+from typing import Optional
 
 _INTEGER_RE = re.compile(r"^[+-]?[0-9]+$")
 
 
 def is_integer(
-    value: Union[str, int, float],
+    value: str | int | float,
     at_least: Optional[int] = None,
     at_most: Optional[int] = None,
 ) -> bool:

@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Optional, Union
+from typing import Optional
 
 from pcs.common.const import (
     PcmkRoleType,
@@ -54,7 +54,7 @@ class CloneStatusDto(DataTransferObject):
     failed: bool
     failure_ignored: bool
     target_role: Optional[PcmkRoleType]
-    instances: Union[Sequence[PrimitiveStatusDto], Sequence[GroupStatusDto]]
+    instances: Sequence[PrimitiveStatusDto] | Sequence[GroupStatusDto]
 
 
 @dataclass(frozen=True)
@@ -80,9 +80,9 @@ class BundleStatusDto(DataTransferObject):
     replicas: Sequence[BundleReplicaStatusDto]
 
 
-AnyResourceStatusDto = Union[
-    PrimitiveStatusDto, GroupStatusDto, CloneStatusDto, BundleStatusDto
-]
+AnyResourceStatusDto = (
+    PrimitiveStatusDto | GroupStatusDto | CloneStatusDto | BundleStatusDto
+)
 
 
 @dataclass(frozen=True)

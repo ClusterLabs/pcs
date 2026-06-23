@@ -1,5 +1,5 @@
 from collections.abc import Iterable, Mapping
-from typing import Optional, Union, cast
+from typing import Optional, cast
 
 from lxml import etree
 from lxml.etree import (
@@ -14,7 +14,7 @@ from pcs.common import (
 from pcs.common.types import StringCollection
 
 
-def get_root(tree: Union[_Element, _ElementTree]) -> _Element:
+def get_root(tree: _Element | _ElementTree) -> _Element:
     # ElementTree has getroot, Element has getroottree
     if isinstance(tree, _ElementTree):
         return tree.getroot()

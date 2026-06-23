@@ -33,7 +33,7 @@ import re
 from collections import Counter
 from collections.abc import Callable, Container, Iterable, Mapping
 from re import Pattern
-from typing import Any, NamedTuple, Optional, Union, cast
+from typing import Any, NamedTuple, Optional, cast
 
 from pcs.common import reports
 from pcs.common.reports import (
@@ -83,12 +83,12 @@ class ValuePair(NamedTuple):
     normalized: TypeOptionValue
 
     @staticmethod
-    def get(val: Union["ValuePair", TypeOptionValue]) -> "ValuePair":
+    def get(val: "ValuePair | TypeOptionValue") -> "ValuePair":
         return val if isinstance(val, ValuePair) else ValuePair(val, val)
 
 
 TypeOptionNormalizedMap = Mapping[TypeOptionName, ValuePair]
-TypeOptionMap = Mapping[TypeOptionName, Union[TypeOptionValue, ValuePair]]
+TypeOptionMap = Mapping[TypeOptionName, TypeOptionValue | ValuePair]
 
 
 def values_to_pairs(
@@ -113,7 +113,7 @@ def values_to_pairs(
 
 
 def pairs_to_values(
-    option_dict: Mapping[TypeOptionName, Union[TypeOptionValue, ValuePair]],
+    option_dict: Mapping[TypeOptionName, TypeOptionValue | ValuePair],
 ) -> TypeOptionRawMap:
     """
     Take a dict which has OptionValuePairs as its values and return dict with
@@ -1137,7 +1137,7 @@ def is_string_length(
 
 
 def is_float(
-    value: Union[str, int, float],
+    value: str | int | float,
 ) -> bool:
     """
     Check if the specified value is a float number
@@ -1215,7 +1215,7 @@ def is_pcmk_datespec_part(
     return True
 
 
-def matches_regexp(value: TypeOptionValue, regexp: Union[str, Pattern]) -> bool:
+def matches_regexp(value: TypeOptionValue, regexp: str | Pattern) -> bool:
     """
     Check if the specified value matches the specified regular expression
 

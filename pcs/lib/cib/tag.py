@@ -3,7 +3,7 @@ from collections import (
     OrderedDict,
 )
 from collections.abc import Iterable
-from typing import Optional, Union, cast
+from typing import Optional, cast
 
 from lxml import etree
 from lxml.etree import _Element
@@ -633,7 +633,7 @@ def get_list_of_tag_elements(tags_section: _Element) -> list[_Element]:
 
 def tag_element_to_dict(
     tag_element: _Element,
-) -> dict[str, Union[str, list[str]]]:
+) -> dict[str, str | list[str]]:
     """
     Convert tag element to the dict structure
 

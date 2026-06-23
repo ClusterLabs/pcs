@@ -3,7 +3,7 @@ import os
 import re
 import stat
 from collections.abc import Mapping
-from typing import Optional, Union
+from typing import Optional
 
 from pcs import settings
 from pcs.common import reports
@@ -433,9 +433,7 @@ def _get_local_sbd_watchdog_timeout() -> int:
 
 
 def validate_stonith_watchdog_timeout(
-    stonith_watchdog_timeout: Union[
-        validate.TypeOptionValue, validate.ValuePair
-    ],
+    stonith_watchdog_timeout: validate.TypeOptionValue | validate.ValuePair,
     force: bool = False,
 ) -> reports.ReportItemList:
     """

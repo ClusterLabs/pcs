@@ -1,6 +1,6 @@
 # pylint: disable=too-many-lines
 from collections.abc import Sequence
-from typing import Optional, Union
+from typing import Optional
 from unittest import TestCase
 
 from pcs.common.const import (
@@ -102,9 +102,7 @@ def fixture_clone_dto(  # noqa: PLR0913
     disabled: bool = False,
     failed: bool = False,
     failure_ignored: bool = False,
-    instances: Union[
-        Sequence[PrimitiveStatusDto], Sequence[GroupStatusDto]
-    ] = (),
+    instances: Sequence[PrimitiveStatusDto] | Sequence[GroupStatusDto] = (),
 ) -> CloneStatusDto:
     # pylint: disable=too-many-arguments
     return CloneStatusDto(

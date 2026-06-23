@@ -2,7 +2,7 @@ from collections import defaultdict
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Final, Literal, Optional, Union, cast
+from typing import Final, Literal, Optional, cast
 
 from pcs.common.const import (
     PCMK_ROLE_STOPPED,
@@ -44,7 +44,7 @@ class NotNoneValue:
 NOT_NONE: Final = NotNoneValue()
 
 
-StateValueType = Union[str, bool, NotNoneValue, set[str]]
+StateValueType = str | bool | NotNoneValue | set[str]
 
 AttributeTuple = tuple[str, StateValueType]
 
@@ -102,12 +102,9 @@ class GroupInstances:
     instances: Sequence[GroupStatusDto]
 
 
-CheckedResourceType = Union[
-    PrimitiveInstances,
-    GroupInstances,
-    CloneStatusDto,
-    BundleStatusDto,
-]
+CheckedResourceType = (
+    PrimitiveInstances | GroupInstances | CloneStatusDto | BundleStatusDto
+)
 
 _TYPE_MAP = {
     PrimitiveStatusDto: ResourceType.PRIMITIVE,
@@ -390,7 +387,7 @@ class ResourcesStatusFacade:
 
         if instance_id is None:
             instance_list = cast(
-                Optional[list[Union[PrimitiveStatusDto, GroupStatusDto]]],
+                Optional[list[PrimitiveStatusDto | GroupStatusDto]],
                 self.get_resource_all_instances(resource_id),
             )
         else:
@@ -1071,15 +1068,15 @@ def _can_check_non_primitive(
     )
 
 
-def _is_orphaned(resource: Union[PrimitiveStatusDto, GroupStatusDto]) -> bool:
+def _is_orphaned(resource: PrimitiveStatusDto | GroupStatusDto) -> bool:
     if isinstance(resource, PrimitiveStatusDto):
         return resource.orphaned
     return all(child.orphaned for child in resource.members)
 
 
 def _filter_clone_orphans(
-    instance_list: Sequence[Union[PrimitiveStatusDto, GroupStatusDto]],
-) -> list[Union[PrimitiveStatusDto, GroupStatusDto]]:
+    instance_list: Sequence[PrimitiveStatusDto | GroupStatusDto],
+) -> list[PrimitiveStatusDto | GroupStatusDto]:
     return [
         instance for instance in instance_list if not _is_orphaned(instance)
     ]

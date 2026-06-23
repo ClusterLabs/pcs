@@ -3,7 +3,7 @@ from collections import defaultdict
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from functools import partial
-from typing import Any, Literal, Optional, Union, cast
+from typing import Any, Literal, Optional, cast
 
 from pcs.common import file_type_codes
 from pcs.common.fencing_topology import (
@@ -651,7 +651,7 @@ class InvalidOptionType(ReportItemMessage):
     """
 
     option_name: str
-    allowed_types: Union[list[str], str]
+    allowed_types: list[str] | str
     _code = codes.INVALID_OPTION_TYPE
 
     @property
@@ -680,7 +680,7 @@ class InvalidOptionValue(ReportItemMessage):
 
     option_name: str
     option_value: str
-    allowed_values: Union[list[str], str, None]
+    allowed_values: list[str] | str | None
     cannot_be_empty: bool = False
     forbidden_characters: Optional[str] = None
     _code = codes.INVALID_OPTION_VALUE
@@ -1964,7 +1964,7 @@ class CorosyncAddressIpVersionWrongForLink(ReportItemMessage):
     # It works for int and str, though, as they are distinguishable. Code was
     # historically putting either of int and str in here. We need the Union here
     # for backward compatibility reasons.
-    link_number: Optional[Union[int, str]] = None
+    link_number: Optional[int | str] = None
     _code = codes.COROSYNC_ADDRESS_IP_VERSION_WRONG_FOR_LINK
 
     @property
@@ -2365,7 +2365,7 @@ class CorosyncLinkDoesNotExistCannotUpdate(ReportItemMessage):
     # It works for int and str, though, as they are distinguishable. Code was
     # historically putting either of int and str in here. We need the Union here
     # for backward compatibility reasons.
-    link_number: Union[int, str]
+    link_number: int | str
     existing_link_list: list[str]
     _code = codes.COROSYNC_LINK_DOES_NOT_EXIST_CANNOT_UPDATE
 

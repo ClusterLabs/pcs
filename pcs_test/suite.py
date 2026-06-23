@@ -8,7 +8,7 @@ import unittest
 from collections.abc import Callable
 from importlib import import_module
 from threading import Thread
-from typing import Optional, Union
+from typing import Optional
 
 PACKAGE_DIR = os.path.realpath(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -39,7 +39,7 @@ def prepare_test_name(test_name):
 
 
 def tests_from_suite(
-    test_candidate: Union[unittest.TestCase, unittest.TestSuite],
+    test_candidate: unittest.TestCase | unittest.TestSuite,
 ) -> list[str]:
     if isinstance(test_candidate, unittest.TestCase):
         return [test_candidate.id()]

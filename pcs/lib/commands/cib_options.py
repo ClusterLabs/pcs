@@ -1,5 +1,5 @@
 from collections.abc import Mapping
-from typing import Any, Optional, Union
+from typing import Any, Optional
 
 from lxml.etree import _Element
 
@@ -438,7 +438,7 @@ def _defaults_update(
 
 def __validate_meta_attrs_based_on_rule(
     cmd_runner: CommandRunner,
-    rule: Union[None, RuleRoot, CibRuleExpressionDto],
+    rule: None | RuleRoot | CibRuleExpressionDto,
     meta_attrs: Mapping[str, str],
 ) -> reports.ReportItemList:
     # Currently, pcmk provides meta-attrs definition for primitive and stonith

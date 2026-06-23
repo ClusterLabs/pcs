@@ -1,6 +1,5 @@
 from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Union
 
 from pcs.common.interface.dto import DataTransferObject
 
@@ -30,9 +29,11 @@ class CibFencingLevelAttributeDto(DataTransferObject):
     devices: list[str]
 
 
-CibFencingLevel = Union[
-    CibFencingLevelNodeDto, CibFencingLevelRegexDto, CibFencingLevelAttributeDto
-]
+CibFencingLevel = (
+    CibFencingLevelNodeDto
+    | CibFencingLevelRegexDto
+    | CibFencingLevelAttributeDto
+)
 
 
 @dataclass(frozen=True)

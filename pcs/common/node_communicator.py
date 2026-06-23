@@ -6,7 +6,7 @@ from dataclasses import (
     dataclass,
     field,
 )
-from typing import Optional, Union
+from typing import Optional
 from urllib.parse import urlencode
 
 # We should ignore SIGPIPE when using pycurl.NOSIGNAL - see the libcurl tutorial
@@ -95,10 +95,10 @@ class RequestData:
     """
 
     action: str
-    structured_data: Union[
-        Sequence[tuple[Union[str, bytes], Union[str, bytes]]],
-        Sequence[tuple[Union[str, bytes], Sequence[Union[str, bytes]]]],
-    ] = ()
+    structured_data: (
+        Sequence[tuple[str | bytes, str | bytes]]
+        | Sequence[tuple[str | bytes, Sequence[str | bytes]]]
+    ) = ()
     data: str = ""
 
     def __post_init__(self) -> None:

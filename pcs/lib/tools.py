@@ -6,7 +6,7 @@ from contextlib import (
     AbstractContextManager,
     contextmanager,
 )
-from typing import IO, Literal, Optional, TypeVar, Union, overload
+from typing import IO, Literal, Optional, TypeVar, overload
 
 from pcs.common import reports
 from pcs.lib.errors import LibraryError
@@ -92,7 +92,7 @@ def get_tmp_file(
 # @overload) and it is properly typed in @overload functions.
 @contextmanager
 def get_tmp_file(  # type: ignore
-    data: Optional[Union[bytes, str]],
+    data: Optional[bytes | str],
     binary: bool = False,
 ):
     mode = "w+b" if binary else "w+"

@@ -1,6 +1,6 @@
 import contextlib
 import re
-from typing import Optional, Union, cast
+from typing import Optional, cast
 
 from lxml.etree import (
     _Element,
@@ -105,10 +105,10 @@ class ElementSearcher:
 
     def __init__(
         self,
-        tags: Union[str, StringIterable],
+        tags: str | StringIterable,
         element_id: str,
         context_element: _Element,
-        element_type_desc: Union[None, str, StringIterable] = None,
+        element_type_desc: None | str | StringIterable = None,
     ):
         """
         tags -- a tag (string) or tags (iterable) to look for
@@ -125,7 +125,7 @@ class ElementSearcher:
         self._book_errors: Optional[ReportItemList] = None
 
     def _prepare_expected_types(
-        self, element_type_desc: Union[None, str, StringIterable]
+        self, element_type_desc: None | str | StringIterable
     ) -> list[str]:
         if element_type_desc is None:
             return list(self._tag_list)
@@ -368,7 +368,7 @@ def find_unique_id(
 
 # DEPRECATED, use ElementSearcher instead
 def find_element_by_tag_and_id(
-    tag: Union[str, StringIterable],
+    tag: str | StringIterable,
     context_element: _Element,
     element_id: str,
     none_if_id_unused: bool = False,
