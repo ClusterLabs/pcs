@@ -1,9 +1,6 @@
 from collections import Counter
-from typing import (
-    Optional,
-    Sequence,
-    cast,
-)
+from collections.abc import Sequence
+from typing import Optional, cast
 
 from lxml.etree import _Element
 

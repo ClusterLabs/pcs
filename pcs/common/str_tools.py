@@ -1,7 +1,7 @@
 import contextlib
 from collections.abc import Iterable as IterableAbc
-from collections.abc import Mapping, Sized
-from typing import Any, Optional, Sequence, TypeVar, Union
+from collections.abc import Mapping, Sequence, Sized
+from typing import Any, Optional, TypeVar, Union
 
 from pcs.common.types import (
     StringIterable,

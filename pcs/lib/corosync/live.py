@@ -1,7 +1,7 @@
 import re
-from collections.abc import Container
+from collections.abc import Container, Sequence
 from dataclasses import dataclass
-from typing import Optional, Sequence
+from typing import Optional
 
 from pcs import settings
 from pcs.common import reports

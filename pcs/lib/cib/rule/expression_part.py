@@ -2,12 +2,9 @@
 Provides classes used as nodes of a semantic tree of a parsed rule expression.
 """
 
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import (
-    NewType,
-    Optional,
-    Sequence,
-)
+from typing import NewType, Optional
 
 BoolOperator = NewType("BoolOperator", str)
 BOOL_AND = BoolOperator("AND")

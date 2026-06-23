@@ -1,6 +1,6 @@
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Any, Sequence
+from typing import Any
 
 from pcs.common.interface.dto import DataTransferObject
 from pcs.common.types import ResourceRelationType

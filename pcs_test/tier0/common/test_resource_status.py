@@ -1,9 +1,6 @@
 # pylint: disable=too-many-lines
-from typing import (
-    Optional,
-    Sequence,
-    Union,
-)
+from collections.abc import Sequence
+from typing import Optional, Union
 from unittest import TestCase
 
 from pcs.common.const import (

@@ -1,5 +1,6 @@
+from collections.abc import Sequence
 from dataclasses import replace
-from typing import Optional, Sequence, cast
+from typing import Optional, cast
 
 from pcs.common.permissions.types import PermissionGrantedType
 from pcs.lib.interface.config import SyncVersionFacadeInterface

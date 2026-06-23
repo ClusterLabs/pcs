@@ -1,5 +1,5 @@
-from collections.abc import Mapping
-from typing import Sequence, cast
+from collections.abc import Mapping, Sequence
+from typing import cast
 
 from pcs.common import reports
 from pcs.common.auth import HostAuthData, HostWithTokenAuthData

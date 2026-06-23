@@ -1,5 +1,6 @@
+from collections.abc import Sequence
 from shlex import quote
-from typing import Optional, Sequence
+from typing import Optional
 
 from pcs.cli.nvset import nvset_dto_to_lines
 from pcs.cli.resource.output import resource_agent_parameter_metadata_to_text

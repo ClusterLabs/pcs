@@ -1,9 +1,6 @@
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import (
-    NewType,
-    Optional,
-    Sequence,
-)
+from typing import NewType, Optional
 
 from pcs.common.interface.dto import DataTransferObject
 from pcs.common.pacemaker.nvset import CibNvsetDto

@@ -1,5 +1,5 @@
-from collections.abc import Mapping
-from typing import Any, Generator, Optional, Sequence, TypeVar, overload
+from collections.abc import Mapping, Sequence
+from typing import Any, Generator, Optional, TypeVar, overload
 
 from pcs import settings
 from pcs.common import reports

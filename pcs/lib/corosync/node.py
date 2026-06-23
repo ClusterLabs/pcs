@@ -1,9 +1,7 @@
 import socket
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import (
-    Optional,
-    Sequence,
-)
+from typing import Optional
 
 from pcs.common import reports
 from pcs.common.corosync_conf import (

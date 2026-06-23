@@ -1,8 +1,9 @@
 import pwd
 import socket
 import struct
+from collections.abc import Sequence
 from logging import Logger
-from typing import Optional, Sequence, cast
+from typing import Optional, cast
 
 from tornado.http1connection import HTTP1Connection
 from tornado.ioloop import IOLoop

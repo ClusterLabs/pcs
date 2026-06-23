@@ -1,4 +1,5 @@
-from typing import Optional, Sequence, cast
+from collections.abc import Sequence
+from typing import Optional, cast
 
 from pcs.common import reports
 from pcs.common.file_type_codes import PCS_KNOWN_HOSTS, FileTypeCode

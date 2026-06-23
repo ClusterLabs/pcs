@@ -1,10 +1,6 @@
 from collections import defaultdict
-from typing import (
-    Any,
-    Optional,
-    Sequence,
-    Union,
-)
+from collections.abc import Sequence
+from typing import Any, Optional, Union
 
 from pcs.cli.reports.output import error
 from pcs.common import const, reports

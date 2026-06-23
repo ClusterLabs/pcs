@@ -1,6 +1,7 @@
 import shlex
+from collections.abc import Sequence
 from dataclasses import replace
-from typing import Optional, Sequence
+from typing import Optional
 
 from pcs.cli.common.output import INDENT_STEP, pairs_to_cmd
 from pcs.cli.nvset import filter_nvpairs_by_names, nvset_dto_to_lines

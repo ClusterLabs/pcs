@@ -1,6 +1,6 @@
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Optional, Sequence
+from typing import Optional
 
 from pcs.common.interface.dto import DataTransferObject
 from pcs.common.types import (
