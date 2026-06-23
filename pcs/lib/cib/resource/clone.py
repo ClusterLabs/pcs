@@ -9,11 +9,8 @@ support for them to be able to read, process and display CIBs containing them.
 """
 
 import dataclasses
-from typing import (
-    Mapping,
-    Optional,
-    cast,
-)
+from collections.abc import Mapping
+from typing import Optional, cast
 
 from lxml import etree
 from lxml.etree import _Element

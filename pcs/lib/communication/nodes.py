@@ -1,5 +1,6 @@
 import json
-from typing import Mapping, Sequence
+from collections.abc import Mapping
+from typing import Sequence
 
 from pcs.common import reports
 from pcs.common.auth import HostAuthData

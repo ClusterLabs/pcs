@@ -1,15 +1,8 @@
 import itertools
 import json
 from collections import Counter
-from typing import (
-    Any,
-    Generic,
-    Mapping,
-    NamedTuple,
-    Optional,
-    TypeVar,
-    overload,
-)
+from collections.abc import Mapping
+from typing import Any, Generic, NamedTuple, Optional, TypeVar, overload
 from unittest import mock
 
 from pcs.common import reports

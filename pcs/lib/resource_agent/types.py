@@ -1,7 +1,7 @@
 from collections import defaultdict
-from collections.abc import Set
+from collections.abc import Mapping, Set
 from dataclasses import dataclass
-from typing import Mapping, NewType, Optional
+from typing import NewType, Optional
 
 from pcs.common.resource_agent.dto import (
     ResourceAgentActionDto,

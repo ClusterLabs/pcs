@@ -1,6 +1,7 @@
 import os
 import tempfile
 import uuid
+from collections.abc import Mapping
 from contextlib import (
     AbstractContextManager,
     contextmanager,
@@ -10,7 +11,6 @@ from typing import (
     Callable,
     Generator,
     Literal,
-    Mapping,
     Optional,
     TypeVar,
     Union,

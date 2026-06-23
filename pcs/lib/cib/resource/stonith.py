@@ -1,9 +1,6 @@
 import re
-from typing import (
-    Mapping,
-    Optional,
-    cast,
-)
+from collections.abc import Mapping
+from typing import Optional, cast
 
 from lxml.etree import _Element
 

@@ -1,4 +1,5 @@
-from typing import Any, Mapping, Optional, Sequence
+from collections.abc import Mapping
+from typing import Any, Optional, Sequence
 
 from pcs import settings
 from pcs.common import reports, ssl

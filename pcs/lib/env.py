@@ -1,5 +1,6 @@
+from collections.abc import Mapping
 from logging import Logger
-from typing import Any, Callable, Mapping, Optional, Union, cast
+from typing import Any, Callable, Optional, Union, cast
 
 from lxml.etree import _Element
 

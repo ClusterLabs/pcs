@@ -2,7 +2,8 @@ import fcntl
 import os
 import re
 import stat
-from typing import Mapping, Optional, Union
+from collections.abc import Mapping
+from typing import Optional, Union
 
 from pcs import settings
 from pcs.common import reports

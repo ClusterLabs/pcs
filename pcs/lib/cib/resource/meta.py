@@ -1,4 +1,5 @@
-from typing import Iterable, Mapping, cast
+from collections.abc import Mapping
+from typing import Iterable, cast
 
 from pcs.common import reports
 from pcs.common.types import StringIterable

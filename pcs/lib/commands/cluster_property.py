@@ -1,4 +1,5 @@
-from typing import Mapping, Union
+from collections.abc import Mapping
+from typing import Union
 
 from pcs import settings
 from pcs.common import reports

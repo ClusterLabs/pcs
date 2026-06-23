@@ -1,5 +1,6 @@
 import json
-from typing import Mapping, Optional
+from collections.abc import Mapping
+from typing import Optional
 
 from pcs.common.file_type_codes import (
     PCS_KNOWN_HOSTS,

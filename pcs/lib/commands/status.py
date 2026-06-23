@@ -1,10 +1,7 @@
 import contextlib
 import os.path
-from typing import (
-    Iterable,
-    Mapping,
-    NamedTuple,
-)
+from collections.abc import Mapping
+from typing import Iterable, NamedTuple
 
 from lxml.etree import _Element
 

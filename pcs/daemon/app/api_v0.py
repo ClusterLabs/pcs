@@ -1,5 +1,6 @@
 import json
-from typing import Any, Mapping, Union, cast
+from collections.abc import Mapping
+from typing import Any, Union, cast
 
 from tornado.locks import Lock
 from tornado.web import Finish

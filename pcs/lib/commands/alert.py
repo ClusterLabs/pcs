@@ -1,4 +1,5 @@
-from typing import TYPE_CHECKING, Any, Mapping, Optional
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, Optional
 
 from pcs.common.pacemaker.alert import CibAlertListDto
 from pcs.common.types import StringIterable

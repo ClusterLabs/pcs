@@ -1,8 +1,9 @@
 # pylint: disable=too-many-lines
 from collections import defaultdict
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from functools import partial
-from typing import Any, Literal, Mapping, Optional, Union, cast
+from typing import Any, Literal, Optional, Union, cast
 
 from pcs.common import file_type_codes
 from pcs.common.fencing_topology import (

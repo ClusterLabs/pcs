@@ -1,18 +1,12 @@
 import base64
 import io
 import re
+from collections.abc import Mapping
 from dataclasses import (
     dataclass,
     field,
 )
-from typing import (
-    Generator,
-    Iterable,
-    Mapping,
-    Optional,
-    Sequence,
-    Union,
-)
+from typing import Generator, Iterable, Optional, Sequence, Union
 from urllib.parse import urlencode
 
 # We should ignore SIGPIPE when using pycurl.NOSIGNAL - see the libcurl tutorial

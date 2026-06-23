@@ -1,11 +1,7 @@
 from collections import Counter
+from collections.abc import Mapping
 from functools import partial
-from typing import (
-    Final,
-    Mapping,
-    Optional,
-    Union,
-)
+from typing import Final, Optional, Union
 
 from pcs.cli.common.errors import (
     SEE_MAN_CHANGES,

@@ -1,4 +1,5 @@
-from typing import Mapping, Optional
+from collections.abc import Mapping
+from typing import Optional
 
 from lxml import etree
 from lxml.etree import _Element

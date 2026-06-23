@@ -1,8 +1,5 @@
-from typing import (
-    Any,
-    Mapping,
-    Sequence,
-)
+from collections.abc import Mapping
+from typing import Any, Sequence
 
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import InputModifiers

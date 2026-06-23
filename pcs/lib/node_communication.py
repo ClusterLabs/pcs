@@ -1,4 +1,4 @@
-from typing import Mapping
+from collections.abc import Mapping
 
 from pcs.common import pcs_pycurl as pycurl
 from pcs.common import reports

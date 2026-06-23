@@ -1,5 +1,6 @@
 import json
-from typing import Literal, Mapping, Optional, Sequence
+from collections.abc import Mapping
+from typing import Literal, Optional, Sequence
 
 from pcs import settings
 from pcs.common import file_type_codes, reports

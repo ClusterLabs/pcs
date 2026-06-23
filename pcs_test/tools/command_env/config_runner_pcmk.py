@@ -1,6 +1,7 @@
 import os
+from collections.abc import Mapping
 from textwrap import dedent
-from typing import Mapping, Optional
+from typing import Optional
 
 from pcs import settings
 

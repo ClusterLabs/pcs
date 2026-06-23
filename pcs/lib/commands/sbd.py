@@ -1,4 +1,5 @@
-from typing import Any, Iterable, Mapping, Optional
+from collections.abc import Mapping
+from typing import Any, Iterable, Optional
 
 from pcs import settings
 from pcs.common import reports

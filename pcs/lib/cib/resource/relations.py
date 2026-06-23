@@ -1,8 +1,7 @@
-from collections.abc import Set
+from collections.abc import Mapping, Set
 from typing import (
     Any,
     Iterable,
-    Mapping,
     MutableMapping,
     Optional,
     Sequence,

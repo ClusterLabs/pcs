@@ -1,7 +1,7 @@
 import shlex
 from collections import defaultdict
-from collections.abc import Container, Sequence
-from typing import Mapping, Optional, Union
+from collections.abc import Container, Mapping, Sequence
+from typing import Optional, Union
 
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.output import (

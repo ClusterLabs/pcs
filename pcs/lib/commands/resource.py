@@ -1,18 +1,10 @@
 # pylint: disable=too-many-lines
 import re
 from collections import defaultdict
+from collections.abc import Mapping
 from contextlib import contextmanager
 from functools import partial
-from typing import (
-    Any,
-    Callable,
-    Iterable,
-    Mapping,
-    Optional,
-    Sequence,
-    Union,
-    cast,
-)
+from typing import Any, Callable, Iterable, Optional, Sequence, Union, cast
 
 from lxml.etree import _Element
 

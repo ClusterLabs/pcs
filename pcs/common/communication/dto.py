@@ -1,9 +1,6 @@
+from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import (
-    Any,
-    Mapping,
-    Optional,
-)
+from typing import Any, Optional
 
 from pcs.common.interface.dto import DataTransferObject
 from pcs.common.reports.dto import ReportItemDto

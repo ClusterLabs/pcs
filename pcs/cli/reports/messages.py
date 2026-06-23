@@ -1,10 +1,6 @@
+from collections.abc import Mapping
 from functools import partial
-from typing import (
-    Any,
-    Mapping,
-    Optional,
-    get_type_hints,
-)
+from typing import Any, Optional, get_type_hints
 
 from pcs.common import file_type_codes
 from pcs.common.reports import (

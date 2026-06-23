@@ -1,13 +1,9 @@
+from collections.abc import Mapping
 from dataclasses import (
     dataclass,
     field,
 )
-from typing import (
-    Any,
-    Mapping,
-    Optional,
-    Union,
-)
+from typing import Any, Optional, Union
 from unittest import TestCase
 
 from pcs.common.reports import (

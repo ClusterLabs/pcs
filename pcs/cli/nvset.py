@@ -1,5 +1,6 @@
+from collections.abc import Mapping
 from dataclasses import replace
-from typing import Iterable, Mapping, Optional
+from typing import Iterable, Optional
 
 from pcs.cli.rule import (
     get_in_effect_label,

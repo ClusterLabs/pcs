@@ -1,4 +1,5 @@
-from typing import Mapping, Optional
+from collections.abc import Mapping
+from typing import Optional
 
 # TODO temporary definition, we want to overhaul the whole 'resource create'
 # command using this and implement a proper dataclass for resource operations

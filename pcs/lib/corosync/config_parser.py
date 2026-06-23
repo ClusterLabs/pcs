@@ -1,4 +1,7 @@
-from typing import Mapping, Optional
+from typing import TYPE_CHECKING, Optional
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
 from pcs.common import (
     file_type_codes,

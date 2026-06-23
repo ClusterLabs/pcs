@@ -1,4 +1,5 @@
-from typing import Mapping, Optional, cast
+from collections.abc import Mapping
+from typing import Optional, cast
 
 from pcs.common import reports
 from pcs.common.corosync_conf import (

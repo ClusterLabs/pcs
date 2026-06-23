@@ -1,4 +1,5 @@
-from typing import Any, Mapping, Sequence, cast
+from collections.abc import Mapping
+from typing import Any, Sequence, cast
 
 from pcs.common import reports
 from pcs.lib import validate

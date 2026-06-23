@@ -1,8 +1,5 @@
-from typing import (
-    Any,
-    Iterable,
-    Mapping,
-)
+from collections.abc import Mapping
+from typing import Any, Iterable
 
 from pcs.common.const import PcmkRoleType
 from pcs.common.interface.dto import to_dict

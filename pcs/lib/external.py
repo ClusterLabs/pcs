@@ -1,8 +1,9 @@
 import signal
 import subprocess
+from collections.abc import Mapping
 from logging import Logger
 from shlex import quote as shell_quote
-from typing import Mapping, Optional
+from typing import Optional
 
 from pcs import settings
 from pcs.common import reports

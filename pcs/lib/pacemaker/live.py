@@ -1,8 +1,9 @@
 import os.path
 import re
+from collections.abc import Mapping
 from hashlib import md5
 from pathlib import Path
-from typing import Mapping, Optional, Union, cast
+from typing import Optional, Union, cast
 
 from lxml import etree
 from lxml.etree import _Element
