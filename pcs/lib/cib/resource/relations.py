@@ -1,12 +1,5 @@
-from collections.abc import Mapping, Set
-from typing import (
-    Any,
-    Iterable,
-    MutableMapping,
-    Optional,
-    Sequence,
-    cast,
-)
+from collections.abc import Mapping, MutableMapping, Set
+from typing import Any, Iterable, Optional, Sequence, cast
 
 from lxml.etree import _Element
 
