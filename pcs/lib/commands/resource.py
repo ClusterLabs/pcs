@@ -6,7 +6,6 @@ from functools import partial
 from typing import (
     Any,
     Callable,
-    FrozenSet,
     Iterable,
     Mapping,
     Optional,
@@ -2324,7 +2323,7 @@ def ban(env, resource_id, node=None, master=False, lifetime=None, wait=False):
 
 def _resource_running_on_nodes(
     resource_state: dict[str, list[str]],
-) -> FrozenSet[str]:
+) -> frozenset[str]:
     if resource_state:
         return frozenset(
             resource_state.get(const.PCMK_ROLE_PROMOTED, [])

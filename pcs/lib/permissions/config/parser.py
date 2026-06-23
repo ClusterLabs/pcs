@@ -1,8 +1,5 @@
 from enum import Enum
-from typing import (
-    FrozenSet,
-    Optional,
-)
+from typing import Optional
 
 import dacite
 
@@ -37,7 +34,7 @@ class ParserV2(ParserInterface):
             if version != 2:
                 raise ParserError(f"Unsupported format version '{version}'")
             return dacite.from_dict(
-                ConfigV2, data, config=dacite.Config(cast=[Enum, FrozenSet])
+                ConfigV2, data, config=dacite.Config(cast=[Enum, frozenset])
             )
         except dacite.DaciteError as e:
             raise ParserError(str(e)) from e
