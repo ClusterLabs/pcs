@@ -1,6 +1,6 @@
-from collections.abc import MutableSequence, Set
+from collections.abc import Generator, MutableSequence, Set
 from enum import StrEnum, auto
-from typing import Generator, Literal, Union
+from typing import Literal, Union
 
 StringSequence = Union[MutableSequence[str], tuple[str, ...]]
 StringCollection = Union[StringSequence, Set[str]]

@@ -1,8 +1,8 @@
 import re
 import uuid
-from collections.abc import MutableSet
+from collections.abc import Generator, MutableSet
 from dataclasses import astuple, dataclass
-from typing import Generator, Optional, TypeVar, Union
+from typing import Optional, TypeVar, Union
 
 from lxml import etree
 from lxml.etree import _Element

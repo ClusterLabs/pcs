@@ -1,12 +1,12 @@
 import os
 import tempfile
 import uuid
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Generator, Mapping
 from contextlib import (
     AbstractContextManager,
     contextmanager,
 )
-from typing import IO, Generator, Literal, Optional, TypeVar, Union, overload
+from typing import IO, Literal, Optional, TypeVar, Union, overload
 
 from pcs.common import reports
 from pcs.lib.errors import LibraryError
