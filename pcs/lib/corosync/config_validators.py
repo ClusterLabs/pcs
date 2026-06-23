@@ -4,6 +4,7 @@ from collections import (
     defaultdict,
 )
 from collections.abc import (
+    Callable,
     Collection,
     Iterable,
     Mapping,
@@ -13,7 +14,7 @@ from collections.abc import (
 )
 from dataclasses import dataclass
 from itertools import zip_longest
-from typing import Any, Callable, Optional
+from typing import Any, Optional
 
 from pcs.common import reports
 from pcs.common.corosync_conf import CorosyncNodeAddressType

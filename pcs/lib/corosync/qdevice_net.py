@@ -2,8 +2,8 @@ import os
 import os.path
 import re
 import shutil
-from collections.abc import Sequence
-from typing import Callable, Optional
+from collections.abc import Callable, Sequence
+from typing import Optional
 
 from pcs import settings
 from pcs.common import reports

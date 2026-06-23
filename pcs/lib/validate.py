@@ -31,9 +31,9 @@ entered one is reported as not valid.
 import ipaddress
 import re
 from collections import Counter
-from collections.abc import Container, Iterable, Mapping
+from collections.abc import Callable, Container, Iterable, Mapping
 from re import Pattern
-from typing import Any, Callable, NamedTuple, Optional, Union, cast
+from typing import Any, NamedTuple, Optional, Union, cast
 
 from pcs.common import reports
 from pcs.common.reports import (

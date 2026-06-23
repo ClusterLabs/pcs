@@ -1,5 +1,5 @@
-from collections.abc import Iterable, Mapping
-from typing import TYPE_CHECKING, Callable, Optional
+from collections.abc import Callable, Iterable, Mapping
+from typing import TYPE_CHECKING, Optional
 
 from lxml.etree import _Element
 

@@ -1,5 +1,5 @@
-from collections.abc import Iterable
-from typing import Callable, Optional
+from collections.abc import Callable, Iterable
+from typing import Optional
 
 from pcs.cli.common.tools import print_to_stderr
 from pcs.common.reports import (

@@ -1,5 +1,5 @@
-from collections.abc import Mapping
-from typing import Any, Callable, Optional
+from collections.abc import Callable, Mapping
+from typing import Any, Optional
 
 from pcs import utils
 from pcs.cli.common.errors import CmdLineInputError

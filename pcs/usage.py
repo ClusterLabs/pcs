@@ -1,5 +1,8 @@
 import re
-from typing import Callable, Final
+from typing import TYPE_CHECKING, Final
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 from pcs import settings
 from pcs.cli.common.output import format_wrap

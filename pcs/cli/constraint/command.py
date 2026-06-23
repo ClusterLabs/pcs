@@ -1,7 +1,5 @@
-from typing import (
-    Any,
-    Callable,
-)
+from collections.abc import Callable
+from typing import Any
 
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import (

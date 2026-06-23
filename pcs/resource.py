@@ -2,9 +2,9 @@
 import json
 import re
 import sys
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from functools import partial
-from typing import TYPE_CHECKING, Any, Callable, Optional
+from typing import TYPE_CHECKING, Any, Optional
 from xml.dom.minidom import parseString
 
 import pcs.lib.pacemaker.live as lib_pacemaker
