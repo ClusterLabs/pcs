@@ -2,12 +2,9 @@ import datetime
 import os
 import signal
 from asyncio import Event
+from collections.abc import Awaitable
 from dataclasses import dataclass
-from typing import (
-    Any,
-    Awaitable,
-    Optional,
-)
+from typing import Any, Optional
 
 from pcs import settings
 from pcs.common.async_tasks.dto import TaskResultDto
