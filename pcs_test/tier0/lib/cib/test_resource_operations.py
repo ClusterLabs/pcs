@@ -1,7 +1,4 @@
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
 from lxml import etree
 
@@ -399,7 +396,7 @@ class ValidateOperation(TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="c",
                     option_name="record-pending",
-                    allowed_values="a pacemaker boolean value: '0', '1', 'false', 'n', 'no', 'off', 'on', 'true', 'y', 'yes'",
+                    allowed_values="a boolean value: '0', '1', 'false', 'true'",
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),
@@ -407,7 +404,7 @@ class ValidateOperation(TestCase):
                     report_codes.INVALID_OPTION_VALUE,
                     option_value="d",
                     option_name="enabled",
-                    allowed_values="a pacemaker boolean value: '0', '1', 'false', 'n', 'no', 'off', 'on', 'true', 'y', 'yes'",
+                    allowed_values="a boolean value: '0', '1', 'false', 'true'",
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),

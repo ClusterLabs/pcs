@@ -12,10 +12,7 @@ from pcs.common import const
 from pcs.common.str_tools import format_list, format_plural
 from pcs.constraint import LOCATION_NODE_VALIDATION_SKIP_MSG
 
-from pcs_test.tools.assertions import (
-    AssertPcsMixin,
-    ac,
-)
+from pcs_test.tools.assertions import AssertPcsMixin, ac
 from pcs_test.tools.bin_mock import get_mock_settings
 from pcs_test.tools.cib import get_assert_pcs_effect_mixin
 from pcs_test.tools.fixture_cib import (
@@ -33,10 +30,7 @@ from pcs_test.tools.misc import (
     write_file_to_tmpfile,
 )
 from pcs_test.tools.misc import get_test_resource as rc
-from pcs_test.tools.pcs_runner import (
-    PcsRunner,
-    pcs,
-)
+from pcs_test.tools.pcs_runner import PcsRunner, pcs
 
 LOCATION_NODE_VALIDATION_SKIP_WARNING = (
     f"Warning: {LOCATION_NODE_VALIDATION_SKIP_MSG}\n"
@@ -1101,9 +1095,9 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
         ac(
             stderr,
             (
-                "Error: 'foo' is not a valid sequential value, use a pacemaker "
-                "boolean value: '0', '1', 'false', 'n', 'no', 'off', 'on', "
-                "'true', 'y', 'yes'\n" + ERRORS_HAVE_OCCURRED
+                "Error: 'foo' is not a valid sequential value, use a "
+                "boolean value: '0', '1', 'false', 'true'\n"
+                + ERRORS_HAVE_OCCURRED
             ),
         )
         self.assertEqual(retval, 1)
@@ -1117,8 +1111,8 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
             stderr,
             (
                 "Error: 'foo' is not a valid require-all value, use a "
-                "pacemaker boolean value: '0', '1', 'false', 'n', 'no', "
-                "'off', 'on', 'true', 'y', 'yes'\n" + ERRORS_HAVE_OCCURRED
+                "boolean value: '0', '1', 'false', 'true'\n"
+                + ERRORS_HAVE_OCCURRED
             ),
         )
         self.assertEqual(retval, 1)
@@ -1600,9 +1594,9 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
         ac(
             stderr,
             (
-                "Error: 'foo' is not a valid sequential value, use a pacemaker "
-                "boolean value: '0', '1', 'false', 'n', 'no', 'off', 'on', "
-                "'true', 'y', 'yes'\n" + ERRORS_HAVE_OCCURRED
+                "Error: 'foo' is not a valid sequential value, use a "
+                "boolean value: '0', '1', 'false', 'true'\n"
+                + ERRORS_HAVE_OCCURRED
             ),
         )
         self.assertEqual(stdout, "")
@@ -1616,8 +1610,8 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
             stderr,
             (
                 "Error: 'foo' is not a valid require-all value, use a "
-                "pacemaker boolean value: '0', '1', 'false', 'n', 'no', "
-                "'off', 'on', 'true', 'y', 'yes'\n" + ERRORS_HAVE_OCCURRED
+                "boolean value: '0', '1', 'false', 'true'\n"
+                + ERRORS_HAVE_OCCURRED
             ),
         )
         self.assertEqual(stdout, "")
@@ -1695,7 +1689,7 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
         )
         ac(
             stderr,
-            "Error: 'foo' is not a valid symmetrical value, use '0', '1', 'false', 'n', 'no', 'off', 'on', 'true', 'y', 'yes'\n",
+            "Error: 'foo' is not a valid symmetrical value, use '0', '1', 'false', 'true'\n",
         )
         self.assertEqual(stdout, "")
         self.assertEqual(retval, 1)

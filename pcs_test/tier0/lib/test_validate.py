@@ -16,9 +16,6 @@ from pcs_test.tools import fixture
 from pcs_test.tools.assertions import assert_report_item_list_equal
 from pcs_test.tools.custom_mock import get_runner_mock
 
-# pylint: disable=no-self-use
-# pylint: disable=too-many-lines
-
 ### normalization
 
 
@@ -1581,6 +1578,63 @@ class ValuePcmkBoolean(TestCase):
                             allowed_values=(
                                 "a pacemaker boolean value: '0', '1', 'false', "
                                 "'n', 'no', 'off', 'on', 'true', 'y', 'yes'"
+                            ),
+                            cannot_be_empty=False,
+                            forbidden_characters=None,
+                        ),
+                    ],
+                )
+
+
+class ValueXsdBoolean(TestCase):
+    # The real code only calls ValuePredicateBase => only basic tests here.
+    def test_empty_report_on_valid_option(self):
+        for value in [
+            "true",
+            "false",
+            "1",
+            "0",
+        ]:
+            with self.subTest(value=value):
+                assert_report_item_list_equal(
+                    validate.ValueXsdBoolean("key", None, None).validate(
+                        {"key": value}
+                    ),
+                    [],
+                )
+
+    def test_report_invalid_value(self):
+        for value in [
+            "",
+            "yes",
+            "no",
+            "on",
+            "off",
+            "y",
+            "n",
+            "T",
+            "F",
+            "-1",
+            "2",
+            "True",
+            "TRUE",
+            "False",
+            "FALSE",
+            "faLse",
+            "TRue",
+        ]:
+            with self.subTest(value=value):
+                assert_report_item_list_equal(
+                    validate.ValueXsdBoolean("key", None, None).validate(
+                        {"key": value}
+                    ),
+                    [
+                        fixture.error(
+                            reports.codes.INVALID_OPTION_VALUE,
+                            option_name="key",
+                            option_value=value,
+                            allowed_values=(
+                                "a boolean value: '0', '1', 'false', 'true'"
                             ),
                             cannot_be_empty=False,
                             forbidden_characters=None,

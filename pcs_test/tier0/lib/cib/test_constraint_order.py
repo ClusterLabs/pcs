@@ -1,7 +1,4 @@
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
 from lxml import etree
 
@@ -9,7 +6,7 @@ from pcs.common.reports import ReportItemSeverity as severities
 from pcs.common.reports import codes as report_codes
 from pcs.lib.cib.constraint import order
 from pcs.lib.errors import LibraryError
-from pcs.lib.pacemaker.values import BOOLEAN_VALUES
+from pcs.lib.xml_tools import XSD_BOOLEAN_VALUES
 
 from pcs_test.tools.assertions import assert_raise_library_error
 
@@ -99,7 +96,7 @@ class PrepareOptionsWithSetTest(TestCase):
                 severities.ERROR,
                 report_codes.INVALID_OPTION_VALUE,
                 {
-                    "allowed_values": BOOLEAN_VALUES,
+                    "allowed_values": XSD_BOOLEAN_VALUES,
                     "option_value": "unknown",
                     "option_name": "symmetrical",
                     "cannot_be_empty": False,

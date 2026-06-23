@@ -36,21 +36,11 @@ from re import Pattern
 from typing import Any, NamedTuple, cast
 
 from pcs.common import reports
-from pcs.common.reports import (
-    ReportItem,
-    ReportItemList,
-    ReportItemSeverity,
-)
+from pcs.common.reports import ReportItem, ReportItemList, ReportItemSeverity
 from pcs.common.str_tools import format_list, format_optional
 from pcs.common.tools import timeout_to_seconds
-from pcs.common.types import (
-    StringCollection,
-    StringIterable,
-)
-from pcs.common.validate import (
-    is_integer,
-    is_port_number,
-)
+from pcs.common.types import StringCollection, StringIterable
+from pcs.common.validate import is_integer, is_port_number
 from pcs.lib.cib.tools import IdProvider
 from pcs.lib.corosync import constants as corosync_constants
 from pcs.lib.external import CommandRunner
@@ -62,6 +52,7 @@ from pcs.lib.pacemaker.values import (
     is_score,
     validate_id,
 )
+from pcs.lib.xml_tools import XSD_BOOLEAN_VALUES, is_xsd_boolean
 
 _FLOAT_RE = re.compile(r"^[-+]?(\d+|(\d*\.\d+)|(\d+\.\d*))([eE][+-]?\d+)?$")
 _PCMK_DATESPEC_PART_RE = re.compile(r"^(?P<since>[0-9]+)(-(?P<until>[0-9]+))?$")
@@ -915,6 +906,20 @@ class ValuePcmkBoolean(ValuePredicateBase):
     def _get_allowed_values(self) -> Any:
         bool_values = format_list(list(BOOLEAN_VALUES))
         return f"a pacemaker boolean value: {bool_values}"
+
+
+class ValueXsdBoolean(ValuePredicateBase):
+    """
+    Report INVALID_OPTION_VALUE when the value is not a valid XSD boolean
+    value (true, false, 1, 0)
+    """
+
+    def _is_valid(self, value: TypeOptionValue) -> bool:
+        return is_xsd_boolean(value)
+
+    def _get_allowed_values(self) -> Any:
+        bool_values = format_list(list(XSD_BOOLEAN_VALUES))
+        return f"a boolean value: {bool_values}"
 
 
 class ValuePcmkDatespecPart(ValuePredicateBase):

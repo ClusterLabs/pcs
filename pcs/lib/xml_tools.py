@@ -2,16 +2,45 @@ from collections.abc import Iterable, Mapping
 from typing import cast
 
 from lxml import etree
-from lxml.etree import (
-    _Element,
-    _ElementTree,
-)
+from lxml.etree import _Element, _ElementTree
 
-from pcs.common import (
-    const,
-    pacemaker,
-)
+from pcs.common import const, pacemaker
 from pcs.common.types import StringCollection
+
+_XSD_BOOLEAN_TRUE = frozenset(["true", "1"])
+_XSD_BOOLEAN_FALSE = frozenset(["false", "0"])
+XSD_BOOLEAN_VALUES = _XSD_BOOLEAN_TRUE | _XSD_BOOLEAN_FALSE
+
+
+def is_xsd_boolean(val: str) -> bool:
+    """
+    Is the value a valid XSD boolean?
+    XSD booleans are: true, false, 1, 0 (case-sensitive).
+    See https://www.w3.org/TR/xmlschema-2/#boolean
+
+    val -- checked value
+    """
+    return val in XSD_BOOLEAN_VALUES
+
+
+def is_xsd_true(val: str) -> bool:
+    """
+    Is the value an XSD boolean true?
+    See https://www.w3.org/TR/xmlschema-2/#boolean
+
+    val -- checked value
+    """
+    return val in _XSD_BOOLEAN_TRUE
+
+
+def is_xsd_false(val: str) -> bool:
+    """
+    Is the value an XSD boolean false?
+    See https://www.w3.org/TR/xmlschema-2/#boolean
+
+    val -- checked value
+    """
+    return val in _XSD_BOOLEAN_FALSE
 
 
 def get_root(tree: _Element | _ElementTree) -> _Element:

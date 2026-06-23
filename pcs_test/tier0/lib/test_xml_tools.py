@@ -8,6 +8,59 @@ from pcs_test.tools.assertions import assert_xml_equal
 from pcs_test.tools.xml import etree_to_str
 
 
+class XsdBooleanTest(TestCase):
+    def test_true_is_xsd_true(self):
+        self.assertTrue(lib.is_xsd_true("true"))
+        self.assertTrue(lib.is_xsd_true("1"))
+
+    def test_nontrue_is_not_xsd_true(self):
+        self.assertFalse(lib.is_xsd_true("True"))
+        self.assertFalse(lib.is_xsd_true("TRUE"))
+        self.assertFalse(lib.is_xsd_true("false"))
+        self.assertFalse(lib.is_xsd_true("0"))
+        self.assertFalse(lib.is_xsd_true(""))
+        self.assertFalse(lib.is_xsd_true("on"))
+        self.assertFalse(lib.is_xsd_true("yes"))
+        self.assertFalse(lib.is_xsd_true("y"))
+
+    def test_true_is_xsd_boolean(self):
+        self.assertTrue(lib.is_xsd_boolean("true"))
+        self.assertTrue(lib.is_xsd_boolean("1"))
+
+    def test_false_is_xsd_false(self):
+        self.assertTrue(lib.is_xsd_false("false"))
+        self.assertTrue(lib.is_xsd_false("0"))
+
+    def test_nonfalse_is_not_xsd_false(self):
+        self.assertFalse(lib.is_xsd_false("False"))
+        self.assertFalse(lib.is_xsd_false("FALSE"))
+        self.assertFalse(lib.is_xsd_false("true"))
+        self.assertFalse(lib.is_xsd_false("1"))
+        self.assertFalse(lib.is_xsd_false(""))
+        self.assertFalse(lib.is_xsd_false("off"))
+        self.assertFalse(lib.is_xsd_false("no"))
+        self.assertFalse(lib.is_xsd_false("n"))
+
+    def test_false_is_xsd_boolean(self):
+        self.assertTrue(lib.is_xsd_boolean("false"))
+        self.assertTrue(lib.is_xsd_boolean("0"))
+
+    def test_nonxsdboolean_is_not_xsd_boolean(self):
+        self.assertFalse(lib.is_xsd_boolean(""))
+        self.assertFalse(lib.is_xsd_boolean("True"))
+        self.assertFalse(lib.is_xsd_boolean("False"))
+        self.assertFalse(lib.is_xsd_boolean("TRUE"))
+        self.assertFalse(lib.is_xsd_boolean("FALSE"))
+        self.assertFalse(lib.is_xsd_boolean("on"))
+        self.assertFalse(lib.is_xsd_boolean("off"))
+        self.assertFalse(lib.is_xsd_boolean("yes"))
+        self.assertFalse(lib.is_xsd_boolean("no"))
+        self.assertFalse(lib.is_xsd_boolean("y"))
+        self.assertFalse(lib.is_xsd_boolean("n"))
+        self.assertFalse(lib.is_xsd_boolean("2"))
+        self.assertFalse(lib.is_xsd_boolean(" 1 "))
+
+
 class GetSubElementTest(TestCase):
     def setUp(self):
         self.root = etree.Element("root")

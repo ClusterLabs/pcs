@@ -174,9 +174,9 @@ def validate_create_with_set(
             ("action", "require-all", "role", "sequential"), option_type="set"
         ),
         validate.ValueIn("action", const.PCMK_ACTIONS),
-        validate.ValuePcmkBoolean("require-all"),
+        validate.ValueXsdBoolean("require-all"),
         validate.ValueIn("role", const.PCMK_ROLES),
-        validate.ValuePcmkBoolean("sequential"),
+        validate.ValueXsdBoolean("sequential"),
     ]
     # validate resources specification and resource set options
     # caller is responsible for handling the 'resource not found' case

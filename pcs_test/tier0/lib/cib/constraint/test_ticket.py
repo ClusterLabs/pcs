@@ -608,10 +608,7 @@ class ValidateCreateWithSet(TestCase):
         )
 
     def test_set_options(self):
-        pcmk_bool = (
-            "a pacemaker boolean value: '0', '1', 'false', 'n', 'no', 'off', "
-            "'on', 'true', 'y', 'yes'"
-        )
+        xsd_boolean = "a boolean value: '0', '1', 'false', 'true'"
         assert_report_item_list_equal(
             ticket.validate_create_with_set(
                 self.id_provider,
@@ -648,7 +645,7 @@ class ValidateCreateWithSet(TestCase):
                     reports.codes.INVALID_OPTION_VALUE,
                     option_name="require-all",
                     option_value="bad-require",
-                    allowed_values=pcmk_bool,
+                    allowed_values=xsd_boolean,
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),
@@ -669,7 +666,7 @@ class ValidateCreateWithSet(TestCase):
                     reports.codes.INVALID_OPTION_VALUE,
                     option_name="sequential",
                     option_value="bad-sequential",
-                    allowed_values=pcmk_bool,
+                    allowed_values=xsd_boolean,
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),

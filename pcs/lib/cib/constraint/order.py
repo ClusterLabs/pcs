@@ -19,15 +19,12 @@ from pcs.lib.cib.constraint.resource_set import (
 )
 from pcs.lib.cib.tools import check_new_id_applicable
 from pcs.lib.errors import LibraryError
-from pcs.lib.pacemaker.values import (
-    BOOLEAN_VALUES,
-    is_true,
-)
 from pcs.lib.tools import get_optional_value
+from pcs.lib.xml_tools import XSD_BOOLEAN_VALUES, is_xsd_true
 
 _DESCRIPTION = "constraint id"
 ATTRIB = {
-    "symmetrical": BOOLEAN_VALUES,
+    "symmetrical": XSD_BOOLEAN_VALUES,
     "kind": ("Optional", "Mandatory", "Serialize"),
 }
 
@@ -84,8 +81,8 @@ def _element_to_attributes_dto(
 ) -> CibConstraintOrderAttributesDto:
     return CibConstraintOrderAttributesDto(
         constraint_id=str(element.attrib["id"]),
-        symmetrical=get_optional_value(is_true, element.get("symmetrical")),
-        require_all=get_optional_value(is_true, element.get("require-all")),
+        symmetrical=get_optional_value(is_xsd_true, element.get("symmetrical")),
+        require_all=get_optional_value(is_xsd_true, element.get("require-all")),
         score=element.get("score"),
         kind=get_optional_value(CibResourceSetOrderType, element.get("kind")),
     )

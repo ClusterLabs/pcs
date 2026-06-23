@@ -25,6 +25,9 @@
   pcs-0.12.0b1) ([RHEL-183182])
 - Adding a node to a cluster now removes all cluster configuration files from
   the new node before adding it.
+- Fixed validation of resource operation options `enabled`, `record-pending`
+  and constraint options `require-all`, `sequential` and `symmetrical`. Values
+  not accepted by CIB are no longer allowed.
 
 ### Deprecated
 - Commands `pcs pcsd certkey` and `pcs pcsd sync-certificates` ([RHEL-149608])

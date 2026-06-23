@@ -26,8 +26,8 @@ from pcs.lib.cib.tools import (
     role_constructor,
 )
 from pcs.lib.errors import LibraryError
-from pcs.lib.pacemaker.values import is_true
 from pcs.lib.tools import get_optional_value
+from pcs.lib.xml_tools import is_xsd_true
 
 _ATTRIBUTES = ("action", "require-all", "role", "sequential")
 
@@ -54,9 +54,9 @@ def _validate_options(options) -> reports.ReportItemList:
     validators = [
         validate.NamesIn(_ATTRIBUTES, option_type="set"),
         validate.ValueIn("action", const.PCMK_ACTIONS),
-        validate.ValuePcmkBoolean("require-all"),
+        validate.ValueXsdBoolean("require-all"),
         validate.ValueIn("role", const.PCMK_ROLES),
-        validate.ValuePcmkBoolean("sequential"),
+        validate.ValueXsdBoolean("sequential"),
     ]
     return validate.ValidatorAll(validators).validate(options)
 
@@ -156,10 +156,10 @@ def _resource_set_element_to_dto(
     return CibResourceSetDto(
         set_id=resource_set_el.get("id", ""),
         sequential=get_optional_value(
-            is_true, resource_set_el.get("sequential")
+            is_xsd_true, resource_set_el.get("sequential")
         ),
         require_all=get_optional_value(
-            is_true, resource_set_el.get("require-all")
+            is_xsd_true, resource_set_el.get("require-all")
         ),
         ordering=get_optional_value(
             CibResourceSetOrdering, resource_set_el.get("ordering")

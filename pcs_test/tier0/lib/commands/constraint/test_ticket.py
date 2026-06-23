@@ -503,10 +503,7 @@ class CreateWithSet(TestCase):
                 },
             )
         )
-        pcmk_bool = (
-            "a pacemaker boolean value: '0', '1', 'false', 'n', 'no', 'off', "
-            "'on', 'true', 'y', 'yes'"
-        )
+        xsd_boolean = "a boolean value: '0', '1', 'false', 'true'"
         self.env_assist.assert_reports(
             [
                 fixture.error(
@@ -540,7 +537,7 @@ class CreateWithSet(TestCase):
                     reports.codes.INVALID_OPTION_VALUE,
                     option_name="sequential",
                     option_value="bad_sequential",
-                    allowed_values=pcmk_bool,
+                    allowed_values=xsd_boolean,
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),
@@ -560,7 +557,7 @@ class CreateWithSet(TestCase):
                     reports.codes.INVALID_OPTION_VALUE,
                     option_name="require-all",
                     option_value="bad_require_all",
-                    allowed_values=pcmk_bool,
+                    allowed_values=xsd_boolean,
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),

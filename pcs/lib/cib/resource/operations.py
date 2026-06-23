@@ -32,8 +32,8 @@ from pcs.lib.cib.tools import (
     role_constructor,
 )
 from pcs.lib.errors import LibraryError
-from pcs.lib.pacemaker.values import is_true
 from pcs.lib.tools import get_optional_value
+from pcs.lib.xml_tools import is_xsd_true
 
 OPERATION_NVPAIR_ATTRIBUTES = [
     "OCF_CHECK_LEVEL",
@@ -56,13 +56,6 @@ ON_FAIL_VALUES = tuple(
         )
     )
 )
-
-_BOOLEAN_VALUES = [
-    "0",
-    "1",
-    "true",
-    "false",
-]
 
 # _normalize(key, value) -> normalized_value
 _normalize = validate.option_value_normalization(
@@ -193,8 +186,8 @@ def validate_operation_list(
     validators += [
         validate.ValueIn("role", const.PCMK_ROLES),
         validate.ValueIn("on-fail", ON_FAIL_VALUES),
-        validate.ValuePcmkBoolean("record-pending"),
-        validate.ValuePcmkBoolean("enabled"),
+        validate.ValueXsdBoolean("record-pending"),
+        validate.ValueXsdBoolean("enabled"),
         validate.MutuallyExclusive(
             ["interval-origin", "start-delay"], option_type=option_type
         ),
@@ -290,9 +283,9 @@ def op_element_to_dto(
         start_delay=op_element.get("start-delay"),
         interval_origin=op_element.get("interval-origin"),
         timeout=op_element.get("timeout"),
-        enabled=get_optional_value(is_true, op_element.get("enabled")),
+        enabled=get_optional_value(is_xsd_true, op_element.get("enabled")),
         record_pending=get_optional_value(
-            is_true, op_element.get("record-pending")
+            is_xsd_true, op_element.get("record-pending")
         ),
         role=get_optional_value(role_constructor, op_element.get("role")),
         on_fail=get_optional_value(
@@ -484,4 +477,4 @@ def is_enabled(operation_element):
     Check if the specified operation is enabled
     etree operation_element -- the operation
     """
-    return is_true(operation_element.attrib.get("enabled", "true"))
+    return is_xsd_true(operation_element.attrib.get("enabled", "true"))

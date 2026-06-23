@@ -1,7 +1,4 @@
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
 from pcs import resource
 from pcs.cli.common.parse_args import InputModifiers
@@ -1562,8 +1559,8 @@ class FailOrWarnOp(ResourceTest):
             ).split(),
             (
                 "Error: 'Abc' is not a valid record-pending value, use a "
-                "pacemaker boolean value: '0', '1', 'false', 'n', 'no', "
-                "'off', 'on', 'true', 'y', 'yes'\n" + ERRORS_HAVE_OCCURRED
+                "boolean value: '0', '1', 'false', 'true'\n"
+                + ERRORS_HAVE_OCCURRED
             ),
         )
 
@@ -1574,9 +1571,9 @@ class FailOrWarnOp(ResourceTest):
                 "op monitor enabled=Abc"
             ).split(),
             (
-                "Error: 'Abc' is not a valid enabled value, use a pacemaker "
-                "boolean value: '0', '1', 'false', 'n', 'no', 'off', 'on', "
-                "'true', 'y', 'yes'\n" + ERRORS_HAVE_OCCURRED
+                "Error: 'Abc' is not a valid enabled value, use a "
+                "boolean value: '0', '1', 'false', 'true'\n"
+                + ERRORS_HAVE_OCCURRED
             ),
         )
 
