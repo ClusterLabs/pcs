@@ -1,10 +1,7 @@
 import re
+from collections.abc import Container
 from dataclasses import dataclass
-from typing import (
-    Container,
-    Optional,
-    Sequence,
-)
+from typing import Optional, Sequence
 
 from pcs import settings
 from pcs.common import reports

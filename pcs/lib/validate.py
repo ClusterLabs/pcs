@@ -31,11 +31,11 @@ entered one is reported as not valid.
 import ipaddress
 import re
 from collections import Counter
+from collections.abc import Container
 from re import Pattern
 from typing import (
     Any,
     Callable,
-    Container,
     Iterable,
     Mapping,
     NamedTuple,
