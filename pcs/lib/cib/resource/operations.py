@@ -1,6 +1,6 @@
 from collections import defaultdict
 from dataclasses import replace as dt_replace
-from typing import Iterable, List, Optional, Tuple, cast
+from typing import Iterable, Optional, Tuple, cast
 
 from lxml import etree
 from lxml.etree import _Element
@@ -81,7 +81,7 @@ def prepare(
     allowed_operation_name_list: StringCollection,
     new_role_names_supported: bool,
     allow_invalid: bool = False,
-) -> List[ResourceOperationFilteredOut]:
+) -> list[ResourceOperationFilteredOut]:
     """
     Return operation_list prepared from raw_operation_list and
     default_operation_list.
@@ -132,7 +132,7 @@ def prepare(
 
 def operations_to_normalized(
     raw_operation_list: Iterable[ResourceOperationFilteredIn],
-) -> List[validate.TypeOptionNormalizedMap]:
+) -> list[validate.TypeOptionNormalizedMap]:
     return [
         validate.values_to_pairs(op, _normalize) for op in raw_operation_list
     ]
@@ -141,7 +141,7 @@ def operations_to_normalized(
 def normalized_to_operations(
     normalized_pairs: Iterable[validate.TypeOptionNormalizedMap],
     new_role_names_supported: bool,
-) -> List[ResourceOperationFilteredOut]:
+) -> list[ResourceOperationFilteredOut]:
     def _replace_role(op_dict):
         if "role" in op_dict:
             op_dict["role"] = pacemaker.role.get_value_for_cib(
@@ -229,7 +229,7 @@ def _filter_op_dict(
 def _get_remaining_defaults(
     operation_list: Iterable[ResourceOperationFilteredIn],
     default_operation_list: Iterable[CibResourceOperationDto],
-) -> List[CibResourceOperationDto]:
+) -> list[CibResourceOperationDto]:
     """
     Return operations not mentioned in operation_list but contained in
         default_operation_list.
@@ -314,7 +314,7 @@ def op_element_to_dto(
 
 def uniquify_operations_intervals(
     operation_list: Iterable[CibResourceOperationDto],
-) -> Tuple[reports.ReportItemList, List[CibResourceOperationDto]]:
+) -> Tuple[reports.ReportItemList, list[CibResourceOperationDto]]:
     """
     Return list of operation where intervals for the same operation are unique
 

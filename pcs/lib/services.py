@@ -1,7 +1,4 @@
-from typing import (
-    List,
-    Optional,
-)
+from typing import Optional
 
 from pcs import settings
 from pcs.common import (
@@ -70,7 +67,7 @@ class _NoOpDriver(services.interfaces.ServiceManagerInterface):
         del service
         return True
 
-    def get_available_services(self) -> List[str]:
+    def get_available_services(self) -> list[str]:
         return []
 
     def is_current_system_supported(self) -> bool:
@@ -85,7 +82,7 @@ def get_service_manager(
     report_processor: reports.ReportProcessor,
 ) -> services.interfaces.ServiceManagerInterface:
     executor = _CmdExecutor(cmd_runner)
-    drivers: List[services.interfaces.ServiceManagerInterface] = [
+    drivers: list[services.interfaces.ServiceManagerInterface] = [
         services.drivers.SystemdDriver(
             executor, settings.systemctl_exec, settings.systemd_unit_path
         ),

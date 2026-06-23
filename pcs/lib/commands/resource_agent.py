@@ -2,7 +2,6 @@ from typing import (
     Any,
     Dict,
     Iterable,
-    List,
     Optional,
     cast,
 )
@@ -49,7 +48,7 @@ from pcs.lib.resource_agent import (
 from pcs.lib.resource_agent.name import name_to_void_metadata
 
 
-def list_standards(lib_env: LibraryEnvironment) -> List[str]:
+def list_standards(lib_env: LibraryEnvironment) -> list[str]:
     """
     List resource agents standards (ocf, lsb, ... ) on the local host
     """
@@ -60,7 +59,7 @@ def list_standards(lib_env: LibraryEnvironment) -> List[str]:
     ]
 
 
-def list_ocf_providers(lib_env: LibraryEnvironment) -> List[str]:
+def list_ocf_providers(lib_env: LibraryEnvironment) -> list[str]:
     """
     List resource agents ocf providers on the local host
     """
@@ -69,7 +68,7 @@ def list_ocf_providers(lib_env: LibraryEnvironment) -> List[str]:
 
 def list_agents_for_standard_and_provider(
     lib_env: LibraryEnvironment, standard_provider: Optional[str] = None
-) -> List[str]:
+) -> list[str]:
     """
     List resource agents for specified standard on the local host
 
@@ -99,7 +98,7 @@ def list_agents(
     lib_env: LibraryEnvironment,
     describe: bool = True,
     search: Optional[str] = None,
-) -> List[Dict[str, Any]]:
+) -> list[Dict[str, Any]]:
     """
     List all resource agents on the local host, optionally filtered and
         described
@@ -126,7 +125,7 @@ def list_agents(
 
 def _get_agent_names(
     runner: CommandRunner, standard_provider: StandardProviderTuple
-) -> List[ResourceAgentName]:
+) -> list[ResourceAgentName]:
     return [
         ResourceAgentName(
             standard_provider.standard, standard_provider.provider, agent
@@ -217,7 +216,7 @@ def _complete_agent_list(
     agent_names: Iterable[ResourceAgentName],
     describe: bool,
     search: Optional[str],
-) -> List[Dict[str, Any]]:
+) -> list[Dict[str, Any]]:
     agent_factory = ResourceAgentFacadeFactory(runner, report_processor)
     search_lower = search.lower() if search else None
     agent_list = []

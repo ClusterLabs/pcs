@@ -2,7 +2,6 @@ from typing import (
     AbstractSet,
     Any,
     Iterable,
-    List,
     Mapping,
     MutableMapping,
     Optional,
@@ -43,7 +42,7 @@ def _get_opposite_relation_id_template(
 class ResourceRelationNode:
     def __init__(self, entity: RelationEntityDto):
         self._obj = entity
-        self._members: List[ResourceRelationNode] = []
+        self._members: list[ResourceRelationNode] = []
         self._is_leaf = False
         self._parent: Optional[ResourceRelationNode] = None
         self._opposite_id = _get_opposite_relation_id_template(
@@ -91,7 +90,7 @@ class ResourceRelationNode:
             member._parent = self  # noqa: SLF001
             self._members.append(member)
 
-    def _get_all_parents(self) -> List[str]:
+    def _get_all_parents(self) -> list[str]:
         # pylint: disable=protected-access
         if self._parent is None:
             return []
@@ -110,7 +109,7 @@ class ResourceRelationTreeBuilder:
     def _init_structures(self) -> None:
         self._processed_nodes: Set[str] = set()
         # queue
-        self._nodes_to_process: List[ResourceRelationNode] = []
+        self._nodes_to_process: list[ResourceRelationNode] = []
 
     def get_tree(self, resource_id: str) -> ResourceRelationNode:
         self._init_structures()
@@ -215,9 +214,9 @@ class ResourceRelationsFetcher:
             relations.append(_get_outer_resource_relation(parent_el))
         return relations
 
-    def _get_ordering_coinstraints(self, resource_id: str) -> List[_Element]:
+    def _get_ordering_coinstraints(self, resource_id: str) -> list[_Element]:
         return cast(
-            List[_Element],
+            list[_Element],
             self._constraints_section.xpath(
                 """
                 .//rsc_order[
@@ -230,9 +229,9 @@ class ResourceRelationsFetcher:
             ),
         )
 
-    def _get_ordering_set_constraints(self, resource_id: str) -> List[_Element]:
+    def _get_ordering_set_constraints(self, resource_id: str) -> list[_Element]:
         return cast(
-            List[_Element],
+            list[_Element],
             self._constraints_section.xpath(
                 ".//rsc_order[./resource_set/resource_ref[@id=$resource_id]]",
                 resource_id=resource_id,

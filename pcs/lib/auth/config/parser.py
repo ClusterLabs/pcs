@@ -1,7 +1,4 @@
-from typing import (
-    List,
-    Optional,
-)
+from typing import Optional
 
 import dacite
 
@@ -24,7 +21,7 @@ class ParserError(ParserErrorException):
 
 class Parser(ParserInterface):
     @staticmethod
-    def parse(raw_file_data: bytes) -> List[TokenEntry]:
+    def parse(raw_file_data: bytes) -> list[TokenEntry]:
         data = JsonParser.parse(raw_file_data)
         if not isinstance(data, list):
             raise ParserError("root object is not list")

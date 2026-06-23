@@ -1,7 +1,4 @@
-from typing import (
-    Any,
-    List,
-)
+from typing import Any
 
 from dacite import DaciteError
 
@@ -52,7 +49,7 @@ def config(
     print("\n".join(lines))
 
 
-def _config_site_lines(site_dto: DrConfigSiteDto) -> List[str]:
+def _config_site_lines(site_dto: DrConfigSiteDto) -> list[str]:
     lines = [f"Role: {site_dto.site_role.capitalize()}"]
     if site_dto.node_list:
         lines.append("Nodes:")

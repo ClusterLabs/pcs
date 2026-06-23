@@ -1,5 +1,4 @@
 from typing import (
-    List,
     Optional,
     Tuple,
     Union,
@@ -334,7 +333,7 @@ def _parse_agent_1_1(
 
 def _parse_parameter_content(
     parameter_el: _Element,
-) -> Tuple[str, Optional[str], Optional[List[str]]]:
+) -> Tuple[str, Optional[str], Optional[list[str]]]:
     value_type = "string"
     default_value = None
     enum_values = None
@@ -352,7 +351,7 @@ def _parse_parameter_content(
 
 def _parse_parameters_1_0(
     element: _Element,
-) -> List[ResourceAgentParameterOcf1_0]:
+) -> list[ResourceAgentParameterOcf1_0]:
     result = []
     for parameter_el in element.iter("parameter"):
         value_type, default_value, enum_values = _parse_parameter_content(
@@ -377,7 +376,7 @@ def _parse_parameters_1_0(
 
 def _parse_parameters_1_1(
     element: _Element,
-) -> List[ResourceAgentParameterOcf1_1]:
+) -> list[ResourceAgentParameterOcf1_1]:
     result = []
     for parameter_el in element.iter("parameter"):
         value_type, default_value, enum_values = _parse_parameter_content(
@@ -414,7 +413,7 @@ def _parse_parameters_1_1(
     return result
 
 
-def _parse_actions_1_0(element: _Element) -> List[ResourceAgentActionOcf1_0]:
+def _parse_actions_1_0(element: _Element) -> list[ResourceAgentActionOcf1_0]:
     return [
         ResourceAgentActionOcf1_0(
             name=str(action.attrib["name"]),
@@ -430,7 +429,7 @@ def _parse_actions_1_0(element: _Element) -> List[ResourceAgentActionOcf1_0]:
     ]
 
 
-def _parse_actions_1_1(element: _Element) -> List[ResourceAgentActionOcf1_1]:
+def _parse_actions_1_1(element: _Element) -> list[ResourceAgentActionOcf1_1]:
     return [
         ResourceAgentActionOcf1_1(
             name=str(action.attrib["name"]),

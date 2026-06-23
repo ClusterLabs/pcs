@@ -4,7 +4,6 @@ from dataclasses import (
 )
 from typing import (
     Any,
-    List,
     Mapping,
     Optional,
     Union,
@@ -24,9 +23,9 @@ OUTER_REPORT_CODE = types.MessageCode("OUTER_REPORT_CODE")
 @dataclass(frozen=True)
 class ReportMessage(item.ReportItemMessage):
     string: str
-    union_str_or_list_of_str: Union[str, List[str]]
-    list_of_str: List[str] = field(default_factory=list)
-    optional_list_of_int: Optional[List[int]] = None
+    union_str_or_list_of_str: Union[str, list[str]]
+    list_of_str: list[str] = field(default_factory=list)
+    optional_list_of_int: Optional[list[int]] = None
     optional_mapping_str_to_any: Optional[Mapping[str, Any]] = None
     _code = REPORT_CODE
 

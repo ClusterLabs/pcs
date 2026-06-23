@@ -1,7 +1,6 @@
 from typing import (
     Callable,
     Iterable,
-    List,
     Optional,
     Set,
 )
@@ -88,7 +87,7 @@ def print_report(report_item_dto: ReportItemDto) -> None:
         print_to_stderr(msg)
 
 
-def has_errors(report_list_dto: List[ReportItemDto]) -> bool:
+def has_errors(report_list_dto: list[ReportItemDto]) -> bool:
     for report_item_dto in report_list_dto:
         if _is_error(report_item_dto):
             return True

@@ -1,6 +1,5 @@
 from typing import (
     Iterable,
-    List,
     Optional,
     Set,
     Tuple,
@@ -31,7 +30,7 @@ def get_existing_nodes_names(
     corosync_conf: Optional[CorosyncConfigFacade] = None,
     cib: Optional[_Element] = None,
     error_on_missing_name: bool = False,
-) -> Tuple[List[str], ReportItemList]:
+) -> Tuple[list[str], ReportItemList]:
     return __get_nodes_names(
         *__get_nodes(corosync_conf, cib), error_on_missing_name
     )
@@ -73,7 +72,7 @@ def __get_nodes_names(
     corosync_nodes: Iterable[CorosyncNode],
     remote_and_guest_nodes: Iterable[PacemakerNode],
     error_on_missing_name: bool = False,
-) -> Tuple[List[str], ReportItemList]:
+) -> Tuple[list[str], ReportItemList]:
     report_list: ReportItemList = []
     corosync_names = []
     name_missing_in_corosync = False

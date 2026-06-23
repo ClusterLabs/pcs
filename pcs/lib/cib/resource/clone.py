@@ -10,7 +10,6 @@ support for them to be able to read, process and display CIBs containing them.
 
 import dataclasses
 from typing import (
-    List,
     Mapping,
     Optional,
     cast,
@@ -193,14 +192,14 @@ def append_new(
 
 
 def get_inner_resource(clone_el: _Element) -> _Element:
-    return cast(List[_Element], clone_el.xpath("./primitive | ./group"))[0]
+    return cast(list[_Element], clone_el.xpath("./primitive | ./group"))[0]
 
 
 def get_inner_primitives(clone_el: _Element) -> list[_Element]:
     """
     Also returns primitives inside cloned groups.
     """
-    return cast(List[_Element], clone_el.xpath(".//primitive"))
+    return cast(list[_Element], clone_el.xpath(".//primitive"))
 
 
 def validate_clone_id(clone_id: str, id_provider: IdProvider) -> ReportItemList:

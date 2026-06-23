@@ -1,5 +1,3 @@
-from typing import List
-
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.tools import print_to_stderr
 from pcs.common import reports
@@ -14,7 +12,7 @@ def is_stonith(agent_name: ResourceAgentNameDto) -> bool:
 
 
 def find_single_agent(
-    agent_names: List[ResourceAgentNameDto], to_find: str
+    agent_names: list[ResourceAgentNameDto], to_find: str
 ) -> ResourceAgentNameDto:
     to_find_normalized = to_find.lower()
     matches = [

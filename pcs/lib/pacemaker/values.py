@@ -1,6 +1,5 @@
 import re
 from typing import (
-    List,
     Optional,
     Union,
 )
@@ -111,7 +110,7 @@ def validate_id_reports(
 def validate_id(
     id_candidate: str,
     description: Optional[str] = None,
-    reporter: Union[None, List, ReportItemList] = None,
+    reporter: Union[None, list, ReportItemList] = None,
 ) -> None:
     """
     Validate a pacemaker id, raise LibraryError on invalid id.

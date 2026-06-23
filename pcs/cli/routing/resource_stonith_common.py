@@ -1,7 +1,4 @@
-from typing import (
-    Any,
-    List,
-)
+from typing import Any
 
 from pcs import resource
 from pcs.cli.common.errors import command_replaced
@@ -12,9 +9,9 @@ from pcs.cli.common.routing import (
 )
 
 
-def resource_defaults_cmd(parent_cmd: List[str]) -> CliCmdInterface:
+def resource_defaults_cmd(parent_cmd: list[str]) -> CliCmdInterface:
     def _get_router(
-        lib: Any, argv: List[str], modifiers: InputModifiers
+        lib: Any, argv: list[str], modifiers: InputModifiers
     ) -> None:
         """
         Options:
@@ -48,9 +45,9 @@ def resource_defaults_cmd(parent_cmd: List[str]) -> CliCmdInterface:
     return _get_router
 
 
-def resource_op_defaults_cmd(parent_cmd: List[str]) -> CliCmdInterface:
+def resource_op_defaults_cmd(parent_cmd: list[str]) -> CliCmdInterface:
     def _get_router(
-        lib: Any, argv: List[str], modifiers: InputModifiers
+        lib: Any, argv: list[str], modifiers: InputModifiers
     ) -> None:
         """
         Options:

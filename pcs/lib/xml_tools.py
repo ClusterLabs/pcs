@@ -1,7 +1,6 @@
 from typing import (
     Dict,
     Iterable,
-    List,
     Mapping,
     Optional,
     Union,
@@ -64,7 +63,7 @@ def get_sub_element(
         the parent element
     """
     sub_element_list = cast(
-        List[_Element],
+        list[_Element],
         element.xpath("./*[local-name()=$tag_name]", tag_name=sub_element_tag),
     )
     if not sub_element_list:

@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from typing import (
     Any,
-    List,
     Mapping,
     Optional,
 )
@@ -16,7 +15,7 @@ from .types import CommunicationResultStatus as StatusType
 class InternalCommunicationResultDto(DataTransferObject):
     status: StatusType
     status_msg: Optional[str]
-    report_list: List[ReportItemDto]
+    report_list: list[ReportItemDto]
     data: Any
 
 

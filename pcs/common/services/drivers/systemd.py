@@ -1,9 +1,6 @@
 import os.path
 import re
-from typing import (
-    List,
-    Optional,
-)
+from typing import Optional
 
 from pcs.common.types import StringIterable
 
@@ -33,7 +30,7 @@ class SystemdDriver(ServiceManagerInterface):
         self._executor = executor
         self._systemctl_bin = systemctl_bin
         self._systemd_unit_paths = systemd_unit_paths
-        self._available_services: List[str] = []
+        self._available_services: list[str] = []
 
     def start(self, service: str, instance: Optional[str] = None) -> None:
         result = self._executor.run(
@@ -112,12 +109,12 @@ class SystemdDriver(ServiceManagerInterface):
     def is_installed(self, service: str) -> bool:
         return service in self.get_available_services()
 
-    def get_available_services(self) -> List[str]:
+    def get_available_services(self) -> list[str]:
         if not self._available_services:
             self._available_services = self._get_available_services()
         return self._available_services
 
-    def _get_available_services(self) -> List[str]:
+    def _get_available_services(self) -> list[str]:
         result = self._executor.run(
             [self._systemctl_bin, "list-unit-files", "--full"]
         )

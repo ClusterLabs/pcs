@@ -4,7 +4,6 @@ from typing import (
     Container,
     Dict,
     Iterable,
-    List,
     NewType,
     Optional,
 )
@@ -41,13 +40,13 @@ class SimulationOperation:
 
 def get_operations_from_transitions(
     transitions: _Element,
-) -> List[SimulationOperation]:
+) -> list[SimulationOperation]:
     """
     Extract resource operations from simulated transitions
 
     transitions -- simulated transitions from crm_simulate
     """
-    operation_list: List[SimulationOperation] = []
+    operation_list: list[SimulationOperation] = []
     for rsc_op in transitions.iterfind("synapse/action_set/rsc_op"):
         operation = SimulationOperationType(rsc_op.get("operation", "").lower())
         if operation not in KNOWN_OPERATIONS:
@@ -70,7 +69,7 @@ def get_operations_from_transitions(
 def get_resources_from_operations(
     operation_list: Iterable[SimulationOperation],
     exclude_resources: Optional[Container[str]] = None,
-) -> List[str]:
+) -> list[str]:
     """
     Get names of all resources from the provided operation list
 
@@ -90,7 +89,7 @@ def get_resources_from_operations(
 def get_resources_left_stopped(
     operation_list: Iterable[SimulationOperation],
     exclude_resources: Optional[Container[str]] = None,
-) -> List[str]:
+) -> list[str]:
     """
     Get names of resources which are left stopped by the provided operation list
 
@@ -105,7 +104,7 @@ def get_resources_left_stopped(
 def get_resources_left_demoted(
     operation_list: Iterable[SimulationOperation],
     exclude_resources: Optional[Container[str]] = None,
-) -> List[str]:
+) -> list[str]:
     """
     Get names of resources which are left demoted by the provided operation list
 
@@ -122,7 +121,7 @@ def _resources_with_imbalanced_operations(
     increment_op: SimulationOperationType,
     decrement_op: SimulationOperationType,
     exclude_resources: Optional[Container[str]] = None,
-) -> List[str]:
+) -> list[str]:
     exclude_resources = exclude_resources or tuple()
     counter: Dict[str, int] = defaultdict(int)
     for res_op in operation_list:

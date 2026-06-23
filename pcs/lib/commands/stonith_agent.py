@@ -1,7 +1,6 @@
 from typing import (
     Any,
     Dict,
-    List,
     Optional,
 )
 
@@ -28,7 +27,7 @@ def list_agents(
     lib_env: LibraryEnvironment,
     describe: bool = True,
     search: Optional[str] = None,
-) -> List[Dict[str, Any]]:
+) -> list[Dict[str, Any]]:
     """
     List all stonith agents on the local host, optionally filtered and described
 

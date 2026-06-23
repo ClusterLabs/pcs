@@ -2,7 +2,6 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import (
     AbstractSet,
-    List,
     Mapping,
     NewType,
     Optional,
@@ -122,7 +121,7 @@ class ResourceAgentParameterOcf1_0:  # pylint: disable=invalid-name
     # default value of the parameter
     default: Optional[str]
     # allowed values, only defined if type == 'select'
-    enum_values: Optional[List[str]]
+    enum_values: Optional[list[str]]
     # is this a required parameter?
     required: Optional[str]
     # is this parameter deprecated?
@@ -148,7 +147,7 @@ class ResourceAgentParameterOcf1_1:  # pylint: disable=invalid-name
     # default value of the parameter
     default: Optional[str]
     # allowed values, only defined if type == 'select'
-    enum_values: Optional[List[str]]
+    enum_values: Optional[list[str]]
     # is this a required parameter?
     required: Optional[str]
     # Is the parameter meant for advanced users?
@@ -156,7 +155,7 @@ class ResourceAgentParameterOcf1_1:  # pylint: disable=invalid-name
     # is this parameter deprecated?
     deprecated: bool
     # list of parameters deprecating this one
-    deprecated_by: List[str]
+    deprecated_by: list[str]
     # text describing / explaining the deprecation
     deprecated_desc: Optional[str]
     # should the parameter's value be unique across same agent resources?
@@ -171,8 +170,8 @@ class ResourceAgentMetadataOcf1_0:  # pylint: disable=invalid-name
     name: ResourceAgentName
     shortdesc: Optional[str]
     longdesc: Optional[str]
-    parameters: List[ResourceAgentParameterOcf1_0]
-    actions: List[ResourceAgentActionOcf1_0]
+    parameters: list[ResourceAgentParameterOcf1_0]
+    actions: list[ResourceAgentActionOcf1_0]
 
 
 @dataclass(frozen=True)
@@ -180,8 +179,8 @@ class ResourceAgentMetadataOcf1_1:  # pylint: disable=invalid-name
     name: ResourceAgentName
     shortdesc: Optional[str]
     longdesc: Optional[str]
-    parameters: List[ResourceAgentParameterOcf1_1]
-    actions: List[ResourceAgentActionOcf1_1]
+    parameters: list[ResourceAgentParameterOcf1_1]
+    actions: list[ResourceAgentActionOcf1_1]
 
 
 @dataclass(frozen=True)
@@ -234,7 +233,7 @@ class ResourceAgentParameter:
     # default value of the parameter
     default: Optional[str]
     # allowed values, only defined if type == 'select'
-    enum_values: Optional[List[str]]
+    enum_values: Optional[list[str]]
     # True if it is a required parameter, False otherwise
     required: bool
     # True if the parameter is meant for advanced users
@@ -242,7 +241,7 @@ class ResourceAgentParameter:
     # True if the parameter is deprecated, False otherwise
     deprecated: bool
     # list of parameters deprecating this one
-    deprecated_by: List[str]
+    deprecated_by: list[str]
     # text describing / explaining the deprecation
     deprecated_desc: Optional[str]
     # should the parameter's value be unique across same agent resources?
@@ -275,8 +274,8 @@ class ResourceAgentMetadata:
     ocf_version: OcfVersion
     shortdesc: Optional[str]
     longdesc: Optional[str]
-    parameters: List[ResourceAgentParameter]
-    actions: List[ResourceAgentAction]
+    parameters: list[ResourceAgentParameter]
+    actions: list[ResourceAgentAction]
 
     @property
     def provides_unfencing(self) -> bool:

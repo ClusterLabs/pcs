@@ -1,5 +1,4 @@
 from typing import (
-    List,
     Optional,
     Set,
     Tuple,
@@ -58,7 +57,7 @@ def find_resources(
     context_element: _Element,
     resource_ids: StringCollection,
     resource_tags: Optional[StringCollection] = None,
-) -> Tuple[List[_Element], ReportItemList]:
+) -> Tuple[list[_Element], ReportItemList]:
     """
     Find a list of resources
 
@@ -80,7 +79,7 @@ def find_resources(
     return resource_el_list, report_list
 
 
-def find_primitives(resource_el: _Element) -> List[_Element]:
+def find_primitives(resource_el: _Element) -> list[_Element]:
     """
     Get list of primitives contained in a given resource
 
@@ -115,7 +114,7 @@ def get_all_inner_resources(resource_el: _Element) -> Set[_Element]:
     return all_inner
 
 
-def get_inner_resources(resource_el: _Element) -> List[_Element]:
+def get_inner_resources(resource_el: _Element) -> list[_Element]:
     """
     Return list of inner resources (direct descendants) of a resource
     specified as resource_el.
@@ -172,7 +171,7 @@ def get_parent_resource(resource_el: _Element) -> Optional[_Element]:
     return None
 
 
-def find_resources_to_enable(resource_el: _Element) -> List[_Element]:
+def find_resources_to_enable(resource_el: _Element) -> list[_Element]:
     """
     Get resources to enable in order to enable specified resource successfully
 
@@ -233,7 +232,7 @@ def is_disabled(resource_el: _Element) -> bool:
     )
 
 
-def find_resources_to_manage(resource_el: _Element) -> List[_Element]:
+def find_resources_to_manage(resource_el: _Element) -> list[_Element]:
     """
     Get resources to set to managed for the specified resource to become managed
 
@@ -251,7 +250,7 @@ def find_resources_to_manage(resource_el: _Element) -> List[_Element]:
     top_element = find_parent(resource_el, {"resources"})
     if top_element is not None:
         parent_el = cast(
-            List[_Element],
+            list[_Element],
             top_element.xpath(
                 # a master or a clone which contains a group, a primitive, or a
                 # grouped primitive with the specified id
@@ -271,13 +270,13 @@ def find_resources_to_manage(resource_el: _Element) -> List[_Element]:
             ),
         )
     children_el = cast(
-        List[_Element],
+        list[_Element],
         resource_el.xpath("(./group|./primitive|./group/primitive)"),
     )
     return [resource_el] + parent_el + children_el
 
 
-def find_resources_to_unmanage(resource_el: _Element) -> List[_Element]:
+def find_resources_to_unmanage(resource_el: _Element) -> list[_Element]:
     """
     Get resources to unmanage to unmanage the specified resource successfully
 

@@ -1,7 +1,6 @@
 from typing import (
     Any,
     Iterable,
-    List,
     Mapping,
 )
 
@@ -43,7 +42,7 @@ def get_default_operation_interval(operation_name: str) -> str:
 
 def complete_operations_options(
     raw_operation_list: Iterable[ResourceOperationIn],
-) -> List[ResourceOperationOut]:
+) -> list[ResourceOperationOut]:
     """
     Return a new list of operations with all necessary keys defined
 
@@ -63,7 +62,7 @@ def complete_operations_options(
 def get_default_operations(
     agent_metadata: ResourceAgentMetadata,
     necessary_only: bool = False,
-) -> List[CibResourceOperationDto]:
+) -> list[CibResourceOperationDto]:
     is_default_operation = (
         _is_default_operation_stonith
         if agent_metadata.name.is_stonith

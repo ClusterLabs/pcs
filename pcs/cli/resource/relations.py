@@ -1,6 +1,5 @@
 from typing import (
     Any,
-    List,
     Mapping,
     Sequence,
 )
@@ -236,7 +235,7 @@ def _filter_supported_keys(
     )
 
 
-def _order_common_metadata_to_str(metadata: Mapping[str, Any]) -> List[str]:
+def _order_common_metadata_to_str(metadata: Mapping[str, Any]) -> list[str]:
     result = _filter_supported_keys(
         metadata, ("symmetrical", "kind", "require-all", "score")
     )

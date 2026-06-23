@@ -9,7 +9,6 @@ from typing import (
     Dict,
     FrozenSet,
     Iterable,
-    List,
     Mapping,
     Optional,
     Sequence,
@@ -299,7 +298,7 @@ def _validate_guest_change(
 
 def _get_nodes_to_validate_against(
     env: LibraryEnvironment, tree: _Element
-) -> Tuple[List[str], List[str], reports.ReportItemList]:
+) -> Tuple[list[str], list[str], reports.ReportItemList]:
     if not env.is_corosync_conf_live and env.is_cib_live:
         raise LibraryError(
             ReportItem.error(
@@ -499,7 +498,7 @@ def create(  # noqa: PLR0913
     env: LibraryEnvironment,
     resource_id: str,
     resource_agent_name: str,
-    operation_list: List[Mapping[str, str]],
+    operation_list: list[Mapping[str, str]],
     meta_attributes: Mapping[str, str],
     instance_attributes: Mapping[str, str],
     *,
@@ -615,7 +614,7 @@ def create_as_clone(  # noqa: PLR0913
     env: LibraryEnvironment,
     resource_id: str,
     resource_agent_name: str,
-    operation_list: List[Mapping[str, str]],
+    operation_list: list[Mapping[str, str]],
     meta_attributes: Mapping[str, str],
     instance_attributes: Mapping[str, str],
     clone_meta_options: Mapping[str, str],
@@ -783,7 +782,7 @@ def create_in_group(  # noqa: PLR0913
     resource_id: str,
     resource_agent_name: str,
     group_id: str,
-    operation_list: List[Mapping[str, str]],
+    operation_list: list[Mapping[str, str]],
     meta_attributes: Mapping[str, str],
     instance_attributes: Mapping[str, str],
     *,
@@ -890,7 +889,7 @@ def create_in_group(  # noqa: PLR0913
                 get_root(resources_section), group_id
             )
         except ElementNotFound:
-            group_id_reports: List[ReportItem] = []
+            group_id_reports: list[ReportItem] = []
             validate_id(
                 group_id, description="group name", reporter=group_id_reports
             )
@@ -938,7 +937,7 @@ def create_into_bundle(  # noqa: PLR0913
     env: LibraryEnvironment,
     resource_id: str,
     resource_agent_name: str,
-    operation_list: List[Mapping[str, str]],
+    operation_list: list[Mapping[str, str]],
     meta_attributes: Mapping[str, str],
     instance_attributes: Mapping[str, str],
     bundle_id: str,
@@ -1458,7 +1457,7 @@ def disable(
 
 def disable_safe(
     env: LibraryEnvironment,
-    resource_or_tag_ids: List[str],
+    resource_or_tag_ids: list[str],
     strict: bool,
     wait: WaitType = False,
 ):
@@ -1560,8 +1559,8 @@ def disable_safe(
 
 
 def disable_simulate(
-    env: LibraryEnvironment, resource_or_tag_ids: List[str], strict: bool
-) -> Mapping[str, Union[str, List[str]]]:
+    env: LibraryEnvironment, resource_or_tag_ids: list[str], strict: bool
+) -> Mapping[str, Union[str, list[str]]]:
     """
     Simulate disallowing specified resources to be started by the cluster
 
@@ -1617,7 +1616,7 @@ def disable_simulate(
 
 def enable(
     env: LibraryEnvironment,
-    resource_or_tag_ids: List[str],
+    resource_or_tag_ids: list[str],
     wait: WaitType = False,
 ):
     """
@@ -1695,7 +1694,7 @@ def _resource_list_enable_disable(
 
 def unmanage(
     env: LibraryEnvironment,
-    resource_or_tag_ids: List[str],
+    resource_or_tag_ids: list[str],
     with_monitor: bool = False,
 ) -> None:
     """
@@ -1730,7 +1729,7 @@ def unmanage(
 
 def manage(
     env: LibraryEnvironment,
-    resource_or_tag_ids: List[str],
+    resource_or_tag_ids: list[str],
     with_monitor: bool = False,
 ) -> None:
     """
@@ -1793,7 +1792,7 @@ def manage(
 def group_add(  # noqa: PLR0912
     env: LibraryEnvironment,
     group_id: str,
-    resource_id_list: List[str],
+    resource_id_list: list[str],
     adjacent_resource_id: Optional[str] = None,
     put_after_adjacent: bool = True,
     wait: WaitType = False,
@@ -1841,7 +1840,7 @@ def group_add(  # noqa: PLR0912
     try:
         group_element = get_element_by_id(get_root(resources_section), group_id)
     except ElementNotFound:
-        group_id_reports: List[ReportItem] = []
+        group_id_reports: list[ReportItem] = []
         validate_id(
             group_id, description="group name", reporter=group_id_reports
         )
@@ -2255,7 +2254,7 @@ def _ensure_resource_moved_and_not_moved_back(
     remove_constraint_cib_diff: str,
     resource_id: str,
     strict: bool,
-    resource_state_before: Dict[str, List[str]],
+    resource_state_before: Dict[str, list[str]],
     node: Optional[str],
 ) -> None:
     with get_tmp_cib(report_processor, cib_xml) as rsc_unmove_cib_file:
@@ -2326,7 +2325,7 @@ def ban(env, resource_id, node=None, master=False, lifetime=None, wait=False):
 
 
 def _resource_running_on_nodes(
-    resource_state: Dict[str, List[str]],
+    resource_state: Dict[str, list[str]],
 ) -> FrozenSet[str]:
     if resource_state:
         return frozenset(
@@ -2339,8 +2338,8 @@ def _resource_running_on_nodes(
 
 def _was_resource_moved(
     node: Optional[str],
-    resource_state_before: Dict[str, List[str]],
-    resource_state_after: Dict[str, List[str]],
+    resource_state_before: Dict[str, list[str]],
+    resource_state_after: Dict[str, list[str]],
 ) -> bool:
     running_on_nodes = _resource_running_on_nodes(resource_state_after)
     return not bool(
@@ -2356,8 +2355,8 @@ def _was_resource_moved(
 def _move_wait_report(
     resource_id: str,
     node: Optional[str],
-    resource_state_before: Dict[str, List[str]],
-    resource_state_after: Dict[str, List[str]],
+    resource_state_before: Dict[str, list[str]],
+    resource_state_after: Dict[str, list[str]],
 ) -> ReportItem:
     severity = reports.item.ReportItemSeverity.info()
     if not _was_resource_moved(
@@ -2768,8 +2767,8 @@ def get_resource_relations_tree(
 def _find_resources_expand_tags(
     cib: _Element,
     resource_or_tag_ids: StringCollection,
-    additional_search: Optional[Callable[[_Element], List[_Element]]] = None,
-) -> Tuple[List[_Element], ReportItemList]:
+    additional_search: Optional[Callable[[_Element], list[_Element]]] = None,
+) -> Tuple[list[_Element], ReportItemList]:
     rsc_or_tag_el_list, report_list = resource.common.find_resources(
         cib,
         resource_or_tag_ids,
@@ -2801,7 +2800,7 @@ def get_required_cib_version_for_primitive(
 
 def is_any_resource_except_stonith(
     env: LibraryEnvironment,
-    resource_id_list: List[str],
+    resource_id_list: list[str],
 ) -> bool:
     """
     Return True if any resource is a non stonith resource. False otherwise.
@@ -2815,7 +2814,7 @@ def is_any_resource_except_stonith(
 
 def is_any_stonith(
     env: LibraryEnvironment,
-    resource_id_list: List[str],
+    resource_id_list: list[str],
 ) -> bool:
     """
     Return True if any resource is a stonith resource. False otherwise.

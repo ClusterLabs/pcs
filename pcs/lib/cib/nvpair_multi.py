@@ -1,6 +1,5 @@
 from typing import (
     Iterable,
-    List,
     Mapping,
     NewType,
     Optional,
@@ -109,7 +108,7 @@ def nvset_to_dict_except_without_values(
     }
 
 
-def find_nvsets(parent_element: _Element, tag: NvsetTag) -> List[_Element]:
+def find_nvsets(parent_element: _Element, tag: NvsetTag) -> list[_Element]:
     """
     Get all nvset xml elements in the given parent element
 
@@ -119,14 +118,14 @@ def find_nvsets(parent_element: _Element, tag: NvsetTag) -> List[_Element]:
     return cast(
         # The xpath method has a complicated return value, but we know our xpath
         # expression returns only elements.
-        List[_Element],
+        list[_Element],
         parent_element.xpath("./*[local-name()=$tag_name]", tag_name=tag),
     )
 
 
 def find_nvsets_by_ids(
     parent_element: _Element, id_list: StringIterable
-) -> Tuple[List[_Element], ReportItemList]:
+) -> Tuple[list[_Element], ReportItemList]:
     """
     Find nvset elements by their IDs and return them with non-empty report
     list in case of errors.
@@ -332,7 +331,7 @@ def _set_nvpair(
     nvpair_el_list = cast(
         # The xpath method has a complicated return value, but we know our xpath
         # expression returns only elements.
-        List[_Element],
+        list[_Element],
         nvset_element.xpath("./nvpair[@name=$name]", name=name),
     )
 

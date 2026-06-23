@@ -1,7 +1,4 @@
-from typing import (
-    List,
-    NamedTuple,
-)
+from typing import NamedTuple
 
 from pcs.common.dr import DrRole
 from pcs.common.types import StringIterable
@@ -10,7 +7,7 @@ from pcs.lib.interface.config import FacadeInterface
 
 class DrSite(NamedTuple):
     role: DrRole
-    node_name_list: List[str]
+    node_name_list: list[str]
 
 
 class Facade(FacadeInterface):
@@ -41,7 +38,7 @@ class Facade(FacadeInterface):
             )
         )
 
-    def get_remote_site_list(self) -> List[DrSite]:
+    def get_remote_site_list(self) -> list[DrSite]:
         return [
             DrSite(
                 DrRole(conf_site["role"]),

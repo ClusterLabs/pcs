@@ -5,10 +5,7 @@ from dataclasses import dataclass
 from logging import handlers
 from multiprocessing.pool import worker as mp_worker_init  # type: ignore
 from queue import Empty
-from typing import (
-    Dict,
-    List,
-)
+from typing import Dict
 
 from pcs import settings
 from pcs.common.async_tasks.dto import TaskResultDto
@@ -70,7 +67,7 @@ class Scheduler:
         self._logger = pcsd_logger
         self._logging_q = self._proc_pool_manager.Queue()
         self._worker_log_listener = self._init_worker_logging()
-        self._single_use_process_pool: List[mp.Process] = []
+        self._single_use_process_pool: list[mp.Process] = []
         # pylint: disable=consider-using-with
         self._proc_pool = mp.Pool(
             processes=self._config.worker_count,
@@ -154,7 +151,7 @@ class Scheduler:
         return task_ident
 
     def _is_possibly_dead_locked(self) -> bool:
-        counter: Dict[TaskState, List[Task]] = defaultdict(list)
+        counter: Dict[TaskState, list[Task]] = defaultdict(list)
         for task in self._task_register.values():
             counter[task.state].append(task)
 
@@ -222,7 +219,7 @@ class Scheduler:
         additional_process.start()
 
     def _handle_single_use_process_pool(self) -> None:
-        new_pool: List[mp.Process] = []
+        new_pool: list[mp.Process] = []
         for process in self._single_use_process_pool:
             if process.is_alive():
                 new_pool.append(process)

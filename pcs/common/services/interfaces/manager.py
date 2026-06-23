@@ -1,7 +1,4 @@
-from typing import (
-    List,
-    Optional,
-)
+from typing import Optional
 
 
 class ServiceManagerInterface:
@@ -74,7 +71,7 @@ class ServiceManagerInterface:
         """
         raise NotImplementedError()
 
-    def get_available_services(self) -> List[str]:
+    def get_available_services(self) -> list[str]:
         """
         Returns list of service names recognized by init system.
         """

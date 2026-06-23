@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from typing import (
     Any,
     Dict,
-    List,
     Optional,
 )
 
@@ -20,7 +19,7 @@ from .types import (
 class CommandOptionsDto(DataTransferObject):
     request_timeout: Optional[int] = None
     effective_username: Optional[str] = None
-    effective_groups: Optional[List[str]] = None
+    effective_groups: Optional[list[str]] = None
 
 
 @dataclass(frozen=True)
@@ -39,7 +38,7 @@ class TaskIdentDto(DataTransferObject):
 class TaskResultDto(DataTransferObject):
     task_ident: str
     command: CommandDto
-    reports: List[ReportItemDto]
+    reports: list[ReportItemDto]
     state: TaskState
     task_finish_type: TaskFinishType
     kill_reason: Optional[TaskKillReason]

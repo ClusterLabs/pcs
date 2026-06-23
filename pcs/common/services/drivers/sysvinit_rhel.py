@@ -1,8 +1,5 @@
 import os.path
-from typing import (
-    List,
-    Optional,
-)
+from typing import Optional
 
 from .. import errors
 from ..interfaces import (
@@ -26,7 +23,7 @@ class SysVInitRhelDriver(ServiceManagerInterface):
         self._executor = executor
         self._service_bin = service_bin
         self._chkconfig_bin = chkconfig_bin
-        self._available_services: List[str] = []
+        self._available_services: list[str] = []
 
     def start(self, service: str, instance: Optional[str] = None) -> None:
         del instance
@@ -68,12 +65,12 @@ class SysVInitRhelDriver(ServiceManagerInterface):
     def is_installed(self, service: str) -> bool:
         return service in self.get_available_services()
 
-    def get_available_services(self) -> List[str]:
+    def get_available_services(self) -> list[str]:
         if not self._available_services:
             self._available_services = self._get_available_services()
         return self._available_services
 
-    def _get_available_services(self) -> List[str]:
+    def _get_available_services(self) -> list[str]:
         result = self._executor.run([self._chkconfig_bin])
         if result.retval != 0:
             return []
