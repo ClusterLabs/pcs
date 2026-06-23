@@ -1,5 +1,5 @@
+from collections.abc import Set
 from typing import (
-    AbstractSet,
     Any,
     Iterable,
     Mapping,
@@ -183,7 +183,7 @@ class ResourceRelationsFetcher:
     @staticmethod
     def _get_all_members(
         relation_list: Iterable[RelationEntityDto],
-    ) -> AbstractSet[str]:
+    ) -> Set[str]:
         result: set[str] = set()
         for relation in relation_list:
             result.update(relation.members)

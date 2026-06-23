@@ -1,11 +1,7 @@
 from collections import defaultdict
+from collections.abc import Set
 from dataclasses import dataclass
-from typing import (
-    AbstractSet,
-    Mapping,
-    NewType,
-    Optional,
-)
+from typing import Mapping, NewType, Optional
 
 from pcs.common.resource_agent.dto import (
     ResourceAgentActionDto,
@@ -298,7 +294,7 @@ class ResourceAgentMetadata:
         }
 
     @property
-    def unique_parameter_groups(self) -> Mapping[str, AbstractSet[str]]:
+    def unique_parameter_groups(self) -> Mapping[str, Set[str]]:
         result = defaultdict(set)
         for param in self.parameters:
             if param.unique_group:
