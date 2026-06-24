@@ -76,7 +76,8 @@ class DaciteTypingCompatibilityTest(TestCase):
     def test_all(self):
         prohibited_types = (Iterable, Container)
         prohibited_types_normalized = [
-            get_origin(_type) for _type in prohibited_types
+            origin if (origin := get_origin(_type)) is not None else _type
+            for _type in prohibited_types
         ]
         for cmd_name, cmd in COMMAND_MAP.items():
             for param in list(inspect.signature(cmd.cmd).parameters.values())[
