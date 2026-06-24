@@ -1733,8 +1733,7 @@
     </capability>
     <capability id="pcmk.resource.update-meta.stonith" in-pcs="0" in-pcsd="1">
       <description>
-        The add_meta_attr_remote url also supports stonith when called with
-        an explicit is-stonith flag.
+        The add_meta_attr_remote url also supports stonith resources.
 
         daemon urls: add_meta_attr_remote
       </description>

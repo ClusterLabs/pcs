@@ -249,6 +249,33 @@ class ResourceUnmanageHandler(ResourceManageUnmanageHandler):
         return "resource.unmanage"
 
 
+class AddMetaAttrHandler(_BaseApiV0Handler):
+    async def _handle_request(self) -> None:
+        self._check_required_params({"res_id", "key", "value"})
+        res_id = self.get_argument("res_id")
+        key = self.get_argument("key")
+        value = self.get_argument("value")
+        force_flags: list[str] = []
+        if key in ("remote-node", "remote-addr"):
+            # --force is a workaround for missing guest node management in the
+            # web ui. The reports generated are to prevent adding guest nodes,
+            # removing guest nodes and changing their connection parameters.
+            force_flags.append(reports.codes.FORCE)
+
+        result = await self._run_library_command(
+            "resource.update_meta",
+            dict(
+                resource_id=res_id,
+                meta_attrs={key: value},
+                force_flags=force_flags,
+            ),
+        )
+
+        if not result.success:
+            raise self._error(reports_to_str(result.reports))
+        self.write("Successfully added meta attribute")
+
+
 class QdeviceNetGetCaCertificateHandler(_BaseApiV0Handler):
     async def _handle_request(self) -> None:
         result = await self._run_library_command(
@@ -794,7 +821,6 @@ def get_routes(
     sync_config_lock: Lock,
 ) -> RoutesType:
     def r(url: str) -> str:
-        # pylint: disable=invalid-name
         return f"/remote/{url}"
 
     params = dict(
@@ -806,6 +832,7 @@ def get_routes(
         # resources
         (r("manage_resource"), ResourceManageHandler, params),
         (r("unmanage_resource"), ResourceUnmanageHandler, params),
+        (r("add_meta_attr_remote"), AddMetaAttrHandler, params),
         # qdevice
         (
             r("qdevice_net_client_destroy"),

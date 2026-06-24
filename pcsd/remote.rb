@@ -64,7 +64,6 @@ def remote(params, request, auth_user)
       # /api/v1/constraint-ticket-remove/v1
       :remove_constraint_remote => method(:remove_constraint_remote),
       :remove_constraint_rule_remote => method(:remove_constraint_rule_remote),
-      :add_meta_attr_remote => method(:add_meta_attr_remote),
       :update_cluster_settings => method(:update_cluster_settings),
       :add_node_attr_remote => method(:add_node_attr_remote),
       :resource_change_group => method(:resource_change_group),
@@ -719,24 +718,6 @@ def add_node_attr_remote(params, request, auth_user)
     return [200, "Successfully added attribute to node"]
   else
     return [400, "Error adding attribute to node"]
-  end
-end
-
-def add_meta_attr_remote(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::WRITE)
-    return 403, 'Permission denied'
-  end
-  retval = add_meta_attr(
-    auth_user,
-    params["res_id"],
-    params["key"],
-    params["value"],
-    params["is-stonith"] == "true"
-  )
-  if retval == 0
-    return [200, "Successfully added meta attribute"]
-  else
-    return [400, "Error adding meta attribute"]
   end
 end
 

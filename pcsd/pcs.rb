@@ -45,20 +45,6 @@ def add_node_attr(auth_user, node, key, value)
   return retval
 end
 
-def add_meta_attr(auth_user, resource, key, value, is_stonith)
-  resource_or_stonith = if is_stonith then "stonith" else "resource" end
-  cmd = [resource_or_stonith, "meta", resource, key.to_s + "=" + value.to_s]
-  flags = []
-  if ["remote-node", "remote-addr"].include?(key.to_s)
-    # --force is a workaround for missing guest node management in the web ui
-    # The reports generated are to prevent adding guest nodes, removing guest
-    # nodes and changing their connection parameters.
-    flags << "--force"
-  end
-  stdout, stderr, retval = run_cmd(auth_user, PCS, *flags, "--", *cmd)
-  return retval
-end
-
 def add_location_constraint(
   auth_user, resource, node, score, force=false
 )

@@ -752,6 +752,64 @@ class ResourceUnmanageHandler(ResourceManageUnmanageMixin, ApiV0HandlerTest):
     command_name = "resource.unmanage"
 
 
+class AddMetaAttrHandler(ApiV0HandlerTest):
+    url = "/remote/add_meta_attr_remote"
+    body_data = {"res_id": "myres", "key": "target-role", "value": "Started"}
+    command_data = {
+        "resource_id": "myres",
+        "meta_attrs": {"target-role": "Started"},
+        "force_flags": [],
+    }
+
+    def assert_success(self, body_data, command_data):
+        self.mock_run_library_command.return_value = self.result_success()
+        response = self.fetch(self.url, body=urlencode(body_data))
+        self.assert_body(response.body, "Successfully added meta attribute")
+        self.assertEqual(response.code, 200)
+        self.mock_run_library_command.assert_called_once_with(
+            "resource.update_meta", command_data
+        )
+
+    def test_success(self):
+        self.assert_success(self.body_data, self.command_data)
+
+    def test_success_with_is_stonith_param(self):
+        self.assert_success(
+            {**self.body_data, "is-stonith": "true"}, self.command_data
+        )
+
+    def test_success_remote_node_forced(self):
+        self.assert_success(
+            {"res_id": "myres", "key": "remote-node", "value": "node1"},
+            {
+                "resource_id": "myres",
+                "meta_attrs": {"remote-node": "node1"},
+                "force_flags": [reports.codes.FORCE],
+            },
+        )
+
+    def test_success_remote_addr_forced(self):
+        self.assert_success(
+            {"res_id": "myres", "key": "remote-addr", "value": "10.0.0.1"},
+            {
+                "resource_id": "myres",
+                "meta_attrs": {"remote-addr": "10.0.0.1"},
+                "force_flags": [reports.codes.FORCE],
+            },
+        )
+
+    def test_missing_params(self):
+        response = self.fetch(self.url)
+        self.assertEqual(response.code, 400)
+        self.mock_run_library_command.assert_not_called()
+
+    def test_failure(self):
+        self.assert_error_with_report(self.url, body=urlencode(self.body_data))
+        self.mock_run_library_command.assert_called_once_with(
+            "resource.update_meta", self.command_data
+        )
+
+
 class QdeviceNetGetCaCertificateHandler(ApiV0HandlerTest):
     url = "/remote/qdevice_net_get_ca_certificate"
 
