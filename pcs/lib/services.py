@@ -1,5 +1,3 @@
-from typing import Optional
-
 from pcs import settings
 from pcs.common import (
     reports,
@@ -26,7 +24,7 @@ class _NoOpDriver(services.interfaces.ServiceManagerInterface):
     def _warn(
         self,
         service: str,
-        instance: Optional[str],
+        instance: str | None,
         action: reports.types.ServiceAction,
     ) -> None:
         self._report_processor.report(
@@ -40,26 +38,26 @@ class _NoOpDriver(services.interfaces.ServiceManagerInterface):
             )
         )
 
-    def start(self, service: str, instance: Optional[str] = None) -> None:
+    def start(self, service: str, instance: str | None = None) -> None:
         self._warn(service, instance, reports.const.SERVICE_ACTION_START)
 
-    def stop(self, service: str, instance: Optional[str] = None) -> None:
+    def stop(self, service: str, instance: str | None = None) -> None:
         self._warn(service, instance, reports.const.SERVICE_ACTION_STOP)
 
-    def enable(self, service: str, instance: Optional[str] = None) -> None:
+    def enable(self, service: str, instance: str | None = None) -> None:
         self._warn(service, instance, reports.const.SERVICE_ACTION_ENABLE)
 
-    def disable(self, service: str, instance: Optional[str] = None) -> None:
+    def disable(self, service: str, instance: str | None = None) -> None:
         self._warn(service, instance, reports.const.SERVICE_ACTION_DISABLE)
 
-    def kill(self, service: str, instance: Optional[str] = None) -> None:
+    def kill(self, service: str, instance: str | None = None) -> None:
         self._warn(service, instance, reports.const.SERVICE_ACTION_KILL)
 
-    def is_enabled(self, service: str, instance: Optional[str] = None) -> bool:
+    def is_enabled(self, service: str, instance: str | None = None) -> bool:
         del service, instance
         return False
 
-    def is_running(self, service: str, instance: Optional[str] = None) -> bool:
+    def is_running(self, service: str, instance: str | None = None) -> bool:
         del service, instance
         return False
 

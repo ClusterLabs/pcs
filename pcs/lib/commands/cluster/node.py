@@ -1,5 +1,3 @@
-from typing import Optional
-
 from pcs import settings
 from pcs.common import file_type_codes, reports
 from pcs.common.cluster_dto import (
@@ -466,7 +464,7 @@ def rename_node_corosync(
 
 
 def get_host_daemons_info(env: LibraryEnvironment) -> ClusterDaemonsInfoDto:
-    def _version_to_dto(version: Optional[Version]) -> VersionDto:
+    def _version_to_dto(version: Version | None) -> VersionDto:
         return (
             VersionDto(*version.as_full_tuple)
             if version

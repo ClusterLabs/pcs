@@ -1,5 +1,5 @@
 from collections.abc import Mapping, Sequence
-from typing import Any, Optional
+from typing import Any
 
 from pcs import settings
 from pcs.common import reports, ssl
@@ -36,13 +36,13 @@ def setup(  # noqa:  PLR0913, PLR0915
     env: LibraryEnvironment,
     cluster_name: str,
     nodes: Sequence[Mapping[str, Any]],
-    transport_type: Optional[str] = None,
-    transport_options: Optional[Mapping[str, str]] = None,
-    link_list: Optional[Sequence[Mapping[str, str]]] = None,
-    compression_options: Optional[Mapping[str, str]] = None,
-    crypto_options: Optional[Mapping[str, str]] = None,
-    totem_options: Optional[Mapping[str, str]] = None,
-    quorum_options: Optional[Mapping[str, str]] = None,
+    transport_type: str | None = None,
+    transport_options: Mapping[str, str] | None = None,
+    link_list: Sequence[Mapping[str, str]] | None = None,
+    compression_options: Mapping[str, str] | None = None,
+    crypto_options: Mapping[str, str] | None = None,
+    totem_options: Mapping[str, str] | None = None,
+    quorum_options: Mapping[str, str] | None = None,
     wait: WaitType = False,
     start: bool = False,
     enable: bool = False,
@@ -297,7 +297,7 @@ def setup_local(  # noqa: PLR0913
     env: LibraryEnvironment,
     cluster_name: str,
     nodes: Sequence[Mapping[str, Any]],
-    transport_type: Optional[str],
+    transport_type: str | None,
     transport_options: Mapping[str, str],
     link_list: Sequence[Mapping[str, str]],
     compression_options: Mapping[str, str],

@@ -1,6 +1,5 @@
 import shlex
 from collections.abc import Sequence
-from typing import Optional
 
 from pcs.cli.common.output import (
     INDENT_STEP,
@@ -21,7 +20,7 @@ from pcs.common.str_tools import (
 )
 
 
-def _description_to_lines(desc: Optional[str]) -> list[str]:
+def _description_to_lines(desc: str | None) -> list[str]:
     return [f"Description: {desc}"] if desc else []
 
 
@@ -54,7 +53,7 @@ def _recipients_to_lines(
     return ["Recipients:"] + indent(lines, indent_step=INDENT_STEP)
 
 
-def _select_dto_to_lines(select_dto: Optional[CibAlertSelectDto]) -> list[str]:
+def _select_dto_to_lines(select_dto: CibAlertSelectDto | None) -> list[str]:
     if not select_dto:
         return []
     lines = []
@@ -116,7 +115,7 @@ def config_dto_to_cmd(config_dto: CibAlertListDto) -> list[str]:
 
 
 def _nvset_to_cmd(
-    label: Optional[str],
+    label: str | None,
     nvsets: Sequence[CibNvsetDto],
 ) -> list[str]:
     if nvsets and nvsets[0].nvpairs:

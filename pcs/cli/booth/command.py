@@ -1,7 +1,4 @@
-from typing import (
-    Any,
-    Optional,
-)
+from typing import Any
 
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import (
@@ -166,7 +163,7 @@ def enable_authfile_clean(
     )
 
 
-def _parse_ticket_operation(arg_list: Argv) -> tuple[str, Optional[str]]:
+def _parse_ticket_operation(arg_list: Argv) -> tuple[str, str | None]:
     site_ip = None
     if len(arg_list) == 2:
         site_ip = arg_list[1]

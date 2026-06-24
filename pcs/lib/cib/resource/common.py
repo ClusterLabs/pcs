@@ -1,4 +1,4 @@
-from typing import Optional, cast
+from typing import cast
 
 from lxml.etree import _Element
 
@@ -28,8 +28,8 @@ from .primitive import is_primitive
 def find_one_resource(
     context_element: _Element,
     resource_id: str,
-    resource_tags: Optional[StringCollection] = None,
-) -> tuple[Optional[_Element], ReportItemList]:
+    resource_tags: StringCollection | None = None,
+) -> tuple[_Element | None, ReportItemList]:
     """
     Find a single resource or return None if not found
 
@@ -51,7 +51,7 @@ def find_one_resource(
 def find_resources(
     context_element: _Element,
     resource_ids: StringCollection,
-    resource_tags: Optional[StringCollection] = None,
+    resource_tags: StringCollection | None = None,
 ) -> tuple[list[_Element], ReportItemList]:
     """
     Find a list of resources
@@ -151,7 +151,7 @@ def is_wrapper_resource(resource_el: _Element) -> bool:
     )
 
 
-def get_parent_resource(resource_el: _Element) -> Optional[_Element]:
+def get_parent_resource(resource_el: _Element) -> _Element | None:
     """
     Return a direct ancestor of a specified resource or None if the resource
     has no ancestor.

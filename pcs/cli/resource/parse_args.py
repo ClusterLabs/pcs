@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Optional
 
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import (
@@ -22,24 +21,24 @@ class PrimitiveOptions:
 
 @dataclass(frozen=True)
 class CloneOptions:
-    clone_id: Optional[str]
+    clone_id: str | None
     meta_attrs: dict[str, str]
 
 
 @dataclass(frozen=True)
 class GroupOptions:
     group_id: str
-    after_resource: Optional[str]
-    before_resource: Optional[str]
+    after_resource: str | None
+    before_resource: str | None
 
 
 @dataclass(frozen=True)
 class ComplexResourceOptions:
     primitive: PrimitiveOptions
-    group: Optional[GroupOptions]
-    clone: Optional[CloneOptions]
-    promotable: Optional[CloneOptions]
-    bundle_id: Optional[str]
+    group: GroupOptions | None
+    clone: CloneOptions | None
+    promotable: CloneOptions | None
+    bundle_id: str | None
 
 
 @dataclass(frozen=True)
@@ -172,7 +171,7 @@ def parse_create_new(arg_list: Argv) -> ComplexResourceOptions:  # noqa: PLR0912
             raise CmdLineInputError(
                 "You have to specify exactly one group after 'group'"
             )
-        position: dict[str, Optional[str]] = {"after": None, "before": None}
+        position: dict[str, str | None] = {"after": None, "before": None}
         for where in position:
             if group_groups.has_keyword(where):
                 if len(group_groups.get_args_flat(where)) != 1:
@@ -186,7 +185,7 @@ def parse_create_new(arg_list: Argv) -> ComplexResourceOptions:  # noqa: PLR0912
             after_resource=position["after"],
         )
 
-    clone_options: dict[str, Optional[CloneOptions]] = {
+    clone_options: dict[str, CloneOptions | None] = {
         "clone": None,
         "promotable": None,
     }
@@ -300,7 +299,7 @@ def parse_create_old(  # noqa: PLR0912
                     f"you cannot use {option} without --group"
                 )
 
-    clone_options: dict[str, Optional[CloneOptions]] = {
+    clone_options: dict[str, CloneOptions | None] = {
         "clone": None,
         "promotable": None,
     }

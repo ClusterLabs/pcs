@@ -1,7 +1,7 @@
 import json
 import logging
 from http.client import responses
-from typing import Any, Optional, cast
+from typing import Any, cast
 
 from dacite import DaciteError, MissingValueError, UnexpectedDataError
 from tornado.web import HTTPError, MissingArgumentError
@@ -29,8 +29,8 @@ class APIError(HTTPError):
     def __init__(
         self,
         http_code: int = 500,
-        http_error: Optional[str] = None,
-        error_msg: Optional[str] = None,
+        http_error: str | None = None,
+        error_msg: str | None = None,
     ) -> None:
         super().__init__(http_code, reason=http_error)
         self.error_msg = error_msg
@@ -54,7 +54,7 @@ class _BaseApiV2Handler(BaseHandler):
     """
 
     scheduler: Scheduler
-    json: Optional[dict[str, Any]] = None
+    json: dict[str, Any] | None = None
     logger: logging.Logger
     _auth_provider: ApiAuthProviderInterface
     _auth_user: AuthUser

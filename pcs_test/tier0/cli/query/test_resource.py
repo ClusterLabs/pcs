@@ -1,5 +1,4 @@
 from collections.abc import Sequence
-from typing import Optional
 from unittest import (
     TestCase,
     mock,
@@ -30,7 +29,7 @@ from pcs_test.tools.misc import dict_to_modifiers
 
 def fixture_primitive_dto(
     resource_id: str,
-    instance_id: Optional[str],
+    instance_id: str | None,
     resource_agent: str = "ocf:pacemaker:Dummy",
     node_names: Sequence[str] = ("node1",),
 ) -> PrimitiveStatusDto:
@@ -56,7 +55,7 @@ def fixture_primitive_dto(
 
 def fixture_group_dto(
     resource_id: str,
-    instance_id: Optional[str],
+    instance_id: str | None,
     members: list[PrimitiveStatusDto],
 ) -> GroupStatusDto:
     return GroupStatusDto(

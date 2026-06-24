@@ -6,7 +6,7 @@ from contextlib import (
     AbstractContextManager,
     contextmanager,
 )
-from typing import IO, Literal, Optional, TypeVar, overload
+from typing import IO, Literal, TypeVar, overload
 
 from pcs.common import reports
 from pcs.lib.errors import LibraryError
@@ -15,8 +15,8 @@ T = TypeVar("T")
 
 
 def get_optional_value(
-    constructor: Callable[[str], T], value: Optional[str]
-) -> Optional[T]:
+    constructor: Callable[[str], T], value: str | None
+) -> T | None:
     if value is None:
         return None
     return constructor(value)
@@ -75,14 +75,14 @@ def dict_to_environment_file(config_dict: Mapping[str, str]) -> str:
 
 @overload
 def get_tmp_file(
-    data: Optional[bytes], binary: Literal[True]
+    data: bytes | None, binary: Literal[True]
 ) -> AbstractContextManager[IO[bytes]]:
     pass
 
 
 @overload
 def get_tmp_file(
-    data: Optional[str],
+    data: str | None,
     binary: Literal[False] = False,
 ) -> AbstractContextManager[IO[str]]:
     pass
@@ -92,7 +92,7 @@ def get_tmp_file(
 # @overload) and it is properly typed in @overload functions.
 @contextmanager
 def get_tmp_file(  # type: ignore
-    data: Optional[bytes | str],
+    data: bytes | str | None,
     binary: bool = False,
 ):
     mode = "w+b" if binary else "w+"
@@ -110,7 +110,7 @@ def get_tmp_file(  # type: ignore
 
 @contextmanager
 def get_tmp_cib(
-    report_processor: reports.ReportProcessor, data: Optional[str]
+    report_processor: reports.ReportProcessor, data: str | None
 ) -> Generator[IO[str], None, None]:
     try:
         with get_tmp_file(data) as tmp_cib_file:
@@ -127,7 +127,7 @@ def get_tmp_cib(
 
 
 def create_tmp_cib(
-    report_processor: reports.ReportProcessor, data: Optional[str]
+    report_processor: reports.ReportProcessor, data: str | None
 ) -> IO[str]:
     try:
         # pylint: disable=consider-using-with

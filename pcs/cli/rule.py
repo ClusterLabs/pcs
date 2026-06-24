@@ -1,5 +1,3 @@
-from typing import Optional
-
 from pcs.common.pacemaker.rule import CibRuleExpressionDto
 from pcs.common.str_tools import (
     format_name_value_list,
@@ -17,7 +15,7 @@ _in_effect_label_map = {
 }
 
 
-def get_in_effect_label(rule: CibRuleExpressionDto) -> Optional[str]:
+def get_in_effect_label(rule: CibRuleExpressionDto) -> str | None:
     return _in_effect_label_map.get(rule.in_effect, None)
 
 

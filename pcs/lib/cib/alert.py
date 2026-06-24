@@ -1,4 +1,4 @@
-from typing import Any, Optional, cast
+from typing import Any, cast
 
 from lxml import etree
 from lxml.etree import _Element
@@ -49,7 +49,7 @@ def find_recipient(context_el: _Element, recipient_id: str) -> _Element:
 
 
 def _update_optional_attribute(
-    element: _Element, attribute: str, value: Optional[str]
+    element: _Element, attribute: str, value: str | None
 ) -> None:
     """
     Set value of an optional attribute, remove the attribute on empty value
@@ -66,7 +66,7 @@ def _update_optional_attribute(
 def _validate_recipient_value_is_unique(
     alert_el: _Element,
     recipient_value: str,
-    recipient_id: Optional[str] = None,
+    recipient_id: str | None = None,
     allow_duplicity: bool = False,
 ) -> reports.ReportItemList:
     """
@@ -102,8 +102,8 @@ def _validate_recipient_value_is_unique(
 def validate_create_alert(
     id_provider: IdProvider,
     # should be str, see lib.commands.alert.create_alert
-    path: Optional[str],
-    alert_id: Optional[str] = None,
+    path: str | None,
+    alert_id: str | None = None,
 ) -> reports.ReportItemList:
     """
     validate new alert creation
@@ -131,8 +131,8 @@ def create_alert(
     tree: _Element,
     id_provider: IdProvider,
     path: str,
-    alert_id: Optional[str] = None,
-    description: Optional[str] = None,
+    alert_id: str | None = None,
+    description: str | None = None,
 ) -> _Element:
     """
     Create new alert element and return it
@@ -158,8 +158,8 @@ def create_alert(
 def update_alert(
     tree: _Element,
     alert_id: str,
-    path: Optional[str],
-    description: Optional[str] = None,
+    path: str | None,
+    description: str | None = None,
 ) -> _Element:
     """
     Update existing alert. Return updated alert element.
@@ -193,8 +193,8 @@ def validate_add_recipient(
     id_provider: IdProvider,
     alert_el: _Element,
     # should be str, see lib.commands.alert.add_recipient
-    recipient_value: Optional[str],
-    recipient_id: Optional[str] = None,
+    recipient_value: str | None,
+    recipient_id: str | None = None,
     allow_same_value: bool = False,
 ) -> reports.ReportItemList:
     """
@@ -237,8 +237,8 @@ def add_recipient(
     id_provider: IdProvider,
     alert_el: _Element,
     recipient_value: str,
-    recipient_id: Optional[str] = None,
-    description: Optional[str] = None,
+    recipient_id: str | None = None,
+    description: str | None = None,
 ) -> _Element:
     """
     Add new recipient to the specified alert, return added recipient element
@@ -263,7 +263,7 @@ def add_recipient(
 
 def validate_update_recipient(
     recipient_el: _Element,
-    recipient_value: Optional[str] = None,
+    recipient_value: str | None = None,
     allow_same_value: bool = False,
 ) -> reports.ReportItemList:
     """
@@ -299,8 +299,8 @@ def validate_update_recipient(
 
 def update_recipient(
     recipient_el: _Element,
-    recipient_value: Optional[str] = None,
-    description: Optional[str] = None,
+    recipient_value: str | None = None,
+    description: str | None = None,
 ) -> _Element:
     """
     Update specified recipient. Returns updated recipient element.
@@ -329,7 +329,7 @@ def remove_recipient(tree: _Element, recipient_id: str) -> None:
 
 def _recipient_el_to_dto(
     recipient_el: _Element,
-    rule_eval: Optional[rule.RuleInEffectEval] = None,
+    rule_eval: rule.RuleInEffectEval | None = None,
 ) -> CibAlertRecipientDto:
     if rule_eval is None:
         rule_eval = rule.RuleInEffectEvalDummy()
@@ -369,7 +369,7 @@ def _select_el_to_dto(select_el: _Element) -> CibAlertSelectDto:
 
 def alert_el_to_dto(
     alert_el: _Element,
-    rule_eval: Optional[rule.RuleInEffectEval] = None,
+    rule_eval: rule.RuleInEffectEval | None = None,
 ) -> CibAlertDto:
     if rule_eval is None:
         rule_eval = rule.RuleInEffectEvalDummy()

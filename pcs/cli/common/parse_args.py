@@ -1,7 +1,7 @@
 from collections import Counter
 from collections.abc import Mapping
 from functools import partial
-from typing import Final, Optional
+from typing import Final
 
 from pcs.cli.common.errors import (
     SEE_MAN_CHANGES,
@@ -407,7 +407,7 @@ class ArgsByKeywords:
 def group_by_keywords(
     arg_list: Argv,
     keyword_set: StringCollection,
-    implicit_first_keyword: Optional[str] = None,
+    implicit_first_keyword: str | None = None,
 ) -> ArgsByKeywords:
     """
     Separate argv into groups delimited by specified keywords
@@ -618,7 +618,7 @@ class InputModifiers:
     def ensure_only_supported(
         self,
         *supported_options: str,
-        hint_syntax_changed: Optional[str] = None,
+        hint_syntax_changed: str | None = None,
         output_format_supported: bool = False,
     ) -> None:
         # --debug is supported in all commands
@@ -737,7 +737,7 @@ class InputModifiers:
         )
 
 
-def get_rule_str(argv: Argv) -> Optional[str]:
+def get_rule_str(argv: Argv) -> str | None:
     if argv:
         if len(argv) > 1:
             # deprecated after 0.11.7

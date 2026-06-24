@@ -1,5 +1,5 @@
 from collections.abc import Iterator
-from typing import Any, Optional
+from typing import Any
 
 import pyparsing
 
@@ -132,7 +132,7 @@ def __build_bool_tree(token_list: pyparsing.ParseResults) -> RuleExprPart:
         "or": BOOL_OR,
     }
     operand_left = token_list[0][0]
-    last_operator: Optional[str] = None
+    last_operator: str | None = None
     operand_list = []
     for operator, operand_right in __operator_operands(token_list[0][1:]):
         # In each iteration, we get a bool_op ("and" or "or") and the right

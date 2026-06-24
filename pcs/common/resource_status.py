@@ -2,7 +2,7 @@ from collections import defaultdict
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Final, Literal, Optional, cast
+from typing import Final, Literal, cast
 
 from pcs.common.const import (
     PCMK_ROLE_STOPPED,
@@ -149,7 +149,7 @@ class InstancesQuantifierUnsupportedException(QueryException):
 
 
 class ResourceException(Exception):
-    def __init__(self, resource_id: str, instance_id: Optional[str]):
+    def __init__(self, resource_id: str, instance_id: str | None):
         self.resource_id = resource_id
         self.instance_id = instance_id
 
@@ -166,7 +166,7 @@ class ResourceUnexpectedTypeException(ResourceException):
     def __init__(
         self,
         resource_id: str,
-        instance_id: Optional[str],
+        instance_id: str | None,
         resource_type: ResourceType,
         expected_types: list[ResourceType],
     ):
@@ -230,8 +230,8 @@ class ResourcesStatusFacade:
         return cls(resources_status_dto.resources)
 
     def get_resource_one_instance(
-        self, resource_id: str, instance_id: Optional[str]
-    ) -> Optional[AnyResourceStatusDto]:
+        self, resource_id: str, instance_id: str | None
+    ) -> AnyResourceStatusDto | None:
         """
         Get one instance of resource with given id. Get instance that
         appears first in the status xml if instance_id is not specified. Return
@@ -258,7 +258,7 @@ class ResourcesStatusFacade:
 
     def get_resource_all_instances(
         self, resource_id: str
-    ) -> Optional[list[AnyResourceStatusDto]]:
+    ) -> list[AnyResourceStatusDto] | None:
         """
         Get a list of all the instances of resource with the given id. Return
         None if resource with the given id does not exist.
@@ -267,7 +267,7 @@ class ResourcesStatusFacade:
         """
         return self._resource_map.get(resource_id)
 
-    def exists(self, resource_id: str, instance_id: Optional[str]) -> bool:
+    def exists(self, resource_id: str, instance_id: str | None) -> bool:
         """
         Check if resource with the given id exists in the cluster
 
@@ -280,7 +280,7 @@ class ResourcesStatusFacade:
         )
 
     def get_type(
-        self, resource_id: str, instance_id: Optional[str]
+        self, resource_id: str, instance_id: str | None
     ) -> ResourceType:
         """
         Return the type of the resource
@@ -295,7 +295,7 @@ class ResourcesStatusFacade:
 
         return _TYPE_MAP[type(resource)]
 
-    def is_stonith(self, resource_id: str, instance_id: Optional[str]) -> bool:
+    def is_stonith(self, resource_id: str, instance_id: str | None) -> bool:
         """
         Check if the resource with the given id is a stonith resource
 
@@ -311,9 +311,7 @@ class ResourcesStatusFacade:
             resource, PrimitiveStatusDto
         ) and resource.resource_agent.startswith("stonith:")
 
-    def is_promotable(
-        self, resource_id: str, instance_id: Optional[str]
-    ) -> bool:
+    def is_promotable(self, resource_id: str, instance_id: str | None) -> bool:
         """
         Check if the resource with the given id is promotable. Usable only
         of clone resources.
@@ -336,7 +334,7 @@ class ResourcesStatusFacade:
 
         return resource.multi_state
 
-    def is_unique(self, resource_id: str, instance_id: Optional[str]) -> bool:
+    def is_unique(self, resource_id: str, instance_id: str | None) -> bool:
         """
         Check if the resource with the given id is globally unique. Usable only
         on clone and bundle resources.
@@ -361,7 +359,7 @@ class ResourcesStatusFacade:
         return resource.unique
 
     def _get_instances_for_state_check(
-        self, resource_id: str, instance_id: Optional[str]
+        self, resource_id: str, instance_id: str | None
     ) -> CheckedResourceType:
         if not self.exists(resource_id, instance_id):
             raise ResourceNonExistentException(resource_id, instance_id)
@@ -387,7 +385,7 @@ class ResourcesStatusFacade:
 
         if instance_id is None:
             instance_list = cast(
-                Optional[list[PrimitiveStatusDto | GroupStatusDto]],
+                list[PrimitiveStatusDto | GroupStatusDto] | None,
                 self.get_resource_all_instances(resource_id),
             )
         else:
@@ -410,7 +408,7 @@ class ResourcesStatusFacade:
         return GroupInstances(cast(list[GroupStatusDto], instance_list))
 
     def can_have_multiple_members(
-        self, resource_id: str, instance_id: Optional[str] = None
+        self, resource_id: str, instance_id: str | None = None
     ) -> bool:
         """
         Check if the resource with the given id can have multiple inner members.
@@ -429,7 +427,7 @@ class ResourcesStatusFacade:
         )
 
     def can_have_multiple_instances(
-        self, resource_id: str, instance_id: Optional[str] = None
+        self, resource_id: str, instance_id: str | None = None
     ) -> bool:
         """
         Check if the resource with the given id can have multiple instances.
@@ -451,9 +449,9 @@ class ResourcesStatusFacade:
     def _validate_quantifiers(
         self,
         resource_id: str,
-        instance_id: Optional[str],
-        members_quantifier: Optional[MoreChildrenQuantifierType],
-        instances_quantifier: Optional[MoreChildrenQuantifierType],
+        instance_id: str | None,
+        members_quantifier: MoreChildrenQuantifierType | None,
+        instances_quantifier: MoreChildrenQuantifierType | None,
     ) -> None:
         if (
             members_quantifier is not None
@@ -469,11 +467,11 @@ class ResourcesStatusFacade:
     def is_state(
         self,
         resource_id: str,
-        instance_id: Optional[str],
+        instance_id: str | None,
         state: ResourceState,
-        expected_node_name: Optional[str] = None,
-        members_quantifier: Optional[MoreChildrenQuantifierType] = None,
-        instances_quantifier: Optional[MoreChildrenQuantifierType] = None,
+        expected_node_name: str | None = None,
+        members_quantifier: MoreChildrenQuantifierType | None = None,
+        instances_quantifier: MoreChildrenQuantifierType | None = None,
     ) -> bool:
         """
         Check if the resource with the given id is in expected state.
@@ -526,12 +524,12 @@ class ResourcesStatusFacade:
     def is_state_exact_value(
         self,
         resource_id: str,
-        instance_id: Optional[str],
+        instance_id: str | None,
         state: ResourceStateExactCheck,
         expected_state_value: str,
-        expected_node_name: Optional[str] = None,
-        members_quantifier: Optional[MoreChildrenQuantifierType] = None,
-        instances_quantifier: Optional[MoreChildrenQuantifierType] = None,
+        expected_node_name: str | None = None,
+        members_quantifier: MoreChildrenQuantifierType | None = None,
+        instances_quantifier: MoreChildrenQuantifierType | None = None,
     ) -> bool:
         """
         Check if the state attribute of the resource contains the expected
@@ -585,8 +583,8 @@ class ResourcesStatusFacade:
     def get_parent_group_id(
         self,
         resource_id: str,
-        instance_id: Optional[str],
-    ) -> Optional[str]:
+        instance_id: str | None,
+    ) -> str | None:
         """
         Check if the resource is in any group and return group id if the
         resource is in group.
@@ -615,8 +613,8 @@ class ResourcesStatusFacade:
     def get_parent_clone_id(
         self,
         resource_id: str,
-        instance_id: Optional[str],
-    ) -> Optional[str]:
+        instance_id: str | None,
+    ) -> str | None:
         """
         Check if the resource is inside any clone and return clone id if the
         resource is in clone. Member of a cloned group is in clone as well.
@@ -649,8 +647,8 @@ class ResourcesStatusFacade:
     def get_parent_bundle_id(
         self,
         resource_id: str,
-        instance_id: Optional[str],
-    ) -> Optional[str]:
+        instance_id: str | None,
+    ) -> str | None:
         """
         Check if the resource is inside any bundle and return bundle id if the
         resource is in bundle.
@@ -677,7 +675,7 @@ class ResourcesStatusFacade:
         return self._child_parent_map[resource_id]
 
     def get_index_in_group(
-        self, resource_id: str, instance_id: Optional[str]
+        self, resource_id: str, instance_id: str | None
     ) -> int:
         """
         Return the index of the resource in a group. Usable only for primitive
@@ -712,7 +710,7 @@ class ResourcesStatusFacade:
         )
 
     def get_members(
-        self, resource_id: str, instance_id: Optional[str]
+        self, resource_id: str, instance_id: str | None
     ) -> list[str]:
         """
         Return resource ids of members of a group, clone or bundle
@@ -753,9 +751,7 @@ class ResourcesStatusFacade:
             [ResourceType.GROUP, ResourceType.CLONE, ResourceType.BUNDLE],
         )
 
-    def get_nodes(
-        self, resource_id: str, instance_id: Optional[str]
-    ) -> list[str]:
+    def get_nodes(self, resource_id: str, instance_id: str | None) -> list[str]:
         """
         Return nodes on which resource is running. For groups, return nodes
         on which any of the members is running. For clones or bundles return
@@ -838,9 +834,9 @@ class ResourcesStatusFacade:
         checked_resource: CheckedResourceType,
         checked_attribute: str,
         expected_attribute_value: StateValueType,
-        expected_node_name: Optional[str] = None,
-        members_quantifier: Optional[MoreChildrenQuantifierType] = None,
-        instances_quantifier: Optional[MoreChildrenQuantifierType] = None,
+        expected_node_name: str | None = None,
+        members_quantifier: MoreChildrenQuantifierType | None = None,
+        instances_quantifier: MoreChildrenQuantifierType | None = None,
     ) -> bool:
         if isinstance(checked_resource, CloneStatusDto):
             return self._clone_state(
@@ -895,7 +891,7 @@ class ResourcesStatusFacade:
         primitive: PrimitiveStatusDto,
         checked_attribute: str,
         expected_attribute_value: StateValueType,
-        expected_node_name: Optional[str],
+        expected_node_name: str | None,
     ) -> bool:
         if checked_attribute == ResourceState.DISABLED.value[0]:
             result = (
@@ -920,8 +916,8 @@ class ResourcesStatusFacade:
         group: GroupStatusDto,
         checked_attribute: str,
         expected_attribute_value: StateValueType,
-        members_quantifier: Optional[MoreChildrenQuantifierType],
-        expected_node_name: Optional[str],
+        members_quantifier: MoreChildrenQuantifierType | None,
+        expected_node_name: str | None,
     ) -> bool:
         if _can_check_non_primitive(
             group,
@@ -954,9 +950,9 @@ class ResourcesStatusFacade:
         clone: CloneStatusDto,
         checked_attribute: str,
         expected_attribute_value: StateValueType,
-        members_quantifier: Optional[MoreChildrenQuantifierType],
-        instances_quantifier: Optional[MoreChildrenQuantifierType],
-        expected_node_name: Optional[str],
+        members_quantifier: MoreChildrenQuantifierType | None,
+        instances_quantifier: MoreChildrenQuantifierType | None,
+        expected_node_name: str | None,
     ) -> bool:
         if _can_check_non_primitive(
             clone,
@@ -1001,8 +997,8 @@ class ResourcesStatusFacade:
         bundle: BundleStatusDto,
         checked_attribute: str,
         expected_attribute_value: StateValueType,
-        instances_quantifier: Optional[MoreChildrenQuantifierType],
-        expected_node_name: Optional[str],
+        instances_quantifier: MoreChildrenQuantifierType | None,
+        expected_node_name: str | None,
     ) -> bool:
         if _can_check_non_primitive(
             bundle,
@@ -1035,7 +1031,7 @@ class ResourcesStatusFacade:
         replica: BundleReplicaStatusDto,
         checked_attribute: str,
         expected_attribute_value: StateValueType,
-        expected_node_name: Optional[str],
+        expected_node_name: str | None,
     ) -> bool:
         if replica.member is None:
             return self._primitive_state(
@@ -1056,7 +1052,7 @@ class ResourcesStatusFacade:
 def _can_check_non_primitive(
     resource: AnyResourceStatusDto,
     attribute_name: str,
-    more_children_check: Optional[MoreChildrenQuantifierType],
+    more_children_check: MoreChildrenQuantifierType | None,
     check_nodes: bool,
 ) -> bool:
     return (

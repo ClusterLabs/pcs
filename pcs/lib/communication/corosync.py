@@ -1,5 +1,4 @@
 import json
-from typing import Optional
 
 from pcs.common import reports
 from pcs.common.node_communicator import (
@@ -343,7 +342,7 @@ class GetCorosyncConf(AllSameDataMixin, OneByOneStrategyMixin, RunRemotelyBase):
         self.__was_successful = True
         return []
 
-    def on_complete(self) -> Optional[str]:
+    def on_complete(self) -> str | None:
         if not self.__was_successful and self.__has_failures:
             self._report(
                 ReportItem.error(

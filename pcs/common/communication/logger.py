@@ -1,6 +1,5 @@
 import os
 from collections.abc import Iterable
-from typing import Optional
 
 from pcs import settings
 from pcs.common.node_communicator import (
@@ -13,7 +12,7 @@ from pcs.common.reports import ReportItem, ReportProcessor, messages
 from pcs.lib.external import is_proxy_set
 
 
-def _get_port(port: Optional[int]) -> int:
+def _get_port(port: int | None) -> int:
     return port if port is not None else settings.pcsd_default_port
 
 

@@ -1,4 +1,4 @@
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 from unittest import mock
 
 from tornado.httputil import HTTPHeaders
@@ -22,7 +22,7 @@ class MockAuthProviderFactory(ApiAuthProviderFactoryInterface):
     user = AuthUser("hacluster", ["haclient"])
 
     def __init__(self):
-        self.provider: Optional[mock.AsyncMock] = None
+        self.provider: mock.AsyncMock | None = None
 
     def create(self, handler: RequestHandler) -> ApiAuthProviderInterface:
         del handler
@@ -88,7 +88,7 @@ class ApiTestBase(AsyncHTTPTestCase):
 
     @staticmethod
     def result_success(
-        result: Any = None, reports: Optional[list[ReportItemDto]] = None
+        result: Any = None, reports: list[ReportItemDto] | None = None
     ) -> SimplifiedResult:
         """
         Create a successful SimplifiedResult for testing
@@ -98,7 +98,7 @@ class ApiTestBase(AsyncHTTPTestCase):
     @staticmethod
     def result_failure(
         result: Any = None,
-        report_items: Optional[list[ReportItemDto]] = None,
+        report_items: list[ReportItemDto] | None = None,
     ) -> SimplifiedResult:
         """
         Create a failed SimplifiedResult for testing

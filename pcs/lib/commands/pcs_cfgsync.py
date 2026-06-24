@@ -1,5 +1,5 @@
 from collections.abc import Mapping
-from typing import Optional, cast
+from typing import cast
 
 from pcs import settings
 from pcs.common import reports
@@ -138,7 +138,7 @@ def set_configs(
         # This allows us to replace invalid local files.
         #
         # So we report warnings, and treat the file the same as nonexistent.
-        local_file: Optional[SyncVersionFacadeInterface]
+        local_file: SyncVersionFacadeInterface | None
         local_file, report_list = __read_local_file(
             file_instance, report_warnings=True
         )
@@ -230,7 +230,7 @@ def update_sync_options(
 def __read_local_file[T: FacadeInterface](
     file_instance: FileInstance,
     report_warnings: bool,
-) -> tuple[Optional[T], reports.ReportItemList]:
+) -> tuple[T | None, reports.ReportItemList]:
     report_list: reports.ReportItemList = []
 
     if not file_instance.raw_file.exists():
@@ -254,7 +254,7 @@ def __read_local_file[T: FacadeInterface](
 def __read_cfgsync_ctl(
     report_warnings: bool = False,
 ) -> tuple[CfgsyncCtlFacade, reports.ReportItemList]:
-    local_file: Optional[CfgsyncCtlFacade]
+    local_file: CfgsyncCtlFacade | None
     local_file, report_list = __read_local_file(
         FileInstance.for_pcs_cfgsync_ctl(), report_warnings
     )

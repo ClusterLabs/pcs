@@ -3,7 +3,7 @@ from collections import (
     OrderedDict,
 )
 from collections.abc import Iterable
-from typing import Optional, cast
+from typing import cast
 
 from lxml import etree
 from lxml.etree import _Element
@@ -217,7 +217,7 @@ class ValidateTagUpdateByIds:
         tag_id: str,
         add_idref_list: StringSequence,
         remove_idref_list: StringSequence,
-        adjacent_idref: Optional[str] = None,
+        adjacent_idref: str | None = None,
     ) -> None:
         """
         tag_id -- id of an existing tag we want to update
@@ -231,18 +231,18 @@ class ValidateTagUpdateByIds:
         self._add_idref_list = add_idref_list
         self._remove_idref_list = remove_idref_list
         self._adjacent_idref = adjacent_idref
-        self._tag_element: Optional[_Element] = None
+        self._tag_element: _Element | None = None
         self._add_obj_ref_element_list: list[_Element] = []
-        self._adjacent_obj_ref_element: Optional[_Element] = None
+        self._adjacent_obj_ref_element: _Element | None = None
         self._remove_obj_ref_element_list: list[_Element] = []
 
-    def tag_element(self) -> Optional[_Element]:
+    def tag_element(self) -> _Element | None:
         return self._tag_element
 
     def add_obj_ref_element_list(self) -> list[_Element]:
         return self._add_obj_ref_element_list
 
-    def adjacent_obj_ref_element(self) -> Optional[_Element]:
+    def adjacent_obj_ref_element(self) -> _Element | None:
         return self._adjacent_obj_ref_element
 
     def remove_obj_ref_element_list(self) -> list[_Element]:
@@ -457,7 +457,7 @@ class ValidateTagUpdateByIds:
                 )
         return report_list
 
-    def _find_obj_ref_in_tag(self, obj_ref_id: str) -> Optional[_Element]:
+    def _find_obj_ref_in_tag(self, obj_ref_id: str) -> _Element | None:
         """
         Find obj_ref element in the tag element being updated.
 
@@ -598,7 +598,7 @@ def remove_obj_ref(obj_ref_list: Iterable[_Element]) -> None:
 def add_obj_ref(
     tag_element: _Element,
     obj_ref_el_list: Iterable[_Element],
-    adjacent_element: Optional[_Element],
+    adjacent_element: _Element | None,
     put_after_adjacent: bool = False,
 ) -> None:
     """
@@ -666,7 +666,7 @@ def tag_element_to_dto(tag_element: _Element) -> CibTagDto:
 
 def expand_tag(
     some_or_tag_el: _Element,
-    only_expand_types: Optional[StringCollection] = None,
+    only_expand_types: StringCollection | None = None,
 ) -> list[_Element]:
     """
     Substitute a tag element with elements which the tag refers to.

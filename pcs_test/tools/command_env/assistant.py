@@ -5,7 +5,6 @@ import os
 import os.path
 import shutil
 from functools import partial
-from typing import Optional
 from unittest import mock
 
 from pcs.common.file import RawFile
@@ -259,8 +258,8 @@ class EnvAssistant:
 
     def get_env(
         self,
-        user_login: Optional[str] = None,
-        user_groups: Optional[StringIterable] = None,
+        user_login: str | None = None,
+        user_groups: StringIterable | None = None,
     ):
         self.__call_queue = CallQueue(self.__config.calls)
         # pylint: disable=attribute-defined-outside-init

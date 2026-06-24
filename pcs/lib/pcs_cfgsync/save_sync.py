@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Optional, cast
+from typing import cast
 
 from pcs.common import reports
 from pcs.common.file_type_codes import PCS_KNOWN_HOSTS, FileTypeCode
@@ -51,7 +51,7 @@ def save_sync_new_version(
     report_processor: reports.ReportProcessor,
     fetch_on_conflict: bool,
     reject_is_error: bool = True,
-) -> tuple[bool, set[str], Optional[SyncVersionFacadeInterface]]:
+) -> tuple[bool, set[str], SyncVersionFacadeInterface | None]:
     """
     Update the file data_version of the file and send it to targets. If any
     target contained newer version of the file and fetch_on_conflict is set
@@ -119,7 +119,7 @@ def save_sync_new_known_hosts(
     target_list: Sequence[RequestTarget],
     node_communicator: Communicator,
     report_processor: reports.ReportProcessor,
-) -> tuple[bool, set[str], Optional[SyncVersionFacadeInterface]]:
+) -> tuple[bool, set[str], SyncVersionFacadeInterface | None]:
     """
     Add and/or remove known hosts from the file, then send it to targets.
     If any target contained newer version of the file, then try to resolve the

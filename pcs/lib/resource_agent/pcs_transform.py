@@ -1,5 +1,4 @@
 from dataclasses import replace
-from typing import Optional
 
 from pcs.common.const import PcmkRoleType
 from pcs.common.pacemaker import role
@@ -326,7 +325,7 @@ def _parameter_deduplicate_desc(
 
 def _get_enum_values_and_new_longdesc(
     parameter: ResourceAgentParameter,
-) -> tuple[list[str], Optional[str]]:
+) -> tuple[list[str], str | None]:
     enum_values = []
     longdesc = parameter.longdesc
     if parameter.longdesc:

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 from pcs.common.interface.dto import DataTransferObject
 from pcs.common.reports.dto import ReportItemDto
@@ -13,9 +13,9 @@ from .types import (
 
 @dataclass(frozen=True)
 class CommandOptionsDto(DataTransferObject):
-    request_timeout: Optional[int] = None
-    effective_username: Optional[str] = None
-    effective_groups: Optional[list[str]] = None
+    request_timeout: int | None = None
+    effective_username: str | None = None
+    effective_groups: list[str] | None = None
 
 
 @dataclass(frozen=True)
@@ -37,5 +37,5 @@ class TaskResultDto(DataTransferObject):
     reports: list[ReportItemDto]
     state: TaskState
     task_finish_type: TaskFinishType
-    kill_reason: Optional[TaskKillReason]
+    kill_reason: TaskKillReason | None
     result: Any

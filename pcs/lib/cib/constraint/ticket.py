@@ -1,5 +1,5 @@
 from collections.abc import Mapping
-from typing import Optional, cast
+from typing import cast
 
 from lxml.etree import SubElement, _Element
 
@@ -39,7 +39,7 @@ def is_ticket_constraint(element: _Element) -> bool:
     return element.tag == TAG
 
 
-def _validate_ticket(ticket: Optional[str]) -> reports.ReportItemList:
+def _validate_ticket(ticket: str | None) -> reports.ReportItemList:
     # use a booth ticket validator for validating a ticket
     if not ticket:
         return [
@@ -53,7 +53,7 @@ def _validate_ticket(ticket: Optional[str]) -> reports.ReportItemList:
 def validate_create_plain(
     id_provider: IdProvider,
     ticket: str,
-    constrained_el: Optional[_Element],
+    constrained_el: _Element | None,
     options: validate.TypeOptionMap,
     in_multiinstance_allowed: bool,
 ) -> reports.ReportItemList:
@@ -301,10 +301,10 @@ class DuplicatesCheckerTicketPlain(DuplicatesChecker):
     Searcher of duplicate plain ticket constraints
     """
 
-    _constraint_characteristics: Mapping[str, Optional[str]]
+    _constraint_characteristics: Mapping[str, str | None]
 
     @staticmethod
-    def _characteristics(constraint_el: _Element) -> dict[str, Optional[str]]:
+    def _characteristics(constraint_el: _Element) -> dict[str, str | None]:
         return {
             "ticket": constraint_el.get("ticket"),
             "rsc": constraint_el.get("rsc"),

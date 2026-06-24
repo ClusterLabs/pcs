@@ -1,6 +1,5 @@
 import json
 from textwrap import dedent
-from typing import Optional
 from unittest import TestCase, mock
 
 from pcs.cli.common.errors import CmdLineInputError
@@ -289,7 +288,7 @@ class TestNodeAttributeOutputCmd(NodeOutputCmdBaseMixin, TestCase):
 
     def _set_config(
         self,
-        node_config: Optional[CibNodeListDto] = None,
+        node_config: CibNodeListDto | None = None,
     ):
         self.node.get_config_dto.return_value = FIXTURE_NODE_CONFIG
         if node_config:
@@ -330,8 +329,8 @@ class TestNodeUtilizationOutputCmd(NodeOutputCmdBaseMixin, TestCase):
 
     def _set_config(
         self,
-        node_config: Optional[CibNodeListDto] = None,
-        properties_config: Optional[ListCibNvsetDto] = None,
+        node_config: CibNodeListDto | None = None,
+        properties_config: ListCibNvsetDto | None = None,
     ):
         self.node.get_config_dto.return_value = FIXTURE_NODE_CONFIG
         self.cluster_property.get_properties.return_value = (

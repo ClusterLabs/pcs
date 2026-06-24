@@ -1,5 +1,4 @@
 import os.path
-from typing import Optional
 
 from .. import errors
 from ..interfaces import ExecutorInterface, ServiceManagerInterface
@@ -26,19 +25,19 @@ class OpenRcDriver(ServiceManagerInterface):
         self._rc_update_bin = rc_update_bin
         self._available_services: list[str] = []
 
-    def start(self, service: str, instance: Optional[str] = None) -> None:
+    def start(self, service: str, instance: str | None = None) -> None:
         del instance
         result = self._executor.run([self._rc_service_bin, service, "start"])
         if result.retval != 0:
             raise errors.StartServiceError(service, result.joined_output)
 
-    def stop(self, service: str, instance: Optional[str] = None) -> None:
+    def stop(self, service: str, instance: str | None = None) -> None:
         del instance
         result = self._executor.run([self._rc_service_bin, service, "stop"])
         if result.retval != 0:
             raise errors.StopServiceError(service, result.joined_output)
 
-    def enable(self, service: str, instance: Optional[str] = None) -> None:
+    def enable(self, service: str, instance: str | None = None) -> None:
         del instance
         result = self._executor.run(
             [self._rc_update_bin, "add", service, "default"]
@@ -46,7 +45,7 @@ class OpenRcDriver(ServiceManagerInterface):
         if result.retval != 0:
             raise errors.EnableServiceError(service, result.joined_output)
 
-    def disable(self, service: str, instance: Optional[str] = None) -> None:
+    def disable(self, service: str, instance: str | None = None) -> None:
         del instance
         if not self.is_installed(service):
             return
@@ -56,7 +55,7 @@ class OpenRcDriver(ServiceManagerInterface):
         if result.retval != 0:
             raise errors.DisableServiceError(service, result.joined_output)
 
-    def is_enabled(self, service: str, instance: Optional[str] = None) -> bool:
+    def is_enabled(self, service: str, instance: str | None = None) -> bool:
         del instance
         result = self._executor.run([self._rc_update_bin, "show", "default"])
         for line in result.stdout.splitlines():
@@ -64,7 +63,7 @@ class OpenRcDriver(ServiceManagerInterface):
                 return True
         return False
 
-    def is_running(self, service: str, instance: Optional[str] = None) -> bool:
+    def is_running(self, service: str, instance: str | None = None) -> bool:
         del instance
         return (
             self._executor.run([self._rc_service_bin, service, "status"]).retval

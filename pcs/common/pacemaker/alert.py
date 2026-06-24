@@ -1,6 +1,5 @@
 from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Optional
 
 from pcs.common.interface.dto import DataTransferObject
 from pcs.common.pacemaker.nvset import CibNvsetDto
@@ -10,7 +9,7 @@ from pcs.common.pacemaker.nvset import CibNvsetDto
 class CibAlertRecipientDto(DataTransferObject):
     id: str
     value: str
-    description: Optional[str]
+    description: str | None
     meta_attributes: Sequence[CibNvsetDto]
     instance_attributes: Sequence[CibNvsetDto]
 
@@ -34,9 +33,9 @@ class CibAlertSelectDto(DataTransferObject):
 class CibAlertDto(DataTransferObject):
     id: str
     path: str
-    description: Optional[str]
+    description: str | None
     recipients: Sequence[CibAlertRecipientDto]
-    select: Optional[CibAlertSelectDto]
+    select: CibAlertSelectDto | None
     meta_attributes: Sequence[CibNvsetDto]
     instance_attributes: Sequence[CibNvsetDto]
 

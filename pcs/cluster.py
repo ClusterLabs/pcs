@@ -10,7 +10,7 @@ import tempfile
 import time
 import xml.dom.minidom
 from collections.abc import Callable, Iterable, Mapping
-from typing import Any, Optional, cast
+from typing import Any, cast
 from xml.parsers.expat import ExpatError
 
 import pcs.lib.pacemaker.live as lib_pacemaker
@@ -414,7 +414,7 @@ def wait_for_remote_node_started(
 
 
 def wait_for_nodes_started(
-    node_list: StringIterable, timeout: Optional[int] = None
+    node_list: StringIterable, timeout: int | None = None
 ) -> None:
     """
     Commandline options:
@@ -2013,7 +2013,7 @@ def _corosync_node_to_cmd_line(node: CorosyncNodeDto) -> str:
 
 
 def _section_to_lines(
-    options: Mapping[str, str], keyword: Optional[str] = None
+    options: Mapping[str, str], keyword: str | None = None
 ) -> list[str]:
     output: list[str] = []
     if options:

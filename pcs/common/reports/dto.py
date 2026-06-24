@@ -1,6 +1,6 @@
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 from pcs.common.interface.dto import DataTransferObject
 
@@ -14,7 +14,7 @@ from .types import (
 @dataclass(frozen=True)
 class ReportItemSeverityDto(DataTransferObject):
     level: SeverityLevel
-    force_code: Optional[ForceCode]
+    force_code: ForceCode | None
 
 
 @dataclass(frozen=True)
@@ -33,4 +33,4 @@ class ReportItemContextDto(DataTransferObject):
 class ReportItemDto(DataTransferObject):
     severity: ReportItemSeverityDto
     message: ReportItemMessageDto
-    context: Optional[ReportItemContextDto]
+    context: ReportItemContextDto | None

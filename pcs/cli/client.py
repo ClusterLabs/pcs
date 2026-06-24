@@ -1,6 +1,6 @@
 import contextlib
 import os
-from typing import Any, Optional, cast
+from typing import Any, cast
 
 from pcs import (
     settings,
@@ -124,7 +124,7 @@ def local_auth_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
 
 
 # used to simplify testing
-def _get_node_communicator(timeout: Optional[int]) -> Communicator:
+def _get_node_communicator(timeout: int | None) -> Communicator:
     log_report_processor = ReportProcessorToLog(log.pcsd)
     return NodeCommunicatorFactory(
         CommunicatorLogger([log_report_processor]),

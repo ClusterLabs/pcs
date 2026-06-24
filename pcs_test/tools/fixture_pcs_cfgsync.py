@@ -1,6 +1,6 @@
 import json
 from collections.abc import Mapping, Sequence
-from typing import Literal, Optional
+from typing import Literal
 
 from pcs import settings
 from pcs.common import file_type_codes, reports
@@ -24,8 +24,8 @@ from pcs_test.tools.command_env.mock_node_communicator import (
 
 def fixture_communication_result_string(
     status: CommunicationResultStatus = COM_STATUS_SUCCESS,
-    status_msg: Optional[str] = None,
-    report_list: Optional[list[reports.ReportItemDto]] = None,
+    status_msg: str | None = None,
+    report_list: list[reports.ReportItemDto] | None = None,
     data="",
 ) -> str:
     return json.dumps(
@@ -42,7 +42,7 @@ def fixture_communication_result_string(
 
 def fixture_known_hosts_file_content(
     data_version: int = 1,
-    known_hosts: Optional[Mapping[str, PcsKnownHost]] = None,
+    known_hosts: Mapping[str, PcsKnownHost] | None = None,
 ) -> str:
     return KnownHostsExporter.export(
         KnownHosts(
@@ -189,7 +189,7 @@ def fixture_save_sync_new_known_hosts_success(
     node_labels: list[str],
     cluster_name: str = "test99",
     file_data_version: int = 1,
-    known_hosts: Optional[Mapping[str, PcsKnownHost]] = None,
+    known_hosts: Mapping[str, PcsKnownHost] | None = None,
     communicator_type: NodeCommunicatorType = (
         NodeCommunicatorType.NO_PRIVILEGE_TRANSITION
     ),
@@ -296,7 +296,7 @@ def fixture_save_sync_new_known_hosts_error(
     node_labels: list[str],
     cluster_name: str = "test99",
     file_data_version: int = 1,
-    known_hosts: Optional[Mapping[str, PcsKnownHost]] = None,
+    known_hosts: Mapping[str, PcsKnownHost] | None = None,
     communicator_type: NodeCommunicatorType = (
         NodeCommunicatorType.NO_PRIVILEGE_TRANSITION
     ),

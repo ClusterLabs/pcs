@@ -1,8 +1,4 @@
-from typing import (
-    Any,
-    Optional,
-    cast,
-)
+from typing import Any, cast
 
 from pcs.cli.common.output import INDENT_STEP
 from pcs.cli.common.tools import print_to_stderr
@@ -23,11 +19,11 @@ from .processor import ReportItemPreprocessor
 def get_duplicate_constraint_exists_preprocessor(
     lib: Any,
 ) -> ReportItemPreprocessor:
-    constraints_dto: Optional[CibConstraintsDto] = None
+    constraints_dto: CibConstraintsDto | None = None
 
     def _report_item_preprocessor(  # noqa: PLR0912
         report_item: reports.ReportItem,
-    ) -> Optional[reports.ReportItem]:
+    ) -> reports.ReportItem | None:
         """
         Provide additional info based on DuplicateConstraintsExist message
 

@@ -1,6 +1,5 @@
 from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import Optional
 
 from lxml.etree import _Element
 
@@ -130,7 +129,7 @@ def update(
     tag_id: str,
     idref_add: StringSequence,
     idref_remove: StringSequence,
-    adjacent_idref: Optional[str] = None,
+    adjacent_idref: str | None = None,
     put_after_adjacent: bool = False,
 ) -> None:
     """

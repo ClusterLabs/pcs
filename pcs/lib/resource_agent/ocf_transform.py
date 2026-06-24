@@ -1,6 +1,5 @@
 from collections import defaultdict
 from collections.abc import Iterable
-from typing import Optional
 
 from . import const
 from .types import (
@@ -162,7 +161,7 @@ def _ocf_1_1_parameter_list_to_ocf_unified(
     ]
 
 
-def _bool_value(value: Optional[str]) -> bool:
+def _bool_value(value: str | None) -> bool:
     """
     Transform raw bool value from metadata to bool type
 

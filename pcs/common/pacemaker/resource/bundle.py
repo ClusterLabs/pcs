@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import NewType, Optional
+from typing import NewType
 
 from pcs.common.interface.dto import DataTransferObject
 from pcs.common.pacemaker.nvset import CibNvsetDto
@@ -14,49 +14,49 @@ CONTAINER_TYPE_PODMAN = ContainerType("podman")
 @dataclass(frozen=True)
 class CibResourceBundleContainerRuntimeOptionsDto(DataTransferObject):
     image: str
-    replicas: Optional[int]
-    replicas_per_host: Optional[int]
-    promoted_max: Optional[int]
-    run_command: Optional[str]
-    network: Optional[str]
-    options: Optional[str]
+    replicas: int | None
+    replicas_per_host: int | None
+    promoted_max: int | None
+    run_command: str | None
+    network: str | None
+    options: str | None
 
 
 @dataclass(frozen=True)
 class CibResourceBundlePortMappingDto(DataTransferObject):
     id: str  # pylint: disable=invalid-name
-    port: Optional[int]
-    internal_port: Optional[int]
-    range: Optional[str]
+    port: int | None
+    internal_port: int | None
+    range: str | None
 
 
 @dataclass(frozen=True)
 class CibResourceBundleNetworkOptionsDto(DataTransferObject):
-    ip_range_start: Optional[str]
-    control_port: Optional[int]
-    host_interface: Optional[str]
-    host_netmask: Optional[int]
-    add_host: Optional[bool]
+    ip_range_start: str | None
+    control_port: int | None
+    host_interface: str | None
+    host_netmask: int | None
+    add_host: bool | None
 
 
 @dataclass(frozen=True)
 class CibResourceBundleStorageMappingDto(DataTransferObject):
     id: str  # pylint: disable=invalid-name
-    source_dir: Optional[str]
-    source_dir_root: Optional[str]
+    source_dir: str | None
+    source_dir_root: str | None
     target_dir: str
-    options: Optional[str]
+    options: str | None
 
 
 @dataclass(frozen=True)
 class CibResourceBundleDto(DataTransferObject):
     # pylint: disable=too-many-instance-attributes
     id: str  # pylint: disable=invalid-name
-    description: Optional[str]
-    member_id: Optional[str]
-    container_type: Optional[ContainerType]
-    container_options: Optional[CibResourceBundleContainerRuntimeOptionsDto]
-    network: Optional[CibResourceBundleNetworkOptionsDto]
+    description: str | None
+    member_id: str | None
+    container_type: ContainerType | None
+    container_options: CibResourceBundleContainerRuntimeOptionsDto | None
+    network: CibResourceBundleNetworkOptionsDto | None
     port_mappings: Sequence[CibResourceBundlePortMappingDto]
     storage_mappings: Sequence[CibResourceBundleStorageMappingDto]
     meta_attributes: Sequence[CibNvsetDto]

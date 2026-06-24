@@ -1,6 +1,5 @@
 import json
 import os
-from typing import Optional
 from unittest import TestCase
 
 from pcs import settings
@@ -46,7 +45,7 @@ class FixtureMixin:
     node_labels = ["node-1", "node-2"]
 
     @staticmethod
-    def fixture_corosync_conf(cluster_name: Optional[str] = None) -> str:
+    def fixture_corosync_conf(cluster_name: str | None = None) -> str:
         return corosync_conf_fixture(
             node_list=[node_fixture("node-1", 1), node_fixture("node-2", 2)],
             cluster_name=cluster_name,

@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any
 
 from pcs.lib.commands.resource_agent import (
     _agent_metadata_to_dict,
@@ -22,7 +22,7 @@ from pcs.lib.resource_agent import (
 def list_agents(
     lib_env: LibraryEnvironment,
     describe: bool = True,
-    search: Optional[str] = None,
+    search: str | None = None,
 ) -> list[dict[str, Any]]:
     """
     List all stonith agents on the local host, optionally filtered and described

@@ -1,5 +1,3 @@
-from typing import Optional
-
 from tornado.web import StaticFileHandler
 
 from pcs.daemon.app.common import EnhanceHeadersMixin
@@ -21,7 +19,7 @@ class StaticFile(EnhanceHeadersMixin, StaticFileHandler):
     # BUT static files are not streamed SO:
     # pylint: disable=abstract-method
     def initialize(
-        self, path: str, default_filename: Optional[str] = None
+        self, path: str, default_filename: str | None = None
     ) -> None:
         super().initialize(path, default_filename)
         # allow static files to be cached

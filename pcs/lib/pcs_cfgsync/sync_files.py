@@ -1,5 +1,4 @@
 from collections.abc import Sequence
-from typing import Optional
 
 from pcs.common import file_type_codes, reports
 from pcs.common.host import PcsKnownHost
@@ -115,7 +114,7 @@ def sync_known_hosts_in_cluster(
 
 
 def _handle_conflict(
-    new_file: Optional[SyncVersionFacadeInterface],
+    new_file: SyncVersionFacadeInterface | None,
     file_instance: FileInstance,
     report_processor: reports.ReportProcessor,
 ) -> None:

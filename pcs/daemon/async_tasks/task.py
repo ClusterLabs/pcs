@@ -4,7 +4,7 @@ import signal
 from asyncio import Event
 from collections.abc import Awaitable
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 from pcs import settings
 from pcs.common.async_tasks.dto import TaskResultDto
@@ -72,12 +72,12 @@ class Task(ImplementsToDto):
         self._result: Any = None
         self._state: TaskState = TaskState.CREATED
         self._task_finish_type: TaskFinishType = TaskFinishType.UNFINISHED
-        self._kill_reason: Optional[TaskKillReason] = None
-        self._last_message_at: Optional[datetime.datetime] = None
-        self._execution_started_at: Optional[datetime.datetime] = None
+        self._kill_reason: TaskKillReason | None = None
+        self._last_message_at: datetime.datetime | None = None
+        self._execution_started_at: datetime.datetime | None = None
         self._worker_pid: int = -1
         self._finished_event = Event()
-        self._to_delete_timestamp: Optional[datetime.datetime] = None
+        self._to_delete_timestamp: datetime.datetime | None = None
 
     @property
     def state(self) -> TaskState:
@@ -118,7 +118,7 @@ class Task(ImplementsToDto):
     def wait_until_finished(self) -> Awaitable[Any]:
         return self._finished_event.wait()
 
-    def _get_last_updated_timestamp(self) -> Optional[datetime.datetime]:
+    def _get_last_updated_timestamp(self) -> datetime.datetime | None:
         """
         Helper function for getting timestamp of the last message received
 
@@ -160,7 +160,7 @@ class Task(ImplementsToDto):
         # to finish and will be garbage collected as abandoned
         return False
 
-    def is_defunct(self, timeout: Optional[int] = None) -> bool:
+    def is_defunct(self, timeout: int | None = None) -> bool:
         """
         Checks that the task is not behaving as expected
 

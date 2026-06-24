@@ -1,5 +1,4 @@
 import re
-from typing import Optional
 
 from pcs import settings
 from pcs.common import (
@@ -478,7 +477,7 @@ def device_net_certificate_check_local(
     cluster_name -- local node cluster name
     """
 
-    def get_certificate_data(text: str) -> Optional[str]:
+    def get_certificate_data(text: str) -> str | None:
         match = re.search(
             r"-----BEGIN CERTIFICATE-----([a-zA-Z0-9/+=]+)-----END CERTIFICATE-----",
             "".join(text.splitlines()),

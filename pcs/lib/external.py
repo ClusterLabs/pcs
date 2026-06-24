@@ -3,7 +3,6 @@ import subprocess
 from collections.abc import Mapping
 from logging import Logger
 from shlex import quote as shell_quote
-from typing import Optional
 
 from pcs import settings
 from pcs.common import reports
@@ -27,7 +26,7 @@ class CommandRunner:
         self,
         logger: Logger,
         reporter: ReportProcessor,
-        env_vars: Optional[Mapping[str, str]] = None,
+        env_vars: Mapping[str, str] | None = None,
     ):
         self._logger = logger
         self._reporter = reporter
@@ -45,8 +44,8 @@ class CommandRunner:
     def run(
         self,
         args: StringSequence,
-        stdin_string: Optional[str] = None,
-        env_extend: Optional[Mapping[str, str]] = None,
+        stdin_string: str | None = None,
+        env_extend: Mapping[str, str] | None = None,
         binary_output: bool = False,
     ) -> tuple[str, str, int]:
         # Allow overriding default settings. If a piece of code really wants to

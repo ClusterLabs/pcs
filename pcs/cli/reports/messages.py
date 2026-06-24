@@ -1,6 +1,6 @@
 from collections.abc import Mapping
 from functools import partial
-from typing import Any, Optional, get_type_hints
+from typing import Any, get_type_hints
 
 from pcs.common import file_type_codes
 from pcs.common.reports import (
@@ -38,7 +38,7 @@ class CliReportMessage:
         return self._dto_obj.payload
 
     def get_message_with_force_text(
-        self, force_code: Optional[types.ForceCode]
+        self, force_code: types.ForceCode | None
     ) -> str:
         force_text_map = {
             codes.SKIP_OFFLINE_NODES: ", use --skip-offline to override",
@@ -609,7 +609,7 @@ class AgentSelfValidationResult(CliReportMessageCustom):
         return f"{self._base_msg}:\n{self._formatted_result}"
 
     def get_message_with_force_text(
-        self, force_code: Optional[types.ForceCode]
+        self, force_code: types.ForceCode | None
     ) -> str:
         force_text = (
             " (use --force to override)" if force_code == codes.FORCE else ""

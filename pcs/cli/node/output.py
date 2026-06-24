@@ -1,7 +1,6 @@
 import shlex
 from collections.abc import Sequence
 from dataclasses import replace
-from typing import Optional
 
 from pcs.cli.common.output import INDENT_STEP, pairs_to_cmd
 from pcs.cli.nvset import filter_nvpairs_by_names, nvset_dto_to_lines
@@ -10,7 +9,7 @@ from pcs.common.pacemaker.nvset import CibNvsetDto
 from pcs.common.str_tools import indent
 
 
-def _description_to_lines(desc: Optional[str]) -> list[str]:
+def _description_to_lines(desc: str | None) -> list[str]:
     return [f"Description: {desc}"] if desc else []
 
 

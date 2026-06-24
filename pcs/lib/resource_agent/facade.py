@@ -1,7 +1,6 @@
 from collections import defaultdict
 from collections.abc import Iterable
 from dataclasses import replace as dc_replace
-from typing import Optional
 
 from pcs.common import reports
 from pcs.common.types import StringIterable
@@ -38,9 +37,7 @@ class ResourceAgentFacade:
     def __init__(
         self,
         metadata: ResourceAgentMetadata,
-        additional_parameters: Optional[
-            Iterable[ResourceAgentParameter]
-        ] = None,
+        additional_parameters: Iterable[ResourceAgentParameter] | None = None,
     ) -> None:
         """
         metadata -- parsed OCF metadata in a universal format (not version specific)
@@ -48,7 +45,7 @@ class ResourceAgentFacade:
         """
         self._raw_metadata = metadata
         self._additional_parameters = additional_parameters
-        self._pcs_metadata_cache: Optional[ResourceAgentMetadata] = None
+        self._pcs_metadata_cache: ResourceAgentMetadata | None = None
 
     @property
     def metadata(self) -> ResourceAgentMetadata:
@@ -84,9 +81,7 @@ class ResourceAgentFacade:
     def get_validators_allowed_parameters(
         self,
         force: bool = False,
-        banned_parameter_list: Optional[
-            Iterable[validate.TypeOptionName]
-        ] = None,
+        banned_parameter_list: Iterable[validate.TypeOptionName] | None = None,
     ) -> list[validate.ValidatorInterface]:
         """
         Return validators checking for specified parameters names
@@ -130,7 +125,7 @@ class ResourceAgentFacade:
     def get_validators_required_parameters(
         self,
         force: bool = False,
-        only_parameters: Optional[StringIterable] = None,
+        only_parameters: StringIterable | None = None,
     ) -> list[validate.ValidatorInterface]:
         """
         Return validators checking if required parameters were specified
@@ -212,7 +207,7 @@ class ResourceAgentFacadeFactory:
     ) -> None:
         self._runner = runner
         self._report_processor = report_processor
-        self._fenced_metadata: Optional[ResourceAgentMetadata] = None
+        self._fenced_metadata: ResourceAgentMetadata | None = None
 
     def facade_from_parsed_name(
         self, name: ResourceAgentName

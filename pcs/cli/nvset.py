@@ -1,6 +1,5 @@
 from collections.abc import Iterable, Mapping
 from dataclasses import replace
-from typing import Optional
 
 from pcs.cli.rule import (
     get_in_effect_label,
@@ -46,7 +45,7 @@ def filter_nvpairs_by_names(
 
 def _get_nvpairs_by_sensitivity(
     nvset_dto: CibNvsetDto,
-    secrets_map: Mapping[str, Optional[str]],
+    secrets_map: Mapping[str, str | None],
     sensitive: bool,
 ) -> list[CibNvpairDto]:
     if not secrets_map:
@@ -64,13 +63,13 @@ def _get_nvpairs_by_sensitivity(
 
 
 def _get_secret_nvpairs(
-    nvset_dto: CibNvsetDto, secrets_map: Mapping[str, Optional[str]]
+    nvset_dto: CibNvsetDto, secrets_map: Mapping[str, str | None]
 ) -> list[CibNvpairDto]:
     return _get_nvpairs_by_sensitivity(nvset_dto, secrets_map, True)
 
 
 def _get_non_secret_nvpairs(
-    nvset_dto: CibNvsetDto, secrets_map: Mapping[str, Optional[str]]
+    nvset_dto: CibNvsetDto, secrets_map: Mapping[str, str | None]
 ) -> list[CibNvpairDto]:
     return _get_nvpairs_by_sensitivity(nvset_dto, secrets_map, False)
 
@@ -79,7 +78,7 @@ def nvset_dto_list_to_lines(
     nvset_dto_list: Iterable[CibNvsetDto],
     nvset_label: str,
     with_ids: bool = False,
-    secrets_map: Optional[Mapping[str, Optional[str]]] = None,
+    secrets_map: Mapping[str, str | None] | None = None,
 ) -> list[str]:
     return [
         line
@@ -97,7 +96,7 @@ def nvset_dto_to_lines(
     nvset: CibNvsetDto,
     nvset_label: str = "Options Set",
     with_ids: bool = False,
-    secrets_map: Optional[Mapping[str, Optional[str]]] = None,
+    secrets_map: Mapping[str, str | None] | None = None,
 ) -> list[str]:
     if secrets_map is None:
         secrets_map = {}

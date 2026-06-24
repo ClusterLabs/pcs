@@ -2,7 +2,7 @@ import base64
 import os.path
 from collections.abc import Mapping
 from functools import partial
-from typing import Optional, cast
+from typing import cast
 
 from lxml.etree import _Element
 
@@ -70,7 +70,7 @@ def config_setup(
     env: LibraryEnvironment,
     site_list: StringSequence,
     arbitrator_list: StringSequence,
-    instance_name: Optional[str] = None,
+    instance_name: str | None = None,
     overwrite_existing: bool = False,
 ) -> None:
     """
@@ -141,7 +141,7 @@ def config_setup(
 
 def config_destroy(  # noqa: PLR0912
     env: LibraryEnvironment,
-    instance_name: Optional[str] = None,
+    instance_name: str | None = None,
     ignore_config_load_problems: bool = False,
 ) -> None:
     # pylint: disable=too-many-branches
@@ -272,7 +272,7 @@ def config_destroy(  # noqa: PLR0912
 
 # TODO: remove once settings booth_enable_autfile_(set|unset)_enabled are removed
 def _config_set_enable_authfile(
-    env: LibraryEnvironment, value: bool, instance_name: Optional[str] = None
+    env: LibraryEnvironment, value: bool, instance_name: str | None = None
 ) -> None:
     report_processor = env.report_processor
     booth_env = env.get_booth_env(instance_name)
@@ -297,21 +297,21 @@ def _config_set_enable_authfile(
 
 
 def config_set_enable_authfile(
-    env: LibraryEnvironment, instance_name: Optional[str] = None
+    env: LibraryEnvironment, instance_name: str | None = None
 ) -> None:
     _config_set_enable_authfile(env, True, instance_name=instance_name)
 
 
 def config_unset_enable_authfile(
-    env: LibraryEnvironment, instance_name: Optional[str] = None
+    env: LibraryEnvironment, instance_name: str | None = None
 ) -> None:
     _config_set_enable_authfile(env, False, instance_name=instance_name)
 
 
 def config_text(
     env: LibraryEnvironment,
-    instance_name: Optional[str] = None,
-    node_name: Optional[str] = None,
+    instance_name: str | None = None,
+    node_name: str | None = None,
 ) -> str:
     """
     get configuration in raw format
@@ -356,7 +356,7 @@ def config_text(
 
 def get_config_and_authfile(
     env: LibraryEnvironment,
-    instance_name: Optional[str] = None,
+    instance_name: str | None = None,
 ) -> BoothConfigAndAuthfileDto:
     """
     Read booth config and its authfile and return their content.
@@ -390,7 +390,7 @@ def get_config_and_authfile(
         raise LibraryError() from e
     report_processor.report_list(authfile_report_list)
 
-    authfile: Optional[BoothConfigFileDto] = None
+    authfile: BoothConfigFileDto | None = None
     if authfile_name and authfile_data is not None:
         authfile = BoothConfigFileDto(
             name=authfile_name,
@@ -410,7 +410,7 @@ def config_ticket_add(
     env: LibraryEnvironment,
     ticket_name: str,
     options: validate.TypeOptionMap,
-    instance_name: Optional[str] = None,
+    instance_name: str | None = None,
     allow_unknown_options: bool = False,
 ) -> None:
     """
@@ -456,7 +456,7 @@ def config_ticket_add(
 def config_ticket_remove(
     env: LibraryEnvironment,
     ticket_name: str,
-    instance_name: Optional[str] = None,
+    instance_name: str | None = None,
 ) -> None:
     """
     remove a ticket from booth configuration
@@ -489,7 +489,7 @@ def config_ticket_remove(
 def create_in_cluster(
     env: LibraryEnvironment,
     ip: str,
-    instance_name: Optional[str] = None,
+    instance_name: str | None = None,
     allow_absent_resource_agent: bool = False,
 ) -> None:
     """
@@ -574,7 +574,7 @@ def create_in_cluster(
 
 
 def get_resource_ids_from_cluster(
-    env: LibraryEnvironment, instance_name: Optional[str] = None
+    env: LibraryEnvironment, instance_name: str | None = None
 ) -> list[str]:
     """
     Return resource ids of booth related resources in cluster. This includes the
@@ -598,7 +598,7 @@ def get_resource_ids_from_cluster(
 
 def remove_from_cluster(
     env: LibraryEnvironment,
-    instance_name: Optional[str] = None,
+    instance_name: str | None = None,
     force_flags: reports.types.ForceFlags = (),
 ) -> None:
     """
@@ -662,7 +662,7 @@ def remove_from_cluster(
 
 def restart(
     env: LibraryEnvironment,
-    instance_name: Optional[str] = None,
+    instance_name: str | None = None,
     allow_multiple: bool = False,
 ) -> None:
     """
@@ -688,8 +688,8 @@ def restart(
 def ticket_grant(
     env: LibraryEnvironment,
     ticket_name: str,
-    site_ip: Optional[str] = None,
-    instance_name: Optional[str] = None,
+    site_ip: str | None = None,
+    instance_name: str | None = None,
 ) -> None:
     """
     Grant a ticket to the site specified by site_ip
@@ -711,8 +711,8 @@ def ticket_grant(
 def ticket_revoke(
     env: LibraryEnvironment,
     ticket_name: str,
-    site_ip: Optional[str] = None,
-    instance_name: Optional[str] = None,
+    site_ip: str | None = None,
+    instance_name: str | None = None,
 ) -> None:
     """
     Revoke a ticket from the site specified by site_ip
@@ -735,8 +735,8 @@ def _ticket_operation(
     operation: str,
     env: LibraryEnvironment,
     ticket_name: str,
-    site_ip: Optional[str],
-    instance_name: Optional[str],
+    site_ip: str | None,
+    instance_name: str | None,
 ) -> None:
     booth_env = env.get_booth_env(instance_name)
     _ensure_live_env(env, booth_env)
@@ -793,7 +793,7 @@ def ticket_cleanup(env: LibraryEnvironment, ticket_name: str) -> None:
 
 
 def ticket_cleanup_auto(
-    env: LibraryEnvironment, instance_name: Optional[str] = None
+    env: LibraryEnvironment, instance_name: str | None = None
 ) -> None:
     """
     Cleanup (remove from CIB on local site) all booth tickets that are in CIB
@@ -946,7 +946,7 @@ def _validate_ticket_in_cib(
 
 def config_sync(
     env: LibraryEnvironment,
-    instance_name: Optional[str] = None,
+    instance_name: str | None = None,
     skip_offline_nodes: bool = False,
 ) -> None:
     """
@@ -1017,7 +1017,7 @@ def config_sync(
 
 
 def enable_booth(
-    env: LibraryEnvironment, instance_name: Optional[str] = None
+    env: LibraryEnvironment, instance_name: str | None = None
 ) -> None:
     """
     Enable specified instance of booth service, systemd systems supported only.
@@ -1046,7 +1046,7 @@ def enable_booth(
 
 
 def disable_booth(
-    env: LibraryEnvironment, instance_name: Optional[str] = None
+    env: LibraryEnvironment, instance_name: str | None = None
 ) -> None:
     """
     Disable specified instance of booth service, systemd systems supported only.
@@ -1075,7 +1075,7 @@ def disable_booth(
 
 
 def start_booth(
-    env: LibraryEnvironment, instance_name: Optional[str] = None
+    env: LibraryEnvironment, instance_name: str | None = None
 ) -> None:
     """
     Start specified instance of booth service, systemd systems supported only.
@@ -1106,7 +1106,7 @@ def start_booth(
 
 
 def stop_booth(
-    env: LibraryEnvironment, instance_name: Optional[str] = None
+    env: LibraryEnvironment, instance_name: str | None = None
 ) -> None:
     """
     Stop specified instance of booth service, systemd systems supported only.
@@ -1135,7 +1135,7 @@ def stop_booth(
 
 
 def pull_config(
-    env: LibraryEnvironment, node_name: str, instance_name: Optional[str] = None
+    env: LibraryEnvironment, node_name: str, instance_name: str | None = None
 ) -> None:
     """
     Get config from specified node and save it on local system. It will
@@ -1205,7 +1205,7 @@ def pull_config(
 
 
 def get_status(
-    env: LibraryEnvironment, instance_name: Optional[str] = None
+    env: LibraryEnvironment, instance_name: str | None = None
 ) -> Mapping[str, str]:
     """
     get booth status info

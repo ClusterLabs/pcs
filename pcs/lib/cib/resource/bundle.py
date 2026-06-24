@@ -1,5 +1,5 @@
 from collections.abc import Iterable, Mapping
-from typing import Optional, cast
+from typing import cast
 
 from lxml import etree
 from lxml.etree import _Element
@@ -76,7 +76,7 @@ def is_bundle(resource_el: _Element) -> bool:
     return resource_el.tag == TAG
 
 
-def get_parent_bundle(resource_el: _Element) -> Optional[_Element]:
+def get_parent_bundle(resource_el: _Element) -> _Element | None:
     """
     Get a parent bundle of a primitive or None
 
@@ -90,7 +90,7 @@ def get_parent_bundle(resource_el: _Element) -> Optional[_Element]:
 
 def bundle_element_to_dto(
     bundle_element: _Element,
-    rule_eval: Optional[rule.RuleInEffectEval] = None,
+    rule_eval: rule.RuleInEffectEval | None = None,
 ) -> bundle.CibResourceBundleDto:
     if rule_eval is None:
         rule_eval = rule.RuleInEffectEvalDummy()
@@ -532,14 +532,14 @@ def add_resource(bundle_element: _Element, primitive_element: _Element) -> None:
     bundle_element.append(primitive_element)
 
 
-def get_inner_resource(bundle_el: _Element) -> Optional[_Element]:
+def get_inner_resource(bundle_el: _Element) -> _Element | None:
     resources = cast(list[_Element], bundle_el.xpath("./primitive"))
     if resources:
         return resources[0]
     return None
 
 
-def _is_supported_container(container_el: Optional[_Element]) -> bool:
+def _is_supported_container(container_el: _Element | None) -> bool:
     return (
         container_el is not None and container_el.tag in GENERIC_CONTAINER_TYPES
     )
@@ -955,7 +955,7 @@ def _append_storage_map(
     return storage_map_element
 
 
-def _get_container_element(bundle_el: _Element) -> Optional[_Element]:
+def _get_container_element(bundle_el: _Element) -> _Element | None:
     container_el = None
     for container_type in GENERIC_CONTAINER_TYPES:
         container_el = bundle_el.find(container_type)

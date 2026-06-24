@@ -1,5 +1,5 @@
 from collections.abc import Iterable, Mapping
-from typing import Optional, cast
+from typing import cast
 
 from lxml.etree import _Element
 
@@ -189,7 +189,7 @@ def validate_create(
 
 
 def _prepare_instance_attributes(
-    instance_attributes: Optional[Mapping[str, str]],
+    instance_attributes: Mapping[str, str] | None,
     host: str,
 ) -> Mapping[str, str]:
     enriched_instance_attributes = (
@@ -207,9 +207,9 @@ def create(  # noqa: PLR0913
     id_provider: IdProvider,
     host: str,
     node_name: str,
-    raw_operation_list: Optional[Iterable[ResourceOperationIn]] = None,
-    meta_attributes: Optional[Mapping[str, str]] = None,
-    instance_attributes: Optional[Mapping[str, str]] = None,
+    raw_operation_list: Iterable[ResourceOperationIn] | None = None,
+    meta_attributes: Mapping[str, str] | None = None,
+    instance_attributes: Mapping[str, str] | None = None,
     allow_invalid_operation: bool = False,
     allow_invalid_instance_attributes: bool = False,
     use_default_operations: bool = True,

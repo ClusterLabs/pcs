@@ -1,5 +1,4 @@
 from collections.abc import Sequence
-from typing import Optional
 
 from pcs.cli.common.output import (
     INDENT_STEP,
@@ -82,7 +81,7 @@ def set_constraint_to_text(
     return result
 
 
-def resource_set_to_cmd(resource_set: CibResourceSetDto) -> Optional[list[str]]:
+def resource_set_to_cmd(resource_set: CibResourceSetDto) -> list[str] | None:
     filtered_pairs = []
     for pair in _resource_set_options_to_pairs(resource_set):
         # this list is based on pcs.lib.cib.constraint.resource_set._ATTRIBUTES

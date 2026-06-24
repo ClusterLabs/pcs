@@ -1,5 +1,5 @@
 from collections.abc import Iterable, Mapping
-from typing import NewType, Optional, cast
+from typing import NewType, cast
 
 from lxml import etree
 from lxml.etree import _Element
@@ -78,7 +78,7 @@ def nvset_element_to_dto(
     )
 
 
-def nvset_to_dict(nvset_el: _Element) -> dict[str, Optional[str]]:
+def nvset_to_dict(nvset_el: _Element) -> dict[str, str | None]:
     """
     Export only nvpairs from an nvset xml element into a dictionary
     """
@@ -156,7 +156,7 @@ class ValidateNvsetAppendNew:
         id_provider: IdProvider,
         nvpair_dict: Mapping[str, str],
         nvset_options: Mapping[str, str],
-        nvset_rule: Optional[str] = None,
+        nvset_rule: str | None = None,
         rule_allows_rsc_expr: bool = False,
         rule_allows_op_expr: bool = False,
         rule_allows_node_attr_expr: bool = False,
@@ -177,7 +177,7 @@ class ValidateNvsetAppendNew:
         self._allow_rsc_expr = rule_allows_rsc_expr
         self._allow_op_expr = rule_allows_op_expr
         self._allow_node_attr_expr = rule_allows_node_attr_expr
-        self._nvset_rule_parsed: Optional[RuleRoot] = None
+        self._nvset_rule_parsed: RuleRoot | None = None
 
     def validate(self, force_options: bool = False) -> reports.ReportItemList:
         report_list: reports.ReportItemList = []
@@ -232,7 +232,7 @@ class ValidateNvsetAppendNew:
 
         return report_list
 
-    def get_parsed_rule(self) -> Optional[RuleRoot]:
+    def get_parsed_rule(self) -> RuleRoot | None:
         return self._nvset_rule_parsed
 
 
@@ -243,7 +243,7 @@ def nvset_append_new(
     nvset_tag: NvsetTag,
     nvpair_dict: Mapping[str, str],
     nvset_options: Mapping[str, str],
-    nvset_rule: Optional[RuleRoot] = None,
+    nvset_rule: RuleRoot | None = None,
 ) -> _Element:
     """
     Create new nvset and append it to CIB

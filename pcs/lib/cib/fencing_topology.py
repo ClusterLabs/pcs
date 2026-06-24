@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Any, Final, Optional, TypeVar, cast
+from typing import Any, Final, TypeVar, cast
 
 from lxml import etree
 from lxml.etree import (
@@ -82,7 +82,7 @@ def add_level(  # noqa: PLR0913
     target_value: FencingTargetValue,
     devices: StringSequence,
     cluster_status_nodes: Sequence[StateElement],
-    level_id: Optional[str] = None,
+    level_id: str | None = None,
     force_device: bool = False,
     force_node: bool = False,
 ) -> None:
@@ -157,10 +157,10 @@ def remove_all_levels(topology_el: _Element) -> None:
 
 def remove_levels_by_params(
     topology_el: _Element,
-    level: Optional[str] = None,
-    target_type: Optional[FencingTargetType] = None,
-    target_value: Optional[FencingTargetValue] = None,
-    devices: Optional[StringSequence] = None,
+    level: str | None = None,
+    target_type: FencingTargetType | None = None,
+    target_value: FencingTargetValue | None = None,
+    devices: StringSequence | None = None,
 ) -> ReportItemList:
     """
     Remove specified fencing level(s)
@@ -263,8 +263,8 @@ def export(topology_el: _Element) -> list[dict[str, Any]]:
     """
     export_levels = []
     for level_el in topology_el.iterfind(TAG_FENCING_LEVEL):
-        target_type: Optional[FencingTargetType] = None
-        target_value: Optional[FencingTargetValue] = None
+        target_type: FencingTargetType | None = None
+        target_value: FencingTargetValue | None = None
         if "target" in level_el.attrib:
             target_type = TARGET_TYPE_NODE
             target_value = level_el.get("target")
@@ -567,10 +567,10 @@ def _find_all_level_elements(tree: _Element) -> list[_Element]:
 
 def _find_level_elements(
     tree: _Element,
-    level: Optional[str] = None,
-    target_type: Optional[FencingTargetType] = None,
-    target_value: Optional[FencingTargetValue] = None,
-    devices: Optional[StringSequence] = None,
+    level: str | None = None,
+    target_type: FencingTargetType | None = None,
+    target_value: FencingTargetValue | None = None,
+    devices: StringSequence | None = None,
 ) -> list[_Element]:
     xpath_vars: dict[str, str] = {}
 

@@ -3,7 +3,6 @@ import os
 import re
 import stat
 from collections.abc import Mapping
-from typing import Optional
 
 from pcs import settings
 from pcs.common import reports
@@ -33,8 +32,8 @@ class _StonithWatchdogTimeoutValidator(validate.ValuePredicateBase):
         self,
         option_name: validate.TypeOptionName,
         threshold: int,
-        option_name_for_report: Optional[str] = None,
-        severity: Optional[reports.ReportItemSeverity] = None,
+        option_name_for_report: str | None = None,
+        severity: reports.ReportItemSeverity | None = None,
     ):
         """
         threshold -- values greater than this are allowed
@@ -217,7 +216,7 @@ def create_sbd_config(
     base_config: Mapping[str, str],
     node_label: str,
     watchdog: str,
-    device_list: Optional[StringSequence] = None,
+    device_list: StringSequence | None = None,
 ) -> str:
     # TODO: figure out which name/ring has to be in SBD_OPTS
     config = dict(base_config)
@@ -527,7 +526,7 @@ def get_available_watchdogs(
 
 
 def test_watchdog(
-    cmd_runner: CommandRunner, watchdog: Optional[str] = None
+    cmd_runner: CommandRunner, watchdog: str | None = None
 ) -> None:
     cmd = [settings.sbd_exec, "test-watchdog"]
     if watchdog:

@@ -1,7 +1,7 @@
 import contextlib
 from collections.abc import Iterable as IterableAbc
 from collections.abc import Mapping, Sequence, Sized
-from typing import Any, Optional, TypeVar
+from typing import Any, TypeVar
 
 from pcs.common.types import (
     StringIterable,
@@ -107,7 +107,7 @@ def format_name_value_id_list(
 
 
 def format_name_optional_value_or_id_list(
-    item_list: Sequence[tuple[str, Optional[str], Optional[str]]],
+    item_list: Sequence[tuple[str, str | None, str | None]],
 ) -> list[str]:
     """
     Turn 3-tuples to strings with starndard quoting:
@@ -235,7 +235,7 @@ def get_plural(singular: str) -> str:
 def format_plural(
     depends_on: int | Sized,
     singular: str,
-    plural: Optional[str] = None,
+    plural: str | None = None,
 ) -> str:
     """
     Takes the singular word form and returns its plural form if depends_on

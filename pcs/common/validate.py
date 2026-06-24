@@ -1,13 +1,12 @@
 import re
-from typing import Optional
 
 _INTEGER_RE = re.compile(r"^[+-]?[0-9]+$")
 
 
 def is_integer(
     value: str | int | float,
-    at_least: Optional[int] = None,
-    at_most: Optional[int] = None,
+    at_least: int | None = None,
+    at_most: int | None = None,
 ) -> bool:
     """
     Check if the specified value is an integer, optionally check a range

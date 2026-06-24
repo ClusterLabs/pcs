@@ -1,6 +1,5 @@
 # pylint: disable=too-many-lines
 from collections.abc import Sequence
-from typing import Optional
 from unittest import TestCase
 
 from pcs.common.const import (
@@ -36,11 +35,11 @@ from pcs.common.types import StringSequence
 
 def fixture_primitive_dto(  # noqa: PLR0913
     resource_id: str,
-    instance_id: Optional[str],
+    instance_id: str | None,
     *,
     resource_agent: str = "ocf:pacemaker:Dummy",
     role: PcmkStatusRoleType = PCMK_STATUS_ROLE_STARTED,
-    target_role: Optional[PcmkRoleType] = None,
+    target_role: PcmkRoleType | None = None,
     active: bool = True,
     orphaned: bool = False,
     blocked: bool = False,
@@ -49,8 +48,8 @@ def fixture_primitive_dto(  # noqa: PLR0913
     failure_ignored: bool = False,
     managed: bool = True,
     node_names: StringSequence = ("node1",),
-    pending: Optional[str] = None,
-    locked_to: Optional[str] = None,
+    pending: str | None = None,
+    locked_to: str | None = None,
 ) -> PrimitiveStatusDto:
     # pylint: disable=too-many-arguments
     return PrimitiveStatusDto(
@@ -75,7 +74,7 @@ def fixture_primitive_dto(  # noqa: PLR0913
 
 def fixture_group_dto(
     resource_id: str,
-    instance_id: Optional[str],
+    instance_id: str | None,
     maintenance: bool = False,
     managed: bool = True,
     disabled: bool = False,

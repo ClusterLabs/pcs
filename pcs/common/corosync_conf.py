@@ -1,6 +1,5 @@
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Optional
 
 from pcs.common.interface.dto import DataTransferObject
 from pcs.common.types import (
@@ -35,7 +34,7 @@ class CorosyncQuorumDeviceSettingsDto(DataTransferObject):
 class CorosyncConfDto(DataTransferObject):
     # pylint: disable=too-many-instance-attributes
     cluster_name: str
-    cluster_uuid: Optional[str]
+    cluster_uuid: str | None
     transport: CorosyncTransportType
     totem_options: Mapping[str, str]
     transport_options: Mapping[str, str]
@@ -44,4 +43,4 @@ class CorosyncConfDto(DataTransferObject):
     nodes: Sequence[CorosyncNodeDto]
     links_options: Mapping[str, Mapping[str, str]]
     quorum_options: Mapping[str, str]
-    quorum_device: Optional[CorosyncQuorumDeviceSettingsDto]
+    quorum_device: CorosyncQuorumDeviceSettingsDto | None

@@ -1,6 +1,5 @@
 import os.path
 import re
-from typing import Optional
 
 from pcs.common.types import StringIterable
 
@@ -32,7 +31,7 @@ class SystemdDriver(ServiceManagerInterface):
         self._systemd_unit_paths = systemd_unit_paths
         self._available_services: list[str] = []
 
-    def start(self, service: str, instance: Optional[str] = None) -> None:
+    def start(self, service: str, instance: str | None = None) -> None:
         result = self._executor.run(
             [
                 self._systemctl_bin,
@@ -45,7 +44,7 @@ class SystemdDriver(ServiceManagerInterface):
                 service, result.joined_output, instance
             )
 
-    def stop(self, service: str, instance: Optional[str] = None) -> None:
+    def stop(self, service: str, instance: str | None = None) -> None:
         result = self._executor.run(
             [
                 self._systemctl_bin,
@@ -58,7 +57,7 @@ class SystemdDriver(ServiceManagerInterface):
                 service, result.joined_output, instance
             )
 
-    def enable(self, service: str, instance: Optional[str] = None) -> None:
+    def enable(self, service: str, instance: str | None = None) -> None:
         result = self._executor.run(
             [
                 self._systemctl_bin,
@@ -71,7 +70,7 @@ class SystemdDriver(ServiceManagerInterface):
                 service, result.joined_output, instance
             )
 
-    def disable(self, service: str, instance: Optional[str] = None) -> None:
+    def disable(self, service: str, instance: str | None = None) -> None:
         if not self.is_installed(service):
             return
         result = self._executor.run(
@@ -86,7 +85,7 @@ class SystemdDriver(ServiceManagerInterface):
                 service, result.joined_output, instance
             )
 
-    def is_enabled(self, service: str, instance: Optional[str] = None) -> bool:
+    def is_enabled(self, service: str, instance: str | None = None) -> bool:
         result = self._executor.run(
             [
                 self._systemctl_bin,
@@ -96,7 +95,7 @@ class SystemdDriver(ServiceManagerInterface):
         )
         return result.retval == 0
 
-    def is_running(self, service: str, instance: Optional[str] = None) -> bool:
+    def is_running(self, service: str, instance: str | None = None) -> bool:
         result = self._executor.run(
             [
                 self._systemctl_bin,
@@ -137,6 +136,6 @@ class SystemdDriver(ServiceManagerInterface):
         return True
 
 
-def _format_service_name(service: str, instance: Optional[str]) -> str:
+def _format_service_name(service: str, instance: str | None) -> str:
     instance_str = f"@{instance}" if instance else ""
     return f"{service}{instance_str}.service"

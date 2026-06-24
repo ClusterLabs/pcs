@@ -1,4 +1,3 @@
-from typing import Optional
 from unittest import TestCase, mock
 
 from pcs.cli.resource import command
@@ -17,10 +16,10 @@ from pcs.common.status_dto import (
 def _fixture_primitive_status_dto(
     resource_id: str,
     resource_agent: str = "ocf:pacemaker:Dummy",
-    target_role: Optional[PcmkRoleType] = None,
+    target_role: PcmkRoleType | None = None,
     role: PcmkStatusRoleType = const.PCMK_STATUS_ROLE_STARTED,
     managed: bool = True,
-    node_names: Optional[list[str]] = None,
+    node_names: list[str] | None = None,
 ) -> PrimitiveStatusDto:
     return PrimitiveStatusDto(
         resource_id=resource_id,

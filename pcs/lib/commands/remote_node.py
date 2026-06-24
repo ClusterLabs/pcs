@@ -1,5 +1,5 @@
 from collections.abc import Callable, Iterable, Mapping
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from lxml.etree import _Element
 
@@ -233,7 +233,7 @@ def _ensure_resource_running(env: LibraryEnvironment, resource_id):
 def node_add_remote(  # noqa: PLR0912, PLR0913, PLR0915
     env: LibraryEnvironment,
     node_name: str,
-    node_addr: Optional[str],
+    node_addr: str | None,
     operations: Iterable[Mapping[str, str]],
     meta_attributes: Mapping[str, str],
     instance_attributes: Mapping[str, str],
@@ -290,7 +290,7 @@ def node_add_remote(  # noqa: PLR0912, PLR0913, PLR0915
     )
     id_provider = IdProvider(cib)
     if env.is_cib_live:
-        corosync_conf: Optional[CorosyncConfigFacade] = env.get_corosync_conf()
+        corosync_conf: CorosyncConfigFacade | None = env.get_corosync_conf()
     else:
         corosync_conf = None
         report_processor.report(
@@ -483,7 +483,7 @@ def node_add_guest(  # noqa: PLR0912, PLR0915
     report_processor = env.report_processor
     cib = env.get_cib()
     id_provider = IdProvider(cib)
-    corosync_conf: Optional[CorosyncConfigFacade]
+    corosync_conf: CorosyncConfigFacade | None
     if env.is_cib_live:
         corosync_conf = env.get_corosync_conf()
     else:

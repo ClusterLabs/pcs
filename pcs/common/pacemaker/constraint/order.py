@@ -1,6 +1,5 @@
 from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Optional
 
 from pcs.common.const import PcmkAction
 from pcs.common.interface.dto import DataTransferObject
@@ -12,20 +11,20 @@ from .set import CibResourceSetDto
 @dataclass(frozen=True)
 class CibConstraintOrderAttributesDto(DataTransferObject):
     constraint_id: str
-    symmetrical: Optional[bool]
-    require_all: Optional[bool]
-    score: Optional[str]
-    kind: Optional[CibResourceSetOrderType]
+    symmetrical: bool | None
+    require_all: bool | None
+    score: str | None
+    kind: CibResourceSetOrderType | None
 
 
 @dataclass(frozen=True)
 class CibConstraintOrderDto(DataTransferObject):
     first_resource_id: str
     then_resource_id: str
-    first_action: Optional[PcmkAction]
-    then_action: Optional[PcmkAction]
-    first_resource_instance: Optional[int]
-    then_resource_instance: Optional[int]
+    first_action: PcmkAction | None
+    then_action: PcmkAction | None
+    first_resource_instance: int | None
+    then_resource_instance: int | None
     attributes: CibConstraintOrderAttributesDto
 
 

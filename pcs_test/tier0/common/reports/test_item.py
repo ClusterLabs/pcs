@@ -3,7 +3,7 @@ from dataclasses import (
     dataclass,
     field,
 )
-from typing import Any, Optional
+from typing import Any
 from unittest import TestCase
 
 from pcs.common.reports import (
@@ -21,8 +21,8 @@ class ReportMessage(item.ReportItemMessage):
     string: str
     union_str_or_list_of_str: str | list[str]
     list_of_str: list[str] = field(default_factory=list)
-    optional_list_of_int: Optional[list[int]] = None
-    optional_mapping_str_to_any: Optional[Mapping[str, Any]] = None
+    optional_list_of_int: list[int] | None = None
+    optional_mapping_str_to_any: Mapping[str, Any] | None = None
     _code = REPORT_CODE
 
     @property
@@ -32,8 +32,8 @@ class ReportMessage(item.ReportItemMessage):
 
 @dataclass(frozen=True)
 class OuterReportMessage(item.ReportItemMessage):
-    optional_inner_msg: Optional[ReportMessage]
-    optional_string: Optional[str] = None
+    optional_inner_msg: ReportMessage | None
+    optional_string: str | None = None
     _code = OUTER_REPORT_CODE
 
     @property

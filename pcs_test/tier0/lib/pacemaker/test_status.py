@@ -1,6 +1,5 @@
 # pylint: disable=too-many-lines
 from collections.abc import Sequence
-from typing import Optional
 from unittest import TestCase
 
 from lxml import etree
@@ -39,7 +38,7 @@ def fixture_primitive_xml(
     resource_id: str = "resource",
     resource_agent: str = "ocf:heartbeat:Dummy",
     role: PcmkStatusRoleType = PCMK_STATUS_ROLE_STARTED,
-    target_role: Optional[str] = None,
+    target_role: str | None = None,
     managed: bool = True,
     node_names: Sequence[str] = ("node1",),
     add_optional_args: bool = False,
@@ -82,10 +81,10 @@ def fixture_primitive_xml(
 
 def fixture_primitive_dto(
     resource_id: str = "resource",
-    instance_id: Optional[str] = None,
+    instance_id: str | None = None,
     resource_agent: str = "ocf:heartbeat:Dummy",
     role: PcmkStatusRoleType = PCMK_STATUS_ROLE_STARTED,
-    target_role: Optional[str] = None,
+    target_role: str | None = None,
     managed: bool = True,
     node_names: Sequence[str] = ("node1",),
     add_optional_args: bool = False,
@@ -112,7 +111,7 @@ def fixture_primitive_dto(
 
 def fixture_group_xml(
     resource_id: str = "resource-group",
-    description: Optional[str] = None,
+    description: str | None = None,
     members: Sequence[str] = (),
 ) -> str:
     description = (
@@ -135,8 +134,8 @@ def fixture_group_xml(
 
 def fixture_group_dto(
     resource_id: str = "resource-group",
-    instance_id: Optional[str] = None,
-    description: Optional[str] = None,
+    instance_id: str | None = None,
+    description: str | None = None,
     members: Sequence[PrimitiveStatusDto] = (),
 ) -> GroupStatusDto:
     return GroupStatusDto(
@@ -154,8 +153,8 @@ def fixture_clone_xml(
     resource_id: str = "resource-clone",
     multi_state: bool = False,
     unique: bool = False,
-    description: Optional[str] = None,
-    target_role: Optional[str] = None,
+    description: str | None = None,
+    target_role: str | None = None,
     instances: Sequence[str] = (),
 ) -> str:
     description = (
@@ -187,8 +186,8 @@ def fixture_clone_dto(
     resource_id: str = "resource-clone",
     multi_state: bool = False,
     unique: bool = False,
-    description: Optional[str] = None,
-    target_role: Optional[str] = None,
+    description: str | None = None,
+    target_role: str | None = None,
     instances: Sequence[PrimitiveStatusDto] | Sequence[GroupStatusDto] = (),
 ) -> CloneStatusDto:
     return CloneStatusDto(
@@ -212,7 +211,7 @@ def fixture_replica_xml(
     bundle_type: str = "podman",
     ip: bool = False,
     node_name: str = "node1",
-    member: Optional[str] = None,
+    member: str | None = None,
 ) -> str:
     ip_resource = fixture_primitive_xml(
         resource_id=f"{bundle_id}-ip-192.168.122.{replica_id}",
@@ -245,7 +244,7 @@ def fixture_replica_dto(
     bundle_type: str = "podman",
     ip: bool = False,
     node_name: str = "node1",
-    member: Optional[PrimitiveStatusDto] = None,
+    member: PrimitiveStatusDto | None = None,
 ) -> BundleReplicaStatusDto:
     ip_resource = fixture_primitive_dto(
         resource_id=f"{bundle_id}-ip-192.168.122.{replica_id}",

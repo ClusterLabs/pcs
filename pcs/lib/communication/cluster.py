@@ -1,5 +1,4 @@
 import json
-from typing import Optional
 
 from dacite import DaciteError
 
@@ -96,8 +95,8 @@ class DestroyWarnOnFailure(
 
 
 class GetQuorumStatus(AllSameDataMixin, OneByOneStrategyMixin, RunRemotelyBase):
-    _quorum_status_facade: Optional[QuorumStatusFacade] = None
-    _has_failure: Optional[bool] = False
+    _quorum_status_facade: QuorumStatusFacade | None = None
+    _has_failure: bool | None = False
 
     def _get_request_data(self):
         return RequestData("remote/get_quorum_info")
@@ -134,7 +133,7 @@ class GetQuorumStatus(AllSameDataMixin, OneByOneStrategyMixin, RunRemotelyBase):
 
     def on_complete(
         self,
-    ) -> tuple[Optional[bool], Optional[QuorumStatusFacade]]:
+    ) -> tuple[bool | None, QuorumStatusFacade | None]:
         return self._has_failure, self._quorum_status_facade
 
 

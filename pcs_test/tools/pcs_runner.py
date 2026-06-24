@@ -2,7 +2,6 @@ import os.path
 import signal
 import subprocess
 from collections.abc import Mapping
-from typing import Optional
 
 from pcs.common.types import StringSequence
 
@@ -17,8 +16,8 @@ class PcsRunner:
     def __init__(
         self,
         cib_file: str,
-        corosync_conf_opt: Optional[str] = None,
-        mock_settings: Optional[Mapping[str, str]] = None,
+        corosync_conf_opt: str | None = None,
+        mock_settings: Mapping[str, str] | None = None,
     ):
         self.cib_file = cib_file
         self.corosync_conf_opt = corosync_conf_opt
@@ -34,10 +33,10 @@ class PcsRunner:
 
 
 def pcs(
-    cib_file: Optional[str],
+    cib_file: str | None,
     args: StringSequence,
-    corosync_conf_opt: Optional[str] = None,
-    mock_settings: Optional[Mapping[str, str]] = None,
+    corosync_conf_opt: str | None = None,
+    mock_settings: Mapping[str, str] | None = None,
 ) -> tuple[str, str, int]:
     if mock_settings is None:
         mock_settings = {}
@@ -61,7 +60,7 @@ def pcs(
 
 
 def _run(
-    args: StringSequence, env_extend: Optional[Mapping[str, str]] = None
+    args: StringSequence, env_extend: Mapping[str, str] | None = None
 ) -> tuple[str, str, int]:
     env_vars = {"LC_ALL": "C"}
     env_vars.update(dict(env_extend) if env_extend else {})

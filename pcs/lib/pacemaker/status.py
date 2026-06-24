@@ -1,6 +1,6 @@
 from collections import Counter
 from collections.abc import Sequence
-from typing import Optional, cast
+from typing import cast
 
 from lxml.etree import _Element
 
@@ -379,7 +379,7 @@ def _get_role(resource: _Element) -> PcmkStatusRoleType:
     return PcmkStatusRoleType(role)
 
 
-def _get_target_role(resource: _Element) -> Optional[PcmkRoleType]:
+def _get_target_role(resource: _Element) -> PcmkRoleType | None:
     target_role = resource.get("target_role")
     if target_role is None:
         return None
@@ -389,7 +389,7 @@ def _get_target_role(resource: _Element) -> Optional[PcmkRoleType]:
     return get_primary_role_value(PcmkRoleType(target_role_normalized))
 
 
-def _remove_clone_suffix(resource_id: str) -> tuple[str, Optional[str]]:
+def _remove_clone_suffix(resource_id: str) -> tuple[str, str | None]:
     if ":" in resource_id:
         resource_id, clone_suffix = resource_id.rsplit(":", 1)
         return resource_id, clone_suffix
@@ -474,7 +474,7 @@ def _pop_implicit_resource(
     expected_id: str,
     exact_match: bool,
     resource_agent: str,
-) -> Optional[PrimitiveStatusDto]:
+) -> PrimitiveStatusDto | None:
     for primitive in primitive_list:
         matching_id = (
             exact_match
@@ -509,8 +509,8 @@ def _replicas_valid(replica_list: Sequence[BundleReplicaStatusDto]) -> bool:
 
 
 def _cmp_replica_members(
-    left: Optional[PrimitiveStatusDto],
-    right: Optional[PrimitiveStatusDto],
+    left: PrimitiveStatusDto | None,
+    right: PrimitiveStatusDto | None,
     compare_ids: bool,
 ) -> bool:
     if left is None and right is None:

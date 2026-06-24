@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 from pcs.common.interface.dto import (
     ImplementsFromDto,
@@ -29,7 +29,7 @@ class ReportItemSeverity(ImplementsToDto, ImplementsFromDto):
     DEBUG = SeverityLevel("DEBUG")
 
     level: SeverityLevel
-    force_code: Optional[ForceCode] = None
+    force_code: ForceCode | None = None
 
     def to_dto(self) -> ReportItemSeverityDto:
         return ReportItemSeverityDto(
@@ -45,9 +45,7 @@ class ReportItemSeverity(ImplementsToDto, ImplementsFromDto):
         )
 
     @classmethod
-    def error(
-        cls, force_code: Optional[ForceCode] = None
-    ) -> "ReportItemSeverity":
+    def error(cls, force_code: ForceCode | None = None) -> "ReportItemSeverity":
         return cls(level=cls.ERROR, force_code=force_code)
 
     @classmethod
@@ -68,7 +66,7 @@ class ReportItemSeverity(ImplementsToDto, ImplementsFromDto):
 
 
 def get_severity(
-    force_code: Optional[ForceCode], is_forced: bool
+    force_code: ForceCode | None, is_forced: bool
 ) -> ReportItemSeverity:
     if is_forced:
         return ReportItemSeverity(ReportItemSeverity.WARNING)
@@ -76,7 +74,7 @@ def get_severity(
 
 
 def get_severity_from_flags(
-    force_code: Optional[ForceCode], force_flags: ForceFlags
+    force_code: ForceCode | None, force_flags: ForceFlags
 ) -> ReportItemSeverity:
     """
     Returns warning/error severity for report creation depending on whether the
@@ -147,14 +145,14 @@ class ReportItemContext(ImplementsToDto, ImplementsFromDto):
 class ReportItem(ImplementsToDto):
     severity: ReportItemSeverity
     message: ReportItemMessage
-    context: Optional[ReportItemContext] = None
+    context: ReportItemContext | None = None
 
     @classmethod
     def error(
         cls,
         message: ReportItemMessage,
-        force_code: Optional[ForceCode] = None,
-        context: Optional[ReportItemContext] = None,
+        force_code: ForceCode | None = None,
+        context: ReportItemContext | None = None,
     ) -> "ReportItem":
         return cls(
             severity=ReportItemSeverity.error(force_code),
@@ -166,7 +164,7 @@ class ReportItem(ImplementsToDto):
     def warning(
         cls,
         message: ReportItemMessage,
-        context: Optional[ReportItemContext] = None,
+        context: ReportItemContext | None = None,
     ) -> "ReportItem":
         return cls(
             severity=ReportItemSeverity.warning(),
@@ -178,7 +176,7 @@ class ReportItem(ImplementsToDto):
     def deprecation(
         cls,
         message: ReportItemMessage,
-        context: Optional[ReportItemContext] = None,
+        context: ReportItemContext | None = None,
     ) -> "ReportItem":
         return cls(
             severity=ReportItemSeverity.deprecation(),
@@ -190,7 +188,7 @@ class ReportItem(ImplementsToDto):
     def info(
         cls,
         message: ReportItemMessage,
-        context: Optional[ReportItemContext] = None,
+        context: ReportItemContext | None = None,
     ) -> "ReportItem":
         return cls(
             severity=ReportItemSeverity.info(),
@@ -202,7 +200,7 @@ class ReportItem(ImplementsToDto):
     def debug(
         cls,
         message: ReportItemMessage,
-        context: Optional[ReportItemContext] = None,
+        context: ReportItemContext | None = None,
     ) -> "ReportItem":
         return cls(
             severity=ReportItemSeverity.debug(),

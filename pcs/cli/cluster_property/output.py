@@ -1,6 +1,5 @@
 from collections.abc import Sequence
 from shlex import quote
-from typing import Optional
 
 from pcs.cli.nvset import nvset_dto_to_lines
 from pcs.cli.resource.output import resource_agent_parameter_metadata_to_text
@@ -78,14 +77,14 @@ class PropertyConfigurationFacade:
         return self._readonly_properties
 
     def get_property_value(
-        self, property_name: str, custom_default: Optional[str] = None
-    ) -> Optional[str]:
+        self, property_name: str, custom_default: str | None = None
+    ) -> str | None:
         nvpair = self._name_nvpair_dto_map.get(property_name)
         return nvpair.value if nvpair else custom_default
 
     def get_property_value_or_default(
-        self, property_name: str, custom_default: Optional[str] = None
-    ) -> Optional[str]:
+        self, property_name: str, custom_default: str | None = None
+    ) -> str | None:
         value = self.get_property_value(property_name)
         if value is not None:
             return value
@@ -93,7 +92,7 @@ class PropertyConfigurationFacade:
 
     def get_defaults(
         self,
-        property_names: Optional[StringSequence] = None,
+        property_names: StringSequence | None = None,
         include_advanced: bool = False,
     ) -> dict[str, str]:
         return {
@@ -106,7 +105,7 @@ class PropertyConfigurationFacade:
 
     def get_properties_metadata(
         self,
-        property_names: Optional[StringSequence] = None,
+        property_names: StringSequence | None = None,
         include_advanced: bool = False,
     ) -> Sequence[ResourceAgentParameterDto]:
         if property_names:
@@ -162,7 +161,7 @@ def properties_to_text(
 
 def properties_to_text_with_default_mark(
     properties_facade: PropertyConfigurationFacade,
-    property_names: Optional[StringSequence] = None,
+    property_names: StringSequence | None = None,
 ) -> list[str]:
     """
     Return text format of configured properties or property default values.

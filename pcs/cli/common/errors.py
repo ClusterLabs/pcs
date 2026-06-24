@@ -1,5 +1,3 @@
-from typing import Optional
-
 from pcs.common.str_tools import (
     format_list_base,
     quote_items,
@@ -20,8 +18,8 @@ class CmdLineInputError(Exception):
 
     def __init__(
         self,
-        message: Optional[str] = None,
-        hint: Optional[str] = None,
+        message: str | None = None,
+        hint: str | None = None,
         show_both_usage_and_message: bool = False,
     ) -> None:
         """

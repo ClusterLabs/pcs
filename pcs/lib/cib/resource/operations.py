@@ -1,7 +1,7 @@
 from collections import defaultdict
 from collections.abc import Iterable
 from dataclasses import replace as dt_replace
-from typing import Optional, cast
+from typing import cast
 
 from lxml import etree
 from lxml.etree import _Element
@@ -157,7 +157,7 @@ def normalized_to_operations(
 
 def validate_operation_list(
     operation_list: Iterable[validate.TypeOptionNormalizedMap],
-    allowed_operation_name_list: Optional[StringCollection],
+    allowed_operation_name_list: StringCollection | None,
     allow_invalid: bool = False,
 ) -> ReportItemList:
     """
@@ -278,7 +278,7 @@ def _get_interval_uniquer():
 
 
 def op_element_to_dto(
-    op_element: _Element, rule_eval: Optional[rule.RuleInEffectEval] = None
+    op_element: _Element, rule_eval: rule.RuleInEffectEval | None = None
 ) -> CibResourceOperationDto:
     if rule_eval is None:
         rule_eval = rule.RuleInEffectEvalDummy()
@@ -449,7 +449,7 @@ def append_new_operation(operations_element, id_provider, options):
 
 
 def get_resource_operations(
-    resource_el: _Element, names: Optional[StringCollection] = None
+    resource_el: _Element, names: StringCollection | None = None
 ) -> list[_Element]:
     """
     Get operations of a given resource, optionally filtered by name

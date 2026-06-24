@@ -1,7 +1,6 @@
 import re
 from collections.abc import Container, Sequence
 from dataclasses import dataclass
-from typing import Optional
 
 from pcs import settings
 from pcs.common import reports
@@ -177,8 +176,8 @@ def _parse_quorum_status(quorum_status: str) -> QuorumStatus:  # noqa: PLR0912
     # pylint: disable=too-many-branches
     node_list: list[QuorumStatusNode] = []
     qdevice_list: list[QuorumStatusNode] = []
-    quorate: Optional[bool] = None
-    quorum: Optional[int] = None
+    quorate: bool | None = None
+    quorum: int | None = None
 
     in_node_list = False
     try:
@@ -249,7 +248,7 @@ def _parse_quorum_status(quorum_status: str) -> QuorumStatus:  # noqa: PLR0912
     )
 
 
-def get_corosync_version(runner: CommandRunner) -> Optional[Version]:
+def get_corosync_version(runner: CommandRunner) -> Version | None:
     """
     Return the installed corosync version or None if version cannot be
     determined.

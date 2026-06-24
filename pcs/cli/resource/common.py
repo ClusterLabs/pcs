@@ -1,6 +1,6 @@
 from collections import defaultdict
 from collections.abc import Sequence
-from typing import Any, Optional
+from typing import Any
 
 from pcs.cli.reports.output import error
 from pcs.common import const, reports
@@ -21,7 +21,7 @@ RESOURCE_NOT_RUNNING = "Resource '{resource_id}' is not running on any nodes"
 
 
 def check_is_not_stonith(
-    lib: Any, resource_id_list: list[str], cmd_to_use: Optional[str] = None
+    lib: Any, resource_id_list: list[str], cmd_to_use: str | None = None
 ) -> None:
     if lib.resource.is_any_stonith(resource_id_list):
         raise error(

@@ -1,5 +1,4 @@
 import re
-from typing import Optional
 
 from pcs import settings
 from pcs.common import reports
@@ -68,7 +67,7 @@ def is_duration(runner: CommandRunner, value: str) -> bool:
 
 def get_valid_timeout_seconds(
     timeout_candidate: str | int | None,
-) -> Optional[int]:
+) -> int | None:
     """
     Transform pacemaker style timeout to number of seconds, raise LibraryError
         on invalid timeout
@@ -88,7 +87,7 @@ def get_valid_timeout_seconds(
 
 def validate_id_reports(
     id_candidate: str,
-    description: Optional[str] = None,
+    description: str | None = None,
 ) -> reports.ReportItemList:
     """
     Validate a pacemaker id, return ReportItemList
@@ -106,7 +105,7 @@ def validate_id_reports(
 
 def validate_id(
     id_candidate: str,
-    description: Optional[str] = None,
+    description: str | None = None,
     reporter: None | list | ReportItemList = None,
 ) -> None:
     """

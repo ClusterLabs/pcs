@@ -3,7 +3,7 @@ import socket
 import struct
 from collections.abc import Sequence
 from logging import Logger
-from typing import Optional, cast
+from typing import cast
 
 from tornado.http1connection import HTTP1Connection
 from tornado.ioloop import IOLoop
@@ -83,9 +83,7 @@ class AuthProviderMulti(ApiAuthProviderInterface):
         self, providers: Sequence[ApiAuthProviderInterface], logger: Logger
     ) -> None:
         self._providers = providers
-        self._first_available_provider: Optional[ApiAuthProviderInterface] = (
-            None
-        )
+        self._first_available_provider: ApiAuthProviderInterface | None = None
         self._logger = logger
 
     def can_handle_request(self) -> bool:
@@ -165,7 +163,7 @@ class UnixSocketAuthProvider(ApiAuthProviderInterface):
             == socket.AF_UNIX
         )
 
-    def _get_unix_socket_user(self) -> Optional[str]:
+    def _get_unix_socket_user(self) -> str | None:
         """
         Extract username from Unix socket peer credentials.
 
@@ -242,7 +240,7 @@ class TokenAuthProvider(ApiAuthProviderInterface):
         self._logger = logger
 
     @property
-    def _token(self) -> Optional[str]:
+    def _token(self) -> str | None:
         return self._handler.get_cookie("token")
 
     def can_handle_request(self) -> bool:

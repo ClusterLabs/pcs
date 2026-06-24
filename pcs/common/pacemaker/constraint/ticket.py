@@ -1,6 +1,5 @@
 from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Optional
 
 from pcs.common.const import PcmkRoleType
 from pcs.common.interface.dto import DataTransferObject
@@ -13,13 +12,13 @@ from .set import CibResourceSetDto
 class CibConstraintTicketAttributesDto(DataTransferObject):
     constraint_id: str
     ticket: str
-    loss_policy: Optional[CibTicketLossPolicy]
+    loss_policy: CibTicketLossPolicy | None
 
 
 @dataclass(frozen=True)
 class CibConstraintTicketDto(DataTransferObject):
     resource_id: str
-    role: Optional[PcmkRoleType]
+    role: PcmkRoleType | None
     attributes: CibConstraintTicketAttributesDto
 
 

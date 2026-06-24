@@ -1,6 +1,5 @@
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Optional
 
 from pcs.common.interface.dto import DataTransferObject
 from pcs.common.types import (
@@ -22,7 +21,7 @@ class CibRuleExpressionDto(DataTransferObject):
     type: CibRuleExpressionType
     in_effect: CibRuleInEffectStatus  # only valid for type==rule
     options: Mapping[str, str]
-    date_spec: Optional[CibRuleDateCommonDto]
-    duration: Optional[CibRuleDateCommonDto]
+    date_spec: CibRuleDateCommonDto | None
+    duration: CibRuleDateCommonDto | None
     expressions: Sequence["CibRuleExpressionDto"]
     as_string: str

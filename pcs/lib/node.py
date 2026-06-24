@@ -1,5 +1,4 @@
 from collections.abc import Iterable
-from typing import Optional
 
 from lxml.etree import _Element
 
@@ -23,8 +22,8 @@ from pcs.lib.xml_tools import get_root
 
 
 def get_existing_nodes_names(
-    corosync_conf: Optional[CorosyncConfigFacade] = None,
-    cib: Optional[_Element] = None,
+    corosync_conf: CorosyncConfigFacade | None = None,
+    cib: _Element | None = None,
     error_on_missing_name: bool = False,
 ) -> tuple[list[str], ReportItemList]:
     return __get_nodes_names(
@@ -51,8 +50,8 @@ def get_existing_nodes_names_addrs(
 
 
 def __get_nodes(
-    corosync_conf: Optional[CorosyncConfigFacade] = None,
-    cib: Optional[_Element] = None,
+    corosync_conf: CorosyncConfigFacade | None = None,
+    cib: _Element | None = None,
 ) -> tuple[Iterable[CorosyncNode], Iterable[PacemakerNode]]:
     corosync_nodes = corosync_conf.get_nodes() if corosync_conf else []
     remote_and_guest_nodes: Iterable[PacemakerNode] = []

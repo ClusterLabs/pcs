@@ -4,7 +4,7 @@ import re
 import sys
 from collections.abc import Callable, Mapping
 from functools import partial
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 from xml.dom.minidom import parseString
 
 import pcs.lib.pacemaker.live as lib_pacemaker
@@ -740,7 +740,7 @@ def resource_create(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  #
 
 def _parse_resource_move_ban(
     argv: Argv,
-) -> tuple[str, Optional[str], Optional[str]]:
+) -> tuple[str, str | None, str | None]:
     resource_id = argv.pop(0)
     node = None
     lifetime = None
@@ -1728,7 +1728,7 @@ def _check_clone_incompatible_options_child(
 def _check_clone_incompatible_options_primitive(
     primitive_el,
     clone_meta_attrs: Mapping[str, str],
-    group_id: Optional[str] = None,
+    group_id: str | None = None,
     force: bool = False,
 ) -> reports.ReportItemList:
     resource_agent_name = _get_resource_agent_name_from_rsc_el(primitive_el)

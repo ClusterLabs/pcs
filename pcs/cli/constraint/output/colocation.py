@@ -1,6 +1,5 @@
 from collections.abc import Iterable
 from shlex import quote
-from typing import Optional
 
 from pcs.cli.common.output import (
     INDENT_STEP,
@@ -133,7 +132,7 @@ def constraints_to_text(
 def _attributes_to_cmd_pairs(
     attributes_dto: CibConstraintColocationAttributesDto,
     filter_out: StringCollection = tuple(),
-) -> Optional[list[tuple[str, str]]]:
+) -> list[tuple[str, str]] | None:
     if attributes_dto.lifetime:
         warn(
             "Lifetime configuration detected in constraint "

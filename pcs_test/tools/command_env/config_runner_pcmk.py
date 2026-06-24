@@ -1,7 +1,6 @@
 import os
 from collections.abc import Mapping
 from textwrap import dedent
-from typing import Optional
 
 from pcs import settings
 
@@ -526,11 +525,11 @@ class PcmkShortcuts:
         self,
         name: str = "runner.pcmk.load_crm_attribute_metadata",
         agent_name: str = "cluster-options",
-        stdout: Optional[str] = None,
+        stdout: str | None = None,
         stderr: str = "",
         returncode: int = 0,
-        instead: Optional[str] = None,
-        before: Optional[str] = None,
+        instead: str | None = None,
+        before: str | None = None,
     ) -> None:
         """
         Create a call for loading crm_attribute metadata - metadata provided by
@@ -574,11 +573,11 @@ class PcmkShortcuts:
         self,
         name: str = "runner.pcmk.load_crm_resource_metadata",
         agent_name: str = "primitive-meta",
-        stdout: Optional[str] = None,
+        stdout: str | None = None,
         stderr: str = "",
         returncode: int = 0,
-        instead: Optional[str] = None,
-        before: Optional[str] = None,
+        instead: str | None = None,
+        before: str | None = None,
     ) -> None:
         """
         Create a call for loading crm_resource metadata - metadata provided by
@@ -664,8 +663,8 @@ class PcmkShortcuts:
     def resource_restart(
         self,
         resource: str,
-        node: Optional[str] = None,
-        timeout: Optional[str] = None,
+        node: str | None = None,
+        timeout: str | None = None,
         stdout: str = "",
         stderr: str = "",
         returncode: int = 0,
@@ -1060,10 +1059,10 @@ class PcmkShortcuts:
     def verify(
         self,
         name: str = "runner.pcmk.verify",
-        cib_tempfile: Optional[str] = None,
-        stderr: Optional[str] = None,
+        cib_tempfile: str | None = None,
+        stderr: str | None = None,
         verbose: bool = False,
-        env: Optional[Mapping[str, str]] = None,
+        env: Mapping[str, str] | None = None,
     ) -> None:
         """
         Create a call for running crm_verify with plaintext output
@@ -1094,11 +1093,11 @@ class PcmkShortcuts:
     def verify_xml(
         self,
         name="runner.pcmk.verify_xml",
-        cib_tempfile: Optional[str] = None,
+        cib_tempfile: str | None = None,
         stdout: str = "",
         stderr: str = "",
         returncode: int = 0,
-        env: Optional[Mapping[str, str]] = None,
+        env: Mapping[str, str] | None = None,
     ) -> None:
         """
         Create a call for running crm_verify with xml output

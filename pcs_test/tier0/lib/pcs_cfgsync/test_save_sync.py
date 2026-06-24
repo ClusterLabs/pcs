@@ -1,6 +1,5 @@
 import json
 from collections.abc import Mapping
-from typing import Optional
 from unittest import TestCase
 
 from pcs import settings
@@ -24,8 +23,8 @@ from pcs_test.tools.command_env import get_env_tools
 
 def fixture_communication_result_string(
     status: CommunicationResultStatus = COM_STATUS_SUCCESS,
-    status_msg: Optional[str] = None,
-    report_list: Optional[reports.dto.ReportItemDto] = None,
+    status_msg: str | None = None,
+    report_list: reports.dto.ReportItemDto | None = None,
     data="",
 ) -> str:
     return json.dumps(
@@ -42,7 +41,7 @@ def fixture_communication_result_string(
 
 def fixture_known_hosts_file_content(
     data_version: int = 1,
-    known_hosts: Optional[Mapping[str, PcsKnownHost]] = None,
+    known_hosts: Mapping[str, PcsKnownHost] | None = None,
 ) -> str:
     return KnownHostsExporter.export(
         KnownHosts(
@@ -55,7 +54,7 @@ def fixture_known_hosts_file_content(
 
 def fixture_known_hosts_facade(
     data_version: int = 1,
-    known_hosts: Optional[Mapping[str, PcsKnownHost]] = None,
+    known_hosts: Mapping[str, PcsKnownHost] | None = None,
 ) -> KnownHostsFacade:
     return KnownHostsFacade(
         KnownHosts(

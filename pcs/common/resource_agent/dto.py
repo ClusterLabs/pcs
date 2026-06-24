@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Optional
 
 from pcs.common.interface.dto import DataTransferObject
 
@@ -7,7 +6,7 @@ from pcs.common.interface.dto import DataTransferObject
 @dataclass(frozen=True)
 class ResourceAgentNameDto(DataTransferObject):
     standard: str
-    provider: Optional[str]
+    provider: str | None
     type: str
 
 
@@ -31,16 +30,16 @@ class ResourceAgentActionDto(DataTransferObject):
     # (start, stop, promote...), mandatory by both OCF 1.0 and 1.1
     name: str
     # mandatory by both OCF 1.0 and 1.1, sometimes not defined by agents
-    timeout: Optional[str]
+    timeout: str | None
     # optional by both OCF 1.0 and 1.1
-    interval: Optional[str]
+    interval: str | None
     # optional by OCF 1.1
     # not allowed by OCF 1.0, defined in OCF 1.0 agents anyway
-    role: Optional[str]
+    role: str | None
     # OCF name: 'start-delay', optional by both OCF 1.0 and 1.1
-    start_delay: Optional[str]
+    start_delay: str | None
     # optional by both OCF 1.0 and 1.1
-    depth: Optional[str]
+    depth: str | None
     # not allowed by any OCF, defined in OCF 1.0 agents anyway
     automatic: bool
     # not allowed by any OCF, defined in OCF 1.0 agents anyway
@@ -54,15 +53,15 @@ class ResourceAgentParameterDto(DataTransferObject):
     # name of the parameter
     name: str
     # short description
-    shortdesc: Optional[str]
+    shortdesc: str | None
     # long description
-    longdesc: Optional[str]
+    longdesc: str | None
     # data type of the parameter
     type: str
     # default value of the parameter
-    default: Optional[str]
+    default: str | None
     # allowed values, only defined if type == 'select'
-    enum_values: Optional[list[str]]
+    enum_values: list[str] | None
     # True if it is a required parameter, False otherwise
     required: bool
     # True if the parameter is meant for advanced users
@@ -72,9 +71,9 @@ class ResourceAgentParameterDto(DataTransferObject):
     # list of parameters deprecating this one
     deprecated_by: list[str]
     # text describing / explaining the deprecation
-    deprecated_desc: Optional[str]
+    deprecated_desc: str | None
     # should the parameter's value be unique across same agent resources?
-    unique_group: Optional[str]
+    unique_group: str | None
     # changing this parameter's value triggers a reload instead of a restart
     reloadable: bool
 
@@ -82,8 +81,8 @@ class ResourceAgentParameterDto(DataTransferObject):
 @dataclass(frozen=True)
 class ResourceAgentMetadataDto(DataTransferObject):
     name: ResourceAgentNameDto
-    shortdesc: Optional[str]
-    longdesc: Optional[str]
+    shortdesc: str | None
+    longdesc: str | None
     parameters: list[ResourceAgentParameterDto]
     actions: list[ResourceAgentActionDto]
 

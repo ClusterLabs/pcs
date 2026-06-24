@@ -1,6 +1,5 @@
 import json
 from collections.abc import Mapping
-from typing import Optional
 
 from pcs.common.file_type_codes import (
     PCS_KNOWN_HOSTS,
@@ -27,10 +26,10 @@ class PcsCfgsyncShortcuts:
     def set_configs(
         self,
         cluster_name: str = "test99",
-        file_contents: Optional[Mapping[FileTypeCode, str]] = None,
+        file_contents: Mapping[FileTypeCode, str] | None = None,
         force: bool = False,
-        node_labels: Optional[StringSequence] = None,
-        communication_list: Optional[Mapping[str, str]] = None,
+        node_labels: StringSequence | None = None,
+        communication_list: Mapping[str, str] | None = None,
         communicator_type: NodeCommunicatorType = NodeCommunicatorType.SIMPLE,
         name="http.pcs_cfgsync.set_configs",
     ):

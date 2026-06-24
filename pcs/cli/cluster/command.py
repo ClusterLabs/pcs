@@ -1,7 +1,4 @@
-from typing import (
-    Any,
-    Optional,
-)
+from typing import Any
 
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import (
@@ -26,7 +23,7 @@ from .report_processor import NodeRemoveRemoteReportProcessor
 
 def _node_add_remote_separate_name_and_addr(
     arg_list: Argv,
-) -> tuple[str, Optional[str], list[str]]:
+) -> tuple[str, str | None, list[str]]:
     """
     Commandline options: no options
     """

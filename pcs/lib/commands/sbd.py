@@ -1,5 +1,5 @@
 from collections.abc import Iterable, Mapping
-from typing import Any, Optional
+from typing import Any
 
 from pcs import settings
 from pcs.common import reports
@@ -159,8 +159,8 @@ def _get_full_target_dict[T](
 
 def check_sbd(
     lib_env: LibraryEnvironment,
-    watchdog: Optional[str] = None,
-    device_list: Optional[StringSequence] = None,
+    watchdog: str | None = None,
+    device_list: StringSequence | None = None,
 ) -> SbdCheckResultDto:
     """
     Check whether sbd is installed, enabled and running.
@@ -181,7 +181,7 @@ def check_sbd(
         running=lib_env.service_manager.is_running(settings.sbd_service_name),
     )
 
-    watchdog_dto: Optional[SbdWatchdogStatusDto] = None
+    watchdog_dto: SbdWatchdogStatusDto | None = None
     if watchdog:
         available_watchdogs = sbd.get_available_watchdogs(lib_env.cmd_runner())
         exists = watchdog in available_watchdogs
@@ -195,7 +195,7 @@ def check_sbd(
             is_supported=exists,
         )
 
-    device_list_dto: Optional[list[SbdDeviceStatusDto]] = None
+    device_list_dto: list[SbdDeviceStatusDto] | None = None
     if device_list:
         device_list_dto = [
             sbd.check_sbd_device_exists(device) for device in device_list
@@ -210,11 +210,11 @@ def check_sbd(
 
 def enable_sbd(  # noqa: PLR0913
     lib_env: LibraryEnvironment,
-    default_watchdog: Optional[str],
+    default_watchdog: str | None,
     watchdog_dict: Mapping[str, str],
     sbd_options: Mapping[str, str],
-    default_device_list: Optional[StringSequence] = None,
-    node_device_dict: Optional[Mapping[str, StringSequence]] = None,
+    default_device_list: StringSequence | None = None,
+    node_device_dict: Mapping[str, StringSequence] | None = None,
     *,
     allow_unknown_opts: bool = False,
     ignore_offline_nodes: bool = False,
@@ -470,7 +470,7 @@ def get_cluster_sbd_status(
 
 def get_cluster_sbd_config(
     lib_env: LibraryEnvironment,
-) -> list[dict[str, Optional[str]]]:
+) -> list[dict[str, str | None]]:
     """
     Returns list of SBD config from all cluster nodes in cluster. Structure
     of data:
@@ -572,7 +572,7 @@ def initialize_block_devices(
 
 def get_local_devices_info(
     lib_env: LibraryEnvironment, dump: bool = False
-) -> list[dict[str, Optional[str]]]:
+) -> list[dict[str, str | None]]:
     """
     Returns list of local devices info in format:
     {
@@ -661,7 +661,7 @@ def get_local_available_watchdogs(
 
 
 def test_local_watchdog(
-    lib_env: LibraryEnvironment, watchdog: Optional[str] = None
+    lib_env: LibraryEnvironment, watchdog: str | None = None
 ) -> None:
     """
     Test local watchdog device by triggering it. System reset is expected. If

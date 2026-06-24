@@ -1,7 +1,4 @@
-from typing import (
-    Optional,
-    cast,
-)
+from typing import cast
 
 from lxml.etree import (
     SubElement,
@@ -32,7 +29,7 @@ def get_inner_resources(
 
 def group_element_to_dto(
     group_element: _Element,
-    rule_eval: Optional[rule.RuleInEffectEval] = None,
+    rule_eval: rule.RuleInEffectEval | None = None,
 ) -> CibResourceGroupDto:
     if rule_eval is None:
         rule_eval = rule.RuleInEffectEvalDummy()

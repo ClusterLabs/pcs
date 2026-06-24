@@ -1,5 +1,3 @@
-from typing import Optional
-
 from pcs.common import file_type_codes
 from pcs.common.reports.dto import ReportItemContextDto
 
@@ -23,7 +21,7 @@ _file_role_translation = {
 
 
 def add_context_to_message(
-    msg: str, context: Optional[ReportItemContextDto]
+    msg: str, context: ReportItemContextDto | None
 ) -> str:
     if context:
         msg = f"{context.node}: {msg}"

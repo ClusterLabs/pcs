@@ -14,7 +14,7 @@ from collections.abc import (
 )
 from dataclasses import dataclass
 from itertools import zip_longest
-from typing import Any, Optional
+from typing import Any
 
 from pcs.common import reports
 from pcs.common.corosync_conf import CorosyncNodeAddressType
@@ -57,8 +57,8 @@ class _ClusterNameGfs2Validator(validate.ValueValidator):
     def __init__(
         self,
         option_name: str,
-        option_name_for_report: Optional[str] = None,
-        severity: Optional[ReportItemSeverity] = None,
+        option_name_for_report: str | None = None,
+        severity: ReportItemSeverity | None = None,
     ):
         """
         option_name -- name of the option to check
@@ -351,7 +351,7 @@ def _extract_existing_addrs_and_names(
 
 def _validate_addr_type(
     addr: str,
-    link_index: Optional[str],
+    link_index: str | None,
     ip_version: str,
     get_addr_type: Callable[[str], CorosyncNodeAddressType],
     # these will get populated in the function
@@ -617,7 +617,7 @@ def add_nodes(  # noqa: PLR0912, PLR0915
 def remove_nodes(
     nodes_names_to_remove: StringCollection,
     existing_nodes: Iterable[CorosyncNode],
-    quorum_device_model: Optional[str],
+    quorum_device_model: str | None,
     quorum_device_settings: tuple[
         Mapping[str, str], Mapping[str, str], Mapping[str, str]
     ],
@@ -2155,8 +2155,8 @@ def _get_option_after_update(
     new_options: Mapping[str, str],
     current_options: Mapping[str, str],
     option_name: str,
-    default_value: Optional[str],
-) -> Optional[str]:
+    default_value: str | None,
+) -> str | None:
     if option_name in new_options:
         if new_options[option_name] == "":
             return default_value
@@ -2165,7 +2165,7 @@ def _get_option_after_update(
 
 
 def _get_unsuitable_keys_and_values_validators(
-    option_dict: Mapping[str, str], option_type: Optional[str] = None
+    option_dict: Mapping[str, str], option_type: str | None = None
 ) -> list[validate.ValidatorInterface]:
     return [validate.CorosyncOption(option_type=option_type)] + [
         validate.ValueCorosyncValue(name) for name in option_dict

@@ -2,7 +2,7 @@ import importlib
 import pkgutil
 from collections.abc import Sequence
 from dataclasses import dataclass, is_dataclass
-from typing import Any, Optional
+from typing import Any
 from unittest import TestCase
 
 from dacite.exceptions import WrongTypeError
@@ -64,7 +64,7 @@ class MyDto3(DataTransferObject):
 class TypeHooksDto(DataTransferObject):
     list_of_tuple_str_str_str: list[tuple[str, str, str]]
     sequence_of_tuple_str_str: Sequence[tuple[str, str]]
-    optional_tuple_str_str: Optional[tuple[str, str]]
+    optional_tuple_str_str: tuple[str, str] | None
 
 
 class DictName(TestCase):
@@ -184,7 +184,7 @@ class EnumDto(DataTransferObject):
     field_a: CorosyncNodeAddressType
     field_b: list[CorosyncNodeAddressType]
     field_c: dict[str, CorosyncNodeAddressType]
-    field_d: Optional[CorosyncNodeAddressType]
+    field_d: CorosyncNodeAddressType | None
 
 
 class EnumConversion(TestCase):

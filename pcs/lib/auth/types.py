@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Optional
 
 from pcs.common.tools import StringCollection
 
@@ -18,5 +17,5 @@ class AuthUser:
 
 @dataclass(frozen=True)
 class DesiredUser:
-    username: Optional[str]
-    groups: Optional[StringCollection]
+    username: str | None
+    groups: StringCollection | None

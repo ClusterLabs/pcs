@@ -1,5 +1,3 @@
-from typing import Optional
-
 from pcs.daemon import log, ruby_pcsd
 from pcs.daemon.app.auth_provider import (
     ApiAuthProviderFactoryInterface,
@@ -24,7 +22,7 @@ class SinatraRemote(LegacyApiHandler, SinatraMixin):
     """
 
     _auth_provider: ApiAuthProviderInterface
-    _effective_user: Optional[AuthUser]
+    _effective_user: AuthUser | None
 
     def initialize(
         self,

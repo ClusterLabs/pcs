@@ -1,5 +1,5 @@
 from collections.abc import Iterable
-from typing import Any, Optional, cast
+from typing import Any, cast
 
 from pcs.common.interface.dto import to_dict
 from pcs.common.pacemaker.resource.operations import (
@@ -62,7 +62,7 @@ def list_ocf_providers(lib_env: LibraryEnvironment) -> list[str]:
 
 
 def list_agents_for_standard_and_provider(
-    lib_env: LibraryEnvironment, standard_provider: Optional[str] = None
+    lib_env: LibraryEnvironment, standard_provider: str | None = None
 ) -> list[str]:
     """
     List resource agents for specified standard on the local host
@@ -92,7 +92,7 @@ def list_agents_for_standard_and_provider(
 def list_agents(
     lib_env: LibraryEnvironment,
     describe: bool = True,
-    search: Optional[str] = None,
+    search: str | None = None,
 ) -> list[dict[str, Any]]:
     """
     List all resource agents on the local host, optionally filtered and
@@ -210,7 +210,7 @@ def _complete_agent_list(
     report_processor: ReportProcessor,
     agent_names: Iterable[ResourceAgentName],
     describe: bool,
-    search: Optional[str],
+    search: str | None,
 ) -> list[dict[str, Any]]:
     agent_factory = ResourceAgentFacadeFactory(runner, report_processor)
     search_lower = search.lower() if search else None

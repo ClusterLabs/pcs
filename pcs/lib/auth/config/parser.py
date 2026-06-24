@@ -1,5 +1,3 @@
-from typing import Optional
-
 import dacite
 
 from pcs.common import file_type_codes as code
@@ -14,7 +12,7 @@ from .types import TokenEntry
 
 
 class ParserError(ParserErrorException):
-    def __init__(self, msg: Optional[str] = None) -> None:
+    def __init__(self, msg: str | None = None) -> None:
         super().__init__()
         self.msg = msg
 
@@ -36,8 +34,8 @@ class Parser(ParserInterface):
     def exception_to_report_list(
         exception: ParserErrorException,
         file_type_code: code.FileTypeCode,
-        file_path: Optional[str],
-        force_code: Optional[reports.types.ForceCode],
+        file_path: str | None,
+        force_code: reports.types.ForceCode | None,
         is_forced_or_warning: bool,
     ) -> reports.ReportItemList:
         raise NotImplementedError()

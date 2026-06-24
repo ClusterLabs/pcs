@@ -1,5 +1,4 @@
 from collections.abc import Callable, Iterable
-from typing import Optional
 
 from pcs.cli.common.tools import print_to_stderr
 from pcs.common.reports import (
@@ -18,7 +17,7 @@ from .output import (
     warn,
 )
 
-ReportItemPreprocessor = Callable[[ReportItem], Optional[ReportItem]]
+ReportItemPreprocessor = Callable[[ReportItem], ReportItem | None]
 
 
 class ReportProcessorToConsole(ReportProcessor):

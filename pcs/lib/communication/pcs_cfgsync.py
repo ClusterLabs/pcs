@@ -191,11 +191,11 @@ class GetConfigs(
             "configs": {
                 "pcs_settings.conf": {
                     "type": str -> ("file"),
-                    "text": Optional[str]
+                    "text": str | None
                 },
                 "known-hosts": {
                     "type": str -> ("file"),
-                    "text": Optional[str]
+                    "text": str | None
                 }
             }
         }

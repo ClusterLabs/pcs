@@ -1,5 +1,5 @@
 from collections.abc import Mapping
-from typing import Optional, cast
+from typing import cast
 
 from pcs.common import reports
 from pcs.common.corosync_conf import (
@@ -155,7 +155,7 @@ def get_corosync_conf_struct(env: LibraryEnvironment) -> CorosyncConfDto:
     Read corosync.conf from the local node and return it in a structured form
     """
     corosync_conf = env.get_corosync_conf()
-    quorum_device_dto: Optional[CorosyncQuorumDeviceSettingsDto] = None
+    quorum_device_dto: CorosyncQuorumDeviceSettingsDto | None = None
     qd_model = corosync_conf.get_quorum_device_model()
     if qd_model is not None:
         (

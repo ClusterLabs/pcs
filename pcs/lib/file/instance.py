@@ -1,7 +1,4 @@
-from typing import (
-    Any,
-    Optional,
-)
+from typing import Any
 
 from pcs.common import (
     file_type_codes,
@@ -33,7 +30,7 @@ class FileInstance:
         cls,
         name: str,
         ghost_file: bool = False,
-        ghost_data: Optional[bytes] = None,
+        ghost_data: bytes | None = None,
     ) -> "FileInstance":
         """
         Factory for booth config file
@@ -51,7 +48,7 @@ class FileInstance:
         cls,
         name: str,
         ghost_file: bool = False,
-        ghost_data: Optional[bytes] = None,
+        ghost_data: bytes | None = None,
     ) -> "FileInstance":
         """
         Factory for booth key file
@@ -70,7 +67,7 @@ class FileInstance:
         file_type_code: file_type_codes.FileTypeCode,
         name: str,
         ghost_file: bool,
-        ghost_data: Optional[bytes],
+        ghost_data: bytes | None,
     ) -> "FileInstance":
         return cls(
             _get_raw_file(
@@ -169,7 +166,7 @@ class FileInstance:
     def parser_exception_to_report_list(
         self,
         exception: ParserErrorException,
-        force_code: Optional[reports.types.ForceCode] = None,
+        force_code: reports.types.ForceCode | None = None,
         is_forced_or_warning: bool = False,
     ) -> reports.ReportItemList:
         """
@@ -245,7 +242,7 @@ class FileInstance:
 
 
 def _get_raw_file(
-    file_metadata: FileMetadata, is_ghost: bool, ghost_data: Optional[bytes]
+    file_metadata: FileMetadata, is_ghost: bool, ghost_data: bytes | None
 ) -> RawFileInterface:
     if is_ghost:
         return raw_file.GhostFile(file_metadata, file_data=ghost_data)

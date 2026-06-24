@@ -1,5 +1,5 @@
 from collections.abc import Iterable, Mapping, MutableMapping, Sequence, Set
-from typing import Any, Optional, cast
+from typing import Any, cast
 
 from lxml.etree import _Element
 
@@ -34,7 +34,7 @@ class ResourceRelationNode:
         self._obj = entity
         self._members: list[ResourceRelationNode] = []
         self._is_leaf = False
-        self._parent: Optional[ResourceRelationNode] = None
+        self._parent: ResourceRelationNode | None = None
         self._opposite_id = _get_opposite_relation_id_template(
             cast(ResourceRelationType, self._obj.type)
         ).format(self._obj.metadata["id"])

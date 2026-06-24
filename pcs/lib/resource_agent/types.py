@@ -1,7 +1,7 @@
 from collections import defaultdict
 from collections.abc import Mapping, Set
 from dataclasses import dataclass
-from typing import NewType, Optional
+from typing import NewType
 
 from pcs.common.resource_agent.dto import (
     ResourceAgentActionDto,
@@ -20,7 +20,7 @@ _FAKE_AGENT_STANDARD = "__pcmk_internal"
 @dataclass(frozen=True)
 class ResourceAgentName:
     standard: str
-    provider: Optional[str]
+    provider: str | None
     type: str
 
     @property
@@ -62,20 +62,20 @@ class ResourceAgentActionOcf1_0:  # pylint: disable=invalid-name
     # (start, stop, promote...), mandatory by both OCF 1.0 and 1.1
     name: str
     # mandatory by both OCF 1.0 and 1.1, sometimes not defined by agents
-    timeout: Optional[str]
+    timeout: str | None
     # optional by both OCF 1.0 and 1.1
-    interval: Optional[str]
+    interval: str | None
     # optional by OCF 1.1
     # not allowed by OCF 1.0, defined in OCF 1.0 agents anyway
-    role: Optional[str]
+    role: str | None
     # OCF name: 'start-delay', optional by both OCF 1.0 and 1.1
-    start_delay: Optional[str]
+    start_delay: str | None
     # optional by both OCF 1.0 and 1.1
-    depth: Optional[str]
+    depth: str | None
     # not allowed by any OCF, defined in OCF 1.0 agents anyway
-    automatic: Optional[str]
+    automatic: str | None
     # not allowed by any OCF, defined in OCF 1.0 agents anyway
-    on_target: Optional[str]
+    on_target: str | None
 
 
 @dataclass(frozen=True)
@@ -85,21 +85,21 @@ class ResourceAgentActionOcf1_1:  # pylint: disable=invalid-name
     # (start, stop, promote...), mandatory by both OCF 1.0 and 1.1
     name: str
     # mandatory by both OCF 1.0 and 1.1, sometimes not defined by agents
-    timeout: Optional[str]
+    timeout: str | None
     # optional by both OCF 1.0 and 1.1
-    interval: Optional[str]
+    interval: str | None
     # optional by OCF 1.1
-    role: Optional[str]
+    role: str | None
     # OCF name: 'start-delay', optional by both OCF 1.0 and 1.1
-    start_delay: Optional[str]
+    start_delay: str | None
     # optional by both OCF 1.0 and 1.1
-    depth: Optional[str]
+    depth: str | None
     # not allowed by any OCF, defined in OCF 1.0 agents anyway, most probably
     # will be used in OCF 1.1 agents as well as it holds important information
-    automatic: Optional[str]
+    automatic: str | None
     # not allowed by any OCF, defined in OCF 1.0 agents anyway, most probably
     # will be used in OCF 1.1 agents as well as it holds important information
-    on_target: Optional[str]
+    on_target: str | None
 
 
 @dataclass(frozen=True)
@@ -109,23 +109,23 @@ class ResourceAgentParameterOcf1_0:  # pylint: disable=invalid-name
     # name of the parameter
     name: str
     # short description
-    shortdesc: Optional[str]
+    shortdesc: str | None
     # long description
-    longdesc: Optional[str]
+    longdesc: str | None
     # data type of the parameter
     type: str
     # default value of the parameter
-    default: Optional[str]
+    default: str | None
     # allowed values, only defined if type == 'select'
-    enum_values: Optional[list[str]]
+    enum_values: list[str] | None
     # is this a required parameter?
-    required: Optional[str]
+    required: str | None
     # is this parameter deprecated?
-    deprecated: Optional[str]
+    deprecated: str | None
     # name of a deprecated parameter obsoleted by this one
-    obsoletes: Optional[str]
+    obsoletes: str | None
     # should the parameter's value be unique across same agent resources?
-    unique: Optional[str]
+    unique: str | None
 
 
 @dataclass(frozen=True)
@@ -135,37 +135,37 @@ class ResourceAgentParameterOcf1_1:  # pylint: disable=invalid-name
     # name of the parameter
     name: str
     # short description
-    shortdesc: Optional[str]
+    shortdesc: str | None
     # long description
-    longdesc: Optional[str]
+    longdesc: str | None
     # data type of the parameter
     type: str
     # default value of the parameter
-    default: Optional[str]
+    default: str | None
     # allowed values, only defined if type == 'select'
-    enum_values: Optional[list[str]]
+    enum_values: list[str] | None
     # is this a required parameter?
-    required: Optional[str]
+    required: str | None
     # Is the parameter meant for advanced users?
-    advanced: Optional[str]
+    advanced: str | None
     # is this parameter deprecated?
     deprecated: bool
     # list of parameters deprecating this one
     deprecated_by: list[str]
     # text describing / explaining the deprecation
-    deprecated_desc: Optional[str]
+    deprecated_desc: str | None
     # should the parameter's value be unique across same agent resources?
     # OCF 1.1 defines "unique" as well, but it is deprecated and we ignore it
-    unique_group: Optional[str]
+    unique_group: str | None
     # changing this parameter's value triggers a reload instead of a restart
-    reloadable: Optional[str]
+    reloadable: str | None
 
 
 @dataclass(frozen=True)
 class ResourceAgentMetadataOcf1_0:  # pylint: disable=invalid-name
     name: ResourceAgentName
-    shortdesc: Optional[str]
-    longdesc: Optional[str]
+    shortdesc: str | None
+    longdesc: str | None
     parameters: list[ResourceAgentParameterOcf1_0]
     actions: list[ResourceAgentActionOcf1_0]
 
@@ -173,8 +173,8 @@ class ResourceAgentMetadataOcf1_0:  # pylint: disable=invalid-name
 @dataclass(frozen=True)
 class ResourceAgentMetadataOcf1_1:  # pylint: disable=invalid-name
     name: ResourceAgentName
-    shortdesc: Optional[str]
-    longdesc: Optional[str]
+    shortdesc: str | None
+    longdesc: str | None
     parameters: list[ResourceAgentParameterOcf1_1]
     actions: list[ResourceAgentActionOcf1_1]
 
@@ -186,16 +186,16 @@ class ResourceAgentAction:
     # (start, stop, promote...), mandatory by both OCF 1.0 and 1.1
     name: str
     # mandatory by both OCF 1.0 and 1.1, sometimes not defined by agents
-    timeout: Optional[str]
+    timeout: str | None
     # optional by both OCF 1.0 and 1.1
-    interval: Optional[str]
+    interval: str | None
     # optional by OCF 1.1
     # not allowed by OCF 1.0, defined in OCF 1.0 agents anyway
-    role: Optional[str]
+    role: str | None
     # OCF name: 'start-delay', optional by both OCF 1.0 and 1.1
-    start_delay: Optional[str]
+    start_delay: str | None
     # optional by both OCF 1.0 and 1.1
-    depth: Optional[str]
+    depth: str | None
     # not allowed by any OCF, defined in OCF 1.0 agents anyway
     automatic: bool
     # not allowed by any OCF, defined in OCF 1.0 agents anyway
@@ -221,15 +221,15 @@ class ResourceAgentParameter:
     # name of the parameter
     name: str
     # short description
-    shortdesc: Optional[str]
+    shortdesc: str | None
     # long description
-    longdesc: Optional[str]
+    longdesc: str | None
     # data type of the parameter
     type: str
     # default value of the parameter
-    default: Optional[str]
+    default: str | None
     # allowed values, only defined if type == 'select'
-    enum_values: Optional[list[str]]
+    enum_values: list[str] | None
     # True if it is a required parameter, False otherwise
     required: bool
     # True if the parameter is meant for advanced users
@@ -239,9 +239,9 @@ class ResourceAgentParameter:
     # list of parameters deprecating this one
     deprecated_by: list[str]
     # text describing / explaining the deprecation
-    deprecated_desc: Optional[str]
+    deprecated_desc: str | None
     # should the parameter's value be unique across same agent resources?
-    unique_group: Optional[str]
+    unique_group: str | None
     # changing this parameter's value triggers a reload instead of a restart
     reloadable: bool
 
@@ -268,8 +268,8 @@ class ResourceAgentMetadata:
     name: ResourceAgentName
     agent_exists: bool
     ocf_version: OcfVersion
-    shortdesc: Optional[str]
-    longdesc: Optional[str]
+    shortdesc: str | None
+    longdesc: str | None
     parameters: list[ResourceAgentParameter]
     actions: list[ResourceAgentAction]
 
@@ -314,7 +314,7 @@ class ResourceAgentMetadata:
 @dataclass(frozen=True, order=True)
 class StandardProviderTuple:
     standard: str
-    provider: Optional[str] = None
+    provider: str | None = None
 
     @property
     def is_stonith(self) -> bool:

@@ -1,5 +1,3 @@
-from typing import Optional
-
 from lxml import etree
 from lxml.etree import _Element
 
@@ -329,7 +327,7 @@ def _parse_agent_1_1(
 
 def _parse_parameter_content(
     parameter_el: _Element,
-) -> tuple[str, Optional[str], Optional[list[str]]]:
+) -> tuple[str, str | None, list[str] | None]:
     value_type = "string"
     default_value = None
     enum_values = None
@@ -441,19 +439,19 @@ def _parse_actions_1_1(element: _Element) -> list[ResourceAgentActionOcf1_1]:
     ]
 
 
-def _get_desc(element: _Element) -> Optional[str]:
+def _get_desc(element: _Element) -> str | None:
     return _get_text_from_dom_element(element.find("desc"))
 
 
-def _get_shortdesc(element: _Element) -> Optional[str]:
+def _get_shortdesc(element: _Element) -> str | None:
     return _get_text_from_dom_element(element.find("shortdesc"))
 
 
-def _get_longdesc(element: _Element) -> Optional[str]:
+def _get_longdesc(element: _Element) -> str | None:
     return _get_text_from_dom_element(element.find("longdesc"))
 
 
-def _get_text_from_dom_element(element: Optional[_Element]) -> Optional[str]:
+def _get_text_from_dom_element(element: _Element | None) -> str | None:
     return (
         None
         if element is None or element.text is None

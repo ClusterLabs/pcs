@@ -16,7 +16,7 @@ import xml.dom.minidom
 from functools import lru_cache
 from io import BytesIO
 from textwrap import dedent
-from typing import TYPE_CHECKING, Any, Optional, cast
+from typing import TYPE_CHECKING, Any, cast
 from urllib.parse import urlencode
 from xml.dom.minidom import Document as DomDocument
 from xml.dom.minidom import parseString
@@ -207,8 +207,8 @@ def read_uid_gid_file(uidgid_filename):
 
 
 def get_uidgid_file_content(
-    uid: Optional[str] = None, gid: Optional[str] = None
-) -> Optional[str]:
+    uid: str | None = None, gid: str | None = None
+) -> str | None:
     if not uid and not gid:
         return None
     uid_gid_lines = []

@@ -1,5 +1,5 @@
 from logging import Logger
-from typing import Optional, TypedDict
+from typing import TypedDict
 
 from tornado.ioloop import IOLoop
 from tornado.web import RequestHandler
@@ -61,11 +61,11 @@ class SessionAuthProvider(ApiAuthProviderInterface):
         self._handler = handler
         self._lib_auth_provider = lib_auth_provider
         self._session_storage = session_storage
-        self._session: Optional[Session] = None
+        self._session: Session | None = None
         self._logger = logger
 
     @property
-    def __sid_from_client(self) -> Optional[str]:
+    def __sid_from_client(self) -> str | None:
         return self._handler.get_cookie(PCSD_SESSION, default=None)
 
     def can_handle_request(self) -> bool:

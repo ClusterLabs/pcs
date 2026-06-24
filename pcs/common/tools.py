@@ -2,7 +2,7 @@ import re
 import uuid
 from collections.abc import Generator, MutableSet
 from dataclasses import astuple, dataclass
-from typing import Optional, TypeVar
+from typing import TypeVar
 
 from lxml import etree
 from lxml.etree import _Element
@@ -59,7 +59,7 @@ def xml_fromstring(xml: str) -> _Element:
     )
 
 
-def timeout_to_seconds(timeout: int | str) -> Optional[int]:
+def timeout_to_seconds(timeout: int | str) -> int | None:
     """
     Transform pacemaker style timeout to number of seconds. If `timeout` is not
     a valid timeout, `None` is returned.
@@ -95,8 +95,8 @@ def timeout_to_seconds(timeout: int | str) -> Optional[int]:
 @dataclass(frozen=True)
 class Version:
     major: int
-    minor: Optional[int] = None
-    revision: Optional[int] = None
+    minor: int | None = None
+    revision: int | None = None
 
     @property
     def as_full_tuple(self) -> tuple[int, int, int]:
@@ -109,10 +109,10 @@ class Version:
     def normalize(self) -> "Version":
         return self.__class__(*self.as_full_tuple)
 
-    def __iter__(self) -> Generator[Optional[int], None, None]:
+    def __iter__(self) -> Generator[int | None, None, None]:
         yield from astuple(self)
 
-    def __getitem__(self, index: int) -> Optional[int]:
+    def __getitem__(self, index: int) -> int | None:
         return astuple(self)[index]
 
     def __str__(self) -> str:
@@ -148,7 +148,7 @@ class Version:
         return self.as_full_tuple >= other.as_full_tuple
 
 
-def get_version_from_string(value: str) -> Optional[Version]:
+def get_version_from_string(value: str) -> Version | None:
     """
     Get Version instance from a string or None if version cannot be determined.
 

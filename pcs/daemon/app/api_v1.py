@@ -1,6 +1,6 @@
 import json
 from collections.abc import Mapping
-from typing import Any, Optional
+from typing import Any
 
 from tornado.web import HTTPError
 
@@ -130,7 +130,7 @@ class _BaseApiV1Handler(BaseHandler):
     """
 
     scheduler: Scheduler
-    json: Optional[dict[str, Any]] = None
+    json: dict[str, Any] | None = None
     _auth_provider: ApiAuthProviderInterface
 
     _real_user: AuthUser

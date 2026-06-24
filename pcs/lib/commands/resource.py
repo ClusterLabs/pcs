@@ -4,7 +4,7 @@ from collections import defaultdict
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from contextlib import contextmanager
 from functools import partial
-from typing import Any, Optional, cast
+from typing import Any, cast
 
 from lxml.etree import _Element
 
@@ -117,7 +117,7 @@ def resource_environment(
 def _get_resource_state_wait(
     env: LibraryEnvironment,
     wait_timeout: int = -1,
-    wait_for_resource_ids: Optional[StringCollection] = None,
+    wait_for_resource_ids: StringCollection | None = None,
     resource_state_reporter: Callable[
         [_Element, str], ReportItem
     ] = info_resource_state,
@@ -136,7 +136,7 @@ def _get_resource_state_wait(
 def _push_cib_wait(
     env: LibraryEnvironment,
     wait_timeout: int = -1,
-    wait_for_resource_ids: Optional[StringCollection] = None,
+    wait_for_resource_ids: StringCollection | None = None,
     resource_state_reporter: Callable[
         [_Element, str], ReportItem
     ] = info_resource_state,
@@ -607,7 +607,7 @@ def create_as_clone(  # noqa: PLR0913
     instance_attributes: Mapping[str, str],
     clone_meta_options: Mapping[str, str],
     *,
-    clone_id: Optional[str] = None,
+    clone_id: str | None = None,
     allow_absent_agent: bool = False,
     allow_invalid_operation: bool = False,
     allow_invalid_instance_attributes: bool = False,
@@ -779,7 +779,7 @@ def create_in_group(  # noqa: PLR0913
     allow_invalid_instance_attributes: bool = False,
     use_default_operations: bool = True,
     ensure_disabled: bool = False,
-    adjacent_resource_id: Optional[str] = None,
+    adjacent_resource_id: str | None = None,
     put_after_adjacent: bool = False,
     wait: WaitType = False,
     allow_not_suitable_command: bool = False,
@@ -1325,10 +1325,10 @@ def _disable_get_element_ids(
     inner_resource_id_set = set()
     disabled_resource_id_set = set()
     for resource_el in disabled_resource_el_list:
-        disabled_resource_id_set.add(cast(Optional[str], resource_el.get("id")))
+        disabled_resource_id_set.add(cast(str | None, resource_el.get("id")))
         inner_resource_id_set.update(
             {
-                cast(Optional[str], inner_resource_el.get("id"))
+                cast(str | None, inner_resource_el.get("id"))
                 for inner_resource_el in resource.common.get_all_inner_resources(
                     resource_el
                 )
@@ -1781,7 +1781,7 @@ def group_add(  # noqa: PLR0912
     env: LibraryEnvironment,
     group_id: str,
     resource_id_list: list[str],
-    adjacent_resource_id: Optional[str] = None,
+    adjacent_resource_id: str | None = None,
     put_after_adjacent: bool = True,
     wait: WaitType = False,
 ):
@@ -1963,9 +1963,9 @@ def get_failcounts(
 def move(
     env: LibraryEnvironment,
     resource_id: str,
-    node: Optional[str] = None,
+    node: str | None = None,
     master: bool = False,
-    lifetime: Optional[str] = None,
+    lifetime: str | None = None,
     wait: WaitType = False,
 ) -> None:
     """
@@ -2011,7 +2011,7 @@ class ResourceMoveAutocleanSimulationFailure(Exception):
 def move_autoclean(  # noqa: PLR0912, PLR0915
     env: LibraryEnvironment,
     resource_id: str,
-    node: Optional[str] = None,
+    node: str | None = None,
     master: bool = False,
     wait_timeout: int = 0,
     strict: bool = False,
@@ -2236,14 +2236,14 @@ def move_autoclean(  # noqa: PLR0912, PLR0915
 
 
 def _ensure_resource_moved_and_not_moved_back(
-    runner_factory: Callable[[Optional[Mapping[str, str]]], CommandRunner],
+    runner_factory: Callable[[Mapping[str, str] | None], CommandRunner],
     report_processor: reports.ReportProcessor,
     cib_xml: str,
     remove_constraint_cib_diff: str,
     resource_id: str,
     strict: bool,
     resource_state_before: dict[str, list[str]],
-    node: Optional[str],
+    node: str | None,
 ) -> None:
     with get_tmp_cib(report_processor, cib_xml) as rsc_unmove_cib_file:
         if not _was_resource_moved(
@@ -2325,7 +2325,7 @@ def _resource_running_on_nodes(
 
 
 def _was_resource_moved(
-    node: Optional[str],
+    node: str | None,
     resource_state_before: dict[str, list[str]],
     resource_state_after: dict[str, list[str]],
 ) -> bool:
@@ -2342,7 +2342,7 @@ def _was_resource_moved(
 
 def _move_wait_report(
     resource_id: str,
-    node: Optional[str],
+    node: str | None,
     resource_state_before: dict[str, list[str]],
     resource_state_after: dict[str, list[str]],
 ) -> ReportItem:
@@ -2755,7 +2755,7 @@ def get_resource_relations_tree(
 def _find_resources_expand_tags(
     cib: _Element,
     resource_or_tag_ids: StringCollection,
-    additional_search: Optional[Callable[[_Element], list[_Element]]] = None,
+    additional_search: Callable[[_Element], list[_Element]] | None = None,
 ) -> tuple[list[_Element], ReportItemList]:
     rsc_or_tag_el_list, report_list = resource.common.find_resources(
         cib,
@@ -2779,7 +2779,7 @@ def _find_resources_expand_tags(
 
 def get_required_cib_version_for_primitive(
     op_list: Iterable[Mapping[str, str]],
-) -> Optional[Version]:
+) -> Version | None:
     for op in op_list:
         if op.get("on-fail", "") == "demote":
             return Version(3, 4, 0)
@@ -2860,8 +2860,8 @@ def get_configured_resources(env: LibraryEnvironment) -> CibResourcesDto:
 def restart(
     env: LibraryEnvironment,
     resource_id: str,
-    node: Optional[str] = None,
-    timeout: Optional[str] = None,
+    node: str | None = None,
+    timeout: str | None = None,
 ) -> None:
     """
     Restart a resource

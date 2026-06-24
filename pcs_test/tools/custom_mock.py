@@ -5,7 +5,6 @@ from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
 from hashlib import md5
 from pathlib import Path
-from typing import Optional
 from unittest import mock
 
 import pcs.common.pcs_pycurl as pycurl
@@ -67,9 +66,9 @@ class TmpFileMock:
     def __init__(
         self,
         calls: Iterable[TmpFileCall] = (),
-        file_content_checker: Optional[
-            Callable[[FileContentType, FileContentType], bool]
-        ] = None,
+        file_content_checker: (
+            Callable[[FileContentType, FileContentType], bool] | None
+        ) = None,
     ):
         self.set_calls(calls)
         self._file_content_checker = file_content_checker
@@ -354,14 +353,14 @@ class CibResourceSecretMockSpec:
     id: str
     name: str
     value: str | Exception
-    checksum: Optional[str] | Exception
+    checksum: str | None | Exception
 
 
 class CibResourceSecretMock:
     def __init__(self, mock_defs: Iterable[CibResourceSecretMockSpec]):
         self._mock_defs = list(mock_defs)
-        self._mock_paths: Optional[list[Path]] = None
-        self._path_mock_map: Optional[dict[Path, mock.MagicMock]] = None
+        self._mock_paths: list[Path] | None = None
+        self._path_mock_map: dict[Path, mock.MagicMock] | None = None
         self._secrets_dir = Path(settings.pacemaker_secrets_dir)
 
     def _create_path_mock_map(self):

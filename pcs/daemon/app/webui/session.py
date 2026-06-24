@@ -1,5 +1,4 @@
 from time import time as now
-from typing import Optional
 
 from pcs.common.tools import get_unique_uuid
 
@@ -43,7 +42,7 @@ class Storage:
         self.__sessions: dict[str, Session] = {}
         self.__lifetime_seconds = lifetime_seconds
 
-    def get(self, sid: str) -> Optional[Session]:
+    def get(self, sid: str) -> Session | None:
         self.drop_expired()
         session = self.__sessions.get(sid)
         if session is not None:

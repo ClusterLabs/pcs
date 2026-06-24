@@ -1,5 +1,4 @@
 # pylint: disable=too-many-lines
-from typing import Optional
 from unittest import (
     TestCase,
     mock,
@@ -113,10 +112,10 @@ class ElementsToRemoveFindElements(TestCase, GetCibMixin):
         self,
         elements_to_remove: lib.ElementsToRemove,
         ids_to_remove: set[str],
-        resources_to_remove: Optional[list[etree._Element]] = None,
+        resources_to_remove: list[etree._Element] | None = None,
         dependant_elements: lib.DependantElements = _DEFAULT_DEPENDANT_ELEMENTS,
         element_references: lib.ElementReferences = _DEFAULT_ELEMENT_REFERENCES,
-        missing_ids: Optional[set[str]] = None,
+        missing_ids: set[str] | None = None,
         unsupported_elements: lib.UnsupportedElements = _DEFAULT_UNSUPPORTED_ELEMENTS,
     ):
         self.assertEqual(elements_to_remove.ids_to_remove, ids_to_remove)

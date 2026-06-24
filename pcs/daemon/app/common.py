@@ -2,16 +2,14 @@ import base64
 import binascii
 from collections.abc import Iterable
 from logging import Logger
-from typing import Any, Optional
+from typing import Any
 
 from tornado.web import Finish, HTTPError, RequestHandler
 from tornado.web import RedirectHandler as TornadoRedirectHandler
 
 from pcs.lib.auth.tools import DesiredUser
 
-RoutesType = Iterable[
-    tuple[str, type[RequestHandler], Optional[dict[str, Any]]]
-]
+RoutesType = Iterable[tuple[str, type[RequestHandler], dict[str, Any] | None]]
 
 
 class EnhanceHeadersMixin:

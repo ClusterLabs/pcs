@@ -8,7 +8,7 @@ from collections.abc import Iterator
 from contextlib import AbstractContextManager, contextmanager
 from dataclasses import dataclass
 from io import BytesIO
-from typing import IO, Any, NewType, Optional
+from typing import IO, Any, NewType
 
 from pcs import settings
 from pcs.common.file_type_codes import FileTypeCode
@@ -22,9 +22,9 @@ from pcs.common.tools import format_os_error
 class FileMetadata:
     file_type_code: FileTypeCode
     path: str
-    owner_user_name: Optional[str]
-    owner_group_name: Optional[str]
-    permissions: Optional[int]
+    owner_user_name: str | None
+    owner_group_name: str | None
+    permissions: int | None
     is_binary: bool
 
 
@@ -297,7 +297,7 @@ class RawFile(RawFileInterface):
         to_delete = (
             backup_files if backup_count == 0 else backup_files[:-backup_count]
         )
-        first_os_error: Optional[OSError] = None
+        first_os_error: OSError | None = None
         for _, path in to_delete:
             try:
                 os.remove(path)

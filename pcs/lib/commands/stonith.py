@@ -1,5 +1,4 @@
 from collections.abc import Collection, Mapping
-from typing import Optional
 
 from lxml.etree import _Element
 
@@ -180,7 +179,7 @@ def create(  # noqa: PLR0913
             resource.common.disable(stonith_element, id_provider)
 
 
-def history_get_text(env: LibraryEnvironment, node: Optional[str] = None):
+def history_get_text(env: LibraryEnvironment, node: str | None = None):
     """
     Get full fencing history in plain text
 
@@ -205,7 +204,7 @@ def history_get_text(env: LibraryEnvironment, node: Optional[str] = None):
         ) from e
 
 
-def history_cleanup(env: LibraryEnvironment, node: Optional[str] = None):
+def history_cleanup(env: LibraryEnvironment, node: str | None = None):
     """
     Clear fencing history
 

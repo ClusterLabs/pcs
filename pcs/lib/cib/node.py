@@ -1,5 +1,4 @@
 from collections import namedtuple
-from typing import Optional
 
 from lxml import etree
 from lxml.etree import _Element
@@ -23,7 +22,7 @@ def get_all_node_elements(nodes_section: _Element) -> list[_Element]:
 
 
 def node_el_to_dto(
-    node_el: _Element, rule_eval: Optional[rule.RuleInEffectEval] = None
+    node_el: _Element, rule_eval: rule.RuleInEffectEval | None = None
 ) -> CibNodeDto:
     if rule_eval is None:
         rule_eval = rule.RuleInEffectEvalDummy()

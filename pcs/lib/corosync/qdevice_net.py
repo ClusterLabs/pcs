@@ -3,7 +3,6 @@ import os.path
 import re
 import shutil
 from collections.abc import Callable, Sequence
-from typing import Optional
 
 from pcs import settings
 from pcs.common import reports
@@ -175,7 +174,7 @@ def qdevice_status_generic_text(
 
 
 def qdevice_status_cluster_text(
-    runner: CommandRunner, cluster: Optional[str] = None, verbose: bool = False
+    runner: CommandRunner, cluster: str | None = None, verbose: bool = False
 ) -> str:
     """
     get qdevice runtime status in plain text

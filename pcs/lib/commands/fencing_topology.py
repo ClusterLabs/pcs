@@ -1,7 +1,4 @@
-from typing import (
-    Any,
-    Optional,
-)
+from typing import Any
 
 from pcs.common.fencing_topology import (
     FencingTargetType,
@@ -22,7 +19,7 @@ def add_level(
     target_type: FencingTargetType,
     target_value: FencingTargetValue,
     devices: StringSequence,
-    level_id: Optional[str] = None,
+    level_id: str | None = None,
     force_device: bool = False,
     force_node: bool = False,
 ) -> None:
@@ -95,10 +92,10 @@ def remove_all_levels(lib_env: LibraryEnvironment) -> None:
 
 def remove_levels_by_params(
     lib_env: LibraryEnvironment,
-    level: Optional[str] = None,
-    target_type: Optional[FencingTargetType] = None,
-    target_value: Optional[FencingTargetValue] = None,
-    devices: Optional[StringSequence] = None,
+    level: str | None = None,
+    target_type: FencingTargetType | None = None,
+    target_value: FencingTargetValue | None = None,
+    devices: StringSequence | None = None,
 ) -> None:
     """
     Remove specified fencing level(s).

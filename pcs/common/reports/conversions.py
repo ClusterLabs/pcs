@@ -1,5 +1,3 @@
-from typing import Optional
-
 from pcs.common.tools import get_all_subclasses
 
 from . import messages
@@ -16,7 +14,7 @@ from .item import (
 
 def report_dto_to_item(
     dto_obj: ReportItemDto,
-    context: Optional[ReportItemContext] = None,
+    context: ReportItemContext | None = None,
 ) -> ReportItem:
     return ReportItem(
         severity=ReportItemSeverity.from_dto(dto_obj.severity),

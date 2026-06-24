@@ -1,7 +1,7 @@
 from collections import defaultdict
 from collections.abc import Iterable
 from dataclasses import replace
-from typing import Optional, cast
+from typing import cast
 
 from pcs.common.file_type_codes import FileTypeCode
 from pcs.common.node_communicator import Communicator, RequestTarget
@@ -94,7 +94,7 @@ class ConfigFetcher:
 
     def _parse_local_config(
         self, file_instance: FileInstance
-    ) -> Optional[SyncVersionFacadeInterface]:
+    ) -> SyncVersionFacadeInterface | None:
         try:
             return cast(
                 SyncVersionFacadeInterface, file_instance.read_to_facade()
@@ -136,7 +136,7 @@ class ConfigFetcher:
 
 def _find_newest_config(
     file_instance: FileInstance, configs: Iterable[SyncVersionFacadeInterface]
-) -> Optional[SyncVersionFacadeInterface]:
+) -> SyncVersionFacadeInterface | None:
     if not configs:
         return None
 

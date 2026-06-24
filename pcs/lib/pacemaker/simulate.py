@@ -1,7 +1,7 @@
 from collections import defaultdict
 from collections.abc import Container, Iterable
 from dataclasses import dataclass
-from typing import NewType, Optional
+from typing import NewType
 
 from lxml.etree import _Element
 
@@ -63,7 +63,7 @@ def get_operations_from_transitions(
 
 def get_resources_from_operations(
     operation_list: Iterable[SimulationOperation],
-    exclude_resources: Optional[Container[str]] = None,
+    exclude_resources: Container[str] | None = None,
 ) -> list[str]:
     """
     Get names of all resources from the provided operation list
@@ -83,7 +83,7 @@ def get_resources_from_operations(
 
 def get_resources_left_stopped(
     operation_list: Iterable[SimulationOperation],
-    exclude_resources: Optional[Container[str]] = None,
+    exclude_resources: Container[str] | None = None,
 ) -> list[str]:
     """
     Get names of resources which are left stopped by the provided operation list
@@ -98,7 +98,7 @@ def get_resources_left_stopped(
 
 def get_resources_left_demoted(
     operation_list: Iterable[SimulationOperation],
-    exclude_resources: Optional[Container[str]] = None,
+    exclude_resources: Container[str] | None = None,
 ) -> list[str]:
     """
     Get names of resources which are left demoted by the provided operation list
@@ -115,7 +115,7 @@ def _resources_with_imbalanced_operations(
     operation_list: Iterable[SimulationOperation],
     increment_op: SimulationOperationType,
     decrement_op: SimulationOperationType,
-    exclude_resources: Optional[Container[str]] = None,
+    exclude_resources: Container[str] | None = None,
 ) -> list[str]:
     exclude_resources = exclude_resources or tuple()
     counter: dict[str, int] = defaultdict(int)

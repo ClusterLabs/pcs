@@ -1,8 +1,4 @@
-from typing import (
-    Any,
-    Optional,
-    cast,
-)
+from typing import Any, cast
 
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import (
@@ -100,7 +96,7 @@ def _get_resource_status_facade(lib: Any) -> ResourcesStatusFacade:
 def _parse_more_members_quantifier(
     sections: ArgsByKeywords,
     keyword: str,
-) -> Optional[MoreChildrenQuantifierType]:
+) -> MoreChildrenQuantifierType | None:
     if not sections.has_keyword(keyword):
         return None
 
@@ -125,7 +121,7 @@ def _parse_more_members_quantifier(
 
 def _parse_expected_state(
     state_section: Argv,
-) -> tuple[ResourceState, Optional[str]]:
+) -> tuple[ResourceState, str | None]:
     if not state_section or len(state_section) > 2:
         raise CmdLineInputError()
 
@@ -149,7 +145,7 @@ def _parse_expected_state(
     return expected_state, state_section[1]
 
 
-def _pop_resource_id(argv: Argv) -> tuple[str, Optional[str]]:
+def _pop_resource_id(argv: Argv) -> tuple[str, str | None]:
     if len(argv) < 1:
         raise CmdLineInputError()
     resource_id = argv.pop(0)
@@ -410,7 +406,7 @@ def is_state(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
 
 
 def _handle_is_in_container(
-    real_id: Optional[str], expected_id: Optional[str], quiet: bool
+    real_id: str | None, expected_id: str | None, quiet: bool
 ) -> SystemExit:
     is_in_container = real_id is not None and (
         expected_id is None or real_id == expected_id

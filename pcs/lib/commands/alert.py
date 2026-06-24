@@ -1,5 +1,5 @@
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from pcs.common.pacemaker.alert import CibAlertListDto
 from pcs.common.types import StringIterable
@@ -30,11 +30,11 @@ def create_alert(
     # maintained for lib.commands. We still want to change it, but it needs to
     # be done in the proper way.
     lib_env: LibraryEnvironment,
-    alert_id: Optional[str],
-    path: Optional[str],
+    alert_id: str | None,
+    path: str | None,
     instance_attribute_dict: Mapping[str, str],
     meta_attribute_dict: Mapping[str, str],
-    description: Optional[str] = None,
+    description: str | None = None,
 ) -> None:
     """
     Create new alert.
@@ -74,10 +74,10 @@ def create_alert(
 def update_alert(
     lib_env: LibraryEnvironment,
     alert_id: str,
-    path: Optional[str],
+    path: str | None,
     instance_attribute_dict: Mapping[str, str],
     meta_attribute_dict: Mapping[str, str],
-    description: Optional[str] = None,
+    description: str | None = None,
 ) -> None:
     """
     Update existing alert with specified id.
@@ -136,11 +136,11 @@ def add_recipient(
     # be done in the proper way.
     lib_env: LibraryEnvironment,
     alert_id: str,
-    recipient_value: Optional[str],
+    recipient_value: str | None,
     instance_attribute_dict: Mapping[str, str],
     meta_attribute_dict: Mapping[str, str],
-    recipient_id: Optional[str] = None,
-    description: Optional[str] = None,
+    recipient_id: str | None = None,
+    description: str | None = None,
     allow_same_value: bool = False,
 ) -> None:
     """
@@ -194,8 +194,8 @@ def update_recipient(
     recipient_id: str,
     instance_attribute_dict: Mapping[str, str],
     meta_attribute_dict: Mapping[str, str],
-    recipient_value: Optional[str] = None,
-    description: Optional[str] = None,
+    recipient_value: str | None = None,
+    description: str | None = None,
     allow_same_value: bool = False,
 ) -> None:
     """

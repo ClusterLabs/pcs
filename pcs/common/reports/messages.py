@@ -3,7 +3,7 @@ from collections import defaultdict
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from functools import partial
-from typing import Any, Literal, Optional, cast
+from typing import Any, Literal, cast
 
 from pcs.common import file_type_codes
 from pcs.common.fencing_topology import (
@@ -91,7 +91,7 @@ def _format_fencing_level_target(
     return str(target_value)
 
 
-def _format_booth_default(value: Optional[str], template: str) -> str:
+def _format_booth_default(value: str | None, template: str) -> str:
     return "" if value in ("booth", "", None) else template.format(value)
 
 
@@ -392,7 +392,7 @@ class RequiredOptionsAreMissing(ReportItemMessage):
     """
 
     option_names: list[str]
-    option_type: Optional[str] = None
+    option_type: str | None = None
     _code = codes.REQUIRED_OPTIONS_ARE_MISSING
 
     @property
@@ -420,8 +420,8 @@ class PrerequisiteOptionIsMissing(ReportItemMessage):
 
     option_name: str
     prerequisite_name: str
-    option_type: Optional[str] = None
-    prerequisite_type: Optional[str] = None
+    option_type: str | None = None
+    prerequisite_type: str | None = None
     _code = codes.PREREQUISITE_OPTION_IS_MISSING
 
     @property
@@ -538,7 +538,7 @@ class RequiredOptionOfAlternativesIsMissing(ReportItemMessage):
 
     option_names: list[str]
     deprecated_names: list[str] = field(default_factory=list)
-    option_type: Optional[str] = None
+    option_type: str | None = None
     _code = codes.REQUIRED_OPTION_OF_ALTERNATIVES_IS_MISSING
 
     @property
@@ -575,7 +575,7 @@ class InvalidOptions(ReportItemMessage):
 
     option_names: list[str]
     allowed: list[str]
-    option_type: Optional[str] = None
+    option_type: str | None = None
     allowed_patterns: list[str] = field(default_factory=list)
     _code = codes.INVALID_OPTIONS
 
@@ -625,7 +625,7 @@ class InvalidUserdefinedOptions(ReportItemMessage):
 
     option_names: list[str]
     allowed_characters: str
-    option_type: Optional[str] = None
+    option_type: str | None = None
     _code = codes.INVALID_USERDEFINED_OPTIONS
 
     @property
@@ -682,7 +682,7 @@ class InvalidOptionValue(ReportItemMessage):
     option_value: str
     allowed_values: list[str] | str | None
     cannot_be_empty: bool = False
-    forbidden_characters: Optional[str] = None
+    forbidden_characters: str | None = None
     _code = codes.INVALID_OPTION_VALUE
 
     @property
@@ -724,7 +724,7 @@ class DeprecatedOption(ReportItemMessage):
 
     option_name: str
     replaced_by: list[str]
-    option_type: Optional[str] = None
+    option_type: str | None = None
     _code = codes.DEPRECATED_OPTION
 
     @property
@@ -753,7 +753,7 @@ class DeprecatedOptionValue(ReportItemMessage):
 
     option_name: str
     deprecated_value: str
-    replaced_by: Optional[str] = None
+    replaced_by: str | None = None
     _code = codes.DEPRECATED_OPTION_VALUE
 
     @property
@@ -781,7 +781,7 @@ class MutuallyExclusiveOptions(ReportItemMessage):
     """
 
     option_names: list[str]
-    option_type: Optional[str] = None
+    option_type: str | None = None
     _code = codes.MUTUALLY_EXCLUSIVE_OPTIONS
 
     @property
@@ -924,7 +924,7 @@ class RunExternalProcessStarted(ReportItemMessage):
     """
 
     command: str
-    stdin: Optional[str]
+    stdin: str | None
     environment: Mapping[str, str]
     _code = codes.RUN_EXTERNAL_PROCESS_STARTED
 
@@ -1894,8 +1894,8 @@ class CorosyncBadNodeAddressesCount(ReportItemMessage):
     actual_count: int
     min_count: int
     max_count: int
-    node_name: Optional[str] = None
-    node_index: Optional[int] = None
+    node_name: str | None = None
+    node_index: int | None = None
     _code = codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT
 
     @property
@@ -1964,7 +1964,7 @@ class CorosyncAddressIpVersionWrongForLink(ReportItemMessage):
     # It works for int and str, though, as they are distinguishable. Code was
     # historically putting either of int and str in here. We need the Union here
     # for backward compatibility reasons.
-    link_number: Optional[int | str] = None
+    link_number: int | str | None = None
     _code = codes.COROSYNC_ADDRESS_IP_VERSION_WRONG_FOR_LINK
 
     @property
@@ -2880,8 +2880,8 @@ class CannotGroupResourceWrongType(ReportItemMessage):
 
     resource_id: str
     resource_type: str
-    parent_id: Optional[str]
-    parent_type: Optional[str]
+    parent_id: str | None
+    parent_type: str | None
     _code = codes.CANNOT_GROUP_RESOURCE_WRONG_TYPE
 
     @property
@@ -2931,7 +2931,7 @@ class CloningStonithResourcesHasNoEffect(ReportItemMessage):
     """
 
     stonith_id_list: list[str]
-    group_id: Optional[str] = None
+    group_id: str | None = None
     _code = codes.CLONING_STONITH_RESOURCES_HAS_NO_EFFECT
 
     @property
@@ -3102,7 +3102,7 @@ class StonithRestartlessUpdateMissingMpathKeys(ReportItemMessage):
     missing_nodes -- nodes which do not have keys
     """
 
-    pcmk_host_map_value: Optional[str]
+    pcmk_host_map_value: str | None
     missing_nodes: list[str]
     _code = codes.STONITH_RESTARTLESS_UPDATE_MISSING_MPATH_KEYS
 
@@ -3444,7 +3444,7 @@ class BadClusterStateData(ReportItemMessage):
     reason -- error description
     """
 
-    reason: Optional[str] = None
+    reason: str | None = None
     _code = codes.BAD_CLUSTER_STATE_DATA
 
     @property
@@ -3567,7 +3567,7 @@ class ResourceRestartError(ReportItemMessage):
 
     reason: str
     resource: str
-    node: Optional[str] = None
+    node: str | None = None
     _code = codes.RESOURCE_RESTART_ERROR
 
     @property
@@ -3632,8 +3632,8 @@ class ResourceCleanupError(ReportItemMessage):
     """
 
     reason: str
-    resource: Optional[str] = None
-    node: Optional[str] = None
+    resource: str | None = None
+    node: str | None = None
     _code = codes.RESOURCE_CLEANUP_ERROR
 
     @property
@@ -3657,8 +3657,8 @@ class ResourceRefreshError(ReportItemMessage):
     """
 
     reason: str
-    resource: Optional[str] = None
-    node: Optional[str] = None
+    resource: str | None = None
+    node: str | None = None
     _code = codes.RESOURCE_REFRESH_ERROR
 
     @property
@@ -5372,8 +5372,8 @@ class CibFencingLevelDoesNotExist(ReportItemMessage):
     """
 
     level: str = ""
-    target_type: Optional[FencingTargetType] = None
-    target_value: Optional[FencingTargetValue] = None
+    target_type: FencingTargetType | None = None
+    target_value: FencingTargetValue | None = None
     devices: list[str] = field(default_factory=list)
     _code = codes.CIB_FENCING_LEVEL_DOES_NOT_EXIST
 
@@ -5528,7 +5528,7 @@ class UseCommandNodeRemoveRemote(ReportItemMessage):
     Advise the user for more appropriate command.
     """
 
-    resource_id: Optional[str] = None
+    resource_id: str | None = None
     _code = codes.USE_COMMAND_NODE_REMOVE_REMOTE
 
     @property
@@ -5544,7 +5544,7 @@ class UseCommandNodeRemoveGuest(ReportItemMessage):
     Advise the user for more appropriate command.
     """
 
-    resource_id: Optional[str] = None
+    resource_id: str | None = None
     _code = codes.USE_COMMAND_NODE_REMOVE_GUEST
 
     @property
@@ -6123,8 +6123,8 @@ class NodeUsedAsTieBreaker(ReportItemMessage):
     node_id -- node id
     """
 
-    node: Optional[str]
-    node_id: Optional[str]
+    node: str | None
+    node_id: str | None
     _code = codes.NODE_USED_AS_TIE_BREAKER
 
     @property
@@ -6731,7 +6731,7 @@ class StoppedResourcesBeforeDeleteCheckSkipped(ReportItemMessage):
     """
 
     resource_id_list: list[str]
-    reason_type: Optional[types.ReasonType] = None
+    reason_type: types.ReasonType | None = None
     _code = codes.STOPPED_RESOURCES_BEFORE_DELETE_CHECK_SKIPPED
 
     @property
@@ -6790,7 +6790,7 @@ class ConfiguredResourceMissingInStatus(ReportItemMessage):
     """
 
     resource_id: str
-    checked_state: Optional[ResourceState] = None
+    checked_state: ResourceState | None = None
     _code = codes.CONFIGURED_RESOURCE_MISSING_IN_STATUS
 
     @property
@@ -7051,7 +7051,7 @@ class ResourceMoveAutocleanSimulationFailure(ReportItemMessage):
 
     resource_id: str
     others_affected: bool
-    node: Optional[str] = None
+    node: str | None = None
     move_constraint_left_in_cib: bool = False
     _code = codes.RESOURCE_MOVE_AUTOCLEAN_SIMULATION_FAILURE
 
@@ -7087,7 +7087,7 @@ class ParseErrorInvalidFileStructure(ReportItemMessage):
 
     reason: str
     file_type_code: file_type_codes.FileTypeCode
-    file_path: Optional[str]
+    file_path: str | None
     _code = codes.PARSE_ERROR_INVALID_FILE_STRUCTURE
 
     @property
@@ -7119,7 +7119,7 @@ class ParseErrorJsonFile(ReportItemMessage):
     position: int
     reason: str
     full_msg: str
-    file_path: Optional[str]
+    file_path: str | None
     _code = codes.PARSE_ERROR_JSON_FILE
 
     @property
@@ -7449,7 +7449,7 @@ class BoothConfigIsUsed(ReportItemMessage):
 
     name: str
     detail: types.BoothConfigUsedWhere
-    resource_name: Optional[str] = None
+    resource_name: str | None = None
     _code = codes.BOOTH_CONFIG_IS_USED
 
     @property
@@ -7672,7 +7672,7 @@ class BoothTicketOperationFailed(ReportItemMessage):
 
     operation: str
     reason: str
-    site_ip: Optional[str]
+    site_ip: str | None
     ticket_name: str
     _code = codes.BOOTH_TICKET_OPERATION_FAILED
 
@@ -8126,9 +8126,9 @@ class AddRemoveItemsNotSpecified(ReportItemMessage):
     container_id -- id of a container
     """
 
-    container_type: Optional[types.AddRemoveContainerType]
+    container_type: types.AddRemoveContainerType | None
     item_type: types.AddRemoveItemType
-    container_id: Optional[str]
+    container_id: str | None
     _code = codes.ADD_REMOVE_ITEMS_NOT_SPECIFIED
 
     @property
@@ -8154,9 +8154,9 @@ class AddRemoveItemsDuplication(ReportItemMessage):
     duplicate_items_list -- list of duplicate items
     """
 
-    container_type: Optional[types.AddRemoveContainerType]
+    container_type: types.AddRemoveContainerType | None
     item_type: types.AddRemoveItemType
-    container_id: Optional[str]
+    container_id: str | None
     duplicate_items_list: list[str]
     _code = codes.ADD_REMOVE_ITEMS_DUPLICATION
 
@@ -8249,9 +8249,9 @@ class AddRemoveCannotAddAndRemoveItemsAtTheSameTime(ReportItemMessage):
     item_list -- common items from add and remove item lists
     """
 
-    container_type: Optional[types.AddRemoveContainerType]
+    container_type: types.AddRemoveContainerType | None
     item_type: types.AddRemoveItemType
-    container_id: Optional[str]
+    container_id: str | None
     item_list: list[str]
     _code = codes.ADD_REMOVE_CANNOT_ADD_AND_REMOVE_ITEMS_AT_THE_SAME_TIME
 
@@ -8502,8 +8502,8 @@ class ResourceCloneIncompatibleMetaAttributes(ReportItemMessage):
 
     attribute: str
     resource_agent: ResourceAgentNameDto
-    resource_id: Optional[str] = None
-    group_id: Optional[str] = None
+    resource_id: str | None = None
+    group_id: str | None = None
     _code = codes.RESOURCE_CLONE_INCOMPATIBLE_META_ATTRIBUTES
 
     @property
@@ -8527,7 +8527,7 @@ class BoothAuthfileNotUsed(ReportItemMessage):
     enabled as well.
     """
 
-    instance: Optional[str]
+    instance: str | None
     _code = codes.BOOTH_AUTHFILE_NOT_USED
 
     @property
@@ -8542,7 +8542,7 @@ class BoothUnsupportedOptionEnableAuthfile(ReportItemMessage):
     not accepted by booth, which will cause booth to fail at startup.
     """
 
-    instance: Optional[str]
+    instance: str | None
     _code = codes.BOOTH_UNSUPPORTED_OPTION_ENABLE_AUTHFILE
 
     @property
@@ -8582,7 +8582,7 @@ class CommandArgumentTypeMismatch(ReportItemMessage):
     """
 
     not_accepted_type: str
-    command_to_use_instead: Optional[types.PcsCommand] = None
+    command_to_use_instead: types.PcsCommand | None = None
     _code = codes.COMMAND_ARGUMENT_TYPE_MISMATCH
 
     @property
@@ -9197,7 +9197,7 @@ class CibResourceSecretUnableToGet(ReportItemMessage):
 
     resource_id: str
     secret_name: str
-    reason: Optional[types.CibResourceSecretErrorReason] = None
+    reason: types.CibResourceSecretErrorReason | None = None
     _code = codes.CIB_RESOURCE_SECRET_UNABLE_TO_GET
 
     @property

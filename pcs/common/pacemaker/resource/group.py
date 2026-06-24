@@ -1,6 +1,5 @@
 from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Optional
 
 from pcs.common.interface.dto import DataTransferObject
 from pcs.common.pacemaker.nvset import CibNvsetDto
@@ -9,7 +8,7 @@ from pcs.common.pacemaker.nvset import CibNvsetDto
 @dataclass(frozen=True)
 class CibResourceGroupDto(DataTransferObject):
     id: str  # pylint: disable=invalid-name
-    description: Optional[str]
+    description: str | None
     member_ids: list[str]
     meta_attributes: Sequence[CibNvsetDto]
     instance_attributes: Sequence[CibNvsetDto]
