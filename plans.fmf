@@ -161,7 +161,7 @@ finish:
       - free -h | tee $TMT_PLAN_DATA/misc/free.log
       - "ausearch -m AVC,USER_AVC,SELINUX_ERR,USER_SELINUX_ERR -ts boot || : \
         | tee $TMT_PLAN_DATA/misc/ausearch.log"
-      - sysctl crypto.fips_enabled | tee $TMT_PLAN_DATA/misc/fips_status.log
+      - sysctl -e crypto.fips_enabled | tee $TMT_PLAN_DATA/misc/fips_status.log
 
 
 /linters:
