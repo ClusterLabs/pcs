@@ -45,6 +45,8 @@ prepare:
       - diffutils
       - findutils
       - gawk
+      # for building c extentsions for python and ruby modules
+      - gcc
       - git
       - make
       - nss-tools
@@ -111,7 +113,6 @@ prepare:
     when: distro == rhel-9, rhel-10, centos-stream-10, centos-stream-9
     how: install
     package:
-      - gcc
       - libffi-devel
 
   - name: Install system rubygem packages
