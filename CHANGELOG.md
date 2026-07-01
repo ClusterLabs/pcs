@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.12.3] - 2026-07-01
 
 ### Added
 - Commands `pcs cluster node rename-corosync` and `pcs cluster node rename-cib`
