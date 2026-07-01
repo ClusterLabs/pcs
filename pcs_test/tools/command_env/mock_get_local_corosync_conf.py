@@ -18,7 +18,7 @@ class Call:
         self.exception_msg = exception_msg
 
     def __repr__(self):
-        return str("<GetLocalCorosyncConf>")
+        return "<GetLocalCorosyncConf>"
 
 
 def get_get_local_corosync_conf(call_queue):

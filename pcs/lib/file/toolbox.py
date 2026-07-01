@@ -76,7 +76,7 @@ class NoopExporter(ExporterInterface):
 class NoopFacade(FacadeInterface):
     @classmethod
     def create(cls) -> "NoopFacade":
-        return cls(bytes())
+        return cls(b"")
 
 
 _toolboxes = {

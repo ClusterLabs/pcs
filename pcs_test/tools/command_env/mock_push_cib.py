@@ -16,7 +16,7 @@ class Call:
         self.exception = exception
 
     def __repr__(self):
-        return str("<CibPush wait_timeout='{0}'>").format(self.wait_timeout)
+        return "<CibPush wait_timeout='{0}'>".format(self.wait_timeout)
 
 
 def get_push_cib(call_queue):

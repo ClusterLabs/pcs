@@ -169,7 +169,7 @@ class Request:
         return cookies
 
     def __repr__(self) -> str:
-        return str("Request({0}, {1})").format(self._target, self._data)
+        return "Request({0}, {1})".format(self._target, self._data)
 
 
 class Response:
