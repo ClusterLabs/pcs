@@ -100,8 +100,8 @@ prepare:
     package:
       - python3-pycurl
 
-  - name: Install dependencies for bundled python3-pycurl
-    # autotools_rpmbuild also bundles pycurl on fedora
+  - name: Install dependencies for bundled python3-pycurl and rubygem-curb
+    # autotools_rpmbuild also bundles pycurl and curb on fedora
     when: distro >= rhel-10, fedora, centos-stream-10
     how: install
     package:
@@ -109,20 +109,13 @@ prepare:
       - libcurl-devel
       - openssl-devel
 
-  - name: Install dependencies for bundled rubygem-ffi
-    when: distro == rhel-9, rhel-10, centos-stream-10, centos-stream-9
-    how: install
-    package:
-      - libffi-devel
-
   - name: Install system rubygem packages
     when: distro == fedora
     how: install
     package:
       - rubygem-backports
       - rubygem-childprocess
-      - rubygem-ethon
-      - rubygem-ffi
+      - rubygem-curb
       - rubygem-mustermann
       - rubygem-nio4r
       - rubygem-puma
