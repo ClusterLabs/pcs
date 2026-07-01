@@ -295,7 +295,7 @@ def remove_uid_gid_file(uid, gid):
     return file_removed
 
 
-@lru_cache()
+@lru_cache
 def read_known_hosts_file() -> dict[str, PcsKnownHost]:
     return read_known_hosts_file_not_cached()
 

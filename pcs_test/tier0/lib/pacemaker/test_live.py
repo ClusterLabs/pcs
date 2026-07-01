@@ -419,7 +419,7 @@ class GetCibTest(TestCase):
     # pylint: disable=no-self-use
     def test_success(self):
         xml = "<xml />"
-        assert_xml_equal(xml, str(XmlManipulation((lib.get_cib(xml)))))
+        assert_xml_equal(xml, str(XmlManipulation(lib.get_cib(xml))))
 
     @mock.patch("pcs.lib.pacemaker.live.xml_fromstring")
     def test_invalid_xml(self, xml_fromstring_mock):

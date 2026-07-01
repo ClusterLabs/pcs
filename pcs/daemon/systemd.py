@@ -24,6 +24,6 @@ async def notify(socket_name):
         log.pcsd.error("Unable to notify systemd on '%s': %s", socket_name, e)
 
 
-@lru_cache()
+@lru_cache
 def is_systemd():
     return any(os.path.isdir(path) for path in settings.systemd_unit_path)

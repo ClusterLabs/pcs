@@ -144,7 +144,7 @@ def is_minimum_pacemaker_version(major, minor, rev):
     )
 
 
-@lru_cache()
+@lru_cache
 def _get_current_pacemaker_version():
     output, dummy_stderr, dummy_retval = runner.run(
         [settings.crm_mon_exec, "--version"]
@@ -158,7 +158,7 @@ def _get_current_pacemaker_version():
     return major, minor, rev
 
 
-@lru_cache()
+@lru_cache
 def _get_current_cib_schema_version():
     regexp = re.compile(r"pacemaker-((\d+)\.(\d+))")
     all_versions = set()
@@ -197,7 +197,7 @@ def _has_pacemaker_features(requested_features):
     return actual >= requested
 
 
-@lru_cache()
+@lru_cache
 def _get_current_pacemaker_features():
     output, dummy_stderr, dummy_retval = runner.run(
         [settings.pacemakerd_exec, "--features"]
@@ -212,7 +212,7 @@ def _get_current_pacemaker_features():
     return (major, minor, rev), features_list
 
 
-@lru_cache()
+@lru_cache
 def is_pacemaker_21_without_20_compatibility():
     return is_minimum_pacemaker_version(
         2, 1, 0
@@ -281,7 +281,7 @@ def skip_unless_root():
     return skipUnless(os.getuid() == 0, "Root user required")
 
 
-@lru_cache()
+@lru_cache
 def _is_booth_resource_agent_installed():
     output, dummy_stderr, dummy_retval = runner.run(
         [settings.crm_resource_exec, "--list-agents", "ocf:pacemaker"]

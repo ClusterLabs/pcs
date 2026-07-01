@@ -68,10 +68,8 @@ def _handle_query_exception(e: QueryException) -> None:
         )
     if isinstance(e, InstancesQuantifierUnsupportedException):
         raise CmdLineInputError(
-            (
-                "'instances' quantifier can be used only on clone resources "
-                "and their instances, or on bundle resources and their replicas"
-            )
+            "'instances' quantifier can be used only on clone resources and "
+            "their instances, or on bundle resources and their replicas"
         )
     raise CmdLineInputError(
         "Unknown error with the query", show_both_usage_and_message=True

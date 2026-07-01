@@ -32,7 +32,7 @@ def get_status_from_api_result(dom: _Element) -> Status:
     errors_el = status_el.find("errors")
     if errors_el is not None:
         errors = [
-            str((error_el.text or "")).strip()
+            str(error_el.text or "").strip()
             for error_el in errors_el.iterfind("error")
         ]
     return Status(
