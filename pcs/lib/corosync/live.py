@@ -1,5 +1,5 @@
 import re
-from collections.abc import Container, Sequence
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 from pcs import settings
@@ -8,6 +8,7 @@ from pcs.common.file import RawFileError
 from pcs.common.reports.item import ReportItem
 from pcs.common.str_tools import format_list
 from pcs.common.tools import Version, get_version_from_string
+from pcs.common.types import StringCollection
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
 from pcs.lib.file.instance import FileInstance
@@ -121,7 +122,7 @@ class QuorumStatusFacade:
     def qdevice_votes(self) -> int:
         return self._quorum_status.qdevice_votes
 
-    def _get_votes_excluding_nodes(self, node_names: Container[str]) -> int:
+    def _get_votes_excluding_nodes(self, node_names: StringCollection) -> int:
         """
         How many votes do remain if specified nodes are not counted in?
 
@@ -146,7 +147,7 @@ class QuorumStatusFacade:
         )
 
     def stopping_nodes_cause_quorum_loss(
-        self, node_names: Container[str]
+        self, node_names: StringCollection
     ) -> bool:
         """
         Will quorum be lost if specified nodes are stopped?
