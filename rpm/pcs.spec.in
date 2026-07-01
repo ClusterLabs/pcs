@@ -16,18 +16,16 @@ Release: 99+git%{?numcomm:.%{numcomm}}%{?alphatag:.%{alphatag}}%{?dirty:.%{dirty
 # GPL-2.0-only: pcs
 # Apache-2.0: dataclasses, tornado
 # Apache-2.0 OR BSD-3-Clause: dateutil
-# MIT: backports, childprocess, dacite, ethon, mustermann, rack, rackup,
+# MIT: backports, childprocess, dacite, mustermann, rack, rackup,
 #      rack-protection, rack-session, rack-test, sinatra, tilt
 # MIT AND (BSD-2-Clause OR GPL-2.0-or-later): nio4r
 # BSD-2-Clause: rexml
 # BSD-2-Clause or Ruby: base64, ruby2_keywords, strscan
 # BSD 3-Clause: puma
-# BSD-3-Clause and MIT: ffi
+# Ruby: curb
 # curl OR LGPL-2.1-or-later: python-pycurl
 # Some gems we bundle are just dependencies of gems that we use,
 # here is their dependency tree (we directly require the 1st level only):
-# ethon:
-#   ffi
 # puma:
 #   nio4r
 # sinatra:
@@ -43,7 +41,7 @@ Release: 99+git%{?numcomm:.%{numcomm}}%{?alphatag:.%{alphatag}}%{?dirty:.%{dirty
 #   base64
 # rexml:
 #   strscan (might be included with Ruby)
-License: GPL-2.0-only AND Apache-2.0 AND MIT AND BSD-2-Clause AND BSD-3-Clause AND (BSD-2-Clause OR GPL-2.0-or-later) AND (Apache-2.0 OR BSD-3-Clause) AND (BSD-2-Clause OR Ruby) AND (curl OR LGPL-2.1-or-later)
+License: GPL-2.0-only AND Apache-2.0 AND MIT AND BSD-2-Clause AND BSD-3-Clause AND Ruby AND (BSD-2-Clause OR GPL-2.0-or-later) AND (Apache-2.0 OR BSD-3-Clause) AND (BSD-2-Clause OR Ruby) AND (curl OR LGPL-2.1-or-later)
 URL: https://github.com/ClusterLabs/pcs
 Summary: Pacemaker/Corosync Configuration System
 
@@ -101,7 +99,8 @@ BuildRequires: python%{python3_version}-pyparsing >= 3.0.0
 # required to pass ./configure
 BuildRequires: python%{python3_version}-lxml
 
-# pycurl is not distributed in rhel 10
+# pycurl is not distributed in rhel 10, libcurl-devel is also needed for
+# compiling bundled rubygem-curb native extension
 %if 0%{?rhel} >= 10
 BuildRequires: libcurl-devel
 BuildRequires: openssl-devel
@@ -124,7 +123,6 @@ BuildRequires: findutils
 # gcc for compiling custom rubygems
 BuildRequires: gcc
 BuildRequires: gcc-c++
-BuildRequires: libffi-devel
 # ruby and gems for pcsd
 BuildRequires: ruby >= 3.1
 BuildRequires: ruby-devel
