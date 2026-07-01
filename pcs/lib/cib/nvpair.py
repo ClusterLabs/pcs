@@ -1,5 +1,5 @@
 from functools import partial
-from typing import Optional, cast, overload
+from typing import cast, overload
 
 from lxml import etree
 from lxml.etree import _Element
@@ -140,7 +140,7 @@ def update_nvset(nvset_element, nvpair_dict, id_provider):
         set_nvpair_in_nvset(nvset_element, name, value, id_provider)
 
 
-def get_nvset(nvset: _Element) -> list[dict[str, Optional[str]]]:
+def get_nvset(nvset: _Element) -> list[dict[str, str | None]]:
     """
     Returns nvset element as list of nvpairs with format:
     [
@@ -170,7 +170,7 @@ def get_value(
     context_element: _Element,
     name: str,
     default: None = None,
-) -> Optional[str]:
+) -> str | None:
     pass
 
 
@@ -188,8 +188,8 @@ def get_value(
     tag_name: str,
     context_element: _Element,
     name: str,
-    default: Optional[str] = None,
-) -> Optional[str]:
+    default: str | None = None,
+) -> str | None:
     """
     Return a value from an nvpair
 

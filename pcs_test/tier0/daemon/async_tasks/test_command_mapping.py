@@ -1,9 +1,10 @@
 import importlib
 import inspect
 import pkgutil
+from collections.abc import Container, Iterable
 from dataclasses import fields, is_dataclass
 from enum import EnumType
-from typing import Container, Iterable, get_args, get_origin, get_type_hints
+from typing import get_args, get_origin, get_type_hints
 from unittest import TestCase
 
 import pcs.lib.commands as lib_command_package
@@ -75,7 +76,8 @@ class DaciteTypingCompatibilityTest(TestCase):
     def test_all(self):
         prohibited_types = (Iterable, Container)
         prohibited_types_normalized = [
-            get_origin(_type) for _type in prohibited_types
+            origin if (origin := get_origin(_type)) is not None else _type
+            for _type in prohibited_types
         ]
         for cmd_name, cmd in COMMAND_MAP.items():
             for param in list(inspect.signature(cmd.cmd).parameters.values())[

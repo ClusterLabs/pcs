@@ -1,8 +1,8 @@
 import signal
 import subprocess
+from collections.abc import Mapping
 from logging import Logger
 from shlex import quote as shell_quote
-from typing import Dict, Mapping, Optional, Tuple
 
 from pcs import settings
 from pcs.common import reports
@@ -26,7 +26,7 @@ class CommandRunner:
         self,
         logger: Logger,
         reporter: ReportProcessor,
-        env_vars: Optional[Mapping[str, str]] = None,
+        env_vars: Mapping[str, str] | None = None,
     ):
         self._logger = logger
         self._reporter = reporter
@@ -38,16 +38,16 @@ class CommandRunner:
         self._env_vars = env_vars if env_vars else {}
 
     @property
-    def env_vars(self) -> Dict[str, str]:
+    def env_vars(self) -> dict[str, str]:
         return dict(self._env_vars)
 
     def run(
         self,
         args: StringSequence,
-        stdin_string: Optional[str] = None,
-        env_extend: Optional[Mapping[str, str]] = None,
+        stdin_string: str | None = None,
+        env_extend: Mapping[str, str] | None = None,
         binary_output: bool = False,
-    ) -> Tuple[str, str, int]:
+    ) -> tuple[str, str, int]:
         # Allow overriding default settings. If a piece of code really wants to
         # set own PATH or CIB_file, we must allow it. I.e. it wants to run
         # a pacemaker tool on a CIB in a file but cannot afford the risk of

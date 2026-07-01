@@ -1,5 +1,3 @@
-from typing import Optional
-
 from pcs.common import (
     file_type_codes,
     reports,
@@ -15,7 +13,7 @@ from pcs.lib.file.instance import FileInstance
 
 
 class BoothEnv:
-    def __init__(self, instance_name: Optional[str], booth_files_data):
+    def __init__(self, instance_name: str | None, booth_files_data):
         """
         Create a new BoothEnv
 

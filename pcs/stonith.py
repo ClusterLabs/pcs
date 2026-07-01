@@ -1,5 +1,5 @@
 import json
-from typing import Any, Optional
+from typing import Any
 
 from pcs import resource, utils
 from pcs.cli.common import parse_args
@@ -463,7 +463,7 @@ def _sbd_parse_node_specific_options(
 
 def _sbd_parse_watchdogs(
     watchdog_list: list[str],
-) -> tuple[Optional[str], dict[str, str]]:
+) -> tuple[str | None, dict[str, str]]:
     """
     Commandline options: no options
     """
@@ -519,7 +519,7 @@ def sbd_status(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     modifiers.ensure_only_supported("--request-timeout", "--full")
 
-    def _bool_to_str(val: Optional[bool]) -> str:
+    def _bool_to_str(val: bool | None) -> str:
         if val is None:
             return "N/A"
         return "YES" if val else " NO"

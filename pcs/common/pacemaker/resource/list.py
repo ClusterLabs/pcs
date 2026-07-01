@@ -1,6 +1,6 @@
+from collections.abc import Sequence
 from dataclasses import dataclass
 from itertools import chain
-from typing import Sequence
 
 from pcs.common.interface.dto import DataTransferObject
 

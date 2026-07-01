@@ -1,4 +1,4 @@
-from typing import Mapping, Union
+from collections.abc import Mapping
 
 from pcs import settings
 from pcs.common import reports
@@ -58,7 +58,7 @@ def _get_properties_facade(
 # format
 def _cluster_property_metadata_to_dict(
     metadata: ResourceAgentMetadata,
-) -> dict[str, dict[str, Union[bool, str, StringSequence]]]:
+) -> dict[str, dict[str, bool | str | StringSequence]]:
     banned_props = ["dc-version", "cluster-infrastructure"]
     basic_props = {
         "batch-limit": "Batch Limit",
@@ -82,7 +82,7 @@ def _cluster_property_metadata_to_dict(
     for parameter in metadata.parameters:
         if parameter.name in banned_props:
             continue
-        single_property_dict: dict[str, Union[bool, str, StringSequence]] = {
+        single_property_dict: dict[str, bool | str | StringSequence] = {
             "name": parameter.name,
             "shortdesc": parameter.shortdesc or "",
             "longdesc": parameter.longdesc or "",
@@ -101,7 +101,7 @@ def _cluster_property_metadata_to_dict(
 
 def get_cluster_properties_definition_legacy(
     env: LibraryEnvironment,
-) -> dict[str, dict[str, Union[bool, str, StringSequence]]]:
+) -> dict[str, dict[str, bool | str | StringSequence]]:
     """
     Return cluster properties definition in the legacy dictionary format.
 

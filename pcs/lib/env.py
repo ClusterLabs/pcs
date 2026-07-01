@@ -1,5 +1,6 @@
+from collections.abc import Callable, Mapping
 from logging import Logger
-from typing import Any, Callable, Mapping, Optional, Union, cast
+from typing import Any, cast
 
 from lxml.etree import _Element
 
@@ -48,7 +49,7 @@ from pcs.lib.services import get_service_manager
 from pcs.lib.tools import create_tmp_cib
 from pcs.lib.xml_tools import etree_to_str
 
-WaitType = Union[None, bool, int, str]
+WaitType = None | bool | int | str
 
 
 def _wait_type_to_int(wait: WaitType) -> int:
@@ -77,15 +78,15 @@ class LibraryEnvironment:
         self,
         logger: Logger,
         report_processor: reports.ReportProcessor,
-        user_login: Optional[str] = None,
-        user_groups: Optional[StringIterable] = None,
-        cib_data: Optional[str] = None,
-        corosync_conf_data: Optional[str] = None,
-        booth_files_data: Optional[Mapping[str, Any]] = None,
-        known_hosts_getter: Optional[
-            Callable[[], Mapping[str, PcsKnownHost]]
-        ] = None,
-        request_timeout: Optional[int] = None,
+        user_login: str | None = None,
+        user_groups: StringIterable | None = None,
+        cib_data: str | None = None,
+        corosync_conf_data: str | None = None,
+        booth_files_data: Mapping[str, Any] | None = None,
+        known_hosts_getter: (
+            Callable[[], Mapping[str, PcsKnownHost]] | None
+        ) = None,
+        request_timeout: int | None = None,
     ):
         # pylint: disable=too-many-arguments
         # pylint: disable=too-many-positional-arguments
@@ -101,11 +102,11 @@ class LibraryEnvironment:
         # postponing dealing with them, because it's not that easy to move
         # related code currently - it's in pcsd
         self._known_hosts_getter = known_hosts_getter
-        self._known_hosts: Optional[Mapping[str, PcsKnownHost]] = None
+        self._known_hosts: Mapping[str, PcsKnownHost] | None = None
         self._cib_upgrade_reported: bool = False
-        self._cib_data_tmp_file: Optional[Any] = None  # TODO proper type hint
-        self.__loaded_cib_diff_source: Optional[str] = None
-        self.__loaded_cib_to_modify: Optional[_Element] = None
+        self._cib_data_tmp_file: Any | None = None  # TODO proper type hint
+        self.__loaded_cib_diff_source: str | None = None
+        self.__loaded_cib_to_modify: _Element | None = None
         self._communicator_factory = NodeCommunicatorFactory(
             CommunicatorLogger(
                 [ReportProcessorToLog(self.logger), self.report_processor]
@@ -114,9 +115,9 @@ class LibraryEnvironment:
             self.user_groups,
             self._request_timeout,
         )
-        self.__loaded_booth_env: Optional[BoothEnv] = None
-        self.__loaded_dr_env: Optional[DrEnv] = None
-        self.__service_manager: Optional[ServiceManagerInterface] = None
+        self.__loaded_booth_env: BoothEnv | None = None
+        self.__loaded_dr_env: DrEnv | None = None
+        self.__service_manager: ServiceManagerInterface | None = None
 
     @property
     def logger(self) -> Logger:
@@ -127,11 +128,11 @@ class LibraryEnvironment:
         return self._report_processor
 
     @property
-    def user_login(self) -> Optional[str]:
+    def user_login(self) -> str | None:
         return self._user_login
 
     @property
-    def user_groups(self) -> Optional[list[str]]:
+    def user_groups(self) -> list[str] | None:
         return self._user_groups
 
     @property
@@ -145,8 +146,8 @@ class LibraryEnvironment:
 
     def get_cib(
         self,
-        minimal_version: Optional[Version] = None,
-        nice_to_have_version: Optional[Version] = None,
+        minimal_version: Version | None = None,
+        nice_to_have_version: Version | None = None,
     ) -> _Element:
         if self.__loaded_cib_diff_source is not None:
             raise AssertionError("CIB has already been loaded")
@@ -451,9 +452,7 @@ class LibraryEnvironment:
     def is_corosync_conf_live(self) -> bool:
         return self._corosync_conf_data is None
 
-    def cmd_runner(
-        self, env: Optional[Mapping[str, str]] = None
-    ) -> CommandRunner:
+    def cmd_runner(self, env: Mapping[str, str] | None = None) -> CommandRunner:
         runner_env = {
             # make sure to get output of external processes in English and ASCII
             "LC_ALL": "C",
@@ -483,14 +482,14 @@ class LibraryEnvironment:
 
     def get_node_communicator(
         self,
-        request_timeout: Optional[int] = None,
+        request_timeout: int | None = None,
     ) -> Communicator:
         return self.communicator_factory.get_communicator(
             request_timeout=request_timeout
         )
 
     def get_node_communicator_no_privilege_transition(
-        self, request_timeout: Optional[int] = None
+        self, request_timeout: int | None = None
     ) -> Communicator:
         return (
             self.communicator_factory.get_communicator_no_privilege_transition(
@@ -521,7 +520,7 @@ class LibraryEnvironment:
                 self._known_hosts = {}
         return self._known_hosts
 
-    def get_booth_env(self, name: Optional[str]) -> BoothEnv:
+    def get_booth_env(self, name: str | None) -> BoothEnv:
         if self.__loaded_booth_env is None:
             self.__loaded_booth_env = BoothEnv(name, self._booth_files_data)
         return self.__loaded_booth_env

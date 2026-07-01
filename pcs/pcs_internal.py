@@ -1,7 +1,7 @@
 import json
 import logging
 import sys
-from typing import Any, Optional
+from typing import Any
 
 from dacite import DaciteError
 
@@ -25,8 +25,8 @@ SUPPORTED_COMMANDS = {
 
 def _exit(
     status: communication.types.CommunicationResultStatus,
-    status_msg: Optional[str] = None,
-    report_list: Optional[ReportItemList] = None,
+    status_msg: str | None = None,
+    report_list: ReportItemList | None = None,
     data: Any = None,
 ) -> None:
     json.dump(

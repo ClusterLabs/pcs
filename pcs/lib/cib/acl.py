@@ -1,5 +1,4 @@
 from functools import partial
-from typing import Optional
 
 from lxml import etree
 from lxml.etree import _Element
@@ -108,7 +107,7 @@ def find_target_or_group(acl_section, target_or_group_id):
 
 
 def validate_create_role(
-    id_provider: IdProvider, role_id: str, description: Optional[str] = None
+    id_provider: IdProvider, role_id: str, description: str | None = None
 ) -> reports.ReportItemList:
     """
     Validate creating a new role
@@ -125,7 +124,7 @@ def validate_create_role(
 
 
 def create_role(
-    acl_section: _Element, role_id: str, description: Optional[str] = None
+    acl_section: _Element, role_id: str, description: str | None = None
 ) -> _Element:
     """
     Create new role element, add it to cib and return it

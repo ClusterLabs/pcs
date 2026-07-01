@@ -1,5 +1,4 @@
 import os.path
-from typing import Optional
 
 from pcs import settings
 from pcs.common import file_type_codes as code
@@ -124,7 +123,7 @@ def _for_pcs_settings_conf() -> FileMetadata:
 
 
 def for_file_type(  # noqa: PLR0911
-    file_type_code: code.FileTypeCode, filename: Optional[str] = None
+    file_type_code: code.FileTypeCode, filename: str | None = None
 ) -> FileMetadata:
     # pylint: disable=too-many-return-statements
     if file_type_code == code.BOOTH_CONFIG:

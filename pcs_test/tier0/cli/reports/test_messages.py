@@ -1,5 +1,4 @@
 import inspect
-from typing import Optional
 from unittest import TestCase
 
 from pcs.cli.reports import messages as cli_messages
@@ -72,7 +71,7 @@ class CliReportMessageTestBase(TestCase):
     def assert_same_messages_with_force_code(
         self,
         msg_obj: item.ReportItemMessage,
-        force_code: Optional[types.ForceCode],
+        force_code: types.ForceCode | None,
     ) -> None:
         cli_msg_obj = self._get_cli_msg_obj(msg_obj)
         self.assertEqual(

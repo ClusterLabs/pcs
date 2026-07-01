@@ -1,6 +1,6 @@
 import contextlib
 import re
-from typing import Optional, Union, cast
+from typing import cast
 
 from lxml.etree import (
     _Element,
@@ -105,10 +105,10 @@ class ElementSearcher:
 
     def __init__(
         self,
-        tags: Union[str, StringIterable],
+        tags: str | StringIterable,
         element_id: str,
         context_element: _Element,
-        element_type_desc: Union[None, str, StringIterable] = None,
+        element_type_desc: None | str | StringIterable = None,
     ):
         """
         tags -- a tag (string) or tags (iterable) to look for
@@ -117,15 +117,15 @@ class ElementSearcher:
         element_type_desc -- element types for reports, tags if not specified
         """
         self._executed = False
-        self._element: Optional[_Element] = None
+        self._element: _Element | None = None
         self._element_id = element_id
         self._context_element = context_element
         self._tag_list = [tags] if isinstance(tags, str) else tags
         self._expected_types = self._prepare_expected_types(element_type_desc)
-        self._book_errors: Optional[ReportItemList] = None
+        self._book_errors: ReportItemList | None = None
 
     def _prepare_expected_types(
-        self, element_type_desc: Union[None, str, StringIterable]
+        self, element_type_desc: None | str | StringIterable
     ) -> list[str]:
         if element_type_desc is None:
             return list(self._tag_list)
@@ -138,7 +138,7 @@ class ElementSearcher:
             self._execute()
         return self._element is not None
 
-    def get_element(self) -> Optional[_Element]:
+    def get_element(self) -> _Element | None:
         if not self._executed:
             self._execute()
         return self._element
@@ -346,7 +346,7 @@ def validate_id_does_not_exist(tree: _Element, _id: str) -> None:
 def find_unique_id(
     tree: _Element,
     check_id: str,
-    reserved_ids: Optional[StringCollection] = None,
+    reserved_ids: StringCollection | None = None,
 ) -> str:
     """
     Return check_id if it doesn't exist in the dom, otherwise add an integer to
@@ -368,12 +368,12 @@ def find_unique_id(
 
 # DEPRECATED, use ElementSearcher instead
 def find_element_by_tag_and_id(
-    tag: Union[str, StringIterable],
+    tag: str | StringIterable,
     context_element: _Element,
     element_id: str,
     none_if_id_unused: bool = False,
-    id_types: Optional[StringIterable] = None,
-) -> Optional[_Element]:
+    id_types: StringIterable | None = None,
+) -> _Element | None:
     """
     Return element with given tag and element_id under context_element. When
     element does not exists raises LibraryError or return None if specified in

@@ -1,8 +1,7 @@
-from typing import (
-    Mapping,
-    Optional,
-    Type,
-)
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
 from pcs.common import (
     file_type_codes,
@@ -23,13 +22,13 @@ AttrTuple = tuple[AttrName, AttrValue]
 
 class Section:
     def __init__(self, name: str):
-        self._parent: Optional["Section"] = None
+        self._parent: "Section | None" = None
         self._attr_list: list[AttrTuple] = []
         self._section_list: list["Section"] = []
         self._name: str = name
 
     @property
-    def parent(self) -> Optional["Section"]:
+    def parent(self) -> "Section | None":
         return self._parent
 
     @property
@@ -66,9 +65,7 @@ class Section:
             parent = parent.parent
         return parent
 
-    def get_attributes(
-        self, name: Optional[AttrName] = None
-    ) -> list[AttrTuple]:
+    def get_attributes(self, name: AttrName | None = None) -> list[AttrTuple]:
         return [
             attr for attr in self._attr_list if name is None or attr[0] == name
         ]
@@ -77,8 +74,8 @@ class Section:
         return {attr[0]: attr[1] for attr in self._attr_list}
 
     def get_attribute_value(
-        self, name: AttrName, default: Optional[AttrValue] = None
-    ) -> Optional[AttrValue]:
+        self, name: AttrName, default: AttrValue | None = None
+    ) -> AttrValue | None:
         return self.get_attributes_dict().get(name, default)
 
     def add_attribute(self, name: AttrName, value: AttrValue) -> "Section":
@@ -86,7 +83,7 @@ class Section:
         return self
 
     def del_attributes_by_name(
-        self, name: AttrName, value: Optional[AttrValue] = None
+        self, name: AttrName, value: AttrValue | None = None
     ) -> "Section":
         self._attr_list = [
             attr
@@ -109,7 +106,7 @@ class Section:
             self.add_attribute(name, value)
         return self
 
-    def get_sections(self, name: Optional[str] = None) -> list["Section"]:
+    def get_sections(self, name: str | None = None) -> list["Section"]:
         return [
             section
             for section in self._section_list
@@ -117,7 +114,7 @@ class Section:
         ]
 
     def add_section(self, section: "Section") -> "Section":
-        parent: Optional["Section"] = self
+        parent: "Section | None" = self
         while parent:
             if parent == section:
                 raise CircularParentshipException()
@@ -154,8 +151,8 @@ class Parser(ParserInterface):
     def exception_to_report_list(
         exception: ParserErrorException,
         file_type_code: file_type_codes.FileTypeCode,
-        file_path: Optional[str],
-        force_code: Optional[reports.types.ForceCode],
+        file_path: str | None,
+        force_code: reports.types.ForceCode | None,
         is_forced_or_warning: bool,
     ) -> reports.ReportItemList:
         del file_type_code, file_path, force_code, is_forced_or_warning
@@ -206,7 +203,7 @@ class Parser(ParserInterface):
         exception: ParserErrorException,
     ) -> reports.item.ReportItemMessage:
         exc_to_msg: Mapping[
-            Type[ParserErrorException], Type[reports.item.ReportItemMessage]
+            type[ParserErrorException], type[reports.item.ReportItemMessage]
         ] = {
             MissingClosingBraceException: (
                 reports.messages.ParseErrorCorosyncConfMissingClosingBrace

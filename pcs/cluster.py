@@ -9,7 +9,8 @@ import sys
 import tempfile
 import time
 import xml.dom.minidom
-from typing import Any, Callable, Iterable, Mapping, Optional, Union, cast
+from collections.abc import Callable, Iterable, Mapping
+from typing import Any, cast
 from xml.parsers.expat import ExpatError
 
 import pcs.lib.pacemaker.live as lib_pacemaker
@@ -413,7 +414,7 @@ def wait_for_remote_node_started(
 
 
 def wait_for_nodes_started(
-    node_list: StringIterable, timeout: Optional[int] = None
+    node_list: StringIterable, timeout: int | None = None
 ) -> None:
     """
     Commandline options:
@@ -1646,7 +1647,7 @@ def _parse_node_options(
     options: Argv,
     additional_options: StringCollection = (),
     additional_repeatable_options: StringCollection = (),
-) -> dict[str, Union[str, list[str]]]:
+) -> dict[str, str | list[str]]:
     """
     Commandline options: no options
     """
@@ -1677,7 +1678,7 @@ LINK_KEYWORD = "link"
 
 def _parse_transport(
     transport_args: Argv,
-) -> tuple[str, dict[str, Union[dict[str, str], list[dict[str, str]]]]]:
+) -> tuple[str, dict[str, dict[str, str] | list[dict[str, str]]]]:
     """
     Commandline options: no options
     """
@@ -1693,7 +1694,7 @@ def _parse_transport(
         keywords,
         implicit_first_keyword=TRANSPORT_DEFAULT_SECTION,
     )
-    options: dict[str, Union[dict[str, str], list[dict[str, str]]]] = {
+    options: dict[str, dict[str, str] | list[dict[str, str]]] = {
         section: KeyValueParser(
             parsed_options.get_args_flat(section)
         ).get_unique()
@@ -1767,9 +1768,7 @@ def cluster_setup(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     ]
 
     transport_type = None
-    transport_options: dict[
-        str, Union[dict[str, str], list[dict[str, str]]]
-    ] = {}
+    transport_options: dict[str, dict[str, str] | list[dict[str, str]]] = {}
 
     if parsed_args.has_keyword(TRANSPORT_KEYWORD):
         transport_type, transport_options = _parse_transport(
@@ -2014,7 +2013,7 @@ def _corosync_node_to_cmd_line(node: CorosyncNodeDto) -> str:
 
 
 def _section_to_lines(
-    options: Mapping[str, str], keyword: Optional[str] = None
+    options: Mapping[str, str], keyword: str | None = None
 ) -> list[str]:
     output: list[str] = []
     if options:
@@ -2054,7 +2053,7 @@ def _config_get_cmd(corosync_conf: CorosyncConfDto) -> list[str]:
     return lines
 
 
-def _parse_add_node(argv: Argv) -> dict[str, Union[str, list[str]]]:
+def _parse_add_node(argv: Argv) -> dict[str, str | list[str]]:
     DEVICE_KEYWORD = "device"  # pylint: disable=invalid-name
     WATCHDOG_KEYWORD = "watchdog"  # pylint: disable=invalid-name
     hostname, *argv = argv

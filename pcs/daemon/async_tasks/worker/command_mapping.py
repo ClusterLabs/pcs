@@ -1,5 +1,6 @@
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
-from typing import Any, Callable, Mapping
+from typing import Any
 
 from pcs.lib.commands import (
     acl,

@@ -1,5 +1,5 @@
+from collections.abc import Mapping, Sequence
 from dataclasses import asdict
-from typing import Mapping, Sequence
 
 from pcs import settings
 from pcs.common import reports

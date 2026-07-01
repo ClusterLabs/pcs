@@ -1,4 +1,5 @@
-from typing import Any, Mapping, Optional, Union
+from collections.abc import Mapping
+from typing import Any
 
 from lxml.etree import _Element
 
@@ -32,7 +33,7 @@ def resource_defaults_create(
     env: LibraryEnvironment,
     nvpairs: Mapping[str, str],
     nvset_options: Mapping[str, str],
-    nvset_rule: Optional[str] = None,
+    nvset_rule: str | None = None,
     force_flags: reports.types.ForceFlags = (),
 ) -> None:
     """
@@ -63,7 +64,7 @@ def operation_defaults_create(
     env: LibraryEnvironment,
     nvpairs: Mapping[str, str],
     nvset_options: Mapping[str, str],
-    nvset_rule: Optional[str] = None,
+    nvset_rule: str | None = None,
     force_flags: reports.types.ForceFlags = (),
 ) -> None:
     """
@@ -96,7 +97,7 @@ def _defaults_create(
     validator_options: Mapping[str, Any],
     nvpairs: Mapping[str, str],
     nvset_options: Mapping[str, str],
-    nvset_rule: Optional[str] = None,
+    nvset_rule: str | None = None,
     force_flags: reports.types.ForceFlags = (),
 ) -> None:
     required_cib_version = None
@@ -259,7 +260,7 @@ def _defaults_remove(
 
 def resource_defaults_update(
     env: LibraryEnvironment,
-    nvset_id: Optional[str],
+    nvset_id: str | None,
     nvpairs: Mapping[str, str],
 ) -> None:
     """
@@ -281,7 +282,7 @@ def resource_defaults_update(
 
 def operation_defaults_update(
     env: LibraryEnvironment,
-    nvset_id: Optional[str],
+    nvset_id: str | None,
     nvpairs: Mapping[str, str],
 ) -> None:
     """
@@ -304,7 +305,7 @@ def operation_defaults_update(
 def _defaults_update(
     env: LibraryEnvironment,
     cib_section_name: str,
-    nvset_id: Optional[str],
+    nvset_id: str | None,
     nvpairs: Mapping[str, str],
     pcs_command: reports.types.PcsCommand,
 ) -> None:
@@ -437,7 +438,7 @@ def _defaults_update(
 
 def __validate_meta_attrs_based_on_rule(
     cmd_runner: CommandRunner,
-    rule: Union[None, RuleRoot, CibRuleExpressionDto],
+    rule: None | RuleRoot | CibRuleExpressionDto,
     meta_attrs: Mapping[str, str],
 ) -> reports.ReportItemList:
     # Currently, pcmk provides meta-attrs definition for primitive and stonith

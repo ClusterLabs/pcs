@@ -5,9 +5,9 @@ import os
 import sys
 import time
 import unittest
+from collections.abc import Callable
 from importlib import import_module
 from threading import Thread
-from typing import Callable, Optional, Union
 
 PACKAGE_DIR = os.path.realpath(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -38,7 +38,7 @@ def prepare_test_name(test_name):
 
 
 def tests_from_suite(
-    test_candidate: Union[unittest.TestCase, unittest.TestSuite],
+    test_candidate: unittest.TestCase | unittest.TestSuite,
 ) -> list[str]:
     if isinstance(test_candidate, unittest.TestCase):
         return [test_candidate.id()]
@@ -48,7 +48,7 @@ def tests_from_suite(
     return test_id_list
 
 
-def autodiscover_tests(tier: Optional[int] = None) -> unittest.TestSuite:
+def autodiscover_tests(tier: int | None = None) -> unittest.TestSuite:
     # ...Find all the test modules by recursing into subdirectories from the
     # specified start directory...
     # ...All test modules must be importable from the top level of the project.
@@ -67,7 +67,7 @@ def autodiscover_tests(tier: Optional[int] = None) -> unittest.TestSuite:
 def discover_tests(
     explicitly_enumerated_tests: list[str],
     exclude_enumerated_tests: bool = False,
-    tier: Optional[int] = None,
+    tier: int | None = None,
 ) -> list[str]:
     if not explicitly_enumerated_tests:
         return tests_from_suite(autodiscover_tests(tier=tier))

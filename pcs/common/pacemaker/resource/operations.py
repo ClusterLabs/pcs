@@ -1,8 +1,5 @@
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import (
-    Optional,
-    Sequence,
-)
 
 from pcs.common.const import (
     PcmkOnFailAction,
@@ -20,15 +17,15 @@ class CibResourceOperationDto(DataTransferObject):
     id: str  # pylint: disable=invalid-name
     name: str
     interval: str
-    description: Optional[str]
+    description: str | None
     # exactly one of start_delay and interval_origin should be defined
-    start_delay: Optional[str]
-    interval_origin: Optional[str]
-    timeout: Optional[str]
-    enabled: Optional[bool]
-    record_pending: Optional[bool]
-    role: Optional[PcmkRoleType]
-    on_fail: Optional[PcmkOnFailAction]
+    start_delay: str | None
+    interval_origin: str | None
+    timeout: str | None
+    enabled: bool | None
+    record_pending: bool | None
+    role: PcmkRoleType | None
+    on_fail: PcmkOnFailAction | None
     meta_attributes: Sequence[CibNvsetDto]
     instance_attributes: Sequence[CibNvsetDto]
 

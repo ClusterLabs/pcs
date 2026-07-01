@@ -1,14 +1,7 @@
 import contextlib
 from collections.abc import Iterable as IterableAbc
-from collections.abc import Sized
-from typing import (
-    Any,
-    Mapping,
-    Optional,
-    Sequence,
-    TypeVar,
-    Union,
-)
+from collections.abc import Mapping, Sequence, Sized
+from typing import Any, TypeVar
 
 from pcs.common.types import (
     StringIterable,
@@ -114,7 +107,7 @@ def format_name_value_id_list(
 
 
 def format_name_optional_value_or_id_list(
-    item_list: Sequence[tuple[str, Optional[str], Optional[str]]],
+    item_list: Sequence[tuple[str, str | None, str | None]],
 ) -> list[str]:
     """
     Turn 3-tuples to strings with starndard quoting:
@@ -195,7 +188,7 @@ def format_optional(
     return empty_case
 
 
-def _is_multiple(what: Union[int, Sized]) -> bool:
+def _is_multiple(what: int | Sized) -> bool:
     """
     Return True if 'what' does not mean one item, False otherwise
 
@@ -240,9 +233,9 @@ def get_plural(singular: str) -> str:
 
 
 def format_plural(
-    depends_on: Union[int, Sized],
+    depends_on: int | Sized,
     singular: str,
-    plural: Optional[str] = None,
+    plural: str | None = None,
 ) -> str:
     """
     Takes the singular word form and returns its plural form if depends_on
@@ -266,5 +259,5 @@ def transform(items: list[T], mapping: Mapping[T, str]) -> list[str]:
     return [mapping.get(item, str(item)) for item in items]
 
 
-def is_iterable_not_str(value: Union[IterableAbc, str]) -> bool:
+def is_iterable_not_str(value: IterableAbc | str) -> bool:
     return isinstance(value, IterableAbc) and not isinstance(value, str)

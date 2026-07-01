@@ -1,14 +1,9 @@
+from collections.abc import Mapping
 from dataclasses import (
     dataclass,
     field,
 )
-from typing import (
-    Any,
-    List,
-    Mapping,
-    Optional,
-    Union,
-)
+from typing import Any
 from unittest import TestCase
 
 from pcs.common.reports import (
@@ -24,10 +19,10 @@ OUTER_REPORT_CODE = types.MessageCode("OUTER_REPORT_CODE")
 @dataclass(frozen=True)
 class ReportMessage(item.ReportItemMessage):
     string: str
-    union_str_or_list_of_str: Union[str, List[str]]
-    list_of_str: List[str] = field(default_factory=list)
-    optional_list_of_int: Optional[List[int]] = None
-    optional_mapping_str_to_any: Optional[Mapping[str, Any]] = None
+    union_str_or_list_of_str: str | list[str]
+    list_of_str: list[str] = field(default_factory=list)
+    optional_list_of_int: list[int] | None = None
+    optional_mapping_str_to_any: Mapping[str, Any] | None = None
     _code = REPORT_CODE
 
     @property
@@ -37,8 +32,8 @@ class ReportMessage(item.ReportItemMessage):
 
 @dataclass(frozen=True)
 class OuterReportMessage(item.ReportItemMessage):
-    optional_inner_msg: Optional[ReportMessage]
-    optional_string: Optional[str] = None
+    optional_inner_msg: ReportMessage | None
+    optional_string: str | None = None
     _code = OUTER_REPORT_CODE
 
     @property

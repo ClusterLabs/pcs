@@ -1,14 +1,8 @@
 import sys
 import xml.dom.minidom
+from collections.abc import Iterable
 from enum import Enum
-from typing import (
-    Any,
-    Iterable,
-    Optional,
-    Set,
-    TypeVar,
-    cast,
-)
+from typing import Any, TypeVar, cast
 from xml.dom.minidom import parseString
 
 import pcs.cli.constraint_order.command as order_command
@@ -670,7 +664,7 @@ _SetConstraint = TypeVar(
 
 
 def _filter_set_constraints_by_resources(
-    constraints_dto: Iterable[_SetConstraint], resources: Set[str]
+    constraints_dto: Iterable[_SetConstraint], resources: set[str]
 ) -> list[_SetConstraint]:
     return [
         constraint_set_dto
@@ -759,7 +753,7 @@ def location_config_cmd(
       * -f - CIB file
     """
     modifiers.ensure_only_supported("-f", "--output-format", "--full", "--all")
-    filter_type: Optional[str] = None
+    filter_type: str | None = None
     filter_items: parse_args.Argv = []
     if argv:
         filter_type, *filter_items = argv

@@ -1,9 +1,5 @@
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import (
-    Mapping,
-    Optional,
-    Sequence,
-)
 
 from pcs.common.interface.dto import DataTransferObject
 from pcs.common.pacemaker.rule import CibRuleExpressionDto
@@ -20,7 +16,7 @@ class CibNvpairDto(DataTransferObject):
 class CibNvsetDto(DataTransferObject):
     id: str  # pylint: disable=invalid-name
     options: Mapping[str, str]
-    rule: Optional[CibRuleExpressionDto]
+    rule: CibRuleExpressionDto | None
     nvpairs: Sequence[CibNvpairDto]
 
 

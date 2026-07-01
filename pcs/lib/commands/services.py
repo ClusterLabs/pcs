@@ -1,5 +1,3 @@
-from typing import Optional
-
 from pcs.common import file_type_codes, reports
 from pcs.common.services.errors import ManageServiceError
 from pcs.common.services_dto import (
@@ -21,7 +19,7 @@ from pcs.lib.services import service_exception_to_report
 def start_service(
     env: LibraryEnvironment,
     service: str,
-    instance: Optional[str],
+    instance: str | None,
 ) -> None:
     env.service_manager.start(service, instance)
 
@@ -29,7 +27,7 @@ def start_service(
 def stop_service(
     env: LibraryEnvironment,
     service: str,
-    instance: Optional[str],
+    instance: str | None,
 ) -> None:
     env.service_manager.stop(service, instance)
 
@@ -37,7 +35,7 @@ def stop_service(
 def enable_service(
     env: LibraryEnvironment,
     service: str,
-    instance: Optional[str],
+    instance: str | None,
 ) -> None:
     env.service_manager.enable(service, instance)
 
@@ -45,7 +43,7 @@ def enable_service(
 def disable_service(
     env: LibraryEnvironment,
     service: str,
-    instance: Optional[str],
+    instance: str | None,
 ) -> None:
     env.service_manager.disable(service, instance)
 

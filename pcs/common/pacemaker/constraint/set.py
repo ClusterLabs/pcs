@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Optional
 
 from pcs.common.const import PcmkAction, PcmkRoleType
 from pcs.common.interface.dto import DataTransferObject
@@ -13,11 +12,11 @@ from pcs.common.pacemaker.types import (
 class CibResourceSetDto(DataTransferObject):
     # pylint: disable=too-many-instance-attributes
     set_id: str
-    sequential: Optional[bool]
-    require_all: Optional[bool]
-    ordering: Optional[CibResourceSetOrdering]
-    action: Optional[PcmkAction]
-    role: Optional[PcmkRoleType]
-    score: Optional[str]
-    kind: Optional[CibResourceSetOrderType]
+    sequential: bool | None
+    require_all: bool | None
+    ordering: CibResourceSetOrdering | None
+    action: PcmkAction | None
+    role: PcmkRoleType | None
+    score: str | None
+    kind: CibResourceSetOrderType | None
     resources_ids: list[str]

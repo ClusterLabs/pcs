@@ -1,8 +1,9 @@
 import os.path
 import re
+from collections.abc import Mapping
 from hashlib import md5
 from pathlib import Path
-from typing import Mapping, Optional, Union, cast
+from typing import cast
 
 from lxml import etree
 from lxml.etree import _Element
@@ -164,7 +165,7 @@ def has_cib_xml() -> bool:
 
 
 def get_cib_xml_cmd_results(
-    runner: CommandRunner, scope: Optional[str] = None
+    runner: CommandRunner, scope: str | None = None
 ) -> tuple[str, str, int]:
     command = [settings.cibadmin_exec, "--local", "--query"]
     if scope:
@@ -173,7 +174,7 @@ def get_cib_xml_cmd_results(
     return stdout, stderr, returncode
 
 
-def get_cib_xml(runner: CommandRunner, scope: Optional[str] = None) -> str:
+def get_cib_xml(runner: CommandRunner, scope: str | None = None) -> str:
     stdout, stderr, retval = get_cib_xml_cmd_results(runner, scope)
     if retval != 0:
         if retval == __EXITCODE_CIB_SCOPE_VALID_BUT_NOT_PRESENT and scope:
@@ -539,7 +540,7 @@ def get_local_node_name(runner: CommandRunner) -> str:
     return stdout.strip()
 
 
-def get_local_node_status(runner: CommandRunner) -> dict[str, Union[bool, str]]:
+def get_local_node_status(runner: CommandRunner) -> dict[str, bool | str]:
     try:
         cluster_status = ClusterState(get_cluster_status_dom(runner))
         node_name = get_local_node_name(runner)
@@ -547,7 +548,7 @@ def get_local_node_status(runner: CommandRunner) -> dict[str, Union[bool, str]]:
         return {"offline": True}
     for node_status in cluster_status.node_section.nodes:
         if node_status.attrs.name == node_name:
-            result: dict[str, Union[bool, str]] = {
+            result: dict[str, bool | str] = {
                 "offline": False,
             }
             for attr in (
@@ -598,8 +599,8 @@ def remove_node(runner: CommandRunner, node_name: str) -> None:
 def resource_restart(
     runner: CommandRunner,
     resource: str,
-    node: Optional[str] = None,
-    timeout: Optional[str] = None,
+    node: str | None = None,
+    timeout: str | None = None,
 ) -> None:
     """
     Ask pacemaker to restart a resource
@@ -628,10 +629,10 @@ def resource_restart(
 
 def resource_cleanup(
     runner: CommandRunner,
-    resource: Optional[str] = None,
-    node: Optional[str] = None,
-    operation: Optional[str] = None,
-    interval: Optional[str] = None,
+    resource: str | None = None,
+    node: str | None = None,
+    operation: str | None = None,
+    interval: str | None = None,
     strict: bool = False,
 ) -> str:
     cmd = [settings.crm_resource_exec, "--cleanup"]
@@ -662,8 +663,8 @@ def resource_cleanup(
 
 def resource_refresh(
     runner: CommandRunner,
-    resource: Optional[str] = None,
-    node: Optional[str] = None,
+    resource: str | None = None,
+    node: str | None = None,
     strict: bool = False,
     force: bool = False,
 ) -> str:
@@ -705,9 +706,9 @@ def resource_refresh(
 def resource_move(
     runner: CommandRunner,
     resource_id: str,
-    node: Optional[str] = None,
+    node: str | None = None,
     promoted: bool = False,
-    lifetime: Optional[str] = None,
+    lifetime: str | None = None,
 ) -> tuple[str, str, int]:
     return _resource_move_ban_clear(
         runner,
@@ -722,9 +723,9 @@ def resource_move(
 def resource_ban(
     runner: CommandRunner,
     resource_id: str,
-    node: Optional[str] = None,
+    node: str | None = None,
     promoted: bool = False,
-    lifetime: Optional[str] = None,
+    lifetime: str | None = None,
 ) -> tuple[str, str, int]:
     return _resource_move_ban_clear(
         runner,
@@ -739,7 +740,7 @@ def resource_ban(
 def resource_unmove_unban(
     runner: CommandRunner,
     resource_id: str,
-    node: Optional[str] = None,
+    node: str | None = None,
     promoted: bool = False,
     expired: bool = False,
 ) -> tuple[str, str, int]:
@@ -763,9 +764,9 @@ def _resource_move_ban_clear(
     runner: CommandRunner,
     action: str,
     resource_id: str,
-    node: Optional[str] = None,
+    node: str | None = None,
     promoted: bool = False,
-    lifetime: Optional[str] = None,
+    lifetime: str | None = None,
     expired: bool = False,
 ) -> tuple[str, str, int]:
     command = [
@@ -804,14 +805,12 @@ def is_fence_history_supported_management(runner: CommandRunner) -> bool:
 
 
 def fence_history_cleanup(
-    runner: CommandRunner, node: Optional[str] = None
+    runner: CommandRunner, node: str | None = None
 ) -> str:
     return _run_fence_history_command(runner, "--cleanup", node)
 
 
-def fence_history_text(
-    runner: CommandRunner, node: Optional[str] = None
-) -> str:
+def fence_history_text(runner: CommandRunner, node: str | None = None) -> str:
     return _run_fence_history_command(runner, "--verbose", node)
 
 
@@ -823,7 +822,7 @@ def fence_history_update(runner: CommandRunner) -> str:
 
 
 def _run_fence_history_command(
-    runner: CommandRunner, command: str, node: Optional[str] = None
+    runner: CommandRunner, command: str, node: str | None = None
 ) -> str:
     stdout, stderr, retval = runner.run(
         [
@@ -958,8 +957,8 @@ def get_resource_digests(
     resource_id: str,
     node_name: str,
     resource_options: dict[str, str],
-    crm_meta_attributes: Optional[dict[str, Optional[str]]] = None,
-) -> dict[str, Optional[str]]:
+    crm_meta_attributes: dict[str, str | None] | None = None,
+) -> dict[str, str | None]:
     """
     Get set of digests for a resource using crm_resource utility. There are 3
     types of digests: all, nonreloadable and nonprivate. Resource can have one
@@ -1028,7 +1027,7 @@ def _validate_stonith_instance_attributes_via_pcmk(
     cmd_runner: CommandRunner,
     agent_name: ResourceAgentName,
     instance_attributes: Mapping[str, str],
-) -> tuple[Optional[bool], str]:
+) -> tuple[bool | None, str]:
     cmd = [
         settings.stonith_admin_exec,
         "--validate",
@@ -1049,7 +1048,7 @@ def _validate_resource_instance_attributes_via_pcmk(
     cmd_runner: CommandRunner,
     agent_name: ResourceAgentName,
     instance_attributes: Mapping[str, str],
-) -> tuple[Optional[bool], str]:
+) -> tuple[bool | None, str]:
     cmd = [
         settings.crm_resource_exec,
         "--validate",
@@ -1075,7 +1074,7 @@ def _handle_instance_attributes_validation_via_pcmk(
     cmd: StringSequence,
     data_xpath: str,
     instance_attributes: Mapping[str, str],
-) -> tuple[Optional[bool], str]:
+) -> tuple[bool | None, str]:
     def _format_output_line(xml_text: str) -> str:
         return "\n".join(
             line.strip() for line in xml_text.split("\n") if line.strip()
@@ -1114,7 +1113,7 @@ def validate_resource_instance_attributes_via_pcmk(
     cmd_runner: CommandRunner,
     resource_agent_name: ResourceAgentName,
     instance_attributes: Mapping[str, str],
-) -> tuple[Optional[bool], str]:
+) -> tuple[bool | None, str]:
     # If CIBSECRET_MARK_VALUE is passed to the validation, then the validation
     # fails to run, because pacemaker tries to load the secret value and fails.
     # To read the secret value, pacemaker needs to know the resource ID. But
@@ -1203,7 +1202,7 @@ def get_resource_secret_value(resource_id: str, attribute_name: str) -> str:
     return secret_value
 
 
-def get_pacemaker_version(runner: CommandRunner) -> Optional[Version]:
+def get_pacemaker_version(runner: CommandRunner) -> Version | None:
     """
     Return the installed pacemaker version or None if version cannot be
     determined.

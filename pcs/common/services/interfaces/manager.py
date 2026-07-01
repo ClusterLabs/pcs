@@ -1,11 +1,5 @@
-from typing import (
-    List,
-    Optional,
-)
-
-
 class ServiceManagerInterface:
-    def start(self, service: str, instance: Optional[str] = None) -> None:
+    def start(self, service: str, instance: str | None = None) -> None:
         """
         service -- name of service to be started
         instance -- service instance identifier. Available only for system which
@@ -15,7 +9,7 @@ class ServiceManagerInterface:
         """
         raise NotImplementedError()
 
-    def stop(self, service: str, instance: Optional[str] = None) -> None:
+    def stop(self, service: str, instance: str | None = None) -> None:
         """
         service -- name of service to be stopped
         instance -- service instance identifier. Available only for system which
@@ -25,7 +19,7 @@ class ServiceManagerInterface:
         """
         raise NotImplementedError()
 
-    def enable(self, service: str, instance: Optional[str] = None) -> None:
+    def enable(self, service: str, instance: str | None = None) -> None:
         """
         service -- name of service to be enabled
         instance -- service instance identifier. Available only for system which
@@ -35,7 +29,7 @@ class ServiceManagerInterface:
         """
         raise NotImplementedError()
 
-    def disable(self, service: str, instance: Optional[str] = None) -> None:
+    def disable(self, service: str, instance: str | None = None) -> None:
         """
         service -- name of service to be disabled
         instance -- service instance identifier. Available only for system which
@@ -45,7 +39,7 @@ class ServiceManagerInterface:
         """
         raise NotImplementedError()
 
-    def is_enabled(self, service: str, instance: Optional[str] = None) -> bool:
+    def is_enabled(self, service: str, instance: str | None = None) -> bool:
         """
         service -- name of service to be checked
         instance -- service instance identifier. Available only for system which
@@ -55,7 +49,7 @@ class ServiceManagerInterface:
         """
         raise NotImplementedError()
 
-    def is_running(self, service: str, instance: Optional[str] = None) -> bool:
+    def is_running(self, service: str, instance: str | None = None) -> bool:
         """
         service -- name of service to be checked
         instance -- service instance identifier. Available only for system which
@@ -74,7 +68,7 @@ class ServiceManagerInterface:
         """
         raise NotImplementedError()
 
-    def get_available_services(self) -> List[str]:
+    def get_available_services(self) -> list[str]:
         """
         Returns list of service names recognized by init system.
         """

@@ -1,7 +1,4 @@
-from typing import (
-    Optional,
-    cast,
-)
+from typing import cast
 
 from lxml.etree import _Element
 
@@ -11,7 +8,7 @@ _BOOTH_ATTRIBUTE = "booth-cfg-name"
 
 
 def get_booth_ticket_names(
-    cib: _Element, booth_instance: Optional[str] = None
+    cib: _Element, booth_instance: str | None = None
 ) -> list[str]:
     """
     Return names of booth tickets present in CIB for the specified booth

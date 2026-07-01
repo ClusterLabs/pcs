@@ -1,16 +1,5 @@
-from typing import (
-    AbstractSet,
-    Any,
-    Iterable,
-    List,
-    Mapping,
-    MutableMapping,
-    Optional,
-    Sequence,
-    Set,
-    Tuple,
-    cast,
-)
+from collections.abc import Iterable, Mapping, MutableMapping, Sequence, Set
+from typing import Any, cast
 
 from lxml.etree import _Element
 
@@ -43,9 +32,9 @@ def _get_opposite_relation_id_template(
 class ResourceRelationNode:
     def __init__(self, entity: RelationEntityDto):
         self._obj = entity
-        self._members: List[ResourceRelationNode] = []
+        self._members: list[ResourceRelationNode] = []
         self._is_leaf = False
-        self._parent: Optional[ResourceRelationNode] = None
+        self._parent: ResourceRelationNode | None = None
         self._opposite_id = _get_opposite_relation_id_template(
             cast(ResourceRelationType, self._obj.type)
         ).format(self._obj.metadata["id"])
@@ -91,7 +80,7 @@ class ResourceRelationNode:
             member._parent = self  # noqa: SLF001
             self._members.append(member)
 
-    def _get_all_parents(self) -> List[str]:
+    def _get_all_parents(self) -> list[str]:
         # pylint: disable=protected-access
         if self._parent is None:
             return []
@@ -108,9 +97,9 @@ class ResourceRelationTreeBuilder:
         self._init_structures()
 
     def _init_structures(self) -> None:
-        self._processed_nodes: Set[str] = set()
+        self._processed_nodes: set[str] = set()
         # queue
-        self._nodes_to_process: List[ResourceRelationNode] = []
+        self._nodes_to_process: list[ResourceRelationNode] = []
 
     def get_tree(self, resource_id: str) -> ResourceRelationNode:
         self._init_structures()
@@ -144,7 +133,7 @@ class ResourceRelationsFetcher:
 
     def get_relations(
         self, resource_id: str
-    ) -> Tuple[IdRelationMap, IdRelationMap]:
+    ) -> tuple[IdRelationMap, IdRelationMap]:
         resources_to_process = {resource_id}
         relations = {}
         resources: MutableMapping[str, RelationEntityDto] = {}
@@ -186,8 +175,8 @@ class ResourceRelationsFetcher:
     @staticmethod
     def _get_all_members(
         relation_list: Iterable[RelationEntityDto],
-    ) -> AbstractSet[str]:
-        result: Set[str] = set()
+    ) -> Set[str]:
+        result: set[str] = set()
         for relation in relation_list:
             result.update(relation.members)
         return result
@@ -215,9 +204,9 @@ class ResourceRelationsFetcher:
             relations.append(_get_outer_resource_relation(parent_el))
         return relations
 
-    def _get_ordering_coinstraints(self, resource_id: str) -> List[_Element]:
+    def _get_ordering_coinstraints(self, resource_id: str) -> list[_Element]:
         return cast(
-            List[_Element],
+            list[_Element],
             self._constraints_section.xpath(
                 """
                 .//rsc_order[
@@ -230,9 +219,9 @@ class ResourceRelationsFetcher:
             ),
         )
 
-    def _get_ordering_set_constraints(self, resource_id: str) -> List[_Element]:
+    def _get_ordering_set_constraints(self, resource_id: str) -> list[_Element]:
         return cast(
-            List[_Element],
+            list[_Element],
             self._constraints_section.xpath(
                 ".//rsc_order[./resource_set/resource_ref[@id=$resource_id]]",
                 resource_id=resource_id,
@@ -294,7 +283,7 @@ def _get_ordering_set_constraint_relation(
     ord_set_const_el: _Element,
 ) -> RelationEntityDto:
     attrs = cast(Mapping[str, str], ord_set_const_el.attrib)
-    members: Set[str] = set()
+    members: set[str] = set()
     metadata: MutableMapping[str, Any] = dict(attrs)
     metadata["sets"] = []
     for rsc_set_el in ord_set_const_el.findall("resource_set"):

@@ -1,8 +1,3 @@
-from typing import (
-    List,
-    Optional,
-)
-
 from pcs import settings
 from pcs.common import (
     reports,
@@ -29,7 +24,7 @@ class _NoOpDriver(services.interfaces.ServiceManagerInterface):
     def _warn(
         self,
         service: str,
-        instance: Optional[str],
+        instance: str | None,
         action: reports.types.ServiceAction,
     ) -> None:
         self._report_processor.report(
@@ -43,26 +38,26 @@ class _NoOpDriver(services.interfaces.ServiceManagerInterface):
             )
         )
 
-    def start(self, service: str, instance: Optional[str] = None) -> None:
+    def start(self, service: str, instance: str | None = None) -> None:
         self._warn(service, instance, reports.const.SERVICE_ACTION_START)
 
-    def stop(self, service: str, instance: Optional[str] = None) -> None:
+    def stop(self, service: str, instance: str | None = None) -> None:
         self._warn(service, instance, reports.const.SERVICE_ACTION_STOP)
 
-    def enable(self, service: str, instance: Optional[str] = None) -> None:
+    def enable(self, service: str, instance: str | None = None) -> None:
         self._warn(service, instance, reports.const.SERVICE_ACTION_ENABLE)
 
-    def disable(self, service: str, instance: Optional[str] = None) -> None:
+    def disable(self, service: str, instance: str | None = None) -> None:
         self._warn(service, instance, reports.const.SERVICE_ACTION_DISABLE)
 
-    def kill(self, service: str, instance: Optional[str] = None) -> None:
+    def kill(self, service: str, instance: str | None = None) -> None:
         self._warn(service, instance, reports.const.SERVICE_ACTION_KILL)
 
-    def is_enabled(self, service: str, instance: Optional[str] = None) -> bool:
+    def is_enabled(self, service: str, instance: str | None = None) -> bool:
         del service, instance
         return False
 
-    def is_running(self, service: str, instance: Optional[str] = None) -> bool:
+    def is_running(self, service: str, instance: str | None = None) -> bool:
         del service, instance
         return False
 
@@ -70,7 +65,7 @@ class _NoOpDriver(services.interfaces.ServiceManagerInterface):
         del service
         return True
 
-    def get_available_services(self) -> List[str]:
+    def get_available_services(self) -> list[str]:
         return []
 
     def is_current_system_supported(self) -> bool:
@@ -85,7 +80,7 @@ def get_service_manager(
     report_processor: reports.ReportProcessor,
 ) -> services.interfaces.ServiceManagerInterface:
     executor = _CmdExecutor(cmd_runner)
-    drivers: List[services.interfaces.ServiceManagerInterface] = [
+    drivers: list[services.interfaces.ServiceManagerInterface] = [
         services.drivers.SystemdDriver(
             executor, settings.systemctl_exec, settings.systemd_unit_path
         ),

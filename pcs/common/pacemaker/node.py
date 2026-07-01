@@ -1,5 +1,5 @@
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Optional, Sequence
 
 from pcs.common.interface.dto import DataTransferObject
 from pcs.common.pacemaker.nvset import CibNvsetDto
@@ -9,9 +9,9 @@ from pcs.common.pacemaker.nvset import CibNvsetDto
 class CibNodeDto(DataTransferObject):
     id: str
     uname: str
-    description: Optional[str]
-    score: Optional[str]
-    type: Optional[str]
+    description: str | None
+    score: str | None
+    type: str | None
     instance_attributes: Sequence[CibNvsetDto]
     utilization: Sequence[CibNvsetDto]
 

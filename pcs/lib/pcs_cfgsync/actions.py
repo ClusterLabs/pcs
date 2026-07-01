@@ -1,4 +1,4 @@
-from typing import Callable
+from collections.abc import Callable
 
 from pcs.lib.pcs_cfgsync.config.facade import Facade as CfgsyncCtlFacade
 

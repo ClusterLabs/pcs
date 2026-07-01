@@ -1,5 +1,4 @@
 from collections import namedtuple
-from typing import Optional, Set
 
 from lxml import etree
 from lxml.etree import _Element
@@ -23,7 +22,7 @@ def get_all_node_elements(nodes_section: _Element) -> list[_Element]:
 
 
 def node_el_to_dto(
-    node_el: _Element, rule_eval: Optional[rule.RuleInEffectEval] = None
+    node_el: _Element, rule_eval: rule.RuleInEffectEval | None = None
 ) -> CibNodeDto:
     if rule_eval is None:
         rule_eval = rule.RuleInEffectEvalDummy()
@@ -99,7 +98,7 @@ def update_node_instance_attrs(
     append_when_useful(cib_nodes, node_el)
 
 
-def get_node_names(cib: _Element) -> Set[str]:
+def get_node_names(cib: _Element) -> set[str]:
     return {
         str(node.attrib["uname"])
         for node in get_nodes(get_root(cib)).iterfind("./node")

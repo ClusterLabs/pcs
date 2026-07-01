@@ -4,7 +4,6 @@ import signal
 import sys
 from textwrap import dedent
 from time import sleep
-from typing import List
 
 import pycurl
 
@@ -31,7 +30,7 @@ from pcs.common.reports import ReportItemDto
 from pcs.utils import read_known_hosts_file
 
 task_ident = ""
-report_list: List[ReportItemDto] = []
+report_list: list[ReportItemDto] = []
 kill_requested = False
 
 

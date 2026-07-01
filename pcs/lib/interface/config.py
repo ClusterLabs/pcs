@@ -1,7 +1,4 @@
-from typing import (
-    Any,
-    Optional,
-)
+from typing import Any
 
 from pcs.common import (
     file_type_codes,
@@ -22,8 +19,8 @@ class ParserInterface:
     def exception_to_report_list(
         exception: ParserErrorException,
         file_type_code: file_type_codes.FileTypeCode,
-        file_path: Optional[str],
-        force_code: Optional[reports.types.ForceCode],
+        file_path: str | None,
+        force_code: reports.types.ForceCode | None,
         is_forced_or_warning: bool,
     ) -> reports.ReportItemList:
         raise NotImplementedError()

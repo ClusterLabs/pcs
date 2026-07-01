@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Optional
 
 from pcs.common.interface.dto import DataTransferObject
 
@@ -13,4 +12,4 @@ class BoothConfigFileDto(DataTransferObject):
 @dataclass(frozen=True)
 class BoothConfigAndAuthfileDto(DataTransferObject):
     config: BoothConfigFileDto
-    authfile: Optional[BoothConfigFileDto]
+    authfile: BoothConfigFileDto | None

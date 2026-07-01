@@ -1,7 +1,6 @@
 import shlex
 from collections import defaultdict
-from collections.abc import Container, Sequence
-from typing import Mapping, Optional, Union
+from collections.abc import Container, Mapping, Sequence
 
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.output import (
@@ -55,7 +54,7 @@ __description_cmd = ["pcs", "cib", "element", "description"]
 
 def _get_ocf_check_level_from_operation(
     operation_dto: CibResourceOperationDto,
-) -> Optional[str]:
+) -> str | None:
     for nvset in operation_dto.instance_attributes:
         for nvpair in nvset.nvpairs:
             if nvpair.name == OCF_CHECK_LEVEL_INSTANCE_ATTRIBUTE_NAME:
@@ -239,7 +238,7 @@ class ResourcesConfigurationFacade:
         clones: Sequence[CibResourceCloneDto],
         bundles: Sequence[CibResourceBundleDto],
         filtered_ids: StringIterable = (),
-        only_stonith: Optional[bool] = None,
+        only_stonith: bool | None = None,
     ) -> None:
         self._primitives = primitives
         self._groups = groups
@@ -253,9 +252,7 @@ class ResourcesConfigurationFacade:
         self._groups_map = {res.id: res for res in self._groups}
         self._child_parent_map: dict[str, str] = {}
         self._parent_child_map: dict[str, list[str]] = defaultdict(list)
-        self._cibsecrets_map: Optional[dict[str, dict[str, Optional[str]]]] = (
-            None
-        )
+        self._cibsecrets_map: dict[str, dict[str, str | None]] | None = None
         for bundle_dto in self._bundles:
             if bundle_dto.member_id:
                 self._set_parent(bundle_dto.member_id, bundle_dto.id)
@@ -276,7 +273,7 @@ class ResourcesConfigurationFacade:
             resources_dto.bundles,
         )
 
-    def get_parent_id(self, res_id: str) -> Optional[str]:
+    def get_parent_id(self, res_id: str) -> str | None:
         return self._child_parent_map.get(res_id)
 
     def _get_children_ids(self, res_id: str) -> list[str]:
@@ -288,24 +285,21 @@ class ResourcesConfigurationFacade:
         self._child_parent_map[child_id] = parent_id
         self._parent_child_map[parent_id].append(child_id)
 
-    def get_primitive_dto(
-        self, obj_id: str
-    ) -> Optional[CibResourcePrimitiveDto]:
+    def get_primitive_dto(self, obj_id: str) -> CibResourcePrimitiveDto | None:
         return self._primitives_map.get(obj_id)
 
-    def get_group_dto(self, obj_id: str) -> Optional[CibResourceGroupDto]:
+    def get_group_dto(self, obj_id: str) -> CibResourceGroupDto | None:
         return self._groups_map.get(obj_id)
 
     def _get_any_resource_dto(
         self, obj_id: str
-    ) -> Optional[
-        Union[
-            CibResourcePrimitiveDto,
-            CibResourceGroupDto,
-            CibResourceCloneDto,
-            CibResourceBundleDto,
-        ]
-    ]:
+    ) -> (
+        CibResourcePrimitiveDto
+        | CibResourceGroupDto
+        | CibResourceCloneDto
+        | CibResourceBundleDto
+        | None
+    ):
         return (
             self._primitives_map.get(obj_id)
             or self._bundles_map.get(obj_id)
@@ -315,13 +309,13 @@ class ResourcesConfigurationFacade:
 
     def _create_cibsecrets_map(
         self,
-        *resource_dtos: Union[
-            CibResourcePrimitiveDto,
-            CibResourceGroupDto,
-            CibResourceCloneDto,
-            CibResourceBundleDto,
-        ],
-    ) -> dict[str, dict[str, Optional[str]]]:
+        *resource_dtos: (
+            CibResourcePrimitiveDto
+            | CibResourceGroupDto
+            | CibResourceCloneDto
+            | CibResourceBundleDto
+        ),
+    ) -> dict[str, dict[str, str | None]]:
         return {
             resource_dto.id: {
                 nvpair_dto.name: None
@@ -332,7 +326,7 @@ class ResourcesConfigurationFacade:
             if resource_dto.instance_attributes
         }
 
-    def _get_cibsecrets_map(self) -> dict[str, dict[str, Optional[str]]]:
+    def _get_cibsecrets_map(self) -> dict[str, dict[str, str | None]]:
         if self._cibsecrets_map is None:
             self._cibsecrets_map = self._create_cibsecrets_map(
                 *self._primitives, *self._groups, *self._clones, *self._bundles
@@ -341,7 +335,7 @@ class ResourcesConfigurationFacade:
 
     def get_resource_secrets_map(
         self, resource_id: str
-    ) -> dict[str, Optional[str]]:
+    ) -> dict[str, str | None]:
         return self._get_cibsecrets_map().get(resource_id, {})
 
     def get_secrets_queries(self) -> list[tuple[str, str]]:
@@ -493,7 +487,7 @@ def _resource_agent_name_to_text(
 def _nvset_to_text(
     label: str,
     nvsets: Sequence[CibNvsetDto],
-    secrets_map: Optional[Mapping[str, Optional[str]]] = None,
+    secrets_map: Mapping[str, str | None] | None = None,
 ) -> list[str]:
     if nvsets and nvsets[0].nvpairs:
         return nvset_dto_to_lines(
@@ -502,7 +496,7 @@ def _nvset_to_text(
     return []
 
 
-def _resource_description_to_text(desc: Optional[str]) -> list[str]:
+def _resource_description_to_text(desc: str | None) -> list[str]:
     if desc:
         return [f"Description: {desc}"]
     return []
@@ -613,7 +607,7 @@ def _resource_bundle_container_options_to_pairs(
 
 
 def _resource_bundle_network_options_to_pairs(
-    bundle_network_dto: Optional[CibResourceBundleNetworkOptionsDto],
+    bundle_network_dto: CibResourceBundleNetworkOptionsDto | None,
 ) -> list[tuple[str, str]]:
     network_options: list[tuple[str, str]] = []
     if not bundle_network_dto:
@@ -668,7 +662,7 @@ def _resource_bundle_network_port_mapping_to_str(
 
 
 def _resource_bundle_network_to_text(
-    bundle_network_dto: Optional[CibResourceBundleNetworkOptionsDto],
+    bundle_network_dto: CibResourceBundleNetworkOptionsDto | None,
 ) -> list[str]:
     network_options = _resource_bundle_network_options_to_pairs(
         bundle_network_dto
@@ -803,7 +797,7 @@ def resources_to_text(
 
 
 def _nvset_to_cmd(
-    label: Optional[str],
+    label: str | None,
     nvsets: Sequence[CibNvsetDto],
 ) -> list[str]:
     if nvsets and nvsets[0].nvpairs:
@@ -833,7 +827,7 @@ def _resource_operation_to_cmd(
 
 def _resource_primitive_to_cmd(
     primitive_dto: CibResourcePrimitiveDto,
-    bundle_id: Optional[str],
+    bundle_id: str | None,
 ) -> list[list[str]]:
     _is_stonith = is_stonith(primitive_dto.agent_name)
     options = (
@@ -1045,7 +1039,7 @@ def _get_stonith_ids_from_group_dto(
 
 
 def _warn_stonith_unsupported(
-    dto: Union[CibResourceBundleDto, CibResourceGroupDto, CibResourceCloneDto],
+    dto: CibResourceBundleDto | CibResourceGroupDto | CibResourceCloneDto,
     stonith_ids: list[str],
 ) -> None:
     resource_pl = format_plural(sorted(stonith_ids), "resource")

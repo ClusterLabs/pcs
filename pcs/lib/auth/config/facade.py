@@ -1,10 +1,6 @@
 import time
-from typing import (
-    Iterable,
-    Optional,
-    Sequence,
-    cast,
-)
+from collections.abc import Iterable, Sequence
+from typing import cast
 
 from pcs.common.tools import get_unique_uuid
 from pcs.lib.interface.config import FacadeInterface
@@ -26,10 +22,10 @@ class Facade(FacadeInterface):
     def config(self) -> Sequence[TokenEntry]:
         return tuple(cast(Iterable[TokenEntry], super().config))
 
-    def _get_entry_by_token(self, token: str) -> Optional[TokenEntry]:
+    def _get_entry_by_token(self, token: str) -> TokenEntry | None:
         return {entry.token: entry for entry in self.config}.get(token)
 
-    def get_user(self, token: str) -> Optional[str]:
+    def get_user(self, token: str) -> str | None:
         entry = self._get_entry_by_token(token)
         if entry is None:
             return None

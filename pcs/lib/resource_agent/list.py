@@ -1,5 +1,3 @@
-from typing import List
-
 from pcs import settings
 from pcs.common import reports
 from pcs.common.str_tools import split_multiline
@@ -32,7 +30,7 @@ _IGNORED_AGENTS = frozenset(
 )
 
 
-def list_resource_agents_standards(runner: CommandRunner) -> List[str]:
+def list_resource_agents_standards(runner: CommandRunner) -> list[str]:
     """
     Return a list of resource agents standards (ocf, lsb, ...) on the local host
     """
@@ -43,7 +41,7 @@ def list_resource_agents_standards(runner: CommandRunner) -> List[str]:
     return sorted(set(split_multiline(stdout)), key=str.lower)
 
 
-def list_resource_agents_ocf_providers(runner: CommandRunner) -> List[str]:
+def list_resource_agents_ocf_providers(runner: CommandRunner) -> list[str]:
     """
     Return a list of resource agents ocf providers on the local host
     """
@@ -56,7 +54,7 @@ def list_resource_agents_ocf_providers(runner: CommandRunner) -> List[str]:
 
 def list_resource_agents_standards_and_providers(
     runner: CommandRunner,
-) -> List[StandardProviderTuple]:
+) -> list[StandardProviderTuple]:
     """
     Return a list of all standard[:provider] on the local host
     """
@@ -77,7 +75,7 @@ def list_resource_agents_standards_and_providers(
 
 def list_resource_agents(
     runner: CommandRunner, standard_provider: StandardProviderTuple
-) -> List[str]:
+) -> list[str]:
     """
     Return a list of resource agents of the specified standard on the local host
 
@@ -134,7 +132,7 @@ def find_one_resource_agent_by_type(
 
 def _find_all_resource_agents_by_type(
     runner: CommandRunner, type_: str
-) -> List[ResourceAgentName]:
+) -> list[ResourceAgentName]:
     """
     List resource agents with the specified type from all standards:providers
 

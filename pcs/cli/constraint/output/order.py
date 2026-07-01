@@ -1,5 +1,5 @@
+from collections.abc import Iterable
 from shlex import quote
-from typing import Iterable
 
 from pcs.cli.common.output import (
     INDENT_STEP,

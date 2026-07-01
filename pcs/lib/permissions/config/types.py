@@ -1,5 +1,5 @@
+from collections.abc import Collection, Sequence
 from dataclasses import dataclass
-from typing import Collection, Sequence
 
 from pcs.common.interface.dto import ImplementsToDto
 from pcs.common.permissions.dto import PermissionEntryDto

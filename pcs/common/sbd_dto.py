@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Optional
 
 from pcs.common.interface.dto import DataTransferObject
 from pcs.common.services_dto import ServiceStatusDto
@@ -22,5 +21,5 @@ class SbdDeviceStatusDto(DataTransferObject):
 @dataclass(frozen=True)
 class SbdCheckResultDto(DataTransferObject):
     sbd_service: ServiceStatusDto
-    watchdog: Optional[SbdWatchdogStatusDto] = None
-    device_list: Optional[list[SbdDeviceStatusDto]] = None
+    watchdog: SbdWatchdogStatusDto | None = None
+    device_list: list[SbdDeviceStatusDto] | None = None

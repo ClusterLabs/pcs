@@ -1,5 +1,3 @@
-from typing import Optional
-
 from lxml.etree import _Element
 
 from pcs import settings
@@ -90,7 +88,7 @@ def verify(env: LibraryEnvironment, verbose: bool = False) -> None:
 
 def corosync_authkey_change(
     env: LibraryEnvironment,
-    corosync_authkey: Optional[bytes] = None,
+    corosync_authkey: bytes | None = None,
     force_flags: reports.types.ForceFlags = (),
 ) -> None:
     """

@@ -1,8 +1,4 @@
-from typing import (
-    List,
-    Optional,
-    cast,
-)
+from typing import cast
 
 from lxml.etree import (
     SubElement,
@@ -27,13 +23,13 @@ def append_new(resources_section: _Element, group_id: str) -> _Element:
 
 def get_inner_resources(
     group_el: _Element,
-) -> List[_Element]:
-    return cast(List[_Element], group_el.xpath("./primitive"))
+) -> list[_Element]:
+    return cast(list[_Element], group_el.xpath("./primitive"))
 
 
 def group_element_to_dto(
     group_element: _Element,
-    rule_eval: Optional[rule.RuleInEffectEval] = None,
+    rule_eval: rule.RuleInEffectEval | None = None,
 ) -> CibResourceGroupDto:
     if rule_eval is None:
         rule_eval = rule.RuleInEffectEvalDummy()

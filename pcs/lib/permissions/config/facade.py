@@ -1,5 +1,6 @@
+from collections.abc import Sequence
 from dataclasses import replace
-from typing import Optional, Sequence, cast
+from typing import cast
 
 from pcs.common.permissions.types import PermissionGrantedType
 from pcs.lib.interface.config import SyncVersionFacadeInterface
@@ -29,7 +30,7 @@ class FacadeV2(SyncVersionFacadeInterface):
     def create(
         cls,
         data_version: int = 1,
-        permissions: Optional[Sequence[PermissionEntry]] = None,
+        permissions: Sequence[PermissionEntry] | None = None,
     ) -> "FacadeV2":
         return cls(
             ConfigV2(
@@ -60,7 +61,7 @@ class FacadeV2(SyncVersionFacadeInterface):
 
     def get_entry(
         self, target: str, target_type: PermissionTargetType
-    ) -> Optional[PermissionEntry]:
+    ) -> PermissionEntry | None:
         for entry in self.config.permissions.local_cluster:
             if entry.type == target_type and entry.name == target:
                 return entry

@@ -1,10 +1,4 @@
-from typing import (
-    List,
-    Optional,
-    Set,
-    Tuple,
-    cast,
-)
+from typing import cast
 
 from lxml.etree import _Element
 
@@ -34,8 +28,8 @@ from .primitive import is_primitive
 def find_one_resource(
     context_element: _Element,
     resource_id: str,
-    resource_tags: Optional[StringCollection] = None,
-) -> Tuple[Optional[_Element], ReportItemList]:
+    resource_tags: StringCollection | None = None,
+) -> tuple[_Element | None, ReportItemList]:
     """
     Find a single resource or return None if not found
 
@@ -57,8 +51,8 @@ def find_one_resource(
 def find_resources(
     context_element: _Element,
     resource_ids: StringCollection,
-    resource_tags: Optional[StringCollection] = None,
-) -> Tuple[List[_Element], ReportItemList]:
+    resource_tags: StringCollection | None = None,
+) -> tuple[list[_Element], ReportItemList]:
     """
     Find a list of resources
 
@@ -80,7 +74,7 @@ def find_resources(
     return resource_el_list, report_list
 
 
-def find_primitives(resource_el: _Element) -> List[_Element]:
+def find_primitives(resource_el: _Element) -> list[_Element]:
     """
     Get list of primitives contained in a given resource
 
@@ -98,7 +92,7 @@ def find_primitives(resource_el: _Element) -> List[_Element]:
     return []
 
 
-def get_all_inner_resources(resource_el: _Element) -> Set[_Element]:
+def get_all_inner_resources(resource_el: _Element) -> set[_Element]:
     """
     Return all inner resources (both direct and indirect) of a resource
     Example: for a clone containing a group, this function will return both
@@ -106,7 +100,7 @@ def get_all_inner_resources(resource_el: _Element) -> Set[_Element]:
 
     resource_el -- resource element to get its inner resources
     """
-    all_inner: Set[_Element] = set()
+    all_inner: set[_Element] = set()
     to_process = {resource_el}
     while to_process:
         new_inner = get_inner_resources(to_process.pop())
@@ -115,7 +109,7 @@ def get_all_inner_resources(resource_el: _Element) -> Set[_Element]:
     return all_inner
 
 
-def get_inner_resources(resource_el: _Element) -> List[_Element]:
+def get_inner_resources(resource_el: _Element) -> list[_Element]:
     """
     Return list of inner resources (direct descendants) of a resource
     specified as resource_el.
@@ -157,7 +151,7 @@ def is_wrapper_resource(resource_el: _Element) -> bool:
     )
 
 
-def get_parent_resource(resource_el: _Element) -> Optional[_Element]:
+def get_parent_resource(resource_el: _Element) -> _Element | None:
     """
     Return a direct ancestor of a specified resource or None if the resource
     has no ancestor.
@@ -172,7 +166,7 @@ def get_parent_resource(resource_el: _Element) -> Optional[_Element]:
     return None
 
 
-def find_resources_to_enable(resource_el: _Element) -> List[_Element]:
+def find_resources_to_enable(resource_el: _Element) -> list[_Element]:
     """
     Get resources to enable in order to enable specified resource successfully
 
@@ -233,7 +227,7 @@ def is_disabled(resource_el: _Element) -> bool:
     )
 
 
-def find_resources_to_manage(resource_el: _Element) -> List[_Element]:
+def find_resources_to_manage(resource_el: _Element) -> list[_Element]:
     """
     Get resources to set to managed for the specified resource to become managed
 
@@ -251,7 +245,7 @@ def find_resources_to_manage(resource_el: _Element) -> List[_Element]:
     top_element = find_parent(resource_el, {"resources"})
     if top_element is not None:
         parent_el = cast(
-            List[_Element],
+            list[_Element],
             top_element.xpath(
                 # a master or a clone which contains a group, a primitive, or a
                 # grouped primitive with the specified id
@@ -271,13 +265,13 @@ def find_resources_to_manage(resource_el: _Element) -> List[_Element]:
             ),
         )
     children_el = cast(
-        List[_Element],
+        list[_Element],
         resource_el.xpath("(./group|./primitive|./group/primitive)"),
     )
     return [resource_el] + parent_el + children_el
 
 
-def find_resources_to_unmanage(resource_el: _Element) -> List[_Element]:
+def find_resources_to_unmanage(resource_el: _Element) -> list[_Element]:
     """
     Get resources to unmanage to unmanage the specified resource successfully
 

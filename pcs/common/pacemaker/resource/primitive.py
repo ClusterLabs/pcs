@@ -1,8 +1,5 @@
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import (
-    Optional,
-    Sequence,
-)
 
 from pcs.common.interface.dto import DataTransferObject
 from pcs.common.pacemaker.nvset import CibNvsetDto
@@ -15,7 +12,7 @@ from .operations import CibResourceOperationDto
 class CibResourcePrimitiveDto(DataTransferObject):
     id: str  # pylint: disable=invalid-name
     agent_name: ResourceAgentNameDto
-    description: Optional[str]
+    description: str | None
     operations: Sequence[CibResourceOperationDto]
     meta_attributes: Sequence[CibNvsetDto]
     instance_attributes: Sequence[CibNvsetDto]

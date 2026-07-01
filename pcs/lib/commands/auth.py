@@ -1,4 +1,5 @@
-from typing import Mapping, Sequence, cast
+from collections.abc import Mapping, Sequence
+from typing import cast
 
 from pcs.common import reports
 from pcs.common.auth import HostAuthData, HostWithTokenAuthData
@@ -141,8 +142,8 @@ def deauth_all_local_hosts(env: LibraryEnvironment) -> None:
 
 
 # TODO
-# hosts_to_remove: set[str] or AbstractSet[str] would be ideal, to show that
-# duplicates are ignored
+# hosts_to_remove: set[str] or Set[str] would be ideal, to show that duplicates
+# are ignored
 # We would need to update pcs.common.interface.dto to allow sets when calling
 # commands through API - json doesn't have set
 def known_hosts_change(

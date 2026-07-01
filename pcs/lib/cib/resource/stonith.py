@@ -1,9 +1,6 @@
 import re
-from typing import (
-    Mapping,
-    Optional,
-    cast,
-)
+from collections.abc import Mapping
+from typing import cast
 
 from lxml.etree import _Element
 
@@ -100,7 +97,7 @@ SUPPORTED_RESOURCE_TYPES_FOR_RESTARTLESS_UPDATE = ["fence_scsi", "fence_mpath"]
 def validate_stonith_restartless_update(
     cib: _Element,
     stonith_id: str,
-) -> tuple[Optional[_Element], ReportItemList]:
+) -> tuple[_Element | None, ReportItemList]:
     """
     Validate that stonith device exists and its type is supported for
     restartless update of scsi devices and has defined option 'devices'.
@@ -147,7 +144,7 @@ def get_node_key_map_for_mpath(
     stonith_el: _Element, node_labels: StringIterable
 ) -> dict[str, str]:
     def library_error(
-        host_map: Optional[str], missing_nodes: StringIterable
+        host_map: str | None, missing_nodes: StringIterable
     ) -> LibraryError:
         return LibraryError(
             ReportItem.error(
@@ -193,7 +190,7 @@ TRANSIENT_DIGEST_ATTRS = frozenset(
 def _get_digest(
     attr: str,
     attr_to_type_map: Mapping[str, str],
-    calculated_digests: Mapping[str, Optional[str]],
+    calculated_digests: Mapping[str, str | None],
 ) -> str:
     """
     Return digest of right type for the specified attribute. If missing, raise
@@ -240,7 +237,7 @@ def _get_lrm_rsc_op_elements(
     resource_id: str,
     node_name: str,
     op_name: str,
-    interval: Optional[str] = None,
+    interval: str | None = None,
 ) -> list[_Element]:
     """
     Get a lrm_rsc_op element from cib status.
@@ -268,7 +265,7 @@ def _get_lrm_rsc_op_elements(
 
 def _get_monitor_attrs(
     resource_el: _Element,
-) -> list[dict[str, Optional[str]]]:
+) -> list[dict[str, str | None]]:
     """
     Get list of interval/timeout attributes of all monitor operations of
     the resource which is being updated.
@@ -284,7 +281,7 @@ def _get_monitor_attrs(
     from the resource definition and lrm_rsc_op elements from the cluster
     status, it will be found later.
     """
-    monitor_attrs_list: list[dict[str, Optional[str]]] = []
+    monitor_attrs_list: list[dict[str, str | None]] = []
     for operation_el in operations.get_resource_operations(
         resource_el, names=["monitor"]
     ):
@@ -309,7 +306,7 @@ def _get_monitor_attrs(
 
 
 def _update_digest_attrs_in_lrm_rsc_op(
-    lrm_rsc_op: _Element, calculated_digests: Mapping[str, Optional[str]]
+    lrm_rsc_op: _Element, calculated_digests: Mapping[str, str | None]
 ) -> None:
     """
     Update digest attributes in lrm_rsc_op elements. If there are missing
@@ -380,7 +377,7 @@ def _update_digest_attrs_in_transient_instance_attributes(
     nvset_el: _Element,
     stonith_id: str,
     stonith_type: str,
-    calculated_digests: Mapping[str, Optional[str]],
+    calculated_digests: Mapping[str, str | None],
 ) -> None:
     """
     Update digests attributes in transient instance attributes element.

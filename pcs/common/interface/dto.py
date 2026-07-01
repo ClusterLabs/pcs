@@ -1,6 +1,7 @@
+from collections.abc import Callable, Iterable
 from dataclasses import asdict
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Callable, Iterable, TypeVar, Union
+from typing import TYPE_CHECKING, Any, TypeVar
 
 import dacite
 
@@ -17,11 +18,9 @@ else:
         pass
 
 
-PrimitiveType = Union[str, int, float, bool, None]
+PrimitiveType = str | int | float | bool | None
 DtoPayload = dict[str, "SerializableType"]
-SerializableType = Union[
-    PrimitiveType, DtoPayload, Iterable["SerializableType"]
-]
+SerializableType = PrimitiveType | DtoPayload | Iterable["SerializableType"]
 
 
 class PayloadConversionError(Exception):

@@ -1,8 +1,5 @@
 from dataclasses import dataclass
-from typing import (
-    Any,
-    Union,
-)
+from typing import Any
 
 from pcs.common.async_tasks.types import TaskFinishType
 from pcs.common.reports import ReportItemDto
@@ -24,11 +21,7 @@ class TaskFinished:
 @dataclass(frozen=True)
 class Message:
     task_ident: str
-    payload: Union[
-        ReportItemDto,
-        TaskExecuted,
-        TaskFinished,
-    ]
+    payload: ReportItemDto | TaskExecuted | TaskFinished
 
 
 @dataclass(frozen=True)

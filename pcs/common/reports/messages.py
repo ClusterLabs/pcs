@@ -1,18 +1,9 @@
 # pylint: disable=too-many-lines
 from collections import defaultdict
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from functools import partial
-from typing import (
-    Any,
-    Dict,
-    List,
-    Literal,
-    Mapping,
-    Optional,
-    Tuple,
-    Union,
-    cast,
-)
+from typing import Any, Literal, cast
 
 from pcs.common import file_type_codes
 from pcs.common.fencing_topology import (
@@ -100,11 +91,11 @@ def _format_fencing_level_target(
     return str(target_value)
 
 
-def _format_booth_default(value: Optional[str], template: str) -> str:
+def _format_booth_default(value: str | None, template: str) -> str:
     return "" if value in ("booth", "", None) else template.format(value)
 
 
-def _key_numeric(item: str) -> Tuple[int, str]:
+def _key_numeric(item: str) -> tuple[int, str]:
     try:
         return int(item), item
     except ValueError:
@@ -258,7 +249,7 @@ def _metatypes_to_string(type_list: StringIterable) -> str:
     return _translate_list_to_string(_meta_type_translation, type_list)
 
 
-def _build_node_description(node_types: List[str]) -> str:
+def _build_node_description(node_types: list[str]) -> str:
     if not node_types:
         return "Node"
 
@@ -400,8 +391,8 @@ class RequiredOptionsAreMissing(ReportItemMessage):
     option_type -- describes the option
     """
 
-    option_names: List[str]
-    option_type: Optional[str] = None
+    option_names: list[str]
+    option_type: str | None = None
     _code = codes.REQUIRED_OPTIONS_ARE_MISSING
 
     @property
@@ -429,8 +420,8 @@ class PrerequisiteOptionIsMissing(ReportItemMessage):
 
     option_name: str
     prerequisite_name: str
-    option_type: Optional[str] = None
-    prerequisite_type: Optional[str] = None
+    option_type: str | None = None
+    prerequisite_type: str | None = None
     _code = codes.PREREQUISITE_OPTION_IS_MISSING
 
     @property
@@ -545,9 +536,9 @@ class RequiredOptionOfAlternativesIsMissing(ReportItemMessage):
     option_type -- describes the option
     """
 
-    option_names: List[str]
-    deprecated_names: List[str] = field(default_factory=list)
-    option_type: Optional[str] = None
+    option_names: list[str]
+    deprecated_names: list[str] = field(default_factory=list)
+    option_type: str | None = None
     _code = codes.REQUIRED_OPTION_OF_ALTERNATIVES_IS_MISSING
 
     @property
@@ -582,10 +573,10 @@ class InvalidOptions(ReportItemMessage):
     allowed_patterns -- allowed user defined options patterns
     """
 
-    option_names: List[str]
-    allowed: List[str]
-    option_type: Optional[str] = None
-    allowed_patterns: List[str] = field(default_factory=list)
+    option_names: list[str]
+    allowed: list[str]
+    option_type: str | None = None
+    allowed_patterns: list[str] = field(default_factory=list)
     _code = codes.INVALID_OPTIONS
 
     @property
@@ -632,9 +623,9 @@ class InvalidUserdefinedOptions(ReportItemMessage):
     option_type -- describes the option
     """
 
-    option_names: List[str]
+    option_names: list[str]
     allowed_characters: str
-    option_type: Optional[str] = None
+    option_type: str | None = None
     _code = codes.INVALID_USERDEFINED_OPTIONS
 
     @property
@@ -660,14 +651,14 @@ class InvalidOptionType(ReportItemMessage):
     """
 
     option_name: str
-    allowed_types: Union[List[str], str]
+    allowed_types: list[str] | str
     _code = codes.INVALID_OPTION_TYPE
 
     @property
     def message(self) -> str:
         return "specified {option_name} is not valid, use {hint}".format(
             hint=(
-                format_list(cast(List[str], self.allowed_types))
+                format_list(cast(list[str], self.allowed_types))
                 if is_iterable_not_str(self.allowed_types)
                 else self.allowed_types
             ),
@@ -689,9 +680,9 @@ class InvalidOptionValue(ReportItemMessage):
 
     option_name: str
     option_value: str
-    allowed_values: Union[List[str], str, None]
+    allowed_values: list[str] | str | None
     cannot_be_empty: bool = False
-    forbidden_characters: Optional[str] = None
+    forbidden_characters: str | None = None
     _code = codes.INVALID_OPTION_VALUE
 
     @property
@@ -708,7 +699,7 @@ class InvalidOptionValue(ReportItemMessage):
             template += ", use {hint}"
         return template.format(
             hint=(
-                format_list(cast(List[str], self.allowed_values))
+                format_list(cast(list[str], self.allowed_values))
                 if (
                     self.allowed_values
                     and is_iterable_not_str(self.allowed_values)
@@ -732,8 +723,8 @@ class DeprecatedOption(ReportItemMessage):
     """
 
     option_name: str
-    replaced_by: List[str]
-    option_type: Optional[str] = None
+    replaced_by: list[str]
+    option_type: str | None = None
     _code = codes.DEPRECATED_OPTION
 
     @property
@@ -762,7 +753,7 @@ class DeprecatedOptionValue(ReportItemMessage):
 
     option_name: str
     deprecated_value: str
-    replaced_by: Optional[str] = None
+    replaced_by: str | None = None
     _code = codes.DEPRECATED_OPTION_VALUE
 
     @property
@@ -789,8 +780,8 @@ class MutuallyExclusiveOptions(ReportItemMessage):
     option_type -- describes the option
     """
 
-    option_names: List[str]
-    option_type: Optional[str] = None
+    option_names: list[str]
+    option_type: str | None = None
     _code = codes.MUTUALLY_EXCLUSIVE_OPTIONS
 
     @property
@@ -933,7 +924,7 @@ class RunExternalProcessStarted(ReportItemMessage):
     """
 
     command: str
-    stdin: Optional[str]
+    stdin: str | None
     environment: Mapping[str, str]
     _code = codes.RUN_EXTERNAL_PROCESS_STARTED
 
@@ -1624,7 +1615,7 @@ class CorosyncConfigUnsupportedTransport(ReportItemMessage):
     """
 
     actual_transport: str
-    supported_transport_types: List[str]
+    supported_transport_types: list[str]
     _code = codes.COROSYNC_CONFIG_UNSUPPORTED_TRANSPORT
 
     @property
@@ -1752,9 +1743,9 @@ class CorosyncConfigCannotSaveInvalidNamesValues(ReportItemMessage):
     attribute_value_pairs -- tuples (attribute_name, its_bad_value)
     """
 
-    section_name_list: List[str]
-    attribute_name_list: List[str]
-    attribute_value_pairs: List[Tuple[str, str]]
+    section_name_list: list[str]
+    attribute_name_list: list[str]
+    attribute_value_pairs: list[tuple[str, str]]
     _code = codes.COROSYNC_CONFIG_CANNOT_SAVE_INVALID_NAMES_VALUES
 
     @property
@@ -1851,7 +1842,7 @@ class CorosyncOptionsIncompatibleWithQdevice(ReportItemMessage):
     options -- incompatible options names
     """
 
-    options: List[str]
+    options: list[str]
     _code = codes.COROSYNC_OPTIONS_INCOMPATIBLE_WITH_QDEVICE
 
     @property
@@ -1903,8 +1894,8 @@ class CorosyncBadNodeAddressesCount(ReportItemMessage):
     actual_count: int
     min_count: int
     max_count: int
-    node_name: Optional[str] = None
-    node_index: Optional[int] = None
+    node_name: str | None = None
+    node_index: int | None = None
     _code = codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT
 
     @property
@@ -1942,7 +1933,7 @@ class CorosyncIpVersionMismatchInLinks(ReportItemMessage):
     link_numbers -- numbers of links with mismatched IP versions
     """
 
-    link_numbers: List[str] = field(default_factory=list)
+    link_numbers: list[str] = field(default_factory=list)
     _code = codes.COROSYNC_IP_VERSION_MISMATCH_IN_LINKS
 
     @property
@@ -1973,7 +1964,7 @@ class CorosyncAddressIpVersionWrongForLink(ReportItemMessage):
     # It works for int and str, though, as they are distinguishable. Code was
     # historically putting either of int and str in here. We need the Union here
     # for backward compatibility reasons.
-    link_number: Optional[Union[int, str]] = None
+    link_number: int | str | None = None
     _code = codes.COROSYNC_ADDRESS_IP_VERSION_WRONG_FOR_LINK
 
     @property
@@ -1993,7 +1984,7 @@ class CorosyncLinkNumberDuplication(ReportItemMessage):
     link_number_list -- list of nonunique link numbers
     """
 
-    link_number_list: List[str]
+    link_number_list: list[str]
     _code = codes.COROSYNC_LINK_NUMBER_DUPLICATION
 
     @property
@@ -2017,7 +2008,7 @@ class CorosyncNodeAddressCountMismatch(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        count_node: Dict[int, List[str]] = defaultdict(list)
+        count_node: dict[int, list[str]] = defaultdict(list)
         for node_name, count in self.node_addr_count.items():
             count_node[count].append(node_name)
         parts = ["All nodes must have the same number of addresses"]
@@ -2045,7 +2036,7 @@ class NodeAddressesAlreadyExist(ReportItemMessage):
     address_list -- list of specified already existing addresses
     """
 
-    address_list: List[str]
+    address_list: list[str]
     _code = codes.NODE_ADDRESSES_ALREADY_EXIST
 
     @property
@@ -2069,7 +2060,7 @@ class NodeAddressesCannotBeEmpty(ReportItemMessage):
     node_name_list -- list of node names with empty addresses
     """
 
-    node_name_list: List[str]
+    node_name_list: list[str]
     _code = codes.NODE_ADDRESSES_CANNOT_BE_EMPTY
 
     @property
@@ -2091,7 +2082,7 @@ class NodeAddressesDuplication(ReportItemMessage):
     address_list -- list of nonunique addresses
     """
 
-    address_list: List[str]
+    address_list: list[str]
     _code = codes.NODE_ADDRESSES_DUPLICATION
 
     @property
@@ -2108,7 +2099,7 @@ class NodeNamesAlreadyExist(ReportItemMessage):
     name_list -- list of specified already used node names
     """
 
-    name_list: List[str]
+    name_list: list[str]
     _code = codes.NODE_NAMES_ALREADY_EXIST
 
     @property
@@ -2132,7 +2123,7 @@ class NodeNamesDuplication(ReportItemMessage):
     name_list -- list of nonunique node names
     """
 
-    name_list: List[str]
+    name_list: list[str]
     _code = codes.NODE_NAMES_DUPLICATION
 
     @property
@@ -2254,7 +2245,7 @@ class CorosyncCannotAddRemoveLinksBadTransport(ReportItemMessage):
     """
 
     actual_transport: str
-    required_transports: List[str]
+    required_transports: list[str]
     add_or_not_remove: bool
     _code = codes.COROSYNC_CANNOT_ADD_REMOVE_LINKS_BAD_TRANSPORT
 
@@ -2345,8 +2336,8 @@ class CorosyncLinkDoesNotExistCannotRemove(ReportItemMessage):
     existing_link_list -- linknumbers of existing links
     """
 
-    link_list: List[str]
-    existing_link_list: List[str]
+    link_list: list[str]
+    existing_link_list: list[str]
     _code = codes.COROSYNC_LINK_DOES_NOT_EXIST_CANNOT_REMOVE
 
     @property
@@ -2374,8 +2365,8 @@ class CorosyncLinkDoesNotExistCannotUpdate(ReportItemMessage):
     # It works for int and str, though, as they are distinguishable. Code was
     # historically putting either of int and str in here. We need the Union here
     # for backward compatibility reasons.
-    link_number: Union[int, str]
-    existing_link_list: List[str]
+    link_number: int | str
+    existing_link_list: list[str]
     _code = codes.COROSYNC_LINK_DOES_NOT_EXIST_CANNOT_UPDATE
 
     @property
@@ -2395,7 +2386,7 @@ class CorosyncTransportUnsupportedOptions(ReportItemMessage):
 
     option_type: str
     actual_transport: str
-    required_transports: List[str]
+    required_transports: list[str]
     _code = codes.COROSYNC_TRANSPORT_UNSUPPORTED_OPTIONS
 
     @property
@@ -2723,7 +2714,7 @@ class QdeviceUsedByClusters(ReportItemMessage):
     Qdevice is currently being used by clusters, cannot stop it unless forced
     """
 
-    clusters: List[str]
+    clusters: list[str]
     _code = codes.QDEVICE_USED_BY_CLUSTERS
 
     @property
@@ -2760,7 +2751,7 @@ class IdBelongsToUnexpectedType(ReportItemMessage):
     """
 
     id: str  # pylint: disable=invalid-name
-    expected_types: List[str]
+    expected_types: list[str]
     current_type: str
     _code = codes.ID_BELONGS_TO_UNEXPECTED_TYPE
 
@@ -2837,7 +2828,7 @@ class IdNotFound(ReportItemMessage):
     """
 
     id: str  # pylint: disable=invalid-name
-    expected_types: List[str]
+    expected_types: list[str]
     context_type: str = ""
     context_id: str = ""
     _code = codes.ID_NOT_FOUND
@@ -2889,8 +2880,8 @@ class CannotGroupResourceWrongType(ReportItemMessage):
 
     resource_id: str
     resource_type: str
-    parent_id: Optional[str]
-    parent_type: Optional[str]
+    parent_id: str | None
+    parent_type: str | None
     _code = codes.CANNOT_GROUP_RESOURCE_WRONG_TYPE
 
     @property
@@ -2939,8 +2930,8 @@ class CloningStonithResourcesHasNoEffect(ReportItemMessage):
     group_id -- optional id of a group containing stonith resources
     """
 
-    stonith_id_list: List[str]
-    group_id: Optional[str] = None
+    stonith_id_list: list[str]
+    group_id: str | None = None
     _code = codes.CLONING_STONITH_RESOURCES_HAS_NO_EFFECT
 
     @property
@@ -2967,7 +2958,7 @@ class StonithResourcesDoNotExist(ReportItemMessage):
     stoniths -- list of specified stonith id
     """
 
-    stonith_ids: List[str]
+    stonith_ids: list[str]
     _code = codes.STONITH_RESOURCES_DO_NOT_EXIST
 
     @property
@@ -3005,7 +2996,7 @@ class StonithRestartlessUpdateUnsupportedAgent(ReportItemMessage):
 
     resource_id: str
     resource_type: str
-    supported_stonith_types: List[str]
+    supported_stonith_types: list[str]
     _code = codes.STONITH_RESTARTLESS_UPDATE_UNSUPPORTED_AGENT
 
     @property
@@ -3063,7 +3054,7 @@ class StonithUnfencingSkippedDevicesFenced(ReportItemMessage):
     the node.
     """
 
-    devices: List[str]
+    devices: list[str]
 
     _code = codes.STONITH_UNFENCING_SKIPPED_DEVICES_FENCED
 
@@ -3111,8 +3102,8 @@ class StonithRestartlessUpdateMissingMpathKeys(ReportItemMessage):
     missing_nodes -- nodes which do not have keys
     """
 
-    pcmk_host_map_value: Optional[str]
-    missing_nodes: List[str]
+    pcmk_host_map_value: str | None
+    missing_nodes: list[str]
     _code = codes.STONITH_RESTARTLESS_UPDATE_MISSING_MPATH_KEYS
 
     @property
@@ -3142,7 +3133,7 @@ class ResourceRunningOnNodes(ReportItemMessage):
     """
 
     resource_id: str
-    roles_with_nodes: Dict[str, List[str]]
+    roles_with_nodes: dict[str, list[str]]
     _code = codes.RESOURCE_RUNNING_ON_NODES
 
     @property
@@ -3150,7 +3141,7 @@ class ResourceRunningOnNodes(ReportItemMessage):
         role_label_map = {
             "Started": "running",
         }
-        state_info: Dict[str, List[str]] = {}
+        state_info: dict[str, list[str]] = {}
         for state, node_list in self.roles_with_nodes.items():
             state_info.setdefault(
                 role_label_map.get(state, state.lower()), []
@@ -3453,7 +3444,7 @@ class BadClusterStateData(ReportItemMessage):
     reason -- error description
     """
 
-    reason: Optional[str] = None
+    reason: str | None = None
     _code = codes.BAD_CLUSTER_STATE_DATA
 
     @property
@@ -3576,7 +3567,7 @@ class ResourceRestartError(ReportItemMessage):
 
     reason: str
     resource: str
-    node: Optional[str] = None
+    node: str | None = None
     _code = codes.RESOURCE_RESTART_ERROR
 
     @property
@@ -3641,8 +3632,8 @@ class ResourceCleanupError(ReportItemMessage):
     """
 
     reason: str
-    resource: Optional[str] = None
-    node: Optional[str] = None
+    resource: str | None = None
+    node: str | None = None
     _code = codes.RESOURCE_CLEANUP_ERROR
 
     @property
@@ -3666,8 +3657,8 @@ class ResourceRefreshError(ReportItemMessage):
     """
 
     reason: str
-    resource: Optional[str] = None
-    node: Optional[str] = None
+    resource: str | None = None
+    node: str | None = None
     _code = codes.RESOURCE_REFRESH_ERROR
 
     @property
@@ -3712,7 +3703,7 @@ class ResourceOperationIntervalDuplication(ReportItemMessage):
         in pcs/lib/exchange_formats.md
     """
 
-    duplications: Mapping[str, List[List[str]]]
+    duplications: Mapping[str, list[list[str]]]
     _code = codes.RESOURCE_OPERATION_INTERVAL_DUPLICATION
 
     @property
@@ -3762,7 +3753,7 @@ class NodeNotFound(ReportItemMessage):
     """
 
     node: str
-    searched_types: List[str] = field(default_factory=list)
+    searched_types: list[str] = field(default_factory=list)
     _code = codes.NODE_NOT_FOUND
 
     @property
@@ -3821,7 +3812,7 @@ class NodeRemoveInPacemakerFailed(ReportItemMessage):
     reason -- reason of failure
     """
 
-    node_list_to_remove: List[str]
+    node_list_to_remove: list[str]
     node: str = ""
     reason: str = ""
     _code = codes.NODE_REMOVE_IN_PACEMAKER_FAILED
@@ -3875,7 +3866,7 @@ class MultipleResultsFound(ReportItemMessage):
     """
 
     result_type: str
-    result_identifier_list: List[str]
+    result_identifier_list: list[str]
     search_description: str = ""
     _code = codes.MULTIPLE_RESULTS_FOUND
 
@@ -4146,7 +4137,7 @@ class AgentNameGuessFoundMoreThanOne(ReportItemMessage):
     """
 
     agent: str
-    possible_agents: List[str]
+    possible_agents: list[str]
     _code = codes.AGENT_NAME_GUESS_FOUND_MORE_THAN_ONE
 
     @property
@@ -4190,7 +4181,7 @@ class AgentImplementsUnsupportedOcfVersion(ReportItemMessage):
 
     agent: str
     ocf_version: str
-    supported_versions: List[str]
+    supported_versions: list[str]
     _code = codes.AGENT_IMPLEMENTS_UNSUPPORTED_OCF_VERSION
 
     @property
@@ -4342,7 +4333,7 @@ class SbdDeviceInitializationStarted(ReportItemMessage):
     Initialization of SBD device(s) started
     """
 
-    device_list: List[str]
+    device_list: list[str]
     _code = codes.SBD_DEVICE_INITIALIZATION_STARTED
 
     @property
@@ -4359,7 +4350,7 @@ class SbdDeviceInitializationSuccess(ReportItemMessage):
     Initialization of SBD device(s) succeeded
     """
 
-    device_list: List[str]
+    device_list: list[str]
     _code = codes.SBD_DEVICE_INITIALIZATION_SUCCESS
 
     @property
@@ -4374,7 +4365,7 @@ class SbdDeviceInitializationError(ReportItemMessage):
     Initialization of SBD device failed
     """
 
-    device_list: List[str]
+    device_list: list[str]
     reason: str
     _code = codes.SBD_DEVICE_INITIALIZATION_ERROR
 
@@ -4455,8 +4446,8 @@ class FilesDistributionStarted(ReportItemMessage):
     node_list -- node names where the files are being sent
     """
 
-    file_list: List[str] = field(default_factory=list)
-    node_list: List[str] = field(default_factory=list)
+    file_list: list[str] = field(default_factory=list)
+    node_list: list[str] = field(default_factory=list)
     _code = codes.FILES_DISTRIBUTION_STARTED
 
     @property
@@ -4478,8 +4469,8 @@ class FilesDistributionSkipped(ReportItemMessage):
     """
 
     reason_type: types.ReasonType
-    file_list: List[str]
-    node_list: List[str]
+    file_list: list[str]
+    node_list: list[str]
     _code = codes.FILES_DISTRIBUTION_SKIPPED
 
     @property
@@ -4547,8 +4538,8 @@ class FilesRemoveFromNodesStarted(ReportItemMessage):
     node_list -- node names the files are being removed from
     """
 
-    file_list: List[str] = field(default_factory=list)
-    node_list: List[str] = field(default_factory=list)
+    file_list: list[str] = field(default_factory=list)
+    node_list: list[str] = field(default_factory=list)
     _code = codes.FILES_REMOVE_FROM_NODES_STARTED
 
     @property
@@ -4570,8 +4561,8 @@ class FilesRemoveFromNodesSkipped(ReportItemMessage):
     """
 
     reason_type: types.ReasonType
-    file_list: List[str]
-    node_list: List[str]
+    file_list: list[str]
+    node_list: list[str]
     _code = codes.FILES_REMOVE_FROM_NODES_SKIPPED
 
     @property
@@ -4636,8 +4627,8 @@ class ServiceCommandsOnNodesStarted(ReportItemMessage):
     Node was requested for actions
     """
 
-    action_list: List[str] = field(default_factory=list)
-    node_list: List[str] = field(default_factory=list)
+    action_list: list[str] = field(default_factory=list)
+    node_list: list[str] = field(default_factory=list)
     _code = codes.SERVICE_COMMANDS_ON_NODES_STARTED
 
     @property
@@ -4659,8 +4650,8 @@ class ServiceCommandsOnNodesSkipped(ReportItemMessage):
     """
 
     reason_type: types.ReasonType
-    action_list: List[str]
-    node_list: List[str]
+    action_list: list[str]
+    node_list: list[str]
     _code = codes.SERVICE_COMMANDS_ON_NODES_SKIPPED
 
     @property
@@ -4743,7 +4734,7 @@ class SbdNotUsedCannotSetSbdOptions(ReportItemMessage):
     node -- node name
     """
 
-    options: List[str]
+    options: list[str]
     node: str
     _code = codes.SBD_NOT_USED_CANNOT_SET_SBD_OPTIONS
 
@@ -4812,7 +4803,7 @@ class SbdTooManyDevicesForNode(ReportItemMessage):
     """
 
     node: str
-    device_list: List[str]
+    device_list: list[str]
     max_devices: int
     _code = codes.SBD_TOO_MANY_DEVICES_FOR_NODE
 
@@ -5174,7 +5165,7 @@ class LiveEnvironmentRequired(ReportItemMessage):
     forbidden_options -- list of items forbidden in the command
     """
 
-    forbidden_options: List[file_type_codes.FileTypeCode]
+    forbidden_options: list[file_type_codes.FileTypeCode]
     _code = codes.LIVE_ENVIRONMENT_REQUIRED
 
     @property
@@ -5211,8 +5202,8 @@ class LiveEnvironmentNotConsistent(ReportItemMessage):
     required_files -- files that must be mocked as well
     """
 
-    mocked_files: List[file_type_codes.FileTypeCode]
-    required_files: List[file_type_codes.FileTypeCode]
+    mocked_files: list[file_type_codes.FileTypeCode]
+    required_files: list[file_type_codes.FileTypeCode]
     _code = codes.LIVE_ENVIRONMENT_NOT_CONSISTENT
 
     @property
@@ -5381,8 +5372,8 @@ class CibFencingLevelDoesNotExist(ReportItemMessage):
     """
 
     level: str = ""
-    target_type: Optional[FencingTargetType] = None
-    target_value: Optional[FencingTargetValue] = None
+    target_type: FencingTargetType | None = None
+    target_value: FencingTargetValue | None = None
     devices: list[str] = field(default_factory=list)
     _code = codes.CIB_FENCING_LEVEL_DOES_NOT_EXIST
 
@@ -5537,7 +5528,7 @@ class UseCommandNodeRemoveRemote(ReportItemMessage):
     Advise the user for more appropriate command.
     """
 
-    resource_id: Optional[str] = None
+    resource_id: str | None = None
     _code = codes.USE_COMMAND_NODE_REMOVE_REMOTE
 
     @property
@@ -5553,7 +5544,7 @@ class UseCommandNodeRemoveGuest(ReportItemMessage):
     Advise the user for more appropriate command.
     """
 
-    resource_id: Optional[str] = None
+    resource_id: str | None = None
     _code = codes.USE_COMMAND_NODE_REMOVE_GUEST
 
     @property
@@ -5629,7 +5620,7 @@ class NodeAddressesUnresolvable(ReportItemMessage):
     address_list -- a list of unresolvable addresses
     """
 
-    address_list: List[str]
+    address_list: list[str]
     _code = codes.NODE_ADDRESSES_UNRESOLVABLE
 
     @property
@@ -5664,7 +5655,7 @@ class HostNotFound(ReportItemMessage):
     therefore it is not possible to communicate with them.
     """
 
-    host_list: List[str]
+    host_list: list[str]
     _code = codes.HOST_NOT_FOUND
 
     @property
@@ -5737,7 +5728,7 @@ class NoHostSpecified(ReportItemMessage):
 
 @dataclass(frozen=True)
 class ClusterDestroyStarted(ReportItemMessage):
-    host_name_list: List[str]
+    host_name_list: list[str]
     _code = codes.CLUSTER_DESTROY_STARTED
 
     @property
@@ -5758,7 +5749,7 @@ class ClusterDestroySuccess(ReportItemMessage):
 
 @dataclass(frozen=True)
 class ClusterEnableStarted(ReportItemMessage):
-    host_name_list: List[str]
+    host_name_list: list[str]
     _code = codes.CLUSTER_ENABLE_STARTED
 
     @property
@@ -5779,7 +5770,7 @@ class ClusterEnableSuccess(ReportItemMessage):
 
 @dataclass(frozen=True)
 class ClusterStartStarted(ReportItemMessage):
-    host_name_list: List[str]
+    host_name_list: list[str]
     _code = codes.CLUSTER_START_STARTED
 
     @property
@@ -5801,7 +5792,7 @@ class ClusterStartSuccess(ReportItemMessage):
 @dataclass(frozen=True)
 class ServiceNotInstalled(ReportItemMessage):
     node: str
-    service_list: List[str]
+    service_list: list[str]
     _code = codes.SERVICE_NOT_INSTALLED
 
     @property
@@ -5841,7 +5832,7 @@ class HostAlreadyInClusterServices(ReportItemMessage):
     """
 
     host_name: str
-    service_list: List[str]
+    service_list: list[str]
     _code = codes.HOST_ALREADY_IN_CLUSTER_SERVICES
 
     @property
@@ -5865,7 +5856,7 @@ class ServiceVersionMismatch(ReportItemMessage):
 
     @property
     def message(self) -> str:
-        version_host: Dict[str, List[str]] = defaultdict(list)
+        version_host: dict[str, list[str]] = defaultdict(list)
         for host_name, version in self.hosts_version.items():
             version_host[version].append(host_name)
         parts = [f"Hosts do not have the same version of '{self.service}'"]
@@ -5887,7 +5878,7 @@ class ServiceVersionMismatch(ReportItemMessage):
 
 @dataclass(frozen=True)
 class WaitForNodeStartupStarted(ReportItemMessage):
-    node_name_list: List[str]
+    node_name_list: list[str]
     _code = codes.WAIT_FOR_NODE_STARTUP_STARTED
 
     @property
@@ -5949,7 +5940,7 @@ class PcsdSslCertAndKeyDistributionStarted(ReportItemMessage):
     node_name_list -- node names to distribute to
     """
 
-    node_name_list: List[str]
+    node_name_list: list[str]
     _code = codes.PCSD_SSL_CERT_AND_KEY_DISTRIBUTION_STARTED
 
     @property
@@ -6087,7 +6078,7 @@ class UnableToConnectToAllRemainingNodes(ReportItemMessage):
         currently unreachable
     """
 
-    node_list: List[str]
+    node_list: list[str]
     _code = codes.UNABLE_TO_CONNECT_TO_ALL_REMAINING_NODE
 
     @property
@@ -6108,7 +6099,7 @@ class NodesToRemoveUnreachable(ReportItemMessage):
         they are currently unreachable
     """
 
-    node_list: List[str]
+    node_list: list[str]
     _code = codes.NODES_TO_REMOVE_UNREACHABLE
 
     @property
@@ -6132,8 +6123,8 @@ class NodeUsedAsTieBreaker(ReportItemMessage):
     node_id -- node id
     """
 
-    node: Optional[str]
-    node_id: Optional[str]
+    node: str | None
+    node_id: str | None
     _code = codes.NODE_USED_AS_TIE_BREAKER
 
     @property
@@ -6279,7 +6270,7 @@ class SystemWillReset(ReportItemMessage):
 @dataclass(frozen=True)
 class ResourceBundleUnsupportedContainerType(ReportItemMessage):
     bundle_id: str
-    supported_container_types: List[str]
+    supported_container_types: list[str]
     updating_options: bool = True
     _code = codes.RESOURCE_BUNDLE_UNSUPPORTED_CONTAINER_TYPE
 
@@ -6348,7 +6339,7 @@ class ResourceInstanceAttrValueNotUnique(ReportItemMessage):
     instance_attr_name: str
     instance_attr_value: str
     agent_name: str
-    resource_id_list: List[str]
+    resource_id_list: list[str]
     _code = codes.RESOURCE_INSTANCE_ATTR_VALUE_NOT_UNIQUE
 
     @property
@@ -6378,9 +6369,9 @@ class ResourceInstanceAttrGroupValueNotUnique(ReportItemMessage):
     """
 
     group_name: str
-    instance_attrs_map: Dict[str, str]
+    instance_attrs_map: dict[str, str]
     agent_name: str
-    resource_id_list: List[str]
+    resource_id_list: list[str]
     _code = codes.RESOURCE_INSTANCE_ATTR_GROUP_VALUE_NOT_UNIQUE
 
     @property
@@ -6411,7 +6402,7 @@ class CannotLeaveGroupEmptyAfterMove(ReportItemMessage):
     """
 
     group_id: str
-    inner_resource_ids: List[str]
+    inner_resource_ids: list[str]
     _code = codes.CANNOT_LEAVE_GROUP_EMPTY_AFTER_MOVE
 
     @property
@@ -6740,7 +6731,7 @@ class StoppedResourcesBeforeDeleteCheckSkipped(ReportItemMessage):
     """
 
     resource_id_list: list[str]
-    reason_type: Optional[types.ReasonType] = None
+    reason_type: types.ReasonType | None = None
     _code = codes.STOPPED_RESOURCES_BEFORE_DELETE_CHECK_SKIPPED
 
     @property
@@ -6799,7 +6790,7 @@ class ConfiguredResourceMissingInStatus(ReportItemMessage):
     """
 
     resource_id: str
-    checked_state: Optional[ResourceState] = None
+    checked_state: ResourceState | None = None
     _code = codes.CONFIGURED_RESOURCE_MISSING_IN_STATUS
 
     @property
@@ -7029,7 +7020,7 @@ class ResourceMoveAffectsOtherResources(ReportItemMessage):
     """
 
     resource_id: str
-    affected_resources: List[str]
+    affected_resources: list[str]
     _code = codes.RESOURCE_MOVE_AFFECTS_OTRHER_RESOURCES
 
     @property
@@ -7060,7 +7051,7 @@ class ResourceMoveAutocleanSimulationFailure(ReportItemMessage):
 
     resource_id: str
     others_affected: bool
-    node: Optional[str] = None
+    node: str | None = None
     move_constraint_left_in_cib: bool = False
     _code = codes.RESOURCE_MOVE_AUTOCLEAN_SIMULATION_FAILURE
 
@@ -7096,7 +7087,7 @@ class ParseErrorInvalidFileStructure(ReportItemMessage):
 
     reason: str
     file_type_code: file_type_codes.FileTypeCode
-    file_path: Optional[str]
+    file_path: str | None
     _code = codes.PARSE_ERROR_INVALID_FILE_STRUCTURE
 
     @property
@@ -7128,7 +7119,7 @@ class ParseErrorJsonFile(ReportItemMessage):
     position: int
     reason: str
     full_msg: str
-    file_path: Optional[str]
+    file_path: str | None
     _code = codes.PARSE_ERROR_JSON_FILE
 
     @property
@@ -7152,8 +7143,8 @@ class ResourceDisableAffectsOtherResources(ReportItemMessage):
     affected_resource_list -- other affected resources
     """
 
-    disabled_resource_list: List[str]
-    affected_resource_list: List[str]
+    disabled_resource_list: list[str]
+    affected_resource_list: list[str]
     _code = codes.RESOURCE_DISABLE_AFFECTS_OTHER_RESOURCES
 
     @property
@@ -7247,7 +7238,7 @@ class BoothLackOfSites(ReportItemMessage):
     sites -- contains currently entered sites
     """
 
-    sites: List[str]
+    sites: list[str]
     _code = codes.BOOTH_LACK_OF_SITES
 
     @property
@@ -7283,7 +7274,7 @@ class BoothAddressDuplication(ReportItemMessage):
     duplicate_addresses -- contains addresses entered multiple times
     """
 
-    duplicate_addresses: List[str]
+    duplicate_addresses: list[str]
     _code = codes.BOOTH_ADDRESS_DUPLICATION
 
     @property
@@ -7301,7 +7292,7 @@ class BoothConfigUnexpectedLines(ReportItemMessage):
     file_path -- path to the conf file if available
     """
 
-    line_list: List[str]
+    line_list: list[str]
     file_path: str = ""
     _code = codes.BOOTH_CONFIG_UNEXPECTED_LINES
 
@@ -7458,7 +7449,7 @@ class BoothConfigIsUsed(ReportItemMessage):
 
     name: str
     detail: types.BoothConfigUsedWhere
-    resource_name: Optional[str] = None
+    resource_name: str | None = None
     _code = codes.BOOTH_CONFIG_IS_USED
 
     @property
@@ -7517,7 +7508,7 @@ class BoothConfigAcceptedByNode(ReportItemMessage):
     """
 
     node: str = ""
-    name_list: List[str] = field(default_factory=list)
+    name_list: list[str] = field(default_factory=list)
     _code = codes.BOOTH_CONFIG_ACCEPTED_BY_NODE
 
     @property
@@ -7681,7 +7672,7 @@ class BoothTicketOperationFailed(ReportItemMessage):
 
     operation: str
     reason: str
-    site_ip: Optional[str]
+    site_ip: str | None
     ticket_name: str
     _code = codes.BOOTH_TICKET_OPERATION_FAILED
 
@@ -7740,7 +7731,7 @@ class TagAddRemoveIdsDuplication(ReportItemMessage):
     specification.
     """
 
-    duplicate_ids_list: List[str]
+    duplicate_ids_list: list[str]
     add_or_not_remove: bool = True
     _code = codes.TAG_ADD_REMOVE_IDS_DUPLICATION
 
@@ -7784,7 +7775,7 @@ class TagCannotAddAndRemoveIdsAtTheSameTime(ReportItemMessage):
     idref_list -- common ids from add and remove lists
     """
 
-    idref_list: List[str]
+    idref_list: list[str]
     _code = codes.TAG_CANNOT_ADD_AND_REMOVE_IDS_AT_THE_SAME_TIME
 
     @property
@@ -7804,7 +7795,7 @@ class TagCannotAddReferenceIdsAlreadyInTheTag(ReportItemMessage):
     """
 
     tag_id: str
-    idref_list: List[str]
+    idref_list: list[str]
     _code = codes.TAG_CANNOT_ADD_REFERENCE_IDS_ALREADY_IN_THE_TAG
 
     @property
@@ -7907,7 +7898,7 @@ class TagCannotRemoveTagReferencedInConstraints(ReportItemMessage):
     """
 
     tag_id: str
-    constraint_id_list: List[str]
+    constraint_id_list: list[str]
     _code = codes.TAG_CANNOT_REMOVE_TAG_REFERENCED_IN_CONSTRAINTS
 
     @property
@@ -7977,7 +7968,7 @@ class TagIdsNotInTheTag(ReportItemMessage):
     """
 
     tag_id: str
-    id_list: List[str]
+    id_list: list[str]
     _code = codes.TAG_IDS_NOT_IN_THE_TAG
 
     @property
@@ -8013,7 +8004,7 @@ class RuleExpressionOptionsDuplication(ReportItemMessage):
     duplicate_option_list -- list of keys duplicated in a single (sub)expression
     """
 
-    duplicate_option_list: List[str]
+    duplicate_option_list: list[str]
     _code = codes.RULE_EXPRESSION_OPTIONS_DUPLICATION
 
     @property
@@ -8135,9 +8126,9 @@ class AddRemoveItemsNotSpecified(ReportItemMessage):
     container_id -- id of a container
     """
 
-    container_type: Optional[types.AddRemoveContainerType]
+    container_type: types.AddRemoveContainerType | None
     item_type: types.AddRemoveItemType
-    container_id: Optional[str]
+    container_id: str | None
     _code = codes.ADD_REMOVE_ITEMS_NOT_SPECIFIED
 
     @property
@@ -8163,10 +8154,10 @@ class AddRemoveItemsDuplication(ReportItemMessage):
     duplicate_items_list -- list of duplicate items
     """
 
-    container_type: Optional[types.AddRemoveContainerType]
+    container_type: types.AddRemoveContainerType | None
     item_type: types.AddRemoveItemType
-    container_id: Optional[str]
-    duplicate_items_list: List[str]
+    container_id: str | None
+    duplicate_items_list: list[str]
     _code = codes.ADD_REMOVE_ITEMS_DUPLICATION
 
     @property
@@ -8193,7 +8184,7 @@ class AddRemoveCannotAddItemsAlreadyInTheContainer(ReportItemMessage):
     container_type: types.AddRemoveContainerType
     item_type: types.AddRemoveItemType
     container_id: str
-    item_list: List[str]
+    item_list: list[str]
     _code = codes.ADD_REMOVE_CANNOT_ADD_ITEMS_ALREADY_IN_THE_CONTAINER
 
     @property
@@ -8225,7 +8216,7 @@ class AddRemoveCannotRemoveItemsNotInTheContainer(ReportItemMessage):
     container_type: types.AddRemoveContainerType
     item_type: types.AddRemoveItemType
     container_id: str
-    item_list: List[str]
+    item_list: list[str]
     _code = codes.ADD_REMOVE_CANNOT_REMOVE_ITEMS_NOT_IN_THE_CONTAINER
 
     @property
@@ -8258,10 +8249,10 @@ class AddRemoveCannotAddAndRemoveItemsAtTheSameTime(ReportItemMessage):
     item_list -- common items from add and remove item lists
     """
 
-    container_type: Optional[types.AddRemoveContainerType]
+    container_type: types.AddRemoveContainerType | None
     item_type: types.AddRemoveItemType
-    container_id: Optional[str]
-    item_list: List[str]
+    container_id: str | None
+    item_list: list[str]
     _code = codes.ADD_REMOVE_CANNOT_ADD_AND_REMOVE_ITEMS_AT_THE_SAME_TIME
 
     @property
@@ -8290,7 +8281,7 @@ class AddRemoveCannotRemoveAllItemsFromTheContainer(ReportItemMessage):
     container_type: types.AddRemoveContainerType
     item_type: types.AddRemoveItemType
     container_id: str
-    item_list: List[str]
+    item_list: list[str]
     _code = codes.ADD_REMOVE_CANNOT_REMOVE_ALL_ITEMS_FROM_THE_CONTAINER
 
     @property
@@ -8511,8 +8502,8 @@ class ResourceCloneIncompatibleMetaAttributes(ReportItemMessage):
 
     attribute: str
     resource_agent: ResourceAgentNameDto
-    resource_id: Optional[str] = None
-    group_id: Optional[str] = None
+    resource_id: str | None = None
+    group_id: str | None = None
     _code = codes.RESOURCE_CLONE_INCOMPATIBLE_META_ATTRIBUTES
 
     @property
@@ -8536,7 +8527,7 @@ class BoothAuthfileNotUsed(ReportItemMessage):
     enabled as well.
     """
 
-    instance: Optional[str]
+    instance: str | None
     _code = codes.BOOTH_AUTHFILE_NOT_USED
 
     @property
@@ -8551,7 +8542,7 @@ class BoothUnsupportedOptionEnableAuthfile(ReportItemMessage):
     not accepted by booth, which will cause booth to fail at startup.
     """
 
-    instance: Optional[str]
+    instance: str | None
     _code = codes.BOOTH_UNSUPPORTED_OPTION_ENABLE_AUTHFILE
 
     @property
@@ -8591,7 +8582,7 @@ class CommandArgumentTypeMismatch(ReportItemMessage):
     """
 
     not_accepted_type: str
-    command_to_use_instead: Optional[types.PcsCommand] = None
+    command_to_use_instead: types.PcsCommand | None = None
     _code = codes.COMMAND_ARGUMENT_TYPE_MISMATCH
 
     @property
@@ -8865,7 +8856,7 @@ class NoStonithMeansWouldBeLeftDueToProperties(ReportItemMessage):
     configured
     """
 
-    property_map: Dict[str, str]
+    property_map: dict[str, str]
     _code = codes.NO_STONITH_MEANS_WOULD_BE_LEFT_DUE_TO_PROPERTIES
 
     @property
@@ -9206,7 +9197,7 @@ class CibResourceSecretUnableToGet(ReportItemMessage):
 
     resource_id: str
     secret_name: str
-    reason: Optional[types.CibResourceSecretErrorReason] = None
+    reason: types.CibResourceSecretErrorReason | None = None
     _code = codes.CIB_RESOURCE_SECRET_UNABLE_TO_GET
 
     @property

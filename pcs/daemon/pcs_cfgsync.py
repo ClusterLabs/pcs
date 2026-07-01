@@ -1,5 +1,5 @@
 from logging import Logger
-from typing import TYPE_CHECKING, Optional, cast
+from typing import TYPE_CHECKING, cast
 
 from pcs.common.node_communicator import Communicator, RequestTarget
 from pcs.common.reports.processor import ReportProcessor
@@ -105,7 +105,7 @@ class CfgSyncPullManager:
         corosync_conf_instance = FileInstance.for_corosync_conf()
         if not corosync_conf_instance.raw_file.exists():
             return "", []
-        corosync_conf: Optional[CorosyncFacade] = self._read_file(
+        corosync_conf: CorosyncFacade | None = self._read_file(
             corosync_conf_instance
         )
         if corosync_conf is None:
@@ -123,7 +123,7 @@ class CfgSyncPullManager:
         self, node_names: StringIterable
     ) -> list[RequestTarget]:
         known_hosts_instance = FileInstance.for_known_hosts()
-        known_hosts_conf: Optional[KnownHostsFacade] = self._read_file(
+        known_hosts_conf: KnownHostsFacade | None = self._read_file(
             known_hosts_instance
         )
 
@@ -136,7 +136,7 @@ class CfgSyncPullManager:
         self._report_processor.report_list(reports)
         return target_list
 
-    def _read_file[T](self, file_instance: FileInstance) -> Optional[T]:
+    def _read_file[T](self, file_instance: FileInstance) -> T | None:
         try:
             return cast(T, file_instance.read_to_facade())
         except RawFileError as e:

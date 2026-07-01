@@ -1,8 +1,5 @@
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import (
-    Optional,
-    Sequence,
-)
 
 from pcs.common.const import PcmkRoleType
 from pcs.common.interface.dto import DataTransferObject
@@ -14,8 +11,8 @@ from .set import CibResourceSetDto
 @dataclass(frozen=True)
 class CibConstraintColocationAttributesDto(DataTransferObject):
     constraint_id: str
-    score: Optional[str]
-    influence: Optional[str]
+    score: str | None
+    influence: str | None
     lifetime: Sequence[CibRuleExpressionDto]
 
 
@@ -24,11 +21,11 @@ class CibConstraintColocationDto(DataTransferObject):
     # pylint: disable=too-many-instance-attributes
     resource_id: str
     with_resource_id: str
-    node_attribute: Optional[str]
-    resource_role: Optional[PcmkRoleType]
-    with_resource_role: Optional[PcmkRoleType]
-    resource_instance: Optional[int]
-    with_resource_instance: Optional[int]
+    node_attribute: str | None
+    resource_role: PcmkRoleType | None
+    with_resource_role: PcmkRoleType | None
+    resource_instance: int | None
+    with_resource_instance: int | None
     attributes: CibConstraintColocationAttributesDto
 
 

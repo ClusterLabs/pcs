@@ -1,9 +1,5 @@
+from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import (
-    Iterator,
-    Optional,
-    Union,
-)
 
 from lxml.etree import _Element
 
@@ -70,7 +66,7 @@ def _get_tag_elements(
 
 def config(
     env: LibraryEnvironment, tag_filter: StringSequence
-) -> list[dict[str, Union[str, list[str]]]]:
+) -> list[dict[str, str | list[str]]]:
     """
     Get tags specified in tag_filter or if empty, then get all the tags
     configured.
@@ -133,7 +129,7 @@ def update(
     tag_id: str,
     idref_add: StringSequence,
     idref_remove: StringSequence,
-    adjacent_idref: Optional[str] = None,
+    adjacent_idref: str | None = None,
     put_after_adjacent: bool = False,
 ) -> None:
     """

@@ -1,12 +1,5 @@
 from collections import defaultdict
-from typing import (
-    Dict,
-    Iterable,
-    List,
-    Optional,
-    Set,
-    Union,
-)
+from collections.abc import Iterable
 
 from . import const
 from .types import (
@@ -23,7 +16,7 @@ from .types import (
 
 
 def ocf_version_to_ocf_unified(
-    metadata: Union[ResourceAgentMetadataOcf1_0, ResourceAgentMetadataOcf1_1],
+    metadata: ResourceAgentMetadataOcf1_0 | ResourceAgentMetadataOcf1_1,
 ) -> ResourceAgentMetadata:
     """
     Transform specific version OCF metadata to a universal format
@@ -80,9 +73,9 @@ def _ocf_1_1_to_ocf_unified(
 
 def _ocf_1_0_action_list_to_ocf_unified(
     action_list: Iterable[
-        Union[ResourceAgentActionOcf1_0, ResourceAgentActionOcf1_1]
+        ResourceAgentActionOcf1_0 | ResourceAgentActionOcf1_1
     ],
-) -> List[ResourceAgentAction]:
+) -> list[ResourceAgentAction]:
     """
     Transform OCF 1.0 actions to a universal format
 
@@ -105,13 +98,13 @@ def _ocf_1_0_action_list_to_ocf_unified(
 
 def _ocf_1_0_parameter_list_to_ocf_unified(
     parameter_list: Iterable[ResourceAgentParameterOcf1_0],
-) -> List[ResourceAgentParameter]:
+) -> list[ResourceAgentParameter]:
     """
     Transform OCF 1.0 parameters to a universal format
 
     parameter_list -- parameters according OCF 1.0
     """
-    deprecated_by_dict: Dict[str, Set[str]] = defaultdict(set)
+    deprecated_by_dict: dict[str, set[str]] = defaultdict(set)
     for parameter in parameter_list:
         if parameter.obsoletes:
             deprecated_by_dict[parameter.obsoletes].add(parameter.name)
@@ -142,7 +135,7 @@ def _ocf_1_0_parameter_list_to_ocf_unified(
 
 def _ocf_1_1_parameter_list_to_ocf_unified(
     parameter_list: Iterable[ResourceAgentParameterOcf1_1],
-) -> List[ResourceAgentParameter]:
+) -> list[ResourceAgentParameter]:
     """
     Transform OCF 1.1 parameters to a universal format
 
@@ -168,7 +161,7 @@ def _ocf_1_1_parameter_list_to_ocf_unified(
     ]
 
 
-def _bool_value(value: Optional[str]) -> bool:
+def _bool_value(value: str | None) -> bool:
     """
     Transform raw bool value from metadata to bool type
 

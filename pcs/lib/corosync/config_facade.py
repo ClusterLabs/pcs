@@ -1,12 +1,5 @@
-from typing import (
-    Any,
-    Generator,
-    Mapping,
-    Optional,
-    Sequence,
-    TypeVar,
-    overload,
-)
+from collections.abc import Generator, Mapping, Sequence
+from typing import Any, TypeVar, overload
 
 from pcs import settings
 from pcs.common import reports
@@ -112,7 +105,7 @@ class ConfigFacade(FacadeInterface):
         )
         self.__remove_empty_sections(self.config)
 
-    def get_cluster_uuid(self) -> Optional[str]:
+    def get_cluster_uuid(self) -> str | None:
         return self._get_option_value("totem", "cluster_uuid")
 
     def set_cluster_uuid(self, cluster_uuid: str) -> None:
@@ -367,8 +360,8 @@ class ConfigFacade(FacadeInterface):
     def _set_link_options(
         self,
         options: Mapping[str, str],
-        interface_section_list: Optional[Sequence[Section]] = None,
-        linknumber: Optional[str] = None,
+        interface_section_list: Sequence[Section] | None = None,
+        linknumber: str | None = None,
     ) -> None:
         """
         Add a new or change an existing interface section with link options
@@ -517,19 +510,19 @@ class ConfigFacade(FacadeInterface):
 
     @overload
     def _get_option_value(
-        self, section: str, option: str, default: Optional[str] = None
-    ) -> Optional[str]:
+        self, section: str, option: str, default: str | None = None
+    ) -> str | None:
         pass
 
     def _get_option_value(
-        self, section: str, option: str, default: Optional[str] = None
-    ) -> Optional[str]:
+        self, section: str, option: str, default: str | None = None
+    ) -> str | None:
         for sec in self.config.get_sections(section):
             default = sec.get_attribute_value(option, default)
         return default
 
     def _is_changed(
-        self, section: str, option_name: str, new_value: Optional[str]
+        self, section: str, option_name: str, new_value: str | None
     ) -> bool:
         if new_value is None:
             return False
@@ -703,7 +696,7 @@ class ConfigFacade(FacadeInterface):
         """
         return self._get_option_value("quorum", "auto_tie_breaker", "0") == "1"
 
-    def get_quorum_device_model(self) -> Optional[str]:
+    def get_quorum_device_model(self) -> str | None:
         """
         Get quorum device model from quorum.device section
         """

@@ -1,12 +1,9 @@
-from typing import Optional
-
-
 class ManageServiceError(Exception):
     def __init__(
         self,
         service: str,
         message: str,
-        instance: Optional[str] = None,
+        instance: str | None = None,
     ):
         self.service = service
         self.message = message

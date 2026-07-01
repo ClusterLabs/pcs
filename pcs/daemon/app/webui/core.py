@@ -1,5 +1,5 @@
 import os.path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from tornado.ioloop import IOLoop
 
@@ -60,7 +60,7 @@ class Login(SPAHandler, AjaxMixin):
             raise self.unauthorized()
 
         sid = self.get_cookie(PCSD_SESSION)
-        session: Optional[Session] = None
+        session: Session | None = None
         if sid is not None:
             session = self._session_storage.get(sid)
 
@@ -83,7 +83,7 @@ class Logout(AjaxMixin, BaseHandler):
 
     async def get(self) -> None:
         sid = self.get_cookie(PCSD_SESSION)
-        session: Optional[Session] = None
+        session: Session | None = None
         if sid is not None:
             session = self._session_storage.get(sid)
         if session:

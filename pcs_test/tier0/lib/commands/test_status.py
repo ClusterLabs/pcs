@@ -1,7 +1,6 @@
 # pylint: disable=too-many-lines
 import os
 from textwrap import dedent
-from typing import Optional
 from unittest import TestCase, mock
 
 from pcs import settings
@@ -1346,7 +1345,7 @@ class FullClusterStatusPlaintextBoothWarning(FullClusterStatusPlaintextBase):
 def _fixture_primitive_resource_dto(
     resource_id: str,
     resource_agent: str,
-    target_role: Optional[PcmkRoleType] = None,
+    target_role: PcmkRoleType | None = None,
     managed: bool = True,
 ) -> PrimitiveStatusDto:
     return PrimitiveStatusDto(

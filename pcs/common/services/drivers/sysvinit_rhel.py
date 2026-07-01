@@ -1,8 +1,4 @@
 import os.path
-from typing import (
-    List,
-    Optional,
-)
 
 from .. import errors
 from ..interfaces import (
@@ -26,27 +22,27 @@ class SysVInitRhelDriver(ServiceManagerInterface):
         self._executor = executor
         self._service_bin = service_bin
         self._chkconfig_bin = chkconfig_bin
-        self._available_services: List[str] = []
+        self._available_services: list[str] = []
 
-    def start(self, service: str, instance: Optional[str] = None) -> None:
+    def start(self, service: str, instance: str | None = None) -> None:
         del instance
         result = self._executor.run([self._service_bin, service, "start"])
         if result.retval != 0:
             raise errors.StartServiceError(service, result.joined_output)
 
-    def stop(self, service: str, instance: Optional[str] = None) -> None:
+    def stop(self, service: str, instance: str | None = None) -> None:
         del instance
         result = self._executor.run([self._service_bin, service, "stop"])
         if result.retval != 0:
             raise errors.StopServiceError(service, result.joined_output)
 
-    def enable(self, service: str, instance: Optional[str] = None) -> None:
+    def enable(self, service: str, instance: str | None = None) -> None:
         del instance
         result = self._executor.run([self._chkconfig_bin, service, "on"])
         if result.retval != 0:
             raise errors.EnableServiceError(service, result.joined_output)
 
-    def disable(self, service: str, instance: Optional[str] = None) -> None:
+    def disable(self, service: str, instance: str | None = None) -> None:
         del instance
         if not self.is_installed(service):
             return
@@ -54,11 +50,11 @@ class SysVInitRhelDriver(ServiceManagerInterface):
         if result.retval != 0:
             raise errors.DisableServiceError(service, result.joined_output)
 
-    def is_enabled(self, service: str, instance: Optional[str] = None) -> bool:
+    def is_enabled(self, service: str, instance: str | None = None) -> bool:
         del instance
         return self._executor.run([self._chkconfig_bin, service]).retval == 0
 
-    def is_running(self, service: str, instance: Optional[str] = None) -> bool:
+    def is_running(self, service: str, instance: str | None = None) -> bool:
         del instance
         return (
             self._executor.run([self._service_bin, service, "status"]).retval
@@ -68,12 +64,12 @@ class SysVInitRhelDriver(ServiceManagerInterface):
     def is_installed(self, service: str) -> bool:
         return service in self.get_available_services()
 
-    def get_available_services(self) -> List[str]:
+    def get_available_services(self) -> list[str]:
         if not self._available_services:
             self._available_services = self._get_available_services()
         return self._available_services
 
-    def _get_available_services(self) -> List[str]:
+    def _get_available_services(self) -> list[str]:
         result = self._executor.run([self._chkconfig_bin])
         if result.retval != 0:
             return []

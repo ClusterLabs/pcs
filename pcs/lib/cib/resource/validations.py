@@ -1,8 +1,4 @@
 from dataclasses import dataclass
-from typing import (
-    List,
-    Optional,
-)
 
 from lxml.etree import _Element
 
@@ -31,8 +27,8 @@ from .stonith import is_stonith
 
 def validate_move_resources_to_group(
     group_element: _Element,
-    resource_element_list: List[_Element],
-    adjacent_resource_element: Optional[_Element],
+    resource_element_list: list[_Element],
+    adjacent_resource_element: _Element | None,
 ) -> reports.ReportItemList:
     """
     Validates that existing resources can be moved into a group,

@@ -4,7 +4,7 @@ import multiprocessing as mp
 import os
 import signal
 from logging import Logger, getLogger
-from typing import Any, Union
+from typing import Any
 
 import dacite
 
@@ -213,7 +213,7 @@ def task_executor(task: WorkerCommand) -> None:
 
 def _param_to_field_tuple(
     param: inspect.Parameter,
-) -> Union[tuple[str, Any], tuple[str, Any, dataclasses.Field]]:
+) -> tuple[str, Any] | tuple[str, Any, dataclasses.Field]:
     field_type = Any
     if param.annotation != inspect.Parameter.empty:
         field_type = param.annotation

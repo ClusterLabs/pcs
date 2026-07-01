@@ -3,7 +3,6 @@ from collections import (
     Counter,
     OrderedDict,
 )
-from typing import Optional
 
 from dateutil import parser as dateutil_parser
 
@@ -166,19 +165,17 @@ class Validator:
 
     @staticmethod
     def _validate_datespec_expr(expr: DatespecExpr) -> reports.ReportItemList:
-        part_limits: dict[str, tuple[Optional[int], Optional[int]]] = (
-            OrderedDict(
-                years=(None, None),
-                weekyears=(None, None),
-                months=(1, 12),
-                weeks=(1, 53),
-                yeardays=(1, 366),
-                monthdays=(1, 31),
-                weekdays=(1, 7),
-                hours=(0, 23),
-                minutes=(0, 59),
-                seconds=(0, 59),
-            )
+        part_limits: dict[str, tuple[int | None, int | None]] = OrderedDict(
+            years=(None, None),
+            weekyears=(None, None),
+            months=(1, 12),
+            weeks=(1, 53),
+            yeardays=(1, 366),
+            monthdays=(1, 31),
+            weekdays=(1, 7),
+            hours=(0, 23),
+            minutes=(0, 59),
+            seconds=(0, 59),
         )
 
         duplicate_keys = {

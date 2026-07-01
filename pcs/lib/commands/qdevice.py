@@ -1,6 +1,5 @@
 import base64
 import binascii
-from typing import List
 
 from pcs.common import reports
 from pcs.common.file import RawFileError
@@ -270,7 +269,7 @@ def _check_qdevice_not_used(
     reporter: ReportProcessor, runner, model, force=False
 ):
     _check_model(model)
-    connected_clusters: List[str] = []
+    connected_clusters: list[str] = []
     if model == "net":
         try:
             status = qdevice_net.qdevice_status_cluster_text(runner)

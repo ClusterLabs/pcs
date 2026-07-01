@@ -1,6 +1,6 @@
+from collections.abc import Iterable
 from dataclasses import dataclass
 from textwrap import dedent
-from typing import Iterable
 
 from lxml import etree
 

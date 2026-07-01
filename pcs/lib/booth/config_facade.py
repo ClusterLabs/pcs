@@ -1,5 +1,3 @@
-from typing import Optional
-
 from pcs import settings
 from pcs.lib.booth.config_parser import ConfigItem
 from pcs.lib.booth.constants import AUTHFILE_FIX_OPTION
@@ -89,7 +87,7 @@ class ConfigFacade(FacadeInterface):
             self.set_option(AUTHFILE_FIX_OPTION, "yes")
         self.set_option("authfile", auth_file)
 
-    def get_authfile(self) -> Optional[str]:
+    def get_authfile(self) -> str | None:
         """
         Get the path to a booth authfile set in the booth config or None
         """
@@ -102,7 +100,7 @@ class ConfigFacade(FacadeInterface):
         if value:
             self._config.insert(0, ConfigItem(key, value))
 
-    def get_option(self, option: str) -> Optional[str]:
+    def get_option(self, option: str) -> str | None:
         for key, value, _ in reversed(self._config):
             if key == option:
                 return value

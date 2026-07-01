@@ -1,11 +1,7 @@
 from collections import Counter
+from collections.abc import Mapping
 from functools import partial
-from typing import (
-    Final,
-    Mapping,
-    Optional,
-    Union,
-)
+from typing import Final
 
 from pcs.cli.common.errors import (
     SEE_MAN_CHANGES,
@@ -27,7 +23,7 @@ from pcs.common.types import (
 
 # sys.argv always returns a list, we don't need StringSequence in here
 Argv = list[str]
-ModifierValueType = Union[None, bool, str]
+ModifierValueType = None | bool | str
 
 _FUTURE_OPTION_STR: Final = "future"
 FUTURE_OPTION: Final = f"--{_FUTURE_OPTION_STR}"
@@ -411,7 +407,7 @@ class ArgsByKeywords:
 def group_by_keywords(
     arg_list: Argv,
     keyword_set: StringCollection,
-    implicit_first_keyword: Optional[str] = None,
+    implicit_first_keyword: str | None = None,
 ) -> ArgsByKeywords:
     """
     Separate argv into groups delimited by specified keywords
@@ -580,7 +576,7 @@ def filter_out_options(arg_list: Argv) -> Argv:
     return args_without_options
 
 
-def wait_to_timeout(wait: Union[bool, str, None]) -> int:
+def wait_to_timeout(wait: bool | str | None) -> int:
     if wait is False:
         return -1
     if wait is None:
@@ -622,7 +618,7 @@ class InputModifiers:
     def ensure_only_supported(
         self,
         *supported_options: str,
-        hint_syntax_changed: Optional[str] = None,
+        hint_syntax_changed: str | None = None,
         output_format_supported: bool = False,
     ) -> None:
         # --debug is supported in all commands
@@ -741,7 +737,7 @@ class InputModifiers:
         )
 
 
-def get_rule_str(argv: Argv) -> Optional[str]:
+def get_rule_str(argv: Argv) -> str | None:
     if argv:
         if len(argv) > 1:
             # deprecated after 0.11.7

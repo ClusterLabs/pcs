@@ -16,7 +16,7 @@ import xml.dom.minidom
 from functools import lru_cache
 from io import BytesIO
 from textwrap import dedent
-from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, cast
+from typing import TYPE_CHECKING, Any, cast
 from urllib.parse import urlencode
 from xml.dom.minidom import Document as DomDocument
 from xml.dom.minidom import parseString
@@ -73,7 +73,7 @@ if TYPE_CHECKING:
 usefile = False
 filename = ""
 # Note: not properly typed
-pcs_options: Dict[Any, Any] = {}
+pcs_options: dict[Any, Any] = {}
 
 
 def _getValidateWithVersion(dom) -> Version:
@@ -207,8 +207,8 @@ def read_uid_gid_file(uidgid_filename):
 
 
 def get_uidgid_file_content(
-    uid: Optional[str] = None, gid: Optional[str] = None
-) -> Optional[str]:
+    uid: str | None = None, gid: str | None = None
+) -> str | None:
     if not uid and not gid:
         return None
     uid_gid_lines = []
@@ -1927,7 +1927,7 @@ def is_score(var):
     return is_score_value(var)
 
 
-def validate_xml_id(var: str, description: str = "id") -> Tuple[bool, str]:
+def validate_xml_id(var: str, description: str = "id") -> tuple[bool, str]:
     """
     Commandline options: no options
     """

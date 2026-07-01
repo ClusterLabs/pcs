@@ -1,4 +1,4 @@
-from typing import Collection, List, Mapping, Optional, Tuple
+from collections.abc import Collection, Mapping
 
 from lxml.etree import _Element
 
@@ -179,7 +179,7 @@ def create(  # noqa: PLR0913
             resource.common.disable(stonith_element, id_provider)
 
 
-def history_get_text(env: LibraryEnvironment, node: Optional[str] = None):
+def history_get_text(env: LibraryEnvironment, node: str | None = None):
     """
     Get full fencing history in plain text
 
@@ -204,7 +204,7 @@ def history_get_text(env: LibraryEnvironment, node: Optional[str] = None):
         ) from e
 
 
-def history_cleanup(env: LibraryEnvironment, node: Optional[str] = None):
+def history_cleanup(env: LibraryEnvironment, node: str | None = None):
     """
     Clear fencing history
 
@@ -258,7 +258,7 @@ def _update_scsi_devices_get_element_and_devices(
     report_processor: ReportProcessor,
     cib: _Element,
     stonith_id: str,
-) -> Tuple[_Element, List[str]]:
+) -> tuple[_Element, list[str]]:
     """
     Do checks and return stonith element and list of current scsi devices.
     Raise LibraryError if checks fail.

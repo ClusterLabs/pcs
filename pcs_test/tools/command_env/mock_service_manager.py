@@ -1,8 +1,4 @@
-from typing import (
-    Any,
-    NamedTuple,
-    Optional,
-)
+from typing import Any, NamedTuple
 
 from pcs.common.services.interfaces.manager import ServiceManagerInterface
 
@@ -16,9 +12,9 @@ def opt_str(val):
 class Call(NamedTuple):
     method: str
     service: str
-    instance: Optional[str] = None
+    instance: str | None = None
     return_value: Any = None
-    exception: Optional[Exception] = None
+    exception: Exception | None = None
 
     @property
     def type(self):

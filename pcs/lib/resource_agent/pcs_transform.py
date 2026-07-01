@@ -1,9 +1,4 @@
 from dataclasses import replace
-from typing import (
-    List,
-    Optional,
-    Tuple,
-)
 
 from pcs.common.const import PcmkRoleType
 from pcs.common.pacemaker import role
@@ -17,8 +12,8 @@ from .types import (
 
 
 def get_additional_trace_parameters(
-    existing_parameters: List[ResourceAgentParameter],
-) -> List[ResourceAgentParameter]:
+    existing_parameters: list[ResourceAgentParameter],
+) -> list[ResourceAgentParameter]:
     """
     Return trace parameters which need to be added based on existing parameters
 
@@ -330,7 +325,7 @@ def _parameter_deduplicate_desc(
 
 def _get_enum_values_and_new_longdesc(
     parameter: ResourceAgentParameter,
-) -> Tuple[List[str], Optional[str]]:
+) -> tuple[list[str], str | None]:
     enum_values = []
     longdesc = parameter.longdesc
     if parameter.longdesc:

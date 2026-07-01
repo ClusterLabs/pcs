@@ -1,12 +1,8 @@
 import errno
 import os
+from collections.abc import Iterator
 from contextlib import contextmanager
 from io import BytesIO
-from typing import (
-    Dict,
-    Iterator,
-    Optional,
-)
 
 # the import makes it look like RealFile is implemented here so we don't
 # have to import RawFile from common and Ghost file from here in other
@@ -25,7 +21,7 @@ from pcs.common.file import RawFile as RealFile  # noqa: F401
 
 def raw_file_error_report(
     error: RawFileError,
-    force_code: Optional[reports.types.ForceCode] = None,
+    force_code: reports.types.ForceCode | None = None,
     is_forced_or_warning: bool = False,
 ) -> reports.ReportItem:
     """
@@ -54,9 +50,7 @@ class GhostFileError(RawFileError):
 
 
 class GhostFile(RawFileInterface):
-    def __init__(
-        self, metadata: FileMetadata, file_data: Optional[bytes] = None
-    ):
+    def __init__(self, metadata: FileMetadata, file_data: bytes | None = None):
         """
         metadata -- describes the file and provides its metadata
         file_data -- data of the ghost file
@@ -65,7 +59,7 @@ class GhostFile(RawFileInterface):
         self.__file_data = file_data
 
     @property
-    def content(self) -> Optional[bytes]:
+    def content(self) -> bytes | None:
         """
         Export the file content
         """
@@ -96,7 +90,7 @@ class GhostFile(RawFileInterface):
         self.write(io_buffer.getvalue(), can_overwrite=True)
 
 
-def export_ghost_file(ghost_file: GhostFile) -> Dict[str, Optional[bytes]]:
+def export_ghost_file(ghost_file: GhostFile) -> dict[str, bytes | None]:
     """
     Export GhostFile so it can be transferred to a client
 

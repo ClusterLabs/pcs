@@ -1,5 +1,4 @@
 import json
-from typing import Optional
 
 from pcs.common import file_type_codes as code
 from pcs.common import reports
@@ -34,8 +33,8 @@ class JsonParser(ParserInterface):
     def exception_to_report_list(
         exception: ParserErrorException,
         file_type_code: code.FileTypeCode,
-        file_path: Optional[str],
-        force_code: Optional[reports.types.ForceCode],
+        file_path: str | None,
+        force_code: reports.types.ForceCode | None,
         is_forced_or_warning: bool,
     ) -> reports.ReportItemList:
         if isinstance(exception, JsonParserException):

@@ -1,7 +1,4 @@
-from typing import (
-    TYPE_CHECKING,
-    Optional,
-)
+from typing import TYPE_CHECKING
 
 from pcs import settings
 from pcs.common import reports
@@ -68,7 +65,7 @@ def get_peers_status(runner, name=None):
 
 def check_authfile_misconfiguration(
     env: BoothEnv, report_processor: reports.ReportProcessor
-) -> Optional[reports.item.ReportItemMessage]:
+) -> reports.item.ReportItemMessage | None:
     if (
         not settings.booth_enable_authfile_set_enabled
         and not settings.booth_enable_authfile_unset_enabled

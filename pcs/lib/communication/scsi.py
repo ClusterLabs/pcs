@@ -1,5 +1,4 @@
 import json
-from typing import Dict
 
 from dacite import DaciteError
 
@@ -94,7 +93,7 @@ class UnfenceMpath(Unfence):
         report_processor: reports.ReportProcessor,
         original_devices: StringIterable,
         updated_devices: StringIterable,
-        node_key_map: Dict[str, str],
+        node_key_map: dict[str, str],
     ) -> None:
         super().__init__(report_processor, original_devices, updated_devices)
         self._node_key_map = node_key_map

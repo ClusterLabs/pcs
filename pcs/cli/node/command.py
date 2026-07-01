@@ -1,5 +1,6 @@
 import json
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from pcs.cli.cluster_property.output import PropertyConfigurationFacade
 from pcs.cli.common.errors import CmdLineInputError

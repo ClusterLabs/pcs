@@ -1,4 +1,4 @@
-from typing import Mapping, Optional
+from collections.abc import Mapping
 
 from lxml import etree
 from lxml.etree import _Element
@@ -122,7 +122,7 @@ class DuplicatesCheckerLocationRulePlain(DuplicatesChecker):
     def __init__(self) -> None:
         super().__init__()
         self._rule_to_str = rule.RuleToStr(normalize=True)
-        self._constraint_to_check_rule: Optional[str] = None
+        self._constraint_to_check_rule: str | None = None
 
     def _check_init(self, constraint_to_check: _Element) -> None:
         self._constraint_to_check_rule = None
@@ -178,7 +178,7 @@ class ValidateCreatePlainWithRule:
         rule_str: str,
         rule_options: validate.TypeOptionMap,
         constraint_options: validate.TypeOptionMap,
-        constrained_el: Optional[_Element] = None,
+        constrained_el: _Element | None = None,
     ):
         """
         id_provider -- elements' ids generator
@@ -190,7 +190,7 @@ class ValidateCreatePlainWithRule:
         self._id_provider = id_provider
         self._rule_str = rule_str
         self._rule_options = rule_options
-        self._rule_parsed: Optional[rule.RuleRoot] = None
+        self._rule_parsed: rule.RuleRoot | None = None
         self._resource_el = constrained_el
         self._constraint_options = constraint_options
 

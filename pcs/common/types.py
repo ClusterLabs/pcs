@@ -1,10 +1,10 @@
-from collections.abc import Set
+from collections.abc import Generator, MutableSequence, Set
 from enum import StrEnum, auto
-from typing import Generator, Literal, MutableSequence, Union
+from typing import Literal
 
-StringSequence = Union[MutableSequence[str], tuple[str, ...]]
-StringCollection = Union[StringSequence, Set[str]]
-StringIterable = Union[StringCollection, Generator[str, None, None]]
+StringSequence = MutableSequence[str] | tuple[str, ...]
+StringCollection = StringSequence | Set[str]
+StringIterable = StringCollection | Generator[str, None, None]
 
 
 class AutoNameEnum(StrEnum):
@@ -16,7 +16,7 @@ class AutoNameEnum(StrEnum):
         return name
 
 
-PcmkScore = Union[int, Literal["INFINITY", "+INFINITY", "-INFINITY"]]
+PcmkScore = int | Literal["INFINITY", "+INFINITY", "-INFINITY"]
 
 
 class CibRuleExpressionType(AutoNameEnum):

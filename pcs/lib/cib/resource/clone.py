@@ -9,12 +9,8 @@ support for them to be able to read, process and display CIBs containing them.
 """
 
 import dataclasses
-from typing import (
-    List,
-    Mapping,
-    Optional,
-    cast,
-)
+from collections.abc import Mapping
+from typing import cast
 
 from lxml import etree
 from lxml.etree import _Element
@@ -80,7 +76,7 @@ def is_promotable_clone(resource_el: _Element) -> bool:
 
 def clone_element_to_dto(
     clone_element: _Element,
-    rule_eval: Optional[rule.RuleInEffectEval] = None,
+    rule_eval: rule.RuleInEffectEval | None = None,
 ) -> CibResourceCloneDto:
     if rule_eval is None:
         rule_eval = rule.RuleInEffectEvalDummy()
@@ -105,7 +101,7 @@ def clone_element_to_dto(
 
 def master_element_to_dto(
     master_element: _Element,
-    rule_eval: Optional[rule.RuleInEffectEval] = None,
+    rule_eval: rule.RuleInEffectEval | None = None,
 ) -> CibResourceCloneDto:
     clone_dto = clone_element_to_dto(master_element, rule_eval)
     promotable_nvpair = nvset.CibNvpairDto(
@@ -139,7 +135,7 @@ def master_element_to_dto(
     return clone_dto
 
 
-def get_parent_any_clone(resource_el: _Element) -> Optional[_Element]:
+def get_parent_any_clone(resource_el: _Element) -> _Element | None:
     """
     Get any parent clone of a primitive (may be in a group) or group
 
@@ -161,7 +157,7 @@ def append_new(
     id_provider: IdProvider,
     primitive_element: _Element,
     options: Mapping[str, str],
-    clone_id: Optional[str] = None,
+    clone_id: str | None = None,
 ) -> _Element:
     """
     Append a new clone element (containing the primitive_element) to the
@@ -193,14 +189,14 @@ def append_new(
 
 
 def get_inner_resource(clone_el: _Element) -> _Element:
-    return cast(List[_Element], clone_el.xpath("./primitive | ./group"))[0]
+    return cast(list[_Element], clone_el.xpath("./primitive | ./group"))[0]
 
 
 def get_inner_primitives(clone_el: _Element) -> list[_Element]:
     """
     Also returns primitives inside cloned groups.
     """
-    return cast(List[_Element], clone_el.xpath(".//primitive"))
+    return cast(list[_Element], clone_el.xpath(".//primitive"))
 
 
 def validate_clone_id(clone_id: str, id_provider: IdProvider) -> ReportItemList:

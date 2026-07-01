@@ -1,5 +1,3 @@
-from typing import Optional
-
 from lxml import etree
 from lxml.etree import _Element
 
@@ -29,7 +27,7 @@ def export(
     id_provider: IdProvider,
     cib_schema_version: Version,
     expr_tree: BoolExpr,
-    rule_id: Optional[str] = None,
+    rule_id: str | None = None,
 ) -> _Element:
     """
     Export parsed rule to a CIB element
@@ -67,7 +65,7 @@ class _Exporter:
         self,
         parent_el: _Element,
         expr_tree: BoolExpr,
-        rule_id: Optional[str] = None,
+        rule_id: str | None = None,
     ) -> _Element:
         element = self._export_part(parent_el, expr_tree, rule_id)
         # Adjust top level rule element (which is represented by BoolExpr
@@ -82,7 +80,7 @@ class _Exporter:
         self,
         parent_el: _Element,
         expr_tree: RuleExprPart,
-        id_: Optional[str] = None,
+        id_: str | None = None,
     ) -> _Element:
         func = self.part_export_map[type(expr_tree)]
         # pylint: disable=comparison-with-callable
@@ -93,7 +91,7 @@ class _Exporter:
         return func(parent_el, expr_tree)  # type: ignore
 
     def _export_bool(
-        self, parent_el: _Element, boolean: BoolExpr, id_: Optional[str] = None
+        self, parent_el: _Element, boolean: BoolExpr, id_: str | None = None
     ) -> _Element:
         element = etree.SubElement(
             parent_el,

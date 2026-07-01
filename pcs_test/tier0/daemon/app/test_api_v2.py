@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import Any, Optional
+from typing import Any
 from unittest import mock
 
 from tornado.httpclient import HTTPResponse
@@ -86,8 +86,8 @@ class ApiV2Test(ApiTestBase):
     @staticmethod
     def make_command_dict(
         command_name: str = "test.command",
-        params: Optional[dict[str, Any]] = None,
-        options: Optional[dict[str, Any]] = None,
+        params: dict[str, Any] | None = None,
+        options: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         return {
             "command_name": command_name,
@@ -102,8 +102,8 @@ class ApiV2Test(ApiTestBase):
     @staticmethod
     def make_command_dto(
         command_name: str = "test.command",
-        params: Optional[dict[str, Any]] = None,
-        options: Optional[CommandOptionsDto] = None,
+        params: dict[str, Any] | None = None,
+        options: CommandOptionsDto | None = None,
     ) -> dict[str, Any]:
         return CommandDto(
             command_name=command_name,
@@ -121,8 +121,8 @@ class ApiV2Test(ApiTestBase):
         state: TaskState = TaskState.FINISHED,
         finish_type: TaskFinishType = TaskFinishType.SUCCESS,
         result: Any = None,
-        report_list: Optional[list] = None,
-        kill_reason: Optional[TaskKillReason] = None,
+        report_list: list | None = None,
+        kill_reason: TaskKillReason | None = None,
     ) -> TaskResultDto:
         return TaskResultDto(
             task_ident=task_ident,
@@ -145,7 +145,7 @@ class ApiV2Test(ApiTestBase):
         self,
         response: HTTPResponse,
         expected_code: int,
-        expected_keys: Optional[list[str]] = None,
+        expected_keys: list[str] | None = None,
     ) -> dict[str, Any]:
         self.assertEqual(response.code, expected_code)
         self.assertEqual(
@@ -175,7 +175,7 @@ class ApiV2Test(ApiTestBase):
         self,
         response: HTTPResponse,
         expected_code: int,
-        expected_message: Optional[str] = None,
+        expected_message: str | None = None,
     ) -> None:
         data = self.assert_json_response(
             response,

@@ -1,11 +1,7 @@
-from typing import (
-    Final,
-    NewType,
-    Union,
-)
+from typing import Final, NewType
 
 FencingTargetType = NewType("FencingTargetType", str)
-FencingTargetValue = Union[str, tuple[str, str]]
+FencingTargetValue = str | tuple[str, str]
 
 TARGET_TYPE_NODE: Final = FencingTargetType("node")
 TARGET_TYPE_REGEXP: Final = FencingTargetType("regexp")

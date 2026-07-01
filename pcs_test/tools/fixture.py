@@ -1,15 +1,8 @@
 import itertools
 import json
 from collections import Counter
-from typing import (
-    Any,
-    Generic,
-    Mapping,
-    NamedTuple,
-    Optional,
-    TypeVar,
-    overload,
-)
+from collections.abc import Mapping
+from typing import Any, Generic, NamedTuple, TypeVar, overload
 from unittest import mock
 
 from pcs.common import reports
@@ -35,8 +28,8 @@ class ReportItemFixture(NamedTuple):
     severity: reports.types.SeverityLevel
     code: reports.types.MessageCode
     payload: Mapping[str, Any]
-    force_code: Optional[reports.types.ForceCode]
-    context: Optional[Mapping[str, Any]]
+    force_code: reports.types.ForceCode | None
+    context: Mapping[str, Any] | None
 
     def to_warn(self):
         return warn(self.code, self.context, **self.payload)
@@ -55,7 +48,7 @@ class ReportItemFixture(NamedTuple):
 
 def debug(
     code: reports.types.MessageCode,
-    context: Optional[Mapping[str, Any]] = None,
+    context: Mapping[str, Any] | None = None,
     **kwargs,
 ) -> ReportItemFixture:
     return ReportItemFixture(
@@ -65,7 +58,7 @@ def debug(
 
 def warn(
     code: reports.types.MessageCode,
-    context: Optional[Mapping[str, Any]] = None,
+    context: Mapping[str, Any] | None = None,
     **kwargs,
 ) -> ReportItemFixture:
     return ReportItemFixture(
@@ -75,7 +68,7 @@ def warn(
 
 def deprecation(
     code: reports.types.MessageCode,
-    context: Optional[Mapping[str, Any]] = None,
+    context: Mapping[str, Any] | None = None,
     **kwargs,
 ) -> ReportItemFixture:
     return ReportItemFixture(
@@ -85,8 +78,8 @@ def deprecation(
 
 def error(
     code: reports.types.MessageCode,
-    force_code: Optional[reports.types.ForceCode] = None,
-    context: Optional[Mapping[str, Any]] = None,
+    force_code: reports.types.ForceCode | None = None,
+    context: Mapping[str, Any] | None = None,
     **kwargs,
 ) -> ReportItemFixture:
     return ReportItemFixture(
@@ -96,7 +89,7 @@ def error(
 
 def info(
     code: reports.types.MessageCode,
-    context: Optional[Mapping[str, Any]] = None,
+    context: Mapping[str, Any] | None = None,
     **kwargs,
 ) -> ReportItemFixture:
     return ReportItemFixture(
@@ -110,10 +103,10 @@ T = TypeVar("T")
 class NameValueSequence(Generic[T]):
     def __init__(
         self,
-        name_list: Optional[list[Optional[str]]] = None,
-        value_list: Optional[list[T]] = None,
+        name_list: list[str | None] | None = None,
+        value_list: list[T] | None = None,
     ):
-        self.__names: list[Optional[str]] = name_list or []
+        self.__names: list[str | None] = name_list or []
         self.__values: list[T] = value_list or []
 
         if len(self.__names) != len(self.__values):
@@ -130,14 +123,14 @@ class NameValueSequence(Generic[T]):
             )
 
     @property
-    def names(self) -> list[Optional[str]]:
+    def names(self) -> list[str | None]:
         return list(self.__names)
 
     @property
     def values(self) -> list[T]:
         return list(self.__values)
 
-    def append(self, value: T, name: Optional[str] = None) -> None:
+    def append(self, value: T, name: str | None = None) -> None:
         """
         Append new value with the specified name at the end of sequence
 
@@ -148,7 +141,7 @@ class NameValueSequence(Generic[T]):
         self.__names.append(name)
         self.__values.append(value)
 
-    def prepend(self, value: T, name: Optional[str] = None) -> None:
+    def prepend(self, value: T, name: str | None = None) -> None:
         """
         Insert new value with the specified name at the start of sequence
 
@@ -159,7 +152,7 @@ class NameValueSequence(Generic[T]):
         self.__names.insert(0, name)
         self.__values.insert(0, value)
 
-    def insert(self, before: str, value: T, name: Optional[str] = None) -> None:
+    def insert(self, before: str, value: T, name: str | None = None) -> None:
         """
         Insert new value before a specified value
 
@@ -183,9 +176,7 @@ class NameValueSequence(Generic[T]):
             del self.__names[index]
             del self.__values[index]
 
-    def replace(
-        self, name: str, value: T, new_name: Optional[str] = None
-    ) -> None:
+    def replace(self, name: str, value: T, new_name: str | None = None) -> None:
         """
         Replace a value specified by its name
 
@@ -225,7 +216,7 @@ class NameValueSequence(Generic[T]):
     def __index_error(self, index: str) -> str:
         return f"'{index}' not present in {self}"
 
-    def __check_name(self, name: Optional[str]) -> None:
+    def __check_name(self, name: str | None) -> None:
         if name is not None and name in self.__names:
             raise AssertionError(f"Name '{name}' already present in {self}")
 
@@ -285,7 +276,7 @@ class NameValueSequence(Generic[T]):
 
 
 class ReportSequenceBuilder:
-    def __init__(self, store: Optional[NameValueSequence] = None):
+    def __init__(self, store: NameValueSequence | None = None):
         self._store = store or NameValueSequence()
 
     @property
@@ -295,7 +286,7 @@ class ReportSequenceBuilder:
     def info(
         self,
         code: reports.types.MessageCode,
-        _name: Optional[str] = None,
+        _name: str | None = None,
         **kwargs,
     ) -> "ReportSequenceBuilder":
         self._store.append(info(code, **kwargs), _name)
@@ -304,7 +295,7 @@ class ReportSequenceBuilder:
     def warn(
         self,
         code: reports.types.MessageCode,
-        _name: Optional[str] = None,
+        _name: str | None = None,
         **kwargs,
     ) -> "ReportSequenceBuilder":
         self._store.append(warn(code, **kwargs), _name)
@@ -313,7 +304,7 @@ class ReportSequenceBuilder:
     def deprecation(
         self,
         code: reports.types.MessageCode,
-        _name: Optional[str] = None,
+        _name: str | None = None,
         **kwargs,
     ) -> "ReportSequenceBuilder":
         self._store.append(deprecation(code, **kwargs), _name)
@@ -322,8 +313,8 @@ class ReportSequenceBuilder:
     def error(
         self,
         code: reports.types.MessageCode,
-        force_code: Optional[reports.types.ForceCode] = None,
-        _name: Optional[str] = None,
+        force_code: reports.types.ForceCode | None = None,
+        _name: str | None = None,
         **kwargs,
     ) -> "ReportSequenceBuilder":
         self._store.append(error(code, force_code=force_code, **kwargs), _name)

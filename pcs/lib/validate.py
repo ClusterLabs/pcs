@@ -31,20 +31,9 @@ entered one is reported as not valid.
 import ipaddress
 import re
 from collections import Counter
+from collections.abc import Callable, Container, Iterable, Mapping
 from re import Pattern
-from typing import (
-    Any,
-    Callable,
-    Container,
-    Dict,
-    Iterable,
-    Mapping,
-    NamedTuple,
-    Optional,
-    Set,
-    Union,
-    cast,
-)
+from typing import Any, NamedTuple, cast
 
 from pcs.common import reports
 from pcs.common.reports import (
@@ -79,7 +68,7 @@ _PCMK_DATESPEC_PART_RE = re.compile(r"^(?P<since>[0-9]+)(-(?P<until>[0-9]+))?$")
 
 TypeOptionName = str
 TypeOptionValue = str
-TypeOptionRawMap = Dict[TypeOptionName, TypeOptionValue]
+TypeOptionRawMap = dict[TypeOptionName, TypeOptionValue]
 TypeNormalizeFunc = Callable[[TypeOptionName, TypeOptionValue], TypeOptionValue]
 
 ### normalization
@@ -94,12 +83,12 @@ class ValuePair(NamedTuple):
     normalized: TypeOptionValue
 
     @staticmethod
-    def get(val: Union["ValuePair", TypeOptionValue]) -> "ValuePair":
+    def get(val: "ValuePair | TypeOptionValue") -> "ValuePair":
         return val if isinstance(val, ValuePair) else ValuePair(val, val)
 
 
 TypeOptionNormalizedMap = Mapping[TypeOptionName, ValuePair]
-TypeOptionMap = Mapping[TypeOptionName, Union[TypeOptionValue, ValuePair]]
+TypeOptionMap = Mapping[TypeOptionName, TypeOptionValue | ValuePair]
 
 
 def values_to_pairs(
@@ -124,7 +113,7 @@ def values_to_pairs(
 
 
 def pairs_to_values(
-    option_dict: Mapping[TypeOptionName, Union[TypeOptionValue, ValuePair]],
+    option_dict: Mapping[TypeOptionName, TypeOptionValue | ValuePair],
 ) -> TypeOptionRawMap:
     """
     Take a dict which has OptionValuePairs as its values and return dict with
@@ -229,8 +218,8 @@ class KeyValidator(ValidatorInterface):
     def __init__(
         self,
         option_name_list: Iterable[TypeOptionName],
-        option_type: Optional[str] = None,
-        severity: Optional[ReportItemSeverity] = None,
+        option_type: str | None = None,
+        severity: ReportItemSeverity | None = None,
     ):
         """
         option_name_list -- names of the options to check
@@ -255,8 +244,8 @@ class CorosyncOption(KeyValidator):
 
     def __init__(
         self,
-        option_type: Optional[str] = None,
-        severity: Optional[ReportItemSeverity] = None,
+        option_type: str | None = None,
+        severity: ReportItemSeverity | None = None,
     ):
         super().__init__([], option_type=option_type, severity=severity)
 
@@ -293,9 +282,9 @@ class DependsOnOption(KeyValidator):
         self,
         option_name_list: Iterable[TypeOptionName],
         prerequisite_name: TypeOptionName,
-        option_type: Optional[str] = None,
-        prerequisite_type: Optional[str] = None,
-        severity: Optional[ReportItemSeverity] = None,
+        option_type: str | None = None,
+        prerequisite_type: str | None = None,
+        severity: ReportItemSeverity | None = None,
     ):
         """
         prerequisite_name -- name of the prerequisite options
@@ -336,8 +325,8 @@ class DeprecatedOption(KeyValidator):
         self,
         option_name_list: Iterable[TypeOptionName],
         deprecated_by: Iterable[TypeOptionName],
-        option_type: Optional[str] = None,
-        severity: Optional[ReportItemSeverity] = None,
+        option_type: str | None = None,
+        severity: ReportItemSeverity | None = None,
     ):
         """
         deprecated_by -- names of the options which should be used instead
@@ -398,9 +387,9 @@ class IsRequiredSome(KeyValidator):
     def __init__(
         self,
         option_name_list: Iterable[TypeOptionName],
-        option_type: Optional[str] = None,
+        option_type: str | None = None,
         deprecated_option_name_list: Iterable[TypeOptionName] = frozenset(),
-        severity: Optional[ReportItemSeverity] = None,
+        severity: ReportItemSeverity | None = None,
     ):
         """
         deprecated_option_name_list -- deprecated options from option_name_list
@@ -455,10 +444,10 @@ class NamesIn(KeyValidator):
     def __init__(
         self,
         option_name_list: Iterable[TypeOptionName],
-        option_type: Optional[str] = None,
-        allowed_option_patterns: Optional[StringIterable] = None,
-        banned_name_list: Optional[Iterable[TypeOptionName]] = None,
-        severity: Optional[ReportItemSeverity] = None,
+        option_type: str | None = None,
+        allowed_option_patterns: StringIterable | None = None,
+        banned_name_list: Iterable[TypeOptionName] | None = None,
+        severity: ReportItemSeverity | None = None,
     ):
         """
         allowed_option_patterns -- option patterns to be added to a report
@@ -550,7 +539,7 @@ class ValueValidator(ValidatorInterface):
     def __init__(
         self,
         option_name: TypeOptionName,
-        option_name_for_report: Optional[str] = None,
+        option_name_for_report: str | None = None,
     ):
         """
         option_name -- name of the option to check
@@ -587,8 +576,8 @@ class ValuePredicateBase(ValueValidator):
     def __init__(
         self,
         option_name: TypeOptionName,
-        option_name_for_report: Optional[str] = None,
-        severity: Optional[ReportItemSeverity] = None,
+        option_name_for_report: str | None = None,
+        severity: ReportItemSeverity | None = None,
     ):
         """
         severity -- severity of produced reports, defaults to error
@@ -689,8 +678,8 @@ class ValueId(ValueValidator):
     def __init__(
         self,
         option_name: TypeOptionName,
-        option_name_for_report: Optional[str] = None,
-        id_provider: Optional[IdProvider] = None,
+        option_name_for_report: str | None = None,
+        id_provider: IdProvider | None = None,
     ):
         """
         id_provider -- checks id uniqueness and books ids if set
@@ -717,9 +706,9 @@ class ValueDeprecated(ValueValidator):
     def __init__(
         self,
         option_name: TypeOptionName,
-        deprecation_map: Mapping[str, Optional[str]],
-        severity: Optional[ReportItemSeverity] = None,
-        option_name_for_report: Optional[str] = None,
+        deprecation_map: Mapping[str, str | None],
+        severity: ReportItemSeverity | None = None,
+        option_name_for_report: str | None = None,
     ):
         """
         deprecation_map -- keys are deprecated values and values are new
@@ -760,8 +749,8 @@ class ValueIn(ValuePredicateBase):
         self,
         option_name: TypeOptionName,
         allowed_value_list: Container[TypeOptionValue],
-        option_name_for_report: Optional[str] = None,
-        severity: Optional[ReportItemSeverity] = None,
+        option_name_for_report: str | None = None,
+        severity: ReportItemSeverity | None = None,
     ):
         """
         allowed_value_list -- list of possible values
@@ -789,10 +778,10 @@ class ValueInteger(ValuePredicateBase):
     def __init__(
         self,
         option_name: TypeOptionName,
-        at_least: Optional[int] = None,
-        at_most: Optional[int] = None,
-        option_name_for_report: Optional[str] = None,
-        severity: Optional[ReportItemSeverity] = None,
+        at_least: int | None = None,
+        at_most: int | None = None,
+        option_name_for_report: str | None = None,
+        severity: ReportItemSeverity | None = None,
     ):
         """
         at_least -- minimal allowed value, do not check the lower bound when
@@ -856,8 +845,8 @@ class ValueNotEmpty(ValuePredicateBase):
         option_name: TypeOptionName,
         # TODO Set proper type. ReportItemMessage must be fixed as well.
         value_desc_or_enum: Any,
-        option_name_for_report: Optional[str] = None,
-        severity: Optional[ReportItemSeverity] = None,
+        option_name_for_report: str | None = None,
+        severity: ReportItemSeverity | None = None,
     ):
         """
         value_desc_or_enum -- a list or a description of possible values
@@ -886,9 +875,9 @@ class ValueStringLength(ValuePredicateBase):
     def __init__(
         self,
         option_name: TypeOptionName,
-        min_len: Optional[int] = None,
-        max_len: Optional[int] = None,
-        option_name_for_report: Optional[str] = None,
+        min_len: int | None = None,
+        max_len: int | None = None,
+        option_name_for_report: str | None = None,
     ):
         super().__init__(
             option_name, option_name_for_report=option_name_for_report
@@ -940,10 +929,10 @@ class ValuePcmkDatespecPart(ValuePredicateBase):
     def __init__(
         self,
         option_name: TypeOptionName,
-        at_least: Optional[int],
-        at_most: Optional[int],
-        option_name_for_report: Optional[str] = None,
-        severity: Optional[ReportItemSeverity] = None,
+        at_least: int | None,
+        at_most: int | None,
+        option_name_for_report: str | None = None,
+        severity: ReportItemSeverity | None = None,
     ):
         """
         at_least -- minimal allowed value
@@ -1075,8 +1064,8 @@ class ValueTimeIntervalOrDuration(ValuePredicateBase):
         self,
         runner: CommandRunner,
         option_name: TypeOptionName,
-        option_name_for_report: Optional[str] = None,
-        severity: Optional[ReportItemSeverity] = None,
+        option_name_for_report: str | None = None,
+        severity: ReportItemSeverity | None = None,
     ):
         super().__init__(
             option_name,
@@ -1131,7 +1120,7 @@ def is_empty_string(value: TypeOptionValue) -> bool:
 
 
 def is_string_length(
-    value: TypeOptionValue, min_len: Optional[int], max_len: Optional[int]
+    value: TypeOptionValue, min_len: int | None, max_len: int | None
 ) -> bool:
     """
     Check if the specified value is string with specified length
@@ -1148,7 +1137,7 @@ def is_string_length(
 
 
 def is_float(
-    value: Union[str, int, float],
+    value: str | int | float,
 ) -> bool:
     """
     Check if the specified value is a float number
@@ -1204,8 +1193,8 @@ def is_ipv6_address(value: TypeOptionValue) -> bool:
 
 def is_pcmk_datespec_part(
     value: str,
-    at_least: Optional[int] = None,
-    at_most: Optional[int] = None,
+    at_least: int | None = None,
+    at_most: int | None = None,
 ) -> bool:
     """
     Check if the value is a valid Pacemaker Datespec part:
@@ -1226,7 +1215,7 @@ def is_pcmk_datespec_part(
     return True
 
 
-def matches_regexp(value: TypeOptionValue, regexp: Union[str, Pattern]) -> bool:
+def matches_regexp(value: TypeOptionValue, regexp: str | Pattern) -> bool:
     """
     Check if the specified value matches the specified regular expression
 
@@ -1247,9 +1236,9 @@ class ValidateAddRemove:
         add_item_list: StringCollection,
         remove_item_list: StringCollection,
         item_type: reports.types.AddRemoveItemType,
-        container_type: Optional[reports.types.AddRemoveContainerType] = None,
-        container_id: Optional[str] = None,
-        severity: Optional[ReportItemSeverity] = None,
+        container_type: reports.types.AddRemoveContainerType | None = None,
+        container_id: str | None = None,
+        severity: ReportItemSeverity | None = None,
     ):
         """
         Validate the arguments of add remove operation.
@@ -1286,7 +1275,7 @@ class ValidateAddRemove:
         return report_list
 
     @staticmethod
-    def _get_duplicate_items(item_list: StringIterable) -> Set[str]:
+    def _get_duplicate_items(item_list: StringIterable) -> set[str]:
         return {item for item, count in Counter(item_list).items() if count > 1}
 
     def validate_no_duplicate_items(self) -> ReportItemList:
@@ -1335,9 +1324,9 @@ class _ValidateAddRemoveWithExistingItems(ValidateAddRemove):
         item_type: reports.types.AddRemoveItemType,
         container_id: str,
         *,
-        adjacent_item_id: Optional[str] = None,
+        adjacent_item_id: str | None = None,
         container_can_be_empty: bool = False,
-        severity: Optional[ReportItemSeverity] = None,
+        severity: ReportItemSeverity | None = None,
     ):
         """
         Validate if items can be added or removed to or from a container.
@@ -1475,7 +1464,7 @@ def validate_add_remove_items(
     container_type: reports.types.AddRemoveContainerType,
     item_type: reports.types.AddRemoveItemType,
     container_id: str,
-    adjacent_item_id: Optional[str] = None,
+    adjacent_item_id: str | None = None,
     container_can_be_empty: bool = False,
 ) -> ReportItemList:
     """
@@ -1518,7 +1507,7 @@ def validate_set_unset_items(
     container_type: reports.types.AddRemoveContainerType,
     item_type: reports.types.AddRemoveItemType,
     container_id: str,
-    severity: Optional[ReportItemSeverity] = None,
+    severity: ReportItemSeverity | None = None,
 ) -> ReportItemList:
     """
     Validate if items can be set or unset to or from a dict of options.

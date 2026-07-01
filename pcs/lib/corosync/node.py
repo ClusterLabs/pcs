@@ -1,9 +1,6 @@
 import socket
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import (
-    Optional,
-    Sequence,
-)
 
 from pcs.common import reports
 from pcs.common.corosync_conf import (
@@ -42,17 +39,17 @@ class CorosyncNodeAddress(ImplementsToDto):
 class CorosyncNode(ImplementsToDto):
     """A node loaded from corosync.conf"""
 
-    name: Optional[str]
+    name: str | None
     addrs: Sequence[CorosyncNodeAddress]
-    nodeid: Optional[str]
+    nodeid: str | None
 
-    def addr_plain_for_link(self, link: str) -> Optional[str]:
+    def addr_plain_for_link(self, link: str) -> str | None:
         for addr in self.addrs:
             if addr.link == link:
                 return addr.addr
         return None
 
-    def addrs_plain(self, except_link: Optional[str] = None) -> list[str]:
+    def addrs_plain(self, except_link: str | None = None) -> list[str]:
         return [
             addr.addr
             for addr in self.addrs

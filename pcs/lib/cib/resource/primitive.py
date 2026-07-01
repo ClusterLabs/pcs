@@ -1,4 +1,5 @@
-from typing import Iterable, Mapping, Optional, cast
+from collections.abc import Iterable, Mapping
+from typing import cast
 
 from lxml import etree
 from lxml.etree import _Element
@@ -69,7 +70,7 @@ def resource_agent_name_from_primitive(
 
 def primitive_element_to_dto(
     primitive_element: _Element,
-    rule_eval: Optional[rule.RuleInEffectEval] = None,
+    rule_eval: rule.RuleInEffectEval | None = None,
 ) -> CibResourcePrimitiveDto:
     if rule_eval is None:
         rule_eval = rule.RuleInEffectEvalDummy()
@@ -138,9 +139,9 @@ def create(  # noqa: PLR0913
     id_provider: IdProvider,
     resource_id: str,
     resource_agent_facade: ResourceAgentFacade,
-    raw_operation_list: Optional[Iterable[ResourceOperationIn]] = None,
-    meta_attributes: Optional[Mapping[str, str]] = None,
-    instance_attributes: Optional[Mapping[str, str]] = None,
+    raw_operation_list: Iterable[ResourceOperationIn] | None = None,
+    meta_attributes: Mapping[str, str] | None = None,
+    instance_attributes: Mapping[str, str] | None = None,
     allow_invalid_operation: bool = False,
     allow_invalid_instance_attributes: bool = False,
     use_default_operations: bool = True,
@@ -302,7 +303,7 @@ def append_new(  # noqa: PLR0913
     id_provider: IdProvider,
     resource_id: str,
     standard: str,
-    provider: Optional[str],
+    provider: str | None,
     agent_type: str,
     *,
     instance_attributes: Mapping[str, str],
@@ -358,7 +359,7 @@ def _validate_unique_instance_attributes(
     resource_agent: ResourceAgentMetadata,
     instance_attributes: Mapping[str, str],
     resources_section: _Element,
-    resource_id: Optional[str] = None,
+    resource_id: str | None = None,
     force: bool = False,
 ) -> reports.ReportItemList:
     if not resource_agent.unique_parameter_groups:
@@ -422,7 +423,7 @@ def _is_ocf_or_stonith_agent(resource_agent_name: ResourceAgentName) -> bool:
 
 
 def _get_report_from_agent_self_validation(
-    is_valid: Optional[bool],
+    is_valid: bool | None,
     reason: str,
     report_severity: reports.ReportItemSeverity,
 ) -> reports.ReportItemList:

@@ -1,10 +1,5 @@
 from dataclasses import dataclass
-from typing import (
-    Any,
-    Dict,
-    List,
-    Optional,
-)
+from typing import Any
 
 from pcs.common.interface.dto import DataTransferObject
 from pcs.common.reports.dto import ReportItemDto
@@ -18,15 +13,15 @@ from .types import (
 
 @dataclass(frozen=True)
 class CommandOptionsDto(DataTransferObject):
-    request_timeout: Optional[int] = None
-    effective_username: Optional[str] = None
-    effective_groups: Optional[List[str]] = None
+    request_timeout: int | None = None
+    effective_username: str | None = None
+    effective_groups: list[str] | None = None
 
 
 @dataclass(frozen=True)
 class CommandDto(DataTransferObject):
     command_name: str
-    params: Dict[str, Any]
+    params: dict[str, Any]
     options: CommandOptionsDto
 
 
@@ -39,8 +34,8 @@ class TaskIdentDto(DataTransferObject):
 class TaskResultDto(DataTransferObject):
     task_ident: str
     command: CommandDto
-    reports: List[ReportItemDto]
+    reports: list[ReportItemDto]
     state: TaskState
     task_finish_type: TaskFinishType
-    kill_reason: Optional[TaskKillReason]
+    kill_reason: TaskKillReason | None
     result: Any

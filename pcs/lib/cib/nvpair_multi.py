@@ -1,12 +1,5 @@
-from typing import (
-    Iterable,
-    List,
-    Mapping,
-    NewType,
-    Optional,
-    Tuple,
-    cast,
-)
+from collections.abc import Iterable, Mapping
+from typing import NewType, cast
 
 from lxml import etree
 from lxml.etree import _Element
@@ -85,7 +78,7 @@ def nvset_element_to_dto(
     )
 
 
-def nvset_to_dict(nvset_el: _Element) -> dict[str, Optional[str]]:
+def nvset_to_dict(nvset_el: _Element) -> dict[str, str | None]:
     """
     Export only nvpairs from an nvset xml element into a dictionary
     """
@@ -109,7 +102,7 @@ def nvset_to_dict_except_without_values(
     }
 
 
-def find_nvsets(parent_element: _Element, tag: NvsetTag) -> List[_Element]:
+def find_nvsets(parent_element: _Element, tag: NvsetTag) -> list[_Element]:
     """
     Get all nvset xml elements in the given parent element
 
@@ -119,14 +112,14 @@ def find_nvsets(parent_element: _Element, tag: NvsetTag) -> List[_Element]:
     return cast(
         # The xpath method has a complicated return value, but we know our xpath
         # expression returns only elements.
-        List[_Element],
+        list[_Element],
         parent_element.xpath("./*[local-name()=$tag_name]", tag_name=tag),
     )
 
 
 def find_nvsets_by_ids(
     parent_element: _Element, id_list: StringIterable
-) -> Tuple[List[_Element], ReportItemList]:
+) -> tuple[list[_Element], ReportItemList]:
     """
     Find nvset elements by their IDs and return them with non-empty report
     list in case of errors.
@@ -163,7 +156,7 @@ class ValidateNvsetAppendNew:
         id_provider: IdProvider,
         nvpair_dict: Mapping[str, str],
         nvset_options: Mapping[str, str],
-        nvset_rule: Optional[str] = None,
+        nvset_rule: str | None = None,
         rule_allows_rsc_expr: bool = False,
         rule_allows_op_expr: bool = False,
         rule_allows_node_attr_expr: bool = False,
@@ -184,7 +177,7 @@ class ValidateNvsetAppendNew:
         self._allow_rsc_expr = rule_allows_rsc_expr
         self._allow_op_expr = rule_allows_op_expr
         self._allow_node_attr_expr = rule_allows_node_attr_expr
-        self._nvset_rule_parsed: Optional[RuleRoot] = None
+        self._nvset_rule_parsed: RuleRoot | None = None
 
     def validate(self, force_options: bool = False) -> reports.ReportItemList:
         report_list: reports.ReportItemList = []
@@ -239,7 +232,7 @@ class ValidateNvsetAppendNew:
 
         return report_list
 
-    def get_parsed_rule(self) -> Optional[RuleRoot]:
+    def get_parsed_rule(self) -> RuleRoot | None:
         return self._nvset_rule_parsed
 
 
@@ -250,7 +243,7 @@ def nvset_append_new(
     nvset_tag: NvsetTag,
     nvpair_dict: Mapping[str, str],
     nvset_options: Mapping[str, str],
-    nvset_rule: Optional[RuleRoot] = None,
+    nvset_rule: RuleRoot | None = None,
 ) -> _Element:
     """
     Create new nvset and append it to CIB
@@ -332,7 +325,7 @@ def _set_nvpair(
     nvpair_el_list = cast(
         # The xpath method has a complicated return value, but we know our xpath
         # expression returns only elements.
-        List[_Element],
+        list[_Element],
         nvset_element.xpath("./nvpair[@name=$name]", name=name),
     )
 

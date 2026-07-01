@@ -1,11 +1,8 @@
 import sys
 import textwrap
+from collections.abc import Iterable
 from shlex import quote
 from shutil import get_terminal_size
-from typing import (
-    Iterable,
-    List,
-)
 
 from pcs.common.types import (
     StringIterable,
@@ -22,7 +19,7 @@ def bool_to_cli_value(value: bool) -> str:
 
 def _smart_wrap(
     text: str, subsequent_indent: int = SUBSEQUENT_INDENT_STEP
-) -> List[str]:
+) -> list[str]:
     initial_indent = len(text) - len(text.lstrip(" "))
     return format_wrap_for_terminal(
         text, subsequent_indent=subsequent_indent + initial_indent
@@ -31,7 +28,7 @@ def _smart_wrap(
 
 def smart_wrap_text(
     lines: StringSequence, subsequent_indent: int = SUBSEQUENT_INDENT_STEP
-) -> List[str]:
+) -> list[str]:
     output = []
     for line in lines:
         if not line:
@@ -45,7 +42,7 @@ def format_wrap_for_terminal(
     text: str,
     subsequent_indent: int = SUBSEQUENT_INDENT_STEP,
     trim: int = 0,
-) -> List[str]:
+) -> list[str]:
     """
     Returns text as a list of lines. Length of a line is determined by a
     terminal size if not explicitly specified.
@@ -74,7 +71,7 @@ def format_wrap(
     text: str,
     max_length: int,
     subsequent_indent: int = SUBSEQUENT_INDENT_STEP,
-) -> List[str]:
+) -> list[str]:
     return textwrap.wrap(
         text,
         max_length,

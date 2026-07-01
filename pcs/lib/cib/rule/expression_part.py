@@ -2,12 +2,9 @@
 Provides classes used as nodes of a semantic tree of a parsed rule expression.
 """
 
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import (
-    NewType,
-    Optional,
-    Sequence,
-)
+from typing import NewType
 
 BoolOperator = NewType("BoolOperator", str)
 BOOL_AND = BoolOperator("AND")
@@ -64,9 +61,9 @@ class DateInRangeExpr(RuleExprPart):
     Represents a 'date in range' expression
     """
 
-    date_start: Optional[str]
-    date_end: Optional[str]
-    duration_parts: Optional[Sequence[tuple[str, str]]]
+    date_start: str | None
+    date_end: str | None
+    duration_parts: Sequence[tuple[str, str]] | None
 
 
 @dataclass(frozen=True)
@@ -86,8 +83,8 @@ class NodeAttrExpr(RuleExprPart):
 
     operator: NodeAttrOperator
     attr_name: str
-    attr_value: Optional[str]
-    attr_type: Optional[NodeAttrType]
+    attr_value: str | None
+    attr_type: NodeAttrType | None
 
 
 @dataclass(frozen=True)
@@ -96,9 +93,9 @@ class RscExpr(RuleExprPart):
     Represents a resource expression in a rule.
     """
 
-    standard: Optional[str]
-    provider: Optional[str]
-    type: Optional[str]
+    standard: str | None
+    provider: str | None
+    type: str | None
 
 
 @dataclass(frozen=True)
@@ -108,4 +105,4 @@ class OpExpr(RuleExprPart):
     """
 
     name: str
-    interval: Optional[str]
+    interval: str | None

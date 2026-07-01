@@ -1,10 +1,7 @@
 import logging
+from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import (
-    Iterator,
-    Optional,
-    cast,
-)
+from typing import cast
 
 from pcs.common.file import RawFileError
 from pcs.lib.file.instance import FileInstance
@@ -103,7 +100,7 @@ class AuthProvider:
             )
             raise _UpdateFacadeError() from e
 
-    def login_user(self, username: str) -> Optional[AuthUser]:
+    def login_user(self, username: str) -> AuthUser | None:
         try:
             groups = get_user_groups(username)
         except UserGroupsError:
@@ -121,7 +118,7 @@ class AuthProvider:
         self._logger.debug("Successful login by '%s'", username)
         return AuthUser(username=username, groups=tuple(groups))
 
-    def auth_by_token(self, token: str) -> Optional[AuthUser]:
+    def auth_by_token(self, token: str) -> AuthUser | None:
         username = self._get_facade().get_user(token)
         if username is None:
             return None
@@ -129,7 +126,7 @@ class AuthProvider:
 
     def auth_by_username_password(
         self, username: str, password: str
-    ) -> Optional[AuthUser]:
+    ) -> AuthUser | None:
         if authenticate_user(username, password):
             return self.login_user(username)
         self._logger.info(
@@ -137,7 +134,7 @@ class AuthProvider:
         )
         return None
 
-    def create_token(self, username: str) -> Optional[str]:
+    def create_token(self, username: str) -> str | None:
         try:
             with self._update_facade() as facade:
                 return facade.add_user(username)

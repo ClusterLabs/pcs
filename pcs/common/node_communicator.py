@@ -1,17 +1,10 @@
 import base64
 import io
 import re
+from collections.abc import Generator, Iterable, Mapping, Sequence
 from dataclasses import (
     dataclass,
     field,
-)
-from typing import (
-    Generator,
-    Iterable,
-    Mapping,
-    Optional,
-    Sequence,
-    Union,
 )
 from urllib.parse import urlencode
 
@@ -46,7 +39,7 @@ class RequestTarget:
     """
 
     label: str
-    token: Optional[str] = None
+    token: str | None = None
     dest_list: list[Destination] = field(default_factory=list)
 
     def __post_init__(self) -> None:
@@ -101,10 +94,10 @@ class RequestData:
     """
 
     action: str
-    structured_data: Union[
-        Sequence[tuple[Union[str, bytes], Union[str, bytes]]],
-        Sequence[tuple[Union[str, bytes], Sequence[Union[str, bytes]]]],
-    ] = ()
+    structured_data: (
+        Sequence[tuple[str | bytes, str | bytes]]
+        | Sequence[tuple[str | bytes, Sequence[str | bytes]]]
+    ) = ()
     data: str = ""
 
     def __post_init__(self) -> None:
@@ -189,8 +182,8 @@ class Response:
         self,
         handle: pycurl.Curl,
         was_connected: bool,
-        errno: Optional[int] = None,
-        error_msg: Optional[str] = None,
+        errno: int | None = None,
+        error_msg: str | None = None,
     ) -> None:
         self._handle = handle
         self._was_connected = was_connected
@@ -234,11 +227,11 @@ class Response:
         return self._was_connected
 
     @property
-    def errno(self) -> Optional[int]:
+    def errno(self) -> int | None:
         return self._errno
 
     @property
-    def error_msg(self) -> Optional[str]:
+    def error_msg(self) -> str | None:
         return self._error_msg
 
     @property
@@ -254,7 +247,7 @@ class Response:
         return str(self._debug)
 
     @property
-    def response_code(self) -> Optional[int]:
+    def response_code(self) -> int | None:
         if not self.was_connected:
             return None
         return self._handle.getinfo(pycurl.RESPONSE_CODE)
@@ -299,9 +292,9 @@ class Communicator:
     def __init__(
         self,
         communicator_logger: CommunicatorLoggerInterface,
-        user: Optional[str],
-        groups: Optional[StringIterable],
-        request_timeout: Optional[int] = None,
+        user: str | None,
+        groups: StringIterable | None,
+        request_timeout: int | None = None,
     ) -> None:
         self._logger = communicator_logger
         self._auth_cookies = _get_auth_cookies(user, groups)
@@ -457,9 +450,9 @@ class NodeCommunicatorFactory:
     def __init__(
         self,
         communicator_logger: CommunicatorLoggerInterface,
-        user: Optional[str],
-        groups: Optional[StringIterable],
-        request_timeout: Optional[int],
+        user: str | None,
+        groups: StringIterable | None,
+        request_timeout: int | None,
     ) -> None:
         self._logger = communicator_logger
         self._user = user
@@ -467,12 +460,12 @@ class NodeCommunicatorFactory:
         self._request_timeout = request_timeout
 
     def get_communicator(
-        self, request_timeout: Optional[int] = None
+        self, request_timeout: int | None = None
     ) -> Communicator:
         return self.get_simple_communicator(request_timeout=request_timeout)
 
     def get_simple_communicator(
-        self, request_timeout: Optional[int] = None
+        self, request_timeout: int | None = None
     ) -> Communicator:
         timeout = request_timeout if request_timeout else self._request_timeout
         return Communicator(
@@ -480,7 +473,7 @@ class NodeCommunicatorFactory:
         )
 
     def get_communicator_no_privilege_transition(
-        self, request_timeout: Optional[int] = None
+        self, request_timeout: int | None = None
     ) -> Communicator:
         """
         Create a node communicator that does not set the effective user cookies
@@ -498,7 +491,7 @@ class NodeCommunicatorFactory:
         )
 
     def get_multiaddress_communicator(
-        self, request_timeout: Optional[int] = None
+        self, request_timeout: int | None = None
     ) -> MultiaddressCommunicator:
         timeout = request_timeout if request_timeout else self._request_timeout
         return MultiaddressCommunicator(
@@ -507,7 +500,7 @@ class NodeCommunicatorFactory:
 
 
 def _get_auth_cookies(
-    user: Optional[str], group_list: Optional[StringIterable]
+    user: str | None, group_list: StringIterable | None
 ) -> dict[str, str]:
     """
     Returns input parameters in a dictionary which is prepared to be converted

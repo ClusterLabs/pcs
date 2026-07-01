@@ -1,4 +1,4 @@
-from typing import Sequence
+from collections.abc import Sequence
 
 from pcs.common import reports
 from pcs.common.permissions.dto import (

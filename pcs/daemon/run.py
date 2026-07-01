@@ -3,9 +3,9 @@ import os
 import signal
 import socket
 import sys
+from collections.abc import Iterable
 from logging import Logger
 from pathlib import Path
-from typing import Iterable, Optional
 
 try:
     from tornado.httputil import (
@@ -55,7 +55,7 @@ from pcs.lib.auth.provider import AuthProvider
 
 
 class SignalInfo:
-    async_scheduler: Optional[Scheduler] = None
+    async_scheduler: Scheduler | None = None
     server_manage = None
     ioloop_started = False
 

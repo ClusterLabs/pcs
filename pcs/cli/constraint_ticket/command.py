@@ -1,9 +1,5 @@
 import dataclasses
-from typing import (
-    Any,
-    Optional,
-    cast,
-)
+from typing import Any, cast
 
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import (
@@ -64,7 +60,7 @@ def add(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
 
     def _rsc_role_preprocessor(
         report_item: reports.ReportItem,
-    ) -> Optional[reports.ReportItem]:
+    ) -> reports.ReportItem | None:
         if isinstance(report_item.message, InvalidOptions):
             new_message = dataclasses.replace(
                 report_item.message,
@@ -75,7 +71,7 @@ def add(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
 
     def _report_item_preprocessor(
         report_item: reports.ReportItem,
-    ) -> Optional[reports.ReportItem]:
+    ) -> reports.ReportItem | None:
         report_item_2 = generic_preprocessor(report_item)
         if not report_item_2:
             return None

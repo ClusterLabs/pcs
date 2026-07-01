@@ -1,9 +1,5 @@
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
-from typing import (
-    Iterable,
-    Sequence,
-    Union,
-)
 
 from pcs.common.interface.dto import DataTransferObject
 
@@ -40,16 +36,14 @@ class CibConstraintsDto(DataTransferObject):
 
 def _get_constraint_ids(
     constraint_dtos: Iterable[
-        Union[
-            CibConstraintLocationDto,
-            CibConstraintLocationSetDto,
-            CibConstraintColocationDto,
-            CibConstraintColocationSetDto,
-            CibConstraintOrderDto,
-            CibConstraintOrderSetDto,
-            CibConstraintTicketDto,
-            CibConstraintTicketSetDto,
-        ]
+        CibConstraintLocationDto
+        | CibConstraintLocationSetDto
+        | CibConstraintColocationDto
+        | CibConstraintColocationSetDto
+        | CibConstraintOrderDto
+        | CibConstraintOrderSetDto
+        | CibConstraintTicketDto
+        | CibConstraintTicketSetDto
     ],
 ) -> list[str]:
     return [
@@ -60,10 +54,7 @@ def _get_constraint_ids(
 
 def _get_location_rule_ids(
     constraint_dtos: Iterable[
-        Union[
-            CibConstraintLocationDto,
-            CibConstraintLocationSetDto,
-        ]
+        CibConstraintLocationDto | CibConstraintLocationSetDto
     ],
 ) -> list[str]:
     return [

@@ -1,7 +1,4 @@
-from typing import (
-    Iterable,
-    Optional,
-)
+from collections.abc import Iterable
 
 from lxml.etree import _Element
 
@@ -14,7 +11,7 @@ from . import (
 def move_resources_to_group(
     group_element: _Element,
     primitives_to_place: Iterable[_Element],
-    adjacent_resource: Optional[_Element] = None,
+    adjacent_resource: _Element | None = None,
     put_after_adjacent: bool = True,
 ) -> None:
     """

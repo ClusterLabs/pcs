@@ -1,10 +1,8 @@
-from typing import Optional
-
 from pcs.common.reports import ReportItem
 
 
 class LibraryError(Exception):
-    def __init__(self, *args: ReportItem, output: Optional[str] = None):
+    def __init__(self, *args: ReportItem, output: str | None = None):
         super().__init__(*args)
         self._output = output
 

@@ -1,9 +1,6 @@
 import shlex
 from collections import defaultdict
-from typing import (
-    Callable,
-    Iterable,
-)
+from collections.abc import Callable, Iterable
 
 from pcs.cli.common.output import (
     INDENT_STEP,

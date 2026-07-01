@@ -1,12 +1,5 @@
-from typing import (
-    Dict,
-    Iterable,
-    List,
-    Mapping,
-    Optional,
-    Union,
-    cast,
-)
+from collections.abc import Iterable, Mapping
+from typing import cast
 
 from lxml import etree
 from lxml.etree import (
@@ -21,7 +14,7 @@ from pcs.common import (
 from pcs.common.types import StringCollection
 
 
-def get_root(tree: Union[_Element, _ElementTree]) -> _Element:
+def get_root(tree: _Element | _ElementTree) -> _Element:
     # ElementTree has getroot, Element has getroottree
     if isinstance(tree, _ElementTree):
         return tree.getroot()
@@ -31,14 +24,14 @@ def get_root(tree: Union[_Element, _ElementTree]) -> _Element:
 
 def find_parent(
     element: _Element, tag_names: StringCollection
-) -> Optional[_Element]:
+) -> _Element | None:
     """
     Return the closest parent with specified tag name of an element or None
 
     element -- the element whose parent we want to find
     tag_names -- allowed tag names of a parent we are looking for
     """
-    candidate: Optional[_Element] = element
+    candidate: _Element | None = element
     while True:
         if candidate is None or candidate.tag in tag_names:
             return candidate
@@ -48,8 +41,8 @@ def find_parent(
 def get_sub_element(
     element: _Element,
     sub_element_tag: str,
-    new_id: Optional[str] = None,
-    new_index: Optional[int] = None,
+    new_id: str | None = None,
+    new_index: int | None = None,
     append_if_missing: bool = True,
 ) -> _Element:
     """
@@ -64,7 +57,7 @@ def get_sub_element(
         the parent element
     """
     sub_element_list = cast(
-        List[_Element],
+        list[_Element],
         element.xpath("./*[local-name()=$tag_name]", tag_name=sub_element_tag),
     )
     if not sub_element_list:
@@ -82,7 +75,7 @@ def get_sub_element(
 
 def export_attributes(
     element: _Element, with_id: bool = True
-) -> Dict[str, str]:
+) -> dict[str, str]:
     result = {str(key): str(value) for key, value in element.attrib.items()}
     if not with_id:
         result.pop("id", None)
@@ -171,7 +164,7 @@ def append_when_useful(
     parent: _Element,
     element: _Element,
     attribs_important: bool = True,
-    index: Optional[int] = None,
+    index: int | None = None,
 ) -> _Element:
     """
     Append an element to a parent if the element is useful (see
@@ -210,7 +203,7 @@ def remove_when_pointless(
 
 
 def reset_element(
-    element: _Element, keep_attrs: Optional[StringCollection] = None
+    element: _Element, keep_attrs: StringCollection | None = None
 ) -> None:
     """
     Remove all subelements and all attributes (except mentioned in keep_attrs)

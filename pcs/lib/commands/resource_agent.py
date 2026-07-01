@@ -1,11 +1,5 @@
-from typing import (
-    Any,
-    Dict,
-    Iterable,
-    List,
-    Optional,
-    cast,
-)
+from collections.abc import Iterable
+from typing import Any, cast
 
 from pcs.common.interface.dto import to_dict
 from pcs.common.pacemaker.resource.operations import (
@@ -49,7 +43,7 @@ from pcs.lib.resource_agent import (
 from pcs.lib.resource_agent.name import name_to_void_metadata
 
 
-def list_standards(lib_env: LibraryEnvironment) -> List[str]:
+def list_standards(lib_env: LibraryEnvironment) -> list[str]:
     """
     List resource agents standards (ocf, lsb, ... ) on the local host
     """
@@ -60,7 +54,7 @@ def list_standards(lib_env: LibraryEnvironment) -> List[str]:
     ]
 
 
-def list_ocf_providers(lib_env: LibraryEnvironment) -> List[str]:
+def list_ocf_providers(lib_env: LibraryEnvironment) -> list[str]:
     """
     List resource agents ocf providers on the local host
     """
@@ -68,8 +62,8 @@ def list_ocf_providers(lib_env: LibraryEnvironment) -> List[str]:
 
 
 def list_agents_for_standard_and_provider(
-    lib_env: LibraryEnvironment, standard_provider: Optional[str] = None
-) -> List[str]:
+    lib_env: LibraryEnvironment, standard_provider: str | None = None
+) -> list[str]:
     """
     List resource agents for specified standard on the local host
 
@@ -98,8 +92,8 @@ def list_agents_for_standard_and_provider(
 def list_agents(
     lib_env: LibraryEnvironment,
     describe: bool = True,
-    search: Optional[str] = None,
-) -> List[Dict[str, Any]]:
+    search: str | None = None,
+) -> list[dict[str, Any]]:
     """
     List all resource agents on the local host, optionally filtered and
         described
@@ -126,7 +120,7 @@ def list_agents(
 
 def _get_agent_names(
     runner: CommandRunner, standard_provider: StandardProviderTuple
-) -> List[ResourceAgentName]:
+) -> list[ResourceAgentName]:
     return [
         ResourceAgentName(
             standard_provider.standard, standard_provider.provider, agent
@@ -183,7 +177,7 @@ def _action_to_operation(
 # backward compatibility layer - export agent metadata in the legacy format
 def _agent_metadata_to_dict(
     agent: ResourceAgentMetadata, describe: bool = False
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     agent_dto = agent.to_dto()
     agent_dict = to_dict(agent_dto)
     del agent_dict["name"]
@@ -216,8 +210,8 @@ def _complete_agent_list(
     report_processor: ReportProcessor,
     agent_names: Iterable[ResourceAgentName],
     describe: bool,
-    search: Optional[str],
-) -> List[Dict[str, Any]]:
+    search: str | None,
+) -> list[dict[str, Any]]:
     agent_factory = ResourceAgentFacadeFactory(runner, report_processor)
     search_lower = search.lower() if search else None
     agent_list = []
@@ -274,7 +268,7 @@ def get_agent_metadata(
 # for now, it is transformed to a dict for backward compatibility
 def describe_agent(
     lib_env: LibraryEnvironment, agent_name: str
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Get agent's description (metadata) in a structure
 

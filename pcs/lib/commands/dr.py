@@ -1,4 +1,5 @@
-from typing import Any, Iterable, List, Mapping, Tuple, cast
+from collections.abc import Iterable, Mapping
+from typing import Any, cast
 
 from pcs.common import (
     file_type_codes,
@@ -184,7 +185,7 @@ def status_all_sites_plaintext(
     env: LibraryEnvironment,
     hide_inactive_resources: bool = False,
     verbose: bool = False,
-) -> List[Mapping[str, Any]]:
+) -> list[Mapping[str, Any]]:
     """
     Return local site's and all remote sites' status as plaintext
 
@@ -282,7 +283,7 @@ def status_all_sites_plaintext(
 
 def _load_dr_config(
     config_file: FileInstance,
-) -> Tuple[ReportItemList, DrConfigFacade]:
+) -> tuple[ReportItemList, DrConfigFacade]:
     if not config_file.raw_file.exists():
         return (
             [
@@ -330,7 +331,7 @@ def destroy(
     if report_processor.has_errors:
         raise LibraryError()
 
-    remote_nodes: List[str] = []
+    remote_nodes: list[str] = []
     for conf_remote_site in dr_config.get_remote_site_list():
         remote_nodes.extend(conf_remote_site.node_name_list)
 

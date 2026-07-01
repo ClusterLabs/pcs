@@ -1,11 +1,6 @@
+from collections.abc import Mapping
 from functools import partial
-from typing import (
-    Any,
-    Dict,
-    Mapping,
-    Optional,
-    get_type_hints,
-)
+from typing import Any, get_type_hints
 
 from pcs.common import file_type_codes
 from pcs.common.reports import (
@@ -43,7 +38,7 @@ class CliReportMessage:
         return self._dto_obj.payload
 
     def get_message_with_force_text(
-        self, force_code: Optional[types.ForceCode]
+        self, force_code: types.ForceCode | None
     ) -> str:
         force_text_map = {
             codes.SKIP_OFFLINE_NODES: ", use --skip-offline to override",
@@ -614,7 +609,7 @@ class AgentSelfValidationResult(CliReportMessageCustom):
         return f"{self._base_msg}:\n{self._formatted_result}"
 
     def get_message_with_force_text(
-        self, force_code: Optional[types.ForceCode]
+        self, force_code: types.ForceCode | None
     ) -> str:
         force_text = (
             " (use --force to override)" if force_code == codes.FORCE else ""
@@ -684,8 +679,8 @@ class ResourceWaitDeprecated(CliReportMessageCustom):
         )
 
 
-def _create_report_msg_map() -> Dict[str, type]:
-    result: Dict[str, type] = {}
+def _create_report_msg_map() -> dict[str, type]:
+    result: dict[str, type] = {}
     for report_msg_cls in get_all_subclasses(CliReportMessageCustom):
         # pylint: disable=protected-access
         code = (

@@ -1,8 +1,3 @@
-from typing import (
-    List,
-    Optional,
-)
-
 from pcs.common.pacemaker.rule import CibRuleExpressionDto
 from pcs.common.str_tools import (
     format_name_value_list,
@@ -20,13 +15,13 @@ _in_effect_label_map = {
 }
 
 
-def get_in_effect_label(rule: CibRuleExpressionDto) -> Optional[str]:
+def get_in_effect_label(rule: CibRuleExpressionDto) -> str | None:
     return _in_effect_label_map.get(rule.in_effect, None)
 
 
 def rule_expression_dto_to_lines(
     rule_expr: CibRuleExpressionDto, with_ids: bool = False
-) -> List[str]:
+) -> list[str]:
     if rule_expr.type == CibRuleExpressionType.RULE:
         return _rule_dto_to_lines(rule_expr, with_ids)
     if rule_expr.type == CibRuleExpressionType.DATE_EXPRESSION:
@@ -36,7 +31,7 @@ def rule_expression_dto_to_lines(
 
 def _rule_dto_to_lines(
     rule_expr: CibRuleExpressionDto, with_ids: bool = False
-) -> List[str]:
+) -> list[str]:
     in_effect_label = get_in_effect_label(rule_expr)
     heading_parts = [
         "Rule{0}:".format(f" ({in_effect_label})" if in_effect_label else "")
@@ -56,7 +51,7 @@ def _rule_dto_to_lines(
 
 def _date_dto_to_lines(
     rule_expr: CibRuleExpressionDto, with_ids: bool = False
-) -> List[str]:
+) -> list[str]:
     operation = rule_expr.options.get("operation", None)
 
     if operation == "date_spec":
@@ -98,7 +93,7 @@ def _date_dto_to_lines(
 
 def _simple_expr_to_lines(
     rule_expr: CibRuleExpressionDto, with_ids: bool = False
-) -> List[str]:
+) -> list[str]:
     parts = ["Expression:", rule_expr.as_string]
     if with_ids:
         parts.append(f"(id: {rule_expr.id})")

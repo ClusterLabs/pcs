@@ -1,5 +1,4 @@
 import json
-from typing import Optional
 from unittest import TestCase, mock
 
 from pcs import settings
@@ -32,8 +31,8 @@ from pcs_test.tools.misc import read_test_resource
 
 def fixture_communication_result_string(
     status: CommunicationResultStatus = COM_STATUS_SUCCESS,
-    status_msg: Optional[str] = None,
-    report_list: Optional[reports.dto.ReportItemDto] = None,
+    status_msg: str | None = None,
+    report_list: reports.dto.ReportItemDto | None = None,
     data="",
 ) -> str:
     return json.dumps(

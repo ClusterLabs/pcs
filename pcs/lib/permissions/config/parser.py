@@ -1,8 +1,4 @@
 from enum import Enum
-from typing import (
-    FrozenSet,
-    Optional,
-)
 
 import dacite
 
@@ -18,7 +14,7 @@ from .types import ConfigV2
 
 
 class ParserError(ParserErrorException):
-    def __init__(self, msg: Optional[str] = None) -> None:
+    def __init__(self, msg: str | None = None) -> None:
         super().__init__()
         self.msg = msg
 
@@ -37,7 +33,7 @@ class ParserV2(ParserInterface):
             if version != 2:
                 raise ParserError(f"Unsupported format version '{version}'")
             return dacite.from_dict(
-                ConfigV2, data, config=dacite.Config(cast=[Enum, FrozenSet])
+                ConfigV2, data, config=dacite.Config(cast=[Enum, frozenset])
             )
         except dacite.DaciteError as e:
             raise ParserError(str(e)) from e
@@ -48,8 +44,8 @@ class ParserV2(ParserInterface):
     def exception_to_report_list(
         exception: ParserErrorException,
         file_type_code: code.FileTypeCode,
-        file_path: Optional[str],
-        force_code: Optional[reports.types.ForceCode],
+        file_path: str | None,
+        force_code: reports.types.ForceCode | None,
         is_forced_or_warning: bool,
     ) -> reports.ReportItemList:
         if isinstance(exception, JsonParserException):

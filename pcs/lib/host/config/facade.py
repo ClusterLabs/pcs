@@ -1,5 +1,5 @@
+from collections.abc import Sequence
 from dataclasses import replace
-from typing import Sequence
 
 from pcs.common.host import PcsKnownHost
 from pcs.common.types import StringSequence
