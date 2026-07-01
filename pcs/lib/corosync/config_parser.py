@@ -22,9 +22,9 @@ AttrTuple = tuple[AttrName, AttrValue]
 
 class Section:
     def __init__(self, name: str):
-        self._parent: "Section | None" = None
+        self._parent: Section | None = None
         self._attr_list: list[AttrTuple] = []
-        self._section_list: list["Section"] = []
+        self._section_list: list[Section] = []
         self._name: str = name
 
     @property
@@ -114,7 +114,7 @@ class Section:
         ]
 
     def add_section(self, section: "Section") -> "Section":
-        parent: "Section | None" = self
+        parent: Section | None = self
         while parent:
             if parent == section:
                 raise CircularParentshipException()
