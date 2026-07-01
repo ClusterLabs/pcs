@@ -301,11 +301,11 @@ class SynchronizeSslCertificates(TestCase):
             self.config.fs.open(
                 settings.pcsd_cert_location,
                 name="fs.open.pcsd_ssl_cert",
-                side_effect=EnvironmentError(1, "error cert"),
+                side_effect=OSError(1, "error cert"),
             ).fs.open(
                 settings.pcsd_key_location,
                 name="fs.open.pcsd_ssl_key",
-                side_effect=EnvironmentError(1, "error key"),
+                side_effect=OSError(1, "error key"),
             )
         )
 

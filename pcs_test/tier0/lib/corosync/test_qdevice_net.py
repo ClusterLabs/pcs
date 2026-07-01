@@ -95,7 +95,7 @@ class QdeviceDestroyTest(TestCase):
 
     def test_cert_dir_rm_error(self, mock_initialized, mock_rmtree):
         mock_initialized.return_value = True
-        mock_rmtree.side_effect = EnvironmentError("test errno", "test message")
+        mock_rmtree.side_effect = OSError("test errno", "test message")
         assert_raise_library_error(
             lib.qdevice_destroy,
             (
@@ -413,7 +413,7 @@ class ClientDestroyTest(TestCase):
 
     def test_cert_dir_rm_error(self, mock_initialized, mock_rmtree):
         mock_initialized.return_value = True
-        mock_rmtree.side_effect = EnvironmentError("test errno", "test message")
+        mock_rmtree.side_effect = OSError("test errno", "test message")
         assert_raise_library_error(
             lib.client_destroy,
             (

@@ -3327,7 +3327,7 @@ class SslCertSync(RemoveCallsMixin, TestCase):
     def test_config_unreadable(self):
         self.config.fs.open(
             settings.pcsd_config,
-            side_effect=EnvironmentError(1, "error reading pcsd config"),
+            side_effect=OSError(1, "error reading pcsd config"),
             name="fs.open.pcsd_config",
             instead="fs.open.pcsd_config",
         )

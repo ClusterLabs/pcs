@@ -733,7 +733,7 @@ def getCorosyncConf():
             settings.corosync_conf_file, "r", encoding="utf-8"
         ) as corosync_conf_file:
             corosync_conf_content = corosync_conf_file.read()
-    except IOError as e:
+    except OSError as e:
         err("Unable to read %s: %s" % (settings.corosync_conf_file, e.strerror))
     return corosync_conf_content
 
@@ -800,7 +800,7 @@ def need_to_handle_qdevice_service():
                 ).get_quorum_device_model()
                 is not None
             )
-    except (EnvironmentError, corosync_conf_parser.CorosyncConfParserException):
+    except (OSError, corosync_conf_parser.CorosyncConfParserException):
         # corosync.conf not present or not valid => no qdevice specified
         return False
 
@@ -814,7 +814,7 @@ def touch_cib_file(cib_filename):
     if not os.path.isfile(cib_filename):
         try:
             write_empty_cib(cib_filename)
-        except EnvironmentError as e:
+        except OSError as e:
             err(
                 "Unable to write to file: '{0}': '{1}'".format(
                     cib_filename, str(e)
@@ -2023,7 +2023,7 @@ def write_file(path, data, permissions=0o644, binary=False):
             return False, "'%s' already exists, use --force to overwrite" % path
         try:
             os.remove(path)
-        except EnvironmentError as e:
+        except OSError as e:
             return False, "unable to remove '%s': %s" % (path, e)
     mode = "wb" if binary else "w"
     try:
@@ -2031,7 +2031,7 @@ def write_file(path, data, permissions=0o644, binary=False):
             os.open(path, os.O_WRONLY | os.O_CREAT, permissions), mode
         ) as outfile:
             outfile.write(data)
-    except EnvironmentError as e:
+    except OSError as e:
         return False, "unable to write to '%s': %s" % (path, e)
     return True, ""
 
@@ -2106,7 +2106,7 @@ def simulate_cib(cib_dom):
                 parseString(transitions_file.read()),
                 parseString(new_cib_file.read()),
             )
-    except (EnvironmentError, xml.parsers.expat.ExpatError) as e:
+    except (OSError, xml.parsers.expat.ExpatError) as e:
         return err("Unable to run crm_simulate:\n%s" % e)
     except xml.etree.ElementTree.ParseError as e:
         return err("Unable to run crm_simulate:\n%s" % e)
@@ -2420,7 +2420,7 @@ def get_lib_env() -> LibraryEnvironment:
         try:
             with open(conf) as corosync_conf_file:
                 corosync_conf_data = corosync_conf_file.read()
-        except IOError as e:
+        except OSError as e:
             err("Unable to read %s: %s" % (conf, e.strerror))
 
     return LibraryEnvironment(

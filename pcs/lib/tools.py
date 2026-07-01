@@ -120,7 +120,7 @@ def get_tmp_cib(
                 )
             )
             yield tmp_cib_file
-    except EnvironmentError as e:
+    except OSError as e:
         raise LibraryError(
             reports.ReportItem.error(reports.messages.CibSaveTmpError(str(e)))
         ) from e
@@ -141,7 +141,7 @@ def create_tmp_cib(
             )
         )
         return tmp_file
-    except EnvironmentError as e:
+    except OSError as e:
         raise LibraryError(
             reports.ReportItem.error(reports.messages.CibSaveTmpError(str(e)))
         ) from e

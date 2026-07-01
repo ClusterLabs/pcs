@@ -2000,12 +2000,12 @@ class FailurePcsdSslCertSync(TestCase):
         self.config.fs.open(
             settings.pcsd_cert_location,
             name="fs.open.pcsd_ssl_cert",
-            side_effect=EnvironmentError(1, "error cert"),
+            side_effect=OSError(1, "error cert"),
         )
         self.config.fs.open(
             settings.pcsd_key_location,
             name="fs.open.pcsd_ssl_key",
-            side_effect=EnvironmentError(1, "error key"),
+            side_effect=OSError(1, "error key"),
         )
 
         self._add_nodes_with_lib_error()
@@ -2207,7 +2207,7 @@ class FailureFilesDistribution(TestCase):
         self.config.fs.open(
             settings.corosync_authkey_file,
             mode="rb",
-            side_effect=EnvironmentError(
+            side_effect=OSError(
                 1, self.err_msg, settings.corosync_authkey_file
             ),
             name="fs.open.corosync_authkey",
@@ -2216,7 +2216,7 @@ class FailureFilesDistribution(TestCase):
         self.config.fs.open(
             settings.pacemaker_authkey_file,
             mode="rb",
-            side_effect=EnvironmentError(
+            side_effect=OSError(
                 1, self.err_msg, settings.pacemaker_authkey_file
             ),
             name="fs.open.pacemaker_authkey",
@@ -2225,7 +2225,7 @@ class FailureFilesDistribution(TestCase):
         self.config.fs.open(
             settings.pcsd_dr_config_location,
             mode="rb",
-            side_effect=EnvironmentError(
+            side_effect=OSError(
                 1, self.err_msg, settings.pcsd_dr_config_location
             ),
             name="fs.open.pcsd_dr_config",
@@ -2274,7 +2274,7 @@ class FailureFilesDistribution(TestCase):
         self.config.fs.open(
             settings.corosync_authkey_file,
             mode="rb",
-            side_effect=EnvironmentError(
+            side_effect=OSError(
                 1, self.err_msg, settings.corosync_authkey_file
             ),
             name="fs.open.corosync_authkey",
@@ -2283,7 +2283,7 @@ class FailureFilesDistribution(TestCase):
         self.config.fs.open(
             settings.pacemaker_authkey_file,
             mode="rb",
-            side_effect=EnvironmentError(
+            side_effect=OSError(
                 1, self.err_msg, settings.pacemaker_authkey_file
             ),
             name="fs.open.pacemaker_authkey",
@@ -2292,7 +2292,7 @@ class FailureFilesDistribution(TestCase):
         self.config.fs.open(
             settings.pcsd_dr_config_location,
             mode="rb",
-            side_effect=EnvironmentError(
+            side_effect=OSError(
                 1, self.err_msg, settings.pcsd_dr_config_location
             ),
             name="fs.open.pcsd_dr_config",
@@ -3607,9 +3607,7 @@ class FailureEnableSbd(TestCase):
         (
             self.config.fs.open(
                 settings.sbd_config,
-                side_effect=EnvironmentError(
-                    1, self.err_msg, settings.sbd_config
-                ),
+                side_effect=OSError(1, self.err_msg, settings.sbd_config),
                 name="fs.open.sbd_config",
             )
         )
@@ -3783,11 +3781,7 @@ class FailureQdevice(TestCase):
         )
         self.config.fs.open(
             pk12_cert_path,
-            side_effect=EnvironmentError(
-                1,
-                self.err_msg,
-                pk12_cert_path,
-            ),
+            side_effect=OSError(1, self.err_msg, pk12_cert_path),
             mode="rb",
             name="fs.open.pk12_cert_read",
         )
@@ -3891,7 +3885,7 @@ class FailureQdevice(TestCase):
         )
         self.config.fs.open(
             cert_req_path,
-            side_effect=EnvironmentError(1, self.err_msg, cert_req_path),
+            side_effect=OSError(1, self.err_msg, cert_req_path),
             mode="rb",
             name="fs.open.cert_req_read",
         )

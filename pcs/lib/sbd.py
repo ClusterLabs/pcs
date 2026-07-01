@@ -250,7 +250,7 @@ def get_local_sbd_config() -> str:
         with open(settings.sbd_config, "r") as sbd_cfg:
             fcntl.flock(sbd_cfg.fileno(), fcntl.LOCK_SH)
             return sbd_cfg.read()
-    except EnvironmentError as e:
+    except OSError as e:
         raise LibraryError(
             reports.ReportItem.error(
                 reports.messages.UnableToGetSbdConfig("local node", str(e))
@@ -271,7 +271,7 @@ def set_local_sbd_config(config: str) -> None:
             # with statement
             fcntl.flock(sbd_cfg.fileno(), fcntl.LOCK_EX)
             sbd_cfg.write(config)
-    except EnvironmentError as e:
+    except OSError as e:
         raise LibraryError(
             reports.ReportItem.error(
                 reports.messages.UnableToSetSbdConfig(str(e))

@@ -1653,7 +1653,7 @@ class TouchCibFile(TestCase):
     @mock.patch("pcs.utils.os.path.isfile", mock.Mock(return_value=False))
     @mock.patch(
         "pcs.utils.write_empty_cib",
-        mock.Mock(side_effect=EnvironmentError("some message")),
+        mock.Mock(side_effect=OSError("some message")),
     )
     @mock.patch("pcs.utils.err")
     def test_exception_is_transformed_correctly(self, err):

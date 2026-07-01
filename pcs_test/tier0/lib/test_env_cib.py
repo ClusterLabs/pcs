@@ -292,7 +292,7 @@ class PushLoadedCib(TestCase, ManageCibAssertionMixin):
             [
                 TmpFileCall(
                     self.tmpfile_old,
-                    orig_content=EnvironmentError("test error"),
+                    orig_content=OSError("test error"),
                 ),
             ]
         )
