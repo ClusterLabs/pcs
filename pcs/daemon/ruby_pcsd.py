@@ -112,7 +112,7 @@ class RubyDaemonRequest(
                 # this let's keep the original header here in this case.
                 if key.lower() == "content-type" and val == "application/json":
                     headers.add(key, val)
-        return super(RubyDaemonRequest, cls).__new__(
+        return super().__new__(
             cls,
             request_type,
             http_request.path if http_request else "",

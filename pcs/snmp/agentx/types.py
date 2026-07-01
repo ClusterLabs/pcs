@@ -8,14 +8,14 @@ BaseType = namedtuple("BaseType", ["data_type", "value"])
 
 class IntegerType(BaseType):
     def __new__(cls, value):
-        return super(IntegerType, cls).__new__(
+        return super().__new__(
             cls, data_type=pyagentx.TYPE_INTEGER, value=value
         )
 
 
 class StringType(BaseType):
     def __new__(cls, value):
-        return super(StringType, cls).__new__(
+        return super().__new__(
             cls, data_type=pyagentx.TYPE_OCTETSTRING, value=value
         )
 
@@ -40,6 +40,4 @@ class Oid(
     __slots__ = ()
 
     def __new__(cls, oid, str_oid, data_type=None, member_list=None):
-        return super(Oid, cls).__new__(
-            cls, oid, str_oid, data_type, member_list
-        )
+        return super().__new__(cls, oid, str_oid, data_type, member_list)
