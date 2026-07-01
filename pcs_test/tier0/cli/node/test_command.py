@@ -286,10 +286,7 @@ class TestNodeAttributeOutputCmd(NodeOutputCmdBaseMixin, TestCase):
             self.lib, argv, dict_to_modifiers(modifiers or {})
         )
 
-    def _set_config(
-        self,
-        node_config: CibNodeListDto | None = None,
-    ):
+    def _set_config(self, node_config: CibNodeListDto | None = None) -> None:
         self.node.get_config_dto.return_value = FIXTURE_NODE_CONFIG
         if node_config:
             self.node.get_config_dto.return_value = node_config
@@ -331,7 +328,7 @@ class TestNodeUtilizationOutputCmd(NodeOutputCmdBaseMixin, TestCase):
         self,
         node_config: CibNodeListDto | None = None,
         properties_config: ListCibNvsetDto | None = None,
-    ):
+    ) -> None:
         self.node.get_config_dto.return_value = FIXTURE_NODE_CONFIG
         self.cluster_property.get_properties.return_value = (
             FIXTURE_PLACEMENT_STRATEGY_SET

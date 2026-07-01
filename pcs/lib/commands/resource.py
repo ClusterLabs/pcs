@@ -877,7 +877,7 @@ def create_in_group(  # noqa: PLR0913
                 get_root(resources_section), group_id
             )
         except ElementNotFound:
-            group_id_reports: list[ReportItem] = []
+            group_id_reports: ReportItemList = []
             validate_id(
                 group_id, description="group name", reporter=group_id_reports
             )
@@ -1828,7 +1828,7 @@ def group_add(  # noqa: PLR0912
     try:
         group_element = get_element_by_id(get_root(resources_section), group_id)
     except ElementNotFound:
-        group_id_reports: list[ReportItem] = []
+        group_id_reports: ReportItemList = []
         validate_id(
             group_id, description="group name", reporter=group_id_reports
         )
