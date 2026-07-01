@@ -78,6 +78,7 @@ select = [
   "SLF",
   "SLOT",
   "TC",
+  "UP",
 ]
 # ruff does not respect pylint ignore directives
 # https://github.com/astral-sh/ruff/issues/1203
@@ -86,6 +87,15 @@ ignore = [
   "C408", # https://docs.astral.sh/ruff/rules/unnecessary-collection-call/
   "SIM102", # https://docs.astral.sh/ruff/rules/collapsible-if/
   "TC006", # https://docs.astral.sh/ruff/rules/runtime-cast-value/
+  # deprecated syntax which is used a lot, we want to fix it eventually but not
+  # right now
+  "UP012", # https://docs.astral.sh/ruff/rules/unnecessary-encode-utf8/
+  "UP015", # https://docs.astral.sh/ruff/rules/redundant-open-modes/
+  "UP030", # https://docs.astral.sh/ruff/rules/format-literals/
+  "UP031", # https://docs.astral.sh/ruff/rules/printf-string-formatting/
+  "UP032", # https://docs.astral.sh/ruff/rules/f-string/
+  "UP046", # https://docs.astral.sh/ruff/rules/non-pep695-generic-class/
+  "UP047", # https://docs.astral.sh/ruff/rules/non-pep695-generic-function/
 ]
 
 [tool.ruff.lint.flake8-builtins]
