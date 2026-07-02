@@ -119,10 +119,17 @@ prepare:
       - rubygem-mustermann
       - rubygem-nio4r
       - rubygem-puma
+      - rubygem-rack
       - rubygem-rack-protection
       - rubygem-rack-test
       - rubygem-sinatra
       - rubygem-tilt
+
+  - name: Install system rubygem-rackup
+    when: distro >= fedora-43
+    how: install
+    package:
+      - rubygem-rackup
 
   - name: Install corosync-qdevice-devel on CentOS-Stream-9
     # required dependency for the rpm build on CentOS-Stream9 / RHEL-9.*
