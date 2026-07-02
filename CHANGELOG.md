@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.11.12] - 2026-07-02
 ### Added
 - Commands `pcs cluster node rename-corosync` and `pcs cluster node rename-cib`
   for cluster node renaming ([RHEL-149172])
