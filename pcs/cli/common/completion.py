@@ -40,14 +40,14 @@ def make_suggestions(
     suggestion_tree -- {'acl': {'role': {'create': ...}}}...
     """
     if not has_applicable_environment(environment):
-        raise EnvironmentError("Environment is not completion ready")
+        raise OSError("Environment is not completion ready")
 
     try:
         typed_word_list = _split_words(
             environment["COMP_WORDS"],
             environment["COMP_LENGTHS"].split(" "),
         )
-    except EnvironmentError:
+    except OSError:
         return ""
 
     return "\n".join(
@@ -65,24 +65,20 @@ def _split_words(joined_words: str, word_lengths: StringSequence) -> list[str]:
         try:
             next_position = cursor_position + int(length)
         except ValueError as e:
-            raise EnvironmentError(
-                f"Length of word '{length}' is not digit"
-            ) from e
+            raise OSError(f"Length of word '{length}' is not digit") from e
         if next_position > words_string_len:
-            raise EnvironmentError(
-                "Expected lengths are bigger than word lengths"
-            )
+            raise OSError("Expected lengths are bigger than word lengths")
         if (
             next_position != words_string_len
             and not joined_words[next_position].isspace()
         ):
-            raise EnvironmentError("Words separator is not expected space")
+            raise OSError("Words separator is not expected space")
 
         word_list.append(joined_words[cursor_position:next_position])
         cursor_position = next_position + 1
 
     if words_string_len > next_position:
-        raise EnvironmentError("Expected lengths are smaller then word lengths")
+        raise OSError("Expected lengths are smaller then word lengths")
 
     return word_list
 

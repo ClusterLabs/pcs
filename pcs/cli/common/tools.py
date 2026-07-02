@@ -3,9 +3,7 @@ import sys
 from pcs.common.tools import timeout_to_seconds
 
 
-def timeout_to_seconds_legacy(
-    timeout: int | str,
-) -> int | str | None:
+def timeout_to_seconds_legacy(timeout: int | str) -> int | str | None:
     """
     Transform pacemaker style timeout to number of seconds. If timeout is not
     valid then `timeout` is returned.

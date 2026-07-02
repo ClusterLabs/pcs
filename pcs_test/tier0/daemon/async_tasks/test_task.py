@@ -88,10 +88,13 @@ class TestReceiveMessage(MockDateTimeNowMixin, TaskBaseTestCase):
         self.mock_datetime_now.assert_called_once()
 
     def test_unsupported_message_type(self):
-        message = Message(TASK_IDENT, 3)
+        payload = 3
+        message = Message(TASK_IDENT, payload)
         with self.assertRaises(tasks.UnknownMessageError) as thrown_exc:
             self.task.receive_message(message)
-        self.assertEqual(type(3).__name__, thrown_exc.exception.payload_type)
+        self.assertEqual(
+            type(payload).__name__, thrown_exc.exception.payload_type
+        )
         self.mock_datetime_now.assert_not_called()
 
 

@@ -24,7 +24,7 @@ class Call:
         self.need_stopped_cluster = need_stopped_cluster
 
     def __repr__(self):
-        return str("<CorosyncConfPush skip-offline='{0}'>").format(
+        return "<CorosyncConfPush skip-offline='{0}'>".format(
             self.skip_offline_targets
         )
 

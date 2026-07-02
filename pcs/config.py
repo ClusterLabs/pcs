@@ -282,7 +282,7 @@ def config_backup_local():
                 ):
                     continue
                 tarball.add(path_info["path"], tar_path)
-    except (tarfile.TarError, EnvironmentError) as e:
+    except (tarfile.TarError, OSError) as e:
         utils.err("unable to create tarball: %s" % e)
 
     tar = tar_data.getvalue()
@@ -358,7 +358,7 @@ def config_restore_remote(infile_name, infile_obj):  # noqa: PLR0912
                     tar_member = tarball.extractfile(tar_member_info)
                     extracted[tar_member_info.name] = tar_member.read()
                     tar_member.close()
-    except (tarfile.TarError, EnvironmentError) as e:
+    except (tarfile.TarError, OSError) as e:
         utils.err("unable to read the tarball: %s" % e)
 
     config_backup_check_version(extracted["version.txt"])
@@ -532,7 +532,7 @@ def config_restore_local(infile_name, infile_obj):  # noqa: PLR0912, PLR0915
                 file_attrs = extract_info["attrs"]
                 os.chmod(path_full, file_attrs["mode"])
                 os.chown(path_full, file_attrs["uid"], file_attrs["gid"])
-    except (tarfile.TarError, EnvironmentError, OSError) as e:
+    except (tarfile.TarError, OSError) as e:
         utils.err("unable to restore the cluster: %s" % e)
     finally:
         if tmp_dir:
@@ -542,7 +542,7 @@ def config_restore_local(infile_name, infile_obj):  # noqa: PLR0912, PLR0915
         sig_path = os.path.join(settings.cib_dir, "cib.xml.sig")
         if os.path.exists(sig_path):
             os.remove(sig_path)
-    except EnvironmentError as e:
+    except OSError as e:
         utils.err("unable to remove %s: %s" % (sig_path, e))
 
 

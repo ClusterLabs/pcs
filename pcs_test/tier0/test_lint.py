@@ -20,7 +20,7 @@ class IterableStr(TestCase):
                     with open(file_path) as file:
                         filedata = file.read()
                         if re.search(
-                            r"\b(collection|iterable|sequence)\[\s*str\s*\]",
+                            r"\b(collection|container|iterable|sequence)\[\s*str\s*\]",
                             filedata,
                             re.IGNORECASE,
                         ):
@@ -29,9 +29,10 @@ class IterableStr(TestCase):
             [],
             paths_to_fix,
             (
-                "'Collection[str]' or 'Iterable[str]' or 'Sequence[str]' found "
-                "in these files. Please replace it with StringCollection, "
-                "StringIterable or StringSequence from pcs.common.types. "
-                r"Vim regexp: \(collection\|iterable\|sequence\)\[\s*str\s*\]\c"
+                "'Collection[str]' 'Container[str]' or 'Iterable[str]' or "
+                "'Sequence[str]' found in these files. Please replace it with "
+                "StringCollection, StringIterable or StringSequence from "
+                "pcs.common.types. "
+                r"Vim regexp: \(collection\|container\|iterable\|sequence\)\[\s*str\s*\]\c"
             ),
         )

@@ -1,6 +1,6 @@
 import shlex
 from collections import defaultdict
-from collections.abc import Container, Mapping, Sequence
+from collections.abc import Mapping, Sequence
 
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.output import (
@@ -364,7 +364,7 @@ class ResourcesConfigurationFacade:
             )
 
     @property
-    def filtered_ids(self) -> Container[str]:
+    def filtered_ids(self) -> frozenset[str]:
         return self._filtered_ids
 
     @property

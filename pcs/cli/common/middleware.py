@@ -33,7 +33,7 @@ def cib(filename, touch_cib_file):
                     # the with statement
                     fcntl.flock(cib_file.fileno(), fcntl.LOCK_SH)
                     original_content = cib_file.read()
-            except EnvironmentError as e:
+            except OSError as e:
                 raise error(f"Cannot read cib file '{filename}': '{e}'") from e
             env.cib_data = original_content
 
@@ -46,7 +46,7 @@ def cib(filename, touch_cib_file):
                     # the with statement
                     fcntl.flock(cib_file.fileno(), fcntl.LOCK_EX)
                     cib_file.write(env.cib_data)
-            except EnvironmentError as e:
+            except OSError as e:
                 raise error(f"Cannot write cib file '{filename}': '{e}'") from e
 
         return result_of_next
@@ -63,7 +63,7 @@ def corosync_conf_existing(local_file_path):
                     # the with statement
                     fcntl.flock(local_file.fileno(), fcntl.LOCK_SH)
                     original_content = local_file.read()
-            except EnvironmentError as e:
+            except OSError as e:
                 raise error(
                     f"Unable to read {local_file_path}: {e.strerror}"
                 ) from e
@@ -78,7 +78,7 @@ def corosync_conf_existing(local_file_path):
                     # the with statement
                     fcntl.flock(local_file.fileno(), fcntl.LOCK_EX)
                     local_file.write(env.corosync_conf_data)
-            except EnvironmentError as e:
+            except OSError as e:
                 raise error(
                     f"Unable to write {local_file_path}: {e.strerror}"
                 ) from e

@@ -105,7 +105,7 @@ class Call:
         self.env = env or {}
 
     def __repr__(self):
-        return str("<Runner '{0}' returncode='{1}' env='{2}'>").format(
+        return "<Runner '{0}' returncode='{1}' env='{2}'>".format(
             self.command, self.returncode, self.env
         )
 

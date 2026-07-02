@@ -56,7 +56,7 @@ def pcsd_certkey_cmd(lib: Any, argv: Argv, modifiers: InputModifiers):
             cert = myfile.read()
         with open(keyfile, "rb") as myfile:
             key = myfile.read()
-    except IOError as e:
+    except OSError as e:
         utils.err(str(e))
     errors = pcs.common.ssl.check_cert_key(certfile, keyfile)
     if errors:
@@ -101,7 +101,7 @@ def pcsd_certkey_cmd(lib: Any, argv: Argv, modifiers: InputModifiers):
         ) as myfile:
             myfile.write(key)
 
-    except IOError as e:
+    except OSError as e:
         utils.err(str(e))
 
     print_to_stderr(
@@ -139,7 +139,7 @@ def pcsd_deauth(lib, argv, modifiers):
         try:
             with open(filepath, "w") as users_file:
                 users_file.write(json.dumps([]))
-        except EnvironmentError as e:
+        except OSError as e:
             utils.err(
                 "Unable to edit data in {file}: {err}".format(
                     file=filepath, err=e
@@ -179,7 +179,7 @@ def pcsd_deauth(lib, argv, modifiers):
         utils.err(
             "Unable to parse data in {file}: {err}".format(file=filepath, err=e)
         )
-    except EnvironmentError as e:
+    except OSError as e:
         utils.err(
             "Unable to edit data in {file}: {err}".format(file=filepath, err=e)
         )

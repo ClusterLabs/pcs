@@ -107,7 +107,7 @@ class HasCompletionEnvironmentTest(TestCase):
 class MakeSuggestionsEnvironment(TestCase):
     def test_raises_for_incomlete_environment(self):
         self.assertRaises(
-            EnvironmentError,
+            OSError,
             lambda: make_suggestions(
                 {
                     "COMP_CWORD": "1",
@@ -141,24 +141,24 @@ class SplitWordsTest(TestCase):
 
     def test_refuse_when_no_int_in_lengths(self):
         self.assertRaises(
-            EnvironmentError,
+            OSError,
             lambda: _split_words("pcs resource op a", ["3", "8", "2", "A"]),
         )
 
     def test_refuse_when_lengths_are_too_big(self):
         self.assertRaises(
-            EnvironmentError,
+            OSError,
             lambda: _split_words("pcs resource op a", ["3", "8", "2", "10"]),
         )
 
     def test_refuse_when_separator_doesnot_match(self):
         self.assertRaises(
-            EnvironmentError,
+            OSError,
             lambda: _split_words("pc sresource op a", ["3", "8", "2", "1"]),
         )
 
     def test_refuse_when_lengths_are_too_small(self):
         self.assertRaises(
-            EnvironmentError,
+            OSError,
             lambda: _split_words("pcs resource op a ", ["3", "8", "2", "1"]),
         )

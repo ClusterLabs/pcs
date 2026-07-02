@@ -18,7 +18,7 @@ def check_cert_key(cert_path: str, key_path: str) -> list[str]:
         ssl_context.load_cert_chain(cert_path, key_path)
     except ssl.SSLError as e:
         errors.append(f"SSL certificate does not match the key: {e}")
-    except EnvironmentError as e:
+    except OSError as e:
         errors.append(f"Unable to load SSL certificate and/or key: {e}")
     return errors
 

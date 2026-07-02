@@ -75,10 +75,12 @@ def _find_disallowed_types(_type, allowed_types, _seen=None):
 class DaciteTypingCompatibilityTest(TestCase):
     def test_all(self):
         prohibited_types = (Iterable, Container)
-        prohibited_types_normalized = [
-            origin if (origin := get_origin(_type)) is not None else _type
-            for _type in prohibited_types
-        ]
+        prohibited_types_normalized = []
+        for _type in prohibited_types:
+            _type_origin = get_origin(_type)
+            prohibited_types_normalized.append(
+                _type_origin if _type_origin is not None else _type
+            )
         for cmd_name, cmd in COMMAND_MAP.items():
             for param in list(inspect.signature(cmd.cmd).parameters.values())[
                 1:

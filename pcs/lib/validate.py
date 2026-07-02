@@ -1136,9 +1136,7 @@ def is_string_length(
     )
 
 
-def is_float(
-    value: str | int | float,
-) -> bool:
+def is_float(value: str | int | float) -> bool:
     """
     Check if the specified value is a float number
 

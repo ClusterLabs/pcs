@@ -55,7 +55,7 @@ class Call:
         return self.return_value
 
     def __repr__(self):
-        return str("<Fcntl '{0}' kwargs={1}>").format(
+        return "<Fcntl '{0}' kwargs={1}>".format(
             self.func_name,
             self.call_kwargs,
         )

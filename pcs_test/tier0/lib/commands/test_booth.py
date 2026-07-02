@@ -675,7 +675,7 @@ class ConfigDestroy(TestCase, FixtureMixin):
         self.config.raw_file.read(
             file_type_codes.BOOTH_CONFIG,
             self.fixture_cfg_path(),
-            content=bytes(),
+            content=b"",
         )
         self.config.raw_file.remove(
             file_type_codes.BOOTH_CONFIG,
@@ -1404,7 +1404,7 @@ class GetConfig(TestCase, FixtureMixin):
         )
 
     def test_success_no_authfile(self):
-        config_content = bytes()
+        config_content = b""
         self.config.raw_file.read(
             file_type_codes.BOOTH_CONFIG,
             self.fixture_cfg_path(),
@@ -3371,11 +3371,11 @@ class ConfigSyncTest(TestCase, FixtureMixin):
         self.config.raw_file.read(
             file_type_codes.BOOTH_CONFIG,
             self.fixture_cfg_path(),
-            content=bytes(),
+            content=b"",
         )
         self.config.http.booth.send_config(
             "booth",
-            bytes().decode("utf-8"),
+            b"".decode("utf-8"),
             node_labels=self.node_list,
         )
         commands.config_sync(self.env_assist.get_env())

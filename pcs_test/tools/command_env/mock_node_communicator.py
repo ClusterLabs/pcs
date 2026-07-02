@@ -341,7 +341,7 @@ class AddRequestCall:
         )
 
     def __repr__(self):
-        return str("<HttpAddRequest communicator='{0}' '{1}'>").format(
+        return "<HttpAddRequest communicator='{0}' '{1}'>".format(
             self.communicator_type.value, self.request_list
         )
 
@@ -360,7 +360,7 @@ class StartLoopCall:
         self.response_list = response_list
 
     def __repr__(self):
-        return str("<HttpStartLoop '{0}'>").format(self.response_list)
+        return "<HttpStartLoop '{0}'>".format(self.response_list)
 
 
 def _compare_request_data(expected, real):

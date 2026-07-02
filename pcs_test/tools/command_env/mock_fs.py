@@ -77,7 +77,7 @@ class Call:
         return self.return_value
 
     def __repr__(self):
-        return str("<Fs '{0}' kwargs={1}>").format(
+        return "<Fs '{0}' kwargs={1}>".format(
             self.func_name,
             self.call_kwargs,
         )

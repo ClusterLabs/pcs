@@ -491,10 +491,8 @@ def update_scsi_devices_without_restart(
         raise LibraryError(
             ReportItem.error(
                 reports.messages.StonithRestartlessUpdateUnableToPerform(
-                    (
-                        "number of lrm_rsc_op and op elements for monitor "
-                        "operation differs"
-                    )
+                    "number of lrm_rsc_op and op elements for monitor "
+                    "operation differs"
                 )
             )
         )
@@ -522,11 +520,9 @@ def update_scsi_devices_without_restart(
             raise LibraryError(
                 ReportItem.error(
                     reports.messages.StonithRestartlessUpdateUnableToPerform(
-                        (
-                            "monitor lrm_rsc_op element for resource "
-                            f"'{resource_id}', node '{node_name}' and interval "
-                            f"'{monitor_attrs['interval']}' not found"
-                        )
+                        "monitor lrm_rsc_op element for resource "
+                        f"'{resource_id}', node '{node_name}' and interval "
+                        f"'{monitor_attrs['interval']}' not found"
                     )
                 )
             )
