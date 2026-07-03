@@ -36,7 +36,6 @@ from re import Pattern
 from typing import Any, NamedTuple, cast
 
 from pcs.common import reports
-from pcs.common.reports import ReportItem, ReportItemList, ReportItemSeverity
 from pcs.common.str_tools import format_list, format_optional
 from pcs.common.tools import timeout_to_seconds
 from pcs.common.types import StringCollection, StringIterable
@@ -154,7 +153,7 @@ class ValidatorInterface:
     Base interface of all validators
     """
 
-    def validate(self, option_dict: TypeOptionMap) -> ReportItemList:
+    def validate(self, option_dict: TypeOptionMap) -> reports.ReportItemList:
         raise NotImplementedError()
 
 
@@ -166,7 +165,7 @@ class CompoundValidator(ValidatorInterface):
     def __init__(self, validator_list: Iterable[ValidatorInterface]):
         self._validator_list = validator_list
 
-    def validate(self, option_dict: TypeOptionMap) -> ReportItemList:
+    def validate(self, option_dict: TypeOptionMap) -> reports.ReportItemList:
         raise NotImplementedError()
 
 
@@ -175,7 +174,7 @@ class ValidatorAll(CompoundValidator):
     Run all validators and return all their reports
     """
 
-    def validate(self, option_dict: TypeOptionMap) -> ReportItemList:
+    def validate(self, option_dict: TypeOptionMap) -> reports.ReportItemList:
         report_list = []
         for validator in self._validator_list:
             report_list.extend(validator.validate(option_dict))
@@ -187,14 +186,19 @@ class ValidatorFirstError(CompoundValidator):
     Run validators in sequence, return reports once one reports an error
     """
 
-    def validate(self, option_dict: TypeOptionMap) -> ReportItemList:
+    def validate(self, option_dict: TypeOptionMap) -> reports.ReportItemList:
         report_list = []
         for validator in self._validator_list:
-            new_report_list: ReportItemList = validator.validate(option_dict)
+            new_report_list: reports.ReportItemList = validator.validate(
+                option_dict
+            )
             report_list.extend(new_report_list)
             error_reported = False
             for report_item in new_report_list:
-                if report_item.severity.level == ReportItemSeverity.ERROR:
+                if (
+                    report_item.severity.level
+                    == reports.ReportItemSeverity.ERROR
+                ):
                     error_reported = True
                     break
             if error_reported:
@@ -210,7 +214,7 @@ class KeyValidator(ValidatorInterface):
         self,
         option_name_list: Iterable[TypeOptionName],
         option_type: str | None = None,
-        severity: ReportItemSeverity | None = None,
+        severity: reports.ReportItemSeverity | None = None,
     ):
         """
         option_name_list -- names of the options to check
@@ -220,10 +224,10 @@ class KeyValidator(ValidatorInterface):
         self._option_name_list = option_name_list
         self._option_type = option_type
         self._severity = (
-            ReportItemSeverity.error() if severity is None else severity
+            reports.ReportItemSeverity.error() if severity is None else severity
         )
 
-    def validate(self, option_dict: TypeOptionMap) -> ReportItemList:
+    def validate(self, option_dict: TypeOptionMap) -> reports.ReportItemList:
         raise NotImplementedError()
 
 
@@ -236,11 +240,11 @@ class CorosyncOption(KeyValidator):
     def __init__(
         self,
         option_type: str | None = None,
-        severity: ReportItemSeverity | None = None,
+        severity: reports.ReportItemSeverity | None = None,
     ):
         super().__init__([], option_type=option_type, severity=severity)
 
-    def validate(self, option_dict: TypeOptionMap) -> ReportItemList:
+    def validate(self, option_dict: TypeOptionMap) -> reports.ReportItemList:
         not_valid_options = [
             name
             for name in option_dict
@@ -251,7 +255,7 @@ class CorosyncOption(KeyValidator):
             # otherwise setting a cratfed option name could be misused for
             # setting arbitrary corosync.conf settings.
             return [
-                ReportItem(
+                reports.ReportItem(
                     self._severity,
                     reports.messages.InvalidUserdefinedOptions(
                         sorted(not_valid_options),
@@ -275,7 +279,7 @@ class DependsOnOption(KeyValidator):
         prerequisite_name: TypeOptionName,
         option_type: str | None = None,
         prerequisite_type: str | None = None,
-        severity: ReportItemSeverity | None = None,
+        severity: reports.ReportItemSeverity | None = None,
     ):
         """
         prerequisite_name -- name of the prerequisite options
@@ -287,9 +291,9 @@ class DependsOnOption(KeyValidator):
         self._prerequisite_name = prerequisite_name
         self._prerequisite_type = prerequisite_type
 
-    def validate(self, option_dict: TypeOptionMap) -> ReportItemList:
+    def validate(self, option_dict: TypeOptionMap) -> reports.ReportItemList:
         return [
-            ReportItem(
+            reports.ReportItem(
                 self._severity,
                 reports.messages.PrerequisiteOptionIsMissing(
                     option_name,
@@ -317,7 +321,7 @@ class DeprecatedOption(KeyValidator):
         option_name_list: Iterable[TypeOptionName],
         deprecated_by: Iterable[TypeOptionName],
         option_type: str | None = None,
-        severity: ReportItemSeverity | None = None,
+        severity: reports.ReportItemSeverity | None = None,
     ):
         """
         deprecated_by -- names of the options which should be used instead
@@ -326,16 +330,16 @@ class DeprecatedOption(KeyValidator):
             option_name_list,
             option_type=option_type,
             severity=(
-                ReportItemSeverity.deprecation()
+                reports.ReportItemSeverity.deprecation()
                 if severity is None
                 else severity
             ),
         )
         self._deprecated_by = sorted(deprecated_by)
 
-    def validate(self, option_dict: TypeOptionMap) -> ReportItemList:
+    def validate(self, option_dict: TypeOptionMap) -> reports.ReportItemList:
         return [
-            ReportItem(
+            reports.ReportItem(
                 severity=self._severity,
                 message=reports.messages.DeprecatedOption(
                     option_name,
@@ -354,11 +358,11 @@ class IsRequiredAll(KeyValidator):
     missing in option_dict
     """
 
-    def validate(self, option_dict: TypeOptionMap) -> ReportItemList:
+    def validate(self, option_dict: TypeOptionMap) -> reports.ReportItemList:
         missing = set(self._option_name_list) - set(option_dict.keys())
         if missing:
             return [
-                ReportItem(
+                reports.ReportItem(
                     severity=self._severity,
                     message=reports.messages.RequiredOptionsAreMissing(
                         sorted(missing),
@@ -380,7 +384,7 @@ class IsRequiredSome(KeyValidator):
         option_name_list: Iterable[TypeOptionName],
         option_type: str | None = None,
         deprecated_option_name_list: Iterable[TypeOptionName] = frozenset(),
-        severity: ReportItemSeverity | None = None,
+        severity: reports.ReportItemSeverity | None = None,
     ):
         """
         deprecated_option_name_list -- deprecated options from option_name_list
@@ -390,11 +394,11 @@ class IsRequiredSome(KeyValidator):
         )
         self._deprecated_option_name_list = deprecated_option_name_list
 
-    def validate(self, option_dict: TypeOptionMap) -> ReportItemList:
+    def validate(self, option_dict: TypeOptionMap) -> reports.ReportItemList:
         found = set(self._option_name_list) & set(option_dict.keys())
         if not found:
             return [
-                ReportItem(
+                reports.ReportItem(
                     self._severity,
                     reports.messages.RequiredOptionOfAlternativesIsMissing(
                         sorted(self._option_name_list),
@@ -412,11 +416,11 @@ class MutuallyExclusive(KeyValidator):
     mutually_exclusive_names in option_dict.
     """
 
-    def validate(self, option_dict: TypeOptionMap) -> ReportItemList:
+    def validate(self, option_dict: TypeOptionMap) -> reports.ReportItemList:
         found = set(self._option_name_list) & set(option_dict.keys())
         if len(found) > 1:
             return [
-                ReportItem(
+                reports.ReportItem(
                     self._severity,
                     reports.messages.MutuallyExclusiveOptions(
                         sorted(found),
@@ -438,7 +442,7 @@ class NamesIn(KeyValidator):
         option_type: str | None = None,
         allowed_option_patterns: StringIterable | None = None,
         banned_name_list: Iterable[TypeOptionName] | None = None,
-        severity: ReportItemSeverity | None = None,
+        severity: reports.ReportItemSeverity | None = None,
     ):
         """
         allowed_option_patterns -- option patterns to be added to a report
@@ -450,12 +454,12 @@ class NamesIn(KeyValidator):
         self._allowed_option_patterns = allowed_option_patterns or []
         self._banned_name_set = set(banned_name_list or [])
 
-    def validate(self, option_dict: TypeOptionMap) -> ReportItemList:
+    def validate(self, option_dict: TypeOptionMap) -> reports.ReportItemList:
         name_set = set(option_dict.keys())
         banned_names = set()
         if not (
             self._severity.force_code is None
-            and self._severity.level == ReportItemSeverity.ERROR
+            and self._severity.level == reports.ReportItemSeverity.ERROR
         ):
             banned_names = name_set & self._banned_name_set
         invalid_names = name_set - set(self._option_name_list) - banned_names
@@ -463,7 +467,7 @@ class NamesIn(KeyValidator):
         report_list = []
         if invalid_names:
             report_list.append(
-                ReportItem(
+                reports.ReportItem(
                     severity=self._severity,
                     message=reports.messages.InvalidOptions(
                         sorted(invalid_names),
@@ -475,7 +479,7 @@ class NamesIn(KeyValidator):
             )
         if banned_names:
             report_list.append(
-                ReportItem.error(
+                reports.ReportItem.error(
                     reports.messages.InvalidOptions(
                         sorted(banned_names),
                         sorted(self._option_name_list),
@@ -502,7 +506,7 @@ class PcmkMetaAttributeNamesIn(KeyValidator):
         super().__init__(option_name_list)
         self._option_type_list = option_type_list
 
-    def validate(self, option_dict: TypeOptionMap) -> ReportItemList:
+    def validate(self, option_dict: TypeOptionMap) -> reports.ReportItemList:
         unknown_meta = set(option_dict.keys()) - set(self._option_name_list)
         report_list = []
         if unknown_meta:
@@ -511,7 +515,7 @@ class PcmkMetaAttributeNamesIn(KeyValidator):
             # are recognized and processed by pacemaker. But we ALWAYS want to
             # ALLOW ANY KEYS. So this must never be an error.
             report_list.append(
-                ReportItem(
+                reports.ReportItem(
                     severity=reports.ReportItemSeverity.warning(),
                     message=reports.messages.MetaAttrsUnknownToPcmk(
                         sorted(unknown_meta),
@@ -540,7 +544,7 @@ class ValueValidator(ValidatorInterface):
         self._option_name_for_report = option_name_for_report
         self.empty_string_valid = False
 
-    def validate(self, option_dict: TypeOptionMap) -> ReportItemList:
+    def validate(self, option_dict: TypeOptionMap) -> reports.ReportItemList:
         if self._option_name not in option_dict:
             return []
         value = ValuePair.get(option_dict[self._option_name])
@@ -555,7 +559,7 @@ class ValueValidator(ValidatorInterface):
             else self._option_name
         )
 
-    def _validate_value(self, value: ValuePair) -> ReportItemList:
+    def _validate_value(self, value: ValuePair) -> reports.ReportItemList:
         raise NotImplementedError()
 
 
@@ -568,7 +572,7 @@ class ValuePredicateBase(ValueValidator):
         self,
         option_name: TypeOptionName,
         option_name_for_report: str | None = None,
-        severity: ReportItemSeverity | None = None,
+        severity: reports.ReportItemSeverity | None = None,
     ):
         """
         severity -- severity of produced reports, defaults to error
@@ -577,20 +581,20 @@ class ValuePredicateBase(ValueValidator):
             option_name, option_name_for_report=option_name_for_report
         )
         self._severity = (
-            ReportItemSeverity.error() if severity is None else severity
+            reports.ReportItemSeverity.error() if severity is None else severity
         )
         self._value_cannot_be_empty = False
         self._forbidden_characters = None
 
-    def _validate_value(self, value: ValuePair) -> ReportItemList:
+    def _validate_value(self, value: ValuePair) -> reports.ReportItemList:
         return (
             []
             if self._is_valid(value.normalized)
             else [self._get_report_item(value)]
         )
 
-    def _get_report_item(self, value: ValuePair) -> ReportItem:
-        return ReportItem(
+    def _get_report_item(self, value: ValuePair) -> reports.ReportItem:
+        return reports.ReportItem(
             severity=self._severity,
             message=reports.messages.InvalidOptionValue(
                 self._get_option_name_for_report(),
@@ -622,7 +626,7 @@ class ValueCorosyncValue(ValueValidator):
     made forcible.
     """
 
-    def _validate_value(self, value: ValuePair) -> ReportItemList:
+    def _validate_value(self, value: ValuePair) -> reports.ReportItemList:
         if not isinstance(value.normalized, str):
             return []
         forbidden_characters = "{}\n\r"
@@ -631,7 +635,7 @@ class ValueCorosyncValue(ValueValidator):
             # otherwise setting a cratfed option value could be misused for
             # setting arbitrary corosync.conf settings.
             return [
-                ReportItem.error(
+                reports.ReportItem.error(
                     reports.messages.InvalidOptionValue(
                         self._get_option_name_for_report(),
                         value.original,
@@ -680,8 +684,8 @@ class ValueId(ValueValidator):
         )
         self._id_provider = id_provider
 
-    def _validate_value(self, value: ValuePair) -> ReportItemList:
-        report_list: ReportItemList = []
+    def _validate_value(self, value: ValuePair) -> reports.ReportItemList:
+        report_list: reports.ReportItemList = []
         validate_id(value.normalized, self._option_name_for_report, report_list)
         if self._id_provider is not None and not report_list:
             report_list.extend(self._id_provider.book_ids(value.normalized))
@@ -698,7 +702,7 @@ class ValueDeprecated(ValueValidator):
         self,
         option_name: TypeOptionName,
         deprecation_map: Mapping[str, str | None],
-        severity: ReportItemSeverity | None = None,
+        severity: reports.ReportItemSeverity | None = None,
         option_name_for_report: str | None = None,
     ):
         """
@@ -711,14 +715,16 @@ class ValueDeprecated(ValueValidator):
             option_name_for_report=option_name_for_report,
         )
         self._severity = (
-            ReportItemSeverity.deprecation() if severity is None else severity
+            reports.ReportItemSeverity.deprecation()
+            if severity is None
+            else severity
         )
         self._deprecation_map = deprecation_map
 
-    def _validate_value(self, value: ValuePair) -> ReportItemList:
+    def _validate_value(self, value: ValuePair) -> reports.ReportItemList:
         if value.normalized in self._deprecation_map:
             return [
-                ReportItem(
+                reports.ReportItem(
                     severity=self._severity,
                     message=reports.messages.DeprecatedOptionValue(
                         option_name=self._get_option_name_for_report(),
@@ -741,7 +747,7 @@ class ValueIn(ValuePredicateBase):
         option_name: TypeOptionName,
         allowed_value_list: Container[TypeOptionValue],
         option_name_for_report: str | None = None,
-        severity: ReportItemSeverity | None = None,
+        severity: reports.ReportItemSeverity | None = None,
     ):
         """
         allowed_value_list -- list of possible values
@@ -772,7 +778,7 @@ class ValueInteger(ValuePredicateBase):
         at_least: int | None = None,
         at_most: int | None = None,
         option_name_for_report: str | None = None,
-        severity: ReportItemSeverity | None = None,
+        severity: reports.ReportItemSeverity | None = None,
     ):
         """
         at_least -- minimal allowed value, do not check the lower bound when
@@ -837,7 +843,7 @@ class ValueNotEmpty(ValuePredicateBase):
         # TODO Set proper type. ReportItemMessage must be fixed as well.
         value_desc_or_enum: Any,
         option_name_for_report: str | None = None,
-        severity: ReportItemSeverity | None = None,
+        severity: reports.ReportItemSeverity | None = None,
     ):
         """
         value_desc_or_enum -- a list or a description of possible values
@@ -937,7 +943,7 @@ class ValuePcmkDatespecPart(ValuePredicateBase):
         at_least: int | None,
         at_most: int | None,
         option_name_for_report: str | None = None,
-        severity: ReportItemSeverity | None = None,
+        severity: reports.ReportItemSeverity | None = None,
     ):
         """
         at_least -- minimal allowed value
@@ -1050,11 +1056,13 @@ class ValueScore(ValueValidator):
     Report INVALID_SCORE if the value is not a valid CIB score
     """
 
-    def _validate_value(self, value: ValuePair) -> ReportItemList:
+    def _validate_value(self, value: ValuePair) -> reports.ReportItemList:
         report_list = []
         if not is_score(value.normalized):
             report_list.append(
-                ReportItem.error(reports.messages.InvalidScore(value.original))
+                reports.ReportItem.error(
+                    reports.messages.InvalidScore(value.original)
+                )
             )
         return report_list
 
@@ -1070,7 +1078,7 @@ class ValueTimeIntervalOrDuration(ValuePredicateBase):
         runner: CommandRunner,
         option_name: TypeOptionName,
         option_name_for_report: str | None = None,
-        severity: ReportItemSeverity | None = None,
+        severity: reports.ReportItemSeverity | None = None,
     ):
         super().__init__(
             option_name,
@@ -1241,7 +1249,7 @@ class ValidateAddRemove:
         item_type: reports.types.AddRemoveItemType,
         container_type: reports.types.AddRemoveContainerType | None = None,
         container_id: str | None = None,
-        severity: ReportItemSeverity | None = None,
+        severity: reports.ReportItemSeverity | None = None,
     ):
         """
         Validate the arguments of add remove operation.
@@ -1259,14 +1267,14 @@ class ValidateAddRemove:
         self._item_type = item_type
         self._container_id = container_id
         self._severity = (
-            ReportItemSeverity.error() if severity is None else severity
+            reports.ReportItemSeverity.error() if severity is None else severity
         )
 
-    def validate_add_or_remove_specified(self) -> ReportItemList:
-        report_list: ReportItemList = []
+    def validate_add_or_remove_specified(self) -> reports.ReportItemList:
+        report_list: reports.ReportItemList = []
         if not self._add_item_list and not self._remove_item_list:
             report_list.append(
-                ReportItem(
+                reports.ReportItem(
                     self._severity,
                     reports.messages.AddRemoveItemsNotSpecified(
                         self._container_type,
@@ -1281,14 +1289,14 @@ class ValidateAddRemove:
     def _get_duplicate_items(item_list: StringIterable) -> set[str]:
         return {item for item, count in Counter(item_list).items() if count > 1}
 
-    def validate_no_duplicate_items(self) -> ReportItemList:
-        report_list: ReportItemList = []
+    def validate_no_duplicate_items(self) -> reports.ReportItemList:
+        report_list: reports.ReportItemList = []
         duplicate_items_list = self._get_duplicate_items(
             self._add_item_list
         ) | self._get_duplicate_items(self._remove_item_list)
         if duplicate_items_list:
             report_list.append(
-                ReportItem(
+                reports.ReportItem(
                     self._severity,
                     reports.messages.AddRemoveItemsDuplication(
                         self._container_type,
@@ -1300,12 +1308,14 @@ class ValidateAddRemove:
             )
         return report_list
 
-    def validate_item_not_both_added_and_removed(self) -> ReportItemList:
-        report_list: ReportItemList = []
+    def validate_item_not_both_added_and_removed(
+        self,
+    ) -> reports.ReportItemList:
+        report_list: reports.ReportItemList = []
         common_items = set(self._add_item_list) & set(self._remove_item_list)
         if common_items:
             report_list.append(
-                ReportItem.error(
+                reports.ReportItem.error(
                     reports.messages.AddRemoveCannotAddAndRemoveItemsAtTheSameTime(
                         self._container_type,
                         self._item_type,
@@ -1329,7 +1339,7 @@ class _ValidateAddRemoveWithExistingItems(ValidateAddRemove):
         *,
         adjacent_item_id: str | None = None,
         container_can_be_empty: bool = False,
-        severity: ReportItemSeverity | None = None,
+        severity: reports.ReportItemSeverity | None = None,
     ):
         """
         Validate if items can be added or removed to or from a container.
@@ -1361,8 +1371,8 @@ class _ValidateAddRemoveWithExistingItems(ValidateAddRemove):
         )
         self._container_id: str = container_id
 
-    def validate_add_items_not_yet_present(self) -> ReportItemList:
-        report_list: ReportItemList = []
+    def validate_add_items_not_yet_present(self) -> reports.ReportItemList:
+        report_list: reports.ReportItemList = []
         already_present = set(self._add_item_list).intersection(
             self._current_item_list
         )
@@ -1370,7 +1380,7 @@ class _ValidateAddRemoveWithExistingItems(ValidateAddRemove):
         # to move items when adjacent_item_id is specified
         if self._adjacent_item_id is None and already_present:
             report_list.append(
-                ReportItem.error(
+                reports.ReportItem.error(
                     reports.messages.AddRemoveCannotAddItemsAlreadyInTheContainer(
                         self._container_type,
                         self._item_type,
@@ -1381,14 +1391,14 @@ class _ValidateAddRemoveWithExistingItems(ValidateAddRemove):
             )
         return report_list
 
-    def validate_remove_items_present(self) -> ReportItemList:
-        report_list: ReportItemList = []
+    def validate_remove_items_present(self) -> reports.ReportItemList:
+        report_list: reports.ReportItemList = []
         missing_items = set(self._remove_item_list).difference(
             self._current_item_list
         )
         if missing_items:
             report_list.append(
-                ReportItem(
+                reports.ReportItem(
                     self._severity,
                     reports.messages.AddRemoveCannotRemoveItemsNotInTheContainer(
                         self._container_type,
@@ -1400,15 +1410,15 @@ class _ValidateAddRemoveWithExistingItems(ValidateAddRemove):
             )
         return report_list
 
-    def validate_container_wont_be_empty(self) -> ReportItemList:
-        report_list: ReportItemList = []
+    def validate_container_wont_be_empty(self) -> reports.ReportItemList:
+        report_list: reports.ReportItemList = []
         if not self._container_can_be_empty and not self._add_item_list:
             remaining_items = set(self._current_item_list).difference(
                 self._remove_item_list
             )
             if not remaining_items:
                 report_list.append(
-                    ReportItem.error(
+                    reports.ReportItem.error(
                         reports.messages.AddRemoveCannotRemoveAllItemsFromTheContainer(
                             self._container_type,
                             self._item_type,
@@ -1419,14 +1429,14 @@ class _ValidateAddRemoveWithExistingItems(ValidateAddRemove):
                 )
         return report_list
 
-    def validate_adjacent(self) -> ReportItemList:
-        report_list: ReportItemList = []
+    def validate_adjacent(self) -> reports.ReportItemList:
+        report_list: reports.ReportItemList = []
         if not self._adjacent_item_id:
             return report_list
 
         if self._adjacent_item_id not in self._current_item_list:
             report_list.append(
-                ReportItem.error(
+                reports.ReportItem.error(
                     reports.messages.AddRemoveAdjacentItemNotInTheContainer(
                         self._container_type,
                         self._item_type,
@@ -1437,7 +1447,7 @@ class _ValidateAddRemoveWithExistingItems(ValidateAddRemove):
             )
         if self._adjacent_item_id in self._add_item_list:
             report_list.append(
-                ReportItem.error(
+                reports.ReportItem.error(
                     reports.messages.AddRemoveCannotPutItemNextToItself(
                         self._container_type,
                         self._item_type,
@@ -1448,7 +1458,7 @@ class _ValidateAddRemoveWithExistingItems(ValidateAddRemove):
             )
         if not self._add_item_list:
             report_list.append(
-                ReportItem.error(
+                reports.ReportItem.error(
                     reports.messages.AddRemoveCannotSpecifyAdjacentItemWithoutItemsToAdd(
                         self._container_type,
                         self._item_type,
@@ -1469,7 +1479,7 @@ def validate_add_remove_items(
     container_id: str,
     adjacent_item_id: str | None = None,
     container_can_be_empty: bool = False,
-) -> ReportItemList:
+) -> reports.ReportItemList:
     """
     Validate if items can be added or removed to or from a container.
 
@@ -1510,8 +1520,8 @@ def validate_set_unset_items(
     container_type: reports.types.AddRemoveContainerType,
     item_type: reports.types.AddRemoveItemType,
     container_id: str,
-    severity: ReportItemSeverity | None = None,
-) -> ReportItemList:
+    severity: reports.ReportItemSeverity | None = None,
+) -> reports.ReportItemList:
     """
     Validate if items can be set or unset to or from a dict of options.
 
