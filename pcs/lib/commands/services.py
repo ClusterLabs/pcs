@@ -186,3 +186,133 @@ def pacemaker_remote_off_local(env: LibraryEnvironment) -> None:
     except ManageServiceError as e:
         env.report_processor.report(service_exception_to_report(e))
         raise LibraryError() from e
+
+
+def corosync_qdevice_enable_local(env: LibraryEnvironment) -> None:
+    _ensure_live_env(env)
+    service_name = "corosync-qdevice"
+    if not env.service_manager.is_enabled("corosync"):
+        env.report_processor.report(
+            reports.ReportItem.info(
+                reports.messages.ServiceActionSkipped(
+                    reports.const.SERVICE_ACTION_ENABLE,
+                    service_name,
+                    "corosync is not enabled",
+                )
+            )
+        )
+        return
+    try:
+        env.service_manager.enable(service_name, instance=None)
+        env.report_processor.report(
+            reports.ReportItem.info(
+                reports.messages.ServiceActionSucceeded(
+                    reports.const.SERVICE_ACTION_ENABLE,
+                    service_name,
+                )
+            )
+        )
+    except ManageServiceError as e:
+        env.report_processor.report(service_exception_to_report(e))
+        raise LibraryError() from e
+
+
+def corosync_qdevice_disable_local(env: LibraryEnvironment) -> None:
+    _ensure_live_env(env)
+    service_name = "corosync-qdevice"
+    try:
+        env.service_manager.disable(service_name, instance=None)
+        env.report_processor.report(
+            reports.ReportItem.info(
+                reports.messages.ServiceActionSucceeded(
+                    reports.const.SERVICE_ACTION_DISABLE,
+                    service_name,
+                )
+            )
+        )
+    except ManageServiceError as e:
+        env.report_processor.report(service_exception_to_report(e))
+        raise LibraryError() from e
+
+
+def corosync_qdevice_start_local(env: LibraryEnvironment) -> None:
+    _ensure_live_env(env)
+    service_name = "corosync-qdevice"
+    if not env.service_manager.is_running("corosync"):
+        env.report_processor.report(
+            reports.ReportItem.info(
+                reports.messages.ServiceActionSkipped(
+                    reports.const.SERVICE_ACTION_START,
+                    service_name,
+                    "corosync is not running",
+                )
+            )
+        )
+        return
+    try:
+        env.service_manager.start(service_name, instance=None)
+        env.report_processor.report(
+            reports.ReportItem.info(
+                reports.messages.ServiceActionSucceeded(
+                    reports.const.SERVICE_ACTION_START,
+                    service_name,
+                )
+            )
+        )
+    except ManageServiceError as e:
+        env.report_processor.report(service_exception_to_report(e))
+        raise LibraryError() from e
+
+
+def corosync_qdevice_stop_local(env: LibraryEnvironment) -> None:
+    _ensure_live_env(env)
+    service_name = "corosync-qdevice"
+    try:
+        env.service_manager.stop(service_name, instance=None)
+        env.report_processor.report(
+            reports.ReportItem.info(
+                reports.messages.ServiceActionSucceeded(
+                    reports.const.SERVICE_ACTION_STOP,
+                    service_name,
+                )
+            )
+        )
+    except ManageServiceError as e:
+        env.report_processor.report(service_exception_to_report(e))
+        raise LibraryError() from e
+
+
+def sbd_enable_local(env: LibraryEnvironment) -> None:
+    _ensure_live_env(env)
+    service_name = "sbd"
+    try:
+        env.service_manager.enable(service_name, instance=None)
+        env.report_processor.report(
+            reports.ReportItem.info(
+                reports.messages.ServiceActionSucceeded(
+                    reports.const.SERVICE_ACTION_ENABLE,
+                    service_name,
+                )
+            )
+        )
+    except ManageServiceError as e:
+        env.report_processor.report(service_exception_to_report(e))
+        raise LibraryError() from e
+
+
+def sbd_disable_local(env: LibraryEnvironment) -> None:
+    _ensure_live_env(env)
+    service_name = "sbd"
+    try:
+        env.service_manager.disable(service_name, instance=None)
+        env.report_processor.report(
+            reports.ReportItem.info(
+                reports.messages.ServiceActionSucceeded(
+                    reports.const.SERVICE_ACTION_DISABLE,
+                    service_name,
+                )
+            )
+        )
+    except ManageServiceError as e:
+        env.report_processor.report(service_exception_to_report(e))
+        raise LibraryError() from e

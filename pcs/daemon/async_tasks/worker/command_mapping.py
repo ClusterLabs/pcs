@@ -492,6 +492,30 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
         cmd=services.pacemaker_remote_off_local,
         required_permission=p.WRITE,
     ),
+    "services.corosync_qdevice_enable_local": _Cmd(
+        cmd=services.corosync_qdevice_enable_local,
+        required_permission=p.WRITE,
+    ),
+    "services.corosync_qdevice_disable_local": _Cmd(
+        cmd=services.corosync_qdevice_disable_local,
+        required_permission=p.WRITE,
+    ),
+    "services.corosync_qdevice_start_local": _Cmd(
+        cmd=services.corosync_qdevice_start_local,
+        required_permission=p.WRITE,
+    ),
+    "services.corosync_qdevice_stop_local": _Cmd(
+        cmd=services.corosync_qdevice_stop_local,
+        required_permission=p.WRITE,
+    ),
+    "services.sbd_enable_local": _Cmd(
+        cmd=services.sbd_enable_local,
+        required_permission=p.WRITE,
+    ),
+    "services.sbd_disable_local": _Cmd(
+        cmd=services.sbd_disable_local,
+        required_permission=p.WRITE,
+    ),
     "sbd.check_sbd": _Cmd(
         cmd=sbd.check_sbd,
         required_permission=p.READ,
@@ -548,11 +572,7 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
         required_permission=p.READ,
     ),
     # CMDs allowed in pcs_internal but not exposed via REST API:
-    # "services.disable_service": Cmd(services.disable_service,
-    # "services.enable_service": Cmd(services.enable_service,
-    # "services.get_services_info": Cmd(services.get_services_info,
-    # "services.start_service": Cmd(services.start_service,
-    # "services.stop_service": Cmd(services.stop_service,
+    # "services.get_services_info": _Cmd(services.get_services_info,
 }
 
 
@@ -584,6 +604,12 @@ LEGACY_API_COMMANDS = (
     # the API.
     "services.pacemaker_remote_on_local",
     "services.pacemaker_remote_off_local",
+    "services.corosync_qdevice_enable_local",
+    "services.corosync_qdevice_disable_local",
+    "services.corosync_qdevice_start_local",
+    "services.corosync_qdevice_stop_local",
+    "services.sbd_enable_local",
+    "services.sbd_disable_local",
     "status.full_cluster_status_plaintext",
     "stonith_agent.describe_agent",
     "stonith_agent.list_agents",
