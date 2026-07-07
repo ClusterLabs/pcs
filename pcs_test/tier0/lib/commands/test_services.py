@@ -7,10 +7,9 @@ from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
 
 
-class PacemakerRemoteServiceMixin:
+class EnsureLiveEnvMixin:
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
-        self.service_name = "pacemaker_remote"
 
     def get_lib_command(self):
         raise NotImplementedError()
@@ -68,7 +67,9 @@ class PacemakerRemoteServiceMixin:
         )
 
 
-class PacemakerRemoteOnLocal(PacemakerRemoteServiceMixin, TestCase):
+class PacemakerRemoteOnLocal(EnsureLiveEnvMixin, TestCase):
+    service_name = "pacemaker_remote"
+
     def get_lib_command(self):
         return lib.pacemaker_remote_on_local
 
@@ -150,7 +151,9 @@ class PacemakerRemoteOnLocal(PacemakerRemoteServiceMixin, TestCase):
         )
 
 
-class PacemakerRemoteOffLocal(PacemakerRemoteServiceMixin, TestCase):
+class PacemakerRemoteOffLocal(EnsureLiveEnvMixin, TestCase):
+    service_name = "pacemaker_remote"
+
     def get_lib_command(self):
         return lib.pacemaker_remote_off_local
 
@@ -225,6 +228,322 @@ class PacemakerRemoteOffLocal(PacemakerRemoteServiceMixin, TestCase):
                     action=reports.const.SERVICE_ACTION_DISABLE,
                     service=self.service_name,
                     reason="disable failed: service timeout",
+                    node="",
+                    instance="",
+                ),
+            ]
+        )
+
+
+class CorosyncQdeviceEnableLocal(EnsureLiveEnvMixin, TestCase):
+    service_name = "corosync-qdevice"
+
+    def get_lib_command(self):
+        return lib.corosync_qdevice_enable_local
+
+    def test_skip_corosync_not_enabled(self):
+        self.config.services.is_enabled("corosync", return_value=False)
+
+        lib.corosync_qdevice_enable_local(self.env_assist.get_env())
+
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    reports.codes.SERVICE_ACTION_SKIPPED,
+                    action=reports.const.SERVICE_ACTION_ENABLE,
+                    service=self.service_name,
+                    reason="corosync is not enabled",
+                    node="",
+                    instance="",
+                ),
+            ]
+        )
+
+    def test_success(self):
+        self.config.services.is_enabled("corosync", return_value=True)
+        self.config.services.enable(self.service_name)
+
+        lib.corosync_qdevice_enable_local(self.env_assist.get_env())
+
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    reports.codes.SERVICE_ACTION_SUCCEEDED,
+                    action=reports.const.SERVICE_ACTION_ENABLE,
+                    service=self.service_name,
+                    node="",
+                    instance="",
+                ),
+            ]
+        )
+
+    def test_failure(self):
+        self.config.services.is_enabled("corosync", return_value=True)
+        self.config.services.enable(
+            self.service_name, failure_msg="enable failed"
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.corosync_qdevice_enable_local(self.env_assist.get_env())
+        )
+
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.SERVICE_ACTION_FAILED,
+                    action=reports.const.SERVICE_ACTION_ENABLE,
+                    service=self.service_name,
+                    reason="enable failed",
+                    node="",
+                    instance="",
+                ),
+            ]
+        )
+
+
+class CorosyncQdeviceDisableLocal(EnsureLiveEnvMixin, TestCase):
+    service_name = "corosync-qdevice"
+
+    def get_lib_command(self):
+        return lib.corosync_qdevice_disable_local
+
+    def test_success(self):
+        self.config.services.disable(self.service_name)
+
+        lib.corosync_qdevice_disable_local(self.env_assist.get_env())
+
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    reports.codes.SERVICE_ACTION_SUCCEEDED,
+                    action=reports.const.SERVICE_ACTION_DISABLE,
+                    service=self.service_name,
+                    node="",
+                    instance="",
+                ),
+            ]
+        )
+
+    def test_failure(self):
+        self.config.services.disable(
+            self.service_name, failure_msg="disable failed"
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.corosync_qdevice_disable_local(
+                self.env_assist.get_env()
+            )
+        )
+
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.SERVICE_ACTION_FAILED,
+                    action=reports.const.SERVICE_ACTION_DISABLE,
+                    service=self.service_name,
+                    reason="disable failed",
+                    node="",
+                    instance="",
+                ),
+            ]
+        )
+
+
+class CorosyncQdeviceStartLocal(EnsureLiveEnvMixin, TestCase):
+    service_name = "corosync-qdevice"
+
+    def get_lib_command(self):
+        return lib.corosync_qdevice_start_local
+
+    def test_skip_corosync_not_running(self):
+        self.config.services.is_running("corosync", return_value=False)
+
+        lib.corosync_qdevice_start_local(self.env_assist.get_env())
+
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    reports.codes.SERVICE_ACTION_SKIPPED,
+                    action=reports.const.SERVICE_ACTION_START,
+                    service=self.service_name,
+                    reason="corosync is not running",
+                    node="",
+                    instance="",
+                ),
+            ]
+        )
+
+    def test_success(self):
+        self.config.services.is_running("corosync", return_value=True)
+        self.config.services.start(self.service_name)
+
+        lib.corosync_qdevice_start_local(self.env_assist.get_env())
+
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    reports.codes.SERVICE_ACTION_SUCCEEDED,
+                    action=reports.const.SERVICE_ACTION_START,
+                    service=self.service_name,
+                    node="",
+                    instance="",
+                ),
+            ]
+        )
+
+    def test_failure(self):
+        self.config.services.is_running("corosync", return_value=True)
+        self.config.services.start(
+            self.service_name, failure_msg="start failed"
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.corosync_qdevice_start_local(self.env_assist.get_env())
+        )
+
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.SERVICE_ACTION_FAILED,
+                    action=reports.const.SERVICE_ACTION_START,
+                    service=self.service_name,
+                    reason="start failed",
+                    node="",
+                    instance="",
+                ),
+            ]
+        )
+
+
+class CorosyncQdeviceStopLocal(EnsureLiveEnvMixin, TestCase):
+    service_name = "corosync-qdevice"
+
+    def get_lib_command(self):
+        return lib.corosync_qdevice_stop_local
+
+    def test_success(self):
+        self.config.services.stop(self.service_name)
+
+        lib.corosync_qdevice_stop_local(self.env_assist.get_env())
+
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    reports.codes.SERVICE_ACTION_SUCCEEDED,
+                    action=reports.const.SERVICE_ACTION_STOP,
+                    service=self.service_name,
+                    node="",
+                    instance="",
+                ),
+            ]
+        )
+
+    def test_failure(self):
+        self.config.services.stop(self.service_name, failure_msg="stop failed")
+
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.corosync_qdevice_stop_local(self.env_assist.get_env())
+        )
+
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.SERVICE_ACTION_FAILED,
+                    action=reports.const.SERVICE_ACTION_STOP,
+                    service=self.service_name,
+                    reason="stop failed",
+                    node="",
+                    instance="",
+                ),
+            ]
+        )
+
+
+class SbdEnableLocal(EnsureLiveEnvMixin, TestCase):
+    service_name = "sbd"
+
+    def get_lib_command(self):
+        return lib.sbd_enable_local
+
+    def test_success(self):
+        self.config.services.enable(self.service_name)
+
+        lib.sbd_enable_local(self.env_assist.get_env())
+
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    reports.codes.SERVICE_ACTION_SUCCEEDED,
+                    action=reports.const.SERVICE_ACTION_ENABLE,
+                    service=self.service_name,
+                    node="",
+                    instance="",
+                ),
+            ]
+        )
+
+    def test_failure(self):
+        self.config.services.enable(
+            self.service_name, failure_msg="enable failed"
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.sbd_enable_local(self.env_assist.get_env())
+        )
+
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.SERVICE_ACTION_FAILED,
+                    action=reports.const.SERVICE_ACTION_ENABLE,
+                    service=self.service_name,
+                    reason="enable failed",
+                    node="",
+                    instance="",
+                ),
+            ]
+        )
+
+
+class SbdDisableLocal(EnsureLiveEnvMixin, TestCase):
+    service_name = "sbd"
+
+    def get_lib_command(self):
+        return lib.sbd_disable_local
+
+    def test_success(self):
+        self.config.services.disable(self.service_name)
+
+        lib.sbd_disable_local(self.env_assist.get_env())
+
+        self.env_assist.assert_reports(
+            [
+                fixture.info(
+                    reports.codes.SERVICE_ACTION_SUCCEEDED,
+                    action=reports.const.SERVICE_ACTION_DISABLE,
+                    service=self.service_name,
+                    node="",
+                    instance="",
+                ),
+            ]
+        )
+
+    def test_failure(self):
+        self.config.services.disable(
+            self.service_name, failure_msg="disable failed"
+        )
+
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.sbd_disable_local(self.env_assist.get_env())
+        )
+
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    reports.codes.SERVICE_ACTION_FAILED,
+                    action=reports.const.SERVICE_ACTION_DISABLE,
+                    service=self.service_name,
+                    reason="disable failed",
                     node="",
                     instance="",
                 ),
