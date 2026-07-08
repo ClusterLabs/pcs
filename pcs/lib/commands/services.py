@@ -10,44 +10,12 @@ from pcs.lib.errors import LibraryError
 from pcs.lib.services import service_exception_to_report
 
 
-# Following commands are meant to be used internally only. They are only used
+# Following command is meant to be used internally only. It is only used
 # from pcsd via pcs_internal script, so that the service_manager functionality
-# is not duplicated in ruby. They don't do any checks and thus allow anyone to
-# manage any service, not limited to cluster services. Therefore, they MUST NOT
+# is not duplicated in ruby. It doesn't do any checks and thus allows anyone to
+# query any service, not limited to cluster services. Therefore, it MUST NOT
 # be exposed in CLI, APIv0, APIv1, neither APIv2. Once related ruby code is
-# moved to python, these commands won't be needed anymore and should be removed.
-def start_service(
-    env: LibraryEnvironment,
-    service: str,
-    instance: str | None,
-) -> None:
-    env.service_manager.start(service, instance)
-
-
-def stop_service(
-    env: LibraryEnvironment,
-    service: str,
-    instance: str | None,
-) -> None:
-    env.service_manager.stop(service, instance)
-
-
-def enable_service(
-    env: LibraryEnvironment,
-    service: str,
-    instance: str | None,
-) -> None:
-    env.service_manager.enable(service, instance)
-
-
-def disable_service(
-    env: LibraryEnvironment,
-    service: str,
-    instance: str | None,
-) -> None:
-    env.service_manager.disable(service, instance)
-
-
+# moved to python, this command won't be needed anymore and should be removed.
 def get_services_info(
     env: LibraryEnvironment,
     services: StringIterable,
@@ -95,9 +63,6 @@ def get_services_info(
             )
         ]
     )
-
-
-# End of commands for internal use only.
 
 
 # This module is a good place for commands managing cluster daemons. Naming
