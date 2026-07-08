@@ -2228,3 +2228,173 @@ class SetSbdConfigHandler(ApiV0HandlerTest):
         self.mock_run_library_command.assert_called_once_with(
             "sbd.set_node_sbd_config_text", self.command_data
         )
+
+
+class QdeviceClientDisableHandler(ApiV0HandlerTest):
+    url = "/remote/qdevice_client_disable"
+
+    def test_success(self):
+        self.mock_run_library_command.return_value = self.result_success()
+        response = self.fetch(self.url)
+        self.assert_body(response.body, "corosync-qdevice disabled")
+        self.assertEqual(response.code, 200)
+        self.mock_run_library_command.assert_called_once_with(
+            "services.corosync_qdevice_disable_local", {}
+        )
+
+    def test_failure(self):
+        self.mock_run_library_command.return_value = self.result_failure()
+        response = self.fetch(self.url)
+        self.assert_body(response.body, "Disabling corosync-qdevice failed")
+        self.assertEqual(response.code, 400)
+        self.mock_run_library_command.assert_called_once_with(
+            "services.corosync_qdevice_disable_local", {}
+        )
+
+
+class QdeviceClientEnableHandler(ApiV0HandlerTest):
+    url = "/remote/qdevice_client_enable"
+
+    def test_success(self):
+        self.mock_run_library_command.return_value = self.result_success()
+        response = self.fetch(self.url)
+        self.assert_body(response.body, "corosync-qdevice enabled")
+        self.assertEqual(response.code, 200)
+        self.mock_run_library_command.assert_called_once_with(
+            "services.corosync_qdevice_enable_local", {}
+        )
+
+    def test_skip(self):
+        self.mock_run_library_command.return_value = self.result_success(
+            reports=[
+                reports.ReportItem.info(
+                    reports.messages.ServiceActionSkipped(
+                        reports.const.SERVICE_ACTION_ENABLE,
+                        "corosync-qdevice",
+                        "corosync is not enabled",
+                    )
+                ).to_dto()
+            ]
+        )
+        response = self.fetch(self.url)
+        self.assert_body(response.body, "corosync is not enabled, skipping")
+        self.assertEqual(response.code, 200)
+        self.mock_run_library_command.assert_called_once_with(
+            "services.corosync_qdevice_enable_local", {}
+        )
+
+    def test_failure(self):
+        self.mock_run_library_command.return_value = self.result_failure()
+        response = self.fetch(self.url)
+        self.assert_body(response.body, "Enabling corosync-qdevice failed")
+        self.assertEqual(response.code, 400)
+        self.mock_run_library_command.assert_called_once_with(
+            "services.corosync_qdevice_enable_local", {}
+        )
+
+
+class QdeviceClientStartHandler(ApiV0HandlerTest):
+    url = "/remote/qdevice_client_start"
+
+    def test_success(self):
+        self.mock_run_library_command.return_value = self.result_success()
+        response = self.fetch(self.url)
+        self.assert_body(response.body, "corosync-qdevice started")
+        self.assertEqual(response.code, 200)
+        self.mock_run_library_command.assert_called_once_with(
+            "services.corosync_qdevice_start_local", {}
+        )
+
+    def test_skip(self):
+        self.mock_run_library_command.return_value = self.result_success(
+            reports=[
+                reports.ReportItem.info(
+                    reports.messages.ServiceActionSkipped(
+                        reports.const.SERVICE_ACTION_START,
+                        "corosync-qdevice",
+                        "corosync is not running",
+                    )
+                ).to_dto()
+            ]
+        )
+        response = self.fetch(self.url)
+        self.assert_body(response.body, "corosync is not running, skipping")
+        self.assertEqual(response.code, 200)
+        self.mock_run_library_command.assert_called_once_with(
+            "services.corosync_qdevice_start_local", {}
+        )
+
+    def test_failure(self):
+        self.mock_run_library_command.return_value = self.result_failure()
+        response = self.fetch(self.url)
+        self.assert_body(response.body, "Starting corosync-qdevice failed")
+        self.assertEqual(response.code, 400)
+        self.mock_run_library_command.assert_called_once_with(
+            "services.corosync_qdevice_start_local", {}
+        )
+
+
+class QdeviceClientStopHandler(ApiV0HandlerTest):
+    url = "/remote/qdevice_client_stop"
+
+    def test_success(self):
+        self.mock_run_library_command.return_value = self.result_success()
+        response = self.fetch(self.url)
+        self.assert_body(response.body, "corosync-qdevice stopped")
+        self.assertEqual(response.code, 200)
+        self.mock_run_library_command.assert_called_once_with(
+            "services.corosync_qdevice_stop_local", {}
+        )
+
+    def test_failure(self):
+        self.mock_run_library_command.return_value = self.result_failure()
+        response = self.fetch(self.url)
+        self.assert_body(response.body, "Stopping corosync-qdevice failed")
+        self.assertEqual(response.code, 400)
+        self.mock_run_library_command.assert_called_once_with(
+            "services.corosync_qdevice_stop_local", {}
+        )
+
+
+class SbdEnableHandler(ApiV0HandlerTest):
+    url = "/remote/sbd_enable"
+
+    def test_success(self):
+        self.mock_run_library_command.return_value = self.result_success()
+        response = self.fetch(self.url)
+        self.assert_body(response.body, "SBD enabled")
+        self.assertEqual(response.code, 200)
+        self.mock_run_library_command.assert_called_once_with(
+            "services.sbd_enable_local", {}
+        )
+
+    def test_failure(self):
+        self.mock_run_library_command.return_value = self.result_failure()
+        response = self.fetch(self.url)
+        self.assert_body(response.body, "Enabling SBD failed")
+        self.assertEqual(response.code, 400)
+        self.mock_run_library_command.assert_called_once_with(
+            "services.sbd_enable_local", {}
+        )
+
+
+class SbdDisableHandler(ApiV0HandlerTest):
+    url = "/remote/sbd_disable"
+
+    def test_success(self):
+        self.mock_run_library_command.return_value = self.result_success()
+        response = self.fetch(self.url)
+        self.assert_body(response.body, "SBD disabled")
+        self.assertEqual(response.code, 200)
+        self.mock_run_library_command.assert_called_once_with(
+            "services.sbd_disable_local", {}
+        )
+
+    def test_failure(self):
+        self.mock_run_library_command.return_value = self.result_failure()
+        response = self.fetch(self.url)
+        self.assert_body(response.body, "Disabling SBD failed")
+        self.assertEqual(response.code, 400)
+        self.mock_run_library_command.assert_called_once_with(
+            "services.sbd_disable_local", {}
+        )
