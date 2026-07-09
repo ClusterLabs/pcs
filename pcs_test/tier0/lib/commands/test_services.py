@@ -1,5 +1,6 @@
 from unittest import TestCase
 
+from pcs import settings
 from pcs.common import file_type_codes, reports
 from pcs.lib.commands import services as lib
 
@@ -460,7 +461,7 @@ class CorosyncQdeviceStopLocal(EnsureLiveEnvMixin, TestCase):
 
 
 class SbdEnableLocal(EnsureLiveEnvMixin, TestCase):
-    service_name = "sbd"
+    service_name = settings.sbd_service_name
 
     def get_lib_command(self):
         return lib.sbd_enable_local
@@ -506,7 +507,7 @@ class SbdEnableLocal(EnsureLiveEnvMixin, TestCase):
 
 
 class SbdDisableLocal(EnsureLiveEnvMixin, TestCase):
-    service_name = "sbd"
+    service_name = settings.sbd_service_name
 
     def get_lib_command(self):
         return lib.sbd_disable_local

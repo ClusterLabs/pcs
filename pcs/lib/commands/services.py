@@ -1,3 +1,4 @@
+from pcs import settings
 from pcs.common import file_type_codes, reports
 from pcs.common.services.errors import ManageServiceError
 from pcs.common.services_dto import (
@@ -249,7 +250,7 @@ def corosync_qdevice_stop_local(env: LibraryEnvironment) -> None:
 
 def sbd_enable_local(env: LibraryEnvironment) -> None:
     _ensure_live_env(env)
-    service_name = "sbd"
+    service_name = settings.sbd_service_name
     try:
         env.service_manager.enable(service_name, instance=None)
         env.report_processor.report(
@@ -267,7 +268,7 @@ def sbd_enable_local(env: LibraryEnvironment) -> None:
 
 def sbd_disable_local(env: LibraryEnvironment) -> None:
     _ensure_live_env(env)
-    service_name = "sbd"
+    service_name = settings.sbd_service_name
     try:
         env.service_manager.disable(service_name, instance=None)
         env.report_processor.report(
