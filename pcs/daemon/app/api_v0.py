@@ -219,6 +219,75 @@ class ManageServicesHandler(_BaseApiV0Handler):
         self.write(json.dumps(response))
 
 
+class _SimpleServiceActionHandler(_BaseApiV0Handler):
+    _cmd_name: str
+    _success_message: str
+    _failure_message: str
+
+    async def _handle_request(self) -> None:
+        result = await self._run_library_command(self._cmd_name, {})
+        if not result.success:
+            raise self._error(self._failure_message)
+        self.write(self._success_message)
+
+
+class _ServiceActionWithSkipHandler(_BaseApiV0Handler):
+    _cmd_name: str
+    _success_message: str
+    _failure_message: str
+    _skip_message: str
+
+    async def _handle_request(self) -> None:
+        result = await self._run_library_command(self._cmd_name, {})
+        if not result.success:
+            raise self._error(self._failure_message)
+        if any(
+            report_item.message.code == reports.codes.SERVICE_ACTION_SKIPPED
+            for report_item in result.reports
+        ):
+            self.write(self._skip_message)
+            return
+        self.write(self._success_message)
+
+
+class QdeviceClientDisableHandler(_SimpleServiceActionHandler):
+    _cmd_name = "services.corosync_qdevice_disable_local"
+    _success_message = "corosync-qdevice disabled"
+    _failure_message = "Disabling corosync-qdevice failed"
+
+
+class QdeviceClientEnableHandler(_ServiceActionWithSkipHandler):
+    _cmd_name = "services.corosync_qdevice_enable_local"
+    _success_message = "corosync-qdevice enabled"
+    _failure_message = "Enabling corosync-qdevice failed"
+    _skip_message = "corosync is not enabled, skipping"
+
+
+class QdeviceClientStartHandler(_ServiceActionWithSkipHandler):
+    _cmd_name = "services.corosync_qdevice_start_local"
+    _success_message = "corosync-qdevice started"
+    _failure_message = "Starting corosync-qdevice failed"
+    _skip_message = "corosync is not running, skipping"
+
+
+class QdeviceClientStopHandler(_SimpleServiceActionHandler):
+    _cmd_name = "services.corosync_qdevice_stop_local"
+    _success_message = "corosync-qdevice stopped"
+    _failure_message = "Stopping corosync-qdevice failed"
+
+
+class SbdEnableHandler(_SimpleServiceActionHandler):
+    _cmd_name = "services.sbd_enable_local"
+    _success_message = "SBD enabled"
+    _failure_message = "Enabling SBD failed"
+
+
+class SbdDisableHandler(_SimpleServiceActionHandler):
+    _cmd_name = "services.sbd_disable_local"
+    _success_message = "SBD disabled"
+    _failure_message = "Disabling SBD failed"
+
+
 class ResourceManageUnmanageHandler(_BaseApiV0Handler):
     async def _handle_request(self) -> None:
         self._check_required_params({"resource_list_json"})
@@ -829,6 +898,12 @@ def get_routes(
     return [
         # services
         (r("manage_services"), ManageServicesHandler, params),
+        (r("qdevice_client_disable"), QdeviceClientDisableHandler, params),
+        (r("qdevice_client_enable"), QdeviceClientEnableHandler, params),
+        (r("qdevice_client_start"), QdeviceClientStartHandler, params),
+        (r("qdevice_client_stop"), QdeviceClientStopHandler, params),
+        (r("sbd_disable"), SbdDisableHandler, params),
+        (r("sbd_enable"), SbdEnableHandler, params),
         # resources
         (r("manage_resource"), ResourceManageHandler, params),
         (r("unmanage_resource"), ResourceUnmanageHandler, params),

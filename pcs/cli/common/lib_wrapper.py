@@ -549,12 +549,7 @@ def load_module(env, middleware_factory, name):  # noqa: PLR0911, PLR0912
             middleware.build(),
             {
                 # Internal use only, see lib.commands.services for details
-                "start_service": services.start_service,
-                "stop_service": services.stop_service,
-                "enable_service": services.enable_service,
-                "disable_service": services.disable_service,
                 "get_services_info": services.get_services_info,
-                # End of internal use only commands
             },
         )
     if name == "scsi":

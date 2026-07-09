@@ -1201,45 +1201,6 @@ def allowed_for_superuser(auth_user)
   return true
 end
 
-def enable_service(service)
-  result = run_pcs_internal(
-    PCSAuth.getSuperuserAuth(),
-    "services.enable_service",
-    {:service => service, :instance => nil},
-  )
-  return result[:status] == 'success'
-end
-
-def disable_service(service)
-  result = run_pcs_internal(
-    PCSAuth.getSuperuserAuth(),
-    "services.disable_service",
-    {:service => service, :instance => nil},
-  )
-  return result[:status] == 'success'
-end
-
-def start_service(service)
-  result = run_pcs_internal(
-    PCSAuth.getSuperuserAuth(),
-    "services.start_service",
-    {:service => service, :instance => nil},
-  )
-  return result[:status] == 'success'
-end
-
-def stop_service(service)
-  if not ServiceChecker.new([service], installed: true).is_installed?(service)
-    return true
-  end
-  result = run_pcs_internal(
-    PCSAuth.getSuperuserAuth(),
-    "services.stop_service",
-    {:service => service, :instance => nil},
-  )
-  return result[:status] == 'success'
-end
-
 class ServiceChecker
   def initialize(services, flags={})
     result = run_pcs_internal(

@@ -34,14 +34,8 @@ def remote(params, request, auth_user)
       :cluster_destroy => method(:cluster_destroy),
       :get_cluster_known_hosts => method(:get_cluster_known_hosts),
       :get_cluster_properties_definition => method(:get_cluster_properties_definition),
-      :sbd_disable => method(:sbd_disable),
-      :sbd_enable => method(:sbd_enable),
       :remove_stonith_watchdog_timeout=> method(:remove_stonith_watchdog_timeout),
       :set_stonith_watchdog_timeout_to_zero => method(:set_stonith_watchdog_timeout_to_zero),
-      :qdevice_client_enable => method(:qdevice_client_enable),
-      :qdevice_client_disable => method(:qdevice_client_disable),
-      :qdevice_client_start => method(:qdevice_client_start),
-      :qdevice_client_stop => method(:qdevice_client_stop),
       :booth_set_config => method(:booth_set_config),
       :booth_save_files => method(:booth_save_files),
       :put_file => method(:put_file),
@@ -1057,28 +1051,6 @@ def get_cluster_properties_definition(params, request, auth_user)
   return [400, '{}']
 end
 
-def sbd_disable(param, request, auth_user)
-  unless allowed_for_local_cluster(auth_user, Permissions::WRITE)
-    return 403, 'Permission denied'
-  end
-  if disable_service(SBD_SERVICE_NAME)
-    return pcsd_success('SBD disabled')
-  else
-    return pcsd_error("Disabling SBD failed")
-  end
-end
-
-def sbd_enable(param, request, auth_user)
-  unless allowed_for_local_cluster(auth_user, Permissions::WRITE)
-    return 403, 'Permission denied'
-  end
-  if enable_service(SBD_SERVICE_NAME)
-    return pcsd_success('SBD enabled')
-  else
-    return pcsd_error("Enabling SBD failed")
-  end
-end
-
 # Original name of the cluster property is 'stonith-watchdog-timeout'. In
 # pacemaker feature set 3.20.5 (at the time of writing this comment it hasn't
 # been released in any pacemaker version yet), it was renamed to
@@ -1154,54 +1126,6 @@ def set_stonith_watchdog_timeout_to_zero(param, request, auth_user)
     return [400, 'Failed to set cluster property fencing-watchdog-timeout / stonith-watchdog-timeout to zero']
   else
     return [200, 'OK']
-  end
-end
-
-def qdevice_client_disable(param, request, auth_user)
-  unless allowed_for_local_cluster(auth_user, Permissions::WRITE)
-    return 403, 'Permission denied'
-  end
-  if disable_service('corosync-qdevice')
-    return pcsd_success('corosync-qdevice disabled')
-  else
-    return pcsd_error("Disabling corosync-qdevice failed")
-  end
-end
-
-def qdevice_client_enable(param, request, auth_user)
-  unless allowed_for_local_cluster(auth_user, Permissions::WRITE)
-    return 403, 'Permission denied'
-  end
-  if not ServiceChecker.new(['corosync'], enabled: true).is_enabled?('corosync')
-    return pcsd_success('corosync is not enabled, skipping')
-  elsif enable_service('corosync-qdevice')
-    return pcsd_success('corosync-qdevice enabled')
-  else
-    return pcsd_error("Enabling corosync-qdevice failed")
-  end
-end
-
-def qdevice_client_stop(param, request, auth_user)
-  unless allowed_for_local_cluster(auth_user, Permissions::WRITE)
-    return 403, 'Permission denied'
-  end
-  if stop_service('corosync-qdevice')
-    return pcsd_success('corosync-qdevice stopped')
-  else
-    return pcsd_error("Stopping corosync-qdevice failed")
-  end
-end
-
-def qdevice_client_start(param, request, auth_user)
-  unless allowed_for_local_cluster(auth_user, Permissions::WRITE)
-    return 403, 'Permission denied'
-  end
-  if not ServiceChecker.new(['corosync'], running: true).is_running?('corosync')
-    return pcsd_success('corosync is not running, skipping')
-  elsif start_service('corosync-qdevice')
-    return pcsd_success('corosync-qdevice started')
-  else
-    return pcsd_error("Starting corosync-qdevice failed")
   end
 end
 

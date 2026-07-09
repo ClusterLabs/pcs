@@ -15,11 +15,7 @@ from pcs.lib.errors import LibraryError
 
 SUPPORTED_COMMANDS = {
     "pcs_cfgsync.save_sync_pcs_settings_internal",
-    "services.disable_service",
-    "services.enable_service",
     "services.get_services_info",
-    "services.start_service",
-    "services.stop_service",
 }
 
 
