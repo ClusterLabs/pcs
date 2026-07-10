@@ -43,6 +43,23 @@ class CorosyncShortcuts:
             instead=instead,
         )
 
+    def reload(
+        self,
+        stdout="",
+        stderr="",
+        returncode=0,
+        name="runner.corosync.reload",
+    ):
+        self.__calls.place(
+            name,
+            RunnerCall(
+                [settings.corosync_cfgtool_exec, "-R"],
+                stdout=stdout,
+                stderr=stderr,
+                returncode=returncode,
+            ),
+        )
+
     def qdevice_init_cert_storage(
         self,
         ca_file_path,
@@ -206,7 +223,7 @@ class CorosyncShortcuts:
         returncode=0,
         name="runner.corosync.quorum_status",
     ):
-        if bool(node_list) == bool(stdout):
+        if (node_list is not None) == (stdout is not None):
             raise AssertionError(
                 "Exactly one of 'node_list', 'stdout' must be specified"
             )
@@ -246,7 +263,7 @@ class CorosyncShortcuts:
         self.__calls.place(
             name,
             RunnerCall(
-                ["corosync-quorumtool", "-p"],
+                ["corosync-quorumtool", "-s", "-p"],
                 stdout=stdout,
                 stderr=stderr,
                 returncode=returncode,

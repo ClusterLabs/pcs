@@ -150,6 +150,10 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
         cmd=cluster.generate_cluster_uuid,
         required_permission=p.SUPERUSER,
     ),
+    "cluster.get_corosync_conf": _Cmd(
+        cmd=cluster.get_corosync_conf,
+        required_permission=p.READ,
+    ),
     "cluster.get_corosync_conf_struct": _Cmd(
         cmd=cluster.get_corosync_conf_struct,
         required_permission=p.READ,
@@ -184,6 +188,10 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
     ),
     "cluster.rename_node_corosync": _Cmd(
         cmd=cluster.rename_node_corosync,
+        required_permission=p.WRITE,
+    ),
+    "cluster.reload_corosync_conf": _Cmd(
+        cmd=cluster.reload_corosync_conf,
         required_permission=p.WRITE,
     ),
     "cluster.set_corosync_conf": _Cmd(
@@ -361,6 +369,10 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
     "quorum.device_net_certificate_setup_local": _Cmd(
         cmd=quorum.device_net_certificate_setup_local,
         required_permission=p.WRITE,
+    ),
+    "quorum.status_text": _Cmd(
+        cmd=quorum.status_text,
+        required_permission=p.READ,
     ),
     # deprecated, API v0 compatibility
     "qdevice.qdevice_net_get_ca_certificate": _Cmd(

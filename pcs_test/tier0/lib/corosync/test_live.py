@@ -1,8 +1,5 @@
 from textwrap import dedent
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
 from pcs import settings
 from pcs.common import file_type_codes
@@ -45,33 +42,44 @@ class GetLocalCorosyncConfTest(TestCase):
 
 
 class GetQuorumStatusTextTest(TestCase):
+    status_info = "status info"
+
     def setUp(self):
         self.mock_runner = mock.MagicMock(spec_set=CommandRunner)
 
     def test_success(self):
-        self.mock_runner.run.return_value = ("status info", "", 0)
+        self.mock_runner.run.return_value = (self.status_info, "", 0)
         self.assertEqual(
-            "status info", lib.get_quorum_status_text(self.mock_runner)
+            self.status_info, lib.get_quorum_status_text(self.mock_runner)
         )
         self.mock_runner.run.assert_called_once_with(
-            [settings.corosync_quorumtool_exec, "-p"]
+            [settings.corosync_quorumtool_exec, "-s", "-p"]
         )
 
-    def test_success_with_retval_1(self):
-        self.mock_runner.run.return_value = ("status info", "", 1)
+    def test_success_with_retval_2(self):
+        self.mock_runner.run.return_value = (self.status_info, "", 2)
         self.assertEqual(
-            "status info", lib.get_quorum_status_text(self.mock_runner)
+            self.status_info, lib.get_quorum_status_text(self.mock_runner)
         )
         self.mock_runner.run.assert_called_once_with(
-            [settings.corosync_quorumtool_exec, "-p"]
+            [settings.corosync_quorumtool_exec, "-s", "-p"]
         )
 
-    def test_error(self):
-        self.mock_runner.run.return_value = ("some info", "status error", 2)
+    def test_error_retval_1(self):
+        self.mock_runner.run.return_value = ("some info", "quorum error", 1)
         with self.assertRaises(lib.QuorumStatusReadException) as cm:
             lib.get_quorum_status_text(self.mock_runner)
         self.mock_runner.run.assert_called_once_with(
-            [settings.corosync_quorumtool_exec, "-p"]
+            [settings.corosync_quorumtool_exec, "-s", "-p"]
+        )
+        self.assertEqual(cm.exception.reason, "quorum error")
+
+    def test_error_stderr(self):
+        self.mock_runner.run.return_value = ("some info", "status error", 0)
+        with self.assertRaises(lib.QuorumStatusReadException) as cm:
+            lib.get_quorum_status_text(self.mock_runner)
+        self.mock_runner.run.assert_called_once_with(
+            [settings.corosync_quorumtool_exec, "-s", "-p"]
         )
         self.assertEqual(cm.exception.reason, "status error")
 

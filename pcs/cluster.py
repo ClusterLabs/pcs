@@ -1259,46 +1259,6 @@ def cluster_uidgid(  # noqa: PLR0912
         raise CmdLineInputError()
 
 
-def cluster_get_corosync_conf(
-    lib: Any, argv: Argv, modifiers: InputModifiers
-) -> None:
-    """
-    Options:
-      * --request-timeout - timeout for HTTP requests, effetive only when at
-        least one node has been specified
-    """
-    del lib
-    modifiers.ensure_only_supported("--request-timeout")
-    if len(argv) > 1:
-        raise CmdLineInputError()
-
-    if not argv:
-        print(utils.getCorosyncConf().rstrip())
-        return
-
-    node = argv[0]
-    retval, output = utils.getCorosyncConfig(node)
-    if retval != 0:
-        utils.err(output)
-    else:
-        print(output.rstrip())
-
-
-def cluster_reload(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
-    """
-    Options: no options
-    """
-    del lib
-    modifiers.ensure_only_supported()
-    if len(argv) != 1 or argv[0] != "corosync":
-        raise CmdLineInputError()
-
-    output, retval = utils.reloadCorosync()
-    if retval != 0 or "invalid option" in output:
-        utils.err(output.rstrip())
-    print_to_stderr("Corosync reloaded")
-
-
 # Completely tear down the cluster & remove config files
 # Code taken from cluster-clean script in pacemaker
 def cluster_destroy(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  # noqa: PLR0912

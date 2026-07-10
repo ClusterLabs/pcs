@@ -7,6 +7,7 @@ from pcs.cli.common.parse_args import (
     InputModifiers,
     KeyValueParser,
 )
+from pcs.cli.common.tools import print_to_stderr
 from pcs.cli.reports.output import (
     deprecation_warning,
     process_library_reports,
@@ -342,6 +343,33 @@ def node_rename_corosync(
     if modifiers.get("--skip-offline"):
         force_flags.append(reports.codes.SKIP_OFFLINE_NODES)
     lib.cluster.rename_node_corosync(argv[0], argv[1], force_flags)
+
+
+def get_corosync_conf(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
+    """
+    Options:
+      * --request-timeout - HTTP request timeout
+    """
+    modifiers.ensure_only_supported("--request-timeout")
+    if len(argv) > 1:
+        raise CmdLineInputError()
+    if argv:
+        print(lib.cluster.get_corosync_conf_remote(argv[0]).rstrip())
+    else:
+        print(lib.cluster.get_corosync_conf().rstrip())
+
+
+def reload_corosync_conf(
+    lib: Any, argv: Argv, modifiers: InputModifiers
+) -> None:
+    """
+    Options: no options
+    """
+    modifiers.ensure_only_supported()
+    if argv:
+        raise CmdLineInputError()
+    lib.cluster.reload_corosync_conf()
+    print_to_stderr("Corosync reloaded")
 
 
 def cluster_rename(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:

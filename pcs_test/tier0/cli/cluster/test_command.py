@@ -451,3 +451,86 @@ class ClusterRename(TestCase):
         self.lib.cluster.rename.assert_called_once_with(
             "A", [report_codes.FORCE, report_codes.SKIP_OFFLINE_NODES]
         )
+
+
+class TestGetCorosyncConf(TestCase):
+    def setUp(self):
+        self.lib = mock.Mock(spec_set=["cluster"])
+        self.lib.cluster = mock.Mock(
+            spec_set=["get_corosync_conf", "get_corosync_conf_remote"]
+        )
+        self.lib.cluster.get_corosync_conf.return_value = "totem {\n}\n"
+        self.lib.cluster.get_corosync_conf_remote.return_value = (
+            "totem {\n  remote\n}\n"
+        )
+
+    def test_success(self):
+        with mock.patch("pcs.cli.cluster.command.print") as mock_print:
+            command.get_corosync_conf(self.lib, [], dict_to_modifiers({}))
+        self.lib.cluster.get_corosync_conf.assert_called_once_with()
+        self.lib.cluster.get_corosync_conf_remote.assert_not_called()
+        mock_print.assert_called_once_with("totem {\n}")
+
+    def test_remote_success(self):
+        with mock.patch("pcs.cli.cluster.command.print") as mock_print:
+            command.get_corosync_conf(
+                self.lib, ["node1"], dict_to_modifiers({})
+            )
+        self.lib.cluster.get_corosync_conf.assert_not_called()
+        self.lib.cluster.get_corosync_conf_remote.assert_called_once_with(
+            "node1"
+        )
+        mock_print.assert_called_once_with("totem {\n  remote\n}")
+
+    def test_too_many_args(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            command.get_corosync_conf(
+                self.lib, ["node1", "node2"], dict_to_modifiers({})
+            )
+        self.assertIsNone(cm.exception.message)
+        self.lib.cluster.get_corosync_conf.assert_not_called()
+        self.lib.cluster.get_corosync_conf_remote.assert_not_called()
+
+    def test_unsupported_modifier(self):
+        with self.assertRaises(CmdLineInputError):
+            command.get_corosync_conf(
+                self.lib, [], dict_to_modifiers({"force": True})
+            )
+        self.lib.cluster.get_corosync_conf.assert_not_called()
+        self.lib.cluster.get_corosync_conf_remote.assert_not_called()
+
+    def test_request_timeout_accepted(self):
+        with mock.patch("pcs.cli.cluster.command.print"):
+            command.get_corosync_conf(
+                self.lib,
+                [],
+                dict_to_modifiers({"request-timeout": "10"}),
+            )
+        self.lib.cluster.get_corosync_conf.assert_called_once_with()
+
+
+class TestReloadCorosyncConf(TestCase):
+    def setUp(self):
+        self.lib = mock.Mock(spec_set=["cluster"])
+        self.lib.cluster = mock.Mock(spec_set=["reload_corosync_conf"])
+
+    @mock.patch("pcs.cli.cluster.command.print_to_stderr")
+    def test_success(self, mock_print_to_stderr):
+        command.reload_corosync_conf(self.lib, [], dict_to_modifiers({}))
+        self.lib.cluster.reload_corosync_conf.assert_called_once_with()
+        mock_print_to_stderr.assert_called_once_with("Corosync reloaded")
+
+    def test_too_many_args(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            command.reload_corosync_conf(
+                self.lib, ["extra"], dict_to_modifiers({})
+            )
+        self.assertIsNone(cm.exception.message)
+        self.lib.cluster.reload_corosync_conf.assert_not_called()
+
+    def test_unsupported_modifier(self):
+        with self.assertRaises(CmdLineInputError):
+            command.reload_corosync_conf(
+                self.lib, [], dict_to_modifiers({"force": True})
+            )
+        self.lib.cluster.reload_corosync_conf.assert_not_called()

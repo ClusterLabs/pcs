@@ -1,4 +1,3 @@
-# pylint: disable=too-many-lines
 import base64
 import fcntl
 import logging
@@ -180,7 +179,6 @@ class GetQuorumConfigTest(TestCase):
 
 @mock.patch("pcs.lib.sbd.is_auto_tie_breaker_needed")
 class CheckIfAtbCanBeDisabledTest(TestCase):
-    # pylint: disable=protected-access
     def setUp(self):
         self.mock_reporter = MockLibraryReportProcessor()
         self.mock_runner = "cmd_runner"
@@ -678,20 +676,37 @@ class SetQuorumOptionsTest(TestCase):
         )
 
 
-@mock.patch("pcs.lib.commands.quorum.corosync_live.get_quorum_status_text")
-@mock.patch.object(LibraryEnvironment, "cmd_runner", lambda self: "mock_runner")
 class StatusTextTest(TestCase):
+    quorum_status_output = "status_text"
+
     def setUp(self):
-        self.mock_logger = mock.MagicMock(logging.Logger)
-        self.mock_reporter = MockLibraryReportProcessor()
-        self.lib_env = LibraryEnvironment(self.mock_logger, self.mock_reporter)
+        self.env_assist, self.config = get_env_tools(test_case=self)
 
-    def test_success(self, mock_status):
-        mock_status.return_value = "status text"
-        self.assertEqual(lib.status_text(self.lib_env), "status text")
-        mock_status.assert_called_once_with("mock_runner")
+    def test_success(self):
+        self.config.runner.corosync.quorum_status(
+            stdout=self.quorum_status_output,
+        )
+        result = lib.status_text(self.env_assist.get_env())
+        self.assertEqual(result, self.quorum_status_output)
 
-    # TODO: add test for failure
+    def test_failure(self):
+        stderr = "quorum is not available"
+        self.config.runner.corosync.quorum_status(
+            stdout="",
+            stderr=stderr,
+            returncode=1,
+        )
+        self.env_assist.assert_raise_library_error(
+            lambda: lib.status_text(self.env_assist.get_env()),
+            [
+                fixture.error(
+                    reports.codes.COROSYNC_QUORUM_GET_STATUS_ERROR,
+                    reason=stderr,
+                    node="",
+                ),
+            ],
+            expected_in_processor=False,
+        )
 
 
 @mock.patch("pcs.lib.commands.quorum.qdevice_client.get_status_text")
@@ -799,8 +814,6 @@ class DeviceNetCertsMixin:
 
 
 class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
-    # pylint: disable=too-many-public-methods
-    # pylint: disable=too-many-instance-attributes
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
 
@@ -2002,7 +2015,6 @@ class AddDeviceNetTest(DeviceNetCertsMixin, TestCase):
 
 
 class DeviceNetCertificateSetupLocal(DeviceNetCertsMixin, TestCase):
-    # pylint: disable=too-many-instance-attributes
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
         self.qnetd_host = "qnetd-host"
@@ -2800,7 +2812,6 @@ class RemoveDeviceHeuristics(TestCase):
 
 
 class RemoveDeviceNetTest(TestCase):
-    # pylint: disable=too-many-public-methods
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         self.config.env.set_known_nodes(["rh7-1", "rh7-2", "rh7-3"])

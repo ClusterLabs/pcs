@@ -41,10 +41,8 @@ def get_pcs_internal_path()
 end
 
 # unique instance signature, allows detection of daemon restarts
-COROSYNC = File.join(COROSYNC_BINARIES, "corosync")
 ISSYSTEMCTL = is_systemctl
 COROSYNC_CMAPCTL = File.join(COROSYNC_BINARIES, "corosync-cmapctl")
-COROSYNC_QUORUMTOOL = File.join(COROSYNC_BINARIES, "corosync-quorumtool")
 
 if not defined? $cur_node_name
   $cur_node_name = Socket.gethostname

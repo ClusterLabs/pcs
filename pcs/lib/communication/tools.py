@@ -1,5 +1,7 @@
+from collections.abc import Iterable
+
 from pcs.common import reports
-from pcs.common.node_communicator import Request
+from pcs.common.node_communicator import Request, RequestTarget
 from pcs.common.reports import ReportItemSeverity
 from pcs.common.reports.item import ReportItem
 from pcs.lib.errors import LibraryError
@@ -87,7 +89,7 @@ class RunRemotelyBase(CommunicationCommandInterface):
 
     _report_pcsd_too_old_on_404 = False
 
-    def __init__(self, report_processor):
+    def __init__(self, report_processor) -> None:
         self.__report_processor = report_processor
         self.__has_errors = False
 
@@ -255,7 +257,7 @@ class AllSameDataMixin:
         """
         self.set_targets([target])
 
-    def set_targets(self, target_list):
+    def set_targets(self, target_list: Iterable[RequestTarget]) -> None:
         """
         Add targets to which requests will be send.
 

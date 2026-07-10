@@ -23,8 +23,6 @@ def remote(params, request, auth_user)
   remote_cmd_without_pacemaker = {
       :status => method(:node_status),
       :cluster_status => method(:cluster_status_remote),
-      :get_quorum_info => method(:get_quorum_info),
-      :get_corosync_conf => method(:get_corosync_conf_remote),
       :set_certs => method(:set_certs),
       :cluster_start => method(:cluster_start),
       :cluster_stop => method(:cluster_stop),
@@ -40,7 +38,6 @@ def remote(params, request, auth_user)
       :booth_save_files => method(:booth_save_files),
       :put_file => method(:put_file),
       :remove_file => method(:remove_file),
-      :reload_corosync_conf => method(:reload_corosync_conf),
       :remove_nodes_from_cib => method(:remove_nodes_from_cib),
   }
   remote_cmd_with_pacemaker = {
@@ -354,33 +351,6 @@ def cluster_disable(params, request, auth_user)
       return JSON.generate({"error" => "true"})
     end
     return "Cluster Disabled"
-  end
-end
-
-def get_quorum_info(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::READ)
-    return 403, 'Permission denied'
-  end
-  stdout, stderr, _retval = run_cmd(
-    PCSAuth.getSuperuserAuth(), COROSYNC_QUORUMTOOL, "-p", "-s"
-  )
-  # retval is 0 on success if node is not in partition with quorum
-  # retval is 1 on error OR on success if node has quorum
-  if stderr.length > 0
-    return stderr.join
-  else
-    return stdout.join
-  end
-end
-
-def get_corosync_conf_remote(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::READ)
-    return 403, 'Permission denied'
-  end
-  begin
-    return get_corosync_conf()
-  rescue
-    return 400, 'Unable to read corosync.conf'
   end
 end
 
@@ -1332,34 +1302,6 @@ def check_request_data_for_json(params, auth_user)
   rescue JSON::ParserError
     raise PcsdRequestException.new('Invalid input data format')
   end
-end
-
-def reload_corosync_conf(params, request, auth_user)
-  if not allowed_for_local_cluster(auth_user, Permissions::WRITE)
-    return 403, 'Permission denied'
-  end
-
-  if ServiceChecker.new(['corosync'], running: true).is_running?('corosync')
-    output, stderr, retval = run_cmd(
-      auth_user, File.join(COROSYNC_BINARIES, "corosync-cfgtool"), "-R"
-    )
-    if retval != 0
-      msg_lines = output + stderr
-      if not msg_lines.empty? and msg_lines[0].strip() == 'Reloading corosync.conf...'
-        msg_lines.delete_at(0)
-      end
-      result = PcsdExchangeFormat::result(
-        :failed,
-        "Unable to reload corosync configuration: #{msg_lines.join("\n").strip()}"
-      )
-    else
-      result = PcsdExchangeFormat::result(:reloaded)
-    end
-  else
-    result = PcsdExchangeFormat::result(:not_running)
-  end
-
-  return JSON.generate(result)
 end
 
 def remove_nodes_from_cib(params, request, auth_user)

@@ -1,10 +1,7 @@
 import re
 
 from pcs import settings
-from pcs.common import (
-    file_type_codes,
-    reports,
-)
+from pcs.common import file_type_codes, reports
 from pcs.common.services.interfaces import ServiceManagerInterface
 from pcs.common.str_tools import join_multilines
 from pcs.lib import sbd
@@ -13,10 +10,7 @@ from pcs.lib.communication import qdevice_net as qdevice_net_com
 from pcs.lib.communication.tools import run_and_raise
 from pcs.lib.corosync import config_validators as corosync_conf_validators
 from pcs.lib.corosync import live as corosync_live
-from pcs.lib.corosync import (
-    qdevice_client,
-    qdevice_net,
-)
+from pcs.lib.corosync import qdevice_client, qdevice_net
 from pcs.lib.corosync.config_facade import ConfigFacade as CorosyncConfFacade
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError

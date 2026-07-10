@@ -1,7 +1,7 @@
 from collections.abc import Mapping
 from typing import cast
 
-from pcs.common import reports
+from pcs.common import file_type_codes, reports
 from pcs.common.corosync_conf import (
     CorosyncConfDto,
     CorosyncQuorumDeviceSettingsDto,
@@ -12,8 +12,11 @@ from pcs.common.types import (
     UnknownCorosyncTransportTypeException,
 )
 from pcs.lib.commands.cluster.utils import ensure_live_env, verify_corosync_conf
+from pcs.lib.communication.corosync import GetCorosyncConf
+from pcs.lib.communication.tools import run_and_raise
 from pcs.lib.corosync import config_facade, config_validators
 from pcs.lib.corosync import constants as corosync_constants
+from pcs.lib.corosync import live as corosync_live
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 from pcs.lib.file.instance import FileInstance
@@ -64,6 +67,18 @@ def _config_update(
         crypto_options,
     )
     verify_corosync_conf(corosync_conf)  # raises if corosync not valid
+
+
+def _ensure_live_corosync(env: LibraryEnvironment) -> None:
+    if not env.is_corosync_conf_live:
+        env.report_processor.report(
+            reports.ReportItem.error(
+                reports.messages.LiveEnvironmentRequired(
+                    [file_type_codes.COROSYNC_CONF]
+                )
+            )
+        )
+        raise LibraryError()
 
 
 def config_update(
@@ -193,6 +208,50 @@ def get_corosync_conf_struct(env: LibraryEnvironment) -> CorosyncConfDto:
                 )
             )
         ) from e
+
+
+def get_corosync_conf(env: LibraryEnvironment) -> str:
+    """
+    Read corosync.conf from the local node and return its plain-text content
+    """
+    _ensure_live_corosync(env)
+    return env.get_corosync_conf_data()
+
+
+def get_corosync_conf_remote(env: LibraryEnvironment, node_name: str) -> str:
+    """
+    Read corosync.conf from a remote node and return its plain-text content
+
+    node_name -- name of the node to fetch corosync.conf from
+    """
+    report_processor = env.report_processor
+    target_factory = env.get_node_target_factory()
+    report_list, target_list = target_factory.get_target_list_with_reports(
+        [node_name], allow_skip=False, report_none_host_found=False
+    )
+    if report_processor.report_list(report_list).has_errors:
+        raise LibraryError()
+    com_cmd = GetCorosyncConf(report_processor)
+    com_cmd.set_targets(target_list)
+    return run_and_raise(env.get_node_communicator(), com_cmd)  # type: ignore[no-untyped-call]
+
+
+def reload_corosync_conf(env: LibraryEnvironment) -> None:
+    """
+    Reload corosync configuration on the local node
+    """
+    _ensure_live_corosync(env)
+    if not env.service_manager.is_running("corosync"):
+        env.report_processor.report(
+            reports.ReportItem.error(
+                reports.messages.CorosyncConfigReloadNotPossible()
+            )
+        )
+        raise LibraryError()
+    report_list = corosync_live.reload_corosync_conf(env.cmd_runner())
+
+    if env.report_processor.report_list(report_list).has_errors:
+        raise LibraryError()
 
 
 def _generate_cluster_uuid(

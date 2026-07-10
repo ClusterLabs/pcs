@@ -374,15 +374,6 @@ def repeat_if_timeout(send_http_request_function, repeat_count=15):
     return repeater
 
 
-# Set the corosync.conf file on the specified node
-def getCorosyncConfig(node):
-    """
-    Commandline options:
-      * --request-timeout - timeout for HTTP requests
-    """
-    return sendHTTPRequest(node, "remote/get_corosync_conf", None, False, False)
-
-
 def setCorosyncConfig(node, config):
     """
     Commandline options:
@@ -736,14 +727,6 @@ def getCorosyncConf():
     except OSError as e:
         err("Unable to read %s: %s" % (settings.corosync_conf_file, e.strerror))
     return corosync_conf_content
-
-
-def reloadCorosync():
-    """
-    Commandline options: no options
-    """
-    output, retval = run(["corosync-cfgtool", "-R"])
-    return output, retval
 
 
 def getCorosyncActiveNodes():

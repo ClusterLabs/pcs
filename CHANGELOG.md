@@ -28,6 +28,8 @@
 - Fixed validation of resource operation options `enabled`, `record-pending`
   and constraint options `require-all`, `sequential` and `symmetrical`. Values
   not accepted by CIB are no longer allowed.
+- Fix `quorum status`. Parsing of corosync quorum status return code is now
+  handled according to the manual of corosync-quorumtool.
 
 ### Deprecated
 - Commands `pcs pcsd certkey` and `pcs pcsd sync-certificates` ([RHEL-149608])

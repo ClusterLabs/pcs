@@ -307,6 +307,14 @@
         daemon urls: get_corosync_conf
       </description>
     </capability>
+    <capability id="corosync.config.get.rest-api.v2" in-pcs="0" in-pcsd="1">
+      <description>
+        Provide the local corosync.conf file in text form (as stored on disk).
+
+        API v2:
+          cluster.get_corosync_conf
+      </description>
+    </capability>
     <capability id="corosync.config.get.struct" in-pcs="1" in-pcsd="1">
       <description>
         Provide the local corosync.conf in a structured format.
@@ -344,6 +352,14 @@
         Instruct corosync to reload its configuration from its config files.
 
         pcs commands: cluster reload corosync
+      </description>
+    </capability>
+    <capability id="corosync.config.reload.rest-api.v2" in-pcs="0" in-pcsd="1">
+      <description>
+        Instruct corosync to reload its configuration from its config files.
+
+        API v2:
+          cluster.reload_corosync_conf
       </description>
     </capability>
     <capability id="corosync.config.sync-to-local-cluster" in-pcs="1" in-pcsd="0">
@@ -420,6 +436,14 @@
 
         pcs commands: quorum status
         daemon urls: get_quorum_info
+      </description>
+    </capability>
+    <capability id="corosync.quorum.status.rest-api.v2" in-pcs="0" in-pcsd="1">
+      <description>
+        Show corosync quorum status on a node.
+
+        API v2:
+          quorum.status_text
       </description>
     </capability>
     <capability id="corosync.quorum.device" in-pcs="1" in-pcsd="0">

@@ -81,8 +81,13 @@ cluster_cmd = create_router(
             ["cluster", "node"],
         ),
         "uidgid": cluster.cluster_uidgid,
-        "corosync": cluster.cluster_get_corosync_conf,
-        "reload": cluster.cluster_reload,
+        "corosync": cluster_command.get_corosync_conf,
+        "reload": create_router(
+            {
+                "corosync": cluster_command.reload_corosync_conf,
+            },
+            ["cluster", "reload"],
+        ),
         "destroy": cluster.cluster_destroy,
         "verify": cluster.cluster_verify,
         "report": cluster.cluster_report,

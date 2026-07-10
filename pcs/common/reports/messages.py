@@ -1574,17 +1574,19 @@ class CorosyncConfigReloadNotPossible(ReportItemMessage):
     Corosync configuration cannot be reloaded because corosync is not running
     on the specified node
 
-    node -- node label on which confi
+    node -- node label on which corosync is not running
     """
 
-    node: str
+    node: str = ""
     _code = codes.COROSYNC_CONFIG_RELOAD_NOT_POSSIBLE
 
     @property
     def message(self) -> str:
         return (
-            f"{self.node}: Corosync is not running, therefore reload of the "
-            "corosync configuration is not possible"
+            "{node_name}Corosync is not running, therefore reload of the "
+            "corosync configuration is not possible".format(
+                node_name=format_optional(self.node, "{}: ")
+            )
         )
 
 

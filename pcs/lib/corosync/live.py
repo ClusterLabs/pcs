@@ -6,7 +6,7 @@ from pcs import settings
 from pcs.common import reports
 from pcs.common.file import RawFileError
 from pcs.common.reports.item import ReportItem
-from pcs.common.str_tools import format_list
+from pcs.common.str_tools import format_list, join_multilines
 from pcs.common.tools import Version, get_version_from_string
 from pcs.common.types import StringCollection
 from pcs.lib.errors import LibraryError
@@ -62,12 +62,14 @@ def get_quorum_status_text(runner: CommandRunner) -> str:
     """
     Get runtime quorum status from the local node
     """
-    stdout, stderr, retval = runner.run(
-        [settings.corosync_quorumtool_exec, "-p"]
-    )
-    # retval is 0 on success if the node is not in a partition with quorum
-    # retval is 1 on error OR on success if the node has quorum
-    if retval not in [0, 1] or stderr.strip():
+    cmd = [settings.corosync_quorumtool_exec, "-s", "-p"]
+    stdout, stderr, retval = runner.run(cmd)
+
+    # According to corosync manual, retval can be one of these 3 values:
+    # 0 - No problems occurred (quorate for -s operation)
+    # 1 - Generic error code
+    # 2 - Not quorate (returned only for -s operation)
+    if retval not in [0, 2] or stderr.strip():
         raise QuorumStatusReadException(stderr)
     return stdout
 
@@ -247,6 +249,24 @@ def _parse_quorum_status(quorum_status: str) -> QuorumStatus:  # noqa: PLR0912
         # exception would be raised just above
         votes_needed_for_quorum=int(quorum) if quorum is not None else 0,
     )
+
+
+def reload_corosync_conf(runner: CommandRunner) -> reports.ReportItemList:
+    """
+    Call corosync configuration reload on the local node
+
+    runner -- a command runner instance
+    """
+    stdout, stderr, retval = runner.run([settings.corosync_cfgtool_exec, "-R"])
+    if retval != 0:
+        return [
+            reports.ReportItem.error(
+                reports.messages.CorosyncConfigReloadError(
+                    reason=join_multilines([stderr, stdout])
+                )
+            )
+        ]
+    return []
 
 
 def get_corosync_version(runner: CommandRunner) -> Version | None:

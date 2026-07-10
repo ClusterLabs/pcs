@@ -281,9 +281,11 @@ EXTRA_DIST		= \
 			  tier0/lib/commands/cluster/test_add_nodes_validation.py \
 			  tier0/lib/commands/cluster/test_authkey_corosync.py \
 			  tier0/lib/commands/cluster/test_config_update.py \
+			  tier0/lib/commands/cluster/test_get_corosync_conf.py \
 			  tier0/lib/commands/cluster/test_get_corosync_conf_struct.py \
 			  tier0/lib/commands/cluster/test_get_host_daemons_info.py \
 			  tier0/lib/commands/cluster/test_get_permissions.py \
+			  tier0/lib/commands/cluster/test_reload_corosync_conf.py \
 			  tier0/lib/commands/cluster/test_node_clear.py \
 			  tier0/lib/commands/cluster/test_node_rename_cib.py \
 			  tier0/lib/commands/cluster/test_node_rename_corosync.py \

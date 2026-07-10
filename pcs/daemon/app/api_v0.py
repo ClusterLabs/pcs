@@ -847,6 +847,56 @@ class CheckSbdHandler(_BaseApiV0Handler):
         self.write(json.dumps(response))
 
 
+class GetQuorumInfo(_BaseApiV0Handler):
+    async def _handle_request(self) -> None:
+        result = await self._run_library_command(
+            "quorum.status_text",
+            {},
+        )
+        if not result.success:
+            for report in result.reports:
+                if (
+                    report.message.code
+                    == reports.codes.COROSYNC_QUORUM_GET_STATUS_ERROR
+                ):
+                    self.write(report.message.payload["reason"])
+                    return
+            raise self._error(reports_to_str(result.reports))
+        self.write(result.result)
+
+
+class GetCorosyncConf(_BaseApiV0Handler):
+    async def _handle_request(self) -> None:
+        result = await self._run_library_command(
+            "cluster.get_corosync_conf", {}
+        )
+        if not result.success:
+            raise self._error(reports_to_str(result.reports))
+        self.write(result.result)
+
+
+class ReloadCorosyncConf(_BaseApiV0Handler):
+    async def _handle_request(self) -> None:
+        result = await self._run_library_command(
+            "cluster.reload_corosync_conf", {}
+        )
+
+        if result.success:
+            self.write({"code": "reloaded", "message": ""})
+            return
+
+        reports_codes = [r.message.code for r in result.reports]
+
+        if reports.codes.COROSYNC_CONFIG_RELOAD_NOT_POSSIBLE in reports_codes:
+            self.write({"code": "not_running", "message": ""})
+            return
+
+        message = ""
+        if result.reports:
+            message = result.reports[0].message.message
+        self.write({"code": "failed", "message": message})
+
+
 class SetCorosyncConf(_BaseApiV0Handler):
     async def _handle_request(self) -> None:
         self._check_required_params({"corosync_conf"})
@@ -957,7 +1007,11 @@ def get_routes(
         (r("known_hosts_change"), KnownHostsChangeHandler, params),
         # check_host
         (r("check_host"), CheckHostHandler, params),
+        # quorum
+        (r("get_quorum_info"), GetQuorumInfo, params),
         # cluster config
+        (r("get_corosync_conf"), GetCorosyncConf, params),
+        (r("reload_corosync_conf"), ReloadCorosyncConf, params),
         (r("set_corosync_conf"), SetCorosyncConf, params),
         # sbd
         (r("check_sbd"), CheckSbdHandler, params),

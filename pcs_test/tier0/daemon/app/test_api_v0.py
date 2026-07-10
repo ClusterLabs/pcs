@@ -2134,6 +2134,146 @@ class KnownHostsChange(ApiV0HandlerTest):
                 self.mock_run_library_command.assert_not_called()
 
 
+class GetQuorumInfo(ApiV0HandlerTest):
+    url = "/remote/get_quorum_info"
+    result_data = "quorum info data"
+    stderr_data = "some stderr output"
+
+    def test_success(self):
+        self.mock_run_library_command.return_value = self.result_success(
+            self.result_data
+        )
+        response = self.fetch(self.url)
+        self.assertEqual(response.code, 200)
+        self.assert_body(response.body, self.result_data)
+        self.mock_run_library_command.assert_called_once_with(
+            "quorum.status_text",
+            {},
+        )
+
+    def test_failure_quorum_status_error(self):
+        self.mock_run_library_command.return_value = self.result_failure(
+            report_items=[
+                reports.ReportItem.error(
+                    reports.messages.CorosyncQuorumGetStatusError(
+                        self.stderr_data
+                    ),
+                ).to_dto()
+            ],
+        )
+        response = self.fetch(self.url)
+        self.assertEqual(response.code, 200)
+        self.assert_body(response.body, self.stderr_data)
+        self.mock_run_library_command.assert_called_once_with(
+            "quorum.status_text",
+            {},
+        )
+
+    def test_failure(self):
+        self.assert_error_with_report(self.url)
+        self.mock_run_library_command.assert_called_once_with(
+            "quorum.status_text",
+            {},
+        )
+
+
+class GetCorosyncConf(ApiV0HandlerTest):
+    url = "/remote/get_corosync_conf"
+
+    def test_success(self):
+        retval = "corosync conf data"
+        self.mock_run_library_command.return_value = self.result_success(retval)
+        response = self.fetch(self.url)
+        self.assertEqual(response.code, 200)
+        self.assert_body(response.body, retval)
+        self.mock_run_library_command.assert_called_once_with(
+            "cluster.get_corosync_conf", {}
+        )
+
+    def test_failure(self):
+        self.assert_error_with_report(self.url)
+        self.mock_run_library_command.assert_called_once_with(
+            "cluster.get_corosync_conf", {}
+        )
+
+
+class ReloadCorosyncConf(ApiV0HandlerTest):
+    url = "/remote/reload_corosync_conf"
+
+    def test_success(self):
+        self.mock_run_library_command.return_value = self.result_success(
+            reports=[
+                reports.ReportItem.info(
+                    reports.messages.CorosyncConfigReloaded()
+                ).to_dto()
+            ],
+        )
+        response = self.fetch(self.url)
+        self.assertEqual(response.code, 200)
+        self.assert_body(response.body, '{"code": "reloaded", "message": ""}')
+        self.mock_run_library_command.assert_called_once_with(
+            "cluster.reload_corosync_conf", {}
+        )
+
+    def test_not_running(self):
+        self.mock_run_library_command.return_value = self.result_failure(
+            report_items=[
+                reports.ReportItem.error(
+                    reports.messages.CorosyncConfigReloadNotPossible()
+                ).to_dto()
+            ],
+        )
+        response = self.fetch(self.url)
+        self.assertEqual(response.code, 200)
+        self.assert_body(
+            response.body, '{"code": "not_running", "message": ""}'
+        )
+        self.mock_run_library_command.assert_called_once_with(
+            "cluster.reload_corosync_conf", {}
+        )
+
+    def test_reload_failed(self):
+        self.mock_run_library_command.return_value = self.result_failure(
+            report_items=[
+                reports.ReportItem.error(
+                    reports.messages.CorosyncConfigReloadError(
+                        reason="some error",
+                    )
+                ).to_dto()
+            ],
+        )
+        response = self.fetch(self.url)
+        self.assertEqual(response.code, 200)
+        self.assert_body(
+            response.body,
+            '{"code": "failed", "message":'
+            ' "Unable to reload corosync configuration: some error"}',
+        )
+        self.mock_run_library_command.assert_called_once_with(
+            "cluster.reload_corosync_conf", {}
+        )
+
+    def test_failure(self):
+        self.mock_run_library_command.return_value = self.result_failure(
+            "some error",
+            [
+                reports.ReportItem.error(
+                    reports.messages.StonithUnfencingFailed("an error"),
+                    context=reports.ReportItemContext("node1"),
+                ).to_dto()
+            ],
+        )
+        response = self.fetch(self.url)
+        self.assertEqual(response.code, 200)
+        self.assert_body(
+            response.body,
+            '{"code": "failed", "message": "Unfencing failed:\\nan error"}',
+        )
+        self.mock_run_library_command.assert_called_once_with(
+            "cluster.reload_corosync_conf", {}
+        )
+
+
 class SetCorosyncConf(ApiV0HandlerTest):
     url = "/remote/set_corosync_conf"
     body_data = {"corosync_conf": "corosyn conf data"}
