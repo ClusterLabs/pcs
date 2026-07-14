@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.11.12.1] - 2026-07-14
 ### Fixed
 - Changelog of the 0.11.12 release incorrectly mentioned a bugfix in the Added
   section, the changelog has been corrected
