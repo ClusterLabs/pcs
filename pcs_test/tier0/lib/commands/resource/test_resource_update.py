@@ -679,7 +679,7 @@ class UpdateMetaRemoveUpdatedGuestNode(TestCase):
         self.config.corosync_conf.load()
         self.config.env.push_cib(
             resources=fixture_primitive(
-                # For removeal, we want to hack the fixture to get the meta
+                # For removal, we want to hack the fixture to get the meta
                 # attributes element without nvpairs
                 meta_nvpairs_xml=(
                     " "
