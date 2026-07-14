@@ -1,4 +1,3 @@
-# pylint: disable=too-many-lines
 from unittest import (
     TestCase,
     mock,
@@ -159,7 +158,6 @@ class MoveAutocleanCommonSetup(TestCase):
     rc("pcmk_rng/api/api-result.rng"),
 )
 class MoveAutocleanSuccess(MoveAutocleanCommonSetup):
-    # pylint: disable=too-many-instance-attributes
     def setUp(self):
         super().setUp()
 
@@ -947,7 +945,6 @@ class MoveAutocleanValidations(MoveAutocleanCommonSetup):
     rc("pcmk_rng/api/api-result.rng"),
 )
 class MoveAutocleanFailures(MoveAutocleanCommonSetup):
-    # pylint: disable=too-many-instance-attributes
     def setUp(self):
         super().setUp()
 

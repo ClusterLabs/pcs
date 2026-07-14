@@ -21,7 +21,6 @@ def prepare_diff(first, second):
 
 
 def ac(a, b):
-    # pylint: disable=invalid-name
     """
     Compare the actual output 'a' and an expected output 'b', print diff b a
     """
@@ -67,8 +66,6 @@ class AssertPcsMixin:
         stderr_regexp=None,
         despace=False,
     ):
-        # pylint: disable=too-many-arguments
-        # pylint: disable=too-many-positional-arguments
         # It is common that successful commands don't print anything, so we
         # default stdout and stderr to an empty string if not specified
         # otherwise.
@@ -155,7 +152,6 @@ class AssertPcsMixin:
         returncode=0,
         despace=False,
     ):
-        # pylint: disable=too-many-arguments
         self.__check_output_specified(
             stdout_full, stdout_start, stdout_regexp, "stdout"
         )

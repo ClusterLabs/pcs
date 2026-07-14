@@ -100,8 +100,6 @@ def add_level(  # noqa: PLR0913
     force_device -- continue even if a stonith device does not exist
     force_node -- continue even if a node (target) does not exist
     """
-    # pylint: disable=too-many-arguments
-    # pylint: disable=too-many-positional-arguments
     id_provider = IdProvider(cib)
     validate_id_reports: ReportItemList = []
     if level_id is not None:

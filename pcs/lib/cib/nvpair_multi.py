@@ -149,8 +149,6 @@ class ValidateNvsetAppendNew:
     Validator for creating new nvset and appending it to CIB
     """
 
-    # pylint: disable=too-many-instance-attributes
-
     def __init__(
         self,
         id_provider: IdProvider,

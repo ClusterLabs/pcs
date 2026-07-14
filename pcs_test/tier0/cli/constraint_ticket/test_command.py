@@ -95,7 +95,6 @@ class RemoveTest(TestCase):
         )
 
     def test_call_library_remove_with_correct_attrs(self):
-        # pylint: disable=no-self-use
         lib = mock.MagicMock(
             constraint_ticket=mock.MagicMock(remove=mock.Mock())
         )

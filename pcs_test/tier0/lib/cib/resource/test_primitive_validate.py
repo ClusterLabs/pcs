@@ -1,4 +1,3 @@
-# pylint: disable=too-many-lines
 from unittest import TestCase, mock
 
 from lxml import etree
@@ -1618,7 +1617,6 @@ class ValidateResourceInstanceAttributesUpdateSelfValidation(TestCase):
 
 
 class ValidateUniqueInstanceAttributes(TestCase):
-    # pylint: disable=protected-access
     cib = etree.fromstring(
         """
         <resources>

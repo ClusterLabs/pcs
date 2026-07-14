@@ -65,7 +65,6 @@ class ManageTest(TestCase, create_setup_patch_mixin(http_server)):
         self.assertFalse(self.https_server_manage.server_is_running)
 
     def HTTPServer(self, app, ssl_options=None):
-        # pylint: disable=invalid-name
         self.assertEqual(self.app, app)
         if ssl_options is not None:
             self.assertEqual(

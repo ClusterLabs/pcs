@@ -221,8 +221,6 @@ def enable_sbd(  # noqa: PLR0913
     no_watchdog_validation: bool = False,
     allow_invalid_option_values: bool = False,
 ) -> None:
-    # pylint: disable=too-many-arguments
-    # pylint: disable=too-many-locals
     """
     Enable SBD on all nodes in cluster.
 

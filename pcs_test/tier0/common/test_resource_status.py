@@ -1,4 +1,3 @@
-# pylint: disable=too-many-lines
 from collections.abc import Sequence
 from unittest import TestCase
 
@@ -51,7 +50,6 @@ def fixture_primitive_dto(  # noqa: PLR0913
     pending: str | None = None,
     locked_to: str | None = None,
 ) -> PrimitiveStatusDto:
-    # pylint: disable=too-many-arguments
     return PrimitiveStatusDto(
         resource_id,
         instance_id,
@@ -103,7 +101,6 @@ def fixture_clone_dto(  # noqa: PLR0913
     failure_ignored: bool = False,
     instances: Sequence[PrimitiveStatusDto] | Sequence[GroupStatusDto] = (),
 ) -> CloneStatusDto:
-    # pylint: disable=too-many-arguments
     return CloneStatusDto(
         resource_id,
         multi_state,
@@ -120,7 +117,6 @@ def fixture_clone_dto(  # noqa: PLR0913
 
 
 class TestFilterCloneOrphans(TestCase):
-    # pylint: disable=protected-access
     def test_primitives(self):
         resource_list = [
             fixture_primitive_dto("primitive", None, node_names=["node1"]),
@@ -178,7 +174,6 @@ class TestFilterCloneOrphans(TestCase):
 
 
 class TestFacadeFromDto(TestCase):
-    # pylint: disable=protected-access
     def test_primitive(self):
         primitive = fixture_primitive_dto("primitive", None)
         dto = ResourcesStatusDto([primitive])
@@ -1119,7 +1114,6 @@ class TestFacadeCanHaveMultipleInstances(TestCase):
 
 
 class TestFacadeIsState(TestCase):
-    # pylint: disable=too-many-public-methods
     def test_nonexistent(self):
         facade = ResourcesStatusFacade([])
 

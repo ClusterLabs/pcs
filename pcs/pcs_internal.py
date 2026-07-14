@@ -64,7 +64,6 @@ class LibraryReportProcessor(ReportProcessor):
 
 
 def main() -> None:
-    # pylint: disable=broad-except
     argv = sys.argv[1:]
     if argv:
         _exit(

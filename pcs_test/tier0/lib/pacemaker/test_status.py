@@ -1,4 +1,3 @@
-# pylint: disable=too-many-lines
 from collections.abc import Sequence
 from unittest import TestCase
 
@@ -324,8 +323,6 @@ def fixture_crm_mon_xml(resources: list[str]) -> str:
 
 
 class TestParsingErrorToReport(TestCase):
-    # pylint: disable=no-self-use
-
     def test_empty_resource_id(self):
         report = status.cluster_status_parsing_error_to_report(
             status.EmptyResourceIdError()
@@ -462,7 +459,6 @@ class TestParsingErrorToReport(TestCase):
 
 
 class TestPrimitiveStatusToDto(TestCase):
-    # pylint: disable=protected-access
     def test_simple(self):
         primitive_xml = etree.fromstring(fixture_primitive_xml())
 
@@ -588,7 +584,6 @@ class TestPrimitiveStatusToDto(TestCase):
 
 
 class TestGroupStatusToDto(TestCase):
-    # pylint: disable=protected-access
     def test_all_attributes(self):
         group_xml = etree.fromstring(
             fixture_group_xml(description="Test description")
@@ -733,7 +728,6 @@ class TestGroupStatusToDto(TestCase):
 
 
 class TestCloneStatusToDto(TestCase):
-    # pylint: disable=protected-access
     def test_all_attributes(self):
         clone_xml = etree.fromstring(
             fixture_clone_xml(
@@ -1047,7 +1041,6 @@ class TestCloneStatusToDto(TestCase):
 
 
 class TestBundleReplicaStatusToDto(TestCase):
-    # pylint: disable=protected-access
     def setUp(self):
         self.bundle_id = "resource-bundle"
         self.bundle_type = "podman"
@@ -1345,7 +1338,6 @@ class TestBundleReplicaStatusToDto(TestCase):
 
 
 class TestBundleStatusToDto(TestCase):
-    # pylint: disable=protected-access
     def test_no_member(self):
         bundle_xml = etree.fromstring(
             fixture_bundle_xml(replicas=[fixture_replica_xml()])

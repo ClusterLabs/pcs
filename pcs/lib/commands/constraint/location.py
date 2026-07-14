@@ -37,7 +37,6 @@ def create_plain_with_rule(
     constraint_options -- additional options for the constraint
     force_flags -- list of flags codes
     """
-    # pylint: disable=too-many-locals
     # Pacemaker 3 changed CIB schema for rules. We no longer support the
     # old schema, so we require CIB to be upgraded to the new one.
     cib = env.get_cib(minimal_version=const.PCMK_RULES_PCMK3_SYNTAX_CIB_VERSION)

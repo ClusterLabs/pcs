@@ -1,5 +1,4 @@
 class Env:
-    # pylint: disable=too-many-instance-attributes
     def __init__(self):
         self.cib_data = None
         self.user = None

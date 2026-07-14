@@ -10,7 +10,6 @@ from pcs.common.interface.dto import DataTransferObject
 
 @dataclass(frozen=True)
 class PrimitiveStatusDto(DataTransferObject):
-    # pylint: disable=too-many-instance-attributes
     resource_id: str
     instance_id: str | None
     resource_agent: str
@@ -42,7 +41,6 @@ class GroupStatusDto(DataTransferObject):
 
 @dataclass(frozen=True)
 class CloneStatusDto(DataTransferObject):
-    # pylint: disable=too-many-instance-attributes
     resource_id: str
     multi_state: bool
     unique: bool
@@ -67,7 +65,6 @@ class BundleReplicaStatusDto(DataTransferObject):
 
 @dataclass(frozen=True)
 class BundleStatusDto(DataTransferObject):
-    # pylint: disable=too-many-instance-attributes
     resource_id: str
     type: str
     image: str

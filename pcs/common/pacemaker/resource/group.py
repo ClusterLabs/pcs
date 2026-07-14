@@ -7,7 +7,7 @@ from pcs.common.pacemaker.nvset import CibNvsetDto
 
 @dataclass(frozen=True)
 class CibResourceGroupDto(DataTransferObject):
-    id: str  # pylint: disable=invalid-name
+    id: str
     description: str | None
     member_ids: list[str]
     meta_attributes: Sequence[CibNvsetDto]

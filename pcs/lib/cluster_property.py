@@ -104,8 +104,6 @@ def validate_set_cluster_properties(  # noqa: PLR0912
     service_manager -- manager for system daemon services
     force -- if True, produce warnings instead of errors
     """
-    # pylint: disable=too-many-branches
-    # pylint: disable=too-many-locals
     possible_properties_dict = {
         parameter.name: parameter
         for parameter in cluster_properties_facade.metadata.parameters

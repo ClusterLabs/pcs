@@ -1,4 +1,3 @@
-# pylint: disable=too-many-lines
 from unittest import TestCase
 
 from pcs.common.reports import codes as report_codes
@@ -393,7 +392,6 @@ def get_fixture_clone_group_cib(  # noqa: PLR0913
     primitive2_meta=False,
     all_meta=False,
 ):
-    # pylint: disable=too-many-arguments
     parts = ["""<resources><clone id="A-clone">"""]
     if clone_unmanaged:
         parts.append(

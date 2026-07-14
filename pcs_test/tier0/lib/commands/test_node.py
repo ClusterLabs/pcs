@@ -176,7 +176,6 @@ class SetInstanceAttrsBase(TestCase):
 @patch_command("update_node_instance_attrs")
 @patch_command("get_local_node_name")
 class SetInstanceAttrsLocal(SetInstanceAttrsBase):
-    # pylint: disable=protected-access
     node_count = 2
 
     def test_not_possible_with_cib_file(self, mock_name, mock_attrs):
@@ -210,7 +209,6 @@ class SetInstanceAttrsLocal(SetInstanceAttrsBase):
 
 @patch_command("update_node_instance_attrs")
 class SetInstanceAttrsAll(SetInstanceAttrsBase):
-    # pylint: disable=protected-access
     node_count = 2
 
     def test_success(self, mock_attrs):
@@ -228,7 +226,6 @@ class SetInstanceAttrsAll(SetInstanceAttrsBase):
 
 @patch_command("update_node_instance_attrs")
 class SetInstanceAttrsList(SetInstanceAttrsBase):
-    # pylint: disable=protected-access
     node_count = 4
 
     def test_success(self, mock_attrs):
@@ -247,7 +244,6 @@ class SetInstanceAttrsList(SetInstanceAttrsBase):
         )
 
     def test_bad_node(self, mock_attrs):
-        # pylint: disable=no-self-use
         assert_raise_library_error(
             lambda: lib._set_instance_attrs_node_list(
                 create_env(), "attrs", ["node-1", "node-9"], False
@@ -301,7 +297,6 @@ class CibRunnerNodes(TestCase):
     @patch_env("ensure_wait_satisfiable", mock.Mock(side_effect=LibraryError))
     def test_raises_when_wait_is_not_satisfiable(self, push_cib):
         def run():
-            # pylint: disable=unused-variable
             with lib.cib_runner_nodes(self.env, "wait") as (cib, runner, nodes):
                 pass
 

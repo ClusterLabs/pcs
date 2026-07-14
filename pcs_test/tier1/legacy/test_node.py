@@ -621,7 +621,6 @@ class NodeAttributeTest(
         lambda cib: etree.tostring(etree.parse(cib).findall(".//nodes")[0])
     ),
 ):
-    # pylint: disable=too-many-public-methods
     def setUp(self):
         self.temp_cib = get_tmp_file("tier1_node_attribute")
         write_file_to_tmpfile(empty_cib, self.temp_cib)
@@ -640,7 +639,6 @@ class NodeAttributeTest(
                     '<instance_attributes id="nodes-{0}">'.format(node_id),
                 ]
             )
-            # pylint: disable=invalid-name
             nv = '<nvpair id="nodes-{id}-{name}" name="{name}" value="{val}"/>'
             for name, value in attrs.get(node_name, {}).items():
                 xml_lines.append(nv.format(id=node_id, name=name, val=value))

@@ -20,7 +20,6 @@ from pcs.lib.interface.config import (
 
 
 class FileInstance:
-    # pylint: disable=too-many-public-methods
     """
     Provides a high-level easy access to config files
     """

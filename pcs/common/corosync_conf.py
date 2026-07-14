@@ -32,7 +32,6 @@ class CorosyncQuorumDeviceSettingsDto(DataTransferObject):
 
 @dataclass(frozen=True)
 class CorosyncConfDto(DataTransferObject):
-    # pylint: disable=too-many-instance-attributes
     cluster_name: str
     cluster_uuid: str | None
     transport: CorosyncTransportType

@@ -8,7 +8,7 @@ from pcs.common.types import ResourceRelationType
 
 @dataclass(frozen=True)
 class RelationEntityDto(DataTransferObject):
-    id: str  # pylint: disable=invalid-name
+    id: str
     type: ResourceRelationType
     members: list[str]
     metadata: Mapping[str, Any]

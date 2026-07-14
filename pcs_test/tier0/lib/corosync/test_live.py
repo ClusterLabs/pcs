@@ -23,7 +23,6 @@ class GetLocalCorosyncConfTest(TestCase):
             self.assertEqual(lib.get_local_corosync_conf(), a_file.read())
 
     def test_error(self):
-        # pylint: disable=no-self-use
         path = rc("corosync.conf.nonexistent")
         settings.corosync_conf_file = path
         assert_raise_library_error(
@@ -89,7 +88,6 @@ class SetExpectedVotesTest(TestCase):
         self.mock_runner = mock.MagicMock(spec_set=CommandRunner)
 
     def test_success(self):
-        # pylint: disable=no-self-use
         cmd_retval = 0
         cmd_stdout = "cmd output"
         cmd_stderr = ""
@@ -103,7 +101,6 @@ class SetExpectedVotesTest(TestCase):
         )
 
     def test_error(self):
-        # pylint: disable=no-self-use
         cmd_retval = 1
         cmd_stdout = "cmd output"
         cmd_stderr = "cmd stderr"

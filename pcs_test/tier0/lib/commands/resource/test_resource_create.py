@@ -1,4 +1,3 @@
-# pylint: disable=too-many-lines
 from unittest import (
     TestCase,
     mock,
@@ -77,7 +76,6 @@ def create(  # noqa: PLR0913
     enable_agent_self_validation=False,
     instance_attributes=None,
 ):
-    # pylint: disable=too-many-arguments
     return resource.create(
         env,
         "A",
@@ -131,7 +129,6 @@ def create_clone(  # noqa: PLR0913
     enable_agent_self_validation=False,
     instance_attributes=None,
 ):
-    # pylint: disable=too-many-arguments
     return resource.create_as_clone(
         env,
         "A",

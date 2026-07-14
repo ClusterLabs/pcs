@@ -91,7 +91,6 @@ class LevelsToText(TestCase, LevelsToOutputMixin):
     ]
 
     def _call_command(self, dto):
-        # pylint: disable=no-self-use
         return output.stonith_level_config_to_text(dto)
 
 
@@ -116,5 +115,4 @@ class LevelsToCmd(TestCase, LevelsToOutputMixin):
     ]
 
     def _call_command(self, dto):
-        # pylint: disable=no-self-use
         return output.stonith_level_config_to_cmd(dto)

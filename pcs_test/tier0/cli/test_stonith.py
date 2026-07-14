@@ -354,7 +354,6 @@ class SbdDeviceSetup(TestCase):
 
 
 class StonithUpdateScsiDevices(TestCase):
-    # pylint: disable=too-many-public-methods
     def setUp(self):
         self.lib = mock.Mock(spec_set=["stonith"])
         self.stonith = mock.Mock(

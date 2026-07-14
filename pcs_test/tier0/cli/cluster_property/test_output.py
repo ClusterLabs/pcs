@@ -58,7 +58,6 @@ def fixture_property_metadata(
     enum_values=None,
     advanced=False,
 ):
-    # pylint: disable=redefined-builtin
     return ResourceAgentParameterDto(
         name=name,
         shortdesc=shortdesc,

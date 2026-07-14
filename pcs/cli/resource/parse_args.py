@@ -123,8 +123,6 @@ def parse_clone(arg_list: Argv, promotable: bool = False) -> CloneOptions:
 
 
 def parse_create_new(arg_list: Argv) -> ComplexResourceOptions:  # noqa: PLR0912
-    # pylint: disable=too-many-branches
-    # pylint: disable=too-many-locals
     top_groups = group_by_keywords(
         arg_list,
         {"clone", "promotable", "bundle", "group"},
@@ -253,9 +251,6 @@ def parse_create_new(arg_list: Argv) -> ComplexResourceOptions:  # noqa: PLR0912
 def parse_create_old(  # noqa: PLR0912
     arg_list: Argv, modifiers: InputModifiers
 ) -> ComplexResourceOptions:
-    # pylint: disable=too-many-branches
-    # pylint: disable=too-many-locals
-    # pylint: disable=too-many-statements
     top_groups = group_by_keywords(
         arg_list,
         {"clone", "promotable", "bundle"},

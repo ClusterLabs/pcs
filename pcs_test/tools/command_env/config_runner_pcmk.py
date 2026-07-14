@@ -30,8 +30,6 @@ RULE_NOT_YET_IN_EFFECT_RETURNCODE = 111
 
 
 class PcmkShortcuts:
-    # pylint: disable=too-many-arguments
-    # pylint: disable=too-many-public-methods
     def __init__(self, calls):
         self.__calls = calls
         self.default_wait_timeout = DEFAULT_WAIT_TIMEOUT
@@ -824,8 +822,6 @@ class PcmkShortcuts:
         int returncode -- crm_resource's returncode
         dict env -- CommandRunner environment variables
         """
-        # arguments are used via locals()
-        # pylint: disable=unused-argument
         all_args = locals()
         del all_args["self"]
         all_args["action"] = "--move"
@@ -862,7 +858,6 @@ class PcmkShortcuts:
         int returncode -- crm_resource's returncode
         """
         # arguments are used via locals()
-        # pylint: disable=unused-argument
         all_args = locals()
         del all_args["self"]
         all_args["action"] = "--ban"
@@ -901,7 +896,6 @@ class PcmkShortcuts:
         dict env -- CommandRunner environment variables
         """
         # arguments are used via locals()
-        # pylint: disable=unused-argument
         all_args = locals()
         del all_args["self"]
         all_args["action"] = "--clear"
@@ -1248,7 +1242,6 @@ class PcmkShortcuts:
         env=None,
         name="runner.pcmk.resource_agent_self_validation",
     ):
-        # pylint: disable=too-many-locals
         if output and stdout:
             raise AssertionError("Cannot specify both output and stdout")
         cmd = [
@@ -1314,7 +1307,6 @@ class PcmkShortcuts:
         env=None,
         name="runner.pcmk.stonith_agent_self_validation",
     ):
-        # pylint: disable=too-many-locals
         if output and stdout:
             raise AssertionError("Cannot specify both output and stdout")
         cmd = [

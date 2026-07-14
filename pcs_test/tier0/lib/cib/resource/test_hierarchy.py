@@ -141,7 +141,6 @@ class MoveResourcesToGroup(TestCase):
         assert_xml_equal(cib_after, etree_to_str(cib))
 
     def test_move_from_another_group(self):
-        # pylint: disable=no-self-use
         cib_before = """
             <resources>
                 <group id="G">
@@ -178,7 +177,6 @@ class MoveResourcesToGroup(TestCase):
         assert_xml_equal(cib_after, etree_to_str(cib))
 
     def test_move_last_from_group(self):
-        # pylint: disable=no-self-use
         cib_before = """
             <resources>
                 <group id="G">
@@ -211,7 +209,6 @@ class MoveResourcesToGroup(TestCase):
         assert_xml_equal(cib_after, etree_to_str(cib))
 
     def _assert_move_last_from_cloned_group(self, clone_type):
-        # pylint: disable=no-self-use
         cib_before = f"""
             <resources>
                 <group id="G">

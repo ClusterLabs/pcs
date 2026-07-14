@@ -1,4 +1,3 @@
-# pylint: disable=too-many-lines
 from hashlib import md5
 from unittest import TestCase, mock
 
@@ -57,7 +56,6 @@ class GetClusterStatusMixin(TestCase):
     settings, "pacemaker_api_result_schema", rc("pcmk_rng/api/api-result.rng")
 )
 class GetClusterStatusXml(GetClusterStatusMixin, TestCase):
-    # pylint: disable=protected-access
     def test_success(self):
         self.config.runner.pcmk.load_state(stdout=self.fixture_xml())
         env = self.env_assist.get_env()
@@ -337,7 +335,6 @@ class GetCibXmlTest(TestCase):
         self.assertEqual(expected_stdout, real_xml)
 
     def test_error(self):
-        # pylint: disable=no-self-use
         expected_stdout = "some info"
         expected_stderr = "some error"
         expected_retval = 1
@@ -381,7 +378,6 @@ class GetCibXmlTest(TestCase):
         self.assertEqual(expected_stdout, real_xml)
 
     def test_scope_error(self):
-        # pylint: disable=no-self-use
         expected_stdout = "some info"
         # yes, the numbers do not match, tested and verified with
         # pacemaker-2.0.0-1.fc29.1.x86_64
@@ -416,7 +412,6 @@ class GetCibXmlTest(TestCase):
 
 
 class GetCibTest(TestCase):
-    # pylint: disable=no-self-use
     def test_success(self):
         xml = "<xml />"
         assert_xml_equal(xml, str(XmlManipulation(lib.get_cib(xml))))
@@ -635,7 +630,6 @@ class GetCibVerificationErrors(TestCase):
 
 
 class ReplaceCibConfigurationTest(TestCase):
-    # pylint: disable=no-self-use
     def test_success(self):
         xml = "<xml/>"
         expected_stdout = "expected output"
@@ -697,8 +691,6 @@ class ReplaceCibConfigurationTest(TestCase):
 
 
 class UpgradeCibTest(TestCase):
-    # pylint: disable=protected-access
-    # pylint: disable=no-self-use
     def test_success(self):
         mock_runner = get_runner("", "", 0)
         lib._upgrade_cib(mock_runner)
@@ -1190,7 +1182,6 @@ class GetLocalNodeStatusTest(TestCase):
 
 
 class RemoveNode(TestCase):
-    # pylint: disable=no-self-use
     def test_success(self):
         mock_runner = get_runner("", "", 0)
         lib.remove_node(mock_runner, "NODE_NAME")
@@ -1518,7 +1509,6 @@ class ResourceRefreshTest(TestCase):
 
 
 class ResourcesWaitingTest(TestCase):
-    # pylint: disable=no-self-use
     def test_wait_success(self):
         expected_stdout = "expected output"
         expected_stderr = "expected stderr"
@@ -1598,7 +1588,6 @@ class ResourcesWaitingTest(TestCase):
 
 
 class IsInPcmkToolHelp(TestCase):
-    # pylint: disable=protected-access
     def test_all_in_stderr(self):
         mock_runner = get_runner("", "ABCDE", 0)
         self.assertTrue(
@@ -1792,8 +1781,6 @@ class GetResourceDigests(TestCase):
 
 
 class HandleInstanceAttributesValidateViaPcmkTest(TestCase):
-    # pylint: disable=protected-access
-
     def test_valid(self):
         runner = get_runner(
             stdout="""

@@ -482,7 +482,6 @@ class RawFileUpdate(TestCase):
         with tmp_dir:
             with raw_file.update() as io_buffer:
                 try:
-                    # pylint: disable=consider-using-with
                     file_obj = open(file_path)  # noqa: SIM115
                 except OSError:
                     self.fail("Unable to open file")
@@ -553,7 +552,6 @@ class RawFileUpdate(TestCase):
 
 @patch_file("os.remove")
 class RawFileRemove(TestCase):
-    # pylint: disable=no-self-use
     def test_success(self, mock_remove):
         RawFile(fixture_metadata()).remove()
         mock_remove.assert_called_once_with(FILE_PATH)

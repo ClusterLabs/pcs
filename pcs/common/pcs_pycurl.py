@@ -1,7 +1,5 @@
 import sys
 
-# pylint: disable=unused-wildcard-import
-# pylint: disable=wildcard-import
 from pycurl import *  # noqa: F403
 
 # This package defines constants which are not present in some older versions

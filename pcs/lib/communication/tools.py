@@ -181,7 +181,6 @@ class OneByOneStrategyMixin(StrategyBase):
     list. Other requests are then available by calling method _get_next_list.
     """
 
-    # pylint: disable=abstract-method
     __iter = None
 
     def get_initial_request_list(self):
@@ -209,7 +208,6 @@ class AllAtOnceStrategyMixin(StrategyBase):
     parallel.
     """
 
-    # pylint: disable=abstract-method
     def get_initial_request_list(self):
         return self._prepare_initial_requests()
 

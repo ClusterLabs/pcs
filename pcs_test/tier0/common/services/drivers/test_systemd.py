@@ -111,12 +111,10 @@ class DisableTest(Base, BaseTestMixin):
 
     def setUp(self):
         super().setUp()
-        # pylint: disable=protected-access
         self.driver._available_services = [self.service]
         self.driver_callback = self.driver.disable
 
     def test_not_installed(self):
-        # pylint: disable=protected-access
         self.driver._available_services = [f"not_{self.service}"]
         self.driver_callback(self.service)
         self.mock_executor.run.assert_not_called()

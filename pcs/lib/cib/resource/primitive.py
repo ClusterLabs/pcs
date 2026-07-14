@@ -150,9 +150,6 @@ def create(  # noqa: PLR0913
     do_not_report_instance_attribute_server_exists: bool = False,
     enable_agent_self_validation: bool = False,
 ) -> _Element:
-    # pylint: disable=too-many-arguments
-    # pylint: disable=too-many-locals
-    # pylint: disable=too-many-positional-arguments
     """
     Prepare all parts of primitive resource and append it into cib.
 
@@ -223,7 +220,6 @@ def create(  # noqa: PLR0913
                 report_msg = cast(
                     reports.messages.InvalidOptions, report_item.message
                 )
-                # pylint: disable=no-member
                 report_item.message = reports.messages.InvalidOptions(
                     report_msg.option_names,
                     sorted(
@@ -310,8 +306,6 @@ def append_new(  # noqa: PLR0913
     meta_attributes: Mapping[str, str],
     operation_list: Iterable[ResourceOperationFilteredIn],
 ) -> _Element:
-    # pylint:disable=too-many-arguments
-    # pylint: disable=too-many-positional-arguments
     """
     Append a new primitive element to the resources_section.
 
@@ -533,7 +527,6 @@ def validate_resource_instance_attributes_update(
     # will be fixed to accept the updated resource as an element instead of a
     # string.
 
-    # pylint: disable=too-many-locals
     report_items: reports.ReportItemList = []
     current_instance_attrs = get_nvset_as_dict(
         INSTANCE_ATTRIBUTES_TAG,

@@ -73,7 +73,6 @@ class RemoveGuest(TestCase):
 
     def find_by(self, identifier):
         # Instance of 'Config' has no 'local' member
-        # pylint: disable=no-member
         self.config.runner.cib.load(resources=FIXTURE_RESOURCES)
         self.config.local.destroy_pacemaker_remote(
             label=NODE_NAME, dest_list=NODE_DEST_LIST
@@ -110,7 +109,6 @@ class RemoveGuestOthers(TestCase):
 
     def test_success_with_wait(self):
         # Instance of 'Config' has no 'local' member
-        # pylint: disable=no-member
         wait = 10
         self.config.runner.cib.load(resources=FIXTURE_RESOURCES)
         self.config.local.destroy_pacemaker_remote(
@@ -129,7 +127,6 @@ class RemoveGuestOthers(TestCase):
 
     def test_can_skip_all_offline(self):
         # Instance of 'Config' has no 'local' member
-        # pylint: disable=no-member
         self.config.runner.cib.load(resources=FIXTURE_RESOURCES)
         self.config.local.destroy_pacemaker_remote(
             label=NODE_NAME, dest_list=NODE_DEST_LIST, **FAIL_HTTP_KWARGS
@@ -239,7 +236,6 @@ class MultipleResults(TestCase):
 
     def test_force(self):
         # Instance of 'Config' has no 'local' member
-        # pylint: disable=no-member
         self.config.local.destroy_pacemaker_remote(
             communication_list=[
                 dict(label="B-NAME", dest_list=self.dest_list_b),
@@ -315,7 +311,6 @@ class MultipleResults(TestCase):
 class AuthkeyRemove(TestCase):
     def setUp(self):
         # Instance of 'Config' has no 'local' member
-        # pylint: disable=no-member
         self.env_assist, self.config = get_env_tools(self)
         self.config.runner.cib.load(resources=FIXTURE_RESOURCES)
         self.config.local.destroy_pacemaker_remote(
@@ -329,7 +324,6 @@ class AuthkeyRemove(TestCase):
 
     def test_fails_when_offline(self):
         # Instance of 'Config' has no 'local' member
-        # pylint: disable=no-member
         self.config.local.remove_authkey(
             communication_list=[
                 dict(label=NODE_NAME, dest_list=NODE_DEST_LIST)
@@ -348,7 +342,6 @@ class AuthkeyRemove(TestCase):
 
     def test_fails_when_remotely_fails(self):
         # Instance of 'Config' has no 'local' member
-        # pylint: disable=no-member
         self.config.local.remove_authkey(
             communication_list=[
                 dict(label=NODE_NAME, dest_list=NODE_DEST_LIST)
@@ -370,7 +363,6 @@ class AuthkeyRemove(TestCase):
 
     def test_forceable_when_remotely_fail(self):
         # Instance of 'Config' has no 'local' member
-        # pylint: disable=no-member
         self.config.local.remove_authkey(
             communication_list=[
                 dict(label=NODE_NAME, dest_list=NODE_DEST_LIST)
@@ -406,7 +398,6 @@ class PcmkRemoteServiceDestroy(TestCase):
 
     def test_fails_when_offline(self):
         # Instance of 'Config' has no 'local' member
-        # pylint: disable=no-member
         self.config.local.destroy_pacemaker_remote(
             label=NODE_NAME, dest_list=NODE_DEST_LIST, **FAIL_HTTP_KWARGS
         )
@@ -419,7 +410,6 @@ class PcmkRemoteServiceDestroy(TestCase):
 
     def test_fails_when_remotely_fails(self):
         # Instance of 'Config' has no 'local' member
-        # pylint: disable=no-member
         self.config.local.destroy_pacemaker_remote(
             label=NODE_NAME,
             dest_list=NODE_DEST_LIST,
@@ -438,7 +428,6 @@ class PcmkRemoteServiceDestroy(TestCase):
 
     def test_forceable_when_remotely_fail(self):
         # Instance of 'Config' has no 'local' member
-        # pylint: disable=no-member
         self.config.local.destroy_pacemaker_remote(
             label=NODE_NAME,
             dest_list=NODE_DEST_LIST,

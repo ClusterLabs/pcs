@@ -4,7 +4,6 @@ from pcs.common import tools
 
 
 class VersionTest(TestCase):
-    # pylint: disable=invalid-name
     def assert_asterisk(self, expected, major, minor=None, revision=None):
         self.assertEqual(expected, (major, minor, revision))
 

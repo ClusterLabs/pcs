@@ -15,7 +15,6 @@ if __name__ == "__main__":
     sys.path.insert(0, BUNDLED_PACKAGES_DIR)
     sys.path.insert(0, PACKAGE_DIR)
 
-    # pylint: disable=wrong-import-position
     # we need settings to be imported from a path defined above
     from pcs import settings
 

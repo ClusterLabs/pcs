@@ -114,9 +114,6 @@ def _config_show_cib_lines(lib, properties_facade=None):  # noqa: PLR0912, PLR09
     Commandline options:
       * -f - CIB file
     """
-    # pylint: disable=too-many-branches
-    # pylint: disable=too-many-locals
-    # pylint: disable=too-many-statements
 
     # update of pcs_options will change output of constraint show and
     # displaying resources and operations defaults
@@ -341,8 +338,6 @@ def config_restore_remote(infile_name, infile_obj):  # noqa: PLR0912
     Commandline options:
       * --request-timeout - timeout for HTTP requests
     """
-    # pylint: disable=too-many-branches
-    # pylint: disable=too-many-locals
     extracted = {
         "version.txt": "",
         "corosync.conf": "",
@@ -429,9 +424,6 @@ def config_restore_local(infile_name, infile_obj):  # noqa: PLR0912, PLR0915
     """
     Commandline options: no options
     """
-    # pylint: disable=too-many-branches
-    # pylint: disable=too-many-locals
-    # pylint: disable=too-many-statements
     service_manager = utils.get_service_manager()
     if (
         service_manager.is_running("corosync")
@@ -846,7 +838,6 @@ def config_checkpoint_restore(lib, argv, modifiers):
     cib_path = os.path.join(settings.cib_dir, "cib-%s.raw" % argv[0])
     try:
         snapshot_dom = parse(cib_path)
-    # pylint: disable=broad-except
     except Exception as e:
         utils.err("unable to read the checkpoint: %s" % e)
     utils.replace_cib_configuration(snapshot_dom)

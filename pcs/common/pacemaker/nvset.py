@@ -7,14 +7,14 @@ from pcs.common.pacemaker.rule import CibRuleExpressionDto
 
 @dataclass(frozen=True)
 class CibNvpairDto(DataTransferObject):
-    id: str  # pylint: disable=invalid-name
+    id: str
     name: str
     value: str
 
 
 @dataclass(frozen=True)
 class CibNvsetDto(DataTransferObject):
-    id: str  # pylint: disable=invalid-name
+    id: str
     options: Mapping[str, str]
     rule: CibRuleExpressionDto | None
     nvpairs: Sequence[CibNvpairDto]

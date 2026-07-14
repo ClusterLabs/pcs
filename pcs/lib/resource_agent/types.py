@@ -56,9 +56,7 @@ class ResourceAgentName:
 
 
 @dataclass(frozen=True)
-class ResourceAgentActionOcf1_0:  # pylint: disable=invalid-name
-    # pylint: disable=too-many-instance-attributes
-
+class ResourceAgentActionOcf1_0:
     # (start, stop, promote...), mandatory by both OCF 1.0 and 1.1
     name: str
     # mandatory by both OCF 1.0 and 1.1, sometimes not defined by agents
@@ -79,9 +77,7 @@ class ResourceAgentActionOcf1_0:  # pylint: disable=invalid-name
 
 
 @dataclass(frozen=True)
-class ResourceAgentActionOcf1_1:  # pylint: disable=invalid-name
-    # pylint: disable=too-many-instance-attributes
-
+class ResourceAgentActionOcf1_1:
     # (start, stop, promote...), mandatory by both OCF 1.0 and 1.1
     name: str
     # mandatory by both OCF 1.0 and 1.1, sometimes not defined by agents
@@ -103,9 +99,7 @@ class ResourceAgentActionOcf1_1:  # pylint: disable=invalid-name
 
 
 @dataclass(frozen=True)
-class ResourceAgentParameterOcf1_0:  # pylint: disable=invalid-name
-    # pylint: disable=too-many-instance-attributes
-
+class ResourceAgentParameterOcf1_0:
     # name of the parameter
     name: str
     # short description
@@ -129,9 +123,7 @@ class ResourceAgentParameterOcf1_0:  # pylint: disable=invalid-name
 
 
 @dataclass(frozen=True)
-class ResourceAgentParameterOcf1_1:  # pylint: disable=invalid-name
-    # pylint: disable=too-many-instance-attributes
-
+class ResourceAgentParameterOcf1_1:
     # name of the parameter
     name: str
     # short description
@@ -162,7 +154,7 @@ class ResourceAgentParameterOcf1_1:  # pylint: disable=invalid-name
 
 
 @dataclass(frozen=True)
-class ResourceAgentMetadataOcf1_0:  # pylint: disable=invalid-name
+class ResourceAgentMetadataOcf1_0:
     name: ResourceAgentName
     shortdesc: str | None
     longdesc: str | None
@@ -171,7 +163,7 @@ class ResourceAgentMetadataOcf1_0:  # pylint: disable=invalid-name
 
 
 @dataclass(frozen=True)
-class ResourceAgentMetadataOcf1_1:  # pylint: disable=invalid-name
+class ResourceAgentMetadataOcf1_1:
     name: ResourceAgentName
     shortdesc: str | None
     longdesc: str | None
@@ -181,8 +173,6 @@ class ResourceAgentMetadataOcf1_1:  # pylint: disable=invalid-name
 
 @dataclass(frozen=True)
 class ResourceAgentAction:
-    # pylint: disable=too-many-instance-attributes
-
     # (start, stop, promote...), mandatory by both OCF 1.0 and 1.1
     name: str
     # mandatory by both OCF 1.0 and 1.1, sometimes not defined by agents
@@ -216,8 +206,6 @@ class ResourceAgentAction:
 
 @dataclass(frozen=True)
 class ResourceAgentParameter:
-    # pylint: disable=too-many-instance-attributes
-
     # name of the parameter
     name: str
     # short description

@@ -17,7 +17,6 @@ class Spy:
 
 
 class Config:
-    # pylint: disable=too-many-instance-attributes
     def __init__(self):
         self.__calls = CallListBuilder()
         self.runner = self.__wrap_helper(
@@ -29,14 +28,13 @@ class Config:
         )
         self.corosync_conf = self.__wrap_helper(CorosyncConf(self.__calls))
         self.fcntl = self.__wrap_helper(FcntlConfig(self.__calls))
-        # pylint: disable=invalid-name
         self.fs = self.__wrap_helper(FsConfig(self.__calls))
         self.raw_file = self.__wrap_helper(RawFileConfig(self.__calls))
         self.services = self.__wrap_helper(ServiceManagerConfig(self.__calls))
 
         self.spy = None
 
-    def add_extension(self, name, Extension):  # pylint: disable=invalid-name
+    def add_extension(self, name, Extension):
         if hasattr(self, name):
             raise AssertionError(
                 f"Config (integration tests) has the extension '{name}' already."

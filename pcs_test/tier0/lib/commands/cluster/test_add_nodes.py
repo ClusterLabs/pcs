@@ -1,5 +1,3 @@
-# pylint: disable=too-many-lines
-# pylint: disable=no-member
 import base64
 import fcntl
 import json
@@ -635,7 +633,6 @@ class CheckLive(TestCase):
 
 
 class AddNodesSuccessMinimal(TestCase):
-    # pylint: disable=too-many-public-methods
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         self.existing_nodes = ()
@@ -1943,7 +1940,6 @@ class FailureCorosyncConfDistribution(TestCase):
 
 
 class FailurePcsdSslCertSync(TestCase):
-    # pylint: disable=too-many-instance-attributes
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         self.existing_nodes, self.new_nodes = generate_nodes(4, 2)
@@ -2079,7 +2075,6 @@ class FailurePcsdSslCertSync(TestCase):
 
 
 class FailureFilesDistribution(TestCase):
-    # pylint: disable=too-many-instance-attributes
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         self.existing_nodes, self.new_nodes = generate_nodes(4, 2)
@@ -2614,7 +2609,6 @@ class FailureFilesDistribution(TestCase):
 
 
 class FailureBoothConfigsDistribution(TestCase):
-    # pylint: disable=too-many-instance-attributes
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         self.existing_nodes, self.new_nodes = generate_nodes(4, 2)
@@ -3277,7 +3271,6 @@ class FailureBoothConfigsDistribution(TestCase):
 
 
 class FailureDisableSbd(TestCase):
-    # pylint: disable=too-many-instance-attributes
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         self.existing_nodes, self.new_nodes = generate_nodes(4, 2)
@@ -3411,7 +3404,6 @@ class FailureDisableSbd(TestCase):
 
 
 class FailureEnableSbd(TestCase):
-    # pylint: disable=too-many-instance-attributes
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         # have 5 nodes in total so we do not need to enable atb
@@ -3626,7 +3618,6 @@ class FailureEnableSbd(TestCase):
 
 
 class FailureQdevice(TestCase):
-    # pylint: disable=too-many-instance-attributes
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         self.existing_nodes, self.new_nodes = generate_nodes(2, 2)
@@ -4026,7 +4017,6 @@ class FailureQdevice(TestCase):
 
 
 class FailureKnownHostsUpdate(TestCase):
-    # pylint: disable=too-many-instance-attributes
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         self.existing_nodes, self.new_nodes = generate_nodes(2, 2)

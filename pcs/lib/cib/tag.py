@@ -139,10 +139,6 @@ def validate_create_tag(
     resources_section -- element resources
     tag_id -- identifier of new tag
     idref_list -- reference ids which we want to tag
-
-    NOTE: Sequence vs. Collection issue:
-            Value 'Collection' is unsubscriptable
-            https://github.com/PyCQA/pylint/issues/2377
     """
     return (
         _validate_tag_id(tag_id, id_provider)
@@ -195,7 +191,6 @@ def validate_remove_tag(
 
 
 class ValidateTagUpdateByIds:
-    # pylint:disable=too-many-instance-attributes
     """
     Validate update of a tag element by using ids.
 

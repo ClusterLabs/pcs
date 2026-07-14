@@ -1,4 +1,3 @@
-# pylint: disable=too-many-lines
 import json
 import re
 import sys
@@ -602,7 +601,6 @@ def resource_create(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  #
       * -f - CIB file
       * --future - enable future cli parser behavior
     """
-    # pylint: disable=too-many-branches
     modifiers_deprecated = ["--before", "--after", "--group"]
     modifiers.ensure_only_supported(
         *(
@@ -945,9 +943,6 @@ def resource_update(args: Argv, modifiers: InputModifiers) -> None:  # noqa: PLR
       * --force - allow invalid options, do not fail if not possible to get
         agent metadata, allow not suitable command
     """
-    # pylint: disable=too-many-branches
-    # pylint: disable=too-many-locals
-    # pylint: disable=too-many-statements
     modifiers.ensure_only_supported(
         "-f", "--wait", "--force", "--agent-validation"
     )
@@ -1234,9 +1229,6 @@ def resource_operation_add(  # noqa: PLR0912, PLR0915
     Commandline options:
       * --force
     """
-    # pylint: disable=too-many-branches
-    # pylint: disable=too-many-locals
-    # pylint: disable=too-many-statements
     if not argv:
         raise CmdLineInputError()
 
@@ -1373,7 +1365,6 @@ def resource_operation_remove(res_id: str, argv: Argv) -> None:  # noqa: PLR0912
     Commandline options:
       * -f - CIB file
     """
-    # pylint: disable=too-many-branches
     # if no args, then we're removing an operation id
 
     # Do not ever remove an operations element, even if it is empty. There may
@@ -1609,7 +1600,6 @@ def resource_clone_create(  # noqa: PLR0912
     Commandline options:
       * --force - allow to clone stonith resource
     """
-    # pylint: disable=too-many-branches
     name = argv.pop(0)
 
     resources_el = cib_dom.getElementsByTagName("resources")[0]
@@ -1783,7 +1773,6 @@ def resource_clone_master_remove(
       * -f - CIB file
       * --wait
     """
-    # pylint: disable=too-many-locals
     del lib
     modifiers.ensure_only_supported("-f", "--wait")
     if len(argv) != 1:
@@ -2013,9 +2002,6 @@ def resource_status(  # noqa: PLR0912, PLR0915
       * -f - CIB file
       * --hide-inactive - print only active resources
     """
-    # pylint: disable=too-many-branches
-    # pylint: disable=too-many-locals
-    # pylint: disable=too-many-statements
     del lib
     modifiers.ensure_only_supported("-f", "--hide-inactive")
     if len(argv) > 2:
@@ -2288,7 +2274,6 @@ def resource_force_action(  # noqa: PLR0912
       * --force
       * --full - more verbose output
     """
-    # pylint: disable=too-many-branches
     modifiers.ensure_only_supported("--force", "--full")
     action_command = {
         "debug-start": "--force-start",
@@ -2403,7 +2388,6 @@ def resource_failcount_show(
       * --full
       * -f - CIB file
     """
-    # pylint: disable=too-many-locals
     modifiers.ensure_only_supported("-f", "--full")
 
     resource = argv.pop(0) if argv and "=" not in argv[0] else None
@@ -2782,7 +2766,6 @@ def resource_relocate_run(cib_dom, resources=None, dry=True):  # noqa: PLR0912
       * --force - allow constraint on any resource, may not have any effective
         as an invalid copnstraint is ignored anyway
     """
-    # pylint: disable=too-many-branches
     resources = [] if resources is None else resources
     was_error = False
     anything_changed = False

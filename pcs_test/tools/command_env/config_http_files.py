@@ -22,7 +22,6 @@ class FilesShortcuts:
         communication_list=None,
         name="http.files.put_files",
     ):
-        # pylint: disable=too-many-arguments
         """
         Create a call for the files distribution to the nodes.
 

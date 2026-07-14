@@ -969,7 +969,6 @@ def get_resource_digests(
     resource_options -- resource options with updated values
     crm_meta_attributes -- parameters of a monitor operation
     """
-    # pylint: disable=too-many-locals
     if crm_meta_attributes is None:
         crm_meta_attributes = {}
     command = [

@@ -15,10 +15,7 @@ from pcs_test.tools.pcs_runner import PcsRunner
 class ManageUnmanage(
     TestCase,
     get_assert_pcs_effect_mixin(
-        lambda cib: etree.tostring(
-            # pylint:disable=undefined-variable
-            etree.parse(cib).findall(".//resources")[0]
-        )
+        lambda cib: etree.tostring(etree.parse(cib).findall(".//resources")[0])
     ),
 ):
     empty_cib = rc("cib-empty.xml")

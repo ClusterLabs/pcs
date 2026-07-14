@@ -1,4 +1,3 @@
-# pylint: disable=import-error
 from pyagentx import Updater
 
 from pcs.snmp.agentx.types import Oid

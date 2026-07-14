@@ -18,7 +18,6 @@ class StonithIsForbidden(
         lambda cib: etree.tostring(etree.parse(cib).findall(".//resources")[0])
     ),
 ):
-    # pylint: disable=too-many-public-methods
     empty_cib = rc("cib-empty.xml")
 
     def setUp(self):

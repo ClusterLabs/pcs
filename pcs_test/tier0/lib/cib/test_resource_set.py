@@ -165,7 +165,6 @@ class CreateTest(TestCase):
 
 class CreateOldTest(TestCase):
     def test_resource_set_to_parent(self):
-        # pylint: disable=no-self-use
         constraint_element = etree.Element("constraint")
         resource_set.create_old(
             constraint_element,

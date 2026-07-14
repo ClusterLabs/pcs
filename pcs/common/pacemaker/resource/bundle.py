@@ -24,7 +24,7 @@ class CibResourceBundleContainerRuntimeOptionsDto(DataTransferObject):
 
 @dataclass(frozen=True)
 class CibResourceBundlePortMappingDto(DataTransferObject):
-    id: str  # pylint: disable=invalid-name
+    id: str
     port: int | None
     internal_port: int | None
     range: str | None
@@ -41,7 +41,7 @@ class CibResourceBundleNetworkOptionsDto(DataTransferObject):
 
 @dataclass(frozen=True)
 class CibResourceBundleStorageMappingDto(DataTransferObject):
-    id: str  # pylint: disable=invalid-name
+    id: str
     source_dir: str | None
     source_dir_root: str | None
     target_dir: str
@@ -50,8 +50,7 @@ class CibResourceBundleStorageMappingDto(DataTransferObject):
 
 @dataclass(frozen=True)
 class CibResourceBundleDto(DataTransferObject):
-    # pylint: disable=too-many-instance-attributes
-    id: str  # pylint: disable=invalid-name
+    id: str
     description: str | None
     member_id: str | None
     container_type: ContainerType | None

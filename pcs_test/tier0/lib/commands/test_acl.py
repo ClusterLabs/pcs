@@ -34,7 +34,6 @@ class AclCommandsTest(TestCase, ExtendedAssertionsMixin):
 @mock.patch("pcs.lib.commands.acl.get_acls", mock.Mock(side_effect=lambda x: x))
 class CibAclSection(TestCase):
     def test_push_cib_on_success(self):
-        # pylint: disable=no-self-use
         env = mock.MagicMock()
         env.get_cib = mock.Mock(return_value="cib")
         with cmd_acl.cib_acl_section(env):

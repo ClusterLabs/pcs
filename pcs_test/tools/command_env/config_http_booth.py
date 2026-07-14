@@ -86,7 +86,6 @@ class BoothShortcuts:
         communication_list=None,
         name="http.booth.save_files",
     ):
-        # pylint: disable=too-many-arguments
         param_list = [("data_json", json.dumps(files_data))]
         if rewrite_existing:
             param_list.append(("rewrite_existing", "1"))

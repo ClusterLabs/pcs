@@ -23,7 +23,6 @@ from .ticket import (
 
 @dataclass(frozen=True)
 class CibConstraintsDto(DataTransferObject):
-    # pylint: disable=too-many-instance-attributes
     location: Sequence[CibConstraintLocationDto] = tuple()
     location_set: Sequence[CibConstraintLocationSetDto] = tuple()
     colocation: Sequence[CibConstraintColocationDto] = tuple()

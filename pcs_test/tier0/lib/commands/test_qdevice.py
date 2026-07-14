@@ -96,7 +96,6 @@ class QdeviceBadModelTest(QdeviceTestCase):
 @mock.patch("pcs.lib.commands.qdevice.qdevice_net.qdevice_setup")
 @mock.patch.object(LibraryEnvironment, "cmd_runner", lambda self: "mock_runner")
 class QdeviceNetSetupTest(QdeviceTestCase):
-    # pylint: disable=no-member
     def test_success(self, mock_net_setup):
         lib.qdevice_setup(self.lib_env, "net", False, False)
 
@@ -281,7 +280,6 @@ class QdeviceNetSetupTest(QdeviceTestCase):
 @mock.patch("pcs.lib.commands.qdevice.qdevice_net.qdevice_destroy")
 @mock.patch.object(LibraryEnvironment, "cmd_runner", lambda self: "mock_runner")
 class QdeviceNetDestroyTest(QdeviceTestCase):
-    # pylint: disable=no-member
     def test_success_not_used(self, mock_net_destroy, mock_status):
         mock_status.return_value = ""
 
@@ -642,7 +640,6 @@ class TestQdeviceNetStatusTextTest(QdeviceTestCase):
 
 
 class QdeviceNetEnableTest(QdeviceTestCase):
-    # pylint: disable=no-member
     def test_success(self):
         lib.qdevice_enable(self.lib_env, "net")
         self.assertEqual(
@@ -691,7 +688,6 @@ class QdeviceNetEnableTest(QdeviceTestCase):
 
 
 class QdeviceNetDisableTest(QdeviceTestCase):
-    # pylint: disable=no-member
     def test_success(self):
         lib.qdevice_disable(self.lib_env, "net")
         self.assertEqual(
@@ -741,7 +737,6 @@ class QdeviceNetDisableTest(QdeviceTestCase):
 
 @mock.patch("pcs.lib.corosync.qdevice_net.qdevice_initialized")
 class QdeviceNetStartTest(QdeviceTestCase):
-    # pylint: disable=no-member
     def test_success(self, mock_qdevice_initialized):
         mock_qdevice_initialized.return_value = True
         lib.qdevice_start(self.lib_env, "net")
@@ -837,7 +832,6 @@ class QdeviceNetStartTest(QdeviceTestCase):
 
 @mock.patch("pcs.lib.corosync.qdevice_net.qdevice_status_cluster_text")
 class QdeviceNetStopTest(QdeviceTestCase):
-    # pylint: disable=no-member
     def test_success_not_used(self, mock_status):
         mock_status.return_value = ""
 

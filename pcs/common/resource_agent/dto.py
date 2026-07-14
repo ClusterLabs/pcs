@@ -25,8 +25,6 @@ class ListResourceAgentNameDto(DataTransferObject):
 
 @dataclass(frozen=True)
 class ResourceAgentActionDto(DataTransferObject):
-    # pylint: disable=too-many-instance-attributes
-
     # (start, stop, promote...), mandatory by both OCF 1.0 and 1.1
     name: str
     # mandatory by both OCF 1.0 and 1.1, sometimes not defined by agents
@@ -48,8 +46,6 @@ class ResourceAgentActionDto(DataTransferObject):
 
 @dataclass(frozen=True)
 class ResourceAgentParameterDto(DataTransferObject):
-    # pylint: disable=too-many-instance-attributes
-
     # name of the parameter
     name: str
     # short description

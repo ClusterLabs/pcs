@@ -464,7 +464,6 @@ class FailureRemoteCorocyncConf(TestCase):
 
 
 class FailureRemoteDrCfgDistribution(TestCase):
-    # pylint: disable=too-many-instance-attributes
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         self.local_nodes = generate_nodes(4)
@@ -606,7 +605,6 @@ class FailureRemoteDrCfgDistribution(TestCase):
 
 
 class FailureLocalDrCfgDistribution(TestCase):
-    # pylint: disable=too-many-instance-attributes
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         local_nodes = generate_nodes(4)

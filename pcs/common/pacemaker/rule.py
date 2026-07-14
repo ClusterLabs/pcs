@@ -10,14 +10,13 @@ from pcs.common.types import (
 
 @dataclass(frozen=True)
 class CibRuleDateCommonDto(DataTransferObject):
-    id: str  # pylint: disable=invalid-name
+    id: str
     options: Mapping[str, str]
 
 
 @dataclass(frozen=True)
 class CibRuleExpressionDto(DataTransferObject):
-    # pylint: disable=too-many-instance-attributes
-    id: str  # pylint: disable=invalid-name
+    id: str
     type: CibRuleExpressionType
     in_effect: CibRuleInEffectStatus  # only valid for type==rule
     options: Mapping[str, str]

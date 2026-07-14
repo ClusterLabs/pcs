@@ -297,7 +297,6 @@ class ListAgents(TestCase):
 
 
 class ActionToOperation(TestCase):
-    # pylint: disable=protected-access
     @staticmethod
     def _action_dict(action):
         all_keys = {

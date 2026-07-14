@@ -123,7 +123,6 @@ def str_to_ssl_options(ssl_options_string, reports):
 
 
 class EnvLoader:
-    # pylint: disable=too-many-public-methods
     def __init__(self, environ):
         self.environ = environ
         self.errors = []

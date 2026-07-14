@@ -45,7 +45,6 @@ class ClusterPcsV1Updater(AgentxUpdaterBase):
     _oid_tree = Oid(0, "pcs_v1", member_list=[_cluster_v1_oid_tree])
 
     def update(self):
-        # pylint: disable=too-many-locals
         output, ret_val = run_pcsdcli("node_status")
         if ret_val != 0 or output["status"] != "ok":
             logger.error(

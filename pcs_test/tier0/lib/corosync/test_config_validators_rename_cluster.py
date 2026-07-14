@@ -8,7 +8,6 @@ from pcs_test.tools.assertions import assert_report_item_list_equal
 
 
 class RenameCluster(TestCase):
-    # pylint: disable=no-self-use
     def test_valid_cluster_name(self):
         assert_report_item_list_equal(
             config_validators.rename_cluster("my-cluster", False), []

@@ -13,7 +13,6 @@ from pcs_test.tools.assertions import assert_raise_library_error
 
 class BoothEnv(TestCase):
     def test_ghost_conf_real_key(self):
-        # pylint: disable=no-self-use
         assert_raise_library_error(
             lambda: env.BoothEnv(
                 "my_booth", {"config_data": "some config data".encode("utf-8")}
@@ -26,7 +25,6 @@ class BoothEnv(TestCase):
         )
 
     def test_real_conf_ghost_key(self):
-        # pylint: disable=no-self-use
         assert_raise_library_error(
             lambda: env.BoothEnv(
                 "my_booth", {"key_data": "some key data".encode("utf-8")}
@@ -101,7 +99,6 @@ class BoothEnv(TestCase):
         self.assertEqual(arbitrator_list, facade.get_arbitrators())
 
     def test_invalid_instance(self):
-        # pylint: disable=no-self-use
         assert_raise_library_error(
             lambda: env.BoothEnv("/tmp/booth/booth", {}),
             fixture.error(
@@ -112,7 +109,6 @@ class BoothEnv(TestCase):
         )
 
     def test_invalid_instance_ghost(self):
-        # pylint: disable=no-self-use
         assert_raise_library_error(
             lambda: env.BoothEnv(
                 "../../booth/booth",

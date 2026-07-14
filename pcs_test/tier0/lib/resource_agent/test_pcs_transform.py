@@ -94,8 +94,6 @@ ra_pkg = "pcs.lib.resource_agent.pcs_transform"
 @mock.patch(f"{ra_pkg}._metadata_parameter_extract_enum_values_from_desc")
 @mock.patch(f"{ra_pkg}._metadata_action_translate_role")
 class OcfUnifiedToPcs(TestCase):
-    # pylint: disable=too-many-arguments
-    # pylint: disable=too-many-positional-arguments
     @staticmethod
     def _fixture_metadata(name):
         return ra.ResourceAgentMetadata(
@@ -265,7 +263,6 @@ class MetadataActionTranslateRole(TestCase):
         metadata_in = self._fixture_metadata([])
         metadata_out = self._fixture_metadata([])
         self.assertEqual(
-            # pylint: disable=protected-access
             ra.pcs_transform._metadata_action_translate_role(metadata_in),
             metadata_out,
         )
@@ -284,7 +281,6 @@ class MetadataActionTranslateRole(TestCase):
             ]
         )
         self.assertEqual(
-            # pylint: disable=protected-access
             ra.pcs_transform._metadata_action_translate_role(metadata_in),
             metadata_out,
         )
@@ -303,7 +299,6 @@ class MetadataActionTranslateRole(TestCase):
             ]
         )
         self.assertEqual(
-            # pylint: disable=protected-access
             ra.pcs_transform._metadata_action_translate_role(metadata_in),
             metadata_out,
         )
@@ -346,7 +341,6 @@ class MetadataParameterExtractAdvancedFromDesc(TestCase):
         metadata_in = self._fixture_metadata([])
         metadata_out = self._fixture_metadata([])
         self.assertEqual(
-            # pylint: disable=protected-access
             ra.pcs_transform._metadata_parameter_extract_advanced_from_desc(
                 metadata_in
             ),
@@ -361,7 +355,6 @@ class MetadataParameterExtractAdvancedFromDesc(TestCase):
             [self._fixture_parameter(None, None, False)]
         )
         self.assertEqual(
-            # pylint: disable=protected-access
             ra.pcs_transform._metadata_parameter_extract_advanced_from_desc(
                 metadata_in
             ),
@@ -376,7 +369,6 @@ class MetadataParameterExtractAdvancedFromDesc(TestCase):
             [self._fixture_parameter("some shortdesc", None, False)]
         )
         self.assertEqual(
-            # pylint: disable=protected-access
             ra.pcs_transform._metadata_parameter_extract_advanced_from_desc(
                 metadata_in
             ),
@@ -393,7 +385,6 @@ class MetadataParameterExtractAdvancedFromDesc(TestCase):
                     [self._fixture_parameter(None, None, True)]
                 )
                 self.assertEqual(
-                    # pylint: disable=protected-access
                     ra.pcs_transform._metadata_parameter_extract_advanced_from_desc(
                         metadata_in
                     ),
@@ -412,7 +403,6 @@ class MetadataParameterExtractAdvancedFromDesc(TestCase):
             [self._fixture_parameter("some shortdesc", None, True)]
         )
         self.assertEqual(
-            # pylint: disable=protected-access
             ra.pcs_transform._metadata_parameter_extract_advanced_from_desc(
                 metadata_in
             ),
@@ -447,7 +437,6 @@ class MetadataParameterExtractAdvancedFromDesc(TestCase):
                     ]
                 )
                 self.assertEqual(
-                    # pylint: disable=protected-access
                     ra.pcs_transform._metadata_parameter_extract_advanced_from_desc(
                         metadata_in
                     ),
@@ -472,7 +461,6 @@ class MetadataParameterExtractAdvancedFromDesc(TestCase):
                     ]
                 )
                 self.assertEqual(
-                    # pylint: disable=protected-access
                     ra.pcs_transform._metadata_parameter_extract_advanced_from_desc(
                         metadata_in
                     ),
@@ -521,7 +509,6 @@ class MetadataParameterExtractEnumValuesFromDesc(TestCase):
         metadata_in = self._fixture_metadata([])
         metadata_out = self._fixture_metadata([])
         self.assertEqual(
-            # pylint: disable=protected-access
             ra.pcs_transform._metadata_parameter_extract_enum_values_from_desc(
                 metadata_in
             ),
@@ -536,7 +523,6 @@ class MetadataParameterExtractEnumValuesFromDesc(TestCase):
             [self._fixture_parameter("select", self.longdesc)]
         )
         self.assertEqual(
-            # pylint: disable=protected-access
             ra.pcs_transform._metadata_parameter_extract_enum_values_from_desc(
                 metadata_in
             ),
@@ -555,7 +541,6 @@ class MetadataParameterExtractEnumValuesFromDesc(TestCase):
             ]
         )
         self.assertEqual(
-            # pylint: disable=protected-access
             ra.pcs_transform._metadata_parameter_extract_enum_values_from_desc(
                 metadata_in
             ),
@@ -577,7 +562,6 @@ class MetadataParameterExtractEnumValuesFromDesc(TestCase):
             ]
         )
         self.assertEqual(
-            # pylint: disable=protected-access
             ra.pcs_transform._metadata_parameter_extract_enum_values_from_desc(
                 metadata_in
             ),
@@ -596,7 +580,6 @@ class MetadataParameterExtractEnumValuesFromDesc(TestCase):
             ]
         )
         self.assertEqual(
-            # pylint: disable=protected-access
             ra.pcs_transform._metadata_parameter_extract_enum_values_from_desc(
                 metadata_in
             ),
@@ -618,7 +601,6 @@ class MetadataParameterExtractEnumValuesFromDesc(TestCase):
             ]
         )
         self.assertEqual(
-            # pylint: disable=protected-access
             ra.pcs_transform._metadata_parameter_extract_enum_values_from_desc(
                 metadata_in
             ),
@@ -646,7 +628,6 @@ class MetadataParameterExtractEnumValuesFromDesc(TestCase):
             ]
         )
         self.assertEqual(
-            # pylint: disable=protected-access
             ra.pcs_transform._metadata_parameter_extract_enum_values_from_desc(
                 metadata_in
             ),
@@ -692,7 +673,6 @@ class MetadataParameterRemoveSelectEnumValuesFromDesc(TestCase):
         metadata_in = self._fixture_metadata([])
         metadata_out = self._fixture_metadata([])
         self.assertEqual(
-            # pylint: disable=protected-access
             ra.pcs_transform._metadata_parameter_remove_select_enum_values_from_desc(
                 metadata_in
             ),
@@ -707,7 +687,6 @@ class MetadataParameterRemoveSelectEnumValuesFromDesc(TestCase):
             [self._fixture_parameter("enum", self.longdesc)]
         )
         self.assertEqual(
-            # pylint: disable=protected-access
             ra.pcs_transform._metadata_parameter_remove_select_enum_values_from_desc(
                 metadata_in
             ),
@@ -722,7 +701,6 @@ class MetadataParameterRemoveSelectEnumValuesFromDesc(TestCase):
             [self._fixture_parameter("select", self.new_longdesc)]
         )
         self.assertEqual(
-            # pylint: disable=protected-access
             ra.pcs_transform._metadata_parameter_remove_select_enum_values_from_desc(
                 metadata_in
             ),
@@ -737,7 +715,6 @@ class MetadataParameterRemoveSelectEnumValuesFromDesc(TestCase):
             [self._fixture_parameter("select", "other longdesc")]
         )
         self.assertEqual(
-            # pylint: disable=protected-access
             ra.pcs_transform._metadata_parameter_remove_select_enum_values_from_desc(
                 metadata_in
             ),
@@ -780,7 +757,6 @@ class MetadataParameterDeduplicateDesc(TestCase):
         metadata_in = self._fixture_metadata([])
         metadata_out = self._fixture_metadata([])
         self.assertEqual(
-            # pylint: disable=protected-access
             ra.pcs_transform._metadata_parameter_deduplicate_desc(metadata_in),
             metadata_out,
         )
@@ -793,7 +769,6 @@ class MetadataParameterDeduplicateDesc(TestCase):
             [self._fixture_parameter("same desc", None)]
         )
         self.assertEqual(
-            # pylint: disable=protected-access
             ra.pcs_transform._metadata_parameter_deduplicate_desc(metadata_in),
             metadata_out,
         )
@@ -806,7 +781,6 @@ class MetadataParameterDeduplicateDesc(TestCase):
             [self._fixture_parameter("shortdesc", "longdesc")]
         )
         self.assertEqual(
-            # pylint: disable=protected-access
             ra.pcs_transform._metadata_parameter_deduplicate_desc(metadata_in),
             metadata_out,
         )
@@ -847,7 +821,6 @@ class MetadataParameterJoinShortLongDesc(TestCase):
         metadata_in = self._fixture_metadata([])
         metadata_out = self._fixture_metadata([])
         self.assertEqual(
-            # pylint: disable=protected-access
             ra.pcs_transform._metadata_parameter_join_short_long_desc(
                 metadata_in
             ),
@@ -862,7 +835,6 @@ class MetadataParameterJoinShortLongDesc(TestCase):
             [self._fixture_parameter(None, None)]
         )
         self.assertEqual(
-            # pylint: disable=protected-access
             ra.pcs_transform._metadata_parameter_join_short_long_desc(
                 metadata_in
             ),
@@ -877,7 +849,6 @@ class MetadataParameterJoinShortLongDesc(TestCase):
             [self._fixture_parameter("shortdesc", None)]
         )
         self.assertEqual(
-            # pylint: disable=protected-access
             ra.pcs_transform._metadata_parameter_join_short_long_desc(
                 metadata_in
             ),
@@ -892,7 +863,6 @@ class MetadataParameterJoinShortLongDesc(TestCase):
             [self._fixture_parameter(None, "longdesc")]
         )
         self.assertEqual(
-            # pylint: disable=protected-access
             ra.pcs_transform._metadata_parameter_join_short_long_desc(
                 metadata_in
             ),
@@ -907,7 +877,6 @@ class MetadataParameterJoinShortLongDesc(TestCase):
             [self._fixture_parameter("shortdesc", "shortdesc.\nlongdesc")]
         )
         self.assertEqual(
-            # pylint: disable=protected-access
             ra.pcs_transform._metadata_parameter_join_short_long_desc(
                 metadata_in
             ),
@@ -928,7 +897,6 @@ class MetadataParameterJoinShortLongDesc(TestCase):
             ]
         )
         self.assertEqual(
-            # pylint: disable=protected-access
             ra.pcs_transform._metadata_parameter_join_short_long_desc(
                 metadata_in
             ),
@@ -971,7 +939,6 @@ class MetadataRemoveUnwantedStonithParameters(TestCase):
         metadata_in = self._fixture_metadata([])
         metadata_out = self._fixture_metadata([])
         self.assertEqual(
-            # pylint: disable=protected-access
             ra.pcs_transform._metadata_remove_unwanted_stonith_parameters(
                 metadata_in
             ),
@@ -994,7 +961,6 @@ class MetadataRemoveUnwantedStonithParameters(TestCase):
             ]
         )
         self.assertEqual(
-            # pylint: disable=protected-access
             ra.pcs_transform._metadata_remove_unwanted_stonith_parameters(
                 metadata_in
             ),
@@ -1037,7 +1003,6 @@ class MetadataMakeStonithActionParameterDeprecated(TestCase):
         metadata_in = self._fixture_metadata([])
         metadata_out = self._fixture_metadata([])
         self.assertEqual(
-            # pylint: disable=protected-access
             ra.pcs_transform._metadata_make_stonith_action_parameter_deprecated(
                 metadata_in
             ),
@@ -1068,7 +1033,6 @@ class MetadataMakeStonithActionParameterDeprecated(TestCase):
             ]
         )
         self.assertEqual(
-            # pylint: disable=protected-access
             ra.pcs_transform._metadata_make_stonith_action_parameter_deprecated(
                 metadata_in
             ),
@@ -1101,7 +1065,6 @@ class MetadataMakeStonithActionParameterDeprecated(TestCase):
             ]
         )
         self.assertEqual(
-            # pylint: disable=protected-access
             ra.pcs_transform._metadata_make_stonith_action_parameter_deprecated(
                 metadata_in
             ),
@@ -1144,7 +1107,6 @@ class MetadataMakeStonithPortParameterNotRequired(TestCase):
         metadata_in = self._fixture_metadata([])
         metadata_out = self._fixture_metadata([])
         self.assertEqual(
-            # pylint: disable=protected-access
             ra.pcs_transform._metadata_make_stonith_port_parameter_not_required(
                 metadata_in
             ),
@@ -1159,7 +1121,6 @@ class MetadataMakeStonithPortParameterNotRequired(TestCase):
             [self._fixture_parameter("param", True, [])]
         )
         self.assertEqual(
-            # pylint: disable=protected-access
             ra.pcs_transform._metadata_make_stonith_port_parameter_not_required(
                 metadata_in
             ),
@@ -1174,7 +1135,6 @@ class MetadataMakeStonithPortParameterNotRequired(TestCase):
             [self._fixture_parameter("port", False, [])]
         )
         self.assertEqual(
-            # pylint: disable=protected-access
             ra.pcs_transform._metadata_make_stonith_port_parameter_not_required(
                 metadata_in
             ),
@@ -1205,7 +1165,6 @@ class MetadataMakeStonithPortParameterNotRequired(TestCase):
             ]
         )
         self.assertEqual(
-            # pylint: disable=protected-access
             ra.pcs_transform._metadata_make_stonith_port_parameter_not_required(
                 metadata_in
             ),

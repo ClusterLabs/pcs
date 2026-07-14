@@ -10,7 +10,6 @@ from pcs_test.tools.assertions import assert_report_item_list_equal
 
 
 class CheckInstanceName(TestCase):
-    # pylint: disable=no-self-use
     def test_success(self):
         assert_report_item_list_equal(
             config_validators.check_instance_name("valid_instance"), []
@@ -31,7 +30,6 @@ class CheckInstanceName(TestCase):
 
 
 class Create(TestCase):
-    # pylint: disable=no-self-use
     def test_no_reports_on_correct_args(self):
         assert_report_item_list_equal(
             config_validators.create(["1.1.1.1", "2.2.2.2"], ["3.3.3.3"]), []

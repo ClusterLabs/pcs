@@ -18,7 +18,6 @@ T = TypeVar("T")
 
 
 class ConfigFacade(FacadeInterface):
-    # pylint: disable=too-many-public-methods
     """
     Provides high level access to a corosync config file
     """
@@ -64,7 +63,6 @@ class ConfigFacade(FacadeInterface):
             )
 
         self = cls(root)
-        # pylint: disable=protected-access
         self.__update_two_node()
 
         return self
@@ -767,7 +765,6 @@ class ConfigFacade(FacadeInterface):
         generic_options: Mapping[str, str],
         heuristics_options: Mapping[str, str],
     ) -> None:
-        # pylint: disable=too-many-locals
         """
         Add quorum device configuration
 

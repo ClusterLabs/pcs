@@ -132,7 +132,6 @@ class CommandRunnerTest(TestCase):
             command, env_extend={"b": "B", "c": "{C}"}
         )
         # check that env_extend did not affect initial env of runner
-        # pylint: disable=protected-access
         self.assertEqual(runner._env_vars, global_env)
 
         self.assertEqual(real_stdout, expected_stdout)
@@ -471,7 +470,6 @@ class IsProxySetTest(TestCase):
         )
 
     def test_HTTP_PROXY(self):
-        # pylint: disable=invalid-name
         self.assertFalse(
             lib.is_proxy_set(
                 {
@@ -490,7 +488,6 @@ class IsProxySetTest(TestCase):
         )
 
     def test_HTTPS_PROXY(self):
-        # pylint: disable=invalid-name
         self.assertTrue(
             lib.is_proxy_set(
                 {
@@ -509,7 +506,6 @@ class IsProxySetTest(TestCase):
         )
 
     def test_ALL_PROXY(self):
-        # pylint: disable=invalid-name
         self.assertTrue(
             lib.is_proxy_set(
                 {

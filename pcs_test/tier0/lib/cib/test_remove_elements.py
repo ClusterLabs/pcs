@@ -1,4 +1,3 @@
-# pylint: disable=too-many-lines
 from unittest import (
     TestCase,
     mock,
@@ -104,7 +103,6 @@ class GetCibMixin:
 
 
 class ElementsToRemoveFindElements(TestCase, GetCibMixin):
-    # pylint: disable=too-many-public-methods
     def setUp(self):
         self.cib = read_test_resource("cib-empty.xml")
 
@@ -1352,7 +1350,6 @@ class EnsureResourcesStopped(TestCase):
 
 
 class DependantElementsToReports(TestCase):
-    # pylint: disable=no-self-use
     def test_no_reports(self):
         elements = lib.DependantElements({})
         assert_report_item_list_equal(elements.to_reports(), [])
@@ -1376,7 +1373,6 @@ class DependantElementsToReports(TestCase):
 
 
 class ElementReferencesToReports(TestCase):
-    # pylint: disable=no-self-use
     def test_no_reports(self):
         elements = lib.ElementReferences({}, {})
         assert_report_item_list_equal(elements.to_reports(), [])
@@ -1407,7 +1403,6 @@ class ElementReferencesToReports(TestCase):
 
 
 class GetInnerReferences(TestCase):
-    # pylint: disable=protected-access
     def test_no_inner_references(self):
         self.assertEqual(
             [], lib._get_inner_references(etree.fromstring("<A/>"))
@@ -1458,7 +1453,6 @@ class GetInnerReferences(TestCase):
 
 
 class IsLastElement(TestCase):
-    # pylint: disable=protected-access
     def test_last_element_true(self):
         for element, tag in (
             (etree.fromstring("<A><a/></A>"), "a"),
@@ -1478,7 +1472,6 @@ class IsLastElement(TestCase):
 
 
 class IsEmptyAfterInnerElRemoval(TestCase):
-    # pylint: disable=protected-access
     def test_last_element_true(self):
         for parent in (
             etree.fromstring("<clone/>"),

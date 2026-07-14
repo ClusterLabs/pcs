@@ -136,13 +136,9 @@ class BaseApiV0Handler(ApiV0Test):
     command_executed = True
 
     class HandlerForTest(api_v0._BaseApiV0Handler):
-        # pylint: disable=protected-access
-
         def initialize(
             self, api_auth_provider_factory, scheduler, cmd_name, cmd_params
         ):
-            # pylint: disable=arguments-differ
-            # pylint: disable=attribute-defined-outside-init
             super().initialize(api_auth_provider_factory, scheduler)
             self.cmd_name = cmd_name
             self.cmd_params = cmd_params
@@ -359,7 +355,6 @@ class ApiV0HandlerTest(ApiV0Test):
         super().setUp()
         self.mock_run_library_command = mock.AsyncMock()
         run_library_command_patcher = mock.patch.object(
-            # pylint: disable=protected-access
             api_v0._BaseApiV0Handler,
             "_run_library_command",
             self.mock_run_library_command,

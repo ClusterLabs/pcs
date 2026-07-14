@@ -114,7 +114,6 @@ def _resource_operation_to_str(
 def resource_agent_parameter_metadata_to_text(  # noqa: PLR0912
     parameter: resource_agent.dto.ResourceAgentParameterDto,
 ) -> list[str]:
-    # pylint: disable=too-many-branches
     # title line
     param_title = [parameter.name]
     if parameter.deprecated_by:
@@ -230,7 +229,6 @@ def resource_agent_metadata_to_text(
 
 
 class ResourcesConfigurationFacade:
-    # pylint: disable=too-many-instance-attributes
     def __init__(
         self,
         primitives: Sequence[CibResourcePrimitiveDto],
@@ -1067,7 +1065,6 @@ def _warn_stonith_unsupported(
 def resources_to_cmd(
     resources_facade: ResourcesConfigurationFacade,
 ) -> list[list[str]]:
-    # pylint: disable=too-many-branches
     output: list[list[str]] = []
     primitives_created_with_bundle = set()
     for bundle_dto in resources_facade.bundles:

@@ -1,4 +1,3 @@
-# pylint: disable=too-many-lines
 import os
 from textwrap import dedent
 from unittest import TestCase, mock
@@ -184,7 +183,6 @@ class FullClusterStatusPlaintextBase(TestCase):
         sbd_enabled=False,
         sbd_active=False,
     ):
-        # pylint: disable=too-many-arguments
         self.config.services.is_enabled(
             "corosync",
             name="services.is_enabled.corosync",
@@ -243,7 +241,6 @@ class FullClusterStatusPlaintextBase(TestCase):
     settings, "pacemaker_api_result_schema", rc("pcmk_rng/api/api-result.rng")
 )
 class FullClusterStatusPlaintext(FullClusterStatusPlaintextBase):
-    # pylint: disable=too-many-public-methods
     def test_life_cib_mocked_corosync(self):
         self.config.env.set_corosync_conf_data("corosync conf data")
 

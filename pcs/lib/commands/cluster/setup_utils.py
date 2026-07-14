@@ -92,7 +92,6 @@ def _wait_for_pacemaker_to_start(
 def host_check_cluster_setup(
     host_info_dict, force, check_services_versions=True
 ):
-    # pylint: disable=too-many-locals
     report_list = []
     # We only care about services which matter for creating a cluster. It does
     # not make sense to check e.g. booth when a) it will never be used b) it

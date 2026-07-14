@@ -1,4 +1,3 @@
-# pylint: disable=too-many-lines
 from collections import (
     Counter,
     defaultdict,
@@ -100,9 +99,6 @@ def create(  # noqa: PLR0912, PLR0915
     force_unresolvable: bool = False,
     force_cluster_name: bool = False,
 ) -> ReportItemList:
-    # pylint: disable=too-many-branches
-    # pylint: disable=too-many-locals
-    # pylint: disable=too-many-statements
     """
     Validate creating a new minimalistic corosync.conf
 
@@ -418,9 +414,6 @@ def add_nodes(  # noqa: PLR0912, PLR0915
     pcmk_existing_nodes: Iterable[PacemakerNode],
     force_unresolvable: bool = False,
 ) -> ReportItemList:
-    # pylint: disable=too-many-branches
-    # pylint: disable=too-many-locals
-    # pylint: disable=too-many-statements
     """
     Validate adding nodes to a config with a nonempty nodelist
 
@@ -940,7 +933,6 @@ def add_link(
     ip_version: str,
     force_unresolvable: bool = False,
 ) -> ReportItemList:
-    # pylint: disable=too-many-locals
     """
     Validate adding a link
 
@@ -1165,10 +1157,6 @@ def update_link(  # noqa: PLR0912, PLR0913
     ip_version: str,
     force_unresolvable: bool = False,
 ) -> ReportItemList:
-    # pylint: disable=too-many-arguments
-    # pylint: disable=too-many-branches
-    # pylint: disable=too-many-locals
-    # pylint: disable=too-many-positional-arguments
     """
     Validate changing an existing link
 

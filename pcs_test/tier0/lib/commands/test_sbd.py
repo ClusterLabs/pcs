@@ -28,7 +28,6 @@ def _assert_equal_list_of_dictionaries_without_order(expected, actual):
 
 
 class ValidateSbdOptionsTest(TestCase):
-    # pylint: disable=protected-access
     def setUp(self):
         self.allowed_sbd_options = sorted(
             [
@@ -250,7 +249,6 @@ class ValidateSbdOptionsTest(TestCase):
         self.assertEqual([], cmd_sbd._validate_sbd_options(config))
 
     def test_watchdog_timeout_is_nonnegative_int(self):
-        # pylint: disable=no-self-use
         config = {
             "SBD_WATCHDOG_TIMEOUT": "-1",
         }
@@ -270,7 +268,6 @@ class ValidateSbdOptionsTest(TestCase):
         )
 
     def test_watchdog_timeout_is_not_int(self):
-        # pylint: disable=no-self-use
         config = {
             "SBD_WATCHDOG_TIMEOUT": "not int",
         }
@@ -290,7 +287,6 @@ class ValidateSbdOptionsTest(TestCase):
         )
 
     def test_watchdog_timeout_is_none(self):
-        # pylint: disable=no-self-use
         config = {
             "SBD_WATCHDOG_TIMEOUT": None,
         }
@@ -311,7 +307,6 @@ class ValidateSbdOptionsTest(TestCase):
 
 
 class ValidateWatchdogDictTest(TestCase):
-    # pylint: disable=protected-access
     def test_all_ok(self):
         watchdog_dict = {
             "node1": "/dev/watchdog1",
@@ -320,7 +315,6 @@ class ValidateWatchdogDictTest(TestCase):
         self.assertEqual([], cmd_sbd._validate_watchdog_dict(watchdog_dict))
 
     def test_some_not_ok(self):
-        # pylint: disable=no-self-use
         watchdog_dict = {
             "node1": "",
             "node2": None,
@@ -340,7 +334,6 @@ class ValidateWatchdogDictTest(TestCase):
 
 
 class GetFullTargetDictTest(TestCase):
-    # pylint: disable=protected-access
     def setUp(self):
         self.target_list = [
             RequestTarget("node{0}".format(i)) for i in range(1, 4)

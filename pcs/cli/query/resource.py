@@ -344,7 +344,6 @@ def is_state(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
         * -f - CIB file
         * --quiet - do not print anything to output
     """
-    # pylint: disable=too-many-locals
     resource_id, instance_id = _pop_resource_id(argv)
 
     sections = group_by_keywords(

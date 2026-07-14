@@ -150,7 +150,6 @@ def add_device(
     force_options=False,
     skip_offline_nodes=False,
 ):
-    # pylint: disable=too-many-locals
     """
     Add a quorum device to a cluster, distribute and reload configs if live
 

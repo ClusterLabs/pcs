@@ -1,4 +1,3 @@
-# pylint: disable=too-many-lines
 import datetime
 import os
 import unittest
@@ -107,7 +106,6 @@ CIB_FIXTURE = ConstraintTestCibFixture("fixture_tier1_constraints", empty_cib)
 
 @skip_unless_crm_rule()
 class ConstraintTest(unittest.TestCase, AssertPcsMixin):
-    # pylint: disable=too-many-public-methods
     def setUp(self):
         self.temp_cib = get_tmp_file("tier1_constraints")
         write_file_to_tmpfile(empty_cib, self.temp_cib)
@@ -484,7 +482,6 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
 
     # see also BundleColocation
     def test_colocation_constraints(self):  # noqa: PLR0915
-        # pylint: disable=too-many-statements
         self.fixture_resources()
         # pcs no longer allows creating masters but supports existing ones. In
         # order to test it, we need to put a master in the CIB without pcs.
@@ -875,7 +872,6 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
 
     # see also BundleColocation
     def test_colocation_sets(self):  # noqa: PLR0915
-        # pylint: disable=too-many-statements
         self.fixture_resources()
         self.assert_pcs_success(
             "resource create D7 ocf:pcsmock:minimal".split()
@@ -1390,7 +1386,6 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
 
     # see also BundleOrder
     def test_order_sets(self):  # noqa: PLR0915
-        # pylint: disable=too-many-statements
         self.fixture_resources()
         self.assert_pcs_success(
             "resource create D7 ocf:pcsmock:minimal".split()
@@ -1730,7 +1725,6 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
         )
 
     def test_master_slave_constraint(self):  # noqa: PLR0915
-        # pylint: disable=too-many-statements
         os.system(
             "CIB_file="
             + self.temp_cib.name
@@ -1947,7 +1941,6 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
         )
 
     def test_clone_constraint(self):  # noqa: PLR0915
-        # pylint: disable=too-many-statements
         os.system(
             "CIB_file="
             + self.temp_cib.name
@@ -2348,7 +2341,6 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
         )
 
     def test_guest_node_constraints_remove(self):
-        # pylint: disable=too-many-statements
         self.temp_corosync_conf = get_tmp_file("tier1_test_constraints")
         write_file_to_tmpfile(rc("corosync.conf"), self.temp_corosync_conf)
         self.fixture_resources()
@@ -2720,7 +2712,6 @@ Error: duplicate constraint already exists, use --force to override
         )
 
     def test_duplicate_set_constraints(self):  # noqa: PLR0915
-        # pylint: disable=too-many-statements
         self.fixture_resources()
         stdout, stderr, retval = pcs(
             self.temp_cib.name, "constraint order set D1 D2".split()
@@ -2970,7 +2961,6 @@ Error: duplicate constraint already exists, use --force to override
         )
 
     def test_constraints_custom_id(self):  # noqa: PLR0915
-        # pylint: disable=too-many-statements
         self.fixture_resources()
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
@@ -4196,7 +4186,6 @@ class LocationPrefersAvoidsMixin(
         self.temp_cib.close()
 
     def xml_score(self, score):
-        # pylint: disable=no-self-use
         return score if score else "INFINITY"
 
     @staticmethod
@@ -4362,7 +4351,6 @@ class LocationAdd(ConstraintEffect):
 
 @skip_unless_crm_rule()
 class ExpiredConstraints(ConstraintBaseTest):
-    # pylint: disable=too-many-public-methods
     # Setting tomorrow to the day after tomorrow in case the tests run close to
     # midnight.
     _tomorrow = (datetime.date.today() + datetime.timedelta(days=2)).strftime(

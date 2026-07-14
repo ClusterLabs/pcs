@@ -19,7 +19,7 @@ from pcs.common.str_tools import format_list
 
 
 def _parse_host_options(host: str, options: Argv) -> Destination:
-    ADDR_OPT_KEYWORD = "addr"  # pylint: disable=invalid-name
+    ADDR_OPT_KEYWORD = "addr"
     supported_options = {ADDR_OPT_KEYWORD}
     parsed_options = KeyValueParser(options).get_unique()
     unknown_options = set(parsed_options.keys()) - supported_options

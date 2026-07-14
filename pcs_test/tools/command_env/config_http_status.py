@@ -22,7 +22,6 @@ class StatusShortcuts:
         report_list=None,
         cluster_status_plaintext="",
     ):
-        # pylint: disable=too-many-arguments
         """
         Create a call for getting cluster status in plaintext
 
@@ -74,7 +73,6 @@ class StatusShortcuts:
         corosync_online_nodes=None,
         corosync_offline_nodes=None,
     ):
-        # pylint: disable=too-many-arguments
         """
         Create a call for getting cluster info from status.
 

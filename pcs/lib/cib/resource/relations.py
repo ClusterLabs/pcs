@@ -58,7 +58,6 @@ class ResourceRelationNode:
         self._is_leaf = True
 
     def add_member(self, member: "ResourceRelationNode") -> None:
-        # pylint: disable=protected-access
         if member._parent is not None:  # noqa: SLF001
             raise AssertionError(
                 "object {} already has a parent set: {}".format(
@@ -81,7 +80,6 @@ class ResourceRelationNode:
             self._members.append(member)
 
     def _get_all_parents(self) -> list[str]:
-        # pylint: disable=protected-access
         if self._parent is None:
             return []
         return self._parent._get_all_parents() + [self._parent.obj.id]  # noqa: SLF001

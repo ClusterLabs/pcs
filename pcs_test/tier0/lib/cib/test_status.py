@@ -136,7 +136,6 @@ class GetResourcesFailcounts(TestCase):
 
 
 class ParseFailureName(TestCase):
-    # pylint: disable=protected-access
     def test_without_clone_id(self):
         self.assertEqual(
             status._parse_failure_name("resource#monitor_1000"),
@@ -151,7 +150,6 @@ class ParseFailureName(TestCase):
 
 
 class FilterResourceFailcounts(TestCase):
-    # pylint: disable=too-many-instance-attributes
     def setUp(self):
         self.fail_01 = {
             "node": "nodeA",

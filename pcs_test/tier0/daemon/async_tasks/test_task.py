@@ -1,4 +1,3 @@
-# pylint: disable=protected-access
 from datetime import timedelta
 from unittest import (
     IsolatedAsyncioTestCase,

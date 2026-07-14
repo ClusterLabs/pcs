@@ -19,15 +19,15 @@ PAM_PROMPT_ECHO_OFF = 1
 PCSD_SERVICE = "pcsd"
 
 
-class pam_message(Structure):  # pylint: disable=invalid-name
+class pam_message(Structure):
     _fields_ = [("msg_style", c_int), ("msg", POINTER(c_char))]
 
 
-class pam_response(Structure):  # pylint: disable=invalid-name
+class pam_response(Structure):
     _fields_ = [("resp", POINTER(c_char)), ("resp_retcode", c_int)]
 
 
-class pam_handle(Structure):  # pylint: disable=invalid-name
+class pam_handle(Structure):
     _fields_ = [("handle", c_void_p)]
 
 
@@ -40,11 +40,11 @@ pam_conversation = CFUNCTYPE(
 )
 
 
-class pam_conv(Structure):  # pylint: disable=invalid-name
+class pam_conv(Structure):
     _fields_ = [("conv", pam_conversation), ("appdata_ptr", c_void_p)]
 
 
-def _prep_fn(fn, restype, argtypes):  # pylint: disable=invalid-name
+def _prep_fn(fn, restype, argtypes):
     fn.restype = restype
     fn.argtypes = argtypes
     return fn

@@ -44,7 +44,6 @@ class AddLevel(TestCase):
         mock_status_dom,
         mock_status,
     ):
-        # pylint: disable=no-self-use
         mock_get_cib.return_value = "mocked cib"
         mock_status_dom.return_value = "mock get_cluster_status_dom"
         mock_status.return_value = mock.MagicMock(
@@ -57,7 +56,6 @@ class AddLevel(TestCase):
         mock_status,
         mock_push_cib,
     ):
-        # pylint: disable=no-self-use
         mock_status_dom.assert_called_once_with()
         mock_status.assert_called_once_with("mock get_cluster_status_dom")
         mock_push_cib.assert_called_once_with()
@@ -220,7 +218,6 @@ class GetConfig(TestCase):
 @patch_env("get_cib", lambda self: "mocked cib")
 class RemoveAllLevels(TestCase):
     def test_success(self, mock_push_cib, mock_get_topology, mock_remove):
-        # pylint: disable=no-self-use
         mock_get_topology.return_value = "topology el"
         lib_env = create_lib_env()
 
@@ -399,7 +396,6 @@ class Verify(TestCase):
         mock_push_cib,
         mock_verify,
     ):
-        # pylint: disable=no-self-use
         mock_status_dom.return_value = "mock get_cluster_status_dom"
         mock_status.return_value = mock.MagicMock(
             node_section=mock.MagicMock(nodes="nodes")

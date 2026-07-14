@@ -133,7 +133,6 @@ class BoothShortcuts:
         instead=None,
         before=None,
     ):
-        # pylint: disable=too-many-arguments
         """
         Create a call for granting a ticket
 
@@ -172,7 +171,6 @@ class BoothShortcuts:
         instead=None,
         before=None,
     ):
-        # pylint: disable=too-many-arguments
         """
         Create a call for revoking a ticket
 

@@ -125,7 +125,6 @@ def _for_pcs_settings_conf() -> FileMetadata:
 def for_file_type(  # noqa: PLR0911
     file_type_code: code.FileTypeCode, filename: str | None = None
 ) -> FileMetadata:
-    # pylint: disable=too-many-return-statements
     if file_type_code == code.BOOTH_CONFIG:
         if not filename:
             raise AssertionError("filename must be set")

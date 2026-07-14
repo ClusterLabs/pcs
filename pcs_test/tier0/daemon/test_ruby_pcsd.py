@@ -112,7 +112,6 @@ class ProcessResponseLog(TestCase):
     @patch_ruby_pcsd("log.from_external_source")
     @patch_ruby_pcsd("next", mock.Mock(return_value=1))
     def test_put_correct_values_to_log(self, from_external_source):
-        # pylint: disable=no-self-use
         ruby_pcsd.process_response_logs(
             [
                 {

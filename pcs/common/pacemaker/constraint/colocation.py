@@ -18,7 +18,6 @@ class CibConstraintColocationAttributesDto(DataTransferObject):
 
 @dataclass(frozen=True)
 class CibConstraintColocationDto(DataTransferObject):
-    # pylint: disable=too-many-instance-attributes
     resource_id: str
     with_resource_id: str
     node_attribute: str | None

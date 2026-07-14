@@ -65,12 +65,6 @@ from pcs.lib.pacemaker.values import (
     sanitize_id,
 )
 
-# pylint: disable=invalid-name
-# pylint: disable=too-many-branches
-# pylint: disable=too-many-lines
-# pylint: disable=too-many-locals
-# pylint: disable=too-many-statements
-
 DEFAULT_ACTION = const.PCMK_ACTION_START
 DEFAULT_ROLE = const.PCMK_ROLE_STARTED
 
@@ -1018,7 +1012,6 @@ def location_add(  # noqa: PLR0912, PLR0915
     elementsToRemove = [
         rsc_loc
         for rsc_loc in constraintsElement.getElementsByTagName("rsc_location")
-        # pylint: disable=too-many-boolean-expressions
         if rsc_loc.getAttribute("id") == constraint_id
         or (
             rsc_loc.getAttribute("node") == node

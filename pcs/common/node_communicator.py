@@ -538,7 +538,6 @@ def _create_request_handle(
     # it is not possible to take this callback out of this function, because of
     # curl API
     def __debug_callback(data_type: int, debug_data: bytes) -> None:
-        # pylint: disable=no-member
         prefixes = {
             # Dynamically added attributes in pcs/common/pcs_pycurl.py
             pycurl.DEBUG_TEXT: b"* ",  # type: ignore[attr-defined]

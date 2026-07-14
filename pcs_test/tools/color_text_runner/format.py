@@ -84,7 +84,6 @@ class Format:
         if not hasattr(test, "_testMethodName"):
             return test.id()
 
-        # pylint: disable=protected-access
         parts = test._testMethodName.split("_")
         if parts[0].startswith("test"):
             parts[0] = self._output.lightgrey("test") + parts[0][len("test") :]
@@ -114,7 +113,6 @@ class Format:
         return overview
 
     def test_name(self, test):
-        # pylint: disable=protected-access
         if isinstance(test, unittest.case._SubTest):
             test = test.test_case
         return "{module_name}.{class_name}.{method_name}".format(
@@ -125,7 +123,6 @@ class Format:
 
     def description(self, test, descriptions):
         subtest_desc = None
-        # pylint: disable=protected-access
         if isinstance(test, unittest.case._SubTest):
             subtest_desc = test._subDescription()
             test = test.test_case

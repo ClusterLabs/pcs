@@ -113,10 +113,6 @@ filename = ""
 
 
 def main(argv=None):  # noqa: PLR0912, PLR0915
-    # pylint: disable=global-statement
-    # pylint: disable=too-many-branches
-    # pylint: disable=too-many-locals
-    # pylint: disable=too-many-statements
     if completion.has_applicable_environment(os.environ):
         print(
             completion.make_suggestions(

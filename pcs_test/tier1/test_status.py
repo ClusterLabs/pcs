@@ -137,7 +137,6 @@ class StonithWarningTest(TestCase, AssertPcsMixin):
 
 
 class ResourceStonithStatusBase(AssertPcsMixin):
-    # pylint: disable=too-many-public-methods
     command = None
     no_resources_msg = None
     all_resources_output = None

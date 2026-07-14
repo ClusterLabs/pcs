@@ -77,7 +77,6 @@ def set_recovery_site(env: LibraryEnvironment, node_name: str) -> None:
     env
     node_name -- a known host from the recovery site
     """
-    # pylint: disable=too-many-locals
     if env.ghost_file_codes:
         raise LibraryError(
             ReportItem.error(

@@ -124,7 +124,6 @@ class AssertTaskStatesMixin:
     def assert_task_state_counts_equal(
         self, created, queued, executed, finished
     ):
-        # pylint: disable=protected-access
         # Cannot use public method get_task because it deletes finished tasks
         state_counts = Counter(
             [task.state for task in self.scheduler._task_register.values()]

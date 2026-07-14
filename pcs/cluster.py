@@ -1,4 +1,3 @@
-# pylint: disable=too-many-lines
 import contextlib
 import datetime
 import json
@@ -467,7 +466,6 @@ def stop_cluster_nodes(nodes: StringCollection) -> None:  # noqa: PLR0912
       * --force - no error when possible quorum loss
       * --request-timeout - timeout for HTTP requests
     """
-    # pylint: disable=too-many-branches
     all_nodes, report_list = get_existing_nodes_names(
         utils.get_corosync_conf_facade()
     )
@@ -776,9 +774,6 @@ def cluster_push(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  # no
       * --config - push only configuration section of CIB
       * -f - CIB file
     """
-    # pylint: disable=too-many-branches
-    # pylint: disable=too-many-locals
-    # pylint: disable=too-many-statements
 
     def get_details_from_crm_verify():
         # get a new runner to run crm_verify command and pass the CIB filename
@@ -948,7 +943,6 @@ def cluster_edit(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  # no
       * -f - CIB file
       * --wait
     """
-    # pylint: disable=too-many-branches
     modifiers.ensure_only_supported("--config", "--wait", "-f")
     if "EDITOR" in os.environ:
         if len(argv) > 1:
@@ -1005,7 +999,6 @@ def get_cib(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  # noqa: P
       * --config show configuration section of CIB
       * -f - CIB file
     """
-    # pylint: disable=too-many-branches
     del lib
     modifiers.ensure_only_supported("--config", "-f")
     if len(argv) > 2:
@@ -1199,8 +1192,6 @@ def cluster_uidgid(  # noqa: PLR0912
     """
     Options: no options
     """
-    # pylint: disable=too-many-branches
-    # pylint: disable=too-many-locals
     del lib
     modifiers.ensure_only_supported()
     if not argv:
@@ -1269,8 +1260,6 @@ def cluster_destroy(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  #
       * --request-timeout - timeout of HTTP requests, effective only with --all
       * --yes - required for destroying the cluster
     """
-    # pylint: disable=too-many-branches
-    # pylint: disable=too-many-statements
     del lib
     modifiers.ensure_only_supported(
         "--all", "--force", "--request-timeout", "--yes"
@@ -1416,7 +1405,6 @@ def cluster_report(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  # 
         want to use --overwrite and not --force.
     """
 
-    # pylint: disable=too-many-branches
     del lib
     modifiers.ensure_only_supported("--force", "--from", "--overwrite", "--to")
     if len(argv) != 1:
@@ -1499,8 +1487,6 @@ def cluster_auth_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  
       * -u - username
       * -p - password
     """
-    # pylint: disable=too-many-branches
-    # pylint: disable=too-many-locals
     modifiers.ensure_only_supported(
         "--corosync_conf", "--request-timeout", "-u", "-p"
     )
@@ -1611,7 +1597,7 @@ def _parse_node_options(
     """
     Commandline options: no options
     """
-    ADDR_OPT_KEYWORD = "addr"  # pylint: disable=invalid-name
+    ADDR_OPT_KEYWORD = "addr"
     supported_options = {ADDR_OPT_KEYWORD} | set(additional_options)
     repeatable_options = {ADDR_OPT_KEYWORD} | set(additional_repeatable_options)
     parser = KeyValueParser(options, repeatable_options)
@@ -1683,7 +1669,6 @@ def cluster_setup(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
       * --corosync_conf - corosync.conf file path, do not talk to cluster nodes
       * --overwrite - allow overwriting existing files
     """
-    # pylint: disable=too-many-locals
     is_local = modifiers.is_specified("--corosync_conf")
 
     allowed_options_common = ["--force", "--no-cluster-uuid"]
@@ -2014,8 +1999,8 @@ def _config_get_cmd(corosync_conf: CorosyncConfDto) -> list[str]:
 
 
 def _parse_add_node(argv: Argv) -> dict[str, str | list[str]]:
-    DEVICE_KEYWORD = "device"  # pylint: disable=invalid-name
-    WATCHDOG_KEYWORD = "watchdog"  # pylint: disable=invalid-name
+    DEVICE_KEYWORD = "device"
+    WATCHDOG_KEYWORD = "watchdog"
     hostname, *argv = argv
     node_dict = _parse_node_options(
         hostname,

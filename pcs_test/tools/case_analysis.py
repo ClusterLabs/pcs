@@ -8,7 +8,6 @@ def test_failed(test):
     # Borrowed from
     # https://stackoverflow.com/questions/4414234/getting-pythons-unittest-results-in-a-teardown-method/39606065#39606065
     # for Python versions 3.4 to 3.11
-    # pylint: disable=protected-access
     if hasattr(test._outcome, "errors"):
         # Python 3.4 - 3.10 (These 2 methods have no side effects)
         result = test.defaultTestResult()

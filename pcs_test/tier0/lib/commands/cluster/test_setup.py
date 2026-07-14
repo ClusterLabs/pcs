@@ -1,4 +1,3 @@
-# pylint: disable=too-many-lines
 import json
 from copy import deepcopy
 from unittest import TestCase, mock
@@ -122,8 +121,6 @@ def corosync_conf_fixture(  # noqa: PLR0913
     cluster_name=None,
     cluster_uuid=CLUSTER_UUID,
 ):
-    # pylint: disable=too-many-arguments
-    # pylint: disable=too-many-locals
     if cluster_uuid:
         cluster_uuid = f"\n    cluster_uuid: {cluster_uuid}"
 
@@ -830,8 +827,6 @@ class Setup2NodeSuccessMinimal(TestCase):
     lambda ssl_key, server_name: PCSD_SSL_CERT,
 )
 class Validation(TestCase):
-    # pylint: disable=too-many-instance-attributes
-    # pylint: disable=too-many-public-methods
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         self.config.env.set_known_nodes(["node1", "node2", "node3", "node4"])

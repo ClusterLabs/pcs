@@ -280,8 +280,6 @@ def warning_reports(report_list):
 
 
 class TestValidateSetClusterProperties(TestCase):
-    # pylint: disable=too-many-instance-attributes
-    # pylint: disable=too-many-public-methods
     def setUp(self):
         self.mock_service_manager = mock.Mock(spec=ServiceManagerInterface)
         self.facade = ResourceAgentFacade(
@@ -807,7 +805,6 @@ class TestValidateSetClusterProperties(TestCase):
 
 class TestGetClusterPropertySetElementLegacy(TestCase):
     def test_return_first_set(self):
-        # pylint: disable=no-self-use
         cib = etree.fromstring(FIXTURE_TWO_PROPERTY_SETS)
         id_provider = IdProvider(cib)
         set_element = (
@@ -821,7 +818,6 @@ class TestGetClusterPropertySetElementLegacy(TestCase):
         )
 
     def test_no_set_create_cib_bootstrap_options_set(self):
-        # pylint: disable=no-self-use
         cib = etree.fromstring(FIXTURE_NO_SET)
         id_provider = IdProvider(cib)
         set_element = (

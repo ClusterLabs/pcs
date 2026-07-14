@@ -13,8 +13,7 @@ OCF_CHECK_LEVEL_INSTANCE_ATTRIBUTE_NAME = "OCF_CHECK_LEVEL"
 
 @dataclass(frozen=True)
 class CibResourceOperationDto(DataTransferObject):
-    # pylint: disable=too-many-instance-attributes
-    id: str  # pylint: disable=invalid-name
+    id: str
     name: str
     interval: str
     description: str | None

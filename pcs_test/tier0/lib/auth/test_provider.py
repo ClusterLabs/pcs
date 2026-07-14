@@ -43,7 +43,6 @@ _FACADE = Facade(
 
 
 class AuthProviderGetFacadeTest(TestCase):
-    # pylint: disable=protected-access
     def setUp(self):
         self.file_instance_mock = mock.Mock(spec_set=FileInstance)
         self.file_instance_mock.raw_file.metadata = _FILE_METADATA
@@ -99,7 +98,6 @@ class AuthProviderGetFacadeTest(TestCase):
 
 
 class AuthProviderUpdateFacadeTest(TestCase):
-    # pylint: disable=protected-access
     def setUp(self):
         self.file_instance_mock = mock.Mock(spec_set=FileInstance)
         self.raw_file_mock = mock.MagicMock(spec_set=RawFile)

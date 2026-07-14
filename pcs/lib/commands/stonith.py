@@ -106,8 +106,6 @@ def create(  # noqa: PLR0913
     wait: WaitType = False,
     enable_agent_self_validation: bool = False,
 ):
-    # pylint: disable=too-many-arguments
-    # pylint: disable=too-many-locals
     """
     Create stonith as resource in a cib.
 

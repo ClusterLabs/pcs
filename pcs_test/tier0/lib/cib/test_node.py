@@ -199,7 +199,6 @@ class UpdateNodeInstanceAttrs(TestCase):
 
 
 class EnsureNodeExists(TestCase):
-    # pylint: disable=protected-access
     def setUp(self):
         self.node1 = etree.fromstring(
             """
@@ -282,7 +281,6 @@ class EnsureNodeExists(TestCase):
 
 
 class GetNodeByUname(TestCase):
-    # pylint: disable=protected-access
     def setUp(self):
         self.node1 = etree.fromstring(
             """
@@ -309,7 +307,6 @@ class GetNodeByUname(TestCase):
 
 
 class CreateNode(TestCase):
-    # pylint: disable=protected-access
     def setUp(self):
         self.nodes = etree.Element("nodes")
 

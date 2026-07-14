@@ -34,7 +34,6 @@ def get_duplicate_constraint_exists_preprocessor(
         matching IDs from the message.
         """
 
-        # pylint: disable=too-many-branches
         nonlocal constraints_dto
 
         def my_print(lines: StringIterable) -> None:

@@ -1,4 +1,3 @@
-# pylint: disable=too-many-lines
 from textwrap import dedent
 from threading import Lock
 from unittest import TestCase
@@ -752,7 +751,6 @@ class LevelTestsBase(TestCase, AssertPcsMixin):
         write_data_to_tmpfile(cib, self.temp_cib)
 
     def fixture_cib_config_cache(self):
-        # pylint: disable=global-statement
         global _fixture_stonith_level_cache  # noqa: PLW0603
         with _fixture_stonith_level_cache_lock:
             if _fixture_stonith_level_cache is None:

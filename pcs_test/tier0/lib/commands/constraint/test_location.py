@@ -13,7 +13,6 @@ from pcs_test.tools.command_env import get_env_tools
 
 
 class CreatePlainWithRule(TestCase):
-    # pylint: disable=too-many-public-methods
     resources_xml = """
         <resources>
           <primitive id="R1" class="ocf" provider="pacemaker" type="Dummy">

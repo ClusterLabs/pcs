@@ -1,4 +1,3 @@
-# pylint: disable=too-many-lines
 from unittest import (
     TestCase,
     mock,
@@ -365,10 +364,9 @@ class ParseCreateArgsCommonMixin:
 
 
 class ParseCreateArgsOld(ParseCreateArgsCommonMixin, TestCase):
-    # pylint: disable=too-many-public-methods
-    # to keep the order of tests, so that the order can be kept once dropping
-    # the old parsing function and merging the test classes back together
-    # pylint: disable=useless-parent-delegation
+    # super().* is just used to keep the order of tests, so that the order can
+    # be kept once dropping the old parsing function and merging the test
+    # classes back together
     msg_clone_without_meta = (
         "Deprecation Warning: Configuring clone meta attributes without "
         "specifying the 'meta' keyword after the 'clone' keyword is deprecated "
@@ -845,10 +843,9 @@ class ParseCreateArgsOld(ParseCreateArgsCommonMixin, TestCase):
 
 
 class ParseCreateArgsNew(ParseCreateArgsCommonMixin, TestCase):
-    # pylint: disable=too-many-public-methods
-    # to keep the order of tests, so that the order can be kept once dropping
-    # the old parsing function and merging the test classes back together
-    # pylint: disable=useless-parent-delegation
+    # super().* is just used to keep the order of tests, so that the order can
+    # be kept once dropping the old parsing function and merging the test
+    # classes back together
     msg_clone_without_meta_err = (
         "Specifying instance attributes for a clone is not supported. Use "
         "'meta' after 'clone' if you want to specify meta attributes."
@@ -1294,7 +1291,6 @@ class ParsePrimitive(TestCase):
 
 
 class ParseBundleCreateAndResetMixin:
-    # pylint: disable=too-many-public-methods
     def assert_produce(self, arg_list, result):
         self.assertEqual(result, self.parse_fn(arg_list))
 
@@ -1703,7 +1699,6 @@ class ParseBundleReset(ParseBundleCreateAndResetMixin, TestCase):
 
 
 class ParseBundleUpdateOptions(TestCase):
-    # pylint: disable=too-many-public-methods
     def assert_produce(self, arg_list, result):
         self.assertEqual(
             result, parse_args.parse_bundle_update_options(arg_list)

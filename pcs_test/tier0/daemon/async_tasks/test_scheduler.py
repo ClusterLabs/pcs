@@ -1,4 +1,3 @@
-# pylint: disable=protected-access
 import dataclasses
 from queue import Empty
 from unittest import mock

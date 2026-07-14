@@ -61,8 +61,6 @@ class CachedCibFixture(AssertPcsMixin):
         return self._pcs_runner
 
     def assertEqual(self, first, second, msg=None):
-        # pylint: disable=invalid-name
-        # pylint: disable=no-self-use
         if first != second:
             raise AssertionError(
                 f"{msg}\n{first} != {second}" if msg else f"{first} != {second}"

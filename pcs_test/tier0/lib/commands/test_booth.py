@@ -1,4 +1,3 @@
-# pylint: disable=too-many-lines
 import base64
 import os
 from textwrap import dedent
@@ -209,7 +208,6 @@ class FixtureMixin:
         return config.encode("utf-8")
 
     def fixture_group_status(self, name="booth", running=True):
-        # pylint: disable=no-self-use
         role = "Started" if running else "Stopped"
         return f"""
             <resources>
@@ -569,7 +567,6 @@ class ConfigSetupAuthfileFix(TestCase, FixtureMixin):
 
 
 class ConfigDestroy(TestCase, FixtureMixin):
-    # pylint: disable=too-many-public-methods
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         self.cib_path = os.path.join(settings.cib_dir, "cib.xml")
@@ -2895,7 +2892,6 @@ class TicketRevoke(TicketGrantRevokeMixin, TestCase):
 
 
 class ConfigSyncTest(TestCase, FixtureMixin):
-    # pylint: disable=too-many-public-methods
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         self.node_list = ["rh7-1", "rh7-2"]

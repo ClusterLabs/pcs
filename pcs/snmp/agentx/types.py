@@ -1,6 +1,5 @@
 from collections import namedtuple
 
-# pylint: disable=import-error
 import pyagentx
 
 BaseType = namedtuple("BaseType", ["data_type", "value"])

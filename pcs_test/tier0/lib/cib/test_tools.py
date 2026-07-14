@@ -1,4 +1,3 @@
-# pylint: disable=too-many-lines
 from functools import partial
 from unittest import (
     TestCase,
@@ -534,13 +533,11 @@ class GetTagsTest(CibToolsTest):
 @mock.patch("pcs.lib.cib.tools.does_id_exist")
 class ValidateIdDoesNotExistsTest(TestCase):
     def test_success_when_id_does_not_exists(self, does_id_exists):
-        # pylint: disable=no-self-use
         does_id_exists.return_value = False
         lib.validate_id_does_not_exist("tree", "some-id")
         does_id_exists.assert_called_once_with("tree", "some-id")
 
     def test_raises_when_id_exists(self, does_id_exists):
-        # pylint: disable=no-self-use
         does_id_exists.return_value = True
         assert_raise_library_error(
             lambda: lib.validate_id_does_not_exist("tree", "some-id"),
@@ -555,7 +552,6 @@ class ValidateIdDoesNotExistsTest(TestCase):
 
 class GetPacemakerVersionByWhichCibWasValidatedTest(TestCase):
     def test_missing_attribute(self):
-        # pylint: disable=no-self-use
         assert_raise_library_error(
             lambda: lib.get_pacemaker_version_by_which_cib_was_validated(
                 etree.XML("<cib/>")
@@ -571,7 +567,6 @@ class GetPacemakerVersionByWhichCibWasValidatedTest(TestCase):
         )
 
     def test_invalid_version(self):
-        # pylint: disable=no-self-use
         assert_raise_library_error(
             lambda: lib.get_pacemaker_version_by_which_cib_was_validated(
                 etree.XML('<cib validate-with="something-1.2.3"/>')
@@ -587,7 +582,6 @@ class GetPacemakerVersionByWhichCibWasValidatedTest(TestCase):
         )
 
     def test_invalid_version_at_end(self):
-        # pylint: disable=no-self-use
         assert_raise_library_error(
             lambda: lib.get_pacemaker_version_by_which_cib_was_validated(
                 etree.XML('<cib validate-with="pacemaker-1.2.3x"/>')
@@ -637,7 +631,6 @@ class GetCibCrmFeatureSet(TestCase):
         )
 
     def test_missing_attribute(self):
-        # pylint: disable=no-self-use
         assert_raise_library_error(
             lambda: lib.get_cib_crm_feature_set(etree.XML("<cib />")),
             fixture.error(
@@ -650,7 +643,6 @@ class GetCibCrmFeatureSet(TestCase):
         )
 
     def test_invalid_version(self):
-        # pylint: disable=no-self-use
         assert_raise_library_error(
             lambda: lib.get_cib_crm_feature_set(
                 etree.XML('<cib crm_feature_set="3" />')
@@ -665,7 +657,6 @@ class GetCibCrmFeatureSet(TestCase):
         )
 
     def test_invalid_version_at_end(self):
-        # pylint: disable=no-self-use
         assert_raise_library_error(
             lambda: lib.get_cib_crm_feature_set(
                 etree.XML('<cib crm_feature_set="3.0.9x" />')
@@ -710,7 +701,6 @@ class FindTagWithId(TestCase):
         self.assertEqual("a", element.attrib["id"])
 
     def test_raises_when_is_under_another_tag(self):
-        # pylint: disable=no-self-use
         tree = etree.fromstring(
             '<cib><resources><primitive id="a"/></resources></cib>'
         )
@@ -729,7 +719,6 @@ class FindTagWithId(TestCase):
         )
 
     def test_raises_when_is_under_another_context(self):
-        # pylint: disable=no-self-use
         tree = etree.fromstring(
             """
             <cib>
@@ -757,7 +746,6 @@ class FindTagWithId(TestCase):
         )
 
     def test_raises_when_id_does_not_exists(self):
-        # pylint: disable=no-self-use
         tree = etree.fromstring("<cib><resources/></cib>")
         assert_raise_library_error(
             lambda: find_group(tree.find(".//resources"), "a"),
@@ -1159,7 +1147,6 @@ class FindElementsReferencingId(TestCase):
 
 
 class RemoveElementById(TestCase):
-    # pylint: disable=no-self-use
     def test_element_not_found(self):
         expected_cib = """<cib><configuration/></cib>"""
         cib = etree.fromstring(expected_cib)
@@ -1253,7 +1240,6 @@ class MultivalueAttrContainsValue(TestCase):
 
 
 class MultivalueAttrDeleteValue(TestCase):
-    # pylint: disable=no-self-use
     def test_remove_one(self):
         element = etree.fromstring('<element attr1="A" attr2="A"/>')
         lib.multivalue_attr_delete_value(element, "attr1", "A")

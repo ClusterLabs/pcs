@@ -60,7 +60,6 @@ def set_up_client_certificates(
     skip_offline_nodes -- continue even if not all nodes are accessible
     allow_skip_offline -- enables forcing errors by skip_offline_nodes
     """
-    # pylint: disable=too-many-locals
     reporter.report(
         reports.ReportItem.info(
             reports.messages.QdeviceCertificateDistributionStarted()

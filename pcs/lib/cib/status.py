@@ -1,5 +1,4 @@
 def get_resources_failcounts(cib_status):
-    # pylint: disable=too-many-locals
     """
     List all resources failcounts
     Return a dict {

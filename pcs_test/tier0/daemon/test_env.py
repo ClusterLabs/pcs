@@ -31,7 +31,6 @@ class Logger:
 
 
 class Prepare(TestCase, create_setup_patch_mixin(env)):
-    # pylint: disable=too-many-public-methods
     def setUp(self):
         self.path_exists = self.setup_patch("os.path.exists", return_value=True)
         self.logger = Logger()

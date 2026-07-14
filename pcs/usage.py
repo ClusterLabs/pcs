@@ -11,8 +11,6 @@ from pcs.cli.reports.output import print_to_stderr
 from pcs.common.str_tools import format_optional, indent, outdent
 from pcs.common.types import StringIterable
 
-# pylint: disable=too-many-lines
-
 examples = ""
 
 _WIDTH = 80
@@ -101,8 +99,6 @@ def full_usage() -> None:
 
 
 def strip_extras(text: str) -> str:  # noqa: PLR0912
-    # pylint: disable=global-statement
-    # pylint: disable=too-many-branches
     global examples  # noqa: PLW0603
     ret = ""
     group_name = text.split(" ")[2]
@@ -2438,7 +2434,6 @@ Commands:
 
 def property_usage(args: Argv) -> str:
     # 'property' is a built-in
-    # pylint: disable=redefined-builtin
     output = """
 Usage: pcs property [commands]...
 Configure pacemaker properties

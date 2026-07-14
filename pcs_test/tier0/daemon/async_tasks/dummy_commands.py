@@ -18,7 +18,6 @@ def dummy_workload_with_result(_) -> str:
 
 
 def dummy_workload_unhandled_exception(_) -> None:
-    # pylint: disable=broad-exception-raised
     raise Exception("Whoa, something happened to this task!")
 
 

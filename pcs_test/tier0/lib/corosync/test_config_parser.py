@@ -1,4 +1,3 @@
-# pylint: disable=too-many-lines
 from unittest import TestCase
 
 from pcs.lib.corosync import config_parser
@@ -800,7 +799,6 @@ class SectionTest(TestCase):
 
 
 class ParserTest(TestCase):
-    # pylint: disable=too-many-public-methods
     def test_empty(self):
         self.assertEqual(
             str(config_parser.Parser.parse("".encode("utf-8"))), ""

@@ -10,7 +10,7 @@ from .operations import CibResourceOperationDto
 
 @dataclass(frozen=True)
 class CibResourcePrimitiveDto(DataTransferObject):
-    id: str  # pylint: disable=invalid-name
+    id: str
     agent_name: ResourceAgentNameDto
     description: str | None
     operations: Sequence[CibResourceOperationDto]

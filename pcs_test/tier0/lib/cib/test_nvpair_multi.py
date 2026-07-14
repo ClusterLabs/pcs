@@ -633,7 +633,6 @@ class ValidateNvsetAppendNew(TestCase):
 
 
 class NvsetAppendNew(TestCase):
-    # pylint: disable=no-self-use
     def test_minimal(self):
         context_element = etree.fromstring("""<context id="a" />""")
         id_provider = IdProvider(context_element)
@@ -836,7 +835,6 @@ class NvsetAppendNew(TestCase):
 
 
 class NvsetRemove(TestCase):
-    # pylint: disable=no-self-use
     def test_success(self):
         xml = etree.fromstring(
             """
@@ -863,7 +861,6 @@ class NvsetRemove(TestCase):
 
 
 class NvsetUpdate(TestCase):
-    # pylint: disable=no-self-use
     def test_success_nvpair_all_cases(self):
         nvset_element = etree.fromstring(
             """

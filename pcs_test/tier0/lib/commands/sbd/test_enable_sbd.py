@@ -1,4 +1,3 @@
-# pylint: disable=too-many-lines
 import json
 from unittest import TestCase
 
@@ -532,7 +531,6 @@ class EvenNumOfNodes(TestCase):
 
 
 class OfflineNodes(TestCase):
-    # pylint: disable=too-many-instance-attributes
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         self.corosync_conf_name = "corosync.conf"
@@ -1241,7 +1239,6 @@ class Validations(TestCase):
 
 
 class FailureHandling(TestCase):
-    # pylint: disable=too-many-instance-attributes
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         self.corosync_conf_name = "corosync.conf"

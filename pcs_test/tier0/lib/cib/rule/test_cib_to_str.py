@@ -15,7 +15,6 @@ from pcs.lib.cib.rule.cib_to_str import RuleToStr
 
 
 class IsoToStr(TestCase):
-    # pylint: disable=protected-access
     def test_no_change(self):
         self.assertEqual(RuleToStr._date_to_str("2023-06"), "2023-06")
         self.assertEqual(RuleToStr._date_to_str("202306"), "202306")

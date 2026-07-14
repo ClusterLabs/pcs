@@ -275,7 +275,6 @@ class BundleCreate(BundleCreateCommon):
 
 
 class BundleUpdate(BundleCreateCommon):
-    # pylint: disable=too-many-public-methods
     empty_cib = rc("cib-empty.xml")
 
     success_xml = """

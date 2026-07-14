@@ -10,7 +10,6 @@ from pcs.common.pacemaker.types import (
 
 @dataclass(frozen=True)
 class CibResourceSetDto(DataTransferObject):
-    # pylint: disable=too-many-instance-attributes
     set_id: str
     sequential: bool | None
     require_all: bool | None

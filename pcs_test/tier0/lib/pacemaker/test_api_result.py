@@ -19,7 +19,6 @@ from pcs_test.tools.xml import etree_to_str
 )
 class GetApiResultDom(TestCase):
     def test_valid_xml(self):
-        # pylint: disable=no-self-use
         xml = """
             <pacemaker-result api-version="2.3" request="command">
                 <status code="0" message="OK"/>
@@ -42,7 +41,6 @@ class GetApiResultDom(TestCase):
 
 
 class GetStatusFromApiResult(TestCase):
-    # pylint: disable=protected-access
     def test_errors(self):
         self.assertEqual(
             api_result.get_status_from_api_result(

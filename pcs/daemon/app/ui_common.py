@@ -14,10 +14,6 @@ class AjaxMixin:
 
 
 class StaticFile(EnhanceHeadersMixin, StaticFileHandler):
-    # abstract method `data_received` does need to be overridden. This
-    # method should be implemented to handle streamed request data.
-    # BUT static files are not streamed SO:
-    # pylint: disable=abstract-method
     def initialize(
         self, path: str, default_filename: str | None = None
     ) -> None:

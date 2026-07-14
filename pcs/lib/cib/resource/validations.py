@@ -279,7 +279,6 @@ def validate_unmove_unban(
 
 @dataclass(frozen=True)
 class _MoveBanClearAnalysis:
-    # pylint: disable=too-many-instance-attributes
     is_bundle: bool
     is_in_bundle: bool
     is_clone: bool

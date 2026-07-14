@@ -15,8 +15,6 @@ from pcs_test.tools.assertions import AssertPcsMixin
 from pcs_test.tools.bin_mock import get_mock_settings
 from pcs_test.tools.pcs_runner import PcsRunner
 
-# pylint: disable=too-many-lines
-
 ERRORS_HAVE_OCCURRED = (
     "Error: Errors have occurred, therefore pcs is unable to continue\n"
 )
@@ -400,7 +398,6 @@ class SuccessOperations(ResourceTest):
         )
 
     def test_op_with_OCF_CHECK_LEVEL(self):
-        # pylint: disable=invalid-name
         self.assert_effect(
             (
                 "resource create R ocf:pcsmock:minimal --no-default-ops "
@@ -968,7 +965,6 @@ class Promotable(TestCase, AssertPcsMixin):
         wait=False,
         enable_agent_self_validation=False,
     ):
-        # pylint: disable=unused-argument
         return locals()
 
     @mock.patch("pcs.cli.reports.output.print_to_stderr")
@@ -1197,7 +1193,6 @@ class FailOrWarnGroupCloneBundleCombinationFuture(
 
 
 class FailOrWarn(ResourceTest):
-    # pylint: disable=too-many-public-methods
     def setUp(self):
         super().setUp()
         self.pcs_runner.mock_settings = get_mock_settings()

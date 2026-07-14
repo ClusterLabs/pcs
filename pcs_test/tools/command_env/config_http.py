@@ -36,7 +36,6 @@ def _mutual_exclusive(param_names, **kwargs):
 
 
 class HttpConfig:
-    # pylint: disable=too-many-instance-attributes
     def __init__(self, call_collection, wrap_helper):
         self.__calls = call_collection
 

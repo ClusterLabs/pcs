@@ -50,10 +50,6 @@ def setup(  # noqa:  PLR0913, PLR0915
     no_cluster_uuid: bool = False,
     force_flags: reports.types.ForceFlags = (),
 ) -> None:
-    # pylint: disable=too-many-arguments
-    # pylint: disable=too-many-positional-arguments
-    # pylint: disable=too-many-locals
-    # pylint: disable=too-many-statements
     """
     Set up cluster on specified nodes.
     Validation of the inputs is done here. Possible existing clusters are
@@ -340,9 +336,6 @@ def setup_local(  # noqa: PLR0913
         {"name": "node3", "addrs": []},
     ]
     """
-    # pylint: disable=too-many-arguments
-    # pylint: disable=too-many-locals
-    # pylint: disable=too-many-positional-arguments
     force = reports.codes.FORCE in force_flags
 
     transport_type = transport_type or "knet"
@@ -430,9 +423,6 @@ def _validate_create_corosync_conf(  # noqa: PLR0913
     quorum_options: Mapping[str, str],
     force: bool,
 ) -> reports.ReportItemList:
-    # pylint: disable=too-many-arguments
-    # pylint: disable=too-many-positional-arguments
-
     # Get IP version for node addresses validation. Defaults taken from man
     # corosync.conf
     ip_version = (
@@ -491,8 +481,6 @@ def _create_corosync_conf(  # noqa: PLR0913
     quorum_options: Mapping[str, str],
     no_cluster_uuid: bool,
 ) -> config_facade.ConfigFacade:
-    # pylint: disable=too-many-arguments
-    # pylint: disable=too-many-positional-arguments
     corosync_conf = config_facade.ConfigFacade.create(
         cluster_name, nodes, transport_type
     )

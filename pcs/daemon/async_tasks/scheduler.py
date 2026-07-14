@@ -49,7 +49,6 @@ class SchedulerConfig:
 
 
 class Scheduler:
-    # pylint: disable=too-many-instance-attributes
     """
     Task management core with an interface for the REST API
     """
@@ -67,7 +66,6 @@ class Scheduler:
         self._logging_q = self._proc_pool_manager.Queue()
         self._worker_log_listener = self._init_worker_logging()
         self._single_use_process_pool: list[mp.Process] = []
-        # pylint: disable=consider-using-with
         self._proc_pool = mp.Pool(
             processes=self._config.worker_count,
             maxtasksperchild=self._config.worker_reset_limit,
@@ -200,7 +198,6 @@ class Scheduler:
             del self._task_register[task.task_ident]
 
     def _spawn_new_single_use_worker(self) -> None:
-        # pylint: disable=protected-access
         additional_process = mp.Process(
             group=None,
             target=mp_worker_init,

@@ -14,7 +14,6 @@ PASSWORD = "password"
 
 class RubyPcsdWrapper(ruby_pcsd.Wrapper):
     def __init__(self, request_type):
-        # pylint: disable=super-init-not-called
         self.request_type = request_type
         self.status_code = 200
         self.headers = {"Some": "value"}
@@ -59,7 +58,6 @@ class AppTest(AsyncHTTPTestCase):
         return Application(self.get_routes())
 
     def get_routes(self):
-        # pylint: disable=no-self-use
         return []
 
     def fetch(self, path, raise_error=False, **kwargs):

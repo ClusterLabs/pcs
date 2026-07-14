@@ -48,7 +48,6 @@ class CibShortcuts:
             MODIFIER_GENERATORS - please refer it when you are adding params
             here)
         """
-        # pylint: disable=too-many-arguments
         if (returncode != 0 or stderr is not None) and (
             modifiers is not None or filename is not None or modifier_shortcuts
         ):

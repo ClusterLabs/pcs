@@ -1,4 +1,3 @@
-# pylint: disable=too-many-lines
 import json
 from unittest import (
     TestCase,
@@ -389,7 +388,6 @@ def get_fixture_clone_group_cib(  # noqa: PLR0913
     primitive2_meta=False,
     all_meta=False,
 ):
-    # pylint: disable=too-many-arguments
     parts = ["""<resources><clone id="A-clone">"""]
     if clone_disabled:
         parts.append(

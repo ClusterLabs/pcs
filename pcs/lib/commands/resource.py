@@ -1,4 +1,3 @@
-# pylint: disable=too-many-lines
 import re
 from collections import defaultdict
 from collections.abc import Callable, Iterable, Mapping, Sequence
@@ -499,8 +498,6 @@ def create(  # noqa: PLR0913
     allow_not_suitable_command: bool = False,
     enable_agent_self_validation: bool = False,
 ):
-    # pylint: disable=too-many-arguments
-    # pylint: disable=too-many-locals
     """
     Create a primitive resource in a cib.
 
@@ -618,8 +615,6 @@ def create_as_clone(  # noqa: PLR0913
     allow_incompatible_clone_meta_attributes: bool = False,
     enable_agent_self_validation: bool = False,
 ):
-    # pylint: disable=too-many-arguments
-    # pylint: disable=too-many-locals
     """
     Create a primitive resource in a clone
 
@@ -785,8 +780,6 @@ def create_in_group(  # noqa: PLR0913
     allow_not_suitable_command: bool = False,
     enable_agent_self_validation: bool = False,
 ):
-    # pylint: disable=too-many-arguments
-    # pylint: disable=too-many-locals
     """
     Create a resource in a cib and put it into a defined group
 
@@ -940,8 +933,6 @@ def create_into_bundle(  # noqa: PLR0913
     allow_not_accessible_resource: bool = False,
     enable_agent_self_validation: bool = False,
 ):
-    # pylint: disable=too-many-arguments
-    # pylint: disable=too-many-locals
     """
     Create a new resource in a cib and put it into an existing bundle
 
@@ -1064,7 +1055,6 @@ def bundle_create(  # noqa: PLR0913
     ensure_disabled=False,
     wait=False,
 ):
-    # pylint: disable=too-many-arguments
     """
     Create a new bundle containing no resources
 
@@ -1150,7 +1140,6 @@ def bundle_reset(  # noqa: PLR0913
     ensure_disabled=False,
     wait=False,
 ):
-    # pylint: disable=too-many-arguments
     """
     Remove configuration of bundle bundle_id and create new one into it.
 
@@ -1243,7 +1232,6 @@ def bundle_update(  # noqa: PLR0913
     force_options=False,
     wait=False,
 ):
-    # pylint: disable=too-many-arguments
     """
     Modify an existing bundle (does not touch encapsulated resources)
 
@@ -1795,8 +1783,6 @@ def group_add(  # noqa: PLR0912
     bool put_after_adjacent -- put resources after or before the adjacent one
     mixed wait -- flag for controlling waiting for pacemaker idle mechanism
     """
-    # pylint: disable = too-many-locals
-    # pylint: disable = too-many-branches
 
     if wait is not False:
         # deprecated in the first version of 0.12
@@ -1918,7 +1904,6 @@ def group_add(  # noqa: PLR0912
 def get_failcounts(
     env, resource=None, node=None, operation=None, interval=None
 ):
-    # pylint: disable=redefined-outer-name
     """
     List resources failcounts, optionally filtered by a resource, node or op
 
@@ -2029,9 +2014,6 @@ def move_autoclean(  # noqa: PLR0912, PLR0915
     strict -- if True affecting other resources than the specified resource
         will cause failure. If False affecting other resources is allowed.
     """
-    # pylint: disable=too-many-branches
-    # pylint: disable=too-many-locals
-    # pylint: disable=too-many-statements
     wait_timeout = max(wait_timeout, 0)
     if not env.is_cib_live:
         raise LibraryError(
@@ -2439,7 +2421,6 @@ class _MoveBanTemplate:
         lifetime=None,
         wait: WaitType = False,
     ):
-        # pylint: disable=too-many-locals
         # validate
 
         if wait is not False:

@@ -47,7 +47,6 @@ class OrganizeLinesTest(TestCase):
                 ConfigItem("ticket", "TA"),
             ],
             # testing a function which should not be used outside of the module
-            # pylint: disable=protected-access
             config_parser._organize_lines(
                 [
                     ("site", "1.1.1.1"),
@@ -85,7 +84,6 @@ class OrganizeLinesTest(TestCase):
                 ),
             ],
             # testing a function which should not be used outside of the module
-            # pylint: disable=protected-access
             config_parser._organize_lines(
                 [
                     ("site", "1.1.1.1"),
@@ -118,7 +116,6 @@ class ParseRawLinesTest(TestCase):
                 ("line-with", "hash#literal"),
             ],
             # testing a function which should not be used outside of the module
-            # pylint: disable=protected-access
             config_parser._parse_to_raw_lines(
                 "\n".join(
                     [
@@ -137,7 +134,6 @@ class ParseRawLinesTest(TestCase):
         self.assertEqual(
             [("site", "1.1.1.1")],
             # testing a function which should not be used outside of the module
-            # pylint: disable=protected-access
             config_parser._parse_to_raw_lines(
                 "\n".join(
                     [
@@ -152,7 +148,6 @@ class ParseRawLinesTest(TestCase):
         self.assertEqual(
             [("site", "1.1.1.1")],
             # testing a function which should not be used outside of the module
-            # pylint: disable=protected-access
             config_parser._parse_to_raw_lines(
                 "\n".join(
                     [
@@ -172,7 +167,6 @@ class ParseRawLinesTest(TestCase):
         line_list = ["site = 1.1.1.1"] + invalid_line_list
         with self.assertRaises(config_parser.InvalidLines) as context_manager:
             # testing a function which should not be used outside of the module
-            # pylint: disable=protected-access
             config_parser._parse_to_raw_lines("\n".join(line_list))
         self.assertEqual(context_manager.exception.args[0], invalid_line_list)
 
@@ -180,7 +174,6 @@ class ParseRawLinesTest(TestCase):
         self.assertEqual(
             [("site", "1.1.1.1")],
             # testing a function which should not be used outside of the module
-            # pylint: disable=protected-access
             config_parser._parse_to_raw_lines(
                 "\n".join(
                     [

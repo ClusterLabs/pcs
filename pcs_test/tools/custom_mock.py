@@ -22,7 +22,6 @@ from pcs_test.tools.assertions import assert_report_item_list_equal
 
 def get_getaddrinfo_mock(resolvable_addr_list):
     def socket_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):  # noqa: A002
-        # pylint: disable=redefined-builtin
         del port, family, type, proto, flags
         if host not in resolvable_addr_list:
             raise socket.gaierror(1, "")
@@ -184,7 +183,6 @@ class MockLibraryReportProcessor(ReportProcessor):
 
 
 class MockCurl:
-    # pylint: disable=too-many-instance-attributes
     def __init__(
         self,
         info=None,
@@ -305,16 +303,13 @@ class MockCurlMulti:
             )
 
     def select(self, timeout=1):
-        # pylint: disable=no-self-use
         del timeout
         return 0
 
     def perform(self):
-        # pylint: disable=no-self-use
         return (0, 0)
 
     def timeout(self):
-        # pylint: disable=no-self-use
         return 0
 
     def info_read(self):
@@ -333,7 +328,6 @@ class MockCurlMulti:
                 else:
                     ok_list.append(handle)
             except pycurl.error as e:
-                # pylint: disable=unbalanced-tuple-unpacking
                 errno, msg = e.args
                 err_list.append((handle, errno, msg))
             self._processed_list.append(handle)

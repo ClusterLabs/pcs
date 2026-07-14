@@ -51,7 +51,6 @@ class Prepare(TestCase):
         complete_operations_options,
         get_remaining_defaults,
     ):
-        # pylint: disable=no-self-use
         new_role_names_supported = False
         validate_operation_list.return_value = ["options_report"]
         validate_different_intervals.return_value = [
@@ -124,14 +123,12 @@ class Prepare(TestCase):
 
 class ValidateDifferentIntervals(TestCase):
     def test_return_empty_reports_on_empty_list(self):
-        # pylint: disable=no-self-use
         assert_report_item_list_equal(
             operations.validate_different_intervals([]),
             [],
         )
 
     def test_return_empty_reports_on_operations_without_duplication(self):
-        # pylint: disable=no-self-use
         assert_report_item_list_equal(
             operations.validate_different_intervals(
                 [
@@ -144,7 +141,6 @@ class ValidateDifferentIntervals(TestCase):
         )
 
     def test_return_report_on_duplicated_intervals(self):
-        # pylint: disable=no-self-use
         assert_report_item_list_equal(
             operations.validate_different_intervals(
                 [
@@ -262,7 +258,6 @@ class Normalize(TestCase):
         self.assertEqual(
             operation,
             {
-                # pylint: disable=protected-access
                 key: operations._normalize(key, value)
                 for key, value in operation.items()
             },
@@ -279,7 +274,6 @@ class Normalize(TestCase):
                 "enabled": "1",
             },
             {
-                # pylint: disable=protected-access
                 key: operations._normalize(key, value)
                 for key, value in {
                     "name": "monitor",
@@ -303,7 +297,6 @@ class ValidateOperation(TestCase):
         allowed_operation_name_list=_DEFAULT,
         allow_invalid=False,
     ):
-        # pylint: disable=no-self-use
         if allowed_operation_name_list is self._DEFAULT:
             allowed_operation_name_list = ["monitor"]
         assert_report_item_list_equal(
@@ -571,7 +564,6 @@ class ValidateOperation(TestCase):
 
 class GetRemainingDefaults(TestCase):
     def test_success(self):
-        # pylint: disable=protected-access
         self.assertEqual(
             operations._get_remaining_defaults(
                 operation_list=[{"name": "monitor"}],

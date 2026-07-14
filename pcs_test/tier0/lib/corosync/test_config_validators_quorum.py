@@ -1,4 +1,3 @@
-# pylint: disable=too-many-lines
 from unittest import TestCase
 
 from pcs.common.reports import codes as report_codes
@@ -29,7 +28,6 @@ forbidden_characters_kwargs = dict(
 
 
 class BaseQuorumOptions:
-    # pylint: disable=no-member
     def test_no_options(self):
         has_qdevice = False
         assert_report_item_list_equal(self.validator({}, has_qdevice), [])
@@ -311,7 +309,6 @@ class QuorumOptionsUpdate(BaseQuorumOptions, TestCase):
         )
 
     def test_last_man_standing_required_currently_disabled(self):
-        # pylint: disable=no-self-use
         has_qdevice = False
         assert_report_item_list_equal(
             config_validators.update_quorum_options(
@@ -335,7 +332,6 @@ class QuorumOptionsUpdate(BaseQuorumOptions, TestCase):
         )
 
     def test_last_man_standing_required_currently_enabled(self):
-        # pylint: disable=no-self-use
         has_qdevice = False
         assert_report_item_list_equal(
             config_validators.update_quorum_options(

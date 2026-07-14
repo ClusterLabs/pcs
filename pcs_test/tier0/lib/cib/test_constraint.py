@@ -19,7 +19,6 @@ from pcs_test.tools.custom_mock import MockLibraryReportProcessor
 
 class PrepareOptionsTest(TestCase):
     def test_refuse_unknown_option(self):
-        # pylint: disable=no-self-use
         assert_raise_library_error(
             lambda: constraint.prepare_options(
                 ("a",), {"b": "c"}, mock.MagicMock(), mock.MagicMock()
@@ -94,7 +93,6 @@ def fixture_constraint_section(return_value):
 
 class CheckIsWithoutDuplicationTest(TestCase):
     def test_raises_when_duplicate_element_found(self):
-        # pylint: disable=no-self-use
         element = mock.MagicMock()
         element.tag = "constraint_type"
 
@@ -124,7 +122,6 @@ class CheckIsWithoutDuplicationTest(TestCase):
         )
 
     def test_success_when_no_duplication_found(self):
-        # pylint: disable=no-self-use
         element = mock.MagicMock()
         element.tag = "constraint_type"
         # no exception raised
@@ -137,7 +134,6 @@ class CheckIsWithoutDuplicationTest(TestCase):
         )
 
     def test_report_when_duplication_allowed(self):
-        # pylint: disable=no-self-use
         element = mock.MagicMock()
         element.tag = "constraint_type"
 
@@ -167,7 +163,6 @@ class CheckIsWithoutDuplicationTest(TestCase):
 
 class CreateWithSetTest(TestCase):
     def test_put_new_constraint_to_constraint_section(self):
-        # pylint: disable=no-self-use
         constraint_section = etree.Element("constraints")
         constraint.create_with_set(
             constraint_section,
@@ -190,7 +185,6 @@ class CreateWithSetTest(TestCase):
         )
 
     def test_refuse_empty_resource_set_list(self):
-        # pylint: disable=no-self-use
         constraint_section = etree.Element("constraints")
         assert_raise_library_error(
             lambda: constraint.create_with_set(

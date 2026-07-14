@@ -65,7 +65,6 @@ def _run(
     env_vars = {"LC_ALL": "C"}
     env_vars.update(dict(env_extend) if env_extend else {})
 
-    # pylint: disable=subprocess-popen-preexec-fn
     with subprocess.Popen(
         args,
         stdin=subprocess.DEVNULL,

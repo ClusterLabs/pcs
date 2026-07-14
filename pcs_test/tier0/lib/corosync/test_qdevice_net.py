@@ -80,7 +80,6 @@ class QdeviceSetupTest(TestCase):
 @mock.patch("pcs.lib.corosync.qdevice_net.shutil.rmtree")
 @mock.patch("pcs.lib.corosync.qdevice_net.qdevice_initialized")
 class QdeviceDestroyTest(TestCase):
-    # pylint: disable=no-self-use
     def test_success(self, mock_initialized, mock_rmtree):
         mock_initialized.return_value = True
         lib.qdevice_destroy()
@@ -398,7 +397,6 @@ class QdeviceSignCertificateRequestTest(CertificateTestCase):
 @mock.patch("pcs.lib.corosync.qdevice_net.shutil.rmtree")
 @mock.patch("pcs.lib.corosync.qdevice_net.client_initialized")
 class ClientDestroyTest(TestCase):
-    # pylint: disable=no-self-use
     def test_success(self, mock_initialized, mock_rmtree):
         mock_initialized.return_value = True
         lib.client_destroy()
@@ -763,7 +761,6 @@ class ClientImportCertificateAndKeyTest(CertificateTestCase):
 
 
 class GetOutputCertificateTest(TestCase):
-    # pylint: disable=protected-access
     def setUp(self):
         self.file_path = "/tmp/a-file"
         self.file_data = b"certificate data from a file"

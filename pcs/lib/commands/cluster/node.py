@@ -73,9 +73,6 @@ def remove_nodes(  # noqa: PLR0912, PLR0915
     node_list,
     force_flags: reports.types.ForceFlags = (),
 ) -> None:
-    # pylint: disable=too-many-branches
-    # pylint: disable=too-many-locals
-    # pylint: disable=too-many-statements
     """
     Remove nodes from a cluster.
 

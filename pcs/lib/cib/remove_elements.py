@@ -487,7 +487,6 @@ def _is_last_element(parent_element: _Element, child_tag: str) -> bool:
 def _is_empty_after_inner_el_removal(  # noqa: PLR0911
     parent_el: _Element,
 ) -> bool:
-    # pylint: disable=too-many-return-statements
     if is_any_clone(parent_el):
         return True
     if is_group(parent_el):

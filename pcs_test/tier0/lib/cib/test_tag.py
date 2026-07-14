@@ -271,7 +271,6 @@ class ValidateCreateTag(ValidateCommonTestData):
 
 
 class ValidateTagIdTest(ValidateCommonTestData):
-    # pylint: disable=protected-access
     def test_tag_id_is_valid(self):
         assert_report_item_list_equal(
             lib._validate_tag_id("new-tag-id", self.id_provider),
@@ -326,7 +325,6 @@ class ValidateTagIdTest(ValidateCommonTestData):
 
 
 class ValidateTagIdNotInIdrefList(TestCase):
-    # pylint: disable=protected-access
     def setUp(self):
         self.idref_list = ["id1", "id2", "id3"]
 
@@ -350,7 +348,6 @@ class ValidateTagIdNotInIdrefList(TestCase):
 
 
 class ValidateDuplicateReferenceIds(ValidateCommonTestData):
-    # pylint: disable=protected-access
     duplicated_ids_input_output = (
         (
             ["id1", "id1"],
@@ -367,14 +364,12 @@ class ValidateDuplicateReferenceIds(ValidateCommonTestData):
     )
 
     def test_no_duplicates(self):
-        # pylint: disable=no-self-use
         assert_report_item_list_equal(
             lib._validate_add_remove_duplicate_reference_ids(["id1", "id2"]),
             [],
         )
 
     def test_duplicates(self):
-        # pylint: disable=no-self-use
         for input_ids, output_ids in self.duplicated_ids_input_output:
             assert_report_item_list_equal(
                 lib._validate_add_remove_duplicate_reference_ids(input_ids),
@@ -389,9 +384,7 @@ class ValidateDuplicateReferenceIds(ValidateCommonTestData):
 
 
 class ValidateTagCreateIdrefListNotEmpty(TestCase):
-    # pylint: disable=protected-access
     def test_empty_list(self):
-        # pylint: disable=no-self-use
         assert_report_item_list_equal(
             lib._validate_tag_create_idref_list_not_empty([]),
             [
@@ -402,7 +395,6 @@ class ValidateTagCreateIdrefListNotEmpty(TestCase):
         )
 
     def test_not_empty_list(self):
-        # pylint: disable=no-self-use
         assert_report_item_list_equal(
             lib._validate_tag_create_idref_list_not_empty(["id"]),
             [],
@@ -410,7 +402,6 @@ class ValidateTagCreateIdrefListNotEmpty(TestCase):
 
 
 class ValidateReferenceIdsAreResources(ValidateCommonTestData):
-    # pylint: disable=protected-access
     def test_ids_exist(self):
         assert_report_item_list_equal(
             lib._validate_reference_ids_are_resources(
@@ -649,7 +640,6 @@ class ValidateCommonConstraintsTestData(TestCase):
 
 class ValidateRemoveTag(ValidateCommonConstraintsTestData):
     def test_success_non_empty_list_for_remove(self):
-        # pylint: disable=no-self-use
         assert_report_item_list_equal(
             lib.validate_remove_tag(
                 get_constraints(self.tree_each_tag_has_one_constraint),
@@ -659,7 +649,6 @@ class ValidateRemoveTag(ValidateCommonConstraintsTestData):
         )
 
     def test_fail_empty_list_for_remove(self):
-        # pylint: disable=no-self-use
         assert_report_item_list_equal(
             lib.validate_remove_tag(
                 get_constraints(self.tree_each_tag_has_one_constraint),
@@ -673,7 +662,6 @@ class ValidateRemoveTag(ValidateCommonConstraintsTestData):
         )
 
     def test_fail_tag_referenced_in_constraint(self):
-        # pylint: disable=no-self-use
         assert_report_item_list_equal(
             lib.validate_remove_tag(
                 get_constraints(self.tree_each_tag_has_one_constraint),
@@ -689,7 +677,6 @@ class ValidateRemoveTag(ValidateCommonConstraintsTestData):
         )
 
     def test_fail_tag_referenced_in_multiple_constraint(self):
-        # pylint: disable=no-self-use
         assert_report_item_list_equal(
             lib.validate_remove_tag(
                 get_constraints(self.tree_tag_has_multiple_constraints),
@@ -771,7 +758,6 @@ class FindConstraintsReferencingTag(ValidateCommonConstraintsTestData):
 
 
 class ValidateAddRemoveDuplicateReferenceIds(ValidateCommonTestData):
-    # pylint: disable=protected-access
     duplicated_ids_input_output = (
         (
             ["id1", "id1"],
@@ -788,14 +774,12 @@ class ValidateAddRemoveDuplicateReferenceIds(ValidateCommonTestData):
     )
 
     def test_add_no_duplicates(self):
-        # pylint: disable=no-self-use
         assert_report_item_list_equal(
             lib._validate_add_remove_duplicate_reference_ids(["id1", "id2"]),
             [],
         )
 
     def test_remove_no_duplicates(self):
-        # pylint: disable=no-self-use
         assert_report_item_list_equal(
             lib._validate_add_remove_duplicate_reference_ids(
                 ["id1", "id2"],

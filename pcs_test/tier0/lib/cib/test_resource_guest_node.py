@@ -614,7 +614,6 @@ class ValidateIsNotGuest(TestCase):
         )
 
     def test_report_when_is_guest(self):
-        # pylint: disable=no-self-use
         assert_report_item_list_equal(
             guest_node.validate_is_not_guest(
                 etree.fromstring(
@@ -642,7 +641,6 @@ class ValidateIsNotGuest(TestCase):
 
 class SetAsGuest(TestCase):
     def test_set_guest_meta_correctly(self):
-        # pylint: disable=no-self-use
         resource_element = etree.fromstring('<primitive id="A"/>')
         guest_node.set_as_guest(
             resource_element,
@@ -669,7 +667,6 @@ class SetAsGuest(TestCase):
 
 class UnsetGuest(TestCase):
     def test_unset_all_guest_attributes(self):
-        # pylint: disable=no-self-use
         resource_element = etree.fromstring(
             """
             <primitive id="A">
@@ -696,7 +693,6 @@ class UnsetGuest(TestCase):
         )
 
     def test_unset_all_guest_attributes_and_empty_meta_tag(self):
-        # pylint: disable=no-self-use
         resource_element = etree.fromstring(
             """
             <primitive id="A">

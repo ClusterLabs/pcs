@@ -282,7 +282,6 @@ def remove_with_resource_set(
             continue
         set_element.remove(ref_element)
         # set_element is lxml element, therefore we have to use len() here
-        # pylint: disable=len-as-condition
         if not len(set_element):
             ticket_element = set_element.getparent()
             if ticket_element is None:

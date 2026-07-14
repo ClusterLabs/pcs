@@ -1,5 +1,3 @@
-# pylint: disable=too-many-lines
-# pylint: disable=no-member
 import fcntl
 import json
 import re
@@ -331,7 +329,6 @@ class SuccessMinimal(TestCase):
 
 
 class NodeNamesMissing(TestCase):
-    # pylint: disable=too-many-instance-attributes
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         self.expected_reports = []
@@ -772,7 +769,6 @@ class FailureAtbRequired(TestCase):
 
 
 class QuorumCheck(TestCase):
-    # pylint: disable=too-many-instance-attributes
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         self.expected_reports = []
@@ -990,7 +986,6 @@ class QuorumCheck(TestCase):
 
 
 class FailureQuorumLoss(TestCase):
-    # pylint: disable=too-many-instance-attributes
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         self.expected_reports = []
@@ -1468,7 +1463,6 @@ class FailureRemoveFromCib(TestCase):
 
 
 class FailureCorosyncReload(TestCase):
-    # pylint: disable=too-many-instance-attributes
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         self.expected_reports = []
@@ -2037,7 +2031,6 @@ class FailureValidationCorosync(TestCase):
 
 
 class OfflineNodes(TestCase):
-    # pylint: disable=too-many-instance-attributes
     def setUp(self):
         self.env_assist, self.config = get_env_tools(self)
         self.removing_num = 2

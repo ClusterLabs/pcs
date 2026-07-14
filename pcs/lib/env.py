@@ -71,9 +71,6 @@ def _wait_type_to_int(wait: WaitType) -> int:
 
 
 class LibraryEnvironment:
-    # pylint: disable=too-many-instance-attributes
-    # pylint: disable=too-many-public-methods
-
     def __init__(  # noqa: PLR0913
         self,
         logger: Logger,
@@ -88,8 +85,6 @@ class LibraryEnvironment:
         ) = None,
         request_timeout: int | None = None,
     ):
-        # pylint: disable=too-many-arguments
-        # pylint: disable=too-many-positional-arguments
         self._logger = logger
         self._report_processor = report_processor
         self._user_login = user_login

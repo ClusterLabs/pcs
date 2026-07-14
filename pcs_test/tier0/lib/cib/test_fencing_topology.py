@@ -40,7 +40,6 @@ from pcs_test.tools.xml import etree_to_str
 
 patch_lib = create_patcher("pcs.lib.cib.fencing_topology")
 
-# pylint: disable=protected-access
 
 FIXTURE_NON_UNIQUE_DEVICES = """
     <fencing-topology>
@@ -103,7 +102,6 @@ class CibMixin:
 
 class StatusNodesMixin:
     def get_status(self):
-        # pylint: disable=no-self-use
         with open(rc("crm_mon.minimal.xml")) as crm_mon_file:
             crm_mon_xml = crm_mon_file.read()
         return ClusterState(
@@ -127,7 +125,6 @@ class StatusNodesMixin:
 @patch_lib("_validate_target", return_value=[])
 @patch_lib("_validate_level", return_value=[])
 class AddLevel(TestCase):
-    # pylint: disable=too-many-instance-attributes
     def setUp(self):
         self.reporter = MockLibraryReportProcessor()
         self.cib = "cib"
@@ -185,7 +182,6 @@ class AddLevel(TestCase):
         dupl_called=True,
         report_list=None,
     ):
-        # pylint: disable=too-many-arguments
         report_list = report_list or []
         with self.assertRaises(LibraryError):
             lib.add_level(
@@ -643,7 +639,6 @@ class FindLevelsWithDevice(TestCase, CibMixin):
 
 
 class RemoveDeviceFromLevel(TestCase):
-    # pylint: disable=no-self-use
     def test_remove_single(self):
         element = etree.fromstring(
             """
@@ -813,7 +808,6 @@ class Verify(TestCase, CibMixin, StatusNodesMixin):
         self.tree = self.cib.find("configuration/fencing-topology")
 
     def fixture_resource(self, tree, name):
-        # pylint: disable=no-self-use
         el = etree.SubElement(tree, "primitive", id=name, type="fence_dummy")
         el.set("class", "stonith")
 
@@ -915,7 +909,6 @@ class ValidateLevel(TestCase):
 @patch_lib("_validate_target_typewise")
 class ValidateTarget(TestCase):
     def test_delegate(self, validate_type, validate_value):
-        # pylint: disable=no-self-use
         lib._validate_target("status", "type", "value", "force")
         validate_type.assert_called_once_with("type")
         validate_value.assert_called_once_with(
@@ -925,7 +918,6 @@ class ValidateTarget(TestCase):
 
 class ValidateTargetTypewise(TestCase):
     def test_success(self):
-        # pylint: disable=no-self-use
         report_list = []
         report_list.extend(lib._validate_target_typewise(TARGET_TYPE_NODE))
         report_list.extend(lib._validate_target_typewise(TARGET_TYPE_ATTRIBUTE))
@@ -933,7 +925,6 @@ class ValidateTargetTypewise(TestCase):
         assert_report_item_list_equal(report_list, [])
 
     def test_empty(self):
-        # pylint: disable=no-self-use
         report_list = lib._validate_target_typewise("")
         report = [
             (
@@ -953,7 +944,6 @@ class ValidateTargetTypewise(TestCase):
         assert_report_item_list_equal(report_list, report)
 
     def test_invalid(self):
-        # pylint: disable=no-self-use
         report_list = lib._validate_target_typewise("bad_target")
         report = [
             (
@@ -1148,7 +1138,6 @@ class ValidateDevices(TestCase):
 @patch_lib("_find_level_elements")
 class ValidateLevelTargetDevicesDoesNotExist(TestCase):
     def test_success(self, mock_find):
-        # pylint: disable=no-self-use
         mock_find.return_value = []
 
         report_list = lib._validate_level_target_devices_does_not_exist(
@@ -1161,7 +1150,6 @@ class ValidateLevelTargetDevicesDoesNotExist(TestCase):
         assert_report_item_list_equal(report_list, [])
 
     def test_error(self, mock_find):
-        # pylint: disable=no-self-use
         mock_find.return_value = ["element"]
 
         report_list = lib._validate_level_target_devices_does_not_exist(
@@ -1258,7 +1246,6 @@ class FindLevelElements(TestCase, CibMixin):
         self.tree = self.cib.find("configuration/fencing-topology")
 
     def get_ids(self, elements):
-        # pylint: disable=no-self-use
         return [el.get("id") for el in elements]
 
     def test_no_filter(self):

@@ -31,7 +31,6 @@ class RunnerConfig:
         instead=None,
         env=None,
     ):
-        # pylint: disable=too-many-arguments
         """
         Place new call to a config.
 

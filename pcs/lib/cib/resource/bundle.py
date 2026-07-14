@@ -246,8 +246,6 @@ def append_new(  # noqa: PLR0913
     storage_map: Iterable[Mapping[str, str]],
     meta_attributes: Mapping[str, str],
 ) -> _Element:
-    # pylint: disable=too-many-arguments
-    # pylint: disable=too-many-positional-arguments
     """
     Create new bundle and add it to the CIB
 
@@ -378,8 +376,6 @@ def validate_update(  # noqa: PLR0913
     meta_attributes: Mapping[str, str],
     force_options: bool = False,
 ) -> reports.ReportItemList:
-    # pylint: disable=too-many-arguments
-    # pylint: disable=too-many-positional-arguments
     """
     Validate modifying an existing bundle, return list of report items
 
@@ -425,8 +421,6 @@ def update(  # noqa: PLR0913
     storage_map_remove: StringIterable,
     meta_attributes: Mapping[str, str],
 ) -> None:
-    # pylint: disable=too-many-arguments
-    # pylint: disable=too-many-positional-arguments
     """
     Modify an existing bundle (does not touch encapsulated resources)
 

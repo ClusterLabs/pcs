@@ -122,15 +122,12 @@ def read_test_resource(name):
 
 
 def cmp3(a, b):
-    # pylint: disable=invalid-name
-
     # python3 doesn't have the cmp function, this is an official workaround
     # https://docs.python.org/3.0/whatsnew/3.0.html#ordering-comparisons
     return (a > b) - (a < b)
 
 
 def compare_version(a, b):
-    # pylint: disable=invalid-name
     if a[0] == b[0]:
         if a[1] == b[1]:
             return cmp3(a[2], b[2])

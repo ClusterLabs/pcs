@@ -665,7 +665,6 @@ class TotemBase:
         raise NotImplementedError()
 
     def test_no_options(self):
-        # pylint: disable=no-self-use
         assert_report_item_list_equal(self.call_function({}), [])
 
     def test_all_valid(self):

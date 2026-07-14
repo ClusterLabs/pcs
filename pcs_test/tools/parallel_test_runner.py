@@ -33,7 +33,6 @@ class ParallelTestManager:
 
 
 class VanillaTextTestResult(unittest.TextTestResult):
-    # pylint: disable=no-self-use
     def get_failed_names(self) -> list[str]:
         return []
 
@@ -74,7 +73,6 @@ class VanillaTextTestResult(unittest.TextTestResult):
 class ParallelTestResult:
     """Representation of test result that can be pickled"""
 
-    # pylint: disable=too-many-instance-attributes
     tests_run: int = 0
     was_successful: bool = True
     error_reports: list[str] = field(default_factory=list)
@@ -94,7 +92,6 @@ class ParallelTestResult:
         vanilla: bool,
         last_slash: bool,
     ) -> None:
-        # pylint: disable=import-outside-toplevel too-many-branches
         summary_lines = []
         if self.error_count or self.failure_count or self.skip_count or vanilla:
             summary_lines.append("")
@@ -173,7 +170,6 @@ class ParallelTestResult:
 class ParallelTestRunner(unittest.TextTestRunner):
     def _makeResult(self):
         return self.resultclass(
-            # pylint: disable=protected-access
             unittest.runner._WritelnDecorator(StringIO()),
             self.descriptions,
             self.verbosity,

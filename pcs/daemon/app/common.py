@@ -191,8 +191,6 @@ class LegacyApiHandler(LegacyApiBaseHandler):
 
 
 class RedirectHandler(EnhanceHeadersMixin, TornadoRedirectHandler):
-    # abstract method `data_received` is not used in redirect:
-    # pylint: disable=abstract-method
     """
     RedirectHandler with modified HTTP headers.
     """

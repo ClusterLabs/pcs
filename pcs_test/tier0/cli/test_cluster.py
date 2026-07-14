@@ -1,4 +1,3 @@
-# pylint: disable=too-many-lines
 import json
 from textwrap import dedent
 from unittest import TestCase, mock
@@ -27,7 +26,6 @@ DEFAULT_TRANSPORT_TYPE = "knet"
 
 
 class ClusterSetup(TestCase):
-    # pylint: disable=too-many-public-methods
     def setUp(self):
         self.lib = mock.Mock(spec_set=["cluster"])
         self.cluster = mock.Mock(spec_set=["setup", "setup_local"])
@@ -551,7 +549,6 @@ class ClusterSetup(TestCase):
 
 
 class NodeAdd(TestCase):
-    # pylint: disable=too-many-public-methods
     def setUp(self):
         self.lib = mock.Mock(spec_set=["cluster"])
         self.cluster = mock.Mock(spec_set=["add_nodes"])
@@ -742,7 +739,6 @@ class NodeAdd(TestCase):
 
 
 class AddLink(TestCase):
-    # pylint: disable=too-many-public-methods
     def setUp(self):
         self.lib = mock.Mock(spec_set=["cluster"])
         self.cluster = mock.Mock(spec_set=["add_link"])
@@ -1005,7 +1001,6 @@ class RemoveLink(TestCase):
 
 
 class UpdateLink(TestCase):
-    # pylint: disable=too-many-public-methods
     def setUp(self):
         self.lib = mock.Mock(spec_set=["cluster"])
         self.cluster = mock.Mock(spec_set=["update_link"])

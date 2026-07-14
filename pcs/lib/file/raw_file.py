@@ -7,7 +7,6 @@ from io import BytesIO
 # the import makes it look like RealFile is implemented here so we don't
 # have to import RawFile from common and Ghost file from here in other
 # places
-# pylint: disable=unused-import
 from pcs.common import reports
 from pcs.common.file import (
     FileMetadata,

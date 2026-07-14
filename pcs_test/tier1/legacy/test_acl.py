@@ -26,7 +26,6 @@ ERRORS_HAVE_OCCURRED = (
 
 
 class ACLTest(TestCase, AssertPcsMixin):
-    # pylint: disable=too-many-public-methods
     def setUp(self):
         self.temp_cib = get_tmp_file("tier1_acl")
         write_file_to_tmpfile(empty_cib, self.temp_cib)

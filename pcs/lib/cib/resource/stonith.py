@@ -433,7 +433,6 @@ def update_scsi_devices_without_restart(
     id_provider -- elements' ids generator
     device_list -- list of updated scsi devices
     """
-    # pylint: disable=too-many-locals
     cib = get_root(resource_el)
     resource_id = resource_el.get("id", "")
     roles_with_nodes = get_resource_state(cluster_state, resource_id)

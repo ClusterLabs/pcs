@@ -128,8 +128,6 @@ def _communication_to_response(  # noqa: PLR0913
     error_msg,
     raw_data,
 ):
-    # pylint: disable=too-many-arguments
-    # pylint: disable=too-many-positional-arguments
     return Response(
         MockCurlSimple(
             info={pycurl.RESPONSE_CODE: response_code},
@@ -194,7 +192,6 @@ def create_communication(  # noqa: PLR0913
     string error_msg -- see Response
     string raw_data -- see data attrib in RequestData
     """
-    # pylint: disable=too-many-arguments
     # We don't care about tokens, see _communication_to_response.
     common = dict(
         action=action,
@@ -445,7 +442,6 @@ class NodeCommunicator:
                     real_request.target.dest_list,
                 )
 
-            # pylint: disable=protected-access
             if not _compare_request_data(
                 expected_request._data.structured_data,
                 real_request._data.structured_data,

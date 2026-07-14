@@ -46,7 +46,6 @@ executor.worker_com = Queue()  # patched at runtime
 
 class IntegrationBaseTestCase(SchedulerBaseAsyncTestCase):
     async def perform_actions(self, message_count):
-        # pylint: disable=protected-access
         """
         USE THIS FUNCTION IN TIER0 TESTS instead of the scheduler function with
         the same name to guarantee consistency between test runs. This function
@@ -162,7 +161,6 @@ class GarbageCollectionTimeoutTests(
         self.finish_tasks(["id0"])
         await self.perform_actions(1)
         self.scheduler.get_task("id0", AUTH_USER)
-        # pylint: disable=protected-access
         self.assertIsNotNone(
             self.scheduler._task_register["id0"]._to_delete_timestamp
         )
@@ -356,8 +354,6 @@ class TaskResultsTests(MockOsKillMixin, IntegrationBaseTestCase):
     behavior. All possible task outcomes are tested.
     """
 
-    # pylint: disable=protected-access
-
     def setUp(self):
         super().setUp()
         self.addCleanup(mock.patch.stopall)
@@ -487,8 +483,6 @@ class TaskResultsTests(MockOsKillMixin, IntegrationBaseTestCase):
 class DeadlockTests(
     MockOsKillMixin, AssertTaskStatesMixin, IntegrationBaseTestCase
 ):
-    # pylint: disable=protected-access
-
     def setUp(self):
         super().setUp()
         self.addCleanup(mock.patch.stopall)

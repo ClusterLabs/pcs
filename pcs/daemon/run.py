@@ -120,7 +120,6 @@ def configure_app(  # noqa: PLR0913
     *,
     debug: bool = False,
 ):
-    # pylint: disable=too-many-arguments
     def make_app(https_server_manage: HttpsServerManage):
         """
         https_server_manage -- allows to control the server (specifically

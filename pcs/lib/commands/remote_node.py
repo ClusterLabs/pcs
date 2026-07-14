@@ -246,10 +246,6 @@ def node_add_remote(  # noqa: PLR0912, PLR0913, PLR0915
     use_default_operations: bool = True,
     wait: WaitType = False,
 ):
-    # pylint: disable=too-many-arguments
-    # pylint: disable=too-many-branches
-    # pylint: disable=too-many-locals
-    # pylint: disable=too-many-statements
     """
     create an ocf:pacemaker:remote resource and use it as a remote node
 
@@ -451,9 +447,6 @@ def node_add_guest(  # noqa: PLR0912, PLR0915
     allow_pacemaker_remote_service_fail=False,
     wait: WaitType = False,
 ):
-    # pylint: disable=too-many-branches
-    # pylint: disable=too-many-locals
-    # pylint: disable=too-many-statements
     """
     Make a guest node from the specified resource
 

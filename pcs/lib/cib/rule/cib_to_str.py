@@ -71,8 +71,6 @@ class RuleToStr:
         return f" {boolean_op} ".join(string_parts)
 
     def _simple_expr_to_str(self, expr_el: _Element) -> str:
-        # pylint - all *_to_str methods must have the same interface
-        # pylint: disable=no-self-use
         string_parts = []
         if "value" in expr_el.attrib:
             # "attribute" and "operation" are defined as mandatory in CIB schema
@@ -130,8 +128,6 @@ class RuleToStr:
         return " ".join(string_parts)
 
     def _op_expr_to_str(self, expr_el: _Element) -> str:
-        # pylint - all *_to_str methods must have the same interface
-        # pylint: disable=no-self-use
         string_parts = ["op", str(expr_el.get("name", ""))]
         if "interval" in expr_el.attrib:
             string_parts.append(
@@ -140,8 +136,6 @@ class RuleToStr:
         return " ".join(string_parts)
 
     def _rsc_expr_to_str(self, expr_el: _Element) -> str:
-        # pylint - all *_to_str methods must have the same interface
-        # pylint: disable=no-self-use
         return "resource " + ":".join(
             [
                 str(expr_el.get(attr, ""))

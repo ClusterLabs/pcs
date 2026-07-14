@@ -56,7 +56,6 @@ class Task(ImplementsToDto):
     Task's representation in the scheduler
     """
 
-    # pylint: disable=too-many-instance-attributes
     def __init__(
         self,
         task_ident: str,

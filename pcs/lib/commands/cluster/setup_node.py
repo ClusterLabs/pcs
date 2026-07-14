@@ -57,9 +57,6 @@ def add_nodes(  # noqa: PLR0912, PLR0915
     no_watchdog_validation=False,
     force_flags: reports.types.ForceFlags = (),
 ):
-    # pylint: disable=too-many-branches
-    # pylint: disable=too-many-locals
-    # pylint: disable=too-many-statements
     """
     Add specified nodes to the local cluster
     Raise LibraryError on any error.

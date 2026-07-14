@@ -25,7 +25,6 @@ class TestException(Exception):
 
 
 class EvenNumberOfNodesAndNoQdevice(TestCase):
-    # pylint: disable=protected-access
     def setUp(self):
         self.mock_corosync_conf = mock.MagicMock(spec_set=CorosyncConfigFacade)
 
@@ -412,7 +411,6 @@ class GetLocalSbdDeviceListTest(TestCase):
         self.assertEqual(0, mock_sbd_config.call_count)
 
     def test_config_read_error(self, mock_sbd_config, mock_config_exists):
-        # pylint: disable=no-self-use
         mock_config_exists.return_value = True
         node = "local node"
         error = "error string"
@@ -438,7 +436,6 @@ class GetLocalSbdDeviceListTest(TestCase):
 
 @mock.patch("pcs.lib.sbd.get_local_sbd_device_list")
 class IsDeviceSetLocalTest(TestCase):
-    # pylint: disable=protected-access
     def test_no_device(self, mock_device_list):
         mock_device_list.return_value = []
         self.assertFalse(lib_sbd._is_device_set_local())
@@ -570,7 +567,6 @@ class ValidateDeviceDictTest(TestCase):
         self.assertEqual([], lib_sbd.validate_nodes_devices(device_dict))
 
     def test_some_not_ok(self):
-        # pylint: disable=no-self-use
         too_many_devices = [
             "/dev" + str(i) for i in range(settings.sbd_max_device_num)
         ] + ["dev/sda2"]

@@ -122,7 +122,6 @@ class Section:
         if section.parent:
             section.parent.del_section(section)
         # here we are editing obj's _parent attribute of the same class
-        # pylint: disable=protected-access
         section._parent = self  # noqa: SLF001
         self._section_list.append(section)
         return self
@@ -132,7 +131,6 @@ class Section:
         # don't set parent to None if the section was not found in the list
         # thanks to remove raising a ValueError in that case
         # here we are editing obj's _parent attribute of the same class
-        # pylint: disable=protected-access
         section._parent = None  # noqa: SLF001
         return self
 
@@ -276,7 +274,6 @@ def _is_valid_name(name: str) -> bool:
 
 
 def _is_valid_value(value: str) -> bool:
-    # pylint: disable=superfluous-parens
     return not (set(value) & set("{}\n\r"))
 
 

@@ -34,7 +34,7 @@ def report_dto_to_item(
 def _create_report_msg_map() -> dict[str, type]:
     result: dict[str, type] = {}
     for report_msg_cls in get_all_subclasses(messages.ReportItemMessage):
-        code = report_msg_cls._code  # pylint: disable=protected-access # noqa: SLF001
+        code = report_msg_cls._code  # noqa: SLF001
         if code:
             if code in result:
                 raise AssertionError()

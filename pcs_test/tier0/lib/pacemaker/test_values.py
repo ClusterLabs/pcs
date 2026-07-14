@@ -97,7 +97,6 @@ class ValidateIdTest(TestCase):
         self.assertEqual(None, lib.validate_id("dum_my"))
 
     def test_invalid_empty(self):
-        # pylint: disable=no-self-use
         assert_raise_library_error(
             lambda: lib.validate_id("", "test id"),
             (
@@ -110,7 +109,6 @@ class ValidateIdTest(TestCase):
         )
 
     def test_invalid_first_character(self):
-        # pylint: disable=no-self-use
         desc = "test id"
         info = {
             "id": "",
@@ -161,7 +159,6 @@ class ValidateIdTest(TestCase):
         )
 
     def test_invalid_character(self):
-        # pylint: disable=no-self-use
         desc = "test id"
         info = {
             "id": "",

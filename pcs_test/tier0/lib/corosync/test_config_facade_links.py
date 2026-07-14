@@ -1,4 +1,3 @@
-# pylint: disable=too-many-lines
 from textwrap import dedent
 from unittest import TestCase
 

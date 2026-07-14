@@ -1,4 +1,3 @@
-# pylint: disable=too-many-lines
 from textwrap import dedent
 from unittest import TestCase, skip
 
@@ -244,7 +243,6 @@ CIB_FIXTURE = ResourceTestCibFixture("fixture_tier1_resource", empty_cib)
 
 
 class Resource(TestCase, AssertPcsMixin):
-    # pylint: disable=too-many-public-methods
     def setUp(self):
         self.temp_cib = get_tmp_file("tier1_resource")
         self.temp_large_cib = get_tmp_file("tier1_resource_large")
@@ -2940,7 +2938,6 @@ class Resource(TestCase, AssertPcsMixin):
         )
 
     def test_relocate_stickiness(self):
-        # pylint: disable=too-many-statements
         self.assert_pcs_success(
             "resource create D1 ocf:pcsmock:minimal --no-default-ops".split()
         )

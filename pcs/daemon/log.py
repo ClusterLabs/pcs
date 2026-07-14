@@ -9,7 +9,6 @@ LOGGER_NAMES = [
     "tornado.general",
 ]
 
-# pylint:disable=invalid-name
 pcsd = logging.getLogger("pcs.daemon")
 
 

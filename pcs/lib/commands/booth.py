@@ -144,7 +144,6 @@ def config_destroy(  # noqa: PLR0912
     instance_name: str | None = None,
     ignore_config_load_problems: bool = False,
 ) -> None:
-    # pylint: disable=too-many-branches
     """
     remove booth configuration files
 

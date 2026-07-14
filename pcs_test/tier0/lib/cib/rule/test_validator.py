@@ -34,7 +34,6 @@ from pcs_test.tools.assertions import assert_report_item_list_equal
 
 class ComplexExpressions(TestCase):
     def test_propagate_errors_from_subexpressions(self):
-        # pylint: disable=no-self-use
         assert_report_item_list_equal(
             Validator(
                 BoolExpr(
@@ -221,7 +220,6 @@ class DisallowedNodeAttrExpressions(TestCase):
 
 class DateUnaryExpression(TestCase):
     def test_date_ok(self):
-        # pylint: disable=no-self-use
         assert_report_item_list_equal(
             Validator(
                 BoolExpr(BOOL_AND, [DateUnaryExpr(DATE_OP_GT, "2020-02-03")])
@@ -230,7 +228,6 @@ class DateUnaryExpression(TestCase):
         )
 
     def test_date_bad(self):
-        # pylint: disable=no-self-use
         assert_report_item_list_equal(
             Validator(
                 BoolExpr(BOOL_AND, [DateUnaryExpr(DATE_OP_GT, "a date")])
@@ -260,7 +257,6 @@ class DateInrangeExpression(TestCase):
     }
 
     def test_date_date_ok(self):
-        # pylint: disable=no-self-use
         assert_report_item_list_equal(
             Validator(
                 BoolExpr(
@@ -272,7 +268,6 @@ class DateInrangeExpression(TestCase):
         )
 
     def test_date_ok(self):
-        # pylint: disable=no-self-use
         assert_report_item_list_equal(
             Validator(
                 BoolExpr(BOOL_AND, [DateInRangeExpr(None, "2020-02-01", None)]),
@@ -298,7 +293,6 @@ class DateInrangeExpression(TestCase):
         )
 
     def test_until_greater_than_since(self):
-        # pylint: disable=no-self-use
         assert_report_item_list_equal(
             Validator(
                 BoolExpr(
@@ -316,7 +310,6 @@ class DateInrangeExpression(TestCase):
         )
 
     def test_dates_bad(self):
-        # pylint: disable=no-self-use
         assert_report_item_list_equal(
             Validator(
                 BoolExpr(BOOL_AND, [DateInRangeExpr("date1", "date2", None)]),
@@ -573,7 +566,6 @@ class DatespecExpression(TestCase):
         )
 
     def test_duplicate_names(self):
-        # pylint: disable=no-self-use
         assert_report_item_list_equal(
             Validator(
                 BoolExpr(

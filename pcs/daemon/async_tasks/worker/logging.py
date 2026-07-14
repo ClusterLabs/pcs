@@ -20,8 +20,6 @@ class Logger(logging.Logger):
         extra=None,
         sinfo=None,
     ) -> logging.LogRecord:
-        # pylint: disable=too-many-arguments
-        # pylint: disable=too-many-positional-arguments
         pid = os.getpid()
         return super().makeRecord(
             name,

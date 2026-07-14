@@ -2,7 +2,6 @@ import datetime
 
 
 class Writer:
-    # pylint: disable=invalid-name
     def __init__(
         self,
         stream,

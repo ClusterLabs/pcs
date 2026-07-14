@@ -1,4 +1,3 @@
-# pylint: disable=too-many-lines
 import json
 from unittest import (
     TestCase,
@@ -397,8 +396,6 @@ class UpdateScsiDevicesMixin:
         digests_attrs_list=None,
         crm_digests_xml=None,
     ):
-        # pylint: disable=too-many-arguments
-        # pylint: disable=too-many-locals
         devices_value = ",".join(sorted(devices_updated))
         self.config.runner.cib.load(
             resources=fixture_scsi(
@@ -480,7 +477,6 @@ class UpdateScsiDevicesMixin:
         digests_attrs_list=None,
         digests_attrs_list_updated=None,
     ):
-        # pylint: disable=too-many-arguments
         self.config_cib(
             devices_before=devices_before,
             devices_updated=devices_updated,

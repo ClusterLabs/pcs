@@ -47,9 +47,6 @@ def nodes_status(lib, argv, modifiers):  # noqa: PLR0912, PLR0915
 
     NOTE: modifiers check is in subcommand
     """
-    # pylint: disable=too-many-branches
-    # pylint: disable=too-many-locals
-    # pylint: disable=too-many-statements
     del lib
     if len(argv) == 1 and (argv[0] == "config"):
         modifiers.ensure_only_supported("-f", "--corosync_conf")

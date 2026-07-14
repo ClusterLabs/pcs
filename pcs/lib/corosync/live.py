@@ -176,7 +176,6 @@ class QuorumStatusFacade:
 
 
 def _parse_quorum_status(quorum_status: str) -> QuorumStatus:  # noqa: PLR0912
-    # pylint: disable=too-many-branches
     node_list: list[QuorumStatusNode] = []
     qdevice_list: list[QuorumStatusNode] = []
     quorate: bool | None = None

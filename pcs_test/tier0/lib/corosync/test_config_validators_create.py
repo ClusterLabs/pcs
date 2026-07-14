@@ -1,4 +1,3 @@
-# pylint: disable=too-many-lines
 from unittest import TestCase
 
 from pcs.common.reports import codes as report_codes
@@ -13,8 +12,6 @@ from pcs_test.tools import fixture
 from pcs_test.tools.assertions import assert_report_item_list_equal
 from pcs_test.tools.custom_mock import patch_getaddrinfo
 
-# pylint: disable=no-self-use
-
 forbidden_characters_kwargs = dict(
     allowed_values=None,
     cannot_be_empty=False,
@@ -27,7 +24,6 @@ _FIXTURE_KNET_PING_INTERVAL_TIMEOUT_EXPECTED = (
 
 
 class Create(TestCase):
-    # pylint: disable=too-many-public-methods
     def setUp(self):
         self.known_addrs = patch_getaddrinfo(
             self,

@@ -333,7 +333,6 @@ class ValidateMoveResourcesToGroup(TestCase):
 
 
 class ValidateMoveBanClearMixin:
-    # pylint: disable=too-many-public-methods
     @staticmethod
     def _fixture_bundle():
         return etree.fromstring(

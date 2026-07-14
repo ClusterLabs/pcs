@@ -268,7 +268,6 @@ class ResponseTest(TestCase):
 
 @mock.patch("pcs.common.node_communicator.pycurl.Curl")
 class CreateRequestHandleTest(TestCase):
-    # pylint: disable=no-member
     _common_opts = {
         pycurl.PROTOCOLS: pycurl.PROTO_HTTPS,
         pycurl.VERBOSE: 1,
@@ -298,7 +297,6 @@ class CreateRequestHandleTest(TestCase):
             "name1": "val1",
             "name2": "val2",
         }
-        # pylint: disable=protected-access
         handle = lib._create_request_handle(request, cookies, 1)
         expected_opts = {
             pycurl.TIMEOUT: 1,
@@ -328,7 +326,6 @@ class CreateRequestHandleTest(TestCase):
         request = lib.Request(
             lib.RequestTarget("label"), lib.RequestData("action")
         )
-        # pylint: disable=protected-access
         handle = lib._create_request_handle(request, {}, 10)
         expected_opts = {
             pycurl.TIMEOUT: 10,
@@ -398,7 +395,6 @@ class CommunicatorSimpleTest(CommunicatorBaseTest):
         self.mock_com_log.log_response.assert_called_once_with(response)
         self.assertEqual(0, self.mock_com_log.log_retry.call_count)
         self.assertEqual(0, self.mock_com_log.log_no_more_addresses.call_count)
-        # pylint: disable=protected-access
         com._multi_handle.assert_no_handle_left()
 
     def test_simple(self, mock_create_handle, _):
@@ -484,7 +480,6 @@ class CommunicatorMultiTest(CommunicatorBaseTest):
             ]
         )
         self.assertEqual(logger_calls, self.mock_com_log.mock_calls)
-        # pylint: disable=no-member, protected-access
         com._multi_handle.assert_no_handle_left()
 
 
@@ -573,7 +568,6 @@ class MultiaddressCommunicatorTest(CommunicatorBaseTest):
             ]
         )
         self.assertEqual(logger_calls, self.mock_com_log.mock_calls)
-        # pylint: disable=no-member, protected-access
         com._multi_handle.assert_no_handle_left()
 
     def test_failure(
@@ -634,5 +628,4 @@ class MultiaddressCommunicatorTest(CommunicatorBaseTest):
             ]
         )
         self.assertEqual(logger_calls, self.mock_com_log.mock_calls)
-        # pylint: disable=no-member, protected-access
         com._multi_handle.assert_no_handle_left()

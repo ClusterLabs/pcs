@@ -58,7 +58,6 @@ class FindPrimitivesByAgent(TestCase):
         )
 
     def test_stonith(self):
-        # pylint: disable=protected-access
         results = primitive.find_primitives_by_agent(
             self.resources_section,
             ResourceAgentName(
@@ -76,7 +75,6 @@ class FindPrimitivesByAgent(TestCase):
             assert_xml_equal(expected_results[i], etree.tostring(res).decode())
 
     def test_with_provider(self):
-        # pylint: disable=protected-access
         results = primitive.find_primitives_by_agent(
             self.resources_section,
             ResourceAgentName(

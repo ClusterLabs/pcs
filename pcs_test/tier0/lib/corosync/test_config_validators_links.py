@@ -1,4 +1,3 @@
-# pylint: disable=too-many-lines
 from unittest import TestCase
 
 from pcs.common.corosync_conf import CorosyncNodeAddressType
@@ -27,7 +26,6 @@ _FIXTURE_KNET_PING_INTERVAL_TIMEOUT_EXPECTED = (
 
 
 class AddLink(TestCase):
-    # pylint: disable=too-many-public-methods
     def setUp(self):
         self.new_addrs = {
             "node1": "addr1-new",
@@ -915,7 +913,6 @@ class UpdateLinkCommon(TestCase):
     # Link update validator is complex, this class tests common cases. For more
     # specific tests see other UpdateLink* classes.
     def test_no_addrs_no_options(self):
-        # pylint: disable=no-self-use
         assert_report_item_list_equal(
             config_validators.update_link(
                 "0",
@@ -932,7 +929,6 @@ class UpdateLinkCommon(TestCase):
         )
 
     def test_nonexistent_link(self):
-        # pylint: disable=no-self-use
         assert_report_item_list_equal(
             config_validators.update_link(
                 "1",
@@ -1455,7 +1451,6 @@ class UpdateLinkAddressesKnet(UpdateLinkAddressesMixin, TestCase):
 
 class UpdateLinkKnet(TestCase):
     def test_individual_options_set(self):
-        # pylint: disable=no-self-use
         assert_report_item_list_equal(
             config_validators.update_link(
                 "2",
@@ -1556,7 +1551,6 @@ class UpdateLinkKnet(TestCase):
         )
 
     def test_individual_options_unset(self):
-        # pylint: disable=no-self-use
         assert_report_item_list_equal(
             config_validators.update_link(
                 "2",
@@ -1690,7 +1684,6 @@ class UpdateLinkKnet(TestCase):
                     )
 
     def test_ping_interval_ping_timeout_initially_broken(self):
-        # pylint: disable=no-self-use
         assert_report_item_list_equal(
             config_validators.update_link(
                 "2",
@@ -1712,7 +1705,6 @@ class UpdateLinkKnet(TestCase):
         )
 
     def test_forbidden_characters(self):
-        # pylint: disable=no-self-use
         assert_report_item_list_equal(
             config_validators.update_link(
                 "2",
@@ -1914,7 +1906,6 @@ class UpdateLinkUdp(TestCase):
         return new_values
 
     def test_individual_options_set(self):
-        # pylint: disable=no-self-use
         assert_report_item_list_equal(
             config_validators.update_link(
                 "0",
@@ -1994,7 +1985,6 @@ class UpdateLinkUdp(TestCase):
         )
 
     def test_individual_options_unset(self):
-        # pylint: disable=no-self-use
         assert_report_item_list_equal(
             config_validators.update_link(
                 "0",
@@ -2101,7 +2091,6 @@ class UpdateLinkUdp(TestCase):
         )
 
     def test_forbidden_characters(self):
-        # pylint: disable=no-self-use
         assert_report_item_list_equal(
             config_validators.update_link(
                 "0",

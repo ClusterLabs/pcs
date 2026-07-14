@@ -23,7 +23,6 @@ from pcs_test.tools.assertions import (
 
 
 class UpdateOptionalAttributeTest(TestCase):
-    # pylint: disable=protected-access
     def test_add(self):
         element = etree.Element("element")
         alert._update_optional_attribute(element, "attr", "value1")
@@ -41,7 +40,6 @@ class UpdateOptionalAttributeTest(TestCase):
 
 
 class ValidateRecipientValueIsUniqueTest(TestCase):
-    # pylint: disable=protected-access
     def setUp(self):
         self.alert = etree.Element("alert", id="alert-1")
         self.recipient = etree.SubElement(
@@ -176,7 +174,6 @@ class CreateAlert(TestCase):
         self.id_provider = IdProvider(self.tree)
 
     def test_no_alerts(self):
-        # pylint: disable=no-self-use
         tree = etree.XML(
             """
             <cib>

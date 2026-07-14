@@ -98,7 +98,6 @@ class RawFileConfig:
         string instead -- the key of a call instead of which this new call is to
             be placed
         """
-        # pylint: disable=too-many-arguments
         call = RawFileWriteCall(
             file_type_code,
             path,
@@ -136,7 +135,6 @@ class RawFileConfig:
         string instead -- the key of a call instead of which this new call is to
             be placed
         """
-        # pylint: disable=too-many-arguments
         call = RawFileRemoveCall(
             file_type_code,
             path,

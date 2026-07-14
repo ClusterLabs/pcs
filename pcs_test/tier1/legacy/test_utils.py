@@ -1,4 +1,3 @@
-# pylint: disable=too-many-lines
 import sys
 import xml.dom.minidom
 from io import StringIO
@@ -21,7 +20,6 @@ TestCase.maxDiff = None
 
 
 class UtilsTest(TestCase):
-    # pylint: disable=too-many-public-methods
     @staticmethod
     def get_cib_empty():
         return xml.dom.minidom.parse(empty_cib)
@@ -88,7 +86,6 @@ class UtilsTest(TestCase):
         return cib_dom
 
     def test_dom_get_resources(self):  # noqa: PLR0915
-        # pylint: disable=too-many-statements
         def test_dom_get(method, dom, ok_ids, bad_ids):
             for element_id in ok_ids:
                 self.assert_element_id(method(dom, element_id), element_id)
@@ -1453,7 +1450,7 @@ class UtilsTest(TestCase):
         )
 
         self.assertEqual(len(dom_get_child_elements(el)), 1)
-        u = dom_get_child_elements(el)[0]  # pylint: disable=invalid-name
+        u = dom_get_child_elements(el)[0]
         self.assertEqual(u.tagName, "utilization")
         self.assertEqual(u.getAttribute("id"), "test_id-utilization")
         self.assertEqual(len(dom_get_child_elements(u)), 2)
@@ -1498,7 +1495,7 @@ class UtilsTest(TestCase):
             },
         )
 
-        u = dom_get_child_elements(el)[0]  # pylint: disable=invalid-name
+        u = dom_get_child_elements(el)[0]
         self.assertEqual(len(dom_get_child_elements(u)), 1)
         self.assertEqual(
             dom_get_child_elements(u)[0].getAttribute("id"),
@@ -1522,7 +1519,7 @@ class UtilsTest(TestCase):
         )
 
         self.assertEqual(len(dom_get_child_elements(el)), 1)
-        u = dom_get_child_elements(el)[0]  # pylint: disable=invalid-name
+        u = dom_get_child_elements(el)[0]
         self.assertEqual(u.tagName, "meta_attributes")
         self.assertEqual(u.getAttribute("id"), "test_id-meta_attributes")
         self.assertEqual(len(dom_get_child_elements(u)), 2)
@@ -1561,7 +1558,7 @@ class UtilsTest(TestCase):
         ).documentElement
         utils.dom_update_meta_attr(el, [("key", "another_val"), ("key2", "")])
 
-        u = dom_get_child_elements(el)[0]  # pylint: disable=invalid-name
+        u = dom_get_child_elements(el)[0]
         self.assertEqual(len(dom_get_child_elements(u)), 1)
         self.assertEqual(
             dom_get_child_elements(u)[0].getAttribute("id"),
@@ -1613,7 +1610,6 @@ class UtilsTest(TestCase):
 class RunParallelTest(TestCase):
     @staticmethod
     def fixture_create_worker(log, name, sleepSeconds=0):
-        # pylint: disable=invalid-name
         def worker():
             sleep(sleepSeconds)
             log.append(name)
@@ -1657,7 +1653,6 @@ class TouchCibFile(TestCase):
     )
     @mock.patch("pcs.utils.err")
     def test_exception_is_transformed_correctly(self, err):
-        # pylint: disable=no-self-use
         filename = "/fake/filename"
         utils.touch_cib_file(filename)
         err.assert_called_once_with(

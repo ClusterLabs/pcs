@@ -1,4 +1,3 @@
-# pylint: disable=too-many-lines
 from collections import defaultdict
 from collections.abc import Mapping
 from dataclasses import dataclass, field
@@ -840,7 +839,7 @@ class InvalidIdBadChar(ReportItemMessage):
     is_first_char -- is it the first character which is forbidden?
     """
 
-    id: str  # pylint: disable=invalid-name
+    id: str
     id_description: str
     invalid_character: str
     is_first_char: bool
@@ -2736,7 +2735,7 @@ class IdAlreadyExists(ReportItemMessage):
     id -- existing id
     """
 
-    id: str  # pylint: disable=invalid-name
+    id: str
     _code = codes.ID_ALREADY_EXISTS
 
     @property
@@ -2752,7 +2751,7 @@ class IdBelongsToUnexpectedType(ReportItemMessage):
     But id does not belong to group.
     """
 
-    id: str  # pylint: disable=invalid-name
+    id: str
     expected_types: list[str]
     current_type: str
     _code = codes.ID_BELONGS_TO_UNEXPECTED_TYPE
@@ -2829,7 +2828,7 @@ class IdNotFound(ReportItemMessage):
     context_id -- id of the subsection
     """
 
-    id: str  # pylint: disable=invalid-name
+    id: str
     expected_types: list[str]
     context_type: str = ""
     context_id: str = ""

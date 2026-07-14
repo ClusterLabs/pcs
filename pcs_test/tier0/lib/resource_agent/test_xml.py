@@ -40,7 +40,6 @@ class LoadMetadataXml(TestCase):
 
         env = self.env_assist.get_env()
         self.assertEqual(
-            # pylint: disable=protected-access
             ra.xml._load_metadata_xml(env.cmd_runner(), agent_name),
             metadata.strip(),
         )
@@ -55,7 +54,6 @@ class LoadMetadataXml(TestCase):
 
         env = self.env_assist.get_env()
         with self.assertRaises(ra.UnableToGetAgentMetadata) as cm:
-            # pylint: disable=protected-access
             ra.xml._load_metadata_xml(env.cmd_runner(), agent_name)
         self.assertEqual(cm.exception.agent_name, "ocf:pacemaker:Dummy")
         self.assertEqual(cm.exception.message, "error message")
@@ -77,7 +75,6 @@ class LoadFakeAgentMetadataXml(TestCase):
 
         env = self.env_assist.get_env()
         self.assertEqual(
-            # pylint: disable=protected-access
             ra.xml._load_fake_agent_metadata_xml(env.cmd_runner(), agent_name),
             metadata.strip(),
         )
@@ -90,7 +87,6 @@ class LoadFakeAgentMetadataXml(TestCase):
 
         env = self.env_assist.get_env()
         with self.assertRaises(ra.UnableToGetAgentMetadata) as cm:
-            # pylint: disable=protected-access
             ra.xml._load_fake_agent_metadata_xml(env.cmd_runner(), agent_name)
         self.assertEqual(cm.exception.agent_name, "pacemaker-fenced")
         self.assertEqual(cm.exception.message, "error message")
@@ -100,7 +96,6 @@ class LoadFakeAgentMetadataXml(TestCase):
 
         env = self.env_assist.get_env()
         with self.assertRaises(ra.UnableToGetAgentMetadata) as cm:
-            # pylint: disable=protected-access
             ra.xml._load_fake_agent_metadata_xml(env.cmd_runner(), agent_name)
         self.assertEqual(cm.exception.agent_name, "unknown")
         self.assertEqual(cm.exception.message, "Unknown agent")
@@ -246,7 +241,6 @@ class LoadCrmAttributeMetadataXml(LoadCrmMetadataXmlBaseMixin, TestCase):
 
 
 class GetOcfVersion(TestCase):
-    # pylint: disable=protected-access
     def test_no_version_element(self):
         self.assertEqual(
             ra.xml._get_ocf_version(
@@ -304,7 +298,6 @@ class GetOcfVersion(TestCase):
 
 
 class MetadataXmlToDom(TestCase):
-    # pylint: disable=protected-access
     def test_not_xml(self):
         with self.assertRaises(etree.XMLSyntaxError):
             ra.xml._metadata_xml_to_dom("not an xml")
@@ -314,7 +307,6 @@ class MetadataXmlToDom(TestCase):
             ra.xml._metadata_xml_to_dom("<resource-agent/>")
 
     def test_no_version_valid(self):
-        # pylint: disable=no-self-use
         metadata = """
             <resource-agent name="agent">
             </resource-agent>
@@ -334,7 +326,6 @@ class MetadataXmlToDom(TestCase):
             )
 
     def test_ocf_1_0_valid(self):
-        # pylint: disable=no-self-use
         metadata = """
             <resource-agent name="agent">
                 <version>1.0</version>
@@ -355,7 +346,6 @@ class MetadataXmlToDom(TestCase):
             )
 
     def test_ocf_1_1_valid(self):
-        # pylint: disable=no-self-use
         metadata = """
             <resource-agent name="agent">
                 <version>1.1</version>

@@ -1,4 +1,3 @@
-# pylint: disable=too-many-lines
 from functools import partial
 from textwrap import dedent
 from unittest import (

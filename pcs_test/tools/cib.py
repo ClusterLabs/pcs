@@ -64,7 +64,6 @@ def get_assert_pcs_effect_mixin(get_cib_part):
             stderr_start=None,
             stderr_regexp=None,
         ):
-            # pylint: disable=too-many-arguments
             self.assert_pcs_success(
                 command,
                 stdout_full=stdout_full,
@@ -88,7 +87,6 @@ def get_assert_pcs_effect_mixin(get_cib_part):
             stderr_start=None,
             stderr_regexp=None,
         ):
-            # pylint: disable=too-many-arguments
             alternative_list = (
                 alternative_cmds
                 if isinstance(alternative_cmds[0], list)

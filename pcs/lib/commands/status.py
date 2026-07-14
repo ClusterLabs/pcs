@@ -106,9 +106,6 @@ def full_cluster_status_plaintext(  # noqa: PLR0912, PLR0915
     hide_inactive_resources -- if True, do not display non-running resources
     verbose -- if True, display more info
     """
-    # pylint: disable=too-many-branches
-    # pylint: disable=too-many-locals
-    # pylint: disable=too-many-statements
 
     # validation
     if not env.is_cib_live and env.is_corosync_conf_live:

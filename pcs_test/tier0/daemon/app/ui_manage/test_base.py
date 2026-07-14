@@ -67,8 +67,6 @@ class BaseAjaxProtectedManageHandlerTest(UiManageTest):
         def initialize(
             self, scheduler, api_auth_provider_factory, cmd_name, cmd_params
         ):
-            # pylint: disable=arguments-differ
-            # pylint: disable=attribute-defined-outside-init
             super().initialize(scheduler, api_auth_provider_factory)
             self.cmd_name = cmd_name
             self.cmd_params = cmd_params

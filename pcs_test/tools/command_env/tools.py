@@ -40,7 +40,6 @@ def get_env_tools(
     runner.pcmk.default_wait_error_returncode = default_wait_error_returncode
 
     if local_extensions:
-        # pylint: disable=invalid-name
         for name, ExtensionClass in local_extensions.items():
             env_assistant.config.add_extension(
                 name,

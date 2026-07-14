@@ -48,7 +48,6 @@ def get_token_for_localhost() -> str:
 
 def get_signal_handler(token: str):
     def signal_handler(sig, frame):
-        # pylint: disable=global-statement
         del frame
         if sig == signal.SIGINT:
             global kill_requested  # noqa: PLW0603
@@ -142,7 +141,6 @@ def error(text: str) -> None:
 def fetch_task_result(
     task_ident_dto: TaskIdentDto, auth_token: str, sleep_interval: float = 0.3
 ) -> TaskResultDto:
-    # pylint: disable=global-statement
     # Using global report list to recall reports in signal handler
     global report_list  # noqa: PLW0603
     task_state = TaskState.CREATED
@@ -169,7 +167,6 @@ def fetch_task_result(
 
 
 def perform_command(command_dto: CommandDto, auth_token: str) -> TaskResultDto:
-    # pylint: disable=global-statement
     global task_ident  # noqa: PLW0603
     response = make_api_request_post(
         "task/create", json.dumps(to_dict(command_dto)), auth_token

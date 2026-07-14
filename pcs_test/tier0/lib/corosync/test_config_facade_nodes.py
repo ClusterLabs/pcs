@@ -218,7 +218,6 @@ class GetNodesTest(TestCase):
 
 class AddNodesTest(TestCase):
     def test_adding_two_nodes(self):
-        # pylint: disable=no-self-use
         config = dedent(
             """\
             nodelist {
@@ -274,7 +273,6 @@ class AddNodesTest(TestCase):
         ac(expected_config, facade.config.export())
 
     def test_skipped_and_out_of_order_links_and_nodes_ids(self):
-        # pylint: disable=no-self-use
         config = dedent(
             """\
             nodelist {
@@ -378,7 +376,6 @@ class AddNodesTest(TestCase):
         ac(expected_config, facade.config.export())
 
     def test_enable_two_node(self):
-        # pylint: disable=no-self-use
         config = dedent(
             """\
             nodelist {
@@ -425,7 +422,6 @@ class AddNodesTest(TestCase):
         ac(expected_config, facade.config.export())
 
     def test_disable_two_node(self):
-        # pylint: disable=no-self-use
         config = dedent(
             """\
             nodelist {
@@ -486,7 +482,6 @@ class AddNodesTest(TestCase):
 
 class RemoveNodes(TestCase):
     def test_remove(self):
-        # pylint: disable=no-self-use
         config = dedent(
             """\
             nodelist {
@@ -568,7 +563,6 @@ class RemoveNodes(TestCase):
         ac(expected_config, facade.config.export())
 
     def test_enable_two_nodes(self):
-        # pylint: disable=no-self-use
         config = dedent(
             """\
             nodelist {
@@ -623,7 +617,6 @@ class RemoveNodes(TestCase):
         ac(expected_config, facade.config.export())
 
     def test_disable_two_nodes(self):
-        # pylint: disable=no-self-use
         config = dedent(
             """\
             nodelist {

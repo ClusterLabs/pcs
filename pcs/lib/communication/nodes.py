@@ -391,7 +391,6 @@ class PcmkRemoteServiceOff(_PcmkRemoteServiceAction):
 
 
 class FileActionBase(RunActionBase):
-    # pylint: disable=abstract-method
     def _init_properties(self):
         self._response_key = "files"
         self._force_code = report_codes.FORCE

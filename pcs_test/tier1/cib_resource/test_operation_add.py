@@ -63,7 +63,6 @@ class OperationAdd(TestCase, get_assert_pcs_effect_mixin(get_cib_resources)):
         )
 
     def test_add_with_OCF_CHECK_LEVEL(self):
-        # pylint: disable=invalid-name
         self.assert_effect(
             (
                 "resource op add R start interval=20s OCF_CHECK_LEVEL=1 "

@@ -42,7 +42,6 @@ def worker_init(message_q: mp.Queue, logging_q: mp.Queue) -> None:
     :param message_q: Queue instance for sending messages to the scheduler
     :param logging_q: Queue instance for sending log records to the scheduler
     """
-    # pylint: disable=global-statement
     # Create and configure new logger
     logger = setup_worker_logger(logging_q)
     logger.info("Worker initialized.")
@@ -52,7 +51,6 @@ def worker_init(message_q: mp.Queue, logging_q: mp.Queue) -> None:
     worker_com = WorkerCommunicator(message_q)
 
     def ignore_signals(sig_num, frame):  # type: ignore
-        # pylint: disable=unused-argument
         pass
 
     signal.signal(signal.SIGINT, ignore_signals)
@@ -188,7 +186,7 @@ def task_executor(task: WorkerCommand) -> None:
         logger.error("Task %s raised a LibraryError: %s.", task.task_ident, e)
         _pause_worker()
         return
-    except Exception as e:  # pylint: disable=broad-except
+    except Exception as e:
         # For unhandled exceptions during execution
         worker_com.put(
             Message(
@@ -221,7 +219,6 @@ def _param_to_field_tuple(
         return (
             param.name,
             field_type,
-            # pylint: disable=invalid-field-call
             # this is actually used within make_dataclass function
             dataclasses.field(default=param.default),
         )

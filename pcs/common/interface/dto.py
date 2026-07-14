@@ -11,7 +11,7 @@ from pcs.common import types
 from pcs.common.str_tools import format_list
 
 if TYPE_CHECKING:
-    from _typeshed import DataclassInstance  # pylint: disable=import-error
+    from _typeshed import DataclassInstance
 else:
 
     class DataclassInstance:

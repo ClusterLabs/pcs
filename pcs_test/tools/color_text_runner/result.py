@@ -28,7 +28,6 @@ class ColorTextTestResult(VanillaTextTestResult):
         self.verbosity = 2 if self.traditional_verbose else verbosity
 
         self._format = Format(Output(self.rich_format))
-        # pylint: disable=invalid-name
         self.reportWriter = self.__chooseWriter()(
             self.stream,
             self._format,
@@ -110,7 +109,7 @@ class ColorTextTestResult(VanillaTextTestResult):
         for line in error_lines:
             self.stream.writeln(line)
 
-    def __chooseWriter(self):  # pylint: disable=invalid-name
+    def __chooseWriter(self):
         if self.measure_time:
             return TimeWriter
         if self.traditional_verbose:

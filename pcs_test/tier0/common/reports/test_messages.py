@@ -15,8 +15,6 @@ from pcs.common.resource_agent.dto import ResourceAgentNameDto
 from pcs.common.resource_status import ResourceState
 from pcs.common.types import CibRuleExpressionType
 
-# pylint: disable=too-many-lines
-
 
 class AllClassesTested(TestCase):
     def test_success(self):

@@ -15,7 +15,6 @@ class LibraryWrapperTest(TestCase):
     @mock.patch("pcs.cli.common.lib_wrapper.constraint_order.create_with_set")
     @mock.patch("pcs.cli.common.lib_wrapper.cli_env_to_lib_env")
     def test_bind_to_library(self, mock_cli_env_to_lib_env, mock_order_set):
-        # pylint: disable=no-self-use
         lib_env = mock.MagicMock()
         lib_env.is_cib_live = True
         lib_env.is_corosync_conf_live = True

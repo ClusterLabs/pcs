@@ -83,7 +83,6 @@ class _Exporter:
         id_: str | None = None,
     ) -> _Element:
         func = self.part_export_map[type(expr_tree)]
-        # pylint: disable=comparison-with-callable
         if func == self._export_bool:
             # mypy doesn't handle this dynamic call
             return func(parent_el, expr_tree, id_)  # type: ignore
