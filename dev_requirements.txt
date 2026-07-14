@@ -1,6 +1,6 @@
 lxml-stubs
 mypy==1.19.1
-ruff==0.14.11
+ruff==0.15.21
 typos==1.41.0
 types-cryptography
 types-dataclasses

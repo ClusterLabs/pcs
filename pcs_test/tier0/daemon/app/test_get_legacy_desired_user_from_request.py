@@ -21,10 +21,10 @@ class GetLegacyDesiredUserFromRequest(TestCase):
         )
 
     def test_success(self):
-        self.mock_handler.get_cookie.side_effect = lambda name: {
+        self.mock_handler.get_cookie.side_effect = {
             "CIB_user": self.USER_NAME,
             "CIB_user_groups": self.USER_GROUPS_ENCODED,
-        }.get(name)
+        }.get
 
         result = get_legacy_desired_user_from_request(
             self.mock_handler, self.mock_logger
@@ -35,9 +35,9 @@ class GetLegacyDesiredUserFromRequest(TestCase):
         self.mock_logger.warning.assert_not_called()
 
     def test_only_username(self):
-        self.mock_handler.get_cookie.side_effect = lambda name: {
+        self.mock_handler.get_cookie.side_effect = {
             "CIB_user": self.USER_NAME
-        }.get(name)
+        }.get
 
         result = get_legacy_desired_user_from_request(
             self.mock_handler, self.mock_logger
@@ -48,9 +48,9 @@ class GetLegacyDesiredUserFromRequest(TestCase):
         self.mock_logger.warning.assert_not_called()
 
     def test_only_groups_ignored(self):
-        self.mock_handler.get_cookie.side_effect = lambda name: {
+        self.mock_handler.get_cookie.side_effect = {
             "CIB_user_groups": self.USER_GROUPS_ENCODED,
-        }.get(name)
+        }.get
 
         result = get_legacy_desired_user_from_request(
             self.mock_handler, self.mock_logger
@@ -61,10 +61,10 @@ class GetLegacyDesiredUserFromRequest(TestCase):
         self.mock_logger.warning.assert_not_called()
 
     def test_invalid_groups(self):
-        self.mock_handler.get_cookie.side_effect = lambda name: {
+        self.mock_handler.get_cookie.side_effect = {
             "CIB_user": "testuser",
             "CIB_user_groups": "this is not a base64 encoded string",
-        }.get(name)
+        }.get
 
         result = get_legacy_desired_user_from_request(
             self.mock_handler, self.mock_logger

@@ -100,7 +100,7 @@ async def config_sync(
         # but the async scheduler cannot process them, resulting in timeout.
         # So we need to run this blocking function in executor
         next_run_after_seconds = await IOLoop.current().run_in_executor(
-            None, lambda: config_puller.run_cfgsync()
+            None, config_puller.run_cfgsync
         )
     IOLoop.current().call_later(
         next_run_after_seconds,
