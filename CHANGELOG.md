@@ -1,17 +1,23 @@
 # Change Log
 
+## [Unreleased]
+### Fixed
+- Changelog of the 0.11.12 release incorrectly mentioned a bugfix in the Added
+  section, the changelog has been corrected
+
 ## [0.11.12] - 2026-07-02
 ### Added
 - Commands `pcs cluster node rename-corosync` and `pcs cluster node rename-cib`
   for cluster node renaming ([RHEL-149172])
-- `pcs constraint config` (and its variants for each constraint type) now list
-  resources in sets in the order defined in the CIB, instead of sorting them
-  alphabetically ([rhbz#2461143]) ([RHEL-176478])
 - Add validation for operations in `pcs resource update`, `pcs resource op add`,
   `pcs stonith update`, and `pcs stonith op add` commands. Operation names are
   now validated against agent metadata, and operation option values are also
   verified ([RHEL-176268])
 
+### Fixed
+- `pcs constraint config` (and its variants for each constraint type) now list
+  resources in sets in the order defined in the CIB, instead of sorting them
+  alphabetically ([rhbz#2461143]) ([RHEL-176478])
 
 [RHEL-149172]: https://redhat.atlassian.net/browse/RHEL-149172
 [RHEL-176268]: https://redhat.atlassian.net/browse/RHEL-176268
