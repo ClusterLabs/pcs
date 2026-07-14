@@ -64,7 +64,7 @@ class StatusShortcuts:
             ),
         )
 
-    def get_cluster_info_from_status(  # noqa: PLR0913
+    def get_cluster_info_from_status(
         self,
         *,
         node_labels=None,

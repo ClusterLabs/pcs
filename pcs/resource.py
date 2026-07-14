@@ -1,4 +1,4 @@
-# pylint: disable=too-many-lines #noqa: PLR0915
+# pylint: disable=too-many-lines
 import json
 import re
 import sys

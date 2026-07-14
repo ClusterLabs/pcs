@@ -540,7 +540,7 @@ class UpdateMetaCheckCloneIncompatibleMetaAttrs(TestCase):
             lambda: resource.update_meta(
                 self.env_assist.get_env(),
                 "non-ocf-clone",
-                {attr: "true"},  # noqa: B023
+                {attr: "true"},
                 [],
             ),
         )

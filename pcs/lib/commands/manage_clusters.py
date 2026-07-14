@@ -22,7 +22,7 @@ from pcs.lib.permissions.config.types import ClusterEntry
 from pcs.lib.permissions.tools import read_pcs_settings_conf
 
 
-def add_existing_cluster(  # noqa: PLR0912, PLR0915
+def add_existing_cluster(  # noqa: PLR0912
     env: LibraryEnvironment,
     node_name: str,
 ) -> None:
