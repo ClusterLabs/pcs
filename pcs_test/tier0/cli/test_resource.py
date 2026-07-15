@@ -1,19 +1,13 @@
 from random import shuffle
 from textwrap import dedent
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
 from pcs import resource
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.reports.processor import ReportItemSeverity
 from pcs.common.reports.codes import FORCE
 
-from pcs_test.tools.assertions import (
-    AssertPcsMixin,
-    ac,
-)
+from pcs_test.tools.assertions import AssertPcsMixin, ac
 from pcs_test.tools.misc import dict_to_modifiers
 
 

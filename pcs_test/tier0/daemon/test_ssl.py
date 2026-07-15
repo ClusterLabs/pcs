@@ -1,15 +1,8 @@
 import os
 import ssl
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
-from pcs.daemon.ssl import (
-    CertKeyPair,
-    PcsdSSL,
-    SSLCertKeyException,
-)
+from pcs.daemon.ssl import CertKeyPair, PcsdSSL, SSLCertKeyException
 
 from pcs_test.tools.misc import get_tmp_dir
 

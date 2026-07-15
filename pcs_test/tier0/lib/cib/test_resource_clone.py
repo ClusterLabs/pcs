@@ -1,6 +1,4 @@
-from unittest import (
-    TestCase,
-)
+from unittest import TestCase
 
 from lxml import etree
 

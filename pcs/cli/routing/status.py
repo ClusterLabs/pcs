@@ -1,15 +1,9 @@
 from typing import Any
 
-from pcs import (
-    status,
-    usage,
-)
+from pcs import status, usage
 from pcs.cli.booth.command import status as booth_status_cmd
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.common.parse_args import (
-    Argv,
-    InputModifiers,
-)
+from pcs.cli.common.parse_args import Argv, InputModifiers
 from pcs.cli.common.routing import create_router
 from pcs.cli.query import resource
 from pcs.cli.status import command as status_command

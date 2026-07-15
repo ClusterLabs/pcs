@@ -5,10 +5,7 @@ from typing import cast
 from pcs.common.tools import get_unique_uuid
 from pcs.lib.interface.config import FacadeInterface
 
-from .types import (
-    TOKEN_ENTRY_DATETIME_FORMAT,
-    TokenEntry,
-)
+from .types import TOKEN_ENTRY_DATETIME_FORMAT, TokenEntry
 
 
 class Facade(FacadeInterface):

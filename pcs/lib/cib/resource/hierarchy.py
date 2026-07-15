@@ -2,10 +2,7 @@ from collections.abc import Iterable
 
 from lxml.etree import _Element
 
-from . import (
-    clone,
-    group,
-)
+from . import clone, group
 
 
 def move_resources_to_group(

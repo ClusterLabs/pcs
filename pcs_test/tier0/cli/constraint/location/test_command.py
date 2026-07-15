@@ -1,14 +1,8 @@
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.constraint.location import command as location_command
-from pcs.common import (
-    const,
-    reports,
-)
+from pcs.common import const, reports
 
 from pcs_test.tools.constraints_dto import get_all_constraints
 from pcs_test.tools.custom_mock import RuleInEffectEvalMock

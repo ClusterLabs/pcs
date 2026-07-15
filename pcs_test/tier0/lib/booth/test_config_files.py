@@ -1,8 +1,5 @@
 import os.path
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
 from pcs import settings
 from pcs.common import file_type_codes

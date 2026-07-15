@@ -1,8 +1,5 @@
 from pcs import settings
-from pcs.common.host import (
-    Destination,
-    PcsKnownHost,
-)
+from pcs.common.host import Destination, PcsKnownHost
 
 from pcs_test.tools.command_env.mock_push_cib import Call as PushCibCall
 from pcs_test.tools.command_env.mock_push_corosync_conf import (

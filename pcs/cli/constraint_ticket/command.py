@@ -2,10 +2,7 @@ import dataclasses
 from typing import Any, cast
 
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.common.parse_args import (
-    Argv,
-    InputModifiers,
-)
+from pcs.cli.common.parse_args import Argv, InputModifiers
 from pcs.cli.constraint import command
 from pcs.cli.constraint.output import print_config
 from pcs.cli.constraint_ticket import parse_args

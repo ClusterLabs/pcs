@@ -3,10 +3,7 @@ import os
 import re
 import tempfile
 from functools import lru_cache
-from unittest import (
-    mock,
-    skipUnless,
-)
+from unittest import mock, skipUnless
 
 from lxml import etree
 

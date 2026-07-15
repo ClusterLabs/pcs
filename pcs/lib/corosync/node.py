@@ -10,10 +10,7 @@ from pcs.common.corosync_conf import (
 )
 from pcs.common.interface.dto import ImplementsToDto
 from pcs.lib.errors import LibraryError
-from pcs.lib.validate import (
-    is_ipv4_address,
-    is_ipv6_address,
-)
+from pcs.lib.validate import is_ipv4_address, is_ipv6_address
 
 
 @dataclass(frozen=True)

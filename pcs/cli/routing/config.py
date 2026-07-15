@@ -1,7 +1,4 @@
-from pcs import (
-    config,
-    usage,
-)
+from pcs import config, usage
 from pcs.cli.common.routing import create_router
 
 config_cmd = create_router(

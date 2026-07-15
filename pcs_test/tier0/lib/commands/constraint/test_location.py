@@ -1,9 +1,6 @@
 from unittest import TestCase
 
-from pcs.common import (
-    const,
-    reports,
-)
+from pcs.common import const, reports
 from pcs.common.pacemaker.types import CibResourceDiscovery
 from pcs.lib.cib import const as cib_const
 from pcs.lib.commands.constraint import location

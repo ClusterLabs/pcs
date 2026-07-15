@@ -25,10 +25,7 @@ from pcs.common.resource_status import (
     can_be_promotable,
     can_be_unique,
 )
-from pcs.common.str_tools import (
-    format_list,
-    format_optional,
-)
+from pcs.common.str_tools import format_list, format_optional
 
 
 def _handle_query_result(result: bool, quiet: bool) -> SystemExit:

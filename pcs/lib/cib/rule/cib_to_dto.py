@@ -2,14 +2,8 @@ from typing import cast
 
 from lxml.etree import _Element
 
-from pcs.common.pacemaker.rule import (
-    CibRuleDateCommonDto,
-    CibRuleExpressionDto,
-)
-from pcs.common.types import (
-    CibRuleExpressionType,
-    CibRuleInEffectStatus,
-)
+from pcs.common.pacemaker.rule import CibRuleDateCommonDto, CibRuleExpressionDto
+from pcs.common.types import CibRuleExpressionType, CibRuleInEffectStatus
 from pcs.lib.xml_tools import export_attributes
 
 from .cib_to_str import RuleToStr

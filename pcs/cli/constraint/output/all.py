@@ -18,12 +18,7 @@ from pcs.common.pacemaker.constraint import (
 )
 from pcs.common.types import CibRuleInEffectStatus
 
-from . import (
-    colocation,
-    location,
-    order,
-    ticket,
-)
+from . import colocation, location, order, ticket
 
 
 def constraints_to_text(

@@ -19,10 +19,7 @@ from pcs.common.node_communicator import (
     Response,
 )
 from pcs.common.pcs_cfgsync_dto import SyncConfigsDto
-from pcs.lib.communication.pcs_cfgsync import (
-    ConfigInfo,
-    GetConfigs,
-)
+from pcs.lib.communication.pcs_cfgsync import ConfigInfo, GetConfigs
 
 from pcs_test.tools import fixture
 from pcs_test.tools.custom_mock import (

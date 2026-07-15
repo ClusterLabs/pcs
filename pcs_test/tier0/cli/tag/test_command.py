@@ -1,15 +1,9 @@
 from textwrap import dedent
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.tag import command
-from pcs.common.pacemaker.tag import (
-    CibTagDto,
-    CibTagListDto,
-)
+from pcs.common.pacemaker.tag import CibTagDto, CibTagListDto
 from pcs.lib.errors import LibraryError
 
 from pcs_test.tools.misc import dict_to_modifiers

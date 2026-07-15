@@ -5,10 +5,7 @@ from pcs.common import reports
 from pcs.common.file import RawFileError
 from pcs.common.reports import ReportProcessor
 from pcs.common.reports import codes as report_codes
-from pcs.common.reports.item import (
-    ReportItem,
-    get_severity,
-)
+from pcs.common.reports.item import ReportItem, get_severity
 from pcs.common.services.errors import ManageServiceError
 from pcs.common.services.interfaces import ServiceManagerInterface
 from pcs.lib import external

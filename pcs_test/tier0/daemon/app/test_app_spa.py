@@ -12,14 +12,8 @@ except ImportError:
 from pcs.lib.auth.provider import AuthProvider
 from pcs.lib.auth.types import AuthUser
 
-from pcs_test.tier0.daemon.app import (
-    fixtures_app,
-    fixtures_app_webui,
-)
-from pcs_test.tools.misc import (
-    get_tmp_dir,
-    skip_unless_webui_installed,
-)
+from pcs_test.tier0.daemon.app import fixtures_app, fixtures_app_webui
+from pcs_test.tools.misc import get_tmp_dir, skip_unless_webui_installed
 
 PREFIX = "/ui/"
 

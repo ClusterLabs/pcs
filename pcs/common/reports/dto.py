@@ -4,11 +4,7 @@ from typing import Any
 
 from pcs.common.interface.dto import DataTransferObject
 
-from .types import (
-    ForceCode,
-    MessageCode,
-    SeverityLevel,
-)
+from .types import ForceCode, MessageCode, SeverityLevel
 
 
 @dataclass(frozen=True)

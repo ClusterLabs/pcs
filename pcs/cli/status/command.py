@@ -1,10 +1,7 @@
 from typing import Any
 
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.common.parse_args import (
-    Argv,
-    InputModifiers,
-)
+from pcs.cli.common.parse_args import Argv, InputModifiers
 
 
 def wait_for_pcmk_idle(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:

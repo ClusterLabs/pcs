@@ -8,14 +8,8 @@ from queue import Queue
 from unittest import mock
 
 from pcs import settings
-from pcs.common.async_tasks.dto import (
-    CommandDto,
-    CommandOptionsDto,
-)
-from pcs.common.async_tasks.types import (
-    TaskFinishType,
-    TaskKillReason,
-)
+from pcs.common.async_tasks.dto import CommandDto, CommandOptionsDto
+from pcs.common.async_tasks.types import TaskFinishType, TaskKillReason
 from pcs.daemon.async_tasks.scheduler import TaskNotFoundError
 from pcs.daemon.async_tasks.types import Command
 from pcs.daemon.async_tasks.worker import executor
@@ -26,10 +20,7 @@ from pcs.daemon.async_tasks.worker.types import (
     TaskFinished,
 )
 
-from .dummy_commands import (
-    RESULT,
-    test_command_map,
-)
+from .dummy_commands import RESULT, test_command_map
 from .helpers import (
     AUTH_USER,
     DATETIME_NOW,

@@ -1,7 +1,4 @@
-from pcs_test.tools.assertions import (
-    AssertPcsMixin,
-    assert_xml_equal,
-)
+from pcs_test.tools.assertions import AssertPcsMixin, assert_xml_equal
 from pcs_test.tools.misc import write_data_to_tmpfile
 
 

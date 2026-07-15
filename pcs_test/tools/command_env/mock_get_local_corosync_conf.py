@@ -1,8 +1,5 @@
 from pcs import settings
-from pcs.common import (
-    file_type_codes,
-    reports,
-)
+from pcs.common import file_type_codes, reports
 from pcs.common.file import RawFileError
 from pcs.common.reports.item import ReportItem
 from pcs.lib.errors import LibraryError

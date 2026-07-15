@@ -7,10 +7,7 @@ from pcs.common.pacemaker.fencing_topology import (
     CibFencingTopologyDto,
 )
 from pcs.common.str_tools import indent
-from pcs.common.types import (
-    StringCollection,
-    StringSequence,
-)
+from pcs.common.types import StringCollection, StringSequence
 
 
 def _get_targets_with_levels_str(

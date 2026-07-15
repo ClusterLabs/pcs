@@ -1,7 +1,4 @@
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
 from lxml import etree
 
@@ -17,9 +14,7 @@ from pcs_test.tools.assertions import (
     assert_raise_library_error,
     assert_xml_equal,
 )
-from pcs_test.tools.custom_mock import (
-    RuleInEffectEvalMock,
-)
+from pcs_test.tools.custom_mock import RuleInEffectEvalMock
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.nodes_dto import FIXTURE_NODES_CONFIG_XML, get_nodes_dto
 from pcs_test.tools.xml import etree_to_str

@@ -2,10 +2,7 @@ import re
 from collections import namedtuple
 
 from pcs.common import reports
-from pcs.common.reports import (
-    ReportItem,
-    get_severity,
-)
+from pcs.common.reports import ReportItem, get_severity
 from pcs.lib.booth import constants
 from pcs.lib.interface.config import (
     ExporterInterface,

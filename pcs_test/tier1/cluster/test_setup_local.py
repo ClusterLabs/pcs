@@ -6,10 +6,7 @@ from pcs import settings
 from pcs.lib.corosync.constants import CLUSTER_NAME_LENGTH_MAX
 
 from pcs_test.tools.assertions import AssertPcsMixin
-from pcs_test.tools.misc import (
-    get_tmp_file,
-    skip_unless_root,
-)
+from pcs_test.tools.misc import get_tmp_file, skip_unless_root
 from pcs_test.tools.pcs_runner import PcsRunner
 
 

@@ -1,8 +1,5 @@
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.common.parse_args import (
-    Argv,
-    KeyValueParser,
-)
+from pcs.cli.common.parse_args import Argv, KeyValueParser
 
 
 def separate_tail_option_candidates(

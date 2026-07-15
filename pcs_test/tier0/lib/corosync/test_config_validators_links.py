@@ -3,11 +3,7 @@ from unittest import TestCase
 from pcs.common.corosync_conf import CorosyncNodeAddressType
 from pcs.common.reports import codes as report_codes
 from pcs.lib.cib.node import PacemakerNode
-from pcs.lib.corosync import (
-    config_validators,
-    constants,
-    node,
-)
+from pcs.lib.corosync import config_validators, constants, node
 
 from pcs_test.tools import fixture
 from pcs_test.tools.assertions import assert_report_item_list_equal

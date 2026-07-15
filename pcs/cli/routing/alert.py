@@ -1,7 +1,4 @@
-from pcs import (
-    alert,
-    usage,
-)
+from pcs import alert, usage
 from pcs.cli.alert import command as alert_command
 from pcs.cli.common.errors import raise_command_replaced
 from pcs.cli.common.routing import create_router

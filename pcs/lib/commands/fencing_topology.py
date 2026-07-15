@@ -1,9 +1,6 @@
 from typing import Any
 
-from pcs.common.fencing_topology import (
-    FencingTargetType,
-    FencingTargetValue,
-)
+from pcs.common.fencing_topology import FencingTargetType, FencingTargetValue
 from pcs.common.pacemaker.fencing_topology import CibFencingTopologyDto
 from pcs.common.types import StringSequence
 from pcs.lib.cib import fencing_topology as cib_fencing_topology

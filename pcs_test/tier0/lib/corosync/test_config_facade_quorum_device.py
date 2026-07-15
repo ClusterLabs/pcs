@@ -8,10 +8,7 @@ from pcs.common.reports import codes as report_codes
 from pcs.lib.corosync.config_parser import Parser
 
 from pcs_test.tools import fixture
-from pcs_test.tools.assertions import (
-    ac,
-    assert_raise_library_error,
-)
+from pcs_test.tools.assertions import ac, assert_raise_library_error
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.misc import outdent
 

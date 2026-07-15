@@ -17,10 +17,7 @@ from pcs.lib.communication.tools import (
     SimpleResponseProcessingMixin,
     SkipOfflineMixin,
 )
-from pcs.lib.corosync.live import (
-    QuorumStatusException,
-    QuorumStatusFacade,
-)
+from pcs.lib.corosync.live import QuorumStatusException, QuorumStatusFacade
 from pcs.lib.node_communication import response_to_report_item
 
 

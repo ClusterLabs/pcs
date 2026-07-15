@@ -8,18 +8,12 @@ from typing import Any
 
 from lxml import etree
 
-from pcs.common import (
-    const,
-    reports,
-)
+from pcs.common import const, reports
 from pcs.common.pacemaker.role import (
     get_value_primary as get_primary_role_value,
 )
 from pcs.common.reports.item import ReportItem
-from pcs.lib.pacemaker.values import (
-    is_false,
-    is_true,
-)
+from pcs.lib.pacemaker.values import is_false, is_true
 from pcs.lib.xml_tools import find_parent
 
 

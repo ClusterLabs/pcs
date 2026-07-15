@@ -1,8 +1,5 @@
 from pcs import settings
-from pcs.common import (
-    reports,
-    services,
-)
+from pcs.common import reports, services
 from pcs.common.types import StringSequence
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner

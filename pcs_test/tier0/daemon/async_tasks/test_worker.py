@@ -1,15 +1,9 @@
 from multiprocessing import Queue
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
 from pcs.common import reports
 from pcs.common.async_tasks import types
-from pcs.common.async_tasks.dto import (
-    CommandDto,
-    CommandOptionsDto,
-)
+from pcs.common.async_tasks.dto import CommandDto, CommandOptionsDto
 from pcs.daemon.async_tasks.types import Command
 from pcs.daemon.async_tasks.worker import executor
 from pcs.daemon.async_tasks.worker.types import (
@@ -19,16 +13,8 @@ from pcs.daemon.async_tasks.worker.types import (
     WorkerCommand,
 )
 
-from .dummy_commands import (
-    RESULT,
-    test_command_map,
-    test_legacy_api_commands,
-)
-from .helpers import (
-    AUTH_USER,
-    MockOsKillMixin,
-    PermissionsCheckerMock,
-)
+from .dummy_commands import RESULT, test_command_map, test_legacy_api_commands
+from .helpers import AUTH_USER, MockOsKillMixin, PermissionsCheckerMock
 
 TASK_IDENT = "id0"
 WORKER_PID = 2222

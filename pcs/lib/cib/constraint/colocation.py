@@ -17,15 +17,9 @@ from pcs.lib.cib.constraint.resource_set import (
 )
 from pcs.lib.cib.rule import RuleInEffectEval
 from pcs.lib.cib.rule.cib_to_dto import rule_element_to_dto
-from pcs.lib.cib.tools import (
-    check_new_id_applicable,
-    role_constructor,
-)
+from pcs.lib.cib.tools import check_new_id_applicable, role_constructor
 from pcs.lib.errors import LibraryError
-from pcs.lib.pacemaker.values import (
-    SCORE_INFINITY,
-    is_score,
-)
+from pcs.lib.pacemaker.values import SCORE_INFINITY, is_score
 from pcs.lib.tools import get_optional_value
 
 _DESCRIPTION = "constraint id"

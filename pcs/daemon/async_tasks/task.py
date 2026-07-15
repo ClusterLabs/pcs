@@ -18,12 +18,7 @@ from pcs.common.reports.dto import ReportItemDto
 from pcs.lib.auth.types import AuthUser
 
 from .types import Command
-from .worker.types import (
-    Message,
-    TaskExecuted,
-    TaskFinished,
-    WorkerCommand,
-)
+from .worker.types import Message, TaskExecuted, TaskFinished, WorkerCommand
 
 
 class UnknownMessageError(Exception):

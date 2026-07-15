@@ -3,14 +3,8 @@ from textwrap import dedent
 from unittest import TestCase
 
 from pcs.cli import rule
-from pcs.common.pacemaker.rule import (
-    CibRuleDateCommonDto,
-    CibRuleExpressionDto,
-)
-from pcs.common.types import (
-    CibRuleExpressionType,
-    CibRuleInEffectStatus,
-)
+from pcs.common.pacemaker.rule import CibRuleDateCommonDto, CibRuleExpressionDto
+from pcs.common.types import CibRuleExpressionType, CibRuleInEffectStatus
 
 
 class RuleDtoToLinesMixin:

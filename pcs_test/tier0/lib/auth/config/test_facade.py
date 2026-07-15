@@ -1,7 +1,4 @@
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
 from pcs.lib.auth.config.facade import Facade
 from pcs.lib.auth.config.types import TokenEntry

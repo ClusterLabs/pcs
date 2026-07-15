@@ -1,10 +1,7 @@
 from functools import partial
 
 import pcs.cli.resource.command as resource_cli
-from pcs import (
-    resource,
-    usage,
-)
+from pcs import resource, usage
 from pcs.cli.cib.element import command as cib_element_cmd
 from pcs.cli.common.routing import create_router
 from pcs.cli.resource.relations import show_resource_relations_cmd

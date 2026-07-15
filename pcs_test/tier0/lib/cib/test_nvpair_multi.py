@@ -3,19 +3,10 @@ from unittest import TestCase
 from lxml import etree
 
 from pcs.common import reports
-from pcs.common.pacemaker.nvset import (
-    CibNvpairDto,
-    CibNvsetDto,
-)
-from pcs.common.pacemaker.rule import (
-    CibRuleDateCommonDto,
-    CibRuleExpressionDto,
-)
+from pcs.common.pacemaker.nvset import CibNvpairDto, CibNvsetDto
+from pcs.common.pacemaker.rule import CibRuleDateCommonDto, CibRuleExpressionDto
 from pcs.common.tools import Version
-from pcs.common.types import (
-    CibRuleExpressionType,
-    CibRuleInEffectStatus,
-)
+from pcs.common.types import CibRuleExpressionType, CibRuleInEffectStatus
 from pcs.lib.cib import nvpair_multi
 from pcs.lib.cib.rule import RuleInEffectEval
 from pcs.lib.cib.rule.expression_part import (

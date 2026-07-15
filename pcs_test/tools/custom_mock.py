@@ -9,10 +9,7 @@ from unittest import mock
 
 import pcs.common.pcs_pycurl as pycurl
 from pcs import settings
-from pcs.common.reports import (
-    ReportItemSeverity,
-    ReportProcessor,
-)
+from pcs.common.reports import ReportItemSeverity, ReportProcessor
 from pcs.common.types import CibRuleInEffectStatus
 from pcs.lib.cib.rule.in_effect import RuleInEffectEval
 from pcs.lib.external import CommandRunner

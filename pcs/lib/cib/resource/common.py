@@ -6,17 +6,12 @@ from pcs.common.reports.item import ReportItemList
 from pcs.common.types import StringCollection
 from pcs.lib.cib import nvpair
 from pcs.lib.cib.const import TAG_LIST_RESOURCE
-from pcs.lib.cib.tools import (
-    ElementSearcher,
-    IdProvider,
-)
+from pcs.lib.cib.tools import ElementSearcher, IdProvider
 from pcs.lib.xml_tools import find_parent
 
 from .bundle import get_inner_resource as get_bundle_inner_resource
 from .bundle import is_bundle
-from .clone import (
-    get_inner_primitives as get_clone_inner_primitive_resources,
-)
+from .clone import get_inner_primitives as get_clone_inner_primitive_resources
 from .clone import get_inner_resource as get_clone_inner_resource
 from .clone import is_any_clone
 from .group import get_inner_resources as get_group_inner_resources

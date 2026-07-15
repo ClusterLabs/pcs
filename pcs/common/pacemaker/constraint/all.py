@@ -7,18 +7,9 @@ from .colocation import (
     CibConstraintColocationDto,
     CibConstraintColocationSetDto,
 )
-from .location import (
-    CibConstraintLocationDto,
-    CibConstraintLocationSetDto,
-)
-from .order import (
-    CibConstraintOrderDto,
-    CibConstraintOrderSetDto,
-)
-from .ticket import (
-    CibConstraintTicketDto,
-    CibConstraintTicketSetDto,
-)
+from .location import CibConstraintLocationDto, CibConstraintLocationSetDto
+from .order import CibConstraintOrderDto, CibConstraintOrderSetDto
+from .ticket import CibConstraintTicketDto, CibConstraintTicketSetDto
 
 
 @dataclass(frozen=True)

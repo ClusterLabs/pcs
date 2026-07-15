@@ -1,7 +1,4 @@
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
 from pcs.common import reports
 from pcs.lib import resource_agent as ra

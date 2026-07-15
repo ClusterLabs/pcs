@@ -1,7 +1,4 @@
-from collections import (
-    Counter,
-    defaultdict,
-)
+from collections import Counter, defaultdict
 from collections.abc import (
     Callable,
     Collection,
@@ -27,10 +24,7 @@ from pcs.common.types import StringCollection
 from pcs.lib import validate
 from pcs.lib.cib.node import PacemakerNode
 from pcs.lib.corosync import constants
-from pcs.lib.corosync.node import (
-    CorosyncNode,
-    get_address_type,
-)
+from pcs.lib.corosync.node import CorosyncNode, get_address_type
 
 _QDEVICE_NET_REQUIRED_OPTIONS = (
     "algorithm",

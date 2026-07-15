@@ -1,7 +1,4 @@
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
 import pcs.lib.corosync.qdevice_client as lib
 from pcs import settings

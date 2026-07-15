@@ -2,10 +2,7 @@ import contextlib
 import os
 from typing import Any, cast
 
-from pcs import (
-    settings,
-    utils,
-)
+from pcs import settings, utils
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import Argv, InputModifiers
 from pcs.cli.file import metadata as cli_metadata

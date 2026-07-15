@@ -1,6 +1,4 @@
-from pcs import (
-    usage,
-)
+from pcs import usage
 from pcs.cli import host
 from pcs.cli.common.routing import create_router
 

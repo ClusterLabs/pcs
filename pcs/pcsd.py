@@ -2,25 +2,13 @@ import contextlib
 import json
 import os
 import sys
-from typing import (
-    Any,
-    cast,
-)
+from typing import Any, cast
 
 import pcs.common.ssl
-from pcs import (
-    settings,
-    utils,
-)
+from pcs import settings, utils
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.common.parse_args import (
-    Argv,
-    InputModifiers,
-)
-from pcs.cli.reports import (
-    output,
-    process_library_reports,
-)
+from pcs.cli.common.parse_args import Argv, InputModifiers
+from pcs.cli.reports import output, process_library_reports
 from pcs.cli.reports.output import deprecation_warning, print_to_stderr
 from pcs.common import file as pcs_file
 from pcs.common import reports

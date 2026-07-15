@@ -1,13 +1,7 @@
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
 from pcs import settings
-from pcs.common import (
-    const,
-    reports,
-)
+from pcs.common import const, reports
 from pcs.lib.commands import resource
 from pcs.lib.errors import LibraryError
 from pcs.lib.resource_agent import ResourceAgentName

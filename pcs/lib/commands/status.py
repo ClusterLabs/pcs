@@ -6,19 +6,13 @@ from typing import NamedTuple
 from lxml.etree import _Element
 
 from pcs import settings
-from pcs.common import (
-    file_type_codes,
-    reports,
-)
+from pcs.common import file_type_codes, reports
 from pcs.common.node_communicator import Communicator
 from pcs.common.reports import ReportProcessor
 from pcs.common.reports.item import ReportItem
 from pcs.common.services.interfaces import ServiceManagerInterface
 from pcs.common.status_dto import ResourcesStatusDto
-from pcs.common.str_tools import (
-    format_list,
-    indent,
-)
+from pcs.common.str_tools import format_list, indent
 from pcs.common.types import (
     CibRuleInEffectStatus,
     StringIterable,
@@ -31,11 +25,7 @@ from pcs.lib.cib.constraint.location import get_all_as_dtos
 from pcs.lib.cib.resource import stonith
 from pcs.lib.cib.resource.bundle import verify as verify_bundles
 from pcs.lib.cib.rule.in_effect import get_rule_evaluator
-from pcs.lib.cib.tools import (
-    get_constraints,
-    get_crm_config,
-    get_resources,
-)
+from pcs.lib.cib.tools import get_constraints, get_crm_config, get_resources
 from pcs.lib.communication.nodes import CheckReachability
 from pcs.lib.communication.tools import run as run_communication
 from pcs.lib.env import LibraryEnvironment

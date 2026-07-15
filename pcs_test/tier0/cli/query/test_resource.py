@@ -1,8 +1,5 @@
 from collections.abc import Sequence
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import Argv

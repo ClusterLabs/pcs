@@ -13,15 +13,9 @@ from pcs.common.resource_status import (
     ResourcesStatusFacade,
     ResourceState,
 )
-from pcs.common.types import (
-    StringCollection,
-    StringSequence,
-)
+from pcs.common.types import StringCollection, StringSequence
 from pcs.lib.cib import const
-from pcs.lib.cib.constraint.common import (
-    is_constraint,
-    is_set_constraint,
-)
+from pcs.lib.cib.constraint.common import is_constraint, is_set_constraint
 from pcs.lib.cib.constraint.location import (
     is_location_constraint,
     is_location_rule,

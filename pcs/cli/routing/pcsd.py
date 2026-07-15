@@ -1,7 +1,4 @@
-from pcs import (
-    pcsd,
-    usage,
-)
+from pcs import pcsd, usage
 from pcs.cli.common.routing import create_router
 
 pcsd_cmd = create_router(

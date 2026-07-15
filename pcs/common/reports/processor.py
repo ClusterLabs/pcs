@@ -3,11 +3,7 @@ from logging import Logger
 
 from pcs.common.reports.utils import add_context_to_message
 
-from .item import (
-    ReportItem,
-    ReportItemList,
-    ReportItemSeverity,
-)
+from .item import ReportItem, ReportItemList, ReportItemSeverity
 
 
 class ReportProcessor(abc.ABC):

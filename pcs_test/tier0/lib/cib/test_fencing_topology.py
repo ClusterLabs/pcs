@@ -1,7 +1,4 @@
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
 from lxml import etree
 
@@ -25,10 +22,7 @@ from pcs.lib.cib import fencing_topology as lib
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.state import ClusterState
 
-from pcs_test.tools import (
-    fixture,
-    fixture_crm_mon,
-)
+from pcs_test.tools import fixture, fixture_crm_mon
 from pcs_test.tools.assertions import (
     assert_report_item_list_equal,
     assert_xml_equal,

@@ -1,9 +1,6 @@
 from typing import Any
 
-from pcs.common import (
-    file_type_codes,
-    reports,
-)
+from pcs.common import file_type_codes, reports
 
 
 class ParserErrorException(Exception):

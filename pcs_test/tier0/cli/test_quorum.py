@@ -1,7 +1,4 @@
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
 from pcs import quorum
 from pcs.cli.common.errors import CmdLineInputError

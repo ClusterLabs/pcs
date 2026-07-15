@@ -6,10 +6,7 @@ from pcs.common import reports
 from pcs.lib.validate import validate_add_remove_items
 
 from . import group
-from .bundle import (
-    get_parent_bundle,
-    is_bundle,
-)
+from .bundle import get_parent_bundle, is_bundle
 from .clone import (
     get_parent_any_clone,
     is_any_clone,

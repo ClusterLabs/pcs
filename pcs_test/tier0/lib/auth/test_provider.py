@@ -1,24 +1,14 @@
 from io import BytesIO
 from logging import Logger
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
-from pcs.common.file import (
-    FileMetadata,
-    RawFile,
-    RawFileError,
-)
+from pcs.common.file import FileMetadata, RawFile, RawFileError
 from pcs.common.file_type_codes import PCS_USERS_CONF
 from pcs.lib.auth import const
 from pcs.lib.auth.config.facade import Facade
 from pcs.lib.auth.config.parser import ParserError
 from pcs.lib.auth.config.types import TokenEntry
-from pcs.lib.auth.provider import (
-    AuthProvider,
-    _UpdateFacadeError,
-)
+from pcs.lib.auth.provider import AuthProvider, _UpdateFacadeError
 from pcs.lib.auth.types import AuthUser
 from pcs.lib.file.instance import FileInstance
 from pcs.lib.file.json import JsonParserException

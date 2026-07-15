@@ -2,18 +2,9 @@ from unittest import TestCase
 
 from lxml import etree
 
-from pcs.common.pacemaker.rule import (
-    CibRuleDateCommonDto,
-    CibRuleExpressionDto,
-)
-from pcs.common.types import (
-    CibRuleExpressionType,
-    CibRuleInEffectStatus,
-)
-from pcs.lib.cib.rule import (
-    RuleInEffectEval,
-    rule_element_to_dto,
-)
+from pcs.common.pacemaker.rule import CibRuleDateCommonDto, CibRuleExpressionDto
+from pcs.common.types import CibRuleExpressionType, CibRuleInEffectStatus
+from pcs.lib.cib.rule import RuleInEffectEval, rule_element_to_dto
 
 
 class RuleInEffectEvalMock(RuleInEffectEval):

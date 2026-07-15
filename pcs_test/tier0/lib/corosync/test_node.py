@@ -2,10 +2,7 @@ from socket import gaierror
 from unittest import TestCase
 from unittest.mock import patch
 
-from pcs.common.corosync_conf import (
-    CorosyncNodeAddressDto,
-    CorosyncNodeDto,
-)
+from pcs.common.corosync_conf import CorosyncNodeAddressDto, CorosyncNodeDto
 from pcs.common.types import CorosyncNodeAddressType
 from pcs.lib.corosync.node import (
     CorosyncNode,

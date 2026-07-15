@@ -2,11 +2,7 @@ from collections.abc import Callable
 from typing import Any
 
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.common.parse_args import (
-    Argv,
-    InputModifiers,
-    ensure_unique_args,
-)
+from pcs.cli.common.parse_args import Argv, InputModifiers, ensure_unique_args
 from pcs.cli.constraint import parse_args
 from pcs.common.pacemaker.constraint import (
     get_all_constraints_ids,

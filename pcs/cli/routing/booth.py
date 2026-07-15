@@ -1,7 +1,4 @@
-from pcs import (
-    settings,
-    usage,
-)
+from pcs import settings, usage
 from pcs.cli.booth import command
 from pcs.cli.common.routing import create_router
 

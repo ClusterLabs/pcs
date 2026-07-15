@@ -1,13 +1,7 @@
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
 from pcs import settings
-from pcs.common import (
-    file_type_codes,
-    reports,
-)
+from pcs.common import file_type_codes, reports
 from pcs.common.tools import xml_fromstring
 from pcs.lib.commands.resource import move_autoclean
 from pcs.lib.xml_tools import etree_to_str
@@ -15,10 +9,7 @@ from pcs.lib.xml_tools import etree_to_str
 from pcs_test.tools import fixture
 from pcs_test.tools.assertions import assert_xml_equal
 from pcs_test.tools.command_env import get_env_tools
-from pcs_test.tools.custom_mock import (
-    TmpFileCall,
-    TmpFileMock,
-)
+from pcs_test.tools.custom_mock import TmpFileCall, TmpFileMock
 from pcs_test.tools.misc import get_test_resource as rc
 
 

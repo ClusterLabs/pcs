@@ -6,10 +6,7 @@ from unittest import TestCase
 from lxml import etree
 
 from pcs.common.interface import dto
-from pcs.common.pacemaker.tag import (
-    CibTagDto,
-    CibTagListDto,
-)
+from pcs.common.pacemaker.tag import CibTagDto, CibTagListDto
 from pcs.common.types import StringSequence
 from pcs.lib.cib.tools import get_resources
 
@@ -23,10 +20,7 @@ from pcs_test.tools.misc import (
     write_file_to_tmpfile,
 )
 from pcs_test.tools.pcs_runner import PcsRunner
-from pcs_test.tools.xml import (
-    XmlManipulation,
-    etree_to_str,
-)
+from pcs_test.tools.xml import XmlManipulation, etree_to_str
 
 empty_cib = rc("cib-empty.xml")
 tags_cib = rc("cib-tags.xml")

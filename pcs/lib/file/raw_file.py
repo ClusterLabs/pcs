@@ -8,11 +8,7 @@ from io import BytesIO
 # have to import RawFile from common and Ghost file from here in other
 # places
 from pcs.common import reports
-from pcs.common.file import (
-    FileMetadata,
-    RawFileError,
-    RawFileInterface,
-)
+from pcs.common.file import FileMetadata, RawFileError, RawFileInterface
 from pcs.common.file import RawFile as RealFile  # noqa: F401
 
 # TODO add logging (logger / debug reports ?)

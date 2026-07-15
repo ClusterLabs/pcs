@@ -19,10 +19,7 @@ from pcs.daemon.app.api_v0_tools import (
     reports_to_str,
     run_library_command_in_scheduler,
 )
-from pcs.daemon.async_tasks.scheduler import (
-    Scheduler,
-    TaskNotFoundError,
-)
+from pcs.daemon.async_tasks.scheduler import Scheduler, TaskNotFoundError
 from pcs.daemon.async_tasks.types import Command
 from pcs.lib.auth.types import AuthUser
 

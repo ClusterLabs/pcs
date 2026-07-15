@@ -2,10 +2,7 @@ import json
 from dataclasses import asdict
 from unittest import TestCase
 
-from pcs.lib.auth.config.parser import (
-    Parser,
-    ParserError,
-)
+from pcs.lib.auth.config.parser import Parser, ParserError
 from pcs.lib.auth.config.types import TokenEntry
 from pcs.lib.interface.config import ParserErrorException
 

@@ -1,10 +1,6 @@
 import logging
 
-from pcs.snmp.agentx.types import (
-    IntegerType,
-    Oid,
-    StringType,
-)
+from pcs.snmp.agentx.types import IntegerType, Oid, StringType
 from pcs.snmp.agentx.updater import AgentxUpdaterBase
 from pcs.utils import run_pcsdcli
 

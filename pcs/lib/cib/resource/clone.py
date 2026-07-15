@@ -15,18 +15,12 @@ from typing import cast
 from lxml import etree
 from lxml.etree import _Element
 
-from pcs.common import (
-    const,
-)
+from pcs.common import const
 from pcs.common.pacemaker import nvset
 from pcs.common.pacemaker.resource.clone import CibResourceCloneDto
 from pcs.common.reports import ReportItemList
 from pcs.common.tools import Version
-from pcs.lib.cib import (
-    nvpair,
-    nvpair_multi,
-    rule,
-)
+from pcs.lib.cib import nvpair, nvpair_multi, rule
 from pcs.lib.cib.const import TAG_RESOURCE_CLONE as TAG_CLONE
 from pcs.lib.cib.const import TAG_RESOURCE_MASTER as TAG_MASTER
 from pcs.lib.cib.nvpair_multi import (
@@ -37,10 +31,7 @@ from pcs.lib.cib.nvpair_multi import (
 )
 from pcs.lib.cib.resource.operations import get_resource_operations
 from pcs.lib.cib.tools import IdProvider
-from pcs.lib.pacemaker.values import (
-    is_true,
-    validate_id,
-)
+from pcs.lib.pacemaker.values import is_true, validate_id
 
 ALL_TAGS = [TAG_CLONE, TAG_MASTER]
 

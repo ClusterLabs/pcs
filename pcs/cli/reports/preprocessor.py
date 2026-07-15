@@ -5,10 +5,7 @@ from pcs.cli.common.tools import print_to_stderr
 from pcs.cli.constraint import output
 from pcs.common import reports
 from pcs.common.pacemaker.constraint import CibConstraintsDto
-from pcs.common.str_tools import (
-    format_list,
-    indent,
-)
+from pcs.common.str_tools import format_list, indent
 from pcs.common.types import StringIterable
 from pcs.lib.errors import LibraryError
 

@@ -2,10 +2,7 @@ from collections.abc import Sequence
 from typing import Any, Final, TypeVar, cast
 
 from lxml import etree
-from lxml.etree import (
-    _Attrib,
-    _Element,
-)
+from lxml.etree import _Attrib, _Element
 
 from pcs.common import reports
 from pcs.common.fencing_topology import (
@@ -44,10 +41,7 @@ from pcs.lib.cib.tools import (
 )
 from pcs.lib.errors import LibraryError
 from pcs.lib.pacemaker.state import _Element as StateElement
-from pcs.lib.pacemaker.values import (
-    sanitize_id,
-    validate_id,
-)
+from pcs.lib.pacemaker.values import sanitize_id, validate_id
 
 _DEVICES_ATTRIBUTE: Final = "devices"
 

@@ -3,18 +3,9 @@ from unittest import TestCase
 from pcs import settings
 from pcs.common import reports
 from pcs.common.pacemaker.defaults import CibDefaultsDto
-from pcs.common.pacemaker.nvset import (
-    CibNvpairDto,
-    CibNvsetDto,
-)
-from pcs.common.pacemaker.rule import (
-    CibRuleDateCommonDto,
-    CibRuleExpressionDto,
-)
-from pcs.common.types import (
-    CibRuleExpressionType,
-    CibRuleInEffectStatus,
-)
+from pcs.common.pacemaker.nvset import CibNvpairDto, CibNvsetDto
+from pcs.common.pacemaker.rule import CibRuleDateCommonDto, CibRuleExpressionDto
+from pcs.common.types import CibRuleExpressionType, CibRuleInEffectStatus
 from pcs.lib.commands import cib_options
 from pcs.lib.resource_agent import const as ra_const
 

@@ -3,10 +3,7 @@ from collections.abc import Iterable as IterableAbc
 from collections.abc import Mapping, Sequence, Sized
 from typing import Any, TypeVar
 
-from pcs.common.types import (
-    StringIterable,
-    StringSequence,
-)
+from pcs.common.types import StringIterable, StringSequence
 
 
 def indent(line_list: StringIterable, indent_step: int = 2) -> list[str]:

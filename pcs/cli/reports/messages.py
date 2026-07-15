@@ -3,14 +3,7 @@ from functools import partial
 from typing import Any, get_type_hints
 
 from pcs.common import file_type_codes
-from pcs.common.reports import (
-    codes,
-    const,
-    dto,
-    item,
-    messages,
-    types,
-)
+from pcs.common.reports import codes, const, dto, item, messages, types
 from pcs.common.str_tools import (
     format_list,
     format_optional,

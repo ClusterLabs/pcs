@@ -4,10 +4,7 @@ from typing import cast
 from lxml.etree import _Element
 
 from pcs.common import reports
-from pcs.common.reports.item import (
-    ReportItem,
-    ReportItemList,
-)
+from pcs.common.reports.item import ReportItem, ReportItemList
 from pcs.common.types import StringCollection
 from pcs.lib import validate
 from pcs.lib.cib.node import PacemakerNode

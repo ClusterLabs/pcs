@@ -3,10 +3,7 @@ from unittest import TestCase
 
 import pcs.lib.node_communication as lib
 from pcs.common import pcs_pycurl as pycurl
-from pcs.common.host import (
-    Destination,
-    PcsKnownHost,
-)
+from pcs.common.host import Destination, PcsKnownHost
 from pcs.common.node_communicator import (
     Request,
     RequestData,
@@ -21,10 +18,7 @@ from pcs_test.tools.assertions import (
     assert_raise_library_error,
     assert_report_item_equal,
 )
-from pcs_test.tools.custom_mock import (
-    MockCurl,
-    MockLibraryReportProcessor,
-)
+from pcs_test.tools.custom_mock import MockCurl, MockLibraryReportProcessor
 
 
 class NodeTargetLibFactory(TestCase):

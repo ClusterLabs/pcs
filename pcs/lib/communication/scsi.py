@@ -6,10 +6,7 @@ from pcs.common import reports
 from pcs.common.communication import const
 from pcs.common.communication.dto import InternalCommunicationResultDto
 from pcs.common.interface.dto import from_dict
-from pcs.common.node_communicator import (
-    Request,
-    RequestData,
-)
+from pcs.common.node_communicator import Request, RequestData
 from pcs.common.types import StringIterable
 from pcs.lib.communication.tools import (
     AllAtOnceStrategyMixin,

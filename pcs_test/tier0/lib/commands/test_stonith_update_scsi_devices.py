@@ -1,14 +1,8 @@
 import json
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
 from pcs import settings
-from pcs.common import (
-    communication,
-    reports,
-)
+from pcs.common import communication, reports
 from pcs.common.interface import dto
 from pcs.common.tools import timeout_to_seconds
 from pcs.lib.commands import stonith
@@ -20,11 +14,7 @@ from pcs_test.tools.command_env.config_http_corosync import (
 )
 from pcs_test.tools.misc import get_test_resource as rc
 
-from .cluster.common import (
-    corosync_conf_fixture,
-    get_two_node,
-    node_fixture,
-)
+from .cluster.common import corosync_conf_fixture, get_two_node, node_fixture
 
 STONITH_ID_SCSI = "scsi-fence-device"
 STONITH_ID_MPATH = "mpath-fence-device"

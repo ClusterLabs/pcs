@@ -7,10 +7,7 @@ from pcs.common.permissions.types import (
     PermissionTargetType,
 )
 from pcs.lib.interface.config import ParserErrorException
-from pcs.lib.permissions.config.parser import (
-    ParserError,
-    ParserV2,
-)
+from pcs.lib.permissions.config.parser import ParserError, ParserV2
 from pcs.lib.permissions.config.types import (
     ClusterEntry,
     ClusterPermissions,

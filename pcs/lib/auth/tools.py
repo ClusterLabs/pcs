@@ -2,10 +2,7 @@ import grp
 import pwd
 from typing import TYPE_CHECKING
 
-from .types import (
-    AuthUser,
-    DesiredUser,
-)
+from .types import AuthUser, DesiredUser
 
 if TYPE_CHECKING:
     from pcs.common.tools import StringCollection

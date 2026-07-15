@@ -1,7 +1,4 @@
-from pcs import (
-    quorum,
-    usage,
-)
+from pcs import quorum, usage
 from pcs.cli.common.routing import create_router
 
 quorum_cmd = create_router(

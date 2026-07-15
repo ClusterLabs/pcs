@@ -1,8 +1,5 @@
 from textwrap import dedent
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
 from pcs import settings
 from pcs.common.reports import ReportItemSeverity as severities

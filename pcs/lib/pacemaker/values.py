@@ -2,10 +2,7 @@ import re
 
 from pcs import settings
 from pcs.common import reports
-from pcs.common.reports.item import (
-    ReportItem,
-    ReportItemList,
-)
+from pcs.common.reports.item import ReportItem, ReportItemList
 from pcs.common.tools import timeout_to_seconds
 from pcs.common.validate import is_integer
 from pcs.lib.errors import LibraryError

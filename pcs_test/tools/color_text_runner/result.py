@@ -1,10 +1,6 @@
 import unittest
 
-from pcs_test.tools.color_text_runner.format import (
-    Format,
-    Output,
-    separator1,
-)
+from pcs_test.tools.color_text_runner.format import Format, Output, separator1
 from pcs_test.tools.color_text_runner.writer import (
     DotWriter,
     ImprovedVerboseWriter,

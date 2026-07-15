@@ -2,10 +2,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
 from pcs.common.interface.dto import DataTransferObject
-from pcs.common.types import (
-    CibRuleExpressionType,
-    CibRuleInEffectStatus,
-)
+from pcs.common.types import CibRuleExpressionType, CibRuleInEffectStatus
 
 
 @dataclass(frozen=True)

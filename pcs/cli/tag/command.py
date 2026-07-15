@@ -1,11 +1,7 @@
 from typing import Any
 
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.common.parse_args import (
-    Argv,
-    InputModifiers,
-    group_by_keywords,
-)
+from pcs.cli.common.parse_args import Argv, InputModifiers, group_by_keywords
 from pcs.cli.tag.output import print_config
 
 

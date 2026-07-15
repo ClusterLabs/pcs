@@ -9,10 +9,7 @@ from pcs.lib.cib.nvpair import (
     arrange_first_meta_attributes,
 )
 from pcs.lib.cib.rule.in_effect import get_rule_evaluator
-from pcs.lib.cib.tools import (
-    IdProvider,
-    get_alerts,
-)
+from pcs.lib.cib.tools import IdProvider, get_alerts
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 

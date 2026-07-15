@@ -3,10 +3,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-from pcs.common import (
-    file_type_codes,
-    reports,
-)
+from pcs.common import file_type_codes, reports
 from pcs.lib.corosync import constants
 from pcs.lib.interface.config import (
     ExporterInterface,

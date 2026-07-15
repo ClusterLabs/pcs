@@ -1,9 +1,6 @@
 import json
 from textwrap import dedent
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
 from pcs.cli.cluster_property import command as cluster_property
 from pcs.cli.common.errors import CmdLineInputError

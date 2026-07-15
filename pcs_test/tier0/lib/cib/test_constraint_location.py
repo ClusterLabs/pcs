@@ -2,10 +2,7 @@ from unittest import TestCase
 
 from lxml import etree
 
-from pcs.common import (
-    const,
-    reports,
-)
+from pcs.common import const, reports
 from pcs.common.pacemaker.types import CibResourceDiscovery
 from pcs.common.types import CibRuleExpressionType
 from pcs.lib.cib import const as cib_const

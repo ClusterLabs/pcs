@@ -1,10 +1,7 @@
 from typing import Any
 from urllib.parse import urlparse
 
-from pcs import (
-    settings,
-    utils,
-)
+from pcs import settings, utils
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import (
     Argv,

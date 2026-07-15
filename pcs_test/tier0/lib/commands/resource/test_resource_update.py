@@ -1,10 +1,6 @@
-from unittest import (
-    TestCase,
-)
+from unittest import TestCase
 
-from pcs.common import (
-    reports,
-)
+from pcs.common import reports
 from pcs.lib.commands import resource
 from pcs.lib.resource_agent.const import PRIMITIVE_META, STONITH_META
 from pcs.lib.resource_agent.types import ResourceAgentName

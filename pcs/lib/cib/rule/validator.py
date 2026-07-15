@@ -1,8 +1,5 @@
 import dataclasses
-from collections import (
-    Counter,
-    OrderedDict,
-)
+from collections import Counter, OrderedDict
 
 from dateutil import parser as dateutil_parser
 

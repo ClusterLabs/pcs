@@ -5,10 +5,7 @@ from lxml import etree
 
 from pcs import resource, utils
 from pcs.common import const
-from pcs.common.str_tools import (
-    format_list,
-    format_plural,
-)
+from pcs.common.str_tools import format_list, format_plural
 from pcs.constraint import LOCATION_NODE_VALIDATION_SKIP_MSG
 from pcs.lib.resource_agent import const as ra_const
 

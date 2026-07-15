@@ -1,17 +1,11 @@
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
 from lxml import etree
 
 from pcs.common.reports import ReportItemSeverity as severities
 from pcs.common.reports import codes as report_codes
 from pcs.lib.cib import acl as lib
-from pcs.lib.cib.tools import (
-    IdProvider,
-    get_acls,
-)
+from pcs.lib.cib.tools import IdProvider, get_acls
 from pcs.lib.errors import LibraryError
 
 from pcs_test.tools.assertions import (

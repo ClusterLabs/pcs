@@ -1,7 +1,4 @@
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
 from lxml import etree
 
@@ -9,11 +6,7 @@ from pcs import settings
 from pcs.common.reports import ReportItemSeverity as severities
 from pcs.common.reports import codes as report_codes
 from pcs.lib.pacemaker import state
-from pcs.lib.pacemaker.state import (
-    ClusterState,
-    _Attrs,
-    _Children,
-)
+from pcs.lib.pacemaker.state import ClusterState, _Attrs, _Children
 
 from pcs_test.tools.assertions import assert_report_item_equal
 from pcs_test.tools.fixture_crm_mon import complete_state

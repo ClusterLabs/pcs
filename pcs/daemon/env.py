@@ -5,10 +5,7 @@ from collections import namedtuple
 from functools import lru_cache
 
 from pcs import settings
-from pcs.common.validate import (
-    is_integer,
-    is_port_number,
-)
+from pcs.common.validate import is_integer, is_port_number
 
 try:
     from pcs.daemon.app import webui

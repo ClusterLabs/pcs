@@ -1,10 +1,7 @@
 from dataclasses import dataclass
 from typing import Any
 
-from pcs.common.interface.dto import (
-    ImplementsFromDto,
-    ImplementsToDto,
-)
+from pcs.common.interface.dto import ImplementsFromDto, ImplementsToDto
 
 from .dto import (
     ReportItemContextDto,
@@ -12,12 +9,7 @@ from .dto import (
     ReportItemMessageDto,
     ReportItemSeverityDto,
 )
-from .types import (
-    ForceCode,
-    ForceFlags,
-    MessageCode,
-    SeverityLevel,
-)
+from .types import ForceCode, ForceFlags, MessageCode, SeverityLevel
 
 
 @dataclass(frozen=True)

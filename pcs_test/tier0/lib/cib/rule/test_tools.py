@@ -1,10 +1,7 @@
 from unittest import TestCase
 
 from pcs.common.pacemaker.rule import CibRuleExpressionDto
-from pcs.common.types import (
-    CibRuleExpressionType,
-    CibRuleInEffectStatus,
-)
+from pcs.common.types import CibRuleExpressionType, CibRuleInEffectStatus
 from pcs.lib.cib.rule import tools
 from pcs.lib.cib.rule.expression_part import (
     BOOL_AND,

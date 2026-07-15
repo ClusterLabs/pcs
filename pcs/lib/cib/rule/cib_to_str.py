@@ -3,10 +3,7 @@ from typing import cast
 
 from lxml.etree import _Element
 
-from pcs.common.str_tools import (
-    format_name_value_list,
-    quote,
-)
+from pcs.common.str_tools import format_name_value_list, quote
 from pcs.lib.xml_tools import export_attributes
 
 

@@ -1,7 +1,4 @@
-from pcs.common.const import (
-    PcmkAction,
-    PcmkRoleType,
-)
+from pcs.common.const import PcmkAction, PcmkRoleType
 from pcs.common.pacemaker.constraint import (
     CibConstraintColocationAttributesDto,
     CibConstraintColocationDto,
@@ -23,10 +20,7 @@ from pcs.common.pacemaker.types import (
     CibResourceSetOrderType,
     CibTicketLossPolicy,
 )
-from pcs.common.types import (
-    CibRuleExpressionType,
-    CibRuleInEffectStatus,
-)
+from pcs.common.types import CibRuleExpressionType, CibRuleInEffectStatus
 from pcs.lib.cib.rule.in_effect import RuleInEffectEval
 
 

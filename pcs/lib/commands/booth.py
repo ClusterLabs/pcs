@@ -8,10 +8,7 @@ from lxml.etree import _Element
 
 from pcs import settings
 from pcs.common import file_type_codes, reports
-from pcs.common.booth_dto import (
-    BoothConfigAndAuthfileDto,
-    BoothConfigFileDto,
-)
+from pcs.common.booth_dto import BoothConfigAndAuthfileDto, BoothConfigFileDto
 from pcs.common.file import FileAlreadyExists, RawFileError
 from pcs.common.reports import ReportProcessor
 from pcs.common.reports import codes as report_codes

@@ -15,21 +15,11 @@ from pcs.common.async_tasks.types import (
 from pcs.common.reports import ReportItem
 from pcs.common.reports.messages import CibUpgradeSuccessful
 from pcs.daemon.async_tasks import scheduler
-from pcs.daemon.async_tasks.task import (
-    Task,
-    TaskConfig,
-)
+from pcs.daemon.async_tasks.task import Task, TaskConfig
 from pcs.daemon.async_tasks.worker.executor import task_executor
-from pcs.daemon.async_tasks.worker.types import (
-    Message,
-    TaskExecuted,
-)
+from pcs.daemon.async_tasks.worker.types import Message, TaskExecuted
 
-from .helpers import (
-    ANOTHER_AUTH_USER,
-    AUTH_USER,
-    SchedulerBaseAsyncTestCase,
-)
+from .helpers import ANOTHER_AUTH_USER, AUTH_USER, SchedulerBaseAsyncTestCase
 
 WORKER1_PID = 2222
 WORKER2_PID = 3333

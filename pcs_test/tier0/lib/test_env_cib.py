@@ -1,8 +1,5 @@
 from functools import partial
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
 from lxml import etree
 
@@ -13,10 +10,7 @@ from pcs.lib.env import LibraryEnvironment
 from pcs_test.tools import fixture
 from pcs_test.tools.assertions import assert_xml_equal
 from pcs_test.tools.command_env import get_env_tools
-from pcs_test.tools.custom_mock import (
-    TmpFileCall,
-    TmpFileMock,
-)
+from pcs_test.tools.custom_mock import TmpFileCall, TmpFileMock
 from pcs_test.tools.misc import create_setup_patch_mixin
 from pcs_test.tools.misc import get_test_resource as rc
 from pcs_test.tools.xml import etree_to_str

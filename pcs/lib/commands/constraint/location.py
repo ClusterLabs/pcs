@@ -1,9 +1,6 @@
 from collections.abc import Mapping
 
-from pcs.common import (
-    const,
-    reports,
-)
+from pcs.common import const, reports
 from pcs.lib import validate
 from pcs.lib.cib.constraint import location
 from pcs.lib.cib.tools import (

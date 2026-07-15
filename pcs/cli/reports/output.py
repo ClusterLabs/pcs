@@ -1,10 +1,7 @@
 import sys
 
 from pcs.cli.common.tools import print_to_stderr
-from pcs.common.reports import (
-    ReportItemList,
-    ReportItemSeverity,
-)
+from pcs.common.reports import ReportItemList, ReportItemSeverity
 from pcs.common.reports.utils import add_context_to_message
 
 from .messages import report_item_msg_from_dto

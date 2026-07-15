@@ -2,10 +2,7 @@ import shlex
 from collections import defaultdict
 from collections.abc import Callable, Iterable
 
-from pcs.cli.common.output import (
-    INDENT_STEP,
-    pairs_to_cmd,
-)
+from pcs.cli.common.output import INDENT_STEP, pairs_to_cmd
 from pcs.cli.reports.output import warn
 from pcs.cli.rule import rule_expression_dto_to_lines
 from pcs.common.pacemaker.constraint import (
@@ -14,15 +11,8 @@ from pcs.common.pacemaker.constraint import (
     CibConstraintLocationSetDto,
 )
 from pcs.common.pacemaker.rule import CibRuleExpressionDto
-from pcs.common.pacemaker.tools import (
-    abs_score,
-    is_negative_score,
-)
-from pcs.common.str_tools import (
-    format_optional,
-    indent,
-    pairs_to_text,
-)
+from pcs.common.pacemaker.tools import abs_score, is_negative_score
+from pcs.common.str_tools import format_optional, indent, pairs_to_text
 
 from . import set as _set
 

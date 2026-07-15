@@ -1,7 +1,4 @@
-from pcs import (
-    acl,
-    usage,
-)
+from pcs import acl, usage
 from pcs.cli.common.errors import raise_command_replaced
 from pcs.cli.common.routing import create_router
 

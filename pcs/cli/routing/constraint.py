@@ -1,19 +1,13 @@
 from typing import Any
 
 import pcs.cli.constraint_colocation.command as colocation_command
-from pcs import (
-    constraint,
-    usage,
-)
+from pcs import constraint, usage
 from pcs.cli.common.errors import (
     CmdLineInputError,
     raise_command_removed,
     raise_command_replaced,
 )
-from pcs.cli.common.parse_args import (
-    Argv,
-    InputModifiers,
-)
+from pcs.cli.common.parse_args import Argv, InputModifiers
 from pcs.cli.common.routing import create_router
 from pcs.cli.constraint import command as constraint_command
 from pcs.cli.constraint.location import command as location_command

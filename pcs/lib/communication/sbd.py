@@ -1,10 +1,7 @@
 import json
 
 from pcs.common import reports
-from pcs.common.node_communicator import (
-    Request,
-    RequestData,
-)
+from pcs.common.node_communicator import Request, RequestData
 from pcs.common.reports import ReportItemSeverity
 from pcs.common.reports.item import ReportItem
 from pcs.lib.communication.tools import (

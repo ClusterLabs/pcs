@@ -8,14 +8,8 @@ from xml.dom.minidom import parseString
 import pcs.cli.constraint_order.command as order_command
 from pcs import utils
 from pcs.cli.common import parse_args
-from pcs.cli.common.errors import (
-    CmdLineInputError,
-    raise_command_replaced,
-)
-from pcs.cli.common.output import (
-    INDENT_STEP,
-    lines_to_str,
-)
+from pcs.cli.common.errors import CmdLineInputError, raise_command_replaced
+from pcs.cli.common.output import INDENT_STEP, lines_to_str
 from pcs.cli.constraint.location.command import (
     RESOURCE_TYPE_REGEXP,
     RESOURCE_TYPE_RESOURCE,
@@ -27,16 +21,8 @@ from pcs.cli.constraint.output import (
     print_config,
 )
 from pcs.cli.reports import process_library_reports
-from pcs.cli.reports.output import (
-    deprecation_warning,
-    print_to_stderr,
-    warn,
-)
-from pcs.common import (
-    const,
-    pacemaker,
-    reports,
-)
+from pcs.cli.reports.output import deprecation_warning, print_to_stderr, warn
+from pcs.common import const, pacemaker, reports
 from pcs.common.pacemaker.constraint import (
     CibConstraintColocationSetDto,
     CibConstraintLocationSetDto,
@@ -48,22 +34,11 @@ from pcs.common.pacemaker.constraint import (
 from pcs.common.pacemaker.resource.list import CibResourcesDto
 from pcs.common.pacemaker.types import CibResourceDiscovery
 from pcs.common.reports import ReportItem
-from pcs.common.str_tools import (
-    format_list,
-    indent,
-)
-from pcs.common.types import (
-    StringCollection,
-    StringIterable,
-    StringSequence,
-)
+from pcs.common.str_tools import format_list, indent
+from pcs.common.types import StringCollection, StringIterable, StringSequence
 from pcs.lib.cib.constraint.order import ATTRIB as order_attrib
 from pcs.lib.node import get_existing_nodes_names
-from pcs.lib.pacemaker.values import (
-    SCORE_INFINITY,
-    is_true,
-    sanitize_id,
-)
+from pcs.lib.pacemaker.values import SCORE_INFINITY, is_true, sanitize_id
 
 DEFAULT_ACTION = const.PCMK_ACTION_START
 DEFAULT_ROLE = const.PCMK_ROLE_STARTED

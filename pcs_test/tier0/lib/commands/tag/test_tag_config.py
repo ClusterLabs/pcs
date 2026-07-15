@@ -1,9 +1,6 @@
 from unittest import TestCase
 
-from pcs.common.pacemaker.tag import (
-    CibTagDto,
-    CibTagListDto,
-)
+from pcs.common.pacemaker.tag import CibTagDto, CibTagListDto
 from pcs.lib.commands import tag as cmd_tag
 
 from pcs_test.tier0.lib.commands.tag.tag_common import (

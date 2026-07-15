@@ -1,7 +1,4 @@
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
 from pcs.common.services import errors
 from pcs.common.services.drivers import SystemdDriver

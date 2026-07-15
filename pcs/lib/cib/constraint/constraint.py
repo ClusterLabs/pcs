@@ -1,18 +1,11 @@
 from collections.abc import Callable
 from typing import cast
 
-from lxml.etree import (
-    SubElement,
-    _Element,
-)
+from lxml.etree import SubElement, _Element
 
 from pcs.common import reports
 from pcs.lib.cib.constraint import resource_set
-from pcs.lib.cib.tools import (
-    ElementNotFound,
-    find_unique_id,
-    get_element_by_id,
-)
+from pcs.lib.cib.tools import ElementNotFound, find_unique_id, get_element_by_id
 from pcs.lib.errors import LibraryError
 from pcs.lib.xml_tools import get_root
 

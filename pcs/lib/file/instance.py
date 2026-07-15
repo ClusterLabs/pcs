@@ -1,22 +1,10 @@
 from typing import Any
 
-from pcs.common import (
-    file_type_codes,
-    reports,
-)
-from pcs.common.file import (
-    FileMetadata,
-    RawFileInterface,
-)
-from pcs.lib.file import (
-    metadata,
-    raw_file,
-)
+from pcs.common import file_type_codes, reports
+from pcs.common.file import FileMetadata, RawFileInterface
+from pcs.lib.file import metadata, raw_file
 from pcs.lib.file import toolbox as file_toolbox
-from pcs.lib.interface.config import (
-    FacadeInterface,
-    ParserErrorException,
-)
+from pcs.lib.interface.config import FacadeInterface, ParserErrorException
 
 
 class FileInstance:

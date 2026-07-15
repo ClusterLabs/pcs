@@ -3,10 +3,7 @@ from collections.abc import Mapping
 from functools import partial
 from typing import Final
 
-from pcs.cli.common.errors import (
-    SEE_MAN_CHANGES,
-    CmdLineInputError,
-)
+from pcs.cli.common.errors import SEE_MAN_CHANGES, CmdLineInputError
 from pcs.cli.reports.output import deprecation_warning
 from pcs.common.const import INFINITY
 from pcs.common.str_tools import (
@@ -15,11 +12,7 @@ from pcs.common.str_tools import (
     format_plural,
 )
 from pcs.common.tools import timeout_to_seconds
-from pcs.common.types import (
-    StringCollection,
-    StringIterable,
-    StringSequence,
-)
+from pcs.common.types import StringCollection, StringIterable, StringSequence
 
 # sys.argv always returns a list, we don't need StringSequence in here
 Argv = list[str]

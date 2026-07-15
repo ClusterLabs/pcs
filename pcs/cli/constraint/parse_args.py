@@ -1,9 +1,5 @@
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.common.parse_args import (
-    Argv,
-    KeyValueParser,
-    split_list,
-)
+from pcs.cli.common.parse_args import Argv, KeyValueParser, split_list
 
 
 def prepare_resource_sets(

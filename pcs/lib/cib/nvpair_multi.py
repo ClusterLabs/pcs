@@ -6,10 +6,7 @@ from lxml.etree import _Element
 
 from pcs.common import reports
 from pcs.common.const import INFINITY
-from pcs.common.pacemaker.nvset import (
-    CibNvpairDto,
-    CibNvsetDto,
-)
+from pcs.common.pacemaker.nvset import CibNvpairDto, CibNvsetDto
 from pcs.common.reports import ReportItemList
 from pcs.common.types import StringIterable
 from pcs.lib import validate
@@ -28,10 +25,7 @@ from pcs.lib.cib.tools import (
     Version,
     create_subelement_id,
 )
-from pcs.lib.xml_tools import (
-    export_attributes,
-    remove_one_element,
-)
+from pcs.lib.xml_tools import export_attributes, remove_one_element
 
 NvsetTag = NewType("NvsetTag", str)
 NVSET_INSTANCE = NvsetTag("instance_attributes")

@@ -3,15 +3,9 @@ from textwrap import dedent
 from unittest import TestCase
 
 from pcs.cli import nvset
-from pcs.common.pacemaker.nvset import (
-    CibNvpairDto,
-    CibNvsetDto,
-)
+from pcs.common.pacemaker.nvset import CibNvpairDto, CibNvsetDto
 from pcs.common.pacemaker.rule import CibRuleExpressionDto
-from pcs.common.types import (
-    CibRuleExpressionType,
-    CibRuleInEffectStatus,
-)
+from pcs.common.types import CibRuleExpressionType, CibRuleInEffectStatus
 
 
 def fixture_dto(in_effect):

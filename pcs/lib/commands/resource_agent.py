@@ -6,10 +6,7 @@ from pcs.common.pacemaker.resource.operations import (
     OCF_CHECK_LEVEL_INSTANCE_ATTRIBUTE_NAME,
     ListCibResourceOperationDto,
 )
-from pcs.common.reports import (
-    ReportItemSeverity,
-    ReportProcessor,
-)
+from pcs.common.reports import ReportItemSeverity, ReportProcessor
 from pcs.lib.cib.resource.agent import (
     get_default_operations,
     operation_dto_to_legacy_dict,

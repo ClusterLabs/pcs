@@ -1,9 +1,5 @@
 import pcs.cli.cluster.command as cluster_command
-from pcs import (
-    cluster,
-    status,
-    usage,
-)
+from pcs import cluster, status, usage
 from pcs.cli.common.errors import raise_command_replaced
 from pcs.cli.common.routing import create_router
 

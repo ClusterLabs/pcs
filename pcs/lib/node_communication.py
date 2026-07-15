@@ -8,10 +8,7 @@ from pcs.common.node_communicator import (
     NodeTargetFactory,
     RequestTarget,
 )
-from pcs.common.reports import (
-    ReportItemSeverity,
-    ReportProcessor,
-)
+from pcs.common.reports import ReportItemSeverity, ReportProcessor
 from pcs.common.reports.item import ReportItem, ReportItemList
 from pcs.common.types import StringIterable
 from pcs.lib.errors import LibraryError

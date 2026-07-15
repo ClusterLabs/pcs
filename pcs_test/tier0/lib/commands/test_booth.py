@@ -5,10 +5,7 @@ from unittest import TestCase, mock
 
 from pcs import settings
 from pcs.common import file_type_codes, reports
-from pcs.common.booth_dto import (
-    BoothConfigAndAuthfileDto,
-    BoothConfigFileDto,
-)
+from pcs.common.booth_dto import BoothConfigAndAuthfileDto, BoothConfigFileDto
 from pcs.common.file import RawFileError
 from pcs.lib.booth import constants
 from pcs.lib.commands import booth as commands

@@ -3,10 +3,7 @@ Data structures in this file correspond to resources configured in
 pcs_test/resources/cib-all.xml
 """
 
-from pcs.common.pacemaker.nvset import (
-    CibNvpairDto,
-    CibNvsetDto,
-)
+from pcs.common.pacemaker.nvset import CibNvpairDto, CibNvsetDto
 from pcs.common.pacemaker.resource.bundle import (
     CONTAINER_TYPE_DOCKER,
     CibResourceBundleContainerRuntimeOptionsDto,

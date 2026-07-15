@@ -12,10 +12,7 @@ from pcs.cli.reports.output import deprecation_warning
 from pcs.cli.reports.preprocessor import (
     get_duplicate_constraint_exists_preprocessor,
 )
-from pcs.common import (
-    const,
-    reports,
-)
+from pcs.common import const, reports
 from pcs.common.pacemaker.constraint import get_all_location_constraints_ids
 from pcs.common.str_tools import format_list
 from pcs.common.types import StringIterable

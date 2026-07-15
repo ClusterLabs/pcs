@@ -4,10 +4,7 @@ import re
 from pcs.common.types import StringIterable
 
 from .. import errors
-from ..interfaces import (
-    ExecutorInterface,
-    ServiceManagerInterface,
-)
+from ..interfaces import ExecutorInterface, ServiceManagerInterface
 
 
 class SystemdDriver(ServiceManagerInterface):

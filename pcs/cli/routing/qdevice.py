@@ -1,7 +1,4 @@
-from pcs import (
-    qdevice,
-    usage,
-)
+from pcs import qdevice, usage
 from pcs.cli.common.routing import create_router
 
 qdevice_cmd = create_router(

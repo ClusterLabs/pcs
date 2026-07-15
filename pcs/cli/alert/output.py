@@ -1,10 +1,7 @@
 import shlex
 from collections.abc import Sequence
 
-from pcs.cli.common.output import (
-    INDENT_STEP,
-    pairs_to_cmd,
-)
+from pcs.cli.common.output import INDENT_STEP, pairs_to_cmd
 from pcs.cli.nvset import nvset_dto_to_lines
 from pcs.common.pacemaker.alert import (
     CibAlertDto,
@@ -13,11 +10,7 @@ from pcs.common.pacemaker.alert import (
     CibAlertSelectDto,
 )
 from pcs.common.pacemaker.nvset import CibNvsetDto
-from pcs.common.str_tools import (
-    format_list,
-    format_optional,
-    indent,
-)
+from pcs.common.str_tools import format_list, format_optional, indent
 
 
 def _description_to_lines(desc: str | None) -> list[str]:

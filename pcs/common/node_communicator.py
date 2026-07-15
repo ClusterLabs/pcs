@@ -2,10 +2,7 @@ import base64
 import io
 import re
 from collections.abc import Generator, Iterable, Mapping, Sequence
-from dataclasses import (
-    dataclass,
-    field,
-)
+from dataclasses import dataclass, field
 from urllib.parse import urlencode
 
 # We should ignore SIGPIPE when using pycurl.NOSIGNAL - see the libcurl tutorial
@@ -19,10 +16,7 @@ except ImportError:
 
 from pcs import settings
 from pcs.common import pcs_pycurl as pycurl
-from pcs.common.host import (
-    Destination,
-    PcsKnownHost,
-)
+from pcs.common.host import Destination, PcsKnownHost
 from pcs.common.types import StringIterable
 
 

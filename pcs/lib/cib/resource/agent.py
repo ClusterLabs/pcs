@@ -3,22 +3,13 @@ from typing import Any
 
 from pcs.common.const import PcmkRoleType
 from pcs.common.interface.dto import to_dict
-from pcs.common.pacemaker.nvset import (
-    CibNvpairDto,
-    CibNvsetDto,
-)
+from pcs.common.pacemaker.nvset import CibNvpairDto, CibNvsetDto
 from pcs.common.pacemaker.resource.operations import (
     OCF_CHECK_LEVEL_INSTANCE_ATTRIBUTE_NAME,
     CibResourceOperationDto,
 )
-from pcs.lib.cib.resource.types import (
-    ResourceOperationIn,
-    ResourceOperationOut,
-)
-from pcs.lib.resource_agent import (
-    ResourceAgentAction,
-    ResourceAgentMetadata,
-)
+from pcs.lib.cib.resource.types import ResourceOperationIn, ResourceOperationOut
+from pcs.lib.resource_agent import ResourceAgentAction, ResourceAgentMetadata
 
 # Operation monitor is always required, even if creating default actions was
 # not requested or a resource/stonith agent does not specify it. See

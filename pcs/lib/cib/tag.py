@@ -1,7 +1,4 @@
-from collections import (
-    Counter,
-    OrderedDict,
-)
+from collections import Counter, OrderedDict
 from collections.abc import Iterable
 from typing import cast
 
@@ -10,15 +7,8 @@ from lxml.etree import _Element
 
 from pcs.common import reports
 from pcs.common.pacemaker.tag import CibTagDto
-from pcs.common.reports import (
-    ReportItem,
-    ReportItemList,
-)
-from pcs.common.types import (
-    StringCollection,
-    StringIterable,
-    StringSequence,
-)
+from pcs.common.reports import ReportItem, ReportItemList
+from pcs.common.types import StringCollection, StringIterable, StringSequence
 from pcs.lib.cib.resource.common import find_resources
 from pcs.lib.cib.tools import (
     ElementSearcher,
@@ -26,16 +16,9 @@ from pcs.lib.cib.tools import (
     get_configuration_elements_by_id,
 )
 from pcs.lib.pacemaker.values import validate_id
-from pcs.lib.xml_tools import (
-    find_parent,
-    move_elements,
-    remove_one_element,
-)
+from pcs.lib.xml_tools import find_parent, move_elements, remove_one_element
 
-from .const import (
-    TAG_OBJREF,
-    TAG_TAG,
-)
+from .const import TAG_OBJREF, TAG_TAG
 
 
 def is_tag(element: _Element) -> bool:

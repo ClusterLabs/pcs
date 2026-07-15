@@ -2,34 +2,18 @@ import contextlib
 import re
 from typing import cast
 
-from lxml.etree import (
-    _Element,
-    _ElementTree,
-)
+from lxml.etree import _Element, _ElementTree
 
-from pcs.common import (
-    const,
-    reports,
-)
+from pcs.common import const, reports
 from pcs.common.pacemaker import role
 from pcs.common.reports import codes as report_codes
-from pcs.common.reports.item import (
-    ReportItem,
-    ReportItemList,
-)
+from pcs.common.reports.item import ReportItem, ReportItemList
 from pcs.common.tools import Version
 from pcs.common.types import StringCollection, StringIterable
 from pcs.lib.cib import sections
 from pcs.lib.errors import LibraryError
-from pcs.lib.pacemaker.values import (
-    sanitize_id,
-    validate_id,
-)
-from pcs.lib.xml_tools import (
-    get_root,
-    get_sub_element,
-    remove_one_element,
-)
+from pcs.lib.pacemaker.values import sanitize_id, validate_id
+from pcs.lib.xml_tools import get_root, get_sub_element, remove_one_element
 
 _VERSION_FORMAT = r"(?P<major>\d+)\.(?P<minor>\d+)(\.(?P<rev>\d+))?$"
 _ELEMENTS_WITH_IDREF_WITHOUT_ID_XPATH = """

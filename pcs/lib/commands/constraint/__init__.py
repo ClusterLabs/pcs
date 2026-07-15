@@ -1,7 +1,1 @@
-from . import (
-    colocation,
-    common,
-    location,
-    order,
-    ticket,
-)
+from . import colocation, common, location, order, ticket

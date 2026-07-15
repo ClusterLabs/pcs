@@ -14,18 +14,9 @@ from pcs.common.async_tasks.dto import (
     TaskIdentDto,
     TaskResultDto,
 )
-from pcs.common.async_tasks.types import (
-    TaskFinishType,
-    TaskState,
-)
-from pcs.common.interface.dto import (
-    from_dict,
-    to_dict,
-)
-from pcs.common.node_communicator import (
-    HostNotFound,
-    NodeTargetFactory,
-)
+from pcs.common.async_tasks.types import TaskFinishType, TaskState
+from pcs.common.interface.dto import from_dict, to_dict
+from pcs.common.node_communicator import HostNotFound, NodeTargetFactory
 from pcs.common.reports import ReportItemDto
 from pcs.utils import read_known_hosts_file
 

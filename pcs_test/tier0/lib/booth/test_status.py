@@ -1,16 +1,10 @@
 import os
 from textwrap import dedent
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
 import pcs.lib.booth.status as lib
 from pcs import settings
-from pcs.common import (
-    file_type_codes,
-    reports,
-)
+from pcs.common import file_type_codes, reports
 from pcs.common.reports import ReportItemSeverity as Severities
 from pcs.common.reports import codes as report_codes
 from pcs.lib.booth import constants

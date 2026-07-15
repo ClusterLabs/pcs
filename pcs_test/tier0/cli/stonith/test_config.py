@@ -9,9 +9,7 @@ from pcs.common.pacemaker.cibsecret import (
     CibResourceSecretDto,
     CibResourceSecretListDto,
 )
-from pcs.common.pacemaker.fencing_topology import (
-    CibFencingTopologyDto,
-)
+from pcs.common.pacemaker.fencing_topology import CibFencingTopologyDto
 from pcs.common.pacemaker.resource.list import CibResourcesDto
 
 from pcs_test.tools.misc import dict_to_modifiers

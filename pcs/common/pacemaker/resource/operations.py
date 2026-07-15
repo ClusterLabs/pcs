@@ -1,10 +1,7 @@
 from collections.abc import Sequence
 from dataclasses import dataclass
 
-from pcs.common.const import (
-    PcmkOnFailAction,
-    PcmkRoleType,
-)
+from pcs.common.const import PcmkOnFailAction, PcmkRoleType
 from pcs.common.interface.dto import DataTransferObject
 from pcs.common.pacemaker.nvset import CibNvsetDto
 

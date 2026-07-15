@@ -12,10 +12,7 @@ from pcs.lib.pacemaker.api_result import (
 from pcs.lib.xml_tools import etree_to_str
 
 from . import const
-from .error import (
-    UnableToGetAgentMetadata,
-    UnsupportedOcfVersion,
-)
+from .error import UnableToGetAgentMetadata, UnsupportedOcfVersion
 from .types import (
     CrmAttrAgent,
     CrmResourceAgent,

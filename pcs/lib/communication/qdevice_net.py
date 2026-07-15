@@ -2,10 +2,7 @@ import base64
 import binascii
 
 from pcs.common import reports
-from pcs.common.node_communicator import (
-    Request,
-    RequestData,
-)
+from pcs.common.node_communicator import Request, RequestData
 from pcs.common.reports.item import ReportItem
 from pcs.lib.communication.qdevice import QdeviceBase
 from pcs.lib.communication.tools import (

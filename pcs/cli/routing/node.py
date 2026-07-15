@@ -1,10 +1,7 @@
 from functools import partial
 from typing import Any
 
-from pcs import (
-    node,
-    usage,
-)
+from pcs import node, usage
 from pcs.cli.common.parse_args import Argv, InputModifiers
 from pcs.cli.common.routing import create_router
 from pcs.cli.node import command as node_command

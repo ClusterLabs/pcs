@@ -1,8 +1,5 @@
 from textwrap import dedent
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
 from pcs import stonith
 from pcs.cli.common.errors import CmdLineInputError

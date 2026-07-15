@@ -1,16 +1,9 @@
 from collections.abc import Mapping
-from dataclasses import (
-    dataclass,
-    field,
-)
+from dataclasses import dataclass, field
 from typing import Any
 from unittest import TestCase
 
-from pcs.common.reports import (
-    dto,
-    item,
-    types,
-)
+from pcs.common.reports import dto, item, types
 
 REPORT_CODE = types.MessageCode("REPORT_CODE")
 OUTER_REPORT_CODE = types.MessageCode("OUTER_REPORT_CODE")

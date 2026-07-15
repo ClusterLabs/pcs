@@ -1,9 +1,4 @@
-from . import (
-    colocation,
-    location,
-    order,
-    ticket,
-)
+from . import colocation, location, order, ticket
 from .all import (
     CibConstraintLocationAnyDto,
     constraints_to_cmd,

@@ -8,10 +8,7 @@ from pcs_test.tier1.cib_resource.common import (
 from pcs_test.tools.bin_mock import get_mock_settings
 from pcs_test.tools.cib import get_assert_pcs_effect_mixin
 from pcs_test.tools.misc import get_test_resource as rc
-from pcs_test.tools.misc import (
-    get_tmp_file,
-    write_data_to_tmpfile,
-)
+from pcs_test.tools.misc import get_tmp_file, write_data_to_tmpfile
 from pcs_test.tools.pcs_runner import PcsRunner
 from pcs_test.tools.xml import XmlManipulation
 

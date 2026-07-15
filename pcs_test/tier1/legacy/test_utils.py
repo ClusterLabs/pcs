@@ -2,10 +2,7 @@ import sys
 import xml.dom.minidom
 from io import StringIO
 from time import sleep
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
 from pcs import utils
 from pcs.common import const

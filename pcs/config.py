@@ -15,14 +15,7 @@ from io import BytesIO
 from typing import cast
 from xml.dom.minidom import parse
 
-from pcs import (
-    cluster,
-    quorum,
-    settings,
-    status,
-    usage,
-    utils,
-)
+from pcs import cluster, quorum, settings, status, usage, utils
 from pcs.cli.alert.output import config_dto_to_lines as alerts_to_lines
 from pcs.cli.cluster_property.output import (
     PropertyConfigurationFacade,
@@ -30,17 +23,11 @@ from pcs.cli.cluster_property.output import (
 )
 from pcs.cli.common import middleware
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.common.output import (
-    INDENT_STEP,
-    smart_wrap_text,
-)
+from pcs.cli.common.output import INDENT_STEP, smart_wrap_text
 from pcs.cli.constraint.output import constraints_to_text
 from pcs.cli.nvset import nvset_dto_list_to_lines
 from pcs.cli.reports import process_library_reports
-from pcs.cli.reports.output import (
-    print_to_stderr,
-    warn,
-)
+from pcs.cli.reports.output import print_to_stderr, warn
 from pcs.cli.resource.output import (
     ResourcesConfigurationFacade,
     resources_to_text,

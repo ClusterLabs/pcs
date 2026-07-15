@@ -1,7 +1,4 @@
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
 import pcs.lib.commands.acl as cmd_acl
 from pcs.common import reports

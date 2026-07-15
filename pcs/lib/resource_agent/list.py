@@ -3,14 +3,8 @@ from pcs.common import reports
 from pcs.common.str_tools import split_multiline
 from pcs.lib.external import CommandRunner
 
-from .error import (
-    AgentNameGuessFoundMoreThanOne,
-    AgentNameGuessFoundNone,
-)
-from .types import (
-    ResourceAgentName,
-    StandardProviderTuple,
-)
+from .error import AgentNameGuessFoundMoreThanOne, AgentNameGuessFoundNone
+from .types import ResourceAgentName, StandardProviderTuple
 
 _IGNORED_AGENTS = frozenset(
     [

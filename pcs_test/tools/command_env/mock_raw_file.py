@@ -1,9 +1,5 @@
 from pcs import settings
-from pcs.common.file import (
-    FileAlreadyExists,
-    RawFileError,
-    RawFileInterface,
-)
+from pcs.common.file import FileAlreadyExists, RawFileError, RawFileInterface
 
 CALL_TYPE_RAW_FILE_BACKUP = "CALL_TYPE_RAW_FILE_BACKUP"
 CALL_TYPE_RAW_FILE_EXISTS = "CALL_TYPE_RAW_FILE_EXISTS"

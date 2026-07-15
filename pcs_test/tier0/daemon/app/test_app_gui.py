@@ -17,10 +17,7 @@ from pcs.daemon.app.auth_provider import (
 from pcs.lib.auth.provider import AuthProvider
 from pcs.lib.auth.types import AuthUser
 
-from pcs_test.tier0.daemon.app import (
-    fixtures_app,
-    fixtures_app_webui,
-)
+from pcs_test.tier0.daemon.app import fixtures_app, fixtures_app_webui
 from pcs_test.tools.misc import skip_unless_webui_installed
 
 # Don't write errors to test output.

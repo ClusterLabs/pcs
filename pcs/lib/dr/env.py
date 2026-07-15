@@ -3,10 +3,7 @@ from pcs.lib.file.instance import FileInstance
 from pcs.lib.file.toolbox import FileToolbox
 from pcs.lib.file.toolbox import for_file_type as get_file_toolbox
 
-from .config.facade import (
-    DrRole,
-    Facade,
-)
+from .config.facade import DrRole, Facade
 
 
 class DrEnv:

@@ -2,11 +2,7 @@ import json
 from typing import Any
 
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.common.output import (
-    format_cmd_list,
-    lines_to_str,
-    smart_wrap_text,
-)
+from pcs.cli.common.output import format_cmd_list, lines_to_str, smart_wrap_text
 from pcs.cli.common.parse_args import (
     FUTURE_OPTION,
     OUTPUT_FORMAT_OPTION,

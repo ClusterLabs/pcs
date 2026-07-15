@@ -1,15 +1,9 @@
 from typing import cast
 
-from lxml.etree import (
-    SubElement,
-    _Element,
-)
+from lxml.etree import SubElement, _Element
 
 from pcs.common.pacemaker.resource.group import CibResourceGroupDto
-from pcs.lib.cib import (
-    nvpair_multi,
-    rule,
-)
+from pcs.lib.cib import nvpair_multi, rule
 from pcs.lib.cib.const import TAG_RESOURCE_GROUP as TAG
 
 

@@ -1,22 +1,14 @@
 from collections.abc import Iterable
 from shlex import quote
 
-from pcs.cli.common.output import (
-    INDENT_STEP,
-    bool_to_cli_value,
-    pairs_to_cmd,
-)
+from pcs.cli.common.output import INDENT_STEP, bool_to_cli_value, pairs_to_cmd
 from pcs.cli.reports.output import warn
 from pcs.common.pacemaker.constraint import (
     CibConstraintOrderAttributesDto,
     CibConstraintOrderDto,
     CibConstraintOrderSetDto,
 )
-from pcs.common.str_tools import (
-    format_optional,
-    indent,
-    pairs_to_text,
-)
+from pcs.common.str_tools import format_optional, indent, pairs_to_text
 
 from . import set as _set
 

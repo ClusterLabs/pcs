@@ -16,10 +16,7 @@ from pcs_test.tools.misc import (
     write_data_to_tmpfile,
 )
 from pcs_test.tools.pcs_runner import PcsRunner
-from pcs_test.tools.xml import (
-    XmlManipulation,
-    etree_to_str,
-)
+from pcs_test.tools.xml import XmlManipulation, etree_to_str
 
 RULE_EVAL = RuleInEffectEvalMock(
     {

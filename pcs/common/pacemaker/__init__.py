@@ -1,6 +1,1 @@
-from . import (
-    nvset,
-    resource,
-    role,
-    rule,
-)
+from . import nvset, resource, role, rule

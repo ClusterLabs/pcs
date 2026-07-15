@@ -1,9 +1,6 @@
 import os.path
 from ssl import OP_NO_SSLv2
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
 from pcs import settings
 from pcs.daemon import env

@@ -1,8 +1,5 @@
 from pcs.common.pacemaker.node import CibNodeDto, CibNodeListDto
-from pcs.common.pacemaker.nvset import (
-    CibNvpairDto,
-    CibNvsetDto,
-)
+from pcs.common.pacemaker.nvset import CibNvpairDto, CibNvsetDto
 from pcs.common.pacemaker.rule import CibRuleExpressionDto
 from pcs.common.types import CibRuleExpressionType, CibRuleInEffectStatus
 from pcs.lib.cib.rule.in_effect import RuleInEffectEval

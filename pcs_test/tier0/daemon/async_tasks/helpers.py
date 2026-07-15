@@ -4,15 +4,9 @@ from collections import Counter
 from dataclasses import dataclass
 from datetime import datetime
 from queue import Queue
-from unittest import (
-    IsolatedAsyncioTestCase,
-    mock,
-)
+from unittest import IsolatedAsyncioTestCase, mock
 
-from pcs.common.async_tasks.dto import (
-    CommandDto,
-    CommandOptionsDto,
-)
+from pcs.common.async_tasks.dto import CommandDto, CommandOptionsDto
 from pcs.common.async_tasks.types import TaskState
 from pcs.common.reports.item import ReportItemMessage
 from pcs.common.reports.types import MessageCode

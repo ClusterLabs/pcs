@@ -1,23 +1,13 @@
 import json
 import logging
-from base64 import (
-    b64decode,
-    b64encode,
-    binascii,
-)
+from base64 import b64decode, b64encode, binascii
 from collections import namedtuple
 
 import pycurl
 from tornado.curl_httpclient import CurlError
 from tornado.gen import convert_yielded
-from tornado.httpclient import (
-    AsyncHTTPClient,
-    HTTPClientError,
-)
-from tornado.httputil import (
-    HTTPHeaders,
-    HTTPServerRequest,
-)
+from tornado.httpclient import AsyncHTTPClient, HTTPClientError
+from tornado.httputil import HTTPHeaders, HTTPServerRequest
 from tornado.web import HTTPError
 
 from pcs.daemon import log

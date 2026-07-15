@@ -1,12 +1,6 @@
 from pcs.common.pacemaker.rule import CibRuleExpressionDto
-from pcs.common.str_tools import (
-    format_name_value_list,
-    indent,
-)
-from pcs.common.types import (
-    CibRuleExpressionType,
-    CibRuleInEffectStatus,
-)
+from pcs.common.str_tools import format_name_value_list, indent
+from pcs.common.types import CibRuleExpressionType, CibRuleInEffectStatus
 
 _in_effect_label_map = {
     CibRuleInEffectStatus.NOT_YET_IN_EFFECT: "not yet in effect",

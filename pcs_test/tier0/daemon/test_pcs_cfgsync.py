@@ -18,12 +18,8 @@ from pcs.lib.host.config.types import KnownHosts
 from pcs.lib.permissions.config.exporter import (
     ExporterV2 as PcsSettingsExporter,
 )
-from pcs.lib.permissions.config.types import (
-    ClusterPermissions,
-)
-from pcs.lib.permissions.config.types import (
-    ConfigV2 as PcsSettingsConf,
-)
+from pcs.lib.permissions.config.types import ClusterPermissions
+from pcs.lib.permissions.config.types import ConfigV2 as PcsSettingsConf
 
 from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.misc import read_test_resource

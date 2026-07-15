@@ -5,10 +5,7 @@ from typing import cast
 from lxml.etree import _Element
 
 from pcs.common import reports
-from pcs.common.reports import (
-    ReportItem,
-    ReportItemList,
-)
+from pcs.common.reports import ReportItem, ReportItemList
 from pcs.common.tools import timeout_to_seconds
 from pcs.common.types import StringIterable
 from pcs.lib.cib.const import TAG_RESOURCE_PRIMITIVE
@@ -24,10 +21,7 @@ from pcs.lib.pacemaker.live import get_resource_digests
 from pcs.lib.pacemaker.state import get_resource_state
 from pcs.lib.xml_tools import get_root
 
-from . import (
-    common,
-    operations,
-)
+from . import common, operations
 
 
 def is_stonith(resource_el: _Element) -> bool:

@@ -14,16 +14,8 @@ from pcs.daemon.async_tasks.types import Command
 from pcs.daemon.log import pcsd as pcsd_logger
 from pcs.lib.auth.types import AuthUser
 
-from .task import (
-    Task,
-    TaskConfig,
-    TaskState,
-    UnknownMessageError,
-)
-from .worker.executor import (
-    task_executor,
-    worker_init,
-)
+from .task import Task, TaskConfig, TaskState, UnknownMessageError
+from .worker.executor import task_executor, worker_init
 from .worker.types import Message
 
 

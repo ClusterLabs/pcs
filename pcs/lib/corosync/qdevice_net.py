@@ -6,10 +6,7 @@ from collections.abc import Callable, Sequence
 
 from pcs import settings
 from pcs.common import reports
-from pcs.common.node_communicator import (
-    NodeCommunicatorFactory,
-    RequestTarget,
-)
+from pcs.common.node_communicator import NodeCommunicatorFactory, RequestTarget
 from pcs.common.str_tools import join_multilines
 from pcs.common.tools import format_os_error
 from pcs.common.types import StringSequence

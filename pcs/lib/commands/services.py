@@ -1,10 +1,7 @@
 from pcs import settings
 from pcs.common import file_type_codes, reports
 from pcs.common.services.errors import ManageServiceError
-from pcs.common.services_dto import (
-    ServicesInfoResultDto,
-    ServiceStatusDto,
-)
+from pcs.common.services_dto import ServicesInfoResultDto, ServiceStatusDto
 from pcs.common.types import StringIterable
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError

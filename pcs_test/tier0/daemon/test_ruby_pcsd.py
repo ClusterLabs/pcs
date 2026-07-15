@@ -1,20 +1,11 @@
 import json
 import logging
 from base64 import b64encode
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 from urllib.parse import urlencode
 
-from tornado.httputil import (
-    HTTPHeaders,
-    HTTPServerRequest,
-)
-from tornado.testing import (
-    AsyncTestCase,
-    gen_test,
-)
+from tornado.httputil import HTTPHeaders, HTTPServerRequest
+from tornado.testing import AsyncTestCase, gen_test
 from tornado.web import HTTPError
 
 from pcs.daemon import ruby_pcsd

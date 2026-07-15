@@ -1,7 +1,4 @@
-from pcs.common.str_tools import (
-    format_list_base,
-    quote_items,
-)
+from pcs.common.str_tools import format_list_base, quote_items
 from pcs.common.types import StringSequence
 
 ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE = (

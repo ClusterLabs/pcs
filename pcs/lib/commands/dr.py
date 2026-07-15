@@ -1,10 +1,7 @@
 from collections.abc import Iterable, Mapping
 from typing import Any, cast
 
-from pcs.common import (
-    file_type_codes,
-    reports,
-)
+from pcs.common import file_type_codes, reports
 from pcs.common.dr import (
     DrConfigDto,
     DrConfigNodeDto,

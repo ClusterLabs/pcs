@@ -3,10 +3,7 @@ from collections.abc import Mapping
 from lxml import etree
 from lxml.etree import _Element
 
-from pcs.common import (
-    const,
-    reports,
-)
+from pcs.common import const, reports
 from pcs.common.pacemaker.constraint import (
     CibConstraintLocationAttributesDto,
     CibConstraintLocationDto,
@@ -20,11 +17,7 @@ from pcs.lib import validate
 from pcs.lib.cib import rule
 from pcs.lib.cib.const import TAG_CONSTRAINT_LOCATION as TAG
 from pcs.lib.cib.const import TAG_RULE
-from pcs.lib.cib.tools import (
-    IdProvider,
-    Version,
-    role_constructor,
-)
+from pcs.lib.cib.tools import IdProvider, Version, role_constructor
 from pcs.lib.pacemaker.values import sanitize_id
 from pcs.lib.tools import get_optional_value
 

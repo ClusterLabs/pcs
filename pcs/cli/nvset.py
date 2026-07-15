@@ -1,10 +1,7 @@
 from collections.abc import Iterable, Mapping
 from dataclasses import replace
 
-from pcs.cli.rule import (
-    get_in_effect_label,
-    rule_expression_dto_to_lines,
-)
+from pcs.cli.rule import get_in_effect_label, rule_expression_dto_to_lines
 from pcs.common.pacemaker.nvset import CibNvpairDto, CibNvsetDto
 from pcs.common.str_tools import (
     format_name_optional_value_or_id_list,

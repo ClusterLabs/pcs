@@ -1,10 +1,7 @@
 from collections.abc import Sequence
 from dataclasses import dataclass
 
-from pcs.common.const import (
-    PcmkRoleType,
-    PcmkStatusRoleType,
-)
+from pcs.common.const import PcmkRoleType, PcmkStatusRoleType
 from pcs.common.interface.dto import DataTransferObject
 
 

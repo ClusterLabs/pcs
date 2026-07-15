@@ -1,15 +1,9 @@
 from datetime import timedelta
-from unittest import (
-    IsolatedAsyncioTestCase,
-    mock,
-)
+from unittest import IsolatedAsyncioTestCase, mock
 
 import pcs.daemon.async_tasks.task as tasks
 from pcs.common.async_tasks import types
-from pcs.common.async_tasks.dto import (
-    CommandDto,
-    CommandOptionsDto,
-)
+from pcs.common.async_tasks.dto import CommandDto, CommandOptionsDto
 from pcs.common.reports import ReportItemDto
 from pcs.daemon.async_tasks.types import Command
 from pcs.daemon.async_tasks.worker.types import (

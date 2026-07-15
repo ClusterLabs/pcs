@@ -1,21 +1,13 @@
 from collections.abc import Callable, Iterable
 
 from pcs.cli.common.tools import print_to_stderr
-from pcs.common.reports import (
-    ReportItem,
-    ReportItemSeverity,
-    ReportProcessor,
-)
+from pcs.common.reports import ReportItem, ReportItemSeverity, ReportProcessor
 from pcs.common.reports.dto import ReportItemDto
 from pcs.common.reports.types import SeverityLevel
 from pcs.common.reports.utils import add_context_to_message
 
 from .messages import report_item_msg_from_dto
-from .output import (
-    deprecation_warning,
-    error,
-    warn,
-)
+from .output import deprecation_warning, error, warn
 
 ReportItemPreprocessor = Callable[[ReportItem], ReportItem | None]
 

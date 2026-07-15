@@ -3,10 +3,7 @@ import dacite
 from pcs.common import file_type_codes as code
 from pcs.common import reports
 from pcs.lib.file.json import JsonParser
-from pcs.lib.interface.config import (
-    ParserErrorException,
-    ParserInterface,
-)
+from pcs.lib.interface.config import ParserErrorException, ParserInterface
 
 from .types import TokenEntry
 

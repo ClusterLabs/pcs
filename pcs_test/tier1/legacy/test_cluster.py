@@ -14,10 +14,7 @@ from pcs_test.tools.misc import (
     write_file_to_tmpfile,
 )
 from pcs_test.tools.misc import get_test_resource as rc
-from pcs_test.tools.pcs_runner import (
-    PcsRunner,
-    pcs,
-)
+from pcs_test.tools.pcs_runner import PcsRunner, pcs
 from pcs_test.tools.xml import str_to_etree
 
 

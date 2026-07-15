@@ -7,10 +7,7 @@ from pcs.common.reports import ReportProcessor
 from pcs.common.reports.item import ReportItem
 from pcs.common.types import StringCollection
 from pcs.lib.cib import resource
-from pcs.lib.cib.nvpair import (
-    INSTANCE_ATTRIBUTES_TAG,
-    get_value,
-)
+from pcs.lib.cib.nvpair import INSTANCE_ATTRIBUTES_TAG, get_value
 from pcs.lib.cib.tools import IdProvider
 from pcs.lib.commands.resource import (
     _are_meta_disabled,
@@ -18,18 +15,9 @@ from pcs.lib.commands.resource import (
     resource_environment,
 )
 from pcs.lib.communication.corosync import GetCorosyncOnlineTargets
-from pcs.lib.communication.scsi import (
-    Unfence,
-    UnfenceMpath,
-)
-from pcs.lib.communication.tools import (
-    AllSameDataMixin,
-    run_and_raise,
-)
-from pcs.lib.env import (
-    LibraryEnvironment,
-    WaitType,
-)
+from pcs.lib.communication.scsi import Unfence, UnfenceMpath
+from pcs.lib.communication.tools import AllSameDataMixin, run_and_raise
+from pcs.lib.env import LibraryEnvironment, WaitType
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
 from pcs.lib.node import get_existing_nodes_names

@@ -1,10 +1,7 @@
 import shutil
 
 from tornado.httpserver import HTTPServer
-from tornado.netutil import (
-    bind_sockets,
-    bind_unix_socket,
-)
+from tornado.netutil import bind_sockets, bind_unix_socket
 
 from pcs.daemon import log
 from pcs.daemon.ssl import PcsdSSL

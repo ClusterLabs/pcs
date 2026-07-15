@@ -11,11 +11,7 @@ from pcs.common.status_dto import (
     GroupStatusDto,
     PrimitiveStatusDto,
 )
-from pcs.common.str_tools import (
-    format_list,
-    format_optional,
-    format_plural,
-)
+from pcs.common.str_tools import format_list, format_optional, format_plural
 
 RESOURCE_NOT_RUNNING = "Resource '{resource_id}' is not running on any nodes"
 

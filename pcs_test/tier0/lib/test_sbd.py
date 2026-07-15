@@ -1,7 +1,4 @@
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
 import pcs.lib.sbd as lib_sbd
 from pcs import settings

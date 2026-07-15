@@ -22,10 +22,7 @@ from pcs.lib.interface.config import (
 from pcs.lib.pcs_cfgsync.config.facade import Facade as CfgsyncCtlFacade
 from pcs.lib.permissions import config as pcs_settings_conf
 
-from .json import (
-    JsonExporter,
-    JsonParser,
-)
+from .json import JsonExporter, JsonParser
 
 
 @dataclass(frozen=True)

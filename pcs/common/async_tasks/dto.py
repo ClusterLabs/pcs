@@ -4,11 +4,7 @@ from typing import Any
 from pcs.common.interface.dto import DataTransferObject
 from pcs.common.reports.dto import ReportItemDto
 
-from .types import (
-    TaskFinishType,
-    TaskKillReason,
-    TaskState,
-)
+from .types import TaskFinishType, TaskKillReason, TaskState
 
 
 @dataclass(frozen=True)

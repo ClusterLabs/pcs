@@ -1,9 +1,6 @@
 from typing import Any
 
-from pcs import (
-    stonith,
-    utils,
-)
+from pcs import stonith, utils
 from pcs.cli.cluster_property.output import PropertyConfigurationFacade
 from pcs.cli.common import parse_args
 from pcs.cli.common.errors import CmdLineInputError
@@ -15,10 +12,7 @@ from pcs.cli.common.parse_args import (
 )
 from pcs.cli.common.tools import print_to_stderr
 from pcs.cli.reports import process_library_reports
-from pcs.common.str_tools import (
-    format_list,
-    indent,
-)
+from pcs.common.str_tools import format_list, indent
 from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.pacemaker.values import is_false
 

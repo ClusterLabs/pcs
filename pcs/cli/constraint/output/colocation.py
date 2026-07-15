@@ -1,10 +1,7 @@
 from collections.abc import Iterable
 from shlex import quote
 
-from pcs.cli.common.output import (
-    INDENT_STEP,
-    pairs_to_cmd,
-)
+from pcs.cli.common.output import INDENT_STEP, pairs_to_cmd
 from pcs.cli.reports.output import warn
 from pcs.cli.rule import rule_expression_dto_to_lines
 from pcs.common.pacemaker.constraint import (
@@ -12,11 +9,7 @@ from pcs.common.pacemaker.constraint import (
     CibConstraintColocationDto,
     CibConstraintColocationSetDto,
 )
-from pcs.common.str_tools import (
-    format_name_value_list,
-    format_optional,
-    indent,
-)
+from pcs.common.str_tools import format_name_value_list, format_optional, indent
 from pcs.common.types import StringCollection
 
 from . import set as _set

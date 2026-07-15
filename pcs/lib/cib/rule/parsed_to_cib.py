@@ -2,10 +2,7 @@ from lxml import etree
 from lxml.etree import _Element
 
 from pcs.common.tools import Version
-from pcs.lib.cib.tools import (
-    IdProvider,
-    create_subelement_id,
-)
+from pcs.lib.cib.tools import IdProvider, create_subelement_id
 
 from .expression_part import (
     DATE_OP_GT,

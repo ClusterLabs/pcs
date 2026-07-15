@@ -12,10 +12,7 @@ from . import const
 from .config.facade import Facade
 from .config.parser import ParserError
 from .pam import authenticate_user
-from .tools import (
-    UserGroupsError,
-    get_user_groups,
-)
+from .tools import UserGroupsError, get_user_groups
 from .types import AuthUser
 
 

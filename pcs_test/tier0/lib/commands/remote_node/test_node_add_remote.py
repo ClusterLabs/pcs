@@ -1,14 +1,8 @@
 from functools import partial
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
 from pcs import settings
-from pcs.common import (
-    file_type_codes,
-    reports,
-)
+from pcs.common import file_type_codes, reports
 from pcs.common.file import RawFileError
 from pcs.common.host import Destination
 from pcs.lib.commands.remote_node import node_add_remote as node_add_remote_orig

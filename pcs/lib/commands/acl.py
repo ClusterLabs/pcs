@@ -2,10 +2,7 @@ from contextlib import contextmanager
 from typing import TYPE_CHECKING
 
 from pcs.lib.cib import acl
-from pcs.lib.cib.tools import (
-    IdProvider,
-    get_acls,
-)
+from pcs.lib.cib.tools import IdProvider, get_acls
 from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 

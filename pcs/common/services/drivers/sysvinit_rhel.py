@@ -1,10 +1,7 @@
 import os.path
 
 from .. import errors
-from ..interfaces import (
-    ExecutorInterface,
-    ServiceManagerInterface,
-)
+from ..interfaces import ExecutorInterface, ServiceManagerInterface
 
 
 class SysVInitRhelDriver(ServiceManagerInterface):

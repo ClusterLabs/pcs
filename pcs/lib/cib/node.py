@@ -11,10 +11,7 @@ from pcs.lib.cib.const import TAG_NODE
 from pcs.lib.cib.nvpair import update_nvset
 from pcs.lib.cib.tools import get_nodes
 from pcs.lib.errors import LibraryError
-from pcs.lib.xml_tools import (
-    append_when_useful,
-    get_root,
-)
+from pcs.lib.xml_tools import append_when_useful, get_root
 
 
 def get_all_node_elements(nodes_section: _Element) -> list[_Element]:

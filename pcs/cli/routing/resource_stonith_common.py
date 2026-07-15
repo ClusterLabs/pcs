@@ -3,10 +3,7 @@ from typing import Any
 from pcs import resource
 from pcs.cli.common.errors import command_replaced
 from pcs.cli.common.parse_args import InputModifiers
-from pcs.cli.common.routing import (
-    CliCmdInterface,
-    create_router,
-)
+from pcs.cli.common.routing import CliCmdInterface, create_router
 
 
 def resource_defaults_cmd(parent_cmd: list[str]) -> CliCmdInterface:

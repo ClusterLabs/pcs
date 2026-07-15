@@ -4,10 +4,7 @@ from collections.abc import Iterable
 from shlex import quote
 from shutil import get_terminal_size
 
-from pcs.common.types import (
-    StringIterable,
-    StringSequence,
-)
+from pcs.common.types import StringIterable, StringSequence
 
 INDENT_STEP = 2
 SUBSEQUENT_INDENT_STEP = 4

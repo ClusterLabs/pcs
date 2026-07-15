@@ -1,12 +1,6 @@
-from pcs.common import (
-    file_type_codes,
-    reports,
-)
+from pcs.common import file_type_codes, reports
 from pcs.common.reports.item import ReportItem
-from pcs.lib.booth import (
-    config_validators,
-    constants,
-)
+from pcs.lib.booth import config_validators, constants
 from pcs.lib.errors import LibraryError
 from pcs.lib.file import raw_file
 from pcs.lib.file.instance import FileInstance

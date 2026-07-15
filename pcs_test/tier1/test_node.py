@@ -8,9 +8,7 @@ from pcs.common.interface import dto
 from pcs.common.pacemaker.node import CibNodeDto, CibNodeListDto
 from pcs.common.pacemaker.nvset import CibNvpairDto, CibNvsetDto
 
-from pcs_test.tier1.legacy.common import (
-    FIXTURE_UTILIZATION_WARNING,
-)
+from pcs_test.tier1.legacy.common import FIXTURE_UTILIZATION_WARNING
 from pcs_test.tools.cib import get_assert_pcs_effect_mixin
 from pcs_test.tools.misc import (
     get_test_resource,

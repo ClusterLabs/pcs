@@ -1,17 +1,11 @@
 import base64
 import logging
 import os.path
-from unittest import (
-    TestCase,
-    mock,
-)
+from unittest import TestCase, mock
 
 import pcs.lib.commands.qdevice as lib
 from pcs import settings
-from pcs.common import (
-    file_type_codes,
-    reports,
-)
+from pcs.common import file_type_codes, reports
 from pcs.common.file import RawFileError
 from pcs.common.reports import ReportItemSeverity as severity
 from pcs.common.reports import codes as report_codes
