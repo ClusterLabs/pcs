@@ -50,7 +50,7 @@ class ConfigFetcher:
             )
 
         cmd = GetConfigs(self._report_processor, cluster_name, False)
-        cmd.set_targets(target_list)  # type: ignore
+        cmd.set_targets(target_list)
         received_configs = run(self._node_communicator, cmd)  # type: ignore
 
         configs_to_update = {}

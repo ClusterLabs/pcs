@@ -118,7 +118,7 @@ def task_executor(task: WorkerCommand) -> None:
     if auth_user.is_superuser:
         auth_user = _get_effective_user(logger, auth_user, command_dto.options)
 
-    env = LibraryEnvironment(  # type: ignore
+    env = LibraryEnvironment(
         logger,
         WorkerReportProcessor(worker_com, task.task_ident),
         known_hosts_getter=read_known_hosts_file_not_cached,

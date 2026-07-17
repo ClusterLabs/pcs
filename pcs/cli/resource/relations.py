@@ -95,7 +95,7 @@ class ResourcePrintableNode(ResourceRelationBase):
                     # 10 items, it would be required to also prepend zeros for
                     # lower numbers. E.g: if there is 100 options, it should
                     # starts as 000, 001, ...
-                    item.relation_entity.type,  # type: ignore
+                    item.relation_entity.type,
                     9,
                 ),
                 _id=item.relation_entity.id,
