@@ -56,7 +56,7 @@ installation:
 * autoconf, automake
 * gcc
 * gcc-c++
-* FFI development files (package libffi-devel or libffi-dev)
+* libcurl development files (package libcurl-devel or libcurl-dev)
 * printf (package coreutils)
 * redhat-rpm-config (if you are using Fedora)
 * wget (to download bundled libraries)

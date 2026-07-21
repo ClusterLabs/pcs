@@ -55,11 +55,12 @@ PCS_PYTHON_PACKAGES = pcs/ pcs_test/
 # 1 - sources directory - with python package sources
 # 2 - destination directory - python package will be installed into the
 #     `packages` subdirectory of this destination directory
+# || exit 1 - avoids masking failures in bash for loops
 define build_python_bundle
 	cd $(1) && \
 	PYTHONPATH=$(2)/packages/ \
 	LC_ALL=C.utf8 \
-	$(PYTHON) setup.py install --install-lib /packages/ --root $(2)
+	$(PYTHON) setup.py install --install-lib /packages/ --root $(2) || exit 1
 endef
 
 PYAGENTX_URI="https://github.com/ondrejmular/pyagentx/archive/v${PYAGENTX_VERSION}.tar.gz"
@@ -96,7 +97,7 @@ endif
 	$(MKDIR_P) ${abs_top_builddir}/$(PCS_BUNDLED_DIR_LOCAL)/src/
 	src=`ls -1 ${abs_top_builddir}/rpm/*.tar.gz ${abs_top_srcdir}/rpm/*.tar.gz 2>/dev/null || true | sort -u | grep -v pcs- || true` && \
 	for i in $$src; do \
-		$(TAR) xvz -C ${abs_top_builddir}/${PCS_BUNDLED_DIR_LOCAL}/src -f $$i; \
+		$(TAR) xvz -C ${abs_top_builddir}/${PCS_BUNDLED_DIR_LOCAL}/src -f $$i || exit 1; \
 	done;
 	touch $@
 

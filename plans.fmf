@@ -45,6 +45,8 @@ prepare:
       - diffutils
       - findutils
       - gawk
+      # for building c extentsions for python and ruby modules
+      - gcc
       - git
       - make
       - nss-tools
@@ -97,21 +99,14 @@ prepare:
     package:
       - python3-pycurl
 
-  - name: Install dependencies for bundled python3-pycurl
-    # autotools_rpmbuild also bundles pycurl on fedora
-    when: distro >= rhel-10, fedora, centos-stream-10
+  - name: Install dependencies for bundled python3-pycurl and rubygem-curb
+    # autotools_rpmbuild also bundles pycurl and curb on fedora
+    when: distro >= rhel-10, fedora, centos-stream-10, rhel-9, centos-stream-9
     how: install
     package:
       - libcurl
       - libcurl-devel
       - openssl-devel
-
-  - name: Install dependencies for bundled rubygem-ffi
-    when: distro == rhel-9, rhel-10, centos-stream-10, centos-stream-9
-    how: install
-    package:
-      - gcc
-      - libffi-devel
 
   - name: Install system rubygem packages
     when: distro == fedora
@@ -119,8 +114,7 @@ prepare:
     package:
       - rubygem-backports
       - rubygem-childprocess
-      - rubygem-ethon
-      - rubygem-ffi
+      - rubygem-curb
       - rubygem-mustermann
       - rubygem-nio4r
       - rubygem-puma
@@ -160,7 +154,7 @@ finish:
       - free -h | tee $TMT_PLAN_DATA/misc/free.log
       - "ausearch -m AVC,USER_AVC,SELINUX_ERR,USER_SELINUX_ERR -ts boot || : \
         | tee $TMT_PLAN_DATA/misc/ausearch.log"
-      - sysctl crypto.fips_enabled | tee $TMT_PLAN_DATA/misc/fips_status.log
+      - sysctl -e crypto.fips_enabled | tee $TMT_PLAN_DATA/misc/fips_status.log
 
 
 /linters:
