@@ -35,9 +35,7 @@ class SessionAuthProviderTest(IsolatedAsyncioTestCase):
     def setUp(self):
         self.handler = mock.Mock()
         cookie_jar = {webui.auth_provider.PCSD_SESSION: "session123"}
-        self.handler.get_cookie.side_effect = (
-            lambda name, default: cookie_jar.get(name, default)  # noqa: PLW0108
-        )
+        self.handler.get_cookie.side_effect = cookie_jar.get
 
         self.session_storage = MockStorage()
 
