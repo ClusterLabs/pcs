@@ -64,11 +64,12 @@ pipinstallopts = --force-reinstall --no-build-isolation --no-warn-script-locatio
 #     `packages` subdirectory of this destination directory
 # switched to pip installation since setup.py installation is deprecated
 # --no-binary - disallows downloading wheels
+# || exit 1 - avoids masking failures in bash for loops
 define build_python_bundle
 	cd $(1) && \
 	PYTHONPATH=$(2)/packages/ \
 	LC_ALL=C.utf8 \
-	${PIP} ${pipopts} install ${pipinstallopts} --no-binary :all: --target $(2)/packages .
+	${PIP} ${pipopts} install ${pipinstallopts} --no-binary :all: --target $(2)/packages . || exit 1
 endef
 
 PYAGENTX_URI="https://github.com/ondrejmular/pyagentx/archive/v${PYAGENTX_VERSION}.tar.gz"
@@ -101,7 +102,7 @@ endif
 	$(MKDIR_P) ${abs_top_builddir}/$(PCS_BUNDLED_DIR_LOCAL)/src/
 	src=`ls -1 ${abs_top_builddir}/rpm/*.tar.gz ${abs_top_srcdir}/rpm/*.tar.gz 2>/dev/null || true | sort -u | grep -v pcs- || true` && \
 	for i in $$src; do \
-		$(TAR) xvz -C ${abs_top_builddir}/${PCS_BUNDLED_DIR_LOCAL}/src -f $$i; \
+		$(TAR) xvz -C ${abs_top_builddir}/${PCS_BUNDLED_DIR_LOCAL}/src -f $$i || exit 1; \
 	done;
 	touch $@
 

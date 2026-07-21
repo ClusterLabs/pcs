@@ -11,7 +11,7 @@ require 'json'
 require 'fileutils'
 require 'backports/latest'
 require 'base64'
-require 'ethon'
+require 'curb'
 require 'openssl'
 require 'stringio'
 
@@ -335,32 +335,31 @@ def send_request(
 
   $logger.info "Connecting to: #{url}"
 
-  req = Ethon::Easy.new()
-  req.set_attributes({
-    :url => url,
-    :timeout_ms => timeout_ms,
-    :cookie => _get_cookie_list(auth_user, cookies_data).join(';'),
-    :ssl_verifyhost => 0,
-    :ssl_verifypeer => 0,
-    :postfields => (encoded_data) ? encoded_data : nil,
-    :httpget => (post ? 0 : 1),
-    :nosignal => 1, # required for multi-threading
-  })
-  req.compose_header('Expect', '')
-  return_code = req.perform
-  response_code = req.response_code
-  response_body = req.response_body
-  req.cleanup
-  if return_code == :ok
-    return response_code, response_body
-  else
+  begin
+    curl = Curl::Easy.new(url)
+    curl.timeout_ms = timeout_ms
+    curl.cookies = _get_cookie_list(auth_user, cookies_data).join(';')
+    curl.ssl_verify_host = false
+    curl.ssl_verify_peer = false
+    curl.nosignal = true # required for multi-threading
+    curl.headers['Expect'] = ''
+
+    if post
+      curl.post_body = encoded_data
+      curl.http_post
+    else
+      curl.http_get
+    end
+
+    return curl.response_code, curl.body_str
+  rescue Curl::Err::CurlError => e
     if is_proxy_set(ENV)
       $logger.warn(
         'Proxy is set in environment variables, try disabling it'
       )
     end
     $logger.info(
-      "No response from: #{node} request: #{request}, error: #{return_code}"
+      "No response from: #{node} request: #{request}, error: #{e.message}"
     )
     return 400,'{"noresponse":true}'
   end

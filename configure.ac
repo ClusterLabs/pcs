@@ -482,8 +482,7 @@ REQUIRE_RACKUP="require 'rackup'"
 if test "x$tests_only" != "xyes"; then
 	PCS_CHECK_GEM([backports])
 	PCS_CHECK_GEM([childprocess])
-	PCS_CHECK_GEM([ethon])
-	PCS_CHECK_GEM([ffi])
+	PCS_CHECK_GEM([curb])
 	PCS_CHECK_GEM([json])
 	PCS_CHECK_GEM([ruby2_keywords])
 	PCS_CHECK_GEM([mustermann])
