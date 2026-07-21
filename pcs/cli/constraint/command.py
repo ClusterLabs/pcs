@@ -35,8 +35,8 @@ def create_with_set(
     create_with_set_library_call(
         resource_set_list,
         constraint_options,
-        resource_in_clone_alowed=modifiers.get("--force"),
-        duplication_alowed=modifiers.get("--force"),
+        resource_in_clone_allowed=modifiers.get("--force"),
+        duplication_allowed=modifiers.get("--force"),
     )
 
 
