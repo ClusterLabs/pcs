@@ -16,7 +16,7 @@ _in_effect_label_map = {
 
 
 def get_in_effect_label(rule: CibRuleExpressionDto) -> str | None:
-    return _in_effect_label_map.get(rule.in_effect, None)
+    return _in_effect_label_map.get(rule.in_effect)
 
 
 def rule_expression_dto_to_lines(

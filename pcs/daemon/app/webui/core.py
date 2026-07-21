@@ -95,7 +95,8 @@ class Logout(AjaxMixin, BaseHandler):
 
 class StaticFileMayBe(StaticFile):
     async def get(self, path: str, include_body: bool = True) -> None:
-        if not os.path.isdir(str(self.root)):
+        # blocking stat() is negligible vs. threading overhead
+        if not os.path.isdir(str(self.root)):  # noqa: ASYNC240
             # spa is probably not installed
             self.set_status(404, "Not Found")
             return None

@@ -79,7 +79,7 @@ def save_sync_new_version(
         if reject_is_error
         else reports.ReportItemSeverity.info(),
     )
-    com_cmd.set_targets(target_list)  # type: ignore[no-untyped-call]
+    com_cmd.set_targets(target_list)
     results = run(node_communicator, com_cmd)  # type: ignore[no-untyped-call]
 
     failed_nodes = _get_failed_nodes(file_type_code, target_list, results)

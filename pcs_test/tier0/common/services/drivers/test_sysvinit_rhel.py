@@ -192,7 +192,7 @@ class IsInstalledTest(Base):
         )
         self.mock_executor.run.return_value = ExecutorResult(0, output, "")
         self.assertTrue(self.driver.is_installed(self.service))
-        # Intetionally called twice to make sure that unit files listing is
+        # Intentionally called twice to make sure that unit files listing is
         # done only once
         self.assertTrue(self.driver.is_installed(self.service))
         self.mock_executor.run.assert_called_once_with([self.chkconfig_bin])
@@ -205,7 +205,7 @@ class IsInstalledTest(Base):
         )
         self.mock_executor.run.return_value = ExecutorResult(0, output, "")
         self.assertFalse(self.driver.is_installed(self.service))
-        # Intetionally called twice to make sure that unit files listing is
+        # Intentionally called twice to make sure that unit files listing is
         # done only once
         self.assertFalse(self.driver.is_installed(self.service))
         self.mock_executor.run.assert_called_once_with([self.chkconfig_bin])

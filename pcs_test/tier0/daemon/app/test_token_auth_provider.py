@@ -15,9 +15,7 @@ class TokenAuthProviderTest(IsolatedAsyncioTestCase):
         self.handler = mock.Mock()
         self.lib_auth_provider = mock.Mock(spec=AuthProvider)
         self.cookie_jar = {"token": "TOKEN", "not_token": "value"}
-        self.handler.get_cookie.side_effect = lambda name: self.cookie_jar.get(
-            name
-        )
+        self.handler.get_cookie.side_effect = self.cookie_jar.get
         self.mock_logger = mock.Mock(spec_set=["debug"])
         self.provider = TokenAuthProvider(
             self.handler, self.lib_auth_provider, self.mock_logger

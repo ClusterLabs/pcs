@@ -66,7 +66,7 @@ class SessionAuthProvider(ApiAuthProviderInterface):
 
     @property
     def __sid_from_client(self) -> str | None:
-        return self._handler.get_cookie(PCSD_SESSION, default=None)
+        return self._handler.get_cookie(PCSD_SESSION)
 
     def can_handle_request(self) -> bool:
         if self._session is not None:

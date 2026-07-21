@@ -253,7 +253,7 @@ class Response:
         return self._handle.getinfo(pycurl.RESPONSE_CODE)
 
     def __repr__(self) -> str:
-        return str(
+        return (
             "Response({0} data='{1}' was_connected={2}) errno='{3}'"
             " error_msg='{4}' response_code='{5}')"
         ).format(

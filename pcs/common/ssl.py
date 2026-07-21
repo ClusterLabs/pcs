@@ -54,12 +54,12 @@ def generate_cert(key: rsa.RSAPrivateKey, server_name: str) -> x509.Certificate:
 
 
 def dump_cert(certificate: x509.Certificate) -> bytes:
-    return certificate.public_bytes(serialization.Encoding.PEM)
+    return certificate.public_bytes(serialization.Encoding.PEM)  # type: ignore[arg-type]
 
 
 def dump_key(key: rsa.RSAPrivateKeyWithSerialization) -> bytes:
     return key.private_bytes(
-        serialization.Encoding.PEM,
-        serialization.PrivateFormat.TraditionalOpenSSL,
+        serialization.Encoding.PEM,  # type: ignore[arg-type]
+        serialization.PrivateFormat.TraditionalOpenSSL,  # type: ignore[arg-type]
         serialization.NoEncryption(),
     )

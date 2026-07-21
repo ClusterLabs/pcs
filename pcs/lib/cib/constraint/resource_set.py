@@ -86,7 +86,7 @@ def create(
 
     for name, value in set_options.items():
         if name == "role":
-            # noqa - for loop variable 'value' overwritten by assignment target
+            # for loop variable 'value' overwritten by assignment target
             value = get_role_value_for_cib(  # noqa: PLW2901
                 const.PcmkRoleType(value),
                 cib_schema_version >= const.PCMK_NEW_ROLES_CIB_VERSION,

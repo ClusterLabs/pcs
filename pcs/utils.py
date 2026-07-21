@@ -1600,7 +1600,7 @@ def is_valid_cib_scope(scope):
 
 # Checks to see if id exists in the xml dom passed
 # DEPRECATED use lxml version available in pcs.lib.cib.tools
-def does_id_exist(dom, check_id):  # noqa: PLR0912
+def does_id_exist(dom, check_id):
     """
     Commandline options: no options
     """
