@@ -130,6 +130,7 @@ EXTRA_DIST		= \
 			  tier0/cli/tag/__init__.py \
 			  tier0/cli/tag/test_command.py \
 			  tier0/cli/test_booth.py \
+			  tier0/cli/test_cli_framework_cookbook.py \
 			  tier0/cli/test_client.py \
 			  tier0/cli/test_cluster.py \
 			  tier0/cli/test_dr.py \
@@ -548,6 +549,9 @@ EXTRA_DIST		= \
 			  tools/check/__init__.py \
 			  tools/check/test_misc.py \
 			  tools/cib.py \
+			  tools/cli_test_framework/__init__.py \
+			  tools/cli_test_framework/mock_lib_wrapper.py \
+			  tools/cli_test_framework/runner.py \
 			  tools/color_text_runner/format.py \
 			  tools/color_text_runner/__init__.py \
 			  tools/color_text_runner/result.py \
