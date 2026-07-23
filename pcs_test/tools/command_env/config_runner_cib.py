@@ -226,17 +226,22 @@ class CibShortcuts:
         stderr="",
         returncode=0,
         env=None,
+        with_status=False,
     ):
         """
         Create a call for pushing a diff of CIBs
         string name -- key of the call
         string cib_diff -- the diff of CIBs
         dict env -- CommandRunner environment variables
+        bool with_status -- if True, expect --update-status flag
         """
+        cmd = ["cibadmin", "--patch", "--verbose", "--xml-pipe"]
+        if with_status:
+            cmd.append("--update-status")
         self.__calls.place(
             name,
             RunnerCall(
-                ["cibadmin", "--patch", "--verbose", "--xml-pipe"],
+                cmd,
                 check_stdin=CheckStdinEqualXml(cib_diff),
                 stdout=stdout,
                 stderr=stderr,

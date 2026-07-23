@@ -46,6 +46,11 @@ class ManageCibAssertionMixin:
             callable_obj, "CIB has been loaded, cannot push custom CIB"
         )
 
+    def assert_raises_cannot_push_status_custom(self, callable_obj):
+        self.assert_raises_cib_error(
+            callable_obj, "Cannot push status section of a custom CIB"
+        )
+
 
 class IsCibLive(TestCase):
     def test_is_live_when_no_cib_data_specified(self):
@@ -379,6 +384,16 @@ class PushLoadedCib(TestCase, ManageCibAssertionMixin):
             ]
         )
 
+    def test_with_status(self):
+        self.config_load_cib_files()
+        self.config.runner.cib.diff(self.tmpfile_old, self.tmpfile_new)
+        self.config.runner.cib.push_diff(with_status=True)
+        env = self.env_assist.get_env()
+
+        env.get_cib()
+        env.push_cib(with_status=True)
+        self.env_assist.assert_reports(self.push_reports())
+
 
 class PushCustomCib(TestCase, ManageCibAssertionMixin):
     custom_cib = "<custom_cib />"
@@ -416,6 +431,12 @@ class PushCustomCib(TestCase, ManageCibAssertionMixin):
                     timeout=self.wait_timeout,
                 )
             ]
+        )
+
+    def test_with_status(self):
+        env = self.env_assist.get_env()
+        self.assert_raises_cannot_push_status_custom(
+            partial(env.push_cib, etree.XML(self.custom_cib), with_status=True)
         )
 
 

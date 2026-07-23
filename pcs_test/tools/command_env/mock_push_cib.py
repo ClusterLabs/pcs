@@ -8,19 +8,28 @@ class Call:
     type = CALL_TYPE_PUSH_CIB
 
     def __init__(
-        self, cib_xml, custom_cib=False, wait_timeout=-1, exception=None
+        self,
+        cib_xml,
+        custom_cib=False,
+        wait_timeout=-1,
+        exception=None,
+        with_status=False,
     ):
         self.cib_xml = cib_xml
         self.custom_cib = custom_cib
         self.wait_timeout = wait_timeout
         self.exception = exception
+        self.with_status = with_status
 
     def __repr__(self):
-        return "<CibPush wait_timeout='{0}'>".format(self.wait_timeout)
+        return (
+            f"<CibPush wait_timeout='{self.wait_timeout}' "
+            f"with_status='{self.with_status}'>"
+        )
 
 
 def get_push_cib(call_queue):
-    def push_cib(lib_env, custom_cib=None, wait_timeout=-1):
+    def push_cib(lib_env, custom_cib=None, wait_timeout=-1, with_status=False):
         i, expected_call = call_queue.take(CALL_TYPE_PUSH_CIB)
 
         if custom_cib is None and expected_call.custom_cib:
@@ -60,6 +69,21 @@ def get_push_cib(call_queue):
                     real_type=type(wait_timeout),
                     expected_value=expected_call.wait_timeout,
                     expected_type=type(expected_call.wait_timeout),
+                )
+            )
+        if with_status != expected_call.with_status:
+            raise AssertionError(
+                (
+                    "Trying to call env.push_cib (call no. {index}) with "
+                    "'with_status' == {real_value} ({real_type}) but it was "
+                    "expected 'with_status' == {expected_value} "
+                    "({expected_type})"
+                ).format(
+                    index=i,
+                    real_value=with_status,
+                    real_type=type(with_status),
+                    expected_value=expected_call.with_status,
+                    expected_type=type(expected_call.with_status),
                 )
             )
 

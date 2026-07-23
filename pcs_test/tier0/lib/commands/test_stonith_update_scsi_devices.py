@@ -404,6 +404,7 @@ class UpdateScsiDevicesMixin:
             ),
         )
         self.config.runner.pcmk.is_resource_digests_supported()
+        self.config.runner.pcmk.is_cibadmin_update_status_supported()
         self.config.runner.pcmk.load_state(
             resources=fixture_crm_mon_res_running(
                 self.stonith_id,
@@ -504,6 +505,7 @@ class UpdateScsiDevicesMixin:
                 lrm_monitor_ops=lrm_monitor_ops_updated,
                 digests_attrs_list=digests_attrs_list_updated,
             ),
+            with_status=True,
         )
         kwargs = dict(devices_updated=devices_updated)
         if devices_add is not None:
@@ -546,6 +548,26 @@ class UpdateScsiDevicesFailuresMixin(UpdateScsiDevicesMixin):
             expected_in_processor=False,
         )
 
+    def test_cibadmin_doesnt_support_update_status(self):
+        self.config.runner.cib.load(
+            resources=fixture_scsi(
+                stonith_id=self.stonith_id, stonith_type=self.stonith_type
+            )
+        )
+        self.config.runner.pcmk.is_resource_digests_supported()
+        self.config.runner.pcmk.is_cibadmin_update_status_supported(
+            is_supported=False
+        )
+        self.env_assist.assert_raise_library_error(
+            self.command(),
+            [
+                fixture.error(
+                    reports.codes.STONITH_RESTARTLESS_UPDATE_OF_SCSI_DEVICES_NOT_SUPPORTED,
+                )
+            ],
+            expected_in_processor=False,
+        )
+
     def test_nonexistent_id(self):
         """
         lower level tested in
@@ -558,6 +580,7 @@ class UpdateScsiDevicesFailuresMixin(UpdateScsiDevicesMixin):
             )
         )
         self.config.runner.pcmk.is_resource_digests_supported()
+        self.config.runner.pcmk.is_cibadmin_update_status_supported()
         self.env_assist.assert_raise_library_error(self.command())
         self.env_assist.assert_reports(
             [
@@ -583,6 +606,7 @@ class UpdateScsiDevicesFailuresMixin(UpdateScsiDevicesMixin):
             )
         )
         self.config.runner.pcmk.is_resource_digests_supported()
+        self.config.runner.pcmk.is_cibadmin_update_status_supported()
         self.env_assist.assert_raise_library_error(
             self.command(devices_add=[DEV_2], devices_remove=[DEV_1])
         )
@@ -935,6 +959,7 @@ class UpdateScsiDevicesFailuresMixin(UpdateScsiDevicesMixin):
                 lrm_start_ops=DEFAULT_LRM_START_OPS_UPDATED,
                 lrm_monitor_ops=DEFAULT_LRM_MONITOR_OPS_UPDATED,
             ),
+            with_status=True,
         )
         self.command(force_flags=[reports.codes.SKIP_OFFLINE_NODES])()
         self.env_assist.assert_reports(
@@ -1226,6 +1251,7 @@ class UpdateScsiDevicesSetFailuresBaseMixin(
             )
         )
         self.config.runner.pcmk.is_resource_digests_supported()
+        self.config.runner.pcmk.is_cibadmin_update_status_supported()
         self.env_assist.assert_raise_library_error(
             self.command(devices_updated=())
         )
@@ -1257,6 +1283,7 @@ class UpdateScsiDevicesAddRemoveFailuresBaseMixin(
             )
         )
         self.config.runner.pcmk.is_resource_digests_supported()
+        self.config.runner.pcmk.is_cibadmin_update_status_supported()
         self.env_assist.assert_raise_library_error(
             self.command(devices_add=(), devices_remove=())
         )

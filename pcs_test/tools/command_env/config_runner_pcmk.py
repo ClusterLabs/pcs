@@ -1006,6 +1006,21 @@ class PcmkShortcuts:
             ),
         )
 
+    def is_cibadmin_update_status_supported(
+        self,
+        name="runner.pcmk.is_cibadmin_update_status_supported",
+        is_supported=True,
+    ):
+        self.__calls.place(
+            name,
+            RunnerCall(
+                ["cibadmin", "--help-all"],
+                stdout="--update-status" if is_supported else "",
+                stderr="",
+                returncode=0,
+            ),
+        )
+
     def resource_digests(
         self,
         resource_id,

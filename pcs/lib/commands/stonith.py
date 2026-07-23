@@ -26,6 +26,7 @@ from pcs.lib.pacemaker.live import (
     fence_history_cleanup,
     fence_history_text,
     fence_history_update,
+    is_cibadmin_update_status_supported,
     is_fence_history_supported_management,
     is_getting_resource_digest_supported,
 )
@@ -254,7 +255,9 @@ def _update_scsi_devices_get_element_and_devices(
     cib -- cib element
     stonith_id -- id of stonith resource
     """
-    if not is_getting_resource_digest_supported(runner):
+    if not is_getting_resource_digest_supported(
+        runner
+    ) or not is_cibadmin_update_status_supported(runner):
         raise LibraryError(
             ReportItem.error(
                 reports.messages.StonithRestartlessUpdateOfScsiDevicesNotSupported()
@@ -381,7 +384,7 @@ def update_scsi_devices(
     _unfencing_scsi_devices(
         env, stonith_el, current_device_list, set_device_list, force_flags
     )
-    env.push_cib()
+    env.push_cib(with_status=True)
 
 
 def update_scsi_devices_add_remove(
@@ -435,4 +438,4 @@ def update_scsi_devices_add_remove(
     _unfencing_scsi_devices(
         env, stonith_el, current_device_list, updated_device_set, force_flags
     )
-    env.push_cib()
+    env.push_cib(with_status=True)
