@@ -28,6 +28,10 @@ def __msg_node_name_already_used(node_name, cluster_name)
   return "The node '#{node_name}' is already a part of the '#{cluster_name}' cluster. You may not add a node to two different clusters."
 end
 
+def __msg_node_not_in_cluster()
+  return 400, "This host is not in a cluster - corosync.conf not present"
+end
+
 def getAuthUser()
   return {
     :username => Thread.current[:tornado_username],
@@ -387,9 +391,17 @@ post '/managec/:cluster/permissions_save/?' do
   )
 end
 
-get '/managec/:cluster/cluster_status' do
+get '/managec/cluster_status' do
+  if not has_corosync_conf()
+    return __msg_node_not_in_cluster()
+  end
   auth_user = getAuthUser()
-  cluster_status_gui(auth_user, params[:cluster])
+  cluster_nodes = get_corosync_nodes_names()
+  status = cluster_status_from_nodes(auth_user, cluster_nodes, $cluster_name)
+  unless status
+    return 403, 'Permission denied'
+  end
+  return JSON.generate(status)
 end
 
 post '/managec/:cluster/fix_auth_of_cluster' do
