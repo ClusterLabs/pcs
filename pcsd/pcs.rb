@@ -146,30 +146,9 @@ def remove_constraint_rule(auth_user, rule_id)
   return retval
 end
 
-# Gets all of the nodes specified in the pcs config file for the cluster
-def get_cluster_nodes(cluster_name)
-  pcs_config = PCSConfig.new(get_pcs_settings_conf())
-  clusters = pcs_config.clusters
-  cluster = nil
-  for c in clusters
-    if c.name == cluster_name
-      cluster = c
-      break
-    end
-  end
-
-  if cluster && cluster.nodes != nil
-    nodes = cluster.nodes
-  else
-    $logger.info "Error: no nodes found for #{cluster_name}"
-    nodes = []
-  end
-  return nodes
-end
-
-def send_cluster_request_with_token(auth_user, cluster_name, request, post=false, data={}, remote=true, raw_data=nil)
+def send_cluster_request_with_token(auth_user, request, post=false, data={}, remote=true, raw_data=nil)
   $logger.info("SCRWT: " + request)
-  nodes = get_cluster_nodes(cluster_name)
+  nodes = get_corosync_nodes_names()
   return send_nodes_request_with_token(
     auth_user, nodes, request, post, data, remote, raw_data
   )
