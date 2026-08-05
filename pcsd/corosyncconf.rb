@@ -168,6 +168,28 @@ module CorosyncConf
     return result
   end
 
+  def CorosyncConf::get_cluster_name(corosync_section)
+    # mimic corosync behavior - the last value is used
+    cluster_name = ''
+    corosync_section.sections('totem').each { |totem|
+      totem.attributes('cluster_name').each { |attrib|
+        cluster_name = attrib[1]
+      }
+    }
+    return cluster_name
+  end
+
+  def CorosyncConf::get_cluster_uuid(corosync_section)
+    # mimic corosync behavior - the last value is used
+    cluster_uuid = ''
+    corosync_section.sections('totem').each { |totem|
+      totem.attributes('cluster_uuid').each { |attrib|
+        cluster_uuid = attrib[1]
+      }
+    }
+    return cluster_uuid
+  end
+
 
   class CorosyncConfException < Exception
   end
