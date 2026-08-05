@@ -29,7 +29,7 @@ def __msg_node_name_already_used(node_name, cluster_name)
 end
 
 def __msg_node_not_in_cluster()
-  return 400, "This host is not in a cluster - corosync.conf not present"
+  return 400, "This host is not in a cluster - corosync.conf not present or not valid"
 end
 
 def getAuthUser()
@@ -42,17 +42,27 @@ end
 before do
   @auth_user = getAuthUser()
   begin
-    $cluster_name, $cluster_uuid = get_cluster_name_and_uuid()
+    $cluster_name = ''
+    $cluster_uuid = ''
+    $cluster_nodes = []
+    if has_corosync_conf()
+      corosync_conf = CorosyncConf::parse_string(get_corosync_conf())
+      $cluster_name = CorosyncConf::get_cluster_name(corosync_conf)
+      $cluster_uuid = CorosyncConf::get_cluster_uuid(corosync_conf)
+      $cluster_nodes = CorosyncConf::get_corosync_nodes_names(corosync_conf)
+    end
   rescue SystemCallError => e
     $logger.error("Unable to read corosync.conf: #{e.message}")
     $logger.warn("Continuing request processing as if this node is not in a cluster")
     $cluster_name = ''
     $cluster_uuid = ''
+    $cluster_nodes = []
   rescue CorosyncConf::ParseErrorException => e
     $logger.error("Unable to parse corosync.conf: #{e.message}")
     $logger.warn("Continuing request processing as if this node is not in a cluster")
     $cluster_name = ''
     $cluster_uuid = ''
+    $cluster_nodes = []
   end
   if PCSD_RESTART_AFTER_REQUESTS > 0
     $request_counter += 1
@@ -382,7 +392,7 @@ get '/imported-cluster-list' do
 end
 
 post '/managec/permissions_save/?' do
-  if not has_corosync_conf()
+  if '' == $cluster_name
     return __msg_node_not_in_cluster()
   end
   auth_user = getAuthUser()
@@ -395,12 +405,11 @@ post '/managec/permissions_save/?' do
 end
 
 get '/managec/cluster_status' do
-  if not has_corosync_conf()
+  if '' == $cluster_name
     return __msg_node_not_in_cluster()
   end
   auth_user = getAuthUser()
-  cluster_nodes = get_corosync_nodes_names()
-  status = cluster_status_from_nodes(auth_user, cluster_nodes, $cluster_name)
+  status = cluster_status_from_nodes(auth_user, $cluster_nodes, $cluster_name)
   unless status
     return 403, 'Permission denied'
   end
@@ -408,11 +417,11 @@ get '/managec/cluster_status' do
 end
 
 post '/managec/fix_auth_of_cluster' do
-  if not has_corosync_conf()
+  if '' == $cluster_name
     return __msg_node_not_in_cluster()
   end
   retval = _send_known_hosts_to_cluster(
-    PCSAuth.getSuperuserAuth(), get_corosync_nodes_names()
+    PCSAuth.getSuperuserAuth(), $cluster_nodes
   )
   if retval == 'error'
     return [400, "Authentication failed."]
@@ -428,7 +437,7 @@ post '/managec/send-known-hosts' do
   if not allowed_for_superuser(auth_user)
     return 403, 'Permission denied.'
   end
-  if not has_corosync_conf()
+  if '' == $cluster_name
     return __msg_node_not_in_cluster()
   end
   return _send_known_hosts_to_cluster(auth_user, params[:node_names])
@@ -477,7 +486,7 @@ def _send_known_hosts_to_node(auth_user, target, host_list)
 end
 
 post '/managec/api/v1/:command' do
-  if not has_corosync_conf()
+  if '' == $cluster_name
     return __msg_node_not_in_cluster()
   end
   auth_user = getAuthUser()
@@ -495,7 +504,7 @@ post '/managec/api/v1/:command' do
 end
 
 get '/managec/api/v1/:command' do
-  if not has_corosync_conf()
+  if '' == $cluster_name
     return __msg_node_not_in_cluster()
   end
   auth_user = getAuthUser()
@@ -513,7 +522,7 @@ get '/managec/api/v1/:command' do
 end
 
 post '/managec/?*' do
-  if not has_corosync_conf()
+  if '' == $cluster_name
     return __msg_node_not_in_cluster()
   end
   auth_user = getAuthUser()
@@ -527,7 +536,7 @@ post '/managec/?*' do
 end
 
 get '/managec/?*' do
-  if not has_corosync_conf()
+  if '' == $cluster_name
     return __msg_node_not_in_cluster()
   end
   auth_user = getAuthUser()
