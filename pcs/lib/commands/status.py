@@ -62,7 +62,7 @@ def pacemaker_status_xml(env: LibraryEnvironment) -> str:
     stdout, _, retval = get_cluster_status_xml_raw(env.cmd_runner())
     if retval == 0:
         return stdout
-    raise LibraryError(output=stdout)
+    raise LibraryError(ReportItem.error(reports.messages.CrmMonError(stdout)))
 
 
 def resources_status(env: LibraryEnvironment) -> ResourcesStatusDto:

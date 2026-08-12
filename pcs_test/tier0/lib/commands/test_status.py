@@ -66,18 +66,20 @@ class PacemakerStatusXml(TestCase):
             1, "an error", ["This is an error message", "And one more"]
         )
         self.config.runner.pcmk.load_state(stdout=error_xml, returncode=1)
-        with self.assertRaises(LibraryError) as cm:
-            status.pacemaker_status_xml(self.env_assist.get_env())
-        assert_xml_equal(cm.exception.output, error_xml)
+        self.assertRaises(
+            LibraryError,
+            lambda: status.pacemaker_status_xml(self.env_assist.get_env()),
+        )
 
     def test_error_not_xml(self):
         # Loading pacemaker state failed, but we expect to get an xml anyway
         # and we return it. If it is not a valid xml, it is a bug or a critical
         # error in pacemaker we can do nothing about.
         self.config.runner.pcmk.load_state(stdout="an error", returncode=1)
-        with self.assertRaises(LibraryError) as cm:
-            status.pacemaker_status_xml(self.env_assist.get_env())
-        self.assertEqual(cm.exception.output, "an error")
+        self.assertRaises(
+            LibraryError,
+            lambda: status.pacemaker_status_xml(self.env_assist.get_env()),
+        )
 
 
 class FullClusterStatusPlaintextBase(TestCase):

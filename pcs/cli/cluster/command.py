@@ -202,7 +202,7 @@ def node_remove_remote(
             temporary_report_processor.reports, force_flags
         )
 
-        if reports.has_errors(filtered_reports) or e.output or e.args:
+        if reports.has_errors(filtered_reports) or e.args:
             if filtered_reports:
                 process_library_reports(
                     filtered_reports,

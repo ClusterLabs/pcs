@@ -236,7 +236,7 @@ def remove(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
         # if there are other errors than CANNOT_REMOVE_RESOURCES_NOT_STOPPED or
         # errors that would be forced, we can exit, since it does not make sense
         # to try stopping and removing the resources again
-        if reports.has_errors(filtered_reports) or e.output or e.args:
+        if reports.has_errors(filtered_reports) or e.args:
             if filtered_reports:
                 process_library_reports(
                     filtered_reports,

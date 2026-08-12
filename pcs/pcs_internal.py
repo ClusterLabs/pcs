@@ -103,7 +103,6 @@ def main() -> None:
             report_list=(
                 cli_env.report_processor.processed_items + list(e.args)
             ),
-            data=e.output,
         )
     except json.JSONDecodeError as e:
         _exit(

@@ -245,9 +245,6 @@ def main(argv=None):  # noqa: PLR0912, PLR0915
             utils.get_library_wrapper(), argv, utils.get_input_modifiers()
         )
     except LibraryError as e:
-        if e.output:
-            sys.stderr.write(e.output)
-            sys.exit(1)
         process_library_reports(e.args)
     except errors.CmdLineInputError:
         if argv and argv[0] in cmd_map:

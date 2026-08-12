@@ -106,8 +106,6 @@ def get_duplicate_constraint_exists_preprocessor(
                 # prevent that. Also, it is not correct to exit with an error
                 # just because we were unable to get optional additional info
                 # for printing a report.
-                if e.output:
-                    print_to_stderr(e.output)
                 if e.args:
                     process_library_reports(
                         cast(reports.ReportItemList, e.args),

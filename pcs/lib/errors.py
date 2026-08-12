@@ -2,10 +2,5 @@ from pcs.common.reports import ReportItem
 
 
 class LibraryError(Exception):
-    def __init__(self, *args: ReportItem, output: str | None = None):
+    def __init__(self, *args: ReportItem):
         super().__init__(*args)
-        self._output = output
-
-    @property
-    def output(self):
-        return self._output
