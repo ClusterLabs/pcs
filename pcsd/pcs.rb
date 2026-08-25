@@ -148,7 +148,16 @@ end
 
 def send_cluster_request_with_token(auth_user, request, post=false, data={}, remote=true, raw_data=nil)
   $logger.info("SCRWT: " + request)
-  nodes = get_corosync_nodes_names()
+
+  if has_corosync_conf()
+    nodes = CorosyncConf::get_corosync_nodes_names(
+      CorosyncConf::parse_string(get_corosync_conf())
+    )
+  else
+    $logger.info "Error: corosync.conf not found"
+    nodes = []
+  end
+
   return send_nodes_request_with_token(
     auth_user, nodes, request, post, data, remote, raw_data
   )
@@ -378,16 +387,6 @@ def get_corosync_conf()
   return read_file_lock(COROSYNC_CONF)
 end
 
-def get_corosync_nodes_names()
-  if !has_corosync_conf()
-    $logger.info "Error: corosync.conf not found"
-    return []
-  end
-  return CorosyncConf::get_corosync_nodes_names(
-    CorosyncConf::parse_string(get_corosync_conf())
-  )
-end
-
 def get_nodes()
   nodes = get_nodes_status()
   return [
@@ -444,15 +443,6 @@ def get_nodes_status()
     'pacemaker_offline' => pacemaker_offline,
     'pacemaker_standby' => pacemaker_standby,
   }
-end
-
-def get_cluster_name()
-  if has_corosync_conf()
-    return CorosyncConf::get_cluster_name(
-      CorosyncConf::parse_string(get_corosync_conf())
-    )
-  end
-  return ''
 end
 
 def get_node_attributes(auth_user, cib_dom=nil)
