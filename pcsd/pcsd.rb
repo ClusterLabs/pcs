@@ -316,6 +316,14 @@ post '/run_pcs' do
         break
     end
   }
+  # We don't want to allow users to use 'pcs host auth --token' from here.
+  # We want to check for all prefixes for '--token' supported by getopt parser.
+  # Checking if the option begins with '--t' is the simplest option in here.
+  if command[0..1] == ['host', 'auth'] \
+    and options.any? { |item| item.start_with?('--t') }
+    then
+      allowed = false
+  end
   if !allowed
     result = {
       'status' => 'bad_command',

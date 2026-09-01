@@ -1,5 +1,12 @@
 # Change Log
 
+## [Unreleased]
+
+### Security
+- Non-root users can no longer run `pcs host auth --token`, which could be
+  abused to read arbitrary files on the filesystem (CVE-2026-84828)
+
+
 ## [0.10.19] - 2024-12-17
 
 ### Security
