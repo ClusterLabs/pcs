@@ -77,6 +77,13 @@ def _non_root_run(argv_cmd):  # noqa: PLR0912 Too many branches
             root_cmd[-1] == "..."
             and argv_cmd[: len(root_cmd) - 1] == root_cmd[:-1]
         ):
+            # disallow `pcs host auth --token` for non-root users
+            if argv_cmd[0:2] == ["host", "auth"] and "--token" in options:
+                raise error(
+                    "'pcs host auth --token' can only be run with root "
+                    "privileges."
+                )
+
             # handle interactivity of 'pcs cluster auth'
             if argv_cmd[0:2] in [["cluster", "auth"], ["host", "auth"]]:
                 if "-u" not in utils.pcs_options:
