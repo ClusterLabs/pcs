@@ -11,6 +11,10 @@
   `cipher` or `hash` to `none`) ([RHEL-218000])
 - UDP and UDPU transports, use knet instead ([RHEL-248861])
 
+### Security
+- Non-root users can no longer run `pcs host auth --token`, which could be
+  abused to read arbitrary files on the filesystem.
+
 [RHEL-214140]: https://redhat.atlassian.net/browse/RHEL-214140
 [RHEL-218000]: https://redhat.atlassian.net/browse/RHEL-218000
 [RHEL-248861]: https://redhat.atlassian.net/browse/RHEL-248861
