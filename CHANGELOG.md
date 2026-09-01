@@ -27,6 +27,10 @@
   library `datetime` module. Ordinal date format (`YYYY-DDD`) is no longer
   accepted in rule date expressions.
 
+### Security
+- Non-root users can no longer run `pcs host auth --token`, which could be
+  abused to read arbitrary files on the filesystem.
+
 
 ## [0.12.3] - 2026-07-01
 
