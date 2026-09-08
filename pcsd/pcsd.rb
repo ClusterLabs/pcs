@@ -325,11 +325,6 @@ post '/manage/api/v1/cluster-setup' do
   end
 end
 
-# use case:
-# - js instructs us to add the just created cluster to our list of clusters
-#
-# post /manage/remember-cluster - moved into Python
-
 ### urls related to creating a new cluster - end
 
 get '/manage/check_auth_against_nodes' do
