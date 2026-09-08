@@ -2751,7 +2751,7 @@
         daemon urls: known_hosts_change
       </description>
     </capability>
-    <capability id="pcs.auth.export-cluster-known-hosts" in-pcs="0" in-pcsd="1">
+    <capability id="pcs.auth.export-cluster-known-hosts" in-pcs="0" in-pcsd="0">
       <description>
         Provide a list of known hosts participating in a local cluster.
 

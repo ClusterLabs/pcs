@@ -193,7 +193,6 @@ EXTRA_DIST		= \
 			  tier0/daemon/app/ui_manage/__init__.py \
 			  tier0/daemon/app/ui_manage/test_auth_gui_against_nodes.py \
 			  tier0/daemon/app/ui_manage/test_base.py \
-			  tier0/daemon/app/ui_manage/test_existing_cluster.py \
 			  tier0/daemon/async_tasks/__init__.py \
 			  tier0/daemon/async_tasks/dummy_commands.py \
 			  tier0/daemon/async_tasks/helpers.py \
@@ -311,8 +310,6 @@ EXTRA_DIST		= \
 			  tier0/lib/commands/dr/test_set_recovery_site.py \
 			  tier0/lib/commands/dr/test_status.py \
 			  tier0/lib/commands/__init__.py \
-			  tier0/lib/commands/manage_clusters/__init__.py \
-			  tier0/lib/commands/manage_clusters/test_add_existing_cluster.py \
 			  tier0/lib/commands/remote_node/fixtures_add.py \
 			  tier0/lib/commands/remote_node/fixtures_remove.py \
 			  tier0/lib/commands/remote_node/__init__.py \

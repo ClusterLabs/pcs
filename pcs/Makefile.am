@@ -231,7 +231,6 @@ EXTRA_DIST		= \
 			  daemon/app/ui_common.py \
 			  daemon/app/ui_manage/auth_gui_against_nodes.py \
 			  daemon/app/ui_manage/base_handler.py \
-			  daemon/app/ui_manage/existing_cluster.py \
 			  daemon/app/ui_manage/__init__.py \
 			  daemon/app/ui_manage/routes.py \
 			  daemon/app/webui/__init__.py \
@@ -364,7 +363,6 @@ EXTRA_DIST		= \
 			  lib/commands/dr.py \
 			  lib/commands/fencing_topology.py \
 			  lib/commands/__init__.py \
-			  lib/commands/manage_clusters.py \
 			  lib/commands/node.py \
 			  lib/commands/pcs_cfgsync.py \
 			  lib/commands/qdevice.py \

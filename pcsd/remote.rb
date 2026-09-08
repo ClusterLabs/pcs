@@ -29,7 +29,6 @@ def remote(params, request, auth_user)
       :cluster_enable => method(:cluster_enable),
       :cluster_disable => method(:cluster_disable),
       :cluster_destroy => method(:cluster_destroy),
-      :get_cluster_known_hosts => method(:get_cluster_known_hosts),
       :get_cluster_properties_definition => method(:get_cluster_properties_definition),
       :remove_stonith_watchdog_timeout=> method(:remove_stonith_watchdog_timeout),
       :set_stonith_watchdog_timeout_to_zero => method(:set_stonith_watchdog_timeout_to_zero),
@@ -733,25 +732,6 @@ def cluster_destroy(params, request, auth_user)
   else
     return [400, "Error destroying cluster:\n#{out}\n#{errout}\n#{retval}\n"]
   end
-end
-
-def get_cluster_known_hosts(params, request, auth_user)
-  # pcsd runs as root thus always returns hacluster's tokens
-  if not allowed_for_local_cluster(auth_user, Permissions::FULL)
-    return 403, "Permission denied"
-  end
-  on, off = get_nodes()
-  nodes = (on + off).uniq()
-  data = {}
-  get_known_hosts().each { |host_name, host_obj|
-    if nodes.include?(host_name)
-      data[host_name] = {
-        'dest_list' => host_obj.dest_list,
-        'token' => host_obj.token,
-      }
-    end
-  }
-  return [200, JSON.generate(data)]
 end
 
 def resource_change_group(params, request, auth_user)

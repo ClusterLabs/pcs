@@ -13,7 +13,6 @@ from pcs.lib.commands import (
     cluster_property,
     constraint,
     fencing_topology,
-    manage_clusters,
     node,
     pcs_cfgsync,
     qdevice,
@@ -293,12 +292,6 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
     "fencing_topology.verify": _Cmd(
         cmd=fencing_topology.verify,
         required_permission=p.WRITE,
-    ),
-    "manage_clusters.add_existing_cluster": _Cmd(
-        cmd=manage_clusters.add_existing_cluster,
-        # needs to be NONE for backwards compatibility with
-        # the original handler in ruby
-        required_permission=p.NONE,
     ),
     "node.maintenance_unmaintenance_all": _Cmd(
         cmd=node.maintenance_unmaintenance_all,
