@@ -1,6 +1,6 @@
 # Change Log
 
-## Unreleased
+## [Unreleased]
 
 ### Removed
 - The deprecated `--force` flag is no longer accepted as an alternative to
@@ -27,9 +27,12 @@
   library `datetime` module. Ordinal date format (`YYYY-DDD`) is no longer
   accepted in rule date expressions.
 
+
+## [0.12.3.1] - 2026-09-08
+
 ### Security
 - Non-root users can no longer run `pcs host auth --token`, which could be
-  abused to read arbitrary files on the filesystem.
+  abused to read arbitrary files on the filesystem (CVE-2026-84828)
 
 
 ## [0.12.3] - 2026-07-01
