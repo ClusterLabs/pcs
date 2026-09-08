@@ -103,7 +103,7 @@ class GetLinkOptions(TestCase):
             },
         )
 
-    def test_all_options_udp(self):
+    def test_unknown_transport(self):
         self._assert_options(
             dedent(
                 """\
@@ -119,15 +119,7 @@ class GetLinkOptions(TestCase):
                 }
             """
             ),
-            {
-                "0": {
-                    "bindnetaddr": "10.0.0.1",
-                    "broadcast": "1",
-                    "mcastaddr": "10.0.0.2",
-                    "mcastport": "1234",
-                    "ttl": "123",
-                },
-            },
+            {"0": {}},
         )
 
     def test_translate_conflict(self):
@@ -1567,81 +1559,3 @@ class UpdateLink(TestCase):
         """
         )
         self._assert_update(before, after, "1", {"transport": "udp"}, {})
-
-    def test_enable_broadcast(self):
-        before = dedent(
-            """\
-            totem {
-                transport: udp
-
-                interface {
-                    mcastport: 1234
-                }
-            }
-        """
-        )
-        after = dedent(
-            """\
-            totem {
-                transport: udp
-
-                interface {
-                    mcastport: 1234
-                    broadcast: yes
-                }
-            }
-        """
-        )
-        self._assert_update(before, after, "0", {"broadcast": "1"}, {})
-
-    def test_disable_broadcast(self):
-        before = dedent(
-            """\
-            totem {
-                transport: udp
-
-                interface {
-                    mcastport: 1234
-                    broadcast: yes
-                }
-            }
-        """
-        )
-        after = dedent(
-            """\
-            totem {
-                transport: udp
-
-                interface {
-                    mcastport: 1234
-                }
-            }
-        """
-        )
-        self._assert_update(before, after, "0", {"broadcast": "0"}, {})
-
-    def test_default_broadcast(self):
-        before = dedent(
-            """\
-            totem {
-                transport: udp
-
-                interface {
-                    mcastport: 1234
-                    broadcast: yes
-                }
-            }
-        """
-        )
-        after = dedent(
-            """\
-            totem {
-                transport: udp
-
-                interface {
-                    mcastport: 1234
-                }
-            }
-        """
-        )
-        self._assert_update(before, after, "0", {"broadcast": ""}, {})

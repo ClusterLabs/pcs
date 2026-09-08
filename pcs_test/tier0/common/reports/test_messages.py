@@ -1024,12 +1024,9 @@ class CorosyncConfigUnsupportedTransport(NameBuildTest):
         self.assert_message_from_report(
             (
                 "Transport 'netk' currently configured in corosync.conf is "
-                "unsupported. Supported transport types are: 'knet', 'udp', "
-                "'udpu'"
+                "unsupported. Supported transport types are: 'knet', 'udp'"
             ),
-            reports.CorosyncConfigUnsupportedTransport(
-                "netk", ["udp", "knet", "udpu"]
-            ),
+            reports.CorosyncConfigUnsupportedTransport("netk", ["udp", "knet"]),
         )
 
 
@@ -1516,11 +1513,11 @@ class CorosyncCannotAddRemoveLinksBadTransport(NameBuildTest):
     def test_remove(self):
         self.assert_message_from_report(
             (
-                "Cluster is using udpu transport which does not support "
+                "Cluster is using udp transport which does not support "
                 "removing links"
             ),
             reports.CorosyncCannotAddRemoveLinksBadTransport(
-                "udpu", ["knet"], add_or_not_remove=False
+                "udp", ["knet"], add_or_not_remove=False
             ),
         )
 
@@ -1635,26 +1632,6 @@ class CorosyncLinkDoesNotExistCannotUpdate(NameBuildTest):
                 ", existing links: '0'"
             ),
             reports.CorosyncLinkDoesNotExistCannotUpdate(3, ["0"]),
-        )
-
-
-class CorosyncTransportUnsupportedOptions(NameBuildTest):
-    def test_udp(self):
-        self.assert_message_from_report(
-            "The udp/udpu transport does not support 'crypto' options, use "
-            "'knet' transport",
-            reports.CorosyncTransportUnsupportedOptions(
-                "crypto", "udp/udpu", ["knet"]
-            ),
-        )
-
-    def test_multiple_supported_transports(self):
-        self.assert_message_from_report(
-            "The udp/udpu transport does not support 'crypto' options, use "
-            "'knet', 'knet2' transport",
-            reports.CorosyncTransportUnsupportedOptions(
-                "crypto", "udp/udpu", ["knet", "knet2"]
-            ),
         )
 
 

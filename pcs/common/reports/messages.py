@@ -2380,26 +2380,6 @@ class CorosyncLinkDoesNotExistCannotUpdate(ReportItemMessage):
 
 
 @dataclass(frozen=True)
-class CorosyncTransportUnsupportedOptions(ReportItemMessage):
-    """
-    A type of options is not supported with the given transport
-    """
-
-    option_type: str
-    actual_transport: str
-    required_transports: list[str]
-    _code = codes.COROSYNC_TRANSPORT_UNSUPPORTED_OPTIONS
-
-    @property
-    def message(self) -> str:
-        required_transports = format_list(self.required_transports)
-        return (
-            f"The {self.actual_transport} transport does not support "
-            f"'{self.option_type}' options, use {required_transports} transport"
-        )
-
-
-@dataclass(frozen=True)
 class ClusterUuidAlreadySet(ReportItemMessage):
     """
     Cluster UUID has already been set in corosync.conf

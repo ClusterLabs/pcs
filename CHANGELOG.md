@@ -17,6 +17,10 @@
 - Setting knet transport crypto options `cipher` or `hash` to `none` or empty
   string is no longer allowed in `pcs cluster setup` and `pcs cluster config
   update`. Pcs no longer allows to disable cluster traffic encryption.
+- UDP and UDPU transports are no longer supported. It is no longer possible to
+  create, display and modify corosync configuration with such transports, use
+  knet transport instead. This affects mainly `pcs cluster setup`, `pcs config
+  update` and `pcs cluster link` commands.
 
 ### Fixed
 - Command `pcs stonith update-scsi-devices` no longer triggers unnecessary

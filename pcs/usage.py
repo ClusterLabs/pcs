@@ -1497,7 +1497,7 @@ Configure cluster for use with pacemaker
 
 Commands:
     setup <cluster name> (<node name> [addr=<node address>]...)...
-            [transport knet|udp|udpu
+            [transport knet
                 [<transport options>] [link <link options>]...
                 [compression <compression options>] [crypto <crypto options>]
             ] [totem <totem options>] [quorum <quorum options>] 
@@ -1533,14 +1533,6 @@ Commands:
             cipher, hash, model
             By default, encryption is enabled with cipher=aes256 and
             hash=sha256.
-
-        Transports udp and udpu:
-        These transports are limited to one address per node. They do not
-        support traffic encryption nor compression.
-        Transport options are:
-            ip_version, netmtu
-        Link options are:
-            bindnetaddr, broadcast, mcastaddr, mcastport, ttl
 
         Totem and quorum can be configured regardless of used transport.
         Totem options are:
@@ -1609,9 +1601,6 @@ Commands:
                 transport knet \\
                 link linknumber=3 mcastport=55405 \\
                 link linknumber=1 pong_count=4
-        Create a cluster using udp transport with a non-default port:
-            pcs cluster setup newcluster node1 node2 \\
-                transport udp link mcastport=55405
 
 {config_show_syntax}
 {config_show_desc}
@@ -1633,8 +1622,6 @@ Commands:
 
         Transport options for knet transport are:
             ip_version, knet_pmtud_interval, link_mode
-        Transport options for udp and updu transports are:
-            ip_version, netmtu
         Compression options are:
             level, model, threshold
         Crypto options are:
@@ -1928,8 +1915,6 @@ Commands:
         for knet transport:
             link_priority, mcastport, ping_interval, ping_precision,
             ping_timeout, pong_count, transport
-        for udp and udpu transports:
-            bindnetaddr, broadcast, mcastaddr, mcastport, ttl
 
     uidgid
         List the current configured uids and gids of users allowed to connect

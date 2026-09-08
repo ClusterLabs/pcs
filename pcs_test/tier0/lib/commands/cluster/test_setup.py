@@ -885,7 +885,7 @@ class Validation(TestCase):
 
         self.env_assist.assert_raise_library_error(
             lambda: cluster.setup(
-                self.env_assist.get_env(), "", [], transport_type="tcp"
+                self.env_assist.get_env(), "", [], transport_type="udp"
             )
         )
         self.env_assist.assert_reports(
@@ -900,9 +900,9 @@ class Validation(TestCase):
                 ),
                 fixture.error(
                     reports.codes.INVALID_OPTION_VALUE,
-                    option_value="tcp",
+                    option_value="udp",
                     option_name="transport",
-                    allowed_values=("knet", "udp", "udpu"),
+                    allowed_values=("knet",),
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),
@@ -1101,144 +1101,6 @@ class Validation(TestCase):
                 ),
             ]
         )
-
-    def test_pass_default_ip_version_to_udpu(self):
-        self.config.http.host.get_host_info(
-            NODE_LIST, output_data=self.get_host_info_ok
-        )
-        self.resolvable_hosts.extend(NODE_LIST)
-
-        self.env_assist.assert_raise_library_error(
-            lambda: cluster.setup(
-                self.env_assist.get_env(),
-                CLUSTER_NAME,
-                [
-                    # by default names, IPv4 and IPv6 are allowed for udpu
-                    {"name": "node1", "addrs": ["node1"]},
-                    {"name": "node2", "addrs": ["::ffff:10:0:0:2"]},
-                    {"name": "node3", "addrs": ["10.0.0.3"]},
-                ],
-                transport_type="udpu",
-            )
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.error(
-                    reports.codes.COROSYNC_IP_VERSION_MISMATCH_IN_LINKS,
-                    link_numbers=["0"],
-                )
-            ]
-        )
-
-    def test_pass_default_ip_version_to_udp(self):
-        self.config.http.host.get_host_info(
-            NODE_LIST, output_data=self.get_host_info_ok
-        )
-        self.resolvable_hosts.extend(NODE_LIST)
-
-        self.env_assist.assert_raise_library_error(
-            lambda: cluster.setup(
-                self.env_assist.get_env(),
-                CLUSTER_NAME,
-                [
-                    # by default names and IPv4 are allowed for udp
-                    {"name": "node1", "addrs": ["node1"]},
-                    {"name": "node2", "addrs": ["node2"]},
-                    {"name": "node3", "addrs": ["::ffff:10:0:0:3"]},
-                ],
-                transport_type="udp",
-            )
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.error(
-                    reports.codes.COROSYNC_ADDRESS_IP_VERSION_WRONG_FOR_LINK,
-                    address="::ffff:10:0:0:3",
-                    expected_address_type="IPv4",
-                    link_number="0",
-                ),
-            ]
-        )
-
-    def _assert_corosync_validators_udp_udpu(self, transport):
-        # The validators have their own tests. In here, we are only concerned
-        # about calling the validators so we test that all provided options
-        # have been validated.
-        self.config.http.host.get_host_info(
-            NODE_LIST, output_data=self.get_host_info_ok
-        )
-        self.resolvable_hosts.extend(NODE_LIST)
-
-        self.env_assist.assert_raise_library_error(
-            lambda: cluster.setup(
-                self.env_assist.get_env(),
-                CLUSTER_NAME,
-                self.command_node_list,
-                transport_type=transport,
-                transport_options={"a": "A"},
-                link_list=[{"b": "B"}],
-                compression_options={"c": "C"},
-                crypto_options={"d": "D"},
-                totem_options={"e": "E"},
-                quorum_options={"f": "F"},
-            )
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.error(
-                    reports.codes.INVALID_OPTIONS,
-                    option_names=["a"],
-                    option_type="udp/udpu transport",
-                    allowed=["ip_version", "netmtu"],
-                    allowed_patterns=[],
-                ),
-                fixture.error(
-                    reports.codes.COROSYNC_TRANSPORT_UNSUPPORTED_OPTIONS,
-                    option_type="compression",
-                    actual_transport="udp/udpu",
-                    required_transports=["knet"],
-                ),
-                fixture.error(
-                    reports.codes.COROSYNC_TRANSPORT_UNSUPPORTED_OPTIONS,
-                    option_type="crypto",
-                    actual_transport="udp/udpu",
-                    required_transports=["knet"],
-                ),
-                fixture.error(
-                    reports.codes.INVALID_OPTIONS,
-                    option_names=["b"],
-                    option_type="link",
-                    allowed=[
-                        "bindnetaddr",
-                        "broadcast",
-                        "mcastaddr",
-                        "mcastport",
-                        "ttl",
-                    ],
-                    allowed_patterns=[],
-                ),
-                fixture.error(
-                    reports.codes.INVALID_OPTIONS,
-                    option_names=["e"],
-                    option_type="totem",
-                    allowed=self.totem_allowed_options,
-                    allowed_patterns=[],
-                ),
-                fixture.error(
-                    reports.codes.INVALID_OPTIONS,
-                    option_names=["f"],
-                    option_type="quorum",
-                    allowed=self.quorum_allowed_options,
-                    allowed_patterns=[],
-                ),
-            ]
-        )
-
-    def test_corosync_validators_udp(self):
-        self._assert_corosync_validators_udp_udpu("udp")
-
-    def test_corosync_validators_udpu(self):
-        self._assert_corosync_validators_udp_udpu("udpu")
 
     def test_corosync_validators_knet(self):
         # The validators have their own tests. In here, we are only concerned
@@ -1754,7 +1616,7 @@ class Validation(TestCase):
                     reports.codes.INVALID_OPTION_VALUE,
                     option_value="tcp",
                     option_name="transport",
-                    allowed_values=("knet", "udp", "udpu"),
+                    allowed_values=("knet",),
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),
@@ -2016,91 +1878,6 @@ class TransportKnetSuccess(TestCase):
                     forbidden_characters=None,
                 ),
             ]
-        )
-
-
-@mock.patch(
-    "pcs.lib.commands.cluster.setup_cluster.generate_uuid", lambda: CLUSTER_UUID
-)
-@mock.patch(
-    "pcs.lib.commands.cluster.setup_cluster.generate_binary_key",
-    lambda random_bytes_count: RANDOM_KEY,
-)
-class TransportUdpSuccess(TestCase):
-    def setUp(self):
-        self.env_assist, self.config = get_env_tools(self)
-        self.config.env.set_known_nodes(NODE_LIST + ["random_node"])
-        self.transport_type = "udp"
-        self.resolvable_hosts = patch_getaddrinfo(self, [])
-
-    def test_basic(self):
-        node_addrs = {node: [f"{node}.addr"] for node in NODE_LIST}
-        self.resolvable_hosts.extend(set(flat_list(node_addrs.values())))
-        config_success_minimal_fixture(
-            self.config,
-            corosync_conf=corosync_conf_fixture(
-                node_addrs, transport_type=self.transport_type
-            ),
-        )
-
-        cluster.setup(
-            self.env_assist.get_env(),
-            CLUSTER_NAME,
-            [
-                dict(
-                    name=node,
-                    addrs=addrs,
-                )
-                for node, addrs in node_addrs.items()
-            ],
-            transport_type=self.transport_type,
-        )
-        self.env_assist.assert_reports(
-            reports_success_minimal_fixture(using_known_hosts_addresses=False)
-        )
-
-    def test_all_options(self):
-        node_addrs = {node: [f"{node}.addr"] for node in NODE_LIST}
-        self.resolvable_hosts.extend(set(flat_list(node_addrs.values())))
-        link_list = [
-            dict(
-                bindnetaddr="127.0.0.1",
-                mcastaddr="127.0.0.1",
-                mcastport="12345",
-                ttl="255",
-            )
-        ]
-        transport_options = dict(ip_version="ipv6", netmtu="1")
-        config_success_minimal_fixture(
-            self.config,
-            corosync_conf=corosync_conf_fixture(
-                node_addrs,
-                transport_type=self.transport_type,
-                link_list=link_list,
-                quorum_options=QUORUM_OPTIONS,
-                transport_options=transport_options,
-                totem_options=TOTEM_OPTIONS,
-            ),
-        )
-
-        cluster.setup(
-            self.env_assist.get_env(),
-            CLUSTER_NAME,
-            [
-                dict(
-                    name=node,
-                    addrs=addrs,
-                )
-                for node, addrs in node_addrs.items()
-            ],
-            transport_type=self.transport_type,
-            transport_options=transport_options,
-            link_list=link_list,
-            totem_options=TOTEM_OPTIONS,
-            quorum_options=QUORUM_OPTIONS,
-        )
-        self.env_assist.assert_reports(
-            reports_success_minimal_fixture(using_known_hosts_addresses=False)
         )
 
 
@@ -3188,7 +2965,7 @@ class SetupLocal(TestCase):
                 self.env_assist.get_env(),
                 "",
                 [],
-                transport_type="tcp",
+                transport_type="udp",
                 transport_options={},
                 link_list=[],
                 compression_options={},
@@ -3210,9 +2987,9 @@ class SetupLocal(TestCase):
                 ),
                 fixture.error(
                     reports.codes.INVALID_OPTION_VALUE,
-                    option_value="tcp",
+                    option_value="udp",
                     option_name="transport",
-                    allowed_values=("knet", "udp", "udpu"),
+                    allowed_values=("knet",),
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),

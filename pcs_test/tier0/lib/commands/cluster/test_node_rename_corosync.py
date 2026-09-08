@@ -14,7 +14,7 @@ def _corosync_conf(
         totem {{
             version: 2
             cluster_name: test
-            transport: udpu
+            transport: knet
         }}
 
         nodelist {{

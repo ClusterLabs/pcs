@@ -6,7 +6,6 @@ from pcs.lib.corosync import config_validators
 from pcs_test.tier0.lib.corosync.test_config_validators_common import (
     TotemBase,
     TransportKnetBase,
-    TransportUdpBase,
 )
 from pcs_test.tools import fixture
 from pcs_test.tools.assertions import assert_report_item_list_equal
@@ -32,28 +31,14 @@ class Create(TestCase):
             + [f"::ffff:10:0:0:{i}" for i in range(1, 20)],
         )
 
-    def test_all_valid_one_node(self):
+    def test_all_valid_one_node_one_address(self):
         assert_report_item_list_equal(
             config_validators.create(
                 "test-cluster",
                 [
                     {"name": "node1", "addrs": ["addr01"]},
                 ],
-                "udp",
-                "ipv4",
-            ),
-            [],
-        )
-
-    def test_all_valid_udp(self):
-        assert_report_item_list_equal(
-            config_validators.create(
-                "test-cluster",
-                [
-                    {"name": "node1", "addrs": ["addr01"]},
-                    {"name": "node2", "addrs": ["addr02"]},
-                ],
-                "udp",
+                "knet",
                 "ipv4",
             ),
             [],
@@ -87,7 +72,7 @@ class Create(TestCase):
                     {"name": "node1", "addrs": ["addr01"]},
                     {"name": "node2", "addrs": ["addr02"]},
                 ],
-                "tcp",
+                "udp",
                 "ipv6-4",
             ),
             [
@@ -101,9 +86,9 @@ class Create(TestCase):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    option_value="tcp",
+                    option_value="udp",
                     option_name="transport",
-                    allowed_values=("knet", "udp", "udpu"),
+                    allowed_values=("knet",),
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),
@@ -117,7 +102,7 @@ class Create(TestCase):
                 [
                     {"name": "node1", "addrs": ["addr01"]},
                 ],
-                "udp",
+                "knet",
                 "ipv4",
             ),
             [
@@ -138,7 +123,7 @@ class Create(TestCase):
                 [
                     {"name": "node1", "addrs": ["addr01"]},
                 ],
-                "udp",
+                "knet",
                 "ipv4",
             ),
             [
@@ -160,7 +145,7 @@ class Create(TestCase):
                 [
                     {"name": "node1", "addrs": ["addr01"]},
                 ],
-                "udp",
+                "knet",
                 "ipv4",
                 force_cluster_name=True,
             ),
@@ -176,7 +161,7 @@ class Create(TestCase):
 
     def test_nodelist_empty(self):
         assert_report_item_list_equal(
-            config_validators.create("test-cluster", [], "udp", "ipv4"),
+            config_validators.create("test-cluster", [], "knet", "ipv4"),
             [fixture.error(report_codes.COROSYNC_NODES_MISSING)],
         )
 
@@ -188,7 +173,7 @@ class Create(TestCase):
                     {"name": "node1", "addrs": ["addr01"]},
                     {},
                 ],
-                "udp",
+                "knet",
                 "ipv4",
             ),
             [
@@ -201,7 +186,7 @@ class Create(TestCase):
                     report_codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT,
                     actual_count=0,
                     min_count=1,
-                    max_count=1,
+                    max_count=8,
                     node_name=None,
                     node_index=2,
                 ),
@@ -216,7 +201,7 @@ class Create(TestCase):
                     {"name": "node1", "addrs": ["addr01"]},
                     {"name": "node2", "addrs": ["addr02"], "nonsense": "abc"},
                 ],
-                "udp",
+                "knet",
                 "ipv4",
             ),
             [
@@ -238,7 +223,7 @@ class Create(TestCase):
                     {"name": "", "addrs": ["addr01"]},
                     {"addrs": ["addr02"]},
                 ],
-                "udp",
+                "knet",
                 "ipv4",
             ),
             [
@@ -272,7 +257,7 @@ class Create(TestCase):
                     {"name": "", "addrs": ["addr06"]},
                     {"name": "", "addrs": ["addr07"]},
                 ],
-                "udp",
+                "knet",
                 "ipv4",
             ),
             [
@@ -299,31 +284,6 @@ class Create(TestCase):
             ],
         )
 
-    def test_node_addrs_missing_udp(self):
-        assert_report_item_list_equal(
-            config_validators.create(
-                "test-cluster",
-                [
-                    {"name": "node1"},
-                    {"name": "node2", "addrs": []},
-                    {"name": "node3", "addrs": None},
-                ],
-                "udp",
-                "ipv4",
-            ),
-            [
-                fixture.error(
-                    report_codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT,
-                    actual_count=0,
-                    min_count=1,
-                    max_count=1,
-                    node_name=name,
-                    node_index=id_,
-                )
-                for id_, name in enumerate(["node1", "node2", "node3"], 1)
-            ],
-        )
-
     def test_node_addrs_missing_knet(self):
         assert_report_item_list_equal(
             config_validators.create(
@@ -346,37 +306,6 @@ class Create(TestCase):
                     node_index=id_,
                 )
                 for id_, name in enumerate(["node1", "node2", "node3"], 1)
-            ],
-        )
-
-    def test_node_addrs_to_many_udp(self):
-        assert_report_item_list_equal(
-            config_validators.create(
-                "test-cluster",
-                [
-                    {"name": "node1", "addrs": ["addr01", "addr03"]},
-                    {"name": "node2", "addrs": ["addr02", "addr04"]},
-                ],
-                "udp",
-                "ipv4",
-            ),
-            [
-                fixture.error(
-                    report_codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT,
-                    actual_count=2,
-                    min_count=1,
-                    max_count=1,
-                    node_name="node1",
-                    node_index=1,
-                ),
-                fixture.error(
-                    report_codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT,
-                    actual_count=2,
-                    min_count=1,
-                    max_count=1,
-                    node_name="node2",
-                    node_index=2,
-                ),
             ],
         )
 
@@ -508,7 +437,7 @@ class Create(TestCase):
                     {"name": "node2", "addrs": ["addr02"]},
                     {"name": "node3", "addrs": ["10.0.0.3"]},
                 ],
-                "udp",
+                "knet",
                 "ipv4",
             ),
             [
@@ -534,7 +463,7 @@ class Create(TestCase):
                     {"name": "node2", "addrs": ["addr02"]},
                     {"name": "node3", "addrs": ["10.0.0.3"]},
                 ],
-                "udp",
+                "knet",
                 "ipv6",
             ),
             [
@@ -607,48 +536,6 @@ class Create(TestCase):
                     report_codes.NODE_ADDRESSES_DUPLICATION,
                     address_list=["10.0.0.1", "::ffff:10:0:0:4", "addr02"],
                 )
-            ],
-        )
-
-    def test_node_addrs_count_mismatch_udp(self):
-        assert_report_item_list_equal(
-            config_validators.create(
-                "test-cluster",
-                [
-                    {"name": "node1", "addrs": ["addr01", "addr11"]},
-                    {"name": "node2", "addrs": ["addr02"]},
-                    {"name": "node3", "addrs": ["addr03", "addr13"]},
-                    {"name": "node4", "addrs": ["addr04"]},
-                    {"name": "node5", "addrs": ["addr05", "addr15", "addr16"]},
-                ],
-                "udp",
-                "ipv4",
-            ),
-            [
-                fixture.error(
-                    report_codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT,
-                    actual_count=2,
-                    min_count=1,
-                    max_count=1,
-                    node_name="node1",
-                    node_index=1,
-                ),
-                fixture.error(
-                    report_codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT,
-                    actual_count=2,
-                    min_count=1,
-                    max_count=1,
-                    node_name="node3",
-                    node_index=3,
-                ),
-                fixture.error(
-                    report_codes.COROSYNC_BAD_NODE_ADDRESSES_COUNT,
-                    actual_count=3,
-                    min_count=1,
-                    max_count=1,
-                    node_name="node5",
-                    node_index=5,
-                ),
             ],
         )
 
@@ -797,7 +684,7 @@ class Create(TestCase):
                 [
                     {"name": "node1}", "addrs": ["addr\r01"]},
                 ],
-                "udp\n",
+                "knet\n",
                 "ipv4",
             ),
             [
@@ -816,15 +703,15 @@ class Create(TestCase):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    option_value="udp\n",
+                    option_value="knet\n",
                     option_name="transport",
-                    allowed_values=("knet", "udp", "udpu"),
+                    allowed_values=("knet",),
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    option_value="udp\n",
+                    option_value="knet\n",
                     option_name="transport",
                     **forbidden_characters_kwargs,
                 ),
@@ -849,22 +736,22 @@ class Create(TestCase):
         )
 
 
-class CreateLinkListCommonMixin:
+class CreateLinkListKnet(TestCase):
     def test_no_links(self):
         assert_report_item_list_equal(
-            self._validate([], self.default_addr_count), []
+            config_validators.create_link_list_knet([], 8), []
         )
 
     def test_no_options(self):
         assert_report_item_list_equal(
-            self._validate([{}], self.default_addr_count), []
+            config_validators.create_link_list_knet([{}], 8), []
         )
 
     def test_less_link_options_than_links(self):
         # If number of links options <= number of addresses, then everything is
         # ok. Number of addresses is checked in another validator.
         assert_report_item_list_equal(
-            self._validate(
+            config_validators.create_link_list_knet(
                 [
                     {"mcastport": "5405"},
                     {"mcastport": "5405"},
@@ -876,7 +763,7 @@ class CreateLinkListCommonMixin:
 
     def test_link_options_count_equals_links_count(self):
         assert_report_item_list_equal(
-            self._validate(
+            config_validators.create_link_list_knet(
                 [
                     {"mcastport": "5405"},
                 ],
@@ -887,7 +774,7 @@ class CreateLinkListCommonMixin:
 
     def test_more_link_options_than_links(self):
         assert_report_item_list_equal(
-            self._validate(
+            config_validators.create_link_list_knet(
                 [
                     {"mcastport": "5405"},
                     {"mcastport": "5405"},
@@ -905,7 +792,7 @@ class CreateLinkListCommonMixin:
 
     def test_max_links_count_too_low(self):
         assert_report_item_list_equal(
-            self._validate(
+            config_validators.create_link_list_knet(
                 [
                     {"mcastport": "5405"},
                 ],
@@ -924,258 +811,11 @@ class CreateLinkListCommonMixin:
         # If number of links options <= number of addresses, then everything is
         # ok. Number of addresses is checked in another validator.
         assert_report_item_list_equal(
-            self._validate([{"mcastport": "5405"} for _ in range(10)], 10), []
-        )
-
-
-class CreateLinkListUdp(CreateLinkListCommonMixin, TestCase):
-    default_addr_count = 1
-
-    def _validate(self, *args, **kwargs):
-        return config_validators.create_link_list_udp(*args, **kwargs)
-
-    def test_all_valid(self):
-        assert_report_item_list_equal(
-            config_validators.create_link_list_udp(
-                [
-                    {
-                        "bindnetaddr": "10.0.0.1",
-                        "broadcast": "0",
-                        "mcastaddr": "225.0.0.1",
-                        "mcastport": "5405",
-                        "ttl": "12",
-                    }
-                ],
-                1,
+            config_validators.create_link_list_knet(
+                [{"mcastport": "5405"} for _ in range(10)], 10
             ),
             [],
         )
-
-    def test_invalid_all_values(self):
-        assert_report_item_list_equal(
-            config_validators.create_link_list_udp(
-                [
-                    {
-                        "bindnetaddr": "my-network",
-                        "broadcast": "yes",
-                        "mcastaddr": "my-group",
-                        "mcastport": "0",
-                        "ttl": "256",
-                    }
-                ],
-                1,
-            ),
-            [
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="my-network",
-                    option_name="bindnetaddr",
-                    allowed_values="an IP address",
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="yes",
-                    option_name="broadcast",
-                    allowed_values=("0", "1"),
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="my-group",
-                    option_name="mcastaddr",
-                    allowed_values="an IP address",
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="0",
-                    option_name="mcastport",
-                    allowed_values="a port number (1..65535)",
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="256",
-                    option_name="ttl",
-                    allowed_values="0..255",
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-            ],
-        )
-
-    def test_invalid_options(self):
-        allowed_options = [
-            "bindnetaddr",
-            "broadcast",
-            "mcastaddr",
-            "mcastport",
-            "ttl",
-        ]
-        assert_report_item_list_equal(
-            config_validators.create_link_list_udp(
-                [
-                    {
-                        "linknumber": "0",
-                        "nonsense": "doesnt matter",
-                    }
-                ],
-                1,
-            ),
-            [
-                fixture.error(
-                    report_codes.INVALID_OPTIONS,
-                    option_names=["linknumber", "nonsense"],
-                    option_type="link",
-                    allowed=allowed_options,
-                    allowed_patterns=[],
-                ),
-            ],
-        )
-
-    def test_broadcast_default_mcastaddr_set(self):
-        assert_report_item_list_equal(
-            config_validators.create_link_list_udp(
-                [{"mcastaddr": "225.0.0.1"}], 1
-            ),
-            [],
-        )
-
-    def test_broadcast_disabled_mcastaddr_set(self):
-        assert_report_item_list_equal(
-            config_validators.create_link_list_udp(
-                [{"broadcast": "0", "mcastaddr": "225.0.0.1"}], 1
-            ),
-            [],
-        )
-
-    def test_broadcast_enabled_mcastaddr_set(self):
-        assert_report_item_list_equal(
-            config_validators.create_link_list_udp(
-                [{"broadcast": "1", "mcastaddr": "225.0.0.1"}], 1
-            ),
-            [
-                fixture.error(
-                    report_codes.PREREQUISITE_OPTION_MUST_BE_DISABLED,
-                    option_name="mcastaddr",
-                    option_type="link",
-                    prerequisite_name="broadcast",
-                    prerequisite_type="link",
-                ),
-            ],
-        )
-
-    def test_forbidden_characters(self):
-        assert_report_item_list_equal(
-            config_validators.create_link_list_udp(
-                [
-                    {
-                        "bindnetaddr": "{10.0.0.1",
-                        "broadcast": "}0",
-                        "mcastaddr": "\r225.0.0.1",
-                        "mcastport": "\n5405",
-                        "ttl": "12",
-                        "op:.tion": "va}l{ue",
-                    }
-                ],
-                1,
-            ),
-            [
-                fixture.error(
-                    report_codes.INVALID_OPTIONS,
-                    option_names=["op:.tion"],
-                    option_type="link",
-                    allowed=[
-                        "bindnetaddr",
-                        "broadcast",
-                        "mcastaddr",
-                        "mcastport",
-                        "ttl",
-                    ],
-                    allowed_patterns=[],
-                ),
-                fixture.error(
-                    report_codes.INVALID_USERDEFINED_OPTIONS,
-                    option_names=["op:.tion"],
-                    option_type="link",
-                    allowed_characters="a-z A-Z 0-9 /_-",
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="{10.0.0.1",
-                    option_name="bindnetaddr",
-                    **forbidden_characters_kwargs,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="}0",
-                    option_name="broadcast",
-                    **forbidden_characters_kwargs,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="\r225.0.0.1",
-                    option_name="mcastaddr",
-                    **forbidden_characters_kwargs,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="\n5405",
-                    option_name="mcastport",
-                    **forbidden_characters_kwargs,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="va}l{ue",
-                    option_name="op:.tion",
-                    **forbidden_characters_kwargs,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="{10.0.0.1",
-                    option_name="bindnetaddr",
-                    allowed_values="an IP address",
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="}0",
-                    option_name="broadcast",
-                    allowed_values=("0", "1"),
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="\r225.0.0.1",
-                    option_name="mcastaddr",
-                    allowed_values="an IP address",
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="\n5405",
-                    option_name="mcastport",
-                    allowed_values="a port number (1..65535)",
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-            ],
-        )
-
-
-class CreateLinkListKnet(CreateLinkListCommonMixin, TestCase):
-    default_addr_count = 8
-
-    def _validate(self, *args, **kwargs):
-        return config_validators.create_link_list_knet(*args, **kwargs)
 
     def test_all_valid(self):
         assert_report_item_list_equal(
@@ -1222,7 +862,7 @@ class CreateLinkListKnet(CreateLinkListCommonMixin, TestCase):
                         "ping_precision": "-15",
                         "ping_timeout": "100",
                         "pong_count": "-10",
-                        "transport": "udpu",
+                        "transport": "sctp",
                     },
                 ],
                 3,
@@ -1294,7 +934,7 @@ class CreateLinkListKnet(CreateLinkListCommonMixin, TestCase):
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    option_value="udpu",
+                    option_value="sctp",
                     option_name="transport",
                     allowed_values=("udp",),
                     cannot_be_empty=False,
@@ -1642,38 +1282,6 @@ class CreateLinkListKnet(CreateLinkListCommonMixin, TestCase):
                     option_value="0{",
                     option_name="linknumber",
                     allowed_values="0..7",
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-            ],
-        )
-
-
-class CreateTransportUdp(TransportUdpBase, TestCase):
-    def call_function(
-        self, generic_options, compression_options, crypto_options
-    ):
-        return config_validators.create_transport_udp(
-            generic_options, compression_options, crypto_options
-        )
-
-    def test_empty_values_not_allowed(self):
-        assert_report_item_list_equal(
-            self.call_function({"ip_version": "", "netmtu": ""}, {}, {}),
-            [
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="",
-                    option_name="ip_version",
-                    allowed_values=("ipv4", "ipv6", "ipv4-6", "ipv6-4"),
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="",
-                    option_name="netmtu",
-                    allowed_values="a positive integer",
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),

@@ -109,7 +109,7 @@ def setup(  # noqa:  PLR0913, PLR0915
     totem_options = totem_options or {}
     quorum_options = quorum_options or {}
     nodes = [normalize_dict(node, {"addrs"}) for node in nodes]
-    if transport_type in corosync_constants.TRANSPORTS_KNET:
+    if transport_type == corosync_constants.TRANSPORT_KNET:
         crypto_options = {**_PCS_DEFAULT_KNET_CRYPTO_OPTIONS, **crypto_options}
 
     report_processor = env.report_processor
@@ -311,7 +311,7 @@ def setup_local(  # noqa: PLR0913
 
     transport_type = transport_type or "knet"
     nodes = [normalize_dict(node, {"addrs"}) for node in nodes]
-    if transport_type in corosync_constants.TRANSPORTS_KNET:
+    if transport_type == corosync_constants.TRANSPORT_KNET:
         crypto_options = {**_PCS_DEFAULT_KNET_CRYPTO_OPTIONS, **crypto_options}
 
     report_processor = env.report_processor
@@ -390,11 +390,7 @@ def _validate_create_corosync_conf(  # noqa: PLR0913
 ) -> reports.ReportItemList:
     # Get IP version for node addresses validation. Defaults taken from man
     # corosync.conf
-    ip_version = (
-        corosync_constants.IP_VERSION_4
-        if transport_type == "udp"
-        else corosync_constants.IP_VERSION_64
-    )
+    ip_version = corosync_constants.IP_VERSION_64
     if (
         transport_options.get("ip_version")
         in corosync_constants.IP_VERSION_VALUES
@@ -411,7 +407,7 @@ def _validate_create_corosync_conf(  # noqa: PLR0913
         force_cluster_name=force,
     )
     max_node_addr_count = max((len(node["addrs"]) for node in nodes), default=0)
-    if transport_type in corosync_constants.TRANSPORTS_KNET:
+    if transport_type == corosync_constants.TRANSPORT_KNET:
         report_list += config_validators.create_transport_knet(
             transport_options, compression_options, crypto_options
         )
@@ -419,13 +415,6 @@ def _validate_create_corosync_conf(  # noqa: PLR0913
             link_list, max_node_addr_count
         )
 
-    elif transport_type in corosync_constants.TRANSPORTS_UDP:
-        report_list += config_validators.create_transport_udp(
-            transport_options, compression_options, crypto_options
-        )
-        report_list += config_validators.create_link_list_udp(
-            link_list, max_node_addr_count
-        )
     return (
         report_list
         + config_validators.create_totem(totem_options)

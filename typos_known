@@ -42,8 +42,6 @@
 ./pcs_test/tier0/cli/test_cluster.py: error: `ba` should be `by`, `be`
 ./pcs_test/tier0/cli/test_cluster.py: error: `ba` should be `by`, `be`
 ./pcs_test/tier0/cli/test_cluster.py: error: `ba` should be `by`, `be`
-./pcs_test/tier0/cli/test_cluster.py: error: `ba` should be `by`, `be`
-./pcs_test/tier0/cli/test_cluster.py: error: `ba` should be `by`, `be`
 ./pcs_test/tier0/lib/cib/test_resource_operations.py: error: `monitro` should be `monitor`
 ./pcs_test/tier0/lib/cib/test_resource_operations.py: error: `monitro` should be `monitor`
 ./pcs_test/tier0/lib/cib/test_tools.py: error: `ba` should be `by`, `be`
@@ -66,14 +64,8 @@
 ./pcs_test/tier0/lib/corosync/test_config_validators_common.py: error: `ue` should be `use`, `due`
 ./pcs_test/tier0/lib/corosync/test_config_validators_common.py: error: `ue` should be `use`, `due`
 ./pcs_test/tier0/lib/corosync/test_config_validators_common.py: error: `ue` should be `use`, `due`
-./pcs_test/tier0/lib/corosync/test_config_validators_common.py: error: `ue` should be `use`, `due`
-./pcs_test/tier0/lib/corosync/test_config_validators_common.py: error: `ue` should be `use`, `due`
 ./pcs_test/tier0/lib/corosync/test_config_validators_create.py: error: `ue` should be `use`, `due`
 ./pcs_test/tier0/lib/corosync/test_config_validators_create.py: error: `ue` should be `use`, `due`
-./pcs_test/tier0/lib/corosync/test_config_validators_create.py: error: `ue` should be `use`, `due`
-./pcs_test/tier0/lib/corosync/test_config_validators_create.py: error: `ue` should be `use`, `due`
-./pcs_test/tier0/lib/corosync/test_config_validators_links.py: error: `ue` should be `use`, `due`
-./pcs_test/tier0/lib/corosync/test_config_validators_links.py: error: `ue` should be `use`, `due`
 ./pcs_test/tier0/lib/corosync/test_config_validators_links.py: error: `ue` should be `use`, `due`
 ./pcs_test/tier0/lib/corosync/test_config_validators_links.py: error: `ue` should be `use`, `due`
 ./pcs_test/tier0/lib/corosync/test_config_validators_links.py: error: `ue` should be `use`, `due`

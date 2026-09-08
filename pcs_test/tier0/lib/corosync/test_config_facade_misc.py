@@ -77,26 +77,21 @@ class GetTransport(GetSimpleValueMixin, TestCase):
         )
 
     def test_one_name(self):
-        self.assert_value("udp", "totem {\n transport: udp\n}\n")
+        self.assert_value("knet", "totem {\n transport: knet\n}\n")
 
     def test_more_names(self):
         self.assert_value(
-            "udpu", "totem {\n transport: udp\n transport: udpu\n}\n"
+            "other", "totem {\n transport: knet\n transport: other\n}\n"
         )
 
     def test_more_sections(self):
         self.assert_value(
-            "udpu", "totem{\n transport: udp\n}\ntotem{\n transport: udpu\n}\n"
+            "other",
+            "totem{\n transport: knet\n}\ntotem{\n transport: other\n}\n",
         )
 
 
 class GetIpVersion(GetSimpleValueMixin, TestCase):
-    transport_ip_list = [
-        ("udp", constants.IP_VERSION_4),
-        ("udpu", constants.IP_VERSION_64),
-        ("knet", constants.IP_VERSION_64),
-    ]
-
     @staticmethod
     def getter(facade):
         return facade.get_ip_version()
@@ -105,36 +100,33 @@ class GetIpVersion(GetSimpleValueMixin, TestCase):
         self.assert_value(constants.IP_VERSION_64, "")
 
     def test_no_name(self):
-        for transport, ip in self.transport_ip_list:
-            with self.subTest(transport=transport, ip=ip):
-                self.assert_value(
-                    ip, f"totem {{\n transport: {transport}\n}}\n"
-                )
+        self.assert_value(
+            constants.IP_VERSION_64, "totem {\n transport: knet\n}\n"
+        )
 
     def test_no_value(self):
-        for transport, ip in self.transport_ip_list:
-            with self.subTest(transport=transport, ip=ip):
-                self.assert_value(
-                    ip, f"totem {{\n transport: {transport}\n ip_version:\n}}\n"
-                )
+        self.assert_value(
+            constants.IP_VERSION_64,
+            "totem {\n transport: knet\n ip_version:\n}\n",
+        )
 
     def test_one_name(self):
         self.assert_value(
-            "ipv4-6", "totem {\n transport: udp\n ip_version: ipv4-6\n}\n"
+            constants.IP_VERSION_46,
+            "totem {\n transport: knet\n ip_version: ipv4-6\n}\n",
         )
 
     def test_more_names(self):
         self.assert_value(
-            "ipv6",
-            (
-                "totem {\ntransport: udp\nip_version: ipv4-6\nip_version: "
-                "ipv6\n}\n"
-            ),
+            constants.IP_VERSION_6,
+            "totem {\ntransport: knet\nip_version: ipv4\nip_version: ipv6\n}\n",
         )
 
     def test_more_sections(self):
         self.assert_value(
-            "ipv6",
-            "totem {\n transport: knet\n ip_version: ipv4-6\n}\n"
-            "totem {\n ip_version: ipv6\n}\n",
+            constants.IP_VERSION_6,
+            (
+                "totem {\n transport: knet\n ip_version: ipv4\n}\n"
+                "totem {\n ip_version: ipv6\n}\n"
+            ),
         )

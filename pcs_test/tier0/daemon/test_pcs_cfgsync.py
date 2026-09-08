@@ -65,7 +65,7 @@ def fixture_pcs_settings_content(data_version=1):
 
 def fixture_corosync_with_no_nodes():
     return CorosyncExporter.export(
-        CorosyncFacade.create("test", [], "udp").config
+        CorosyncFacade.create("test", [], "knet").config
     )
 
 

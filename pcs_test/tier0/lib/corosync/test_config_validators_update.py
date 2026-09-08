@@ -6,7 +6,6 @@ from pcs.lib.corosync import config_validators
 from pcs_test.tier0.lib.corosync.test_config_validators_common import (
     TotemBase,
     TransportKnetBase,
-    TransportUdpBase,
 )
 from pcs_test.tools import fixture
 from pcs_test.tools.assertions import assert_report_item_list_equal
@@ -283,19 +282,4 @@ class UpdateTransportKnet(TransportKnetBase, TestCase):
                 ),
                 self.fixture_error_prerequisite,
             ],
-        )
-
-
-class UpdateTransportUdp(TransportUdpBase, TestCase):
-    def call_function(
-        self, generic_options, compression_options, crypto_options
-    ):
-        return config_validators.update_transport_udp(
-            generic_options, compression_options, crypto_options
-        )
-
-    def test_empty_values_allowed(self):
-        assert_report_item_list_equal(
-            self.call_function({"ip_version": "", "netmtu": ""}, {}, {}),
-            [],
         )

@@ -24,15 +24,15 @@ class GetCorosyncConfStruct(TestCase):
 
     def test_unsupported_corosync_transport(self):
         self.config.corosync_conf.load_content(
-            fixture_totem(transport_type="unknown")
+            fixture_totem(transport_type="udp")
         )
         self.env_assist.assert_raise_library_error(
             lambda: cluster.get_corosync_conf_struct(self.env_assist.get_env()),
             [
                 fixture.error(
                     report_codes.COROSYNC_CONFIG_UNSUPPORTED_TRANSPORT,
-                    actual_transport="unknown",
-                    supported_transport_types=["knet", "udp", "udpu"],
+                    actual_transport="udp",
+                    supported_transport_types=["knet"],
                 ),
             ],
             expected_in_processor=False,

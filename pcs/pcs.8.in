@@ -469,7 +469,7 @@ relations <resource id> [\fB\-\-full\fR]
 Display relations of a resource specified by its id with other resources in a tree structure. Supported types of resource relations are: ordering constraints, ordering set constraints, relations defined by resource hierarchy (clones, groups, bundles). If \fB\-\-full\fR is used, more verbose output will be printed.
 .SS "cluster"
 .TP
-setup <cluster name> (<node name> [addr=<node address>]...)... [transport knet|udp|udpu [<transport options>] [link <link options>]... [compression <compression options>] [crypto <crypto options>]] [totem <totem options>] [quorum <quorum options>] [\fB\-\-no\-cluster\-uuid\fR] ([\fB\-\-enable\fR] [\fB\-\-start\fR [\fB\-\-wait\fR[=<n>]]] [\fB\-\-no\-keys\-sync\fR]) | [\fB\-\-corosync_conf\fR <path>]
+setup <cluster name> (<node name> [addr=<node address>]...)... [transport knet [<transport options>] [link <link options>]... [compression <compression options>] [crypto <crypto options>]] [totem <totem options>] [quorum <quorum options>] [\fB\-\-no\-cluster\-uuid\fR] ([\fB\-\-enable\fR] [\fB\-\-start\fR [\fB\-\-wait\fR[=<n>]]] [\fB\-\-no\-keys\-sync\fR]) | [\fB\-\-corosync_conf\fR <path>]
 Create a cluster from the listed nodes and synchronize cluster configuration files to them. If \fB\-\-corosync_conf\fR is specified, do not connect to other nodes and save corosync.conf to the specified path; see 'Local only mode' below for details.
 
 Nodes are specified by their names and optionally their addresses. If no addresses are specified for a node, pcs will configure corosync to communicate with that node using an address provided in 'pcs host auth' command. Otherwise, pcs will configure corosync to communicate with the node using the specified addresses.
@@ -489,14 +489,6 @@ Compression options are: level, model, threshold
 Crypto options are: cipher, hash, model
 .br
 By default, encryption is enabled with cipher=aes256 and hash=sha256.
-
-Transports udp and udpu:
-.br
-These transports are limited to one address per node. They do not support traffic encryption nor compression.
-.br
-Transport options are: ip_version, netmtu
-.br
-Link options are: bindnetaddr, broadcast, mcastaddr, mcastport, ttl
 
 Totem and quorum can be configured regardless of used transport.
 .br
@@ -535,9 +527,6 @@ Set link options for all links. Link options are matched to the links in order. 
 .br
 Set link options for the second and fourth links only. Link options are matched to the links based on the linknumber option (the first link is link 0):
     pcs cluster setup newcluster node1 addr=10.0.1.11 addr=10.0.2.11 addr=10.0.3.11 addr=10.0.4.11 node2 addr=10.0.1.12 addr=10.0.2.12 addr=10.0.3.12 addr=10.0.4.12 transport knet link linknumber=3 mcastport=55405 link linknumber=1 pong_count=4
-.br
-Create a cluster using udp transport with a non\-default port:
-    pcs cluster setup newcluster node1 node2 transport udp link mcastport=55405
 .TP
 config [show] [@OUTPUT_FORMAT_SYNTAX_DOC@] [\fB\-\-corosync_conf\fR <path>]
 Show cluster configuration. @OUTPUT_FORMAT_DESC_DOC@ If \fB\-\-corosync_conf\fR is specified, configuration file specified by <path> is used instead of the current cluster configuration.
@@ -550,8 +539,6 @@ If \fB\-\-corosync_conf\fR is specified, update cluster configuration in a file 
 All options are documented in corosync.conf(5) man page. There are different transport options for transport types. Compression and crypto options are only available for knet transport. Totem options can be set regardless of the transport type.
 .br
 Transport options for knet transport are: ip_version, knet_pmtud_interval, link_mode
-.br
-Transport options for udp and updu transports are: ip_version, netmtu
 .br
 Compression options are: level, model, threshold
 .br
@@ -752,8 +739,6 @@ Add, remove or change node addresses / link options of an existing corosync link
 Link options (documented in corosync.conf(5) man page) are:
 .br
 for knet transport: link_priority, mcastport, ping_interval, ping_precision, ping_timeout, pong_count, transport
-.br
-for udp and udpu transports: bindnetaddr, broadcast, mcastaddr, mcastport, ttl
 .TP
 uidgid
 List the current configured uids and gids of users allowed to connect to corosync.
@@ -1733,6 +1718,8 @@ This section summarizes the most important changes in commands done in pcs\-1.0.
 .SS "Corosync / kronosnet changes"
 .TP
 Following Corosync / Kronosnet, pcs has dropped support for:
+.br
+UDP and UDPU transport, use knet transport instead
 .br
 SCTP transport in knet links
 .TP

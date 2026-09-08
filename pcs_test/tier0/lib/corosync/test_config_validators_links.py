@@ -28,7 +28,7 @@ class AddLink(TestCase):
             "node2": "addr2-new",
             "node3": "addr3-new",
         }
-        self.transport = constants.TRANSPORTS_KNET[0]
+        self.transport = constants.TRANSPORT_KNET
         self.existing_link_list = ["0", "1", "3"]
         self.coro_nodes = [
             node.CorosyncNode(
@@ -81,7 +81,7 @@ class AddLink(TestCase):
             [],
         )
 
-    def _assert_bad_transport(self, transport):
+    def test_bad_transport(self):
         assert_report_item_list_equal(
             config_validators.add_link(
                 self.new_addrs,
@@ -89,24 +89,18 @@ class AddLink(TestCase):
                 self.coro_nodes,
                 self.pcmk_nodes,
                 self.existing_link_list,
-                transport,
+                "udp",
                 constants.IP_VERSION_64,
             ),
             [
                 fixture.error(
                     report_codes.COROSYNC_CANNOT_ADD_REMOVE_LINKS_BAD_TRANSPORT,
                     add_or_not_remove=True,
-                    actual_transport=transport,
+                    actual_transport="udp",
                     required_transports=["knet"],
                 )
             ],
         )
-
-    def test_transport_udp(self):
-        self._assert_bad_transport("udp")
-
-    def test_transport_udpu(self):
-        self._assert_bad_transport("udpu")
 
     def test_ping_interval_without_ping_timeout(self):
         assert_report_item_list_equal(
@@ -780,24 +774,18 @@ class RemoveLinks(TestCase):
             ],
         )
 
-    def _assert_bad_transport(self, transport):
+    def test_bad_transport(self):
         assert_report_item_list_equal(
-            config_validators.remove_links(["3"], self.existing, transport),
+            config_validators.remove_links(["3"], self.existing, "udp"),
             [
                 fixture.error(
                     report_codes.COROSYNC_CANNOT_ADD_REMOVE_LINKS_BAD_TRANSPORT,
                     add_or_not_remove=False,
-                    actual_transport=transport,
+                    actual_transport="udp",
                     required_transports=["knet"],
                 )
             ],
         )
-
-    def test_transport_udp(self):
-        self._assert_bad_transport("udp")
-
-    def test_transport_udpu(self):
-        self._assert_bad_transport("udpu")
 
     def test_nonexistent_links(self):
         to_remove = ["15", "0", "4", "abc", "1"]
@@ -895,7 +883,7 @@ class UpdateLinkCommon(TestCase):
                 [],
                 [],
                 ["0"],
-                constants.TRANSPORTS_UDP[0],
+                constants.TRANSPORT_KNET,
                 constants.IP_VERSION_64,
             ),
             [],
@@ -911,7 +899,7 @@ class UpdateLinkCommon(TestCase):
                 [],
                 [],
                 ["0"],
-                constants.TRANSPORTS_UDP[0],
+                constants.TRANSPORT_KNET,
                 constants.IP_VERSION_64,
             ),
             [
@@ -924,7 +912,26 @@ class UpdateLinkCommon(TestCase):
         )
 
 
-class UpdateLinkAddressesMixin:
+class UpdateLinkAddressesKnet(TestCase):
+    def setUp(self):
+        self.linknumber = "1"
+        self.transport = constants.TRANSPORT_KNET
+        self.existing_link_list = ["0", "1", "3"]
+        self.coro_nodes = [
+            node.CorosyncNode(
+                f"node{i}",
+                [
+                    node.CorosyncNodeAddress(f"addr{i}-{j}", f"{j}")
+                    for j in self.existing_link_list
+                ],
+                i,
+            )
+            for i in range(1, 5)
+        ]
+        self.existing_addrs = []
+        for a_node in self.coro_nodes:
+            self.existing_addrs.extend(a_node.addrs_plain())
+
     def test_swap_addresses(self):
         new_addrs = {
             self.coro_nodes[0].name: (
@@ -1186,136 +1193,6 @@ class UpdateLinkAddressesMixin:
             ],
         )
 
-
-class UpdateLinkAddressesUdp(UpdateLinkAddressesMixin, TestCase):
-    def setUp(self):
-        self.linknumber = "0"
-        self.transport = constants.TRANSPORTS_UDP[0]
-        self.existing_link_list = ["0"]
-        self.coro_nodes = [
-            node.CorosyncNode(
-                f"node{i}", [node.CorosyncNodeAddress(f"addr{i}", "0")], i
-            )
-            for i in range(1, 5)
-        ]
-        self.existing_addrs = []
-        for a_node in self.coro_nodes:
-            self.existing_addrs.extend(a_node.addrs_plain())
-
-    def test_new_address_already_used(self):
-        pcmk_nodes = [PacemakerNode("node-remote", "addr-remote")]
-        new_addrs = {
-            self.coro_nodes[1].name: self.coro_nodes[0].addr_plain_for_link(
-                "0"
-            ),
-            self.coro_nodes[2].name: pcmk_nodes[0].addr,
-            self.coro_nodes[3].name: "new-addr",
-        }
-        patch_getaddrinfo(self, list(new_addrs.values()) + self.existing_addrs)
-
-        assert_report_item_list_equal(
-            config_validators.update_link(
-                self.linknumber,
-                new_addrs,
-                {},
-                {},
-                self.coro_nodes,
-                pcmk_nodes,
-                self.existing_link_list,
-                self.transport,
-                constants.IP_VERSION_64,
-            ),
-            [
-                fixture.error(
-                    report_codes.NODE_ADDRESSES_ALREADY_EXIST,
-                    address_list=["addr-remote", "addr1"],
-                ),
-            ],
-        )
-
-    def test_mixing_ip_families_new_vs_ipv6(self):
-        patch_getaddrinfo(self, self.existing_addrs)
-        coro_nodes = [
-            node.CorosyncNode(
-                f"node{i}",
-                [node.CorosyncNodeAddress(f"::ffff:10:0:2:{i}", "0")],
-                i,
-            )
-            for i in range(1, 3)
-        ]
-        assert_report_item_list_equal(
-            config_validators.update_link(
-                self.linknumber,
-                {
-                    self.coro_nodes[0].name: "10.0.1.1",
-                },
-                {},
-                {},
-                coro_nodes,
-                [],
-                self.existing_link_list,
-                self.transport,
-                constants.IP_VERSION_64,
-            ),
-            [
-                fixture.error(
-                    report_codes.COROSYNC_IP_VERSION_MISMATCH_IN_LINKS,
-                    link_numbers=[],
-                ),
-            ],
-        )
-
-    def test_mixing_ip_families_new_vs_ipv4(self):
-        patch_getaddrinfo(self, self.existing_addrs)
-        coro_nodes = [
-            node.CorosyncNode(
-                f"node{i}", [node.CorosyncNodeAddress(f"10.0.0.{i}", "0")], i
-            )
-            for i in range(1, 3)
-        ]
-        assert_report_item_list_equal(
-            config_validators.update_link(
-                self.linknumber,
-                {
-                    self.coro_nodes[0].name: "::ffff:10:0:3:1",
-                },
-                {},
-                {},
-                coro_nodes,
-                [],
-                self.existing_link_list,
-                self.transport,
-                constants.IP_VERSION_64,
-            ),
-            [
-                fixture.error(
-                    report_codes.COROSYNC_IP_VERSION_MISMATCH_IN_LINKS,
-                    link_numbers=[],
-                ),
-            ],
-        )
-
-
-class UpdateLinkAddressesKnet(UpdateLinkAddressesMixin, TestCase):
-    def setUp(self):
-        self.linknumber = "1"
-        self.transport = constants.TRANSPORTS_KNET[0]
-        self.existing_link_list = ["0", "1", "3"]
-        self.coro_nodes = [
-            node.CorosyncNode(
-                f"node{i}",
-                [
-                    node.CorosyncNodeAddress(f"addr{i}-{j}", f"{j}")
-                    for j in self.existing_link_list
-                ],
-                i,
-            )
-            for i in range(1, 5)
-        ]
-        self.existing_addrs = []
-        for a_node in self.coro_nodes:
-            self.existing_addrs.extend(a_node.addrs_plain())
-
     def test_new_address_already_used(self):
         pcmk_nodes = [PacemakerNode("node-remote", "addr-remote")]
         new_addrs = {
@@ -1445,7 +1322,7 @@ class UpdateLinkKnet(TestCase):
                 [
                     "2",
                 ],
-                constants.TRANSPORTS_KNET[0],
+                constants.TRANSPORT_KNET,
                 constants.IP_VERSION_64,
             ),
             [
@@ -1545,7 +1422,7 @@ class UpdateLinkKnet(TestCase):
                 [
                     "2",
                 ],
-                constants.TRANSPORTS_KNET[0],
+                constants.TRANSPORT_KNET,
                 constants.IP_VERSION_64,
             ),
             [
@@ -1650,7 +1527,7 @@ class UpdateLinkKnet(TestCase):
                             [
                                 "2",
                             ],
-                            constants.TRANSPORTS_KNET[0],
+                            constants.TRANSPORT_KNET,
                             constants.IP_VERSION_64,
                         ),
                         reports,
@@ -1671,7 +1548,7 @@ class UpdateLinkKnet(TestCase):
                 [
                     "2",
                 ],
-                constants.TRANSPORTS_KNET[0],
+                constants.TRANSPORT_KNET,
                 constants.IP_VERSION_64,
             ),
             [],
@@ -1698,7 +1575,7 @@ class UpdateLinkKnet(TestCase):
                 [
                     "2",
                 ],
-                constants.TRANSPORTS_KNET[0],
+                constants.TRANSPORT_KNET,
                 constants.IP_VERSION_64,
             ),
             [
@@ -1824,333 +1701,6 @@ class UpdateLinkKnet(TestCase):
                     option_value="udp}",
                     option_name="transport",
                     allowed_values=("udp",),
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-            ],
-        )
-
-
-class UpdateLinkUdp(TestCase):
-    broadcast_values = (None, "", "0", "1")
-    mcastaddr_values = (None, "", "225.1.2.3")
-    mcast_error = fixture.error(
-        report_codes.PREREQUISITE_OPTION_MUST_BE_DISABLED,
-        option_name="mcastaddr",
-        option_type="link",
-        prerequisite_name="broadcast",
-        prerequisite_type="link",
-    )
-
-    @staticmethod
-    def _fixture_new_values(broadcast, mcastaddr):
-        new_values = {}
-        if broadcast is not None:
-            new_values["broadcast"] = broadcast
-        if mcastaddr is not None:
-            new_values["mcastaddr"] = mcastaddr
-        return new_values
-
-    def test_individual_options_set(self):
-        assert_report_item_list_equal(
-            config_validators.update_link(
-                "0",
-                {},
-                {
-                    "bindnetaddr": "my-network",
-                    "broadcast": "yes",
-                    "mcastaddr": "my-group",
-                    "mcastport": "0",
-                    "ttl": "256",
-                    "wrong": "value",
-                },
-                {},
-                [],
-                [],
-                [
-                    "0",
-                ],
-                constants.TRANSPORTS_UDP[0],
-                constants.IP_VERSION_4,
-            ),
-            [
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="my-network",
-                    option_name="bindnetaddr",
-                    allowed_values="an IP address",
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="yes",
-                    option_name="broadcast",
-                    allowed_values=("0", "1"),
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="my-group",
-                    option_name="mcastaddr",
-                    allowed_values="an IP address",
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="0",
-                    option_name="mcastport",
-                    allowed_values="a port number (1..65535)",
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="256",
-                    option_name="ttl",
-                    allowed_values="0..255",
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTIONS,
-                    option_names=["wrong"],
-                    option_type="link",
-                    allowed=[
-                        "bindnetaddr",
-                        "broadcast",
-                        "mcastaddr",
-                        "mcastport",
-                        "ttl",
-                    ],
-                    allowed_patterns=[],
-                ),
-            ],
-        )
-
-    def test_individual_options_unset(self):
-        assert_report_item_list_equal(
-            config_validators.update_link(
-                "0",
-                {},
-                {
-                    "bindnetaddr": "",
-                    "broadcast": "",
-                    "mcastaddr": "",
-                    "mcastport": "",
-                    "ttl": "",
-                    "wrong": "",
-                },
-                {},
-                [],
-                [],
-                [
-                    "0",
-                ],
-                constants.TRANSPORTS_UDP[0],
-                constants.IP_VERSION_4,
-            ),
-            [
-                fixture.error(
-                    report_codes.INVALID_OPTIONS,
-                    option_names=["wrong"],
-                    option_type="link",
-                    allowed=[
-                        "bindnetaddr",
-                        "broadcast",
-                        "mcastaddr",
-                        "mcastport",
-                        "ttl",
-                    ],
-                    allowed_patterns=[],
-                ),
-            ],
-        )
-
-    def _assert_broadcast_mcast_dependencies(
-        self, initial_options, error_expected_for_input
-    ):
-        for broadcast in self.broadcast_values:
-            for mcastaddr in self.mcastaddr_values:
-                new_options = self._fixture_new_values(broadcast, mcastaddr)
-                error_expected = new_options in error_expected_for_input
-                with self.subTest(
-                    initial_options=initial_options,
-                    new_options=new_options,
-                    error_expected=error_expected,
-                ):
-                    assert_report_item_list_equal(
-                        config_validators.update_link(
-                            "0",
-                            {},
-                            new_options,
-                            initial_options,
-                            [],
-                            [],
-                            [
-                                "0",
-                            ],
-                            constants.TRANSPORTS_UDP[0],
-                            constants.IP_VERSION_4,
-                        ),
-                        [self.mcast_error] if error_expected else [],
-                    )
-
-    def test_broadcast_mcastaddr_dependencies_both_unset(self):
-        initial_options = {}
-        error_expected_for_input = (
-            {"broadcast": "1", "mcastaddr": "225.1.2.3"},
-        )
-        self._assert_broadcast_mcast_dependencies(
-            initial_options, error_expected_for_input
-        )
-
-    def test_broadcast_mcastaddr_dependencies_both_disabled(self):
-        initial_options = {"broadcast": "0"}
-        error_expected_for_input = (
-            {"broadcast": "1", "mcastaddr": "225.1.2.3"},
-        )
-        self._assert_broadcast_mcast_dependencies(
-            initial_options, error_expected_for_input
-        )
-
-    def test_broadcast_mcastaddr_dependencies_broadcast_enabled(self):
-        initial_options = {"broadcast": "1"}
-        error_expected_for_input = (
-            {"mcastaddr": "225.1.2.3"},
-            {"broadcast": "1", "mcastaddr": "225.1.2.3"},
-        )
-        self._assert_broadcast_mcast_dependencies(
-            initial_options, error_expected_for_input
-        )
-
-    def test_broadcast_mcastaddr_dependencies_mcastaddr_enabled(self):
-        initial_options = {"mcastaddr": "255.2.4.5"}
-        error_expected_for_input = (
-            {"broadcast": "1"},
-            {"broadcast": "1", "mcastaddr": "225.1.2.3"},
-        )
-        self._assert_broadcast_mcast_dependencies(
-            initial_options, error_expected_for_input
-        )
-
-    def test_forbidden_characters(self):
-        assert_report_item_list_equal(
-            config_validators.update_link(
-                "0",
-                {},
-                {
-                    "bindnetaddr": "10.1.2.0\n",
-                    "broadcast": "1\r",
-                    "mcastaddr": "248.251.1.10{",
-                    "mcastport": "5405}",
-                    "ttl": "128{}",
-                    "op:.tion": "va}l{ue",
-                },
-                {},
-                [],
-                [],
-                [
-                    "0",
-                ],
-                constants.TRANSPORTS_UDP[0],
-                constants.IP_VERSION_4,
-            ),
-            [
-                fixture.error(
-                    report_codes.INVALID_OPTIONS,
-                    option_names=["op:.tion"],
-                    option_type="link",
-                    allowed=[
-                        "bindnetaddr",
-                        "broadcast",
-                        "mcastaddr",
-                        "mcastport",
-                        "ttl",
-                    ],
-                    allowed_patterns=[],
-                ),
-                fixture.error(
-                    report_codes.INVALID_USERDEFINED_OPTIONS,
-                    option_names=["op:.tion"],
-                    option_type="link",
-                    allowed_characters="a-z A-Z 0-9 /_-",
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="10.1.2.0\n",
-                    option_name="bindnetaddr",
-                    **forbidden_characters_kwargs,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="1\r",
-                    option_name="broadcast",
-                    **forbidden_characters_kwargs,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="248.251.1.10{",
-                    option_name="mcastaddr",
-                    **forbidden_characters_kwargs,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="5405}",
-                    option_name="mcastport",
-                    **forbidden_characters_kwargs,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="128{}",
-                    option_name="ttl",
-                    **forbidden_characters_kwargs,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="va}l{ue",
-                    option_name="op:.tion",
-                    **forbidden_characters_kwargs,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="10.1.2.0\n",
-                    option_name="bindnetaddr",
-                    allowed_values="an IP address",
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="1\r",
-                    option_name="broadcast",
-                    allowed_values=("0", "1"),
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="248.251.1.10{",
-                    option_name="mcastaddr",
-                    allowed_values="an IP address",
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="5405}",
-                    option_name="mcastport",
-                    allowed_values="a port number (1..65535)",
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="128{}",
-                    option_name="ttl",
-                    allowed_values="0..255",
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),

@@ -168,7 +168,7 @@
         daemon urls: /api/v1/cluster-setup/v1
       </description>
     </capability>
-    <capability id="cluster.create.transport.udp-udpu" in-pcs="1" in-pcsd="1">
+    <capability id="cluster.create.transport.udp-udpu" in-pcs="0" in-pcsd="0">
       <description>
         Udp and udpu transports are supported.
 
@@ -176,7 +176,14 @@
         daemon urls: /api/v1/cluster-setup/v1
       </description>
     </capability>
-    <capability id="cluster.create.transport.udp-udpu.no-rrp" in-pcs="1" in-pcsd="1">
+    <capability id="cluster.create.transport.udp-udpu.no-rrp" in-pcs="0" in-pcsd="0">
+      <!--
+        RRP is not supported for UDP and UDPU transport, since the whole UDP and
+        UDPU transport support has been removed. So technically, this capability
+        should be set to in-pcs=1 in-pcsd=1. However, since the parent
+        capability is removed (in-pcs=0 in-pcsd=0), it doesn't make sense to
+        keep this one either.
+      -->
       <description>
         Redundant ring protocol (rrp) is not supported.
 

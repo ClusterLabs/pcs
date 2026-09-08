@@ -1,9 +1,8 @@
 import re
 
+TRANSPORT_KNET = "knet"
 TRANSPORT_DEFAULT = "knet"
-TRANSPORTS_KNET = ("knet",)
-TRANSPORTS_UDP = ("udp", "udpu")
-TRANSPORTS_ALL = TRANSPORTS_KNET + TRANSPORTS_UDP
+TRANSPORTS_ALL = (TRANSPORT_KNET,)
 
 TRANSPORT_KNET_CRYPTO_OPTIONS = (
     "cipher",
@@ -21,11 +20,6 @@ TRANSPORT_KNET_GENERIC_OPTIONS = (
     "ip_version",  # It tells knet which IP to prefer.
     "knet_pmtud_interval",
     "link_mode",
-)
-
-TRANSPORT_UDP_GENERIC_OPTIONS = (
-    "ip_version",
-    "netmtu",
 )
 
 TRANSPORT_RUNTIME_CHANGE_BANNED_OPTIONS = (
@@ -54,11 +48,9 @@ TOTEM_OPTIONS = (
     "window_size",
 )
 
-LINKS_UDP_MIN = 1
-LINKS_UDP_MAX = 1
 LINKS_KNET_MIN = 1
 LINKS_KNET_MAX = 8
-LINKS_MAX = max(LINKS_KNET_MAX, LINKS_UDP_MAX)
+LINKS_MAX = LINKS_KNET_MAX
 
 NODE_OPTIONS = ["name", "nodeid"] + [f"ring{i}_addr" for i in range(LINKS_MAX)]
 
@@ -89,14 +81,6 @@ LINK_OPTIONS_KNET_USER = tuple(
 # This is what corsync works with.
 LINK_OPTIONS_KNET_COROSYNC = tuple(
     sorted([pair[1] for pair in LINK_OPTIONS_KNET_TRANSLATION])
-)
-
-LINK_OPTIONS_UDP = (
-    "bindnetaddr",
-    "broadcast",
-    "mcastaddr",
-    "mcastport",
-    "ttl",
 )
 
 QUORUM_OPTIONS = (

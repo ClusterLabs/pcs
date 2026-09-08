@@ -324,7 +324,7 @@ class UpdateConfig(TestCase):
 
     def test_unsupported_transport(self):
         self.config.corosync_conf.load_content(
-            fixture_totem(transport_type="keynet")
+            fixture_totem(transport_type="udp")
         )
         self.env_assist.assert_raise_library_error(
             lambda: cluster.config_update(
@@ -346,8 +346,8 @@ class UpdateConfig(TestCase):
                 ),
                 fixture.error(
                     report_codes.COROSYNC_CONFIG_UNSUPPORTED_TRANSPORT,
-                    actual_transport="keynet",
-                    supported_transport_types=["knet", "udp", "udpu"],
+                    actual_transport="udp",
+                    supported_transport_types=["knet"],
                 ),
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
@@ -356,51 +356,6 @@ class UpdateConfig(TestCase):
                     allowed_values="a non-negative integer",
                     cannot_be_empty=False,
                     forbidden_characters=None,
-                ),
-            ]
-        )
-
-    def test_udp_transport_unsupported_options(self):
-        self.config.corosync_conf.load_content(
-            fixture_totem(transport_type="udp")
-        )
-        self.env_assist.assert_raise_library_error(
-            lambda: cluster.config_update(
-                self.env_assist.get_env(),
-                {"knet_pmtud_interval": "interval"},
-                {"level": "high", "unknown": "val"},
-                {"cipher": "strong", "unknown": "val"},
-                {"downcheck": "check"},
-            )
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_name="downcheck",
-                    option_value="check",
-                    allowed_values="a non-negative integer",
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTIONS,
-                    option_names=["knet_pmtud_interval"],
-                    option_type="udp/udpu transport",
-                    allowed=["ip_version", "netmtu"],
-                    allowed_patterns=[],
-                ),
-                fixture.error(
-                    report_codes.COROSYNC_TRANSPORT_UNSUPPORTED_OPTIONS,
-                    option_type="compression",
-                    actual_transport="udp/udpu",
-                    required_transports=["knet"],
-                ),
-                fixture.error(
-                    report_codes.COROSYNC_TRANSPORT_UNSUPPORTED_OPTIONS,
-                    option_type="crypto",
-                    actual_transport="udp/udpu",
-                    required_transports=["knet"],
                 ),
             ]
         )
@@ -537,6 +492,27 @@ class UpdateConfigLocal(TestCase):
             ],
         )
 
+    def test_unsupported_transport(self):
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.config_update_local(
+                self.env_assist.get_env(),
+                fixture_totem(transport_type="udp").encode(),
+                {"knet_pmtud_interval": "100"},
+                {},
+                {},
+                {},
+            ),
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.COROSYNC_CONFIG_UNSUPPORTED_TRANSPORT,
+                    actual_transport="udp",
+                    supported_transport_types=["knet"],
+                ),
+            ]
+        )
+
     def test_add_modify_remove_options(self):
         before = fixture_totem(
             cluster_uuid=None,
@@ -583,35 +559,53 @@ class UpdateConfigLocal(TestCase):
         self.env_assist.assert_raise_library_error(
             lambda: cluster.config_update_local(
                 self.env_assist.get_env(),
-                fixture_totem(transport_type="udp").encode(),
-                {"knet_pmtud_interval": "100"},
-                {},
-                {"cipher": "none", "hash": "none"},
-                {"token": "notanumber"},
+                fixture_totem().encode(),
+                {"ip_version": "4"},
+                {"level": "high"},
+                {"cipher": "strong"},
+                {"downcheck": "check"},
             ),
         )
         self.env_assist.assert_reports(
             [
                 fixture.error(
                     report_codes.INVALID_OPTION_VALUE,
-                    option_name="token",
-                    option_value="notanumber",
+                    option_name="downcheck",
+                    option_value="check",
                     allowed_values="a non-negative integer",
                     cannot_be_empty=False,
                     forbidden_characters=None,
                 ),
                 fixture.error(
-                    report_codes.INVALID_OPTIONS,
-                    option_names=["knet_pmtud_interval"],
-                    option_type="udp/udpu transport",
-                    allowed=["ip_version", "netmtu"],
-                    allowed_patterns=[],
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="ip_version",
+                    option_value="4",
+                    allowed_values=("ipv4", "ipv6", "ipv4-6", "ipv6-4"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
                 ),
                 fixture.error(
-                    report_codes.COROSYNC_TRANSPORT_UNSUPPORTED_OPTIONS,
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="level",
+                    option_value="high",
+                    allowed_values="a non-negative integer",
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.INVALID_OPTION_VALUE,
+                    option_name="cipher",
+                    option_value="strong",
+                    allowed_values=("aes256", "aes192", "aes128"),
+                    cannot_be_empty=False,
+                    forbidden_characters=None,
+                ),
+                fixture.error(
+                    report_codes.PREREQUISITE_OPTION_MUST_BE_ENABLED_AS_WELL,
+                    option_name="cipher",
+                    prerequisite_name="hash",
                     option_type="crypto",
-                    actual_transport="udp/udpu",
-                    required_transports=["knet"],
+                    prerequisite_type="crypto",
                 ),
             ]
         )

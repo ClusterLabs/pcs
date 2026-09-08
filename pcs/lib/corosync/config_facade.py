@@ -463,11 +463,9 @@ class ConfigFacade(FacadeInterface):
         Get all links' options in a dict: key=linknumber value=dict of options
         """
         transport = self.get_transport()
-        allowed_options = (
-            constants.LINK_OPTIONS_UDP
-            if transport in constants.TRANSPORTS_UDP
-            else constants.LINK_OPTIONS_KNET_COROSYNC
-        )
+        allowed_options: tuple[str, ...] = tuple()
+        if transport == constants.TRANSPORT_KNET:
+            allowed_options = constants.LINK_OPTIONS_KNET_COROSYNC
         raw_options: dict[str, dict[str, str]] = {}
         for totem_section in self.config.get_sections("totem"):
             for interface_section in totem_section.get_sections("interface"):
@@ -481,7 +479,7 @@ class ConfigFacade(FacadeInterface):
                     if name in allowed_options:
                         raw_options[linknumber][name] = value
                 # make sure the linknumber is present for knet
-                if transport in constants.TRANSPORTS_KNET:
+                if transport == constants.TRANSPORT_KNET:
                     raw_options[linknumber]["linknumber"] = linknumber
         return {
             linknumber: self.__translate_link_options(options, False)
@@ -496,8 +494,6 @@ class ConfigFacade(FacadeInterface):
         ip_version = self._get_option_value("totem", "ip_version")
         if ip_version:
             return ip_version
-        if self.get_transport() == "udp":
-            return constants.IP_VERSION_4
         return constants.IP_VERSION_64
 
     @overload
@@ -549,22 +545,10 @@ class ConfigFacade(FacadeInterface):
         ):
             self._need_stopped_cluster = True
         transport_type = self.get_transport()
-        if transport_type in constants.TRANSPORTS_KNET:
+        if transport_type == constants.TRANSPORT_KNET:
             self._set_transport_knet_options(
                 transport_options, compression_options, crypto_options
             )
-        elif transport_type in constants.TRANSPORTS_UDP:
-            self._set_transport_udp_options(transport_options)
-
-    def _set_transport_udp_options(self, options: Mapping[str, str]) -> None:
-        """
-        Set transport options for udp transports
-
-        options -- transport options
-        """
-        totem_section_list = self.__ensure_section(self.config, "totem")
-        self.__set_section_options(totem_section_list, options)
-        self.__remove_empty_sections(self.config)
 
     def _set_transport_knet_options(
         self,
@@ -616,13 +600,9 @@ class ConfigFacade(FacadeInterface):
         Get configurable generic transport options
         """
         transport_type = self.get_transport()
-        if transport_type in constants.TRANSPORTS_KNET:
+        if transport_type == constants.TRANSPORT_KNET:
             return self._filter_options(
                 "totem", constants.TRANSPORT_KNET_GENERIC_OPTIONS
-            )
-        if transport_type in constants.TRANSPORTS_UDP:
-            return self._filter_options(
-                "totem", constants.TRANSPORT_UDP_GENERIC_OPTIONS
             )
         return {}
 
@@ -977,32 +957,10 @@ class ConfigFacade(FacadeInterface):
             translate_map = {pair[0]: pair[1] for pair in pairs}
         else:
             translate_map = {pair[1]: pair[0] for pair in pairs}
-        result = {
+        return {
             translate_map.get(name, name): value
             for name, value in options.items()
         }
-
-        if "broadcast" in result:
-            if input_to_corosync:
-                # If broadcast == 1, transform it to broadcast == yes. If this
-                # is called from an update where broadcast is being disabled,
-                # remove broadcast from corosync.conf. Else do not put the
-                # option to the config at all. From man corosync.conf, there is
-                # only one allowed value: "yes".
-                if result["broadcast"] in ("1", 1):
-                    result["broadcast"] = "yes"
-                elif result["broadcast"] in ("0", 0, ""):
-                    result["broadcast"] = ""
-                else:
-                    del result["broadcast"]
-            # When displaying config to users, do the opposite
-            # transformation: only "yes" is allowed.
-            elif result["broadcast"] == "yes":
-                result["broadcast"] = "1"
-            else:
-                del result["broadcast"]
-
-        return result
 
 
 def _add_prefix_to_dict_keys(

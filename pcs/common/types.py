@@ -58,8 +58,6 @@ class UnknownCorosyncTransportTypeException(Exception):
 
 
 class CorosyncTransportType(AutoNameEnum):
-    UDP = auto()
-    UDPU = auto()
     KNET = auto()
 
     @classmethod

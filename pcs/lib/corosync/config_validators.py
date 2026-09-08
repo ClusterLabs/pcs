@@ -137,13 +137,9 @@ def create(  # noqa: PLR0912, PLR0915
         # Cannot use node.get("addrs", []) - if node["addrs"] == None then
         # the get returns None and len(None) raises an exception.
         addr_count = len(node.get("addrs") or [])
-        if transport in constants.TRANSPORTS_KNET + constants.TRANSPORTS_UDP:
-            if transport in constants.TRANSPORTS_KNET:
-                min_addr_count = constants.LINKS_KNET_MIN
-                max_addr_count = constants.LINKS_KNET_MAX
-            else:
-                min_addr_count = constants.LINKS_UDP_MIN
-                max_addr_count = constants.LINKS_UDP_MAX
+        if transport == constants.TRANSPORT_KNET:
+            min_addr_count = constants.LINKS_KNET_MIN
+            max_addr_count = constants.LINKS_KNET_MAX
             if addr_count < min_addr_count or addr_count > max_addr_count:
                 report_items.append(
                     ReportItem.error(
@@ -231,13 +227,8 @@ def create(  # noqa: PLR0912, PLR0915
             # Cannot use node.get("addrs", []) - if node["addrs"] == None then
             # the get returns None and len(None) raises an exception.
             node_addr_count[node["name"]] = len(node.get("addrs") or [])
-        # Check if all nodes have the same number of addresses. No need to
-        # check that if udp or udpu transport is used as they can only use one
-        # address and that has already been checked above.
-        if (
-            transport not in constants.TRANSPORTS_UDP
-            and len(Counter(node_addr_count.values()).keys()) > 1
-        ):
+        # Check if all nodes have the same number of addresses.
+        if len(Counter(node_addr_count.values()).keys()) > 1:
             report_items.append(
                 ReportItem.error(
                     reports.messages.CorosyncNodeAddressCountMismatch(
@@ -672,95 +663,6 @@ def _check_link_options_count(
     return report_items
 
 
-def _get_link_options_validators_udp(
-    options: Mapping[str, str], allow_empty_values: bool = False
-) -> list[validate.ValidatorInterface]:
-    # This only returns validators checking single values. Add checks for
-    # intervalues relationships as needed.
-    validators = [
-        validate.ValueIpAddress("bindnetaddr"),
-        validate.ValueIn("broadcast", ("0", "1")),
-        validate.ValueIpAddress("mcastaddr"),
-        validate.ValuePortNumber("mcastport"),
-        validate.ValueInteger("ttl", 0, 255),
-    ]
-    if allow_empty_values:
-        for val in validators:
-            val.empty_string_valid = True
-    return (
-        [validate.NamesIn(constants.LINK_OPTIONS_UDP, option_type="link")]
-        + _get_unsuitable_keys_and_values_validators(
-            options, option_type="link"
-        )
-        + list(validators)
-    )
-
-
-def _update_link_options_udp(
-    new_options: Mapping[str, str], current_options: Mapping[str, str]
-) -> ReportItemList:
-    report_items = validate.ValidatorAll(
-        _get_link_options_validators_udp(new_options, allow_empty_values=True)
-    ).validate(new_options)
-
-    # default values taken from `man corosync.conf`
-    target_broadcast = _get_option_after_update(
-        new_options, current_options, "broadcast", "0"
-    )
-    target_mcastaddr = _get_option_after_update(
-        new_options, current_options, "mcastaddr", None
-    )
-    if target_broadcast == "1" and target_mcastaddr is not None:
-        report_items.append(
-            ReportItem.error(
-                reports.messages.PrerequisiteOptionMustBeDisabled(
-                    "mcastaddr",
-                    "broadcast",
-                    option_type="link",
-                    prerequisite_type="link",
-                )
-            )
-        )
-
-    return report_items
-
-
-def create_link_list_udp(
-    link_list: Sequence[Mapping[str, str]], max_allowed_link_count: int
-) -> ReportItemList:
-    """
-    Validate creating udp/udpu link (interface) list options
-
-    link_list -- list of link options
-    max_allowed_link_count -- how many links is defined by addresses
-    """
-    if not link_list:
-        # It is not mandatory to set link options. If an empty link list is
-        # provided, everything is fine and we have nothing to validate.
-        return []
-
-    options = link_list[0]
-    report_items = validate.ValidatorAll(
-        _get_link_options_validators_udp(options, allow_empty_values=False)
-    ).validate(options)
-    # default values taken from `man corosync.conf`
-    if options.get("broadcast", "0") == "1" and "mcastaddr" in options:
-        report_items.append(
-            ReportItem.error(
-                reports.messages.PrerequisiteOptionMustBeDisabled(
-                    "mcastaddr",
-                    "broadcast",
-                    option_type="link",
-                    prerequisite_type="link",
-                )
-            )
-        )
-    report_items.extend(
-        _check_link_options_count(len(link_list), max_allowed_link_count)
-    )
-    return report_items
-
-
 def create_link_list_knet(
     link_list: Sequence[Mapping[str, str]], max_allowed_link_count: int
 ) -> ReportItemList:
@@ -943,12 +845,12 @@ def add_link(
     number_of_links_to_add = 1
 
     # Check the transport supports adding links
-    if transport not in constants.TRANSPORTS_KNET:
+    if transport != constants.TRANSPORT_KNET:
         report_items.append(
             ReportItem.error(
                 reports.messages.CorosyncCannotAddRemoveLinksBadTransport(
                     transport,
-                    list(constants.TRANSPORTS_KNET),
+                    [constants.TRANSPORT_KNET],
                     add_or_not_remove=True,
                 )
             )
@@ -1072,12 +974,12 @@ def remove_links(
     """
     report_items = []
 
-    if transport not in constants.TRANSPORTS_KNET:
+    if transport != constants.TRANSPORT_KNET:
         report_items.append(
             ReportItem.error(
                 reports.messages.CorosyncCannotAddRemoveLinksBadTransport(
                     transport,
-                    list(constants.TRANSPORTS_KNET),
+                    [constants.TRANSPORT_KNET],
                     add_or_not_remove=False,
                 )
             )
@@ -1180,13 +1082,24 @@ def update_link(  # noqa: PLR0912, PLR0913
         ]
     # validate link options based on transport
     if link_options:
-        if transport in constants.TRANSPORTS_UDP:
-            report_items.extend(
-                _update_link_options_udp(link_options, current_link_options)
-            )
-        elif transport in constants.TRANSPORTS_KNET:
+        if transport == constants.TRANSPORT_KNET:
             report_items.extend(
                 _update_link_options_knet(link_options, current_link_options)
+            )
+        else:
+            # Originally, we weren't producing this error and the validation
+            # silently skipped link options for transports unknown to pcs. When
+            # support for udp/udpu transports was removed from pcs, the report
+            # was added to announce that previously supported transports are no
+            # longer supported. There is no validation for udp/udpu options
+            # now. Without the report, pcs would silently accept anything, and
+            # users would not know the validation is gone.
+            report_items.append(
+                reports.ReportItem.error(
+                    reports.messages.CorosyncConfigUnsupportedTransport(
+                        transport, sorted(constants.TRANSPORTS_ALL)
+                    )
+                )
             )
     # validate addresses
     get_addr_type = _addr_type_analyzer()
@@ -1301,112 +1214,6 @@ def _report_non_unique_addresses(
         )
 
     return report_items
-
-
-def _get_transport_udp_generic_validators(
-    options: Mapping[str, str],
-    allow_empty_values: bool,
-) -> list[validate.ValidatorInterface]:
-    # No need to support force:
-    # * values are either an enum or numbers with no range set - nothing to
-    #   force
-    # * names are strictly set as we cannot risk the user overwrites some
-    #   setting they should not to
-    # * changes to names and values in corosync are very rare
-    validators = [
-        validate.ValueIn("ip_version", constants.IP_VERSION_VALUES),
-        validate.ValuePositiveInteger("netmtu"),
-    ]
-    if allow_empty_values:
-        for val in validators:
-            val.empty_string_valid = True
-    return (
-        [
-            validate.NamesIn(
-                constants.TRANSPORT_UDP_GENERIC_OPTIONS,
-                option_type="udp/udpu transport",
-            )
-        ]
-        + _get_unsuitable_keys_and_values_validators(
-            options, option_type="udp/udpu transport"
-        )
-        + list(validators)
-    )
-
-
-def _validate_transport_udp(
-    generic_options: Mapping[str, str],
-    compression_options: Mapping[str, str],
-    crypto_options: Mapping[str, str],
-    allow_empty_values: bool,
-) -> ReportItemList:
-    report_items = validate.ValidatorAll(
-        _get_transport_udp_generic_validators(
-            generic_options, allow_empty_values=allow_empty_values
-        )
-    ).validate(generic_options)
-
-    if compression_options:
-        report_items.append(
-            ReportItem.error(
-                reports.messages.CorosyncTransportUnsupportedOptions(
-                    "compression",
-                    "udp/udpu",
-                    ["knet"],
-                )
-            )
-        )
-    if crypto_options:
-        report_items.append(
-            ReportItem.error(
-                reports.messages.CorosyncTransportUnsupportedOptions(
-                    "crypto",
-                    "udp/udpu",
-                    ["knet"],
-                )
-            )
-        )
-    return report_items
-
-
-def create_transport_udp(
-    generic_options: Mapping[str, str],
-    compression_options: Mapping[str, str],
-    crypto_options: Mapping[str, str],
-) -> ReportItemList:
-    """
-    Validate creating udp/udpu transport options
-
-    dict generic_options -- generic transport options
-    dict compression_options -- compression options
-    dict crypto_options -- crypto options
-    """
-    return _validate_transport_udp(
-        generic_options,
-        compression_options,
-        crypto_options,
-        allow_empty_values=False,
-    )
-
-
-def update_transport_udp(
-    generic_options: Mapping[str, str],
-    compression_options: Mapping[str, str],
-    crypto_options: Mapping[str, str],
-) -> ReportItemList:
-    """
-    Validate updating udp/udpu transport options
-
-    generic_options -- generic transport options
-    compression_options -- compression options
-    crypto_options -- crypto options
-    """
-    return _validate_transport_udp(
-        generic_options,
-        compression_options,
-        crypto_options,
-        allow_empty_values=True,
-    )
 
 
 def _get_transport_knet_generic_validators(

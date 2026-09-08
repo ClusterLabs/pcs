@@ -89,6 +89,7 @@ class NeedsStoppedClusterTest(TestCase):
 
 
 class SetTransportOptionsKnetMixin:
+    maxDiff = None
     knet_transport = None
 
     def test_add_knet_transport_options(self):
@@ -404,77 +405,6 @@ class SetTransportOptionsKnetMixin:
             facade.config.export(),
         )
 
-    def test_modify_knet_transport_options_transport_override(self):
-        config = dedent(
-            """\
-            totem {{{0}
-                ip_version: ipv6
-                knet_pmtud_interval: 1000
-                link_mode: active
-                knet_compression_model: zlib
-                knet_compression_level: 5
-                knet_compression_threshold: 100
-                crypto_cipher: aes256
-                crypto_hash: sha512
-                ip_version: ipv4
-                crypto_model: nss
-                ip_version: ipv6
-            }}
-
-            totem {{
-                ip_version: ipv6
-            }}
-
-            totem {{
-                transport: udp
-                ip_version: ipv4
-                knet_pmtud_interval: 2000
-                knet_compression_model: lza4
-                knet_compression_level: 5
-                crypto_hash: sha256
-                crypto_model: openssl
-            }}
-        """
-        ).format(self.knet_transport)
-        facade = _get_facade(config)
-        facade.set_transport_options(
-            {
-                "ip_version": "ipv4-6",
-                "link_mode": "passive",
-            },
-            {"model": "zlib", "threshold": "100"},
-            {"cipher": "aes128", "hash": "md5"},
-        )
-        self.assertTrue(facade.need_stopped_cluster)
-        self.assertFalse(facade.need_qdevice_reload)
-        self.assertEqual(
-            dedent(
-                """\
-                totem {{{0}
-                    knet_pmtud_interval: 1000
-                    knet_compression_model: zlib
-                    knet_compression_level: 5
-                    knet_compression_threshold: 100
-                    crypto_cipher: aes256
-                    crypto_hash: sha512
-                    crypto_model: nss
-                }}
-
-                totem {{
-                    transport: udp
-                    ip_version: ipv4-6
-                    knet_pmtud_interval: 2000
-                    knet_compression_model: lza4
-                    knet_compression_level: 5
-                    crypto_hash: sha256
-                    crypto_model: openssl
-                    link_mode: passive
-                }}
-            """,
-            ).format(self.knet_transport),
-            facade.config.export(),
-        )
-
 
 class SetTransportOptionsDefaultKnetTest(
     SetTransportOptionsKnetMixin, TestCase
@@ -488,361 +418,6 @@ class SetTransportOptionsDefinedKnetTest(
     knet_transport = "\n    transport: knet"
 
 
-class SetTransportOptionsUdpMixin:
-    udp_transport = None
-
-    def test_add_udp_transport_options_generic_only(self):
-        config = dedent(
-            f"""\
-            totem {{
-                transport: {self.udp_transport}
-            }}
-        """
-        )
-        facade = _get_facade(config)
-        facade.set_transport_options(
-            {"ip_version": "ipv4", "netmtu": "1500"},
-            {
-                "threshold": "1234",
-                "model": "zlib",
-                "level": "5",
-            },
-            {
-                "model": "nss",
-                "hash": "sha256",
-                "cipher": "aes256",
-            },
-        )
-        self.assertTrue(facade.need_stopped_cluster)
-        self.assertFalse(facade.need_qdevice_reload)
-        self.assertEqual(
-            dedent(
-                f"""\
-                totem {{
-                    transport: {self.udp_transport}
-                    ip_version: ipv4
-                    netmtu: 1500
-                }}
-            """
-            ),
-            facade.config.export(),
-        )
-
-    def test_remove_udp_transport_options_generic_only(self):
-        config = dedent(
-            f"""\
-            totem {{
-                transport: {self.udp_transport}
-                ip_version: ipv4
-                netmtu: 1500
-                knet_pmtud_interval: 1234
-                knet_compression_model: zlib
-                crypto_cipher: aes256
-                crypto_hash: sha256
-            }}
-        """
-        )
-        facade = _get_facade(config)
-        facade.set_transport_options(
-            {
-                "ip_version": "",
-                "netmtu": "",
-                "knet_pmtud_interval": "",
-            },
-            {"model": ""},
-            {
-                "": "",
-                "cipher": "",
-            },
-        )
-        self.assertTrue(facade.need_stopped_cluster)
-        self.assertFalse(facade.need_qdevice_reload)
-        self.assertEqual(
-            dedent(
-                f"""\
-                totem {{
-                    transport: {self.udp_transport}
-                    knet_compression_model: zlib
-                    crypto_cipher: aes256
-                    crypto_hash: sha256
-                }}
-            """
-            ),
-            facade.config.export(),
-        )
-
-    def test_modify_udp_transport_options_generic_only(self):
-        config = dedent(
-            f"""\
-            totem {{
-                transport: {self.udp_transport}
-                ip_version: ipv4
-                netmtu: 1500
-                knet_pmtud_interval: 1234
-                knet_compression_model: zlib
-                crypto_cipher: aes256
-                crypto_hash: sha256
-            }}
-        """
-        )
-        facade = _get_facade(config)
-        facade.set_transport_options(
-            {
-                "ip_version": "ipv6",
-                "netmtu": "1000",
-                "knet_pmtud_interval": "1000",
-            },
-            {"model": "lz4"},
-            {"cipher": "aes128", "hash": "md5"},
-        )
-        self.assertTrue(facade.need_stopped_cluster)
-        self.assertFalse(facade.need_qdevice_reload)
-        self.assertEqual(
-            dedent(
-                f"""\
-                totem {{
-                    transport: {self.udp_transport}
-                    ip_version: ipv6
-                    netmtu: 1000
-                    knet_pmtud_interval: 1000
-                    knet_compression_model: zlib
-                    crypto_cipher: aes256
-                    crypto_hash: sha256
-                }}
-            """
-            ),
-            facade.config.export(),
-        )
-
-    def test_add_udp_transport_options_multiple_sections(self):
-        config = dedent(
-            f"""\
-            totem {{
-                transport: {self.udp_transport}
-                knet_pmtud_interval: 1000
-                knet_compression_model: zlib
-                crypto_cipher: aes256
-            }}
-
-            totem {{
-                knet_pmtud_interval: 2000
-                knet_compression_model: lza4
-                crypto_hash: sha256
-            }}
-        """
-        )
-        facade = _get_facade(config)
-        facade.set_transport_options(
-            {
-                "ip_version": "ipv6",
-                "netmtu": "1000",
-            },
-            {"level": "5"},
-            {"model": "openssl"},
-        )
-        self.assertTrue(facade.need_stopped_cluster)
-        self.assertFalse(facade.need_qdevice_reload)
-        self.assertEqual(
-            dedent(
-                f"""\
-                totem {{
-                    transport: {self.udp_transport}
-                    knet_pmtud_interval: 1000
-                    knet_compression_model: zlib
-                    crypto_cipher: aes256
-                }}
-
-                totem {{
-                    knet_pmtud_interval: 2000
-                    knet_compression_model: lza4
-                    crypto_hash: sha256
-                    ip_version: ipv6
-                    netmtu: 1000
-                }}
-            """
-            ),
-            facade.config.export(),
-        )
-
-    def test_remove_udp_transport_options_multiple_sections(self):
-        config = dedent(
-            f"""\
-            totem {{
-                transport: {self.udp_transport}
-                ip_version: ipv6
-                knet_pmtud_interval: 1000
-                knet_compression_model: zlib
-                crypto_cipher: aes256
-                ip_version: ipv4
-            }}
-
-            totem {{
-                ip_version: ipv6
-            }}
-
-            totem {{
-                ip_version: ipv4
-                netmtu: 1000
-                knet_pmtud_interval: 2000
-                knet_compression_model: lza4
-                crypto_hash: sha256
-            }}
-        """
-        )
-        facade = _get_facade(config)
-        facade.set_transport_options(
-            {"ip_version": "", "netmtu": "", "knet_pmtud_interval": ""},
-            {"model": ""},
-            {"cipher": "", "hash": ""},
-        )
-        self.assertTrue(facade.need_stopped_cluster)
-        self.assertFalse(facade.need_qdevice_reload)
-        self.assertEqual(
-            dedent(
-                f"""\
-                totem {{
-                    transport: {self.udp_transport}
-                    knet_compression_model: zlib
-                    crypto_cipher: aes256
-                }}
-
-                totem {{
-                    knet_compression_model: lza4
-                    crypto_hash: sha256
-                }}
-            """
-            ),
-            facade.config.export(),
-        )
-
-    def test_modify_udp_transport_options_multiple_sections(self):
-        config = dedent(
-            f"""\
-            totem {{
-                transport: {self.udp_transport}
-                ip_version: ipv4
-                knet_pmtud_interval: 1000
-                knet_compression_model: zlib
-                crypto_cipher: aes256
-                ip_version: ipv6
-            }}
-
-            totem {{
-                ip_version: ipv6
-            }}
-
-            totem {{
-                ip_version: ipv6
-                netmtu: 1000
-                knet_pmtud_interval: 2000
-                knet_compression_model: lza4
-                crypto_hash: sha256
-                netmtu: 2000
-            }}
-        """
-        )
-        facade = _get_facade(config)
-        facade.set_transport_options(
-            {
-                "ip_version": "ipv4-6",
-                "netmtu": "1500",
-                "knet_pmtud_interval": "2000",
-            },
-            {"model": "lza4"},
-            {"cipher": "aes128", "hash": "md5"},
-        )
-        self.assertTrue(facade.need_stopped_cluster)
-        self.assertFalse(facade.need_qdevice_reload)
-        self.assertEqual(
-            dedent(
-                f"""\
-                totem {{
-                    transport: {self.udp_transport}
-                    knet_compression_model: zlib
-                    crypto_cipher: aes256
-                }}
-
-                totem {{
-                    ip_version: ipv4-6
-                    netmtu: 1500
-                    knet_pmtud_interval: 2000
-                    knet_compression_model: lza4
-                    crypto_hash: sha256
-                }}
-            """
-            ),
-            facade.config.export(),
-        )
-
-    def test_modify_udp_transport_options_transport_override(self):
-        config = dedent(
-            f"""\
-            totem {{
-                transport: {self.udp_transport}
-                ip_version: ipv4
-                knet_pmtud_interval: 1000
-                knet_compression_model: zlib
-                crypto_cipher: aes256
-                ip_version: ipv6
-            }}
-
-            totem {{
-                ip_version: ipv6
-            }}
-
-            totem {{
-                ip_version: ipv6
-                transport: knet
-                netmtu: 1000
-                knet_pmtud_interval: 2000
-                knet_compression_model: lza4
-                crypto_hash: sha256
-                netmtu: 2000
-            }}
-        """
-        )
-        facade = _get_facade(config)
-        facade.set_transport_options(
-            {
-                "ip_version": "ipv4-6",
-                "netmtu": "1500",
-                "knet_pmtud_interval": "2000",
-            },
-            {"model": "lza4"},
-            {"cipher": "aes128", "hash": "md5"},
-        )
-        self.assertTrue(facade.need_stopped_cluster)
-        self.assertFalse(facade.need_qdevice_reload)
-        self.assertEqual(
-            dedent(
-                f"""\
-                totem {{
-                    transport: {self.udp_transport}
-                }}
-
-                totem {{
-                    ip_version: ipv4-6
-                    transport: knet
-                    netmtu: 1500
-                    knet_pmtud_interval: 2000
-                    knet_compression_model: lza4
-                    crypto_hash: md5
-                    crypto_cipher: aes128
-                }}
-            """
-            ),
-            facade.config.export(),
-        )
-
-
-class SetTransportOptionsUdpTest(SetTransportOptionsUdpMixin, TestCase):
-    udp_transport = "udp"
-
-
-class SetTransportOptionsUdpuTest(SetTransportOptionsUdpMixin, TestCase):
-    udp_transport = "udpu"
-
-
 class SetTransportOptionsGeneralTest(TestCase):
     _option_prefix_list = ["", "knet_compression_", "crypto_"]
 
@@ -854,12 +429,6 @@ class SetTransportOptionsGeneralTest(TestCase):
 
     _add_option_params_list = [
         ({"option": "value"}, {}, {}),
-        ({}, {"option": "value"}, {}),
-        ({}, {}, {"option": "value"}),
-    ]
-
-    _udp_do_not_modify_params_list = [
-        ({}, {}, {}),
         ({}, {"option": "value"}, {}),
         ({}, {}, {"option": "value"}),
     ]
@@ -914,8 +483,6 @@ class SetTransportOptionsGeneralTest(TestCase):
         for transport, params in [
             ("", self._remove_option_params_list),
             ("knet", self._remove_option_params_list),
-            ("udp", self._remove_option_params_list[0:1]),
-            ("udpu", self._remove_option_params_list[0:1]),
         ]:
             with self.subTest(transport=transport, params=params):
                 self._assert_set_transport_options(
@@ -940,23 +507,11 @@ class SetTransportOptionsGeneralTest(TestCase):
                     ),
                 )
 
-    def test_do_not_remove_option(self):
-        params = self._udp_do_not_modify_params_list
-        for transport, params_list in [("udp", params), ("udpu", params)]:
-            with self.subTest(transport=transport, params=params):
-                self._assert_set_transport_options(
-                    params_list,
-                    self._transport_option_tmplt.format(transport=transport),
-                    self._transport_option_tmplt.format(transport=transport),
-                )
-
     def test_modify_option(self):
         params = self._add_option_params_list
         for transport, params_list in [
             ("", params),
             ("knet", params),
-            ("udp", params[0:1]),
-            ("udpu", params[0:1]),
         ]:
             with self.subTest(transport=transport, params=params):
                 self._assert_set_transport_options(
@@ -969,16 +524,6 @@ class SetTransportOptionsGeneralTest(TestCase):
                         }}}}
                     """,
                     ),
-                    self._transport_option_tmplt.format(transport=transport),
-                )
-
-    def test_do_not_modify_option(self):
-        params = self._udp_do_not_modify_params_list
-        for transport, params_list in [("udp", params), ("udpu", params)]:
-            with self.subTest(transport=transport, params=params):
-                self._assert_set_transport_options(
-                    params_list,
-                    self._transport_option_tmplt.format(transport=transport),
                     self._transport_option_tmplt.format(transport=transport),
                 )
 
@@ -1094,13 +639,6 @@ class GetTransportOptions(GetOptionsDictMixin, TestCase):
             self._empty_transport_options_template,
         )
 
-    def test_empty_options_udp(self):
-        self._assert_transport_option_dict(
-            ["udp", "udpu"],
-            {"ip_version": "", "netmtu": ""},
-            self._empty_transport_options_template,
-        )
-
     def test_options_knet(self):
         self._assert_transport_option_dict(
             ["", "knet"],
@@ -1112,13 +650,6 @@ class GetTransportOptions(GetOptionsDictMixin, TestCase):
             self._transport_options_template,
         )
 
-    def test_options_udp(self):
-        self._assert_transport_option_dict(
-            ["udp", "udpu"],
-            {"ip_version": "ipv4-6", "netmtu": "1500"},
-            self._transport_options_template,
-        )
-
 
 class GetCompressionOptions(GetOptionsDictMixin, TestCase):
     @staticmethod
@@ -1127,14 +658,14 @@ class GetCompressionOptions(GetOptionsDictMixin, TestCase):
 
     def test_empty_compression_options(self):
         self._assert_transport_option_dict(
-            ["", "knet", "udp", "udpu"],
+            ["", "knet"],
             {"level": "", "model": "", "threshold": ""},
             self._empty_transport_options_template,
         )
 
     def test_compression_options(self):
         self._assert_transport_option_dict(
-            ["", "knet", "udp", "udpu"],
+            ["", "knet"],
             {"level": "5", "model": "zlib", "threshold": "100"},
             self._transport_options_template,
         )
@@ -1147,14 +678,14 @@ class GetCryptoOptions(GetOptionsDictMixin, TestCase):
 
     def test_empty_crypto_options(self):
         self._assert_transport_option_dict(
-            ["", "knet", "udp", "udpu"],
+            ["", "knet"],
             {"cipher": "", "hash": "", "model": ""},
             self._empty_transport_options_template,
         )
 
     def test_crypto_options(self):
         self._assert_transport_option_dict(
-            ["", "knet", "udp", "udpu"],
+            ["", "knet"],
             {"cipher": "aes256", "hash": "sha256", "model": "nss"},
             self._transport_options_template,
         )
@@ -1211,14 +742,14 @@ class GetTotemOptions(GetOptionsDictMixin, TestCase):
 
     def test_empty_totem_options(self):
         self._assert_transport_option_dict(
-            ["", "knet", "udp", "udpu"],
+            ["", "knet"],
             FIXTURE_EMPTY_TOTEM_TOKEN_OPTIONS,
             self._empty_transport_options_template,
         )
 
     def test_totem_options(self):
         self._assert_transport_option_dict(
-            ["", "knet", "udp", "udpu"],
+            ["", "knet"],
             FIXTURE_TOTEM_TOKEN_OPTIONS,
             self._transport_options_template,
         )

@@ -165,6 +165,41 @@ class UpdateLink(TestCase):
             ]
         )
 
+    def test_unsupported_transport(self):
+        before = """\
+            totem {
+                transport: udp
+
+                interface {
+                    mcastport: 1234
+                }
+            }
+
+            nodelist {
+                node {
+                    ring0_addr: node1-addr0
+                    name: node1
+                    nodeid: 1
+                }
+            }
+        """
+        patch_getaddrinfo(self, ["node1-addr0"])
+        self.config.corosync_conf.load_content(before)
+        self.env_assist.assert_raise_library_error(
+            lambda: cluster.update_link(
+                self.env_assist.get_env(), "0", {}, {"a": "A"}
+            )
+        )
+        self.env_assist.assert_reports(
+            [
+                fixture.error(
+                    report_codes.COROSYNC_CONFIG_UNSUPPORTED_TRANSPORT,
+                    actual_transport="udp",
+                    supported_transport_types=["knet"],
+                )
+            ]
+        )
+
 
 class UpdateLinkKnet(TestCase):
     def setUp(self):
@@ -312,164 +347,6 @@ class UpdateLinkKnet(TestCase):
                 fixture.error(
                     report_codes.NODE_ADDRESSES_ALREADY_EXIST,
                     address_list=["node2-addr0"],
-                ),
-            ]
-        )
-
-
-class UpdateLinkUdp(TestCase):
-    def setUp(self):
-        self.env_assist, self.config = get_env_tools(self)
-        self.config.env.set_known_nodes(["node1", "node2", "node3"])
-        self.existing_addrs = ["node1-addr0", "node2-addr0", "node3-addr0"]
-        self.before = """\
-            totem {
-                transport: udp
-
-                interface {
-                    broadcast: yes
-                    mcastport: 1234
-                    ttl: 128
-                }
-            }
-
-            nodelist {
-                node {
-                    ring0_addr: node1-addr0
-                    name: node1
-                    nodeid: 1
-                }
-
-                node {
-                    ring0_addr: node2-addr0
-                    name: node2
-                    nodeid: 2
-                }
-
-                node {
-                    ring0_addr: node3-addr0
-                    name: node3
-                    nodeid: 3
-                }
-            }
-        """
-
-    def test_success(self):
-        after = """\
-            totem {
-                transport: udp
-
-                interface {
-                    ttl: 128
-                    mcastaddr: 225.0.0.1
-                }
-            }
-
-            nodelist {
-                node {
-                    ring0_addr: node1-addr0
-                    name: node1
-                    nodeid: 1
-                }
-
-                node {
-                    ring0_addr: node2-addrA
-                    name: node2
-                    nodeid: 2
-                }
-
-                node {
-                    ring0_addr: node3-addr0
-                    name: node3
-                    nodeid: 3
-                }
-            }
-        """
-
-        patch_getaddrinfo(self, self.existing_addrs + ["node2-addrA"])
-        self.config.corosync_conf.load_content(self.before)
-        self.config.env.push_corosync_conf(
-            corosync_conf_text=after, need_stopped_cluster=True
-        )
-
-        cluster.update_link(
-            self.env_assist.get_env(),
-            "0",
-            {"node2": "node2-addrA"},
-            {"mcastport": "", "broadcast": "0", "mcastaddr": "225.0.0.1"},
-        )
-        # Reports from pushing corosync.conf are produced in env. That code is
-        # hidden in self.config.env.push_corosync_conf.
-        self.env_assist.assert_reports([])
-
-    def test_validation(self):
-        patch_getaddrinfo(self, self.existing_addrs + ["node3-addr0"])
-        self.config.corosync_conf.load_content(self.before)
-
-        self.env_assist.assert_raise_library_error(
-            lambda: cluster.update_link(
-                self.env_assist.get_env(),
-                "0",
-                {
-                    "nodeX": "addr-new",
-                    "node2": "",
-                    "node1": "node3-addr0",
-                },
-                {
-                    "wrong": "option",
-                    "broadcast": "1",
-                    "mcastaddr": "address",
-                },
-            ),
-            [],
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.error(
-                    report_codes.INVALID_OPTION_VALUE,
-                    option_value="address",
-                    option_name="mcastaddr",
-                    allowed_values="an IP address",
-                    cannot_be_empty=False,
-                    forbidden_characters=None,
-                ),
-                fixture.error(
-                    report_codes.INVALID_OPTIONS,
-                    option_names=["wrong"],
-                    option_type="link",
-                    allowed=[
-                        "bindnetaddr",
-                        "broadcast",
-                        "mcastaddr",
-                        "mcastport",
-                        "ttl",
-                    ],
-                    allowed_patterns=[],
-                ),
-                fixture.error(
-                    report_codes.PREREQUISITE_OPTION_MUST_BE_DISABLED,
-                    option_name="mcastaddr",
-                    option_type="link",
-                    prerequisite_name="broadcast",
-                    prerequisite_type="link",
-                ),
-                fixture.error(
-                    report_codes.NODE_NOT_FOUND,
-                    node="nodeX",
-                    searched_types=[],
-                ),
-                fixture.error(
-                    report_codes.NODE_ADDRESSES_CANNOT_BE_EMPTY,
-                    node_name_list=["node2"],
-                ),
-                fixture.error(
-                    report_codes.NODE_ADDRESSES_UNRESOLVABLE,
-                    force_code=report_codes.FORCE,
-                    address_list=["addr-new"],
-                ),
-                fixture.error(
-                    report_codes.NODE_ADDRESSES_ALREADY_EXIST,
-                    address_list=["node3-addr0"],
                 ),
             ]
         )

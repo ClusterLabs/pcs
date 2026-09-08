@@ -36,18 +36,12 @@ def _config_update(
 ) -> None:
     transport_type = corosync_conf.get_transport()
     report_list = config_validators.update_totem(totem_options)
-    if transport_type in corosync_constants.TRANSPORTS_KNET:
+    if transport_type == corosync_constants.TRANSPORT_KNET:
         report_list += config_validators.update_transport_knet(
             transport_options,
             compression_options,
             crypto_options,
             corosync_conf.get_crypto_options(),
-        )
-    elif transport_type in corosync_constants.TRANSPORTS_UDP:
-        report_list += config_validators.update_transport_udp(
-            transport_options,
-            compression_options,
-            crypto_options,
         )
     else:
         report_processor.report(

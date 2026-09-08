@@ -178,12 +178,12 @@ class ClusterSetup(TestCase):
             ],
         )
 
-    def test_transport_with_unknown_keywords(self):
+    def test_transport_keywords_are_transport_independent(self):
         node = "node"
-        self.call_cmd(["node", "transport", "udp", "crypto", "a=1"])
+        self.call_cmd(["node", "transport", "unknown", "crypto", "a=1"])
         self.assert_setup_called_with(
             [_node(node)],
-            transport_type="udp",
+            transport_type="unknown",
             crypto_options=dict(a="1"),
         )
 
@@ -326,54 +326,6 @@ class ClusterSetup(TestCase):
                 dict(ca="1", cb="2", cc="3"),
             ],
         )
-
-    def assert_with_all_options(self, transport_type):
-        self.call_cmd(
-            [
-                "node0",
-                "node2",
-                "addr=addr0",
-                "node1",
-                "addr=addr1",
-                "addr=addr2",
-                "totem",
-                "a=1",
-                "b=1",
-                "quorum",
-                "c=1",
-                "d=1",
-                "transport",
-                transport_type,
-                "a=a",
-                "b=b",
-                "link",
-                "aa=1",
-                "link",
-                "ba=1",
-                "bb=2",
-            ]
-        )
-        self.assert_setup_called_with(
-            [
-                _node("node0"),
-                _node("node2", addrs=["addr0"]),
-                _node("node1", addrs=["addr1", "addr2"]),
-            ],
-            totem_options=dict(a="1", b="1"),
-            quorum_options=dict(c="1", d="1"),
-            transport_type=transport_type,
-            transport_options=dict(a="a", b="b"),
-            link_list=[
-                dict(aa="1"),
-                dict(ba="1", bb="2"),
-            ],
-        )
-
-    def test_full_udp(self):
-        self.assert_with_all_options("udp")
-
-    def test_full_udpu(self):
-        self.assert_with_all_options("udpu")
 
     def test_enable(self):
         node_name = "node"
