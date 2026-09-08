@@ -304,12 +304,6 @@ COMMAND_MAP: Mapping[str, _Cmd] = {
         # the original handler in ruby
         required_permission=p.NONE,
     ),
-    "manage_clusters.remove_clusters": _Cmd(
-        cmd=manage_clusters.remove_clusters,
-        # needs to be NONE for backwards compatibility with
-        # the original handler in ruby
-        required_permission=p.NONE,
-    ),
     "node.maintenance_unmaintenance_all": _Cmd(
         cmd=node.maintenance_unmaintenance_all,
         required_permission=p.WRITE,
@@ -596,7 +590,6 @@ LEGACY_API_COMMANDS = (
     "cluster.set_corosync_conf",
     "cluster.set_permissions",
     "manage_clusters.add_cluster",
-    "manage_clusters.remove_clusters",
     "pcs_cfgsync.set_configs",
     "pcs_cfgsync.update_sync_options",
     "qdevice.qdevice_net_get_ca_certificate",

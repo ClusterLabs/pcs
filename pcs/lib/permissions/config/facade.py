@@ -106,12 +106,3 @@ class FacadeV2(SyncVersionFacadeInterface):
 
     def add_cluster(self, cluster: ClusterEntry) -> None:
         self._set_clusters(list(self.config.clusters) + [cluster])
-
-    def remove_cluster(self, cluster_name: str) -> None:
-        self._set_clusters(
-            [
-                cluster
-                for cluster in self.config.clusters
-                if cluster.name != cluster_name
-            ]
-        )

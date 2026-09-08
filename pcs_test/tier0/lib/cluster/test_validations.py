@@ -79,25 +79,3 @@ class ValidateAddCluster(TestCase):
                 )
             ],
         )
-
-
-class ValidateRemoveClusters(TestCase):
-    def test_valid_no_reports(self):
-        report_list = validations.validate_remove_clusters(
-            ["CLUSTER1", "CLUSTER2", "CLUSTER3"]
-        )
-        assert_report_item_list_equal(report_list, [])
-
-    def test_empty_list(self):
-        report_list = validations.validate_remove_clusters([])
-        assert_report_item_list_equal(
-            report_list,
-            [
-                fixture.error(
-                    reports.codes.ADD_REMOVE_ITEMS_NOT_SPECIFIED,
-                    container_type=None,
-                    item_type=reports.const.ADD_REMOVE_ITEM_TYPE_CLUSTER,
-                    container_id=None,
-                )
-            ],
-        )

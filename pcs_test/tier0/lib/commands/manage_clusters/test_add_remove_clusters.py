@@ -174,32 +174,6 @@ class AddClusterLocalNodeNotInCluster(AddRemoveNotInClusterBase, TestCase):
         )
 
 
-class RemoveClustersLocalNodeNotInCluster(AddRemoveNotInClusterBase, TestCase):
-    CLUSTERS_AFTER_OPERATION = AddRemoveNotInClusterBase.LOCAL_CLUSTERS[:1]
-
-    def get_lib_command_call(self):
-        return lambda: manage_clusters.remove_clusters(
-            self.env_assist.get_env(), ["CLUSTER-Y", "CLUSTER-Z"]
-        )
-
-    def test_input_validation_failed(self):
-        self.env_assist.assert_raise_library_error(
-            lambda: manage_clusters.remove_clusters(
-                self.env_assist.get_env(), []
-            )
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.error(
-                    reports.codes.ADD_REMOVE_ITEMS_NOT_SPECIFIED,
-                    container_type=None,
-                    item_type=reports.const.ADD_REMOVE_ITEM_TYPE_CLUSTER,
-                    container_id=None,
-                )
-            ]
-        )
-
-
 class AddRemoveInClusterBase:
     NODE_LABELS = ["node1", "node2", "node3"]
 
@@ -393,13 +367,4 @@ class AddClusterLocalNodeInCluster(AddRemoveInClusterBase, TestCase):
     def get_lib_command_call(self):
         return lambda: manage_clusters.add_cluster(
             self.env_assist.get_env(), "CLUSTER", ["NODE1", "NODE2"]
-        )
-
-
-class RemoveClusterLocalNodeInCluster(AddRemoveInClusterBase, TestCase):
-    CLUSTERS_AFTER_OPERATION = AddRemoveNotInClusterBase.LOCAL_CLUSTERS[:1]
-
-    def get_lib_command_call(self):
-        return lambda: manage_clusters.remove_clusters(
-            self.env_assist.get_env(), ["CLUSTER-Y", "CLUSTER-Z"]
         )

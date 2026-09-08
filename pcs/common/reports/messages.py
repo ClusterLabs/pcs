@@ -107,7 +107,6 @@ _add_remove_container_translation = {
 }
 
 _add_remove_item_translation = {
-    const.ADD_REMOVE_ITEM_TYPE_CLUSTER: "cluster",
     const.ADD_REMOVE_ITEM_TYPE_DEVICE: "device",
     const.ADD_REMOVE_ITEM_TYPE_HOST: "host",
     const.ADD_REMOVE_ITEM_TYPE_PROPERTY: "property",
