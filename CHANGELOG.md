@@ -1,16 +1,19 @@
 # Change Log
 
-## Unreleased
+## [Unreleased]
 
 ### Fixed
 - Command `pcs stonith update-scsi-devices` no longer triggers unnecessary
   resource restarts when updating SCSI devices. ([RHEL-215405])
 
+[RHEL-215405]: https://redhat.atlassian.net/browse/RHEL-215405
+
+
+## [0.11.12.2] - 2026-09-08
+
 ### Security
 - Non-root users can no longer run `pcs host auth --token`, which could be
-  abused to read arbitrary files on the filesystem.
-
-[RHEL-215405]: https://redhat.atlassian.net/browse/RHEL-215405
+  abused to read arbitrary files on the filesystem (CVE-2026-84828)
 
 
 ## [0.11.12.1] - 2026-07-14
