@@ -353,15 +353,6 @@ def node_status(params, request, auth_user)
   return [400, "Unsupported version '#{version}' of status requested"]
 end
 
-def imported_cluster_list(params, request, auth_user)
-  config = PCSConfig.new(get_pcs_settings_conf())
-  imported_clusters = {"cluster_list" => []}
-  config.clusters.each { |cluster|
-    imported_clusters["cluster_list"] << { "name": cluster.name }
-  }
-  return JSON.generate(imported_clusters)
-end
-
 def resource_cleanup(params, request, auth_user)
   return _resource_cleanup_refresh("cleanup", params, request, auth_user)
 end

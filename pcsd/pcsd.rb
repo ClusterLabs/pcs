@@ -20,14 +20,6 @@ set :app_file, __FILE__
 set :logging, false
 set :static, false
 
-def __msg_cluster_name_already_used(cluster_name)
-  return "The cluster name '#{cluster_name}' has already been added. You may not add two clusters with the same name."
-end
-
-def __msg_node_name_already_used(node_name, cluster_name)
-  return "The node '#{node_name}' is already a part of the '#{cluster_name}' cluster. You may not add a node to two different clusters."
-end
-
 def __msg_node_not_in_cluster()
   return 400, "This host is not in a cluster - corosync.conf not present or not valid"
 end
@@ -315,41 +307,6 @@ post '/manage/send-known-hosts-to-node' do
   )
 end
 
-# use case:
-# - js asks us if specified cluster name and/or node names are available
-get '/manage/can-add-cluster-or-nodes' do
-  # This is currently used form cluster setup and node add, both of which
-  # require hacluster user anyway. If needed to be used anywhere else, consider
-  # if hacluster should be required.
-  auth_user = getAuthUser()
-  if not allowed_for_superuser(auth_user)
-    return 403, 'Permission denied.'
-  end
-
-  pcs_config = PCSConfig.new(get_pcs_settings_conf())
-  errors = []
-
-  if params.include?(:cluster)
-    if pcs_config.is_cluster_name_in_use(params[:cluster])
-      errors << __msg_cluster_name_already_used(params[:cluster])
-    end
-  end
-
-  if params.include?(:node_names)
-    params[:node_names].each { |node_name|
-      cluster_name = pcs_config.get_nodes_cluster(node_name)
-      if cluster_name
-        errors << __msg_node_name_already_used(node_name, cluster_name)
-      end
-    }
-  end
-
-  unless errors.empty?
-    return 400, errors.join("\n")
-  end
-  return 200, ""
-end
-
 post '/manage/api/v1/cluster-setup' do
   auth_user = getAuthUser()
   if not allowed_for_superuser(auth_user)
@@ -393,10 +350,6 @@ get '/manage/check_auth_against_nodes' do
     node_results[node] = 'Unable to authenticate'
   }
   return JSON.generate(node_results)
-end
-
-get '/imported-cluster-list' do
-  imported_cluster_list(params, request, getAuthUser())
 end
 
 post '/managec/permissions_save/?' do
