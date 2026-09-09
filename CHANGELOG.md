@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [0.10.20] - 2026-09-09
 
 ### Security
 - Non-root users can no longer run `pcs host auth --token`, which could be
