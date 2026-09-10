@@ -2,15 +2,15 @@
 # yamllint disable rule:line-length
 
 # ########################################################################
-# This workflow locks or unlocks a specified branch using the GitHub API
-# branch protection settings. It is triggered manually via
-# workflow_dispatch and restricted to a configurable list of authorized
-# users defined in the ALLOWED_USERS environment variable.
+# This workflow enables or disables a predefined ruleset preventing pushes to
+# production branches using the GitHub API repository ruleset settings. It is
+# triggered manually via workflow_dispatch and restricted to a configurable
+# list of authorized users defined in the ALLOWED_USERS environment variable.
 #
 # It requires a fine-grained Personal Access Token (PAT) with
 # administration (read and write) permissions, stored as an environment
 # secret. The default GITHUB_TOKEN does not have sufficient permissions
-# to read or update branch protection rules via the API.
+# to read or update rulesets via the API.
 #
 # Setup — create one environment, one secret, and one variable in the GitHub UI:
 #
@@ -22,7 +22,7 @@
 #      - Create a fine-grained PAT at:
 #        https://github.com/settings/personal-access-tokens/new
 #      - Set "Resource owner" to the repository owner user who can
-#        set the branch protection rules
+#        set repository rulesets
 #      - Under "Repository access", select "Only select repositories"
 #        and choose "ClusterLabs/pcs"
 #      - Under "Repository permissions", set "Administration" to
@@ -39,12 +39,16 @@
 #        who are authorized to run this workflow
 #        (e.g., "user1 user2")
 #
+#   4. Environment variable "RULESET_ID"
+#      - Create under Settings -> Environments -> lock-token -> Add
+#        environment variable with the name RULESET_ID
+#      - Set the value to an ID of the ruleset
+#
 # Documentation:
 # - https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments
 # - https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token
 # - https://docs.github.com/en/rest/authentication/permissions-required-for-fine-grained-personal-access-tokens?apiVersion=2026-03-10#repository-permissions-for-administration
-# - https://docs.github.com/en/rest/branches/branch-protection?apiVersion=2026-03-10#get-admin-branch-protection
-# - https://docs.github.com/en/rest/branches/branch-protection?apiVersion=2026-03-10#update-branch-protection
+# - https://docs.github.com/en/rest/repos/rules?apiVersion=2026-03-10#update-a-repository-ruleset
 # ########################################################################
 
 name: API Branch Locking
@@ -52,23 +56,13 @@ name: API Branch Locking
 on:
   workflow_dispatch:
     inputs:
-      lock_branch:
-        description: "Lock the branch (true) or unlock it (false)"
+      enforcement:
+        description: "Set branches locking ruleset enforcement"
         required: true
         type: choice
         options:
-          - "true"
-          - "false"
-      branch:
-        description: "Target branch"
-        required: true
-        type: choice
-        options:
-          - main
-          - pcs-1.x
-          - pcs-0.12
-          - pcs-0.11
-          - pcs-0.10
+          - "active"
+          - "disabled"
 
 permissions:
   contents: read
@@ -96,93 +90,30 @@ jobs:
           echo "ERROR: User ${GH_ACTOR} is not authorized to run this workflow"
           exit 1
 
-      - name: Get branch protection rules
+      - name: Enable or disable the ruleset
         env:
           GH_TOKEN: ${{ secrets.PCS_REPO_LOCK_GITHUB_API_TOKEN }}
           REPO: ${{ github.repository }}
-          BRANCH: ${{ inputs.branch }}
+          RULESET_ID: ${{ vars.RULESET_ID }}
+          RULESET_ENFORCEMENT: ${{ inputs.enforcement }}
         run: |
-          HTTP_CODE=$(
-            curl -s -o /tmp/protection.json -w "%{http_code}" \
-              -H "Authorization: Bearer ${GH_TOKEN}" \
-              -H "Accept: application/vnd.github+json" \
-              -H "X-GitHub-Api-Version: 2026-03-10" \
-              "https://api.github.com/repos/${REPO}/branches/${BRANCH}/protection"
-          )
-          if [[ "$HTTP_CODE" != "200" ]]; then
-            echo "ERROR: Failed to get branch protection for ${BRANCH} (HTTP ${HTTP_CODE})"
-            cat /tmp/protection.json
+          if [[ -z "${RULESET_ID}" ]]; then
+            echo "ERROR: RULESET_ID environment variable is not configured"
             exit 1
           fi
-          echo "Current lock_branch: $(jq '.lock_branch.enabled' /tmp/protection.json)"
-
-      - name: Update branch protection with lock_branch=${{ inputs.lock_branch }}
-        env:
-          GH_TOKEN: ${{ secrets.PCS_REPO_LOCK_GITHUB_API_TOKEN }}
-          REPO: ${{ github.repository }}
-          BRANCH: ${{ inputs.branch }}
-          LOCK_BRANCH: ${{ inputs.lock_branch }}
-        run: |
-          jq --argjson lock "${LOCK_BRANCH}" \
-            '{
-              required_status_checks: (
-                if .required_status_checks then {
-                  strict: .required_status_checks.strict,
-                  checks: (.required_status_checks.checks // [])
-                } else null end
-              ),
-              enforce_admins: (.enforce_admins.enabled // false),
-              required_pull_request_reviews: (
-                if .required_pull_request_reviews then {
-                  dismissal_restrictions: (
-                    if .required_pull_request_reviews.dismissal_restrictions then {
-                      users: [.required_pull_request_reviews.dismissal_restrictions.users[]?.login],
-                      teams: [.required_pull_request_reviews.dismissal_restrictions.teams[]?.slug],
-                      apps: [.required_pull_request_reviews.dismissal_restrictions.apps[]?.slug]
-                    } else null end
-                  ),
-                  bypass_pull_request_allowances: (
-                    if .required_pull_request_reviews.bypass_pull_request_allowances then {
-                      users: [.required_pull_request_reviews.bypass_pull_request_allowances.users[]?.login],
-                      teams: [.required_pull_request_reviews.bypass_pull_request_allowances.teams[]?.slug],
-                      apps: [.required_pull_request_reviews.bypass_pull_request_allowances.apps[]?.slug]
-                    } else null end
-                  ),
-                  dismiss_stale_reviews: (.required_pull_request_reviews.dismiss_stale_reviews // false),
-                  require_code_owner_reviews: (.required_pull_request_reviews.require_code_owner_reviews // false),
-                  required_approving_review_count: (.required_pull_request_reviews.required_approving_review_count // 0),
-                  require_last_push_approval: (.required_pull_request_reviews.require_last_push_approval // false)
-                } else null end
-              ),
-              restrictions: (
-                if .restrictions then {
-                  users: [.restrictions.users[]?.login],
-                  teams: [.restrictions.teams[]?.slug],
-                  apps: [.restrictions.apps[]?.slug]
-                } else null end
-              ),
-              required_linear_history: (.required_linear_history.enabled // false),
-              allow_force_pushes: (.allow_force_pushes.enabled // false),
-              allow_deletions: (.allow_deletions.enabled // false),
-              block_creations: (.block_creations.enabled // false),
-              required_conversation_resolution: (.required_conversation_resolution.enabled // false),
-              lock_branch: $lock,
-              allow_fork_syncing: (.allow_fork_syncing.enabled // false)
-            }' /tmp/protection.json > /tmp/payload.json
-
           HTTP_CODE=$(
-            curl -s -o /tmp/update-response.json -w "%{http_code}" \
+            curl --silent --output /tmp/update-response.json --write-out "%{http_code}" \
               -X PUT \
               -H "Authorization: Bearer ${GH_TOKEN}" \
               -H "Accept: application/vnd.github+json" \
               -H "X-GitHub-Api-Version: 2026-03-10" \
-              "https://api.github.com/repos/${REPO}/branches/${BRANCH}/protection" \
-              -d @/tmp/payload.json
+              "https://api.github.com/repos/${REPO}/rulesets/${RULESET_ID}" \
+              -d "{\"enforcement\":\"$RULESET_ENFORCEMENT\"}"
           )
           if [[ "$HTTP_CODE" != "200" ]]; then
-            echo "ERROR: Failed to set lock_branch=${LOCK_BRANCH} on ${BRANCH} (HTTP ${HTTP_CODE})"
+            echo "ERROR: Failed to set enforcement=${RULESET_ENFORCEMENT} for ruleset ${RULESET_ID} (HTTP ${HTTP_CODE})"
             cat /tmp/update-response.json
             exit 1
           fi
-          echo "Successfully set lock_branch=${LOCK_BRANCH} on ${BRANCH}"
-          echo "New lock_branch state: $(jq '.lock_branch.enabled' /tmp/update-response.json)"
+          echo "Successfully set enforcement=${RULESET_ENFORCEMENT} for ruleset ${RULESET_ID}"
+          echo "New enforcement state: $(jq '.enforcement' /tmp/update-response.json)"
