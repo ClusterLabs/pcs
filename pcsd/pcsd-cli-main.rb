@@ -7,6 +7,7 @@ require 'bootstrap.rb'
 require 'pcs.rb'
 require 'auth.rb'
 require 'remote.rb'
+require 'corosyncconf.rb'
 
 
 PCS = get_pcs_path()
@@ -65,7 +66,15 @@ def pcsd_cli_main()
   end
 
   # continue environment setup with user set in auth_user
-  $cluster_name = get_cluster_name()
+  $cluster_name = ''
+  $cluster_uuid = ''
+  $cluster_nodes = []
+  if has_corosync_conf()
+    corosync_conf = CorosyncConf::parse_string(get_corosync_conf())
+    $cluster_name = CorosyncConf::get_cluster_name(corosync_conf)
+    $cluster_uuid = CorosyncConf::get_cluster_uuid(corosync_conf)
+    $cluster_nodes = CorosyncConf::get_corosync_nodes_names(corosync_conf)
+  end
 
   # get params and run a command
   command = ARGV[0]

@@ -28,6 +28,10 @@ def __msg_node_name_already_used(node_name, cluster_name)
   return "The node '#{node_name}' is already a part of the '#{cluster_name}' cluster. You may not add a node to two different clusters."
 end
 
+def __msg_node_not_in_cluster()
+  return 400, "This host is not in a cluster - corosync.conf not present or not valid"
+end
+
 def getAuthUser()
   return {
     :username => Thread.current[:tornado_username],
@@ -38,17 +42,27 @@ end
 before do
   @auth_user = getAuthUser()
   begin
-    $cluster_name, $cluster_uuid = get_cluster_name_and_uuid()
+    $cluster_name = ''
+    $cluster_uuid = ''
+    $cluster_nodes = []
+    if has_corosync_conf()
+      corosync_conf = CorosyncConf::parse_string(get_corosync_conf())
+      $cluster_name = CorosyncConf::get_cluster_name(corosync_conf)
+      $cluster_uuid = CorosyncConf::get_cluster_uuid(corosync_conf)
+      $cluster_nodes = CorosyncConf::get_corosync_nodes_names(corosync_conf)
+    end
   rescue SystemCallError => e
     $logger.error("Unable to read corosync.conf: #{e.message}")
     $logger.warn("Continuing request processing as if this node is not in a cluster")
     $cluster_name = ''
     $cluster_uuid = ''
+    $cluster_nodes = []
   rescue CorosyncConf::ParseErrorException => e
     $logger.error("Unable to parse corosync.conf: #{e.message}")
     $logger.warn("Continuing request processing as if this node is not in a cluster")
     $cluster_name = ''
     $cluster_uuid = ''
+    $cluster_nodes = []
   end
   if PCSD_RESTART_AFTER_REQUESTS > 0
     $request_counter += 1
@@ -296,8 +310,8 @@ post '/manage/send-known-hosts-to-node' do
   if not allowed_for_superuser(auth_user)
     return 403, 'Permission denied.'
   end
-  return pcs_compatibility_layer_known_hosts_add(
-    auth_user, false, params[:target_node], params[:node_names]
+  return _send_known_hosts_to_node(
+    auth_user, params[:target_node], params[:node_names]
   )
 end
 
@@ -385,54 +399,59 @@ get '/imported-cluster-list' do
   imported_cluster_list(params, request, getAuthUser())
 end
 
-post '/managec/:cluster/permissions_save/?' do
+post '/managec/permissions_save/?' do
+  if '' == $cluster_name
+    return __msg_node_not_in_cluster()
+  end
   auth_user = getAuthUser()
   new_params = {
     'json_data' => JSON.generate(params)
   }
   return send_cluster_request_with_token(
-    auth_user, params[:cluster], "set_permissions", true, new_params
+    auth_user, "set_permissions", true, new_params
   )
 end
 
-get '/managec/:cluster/cluster_status' do
-  auth_user = getAuthUser()
-  cluster_status_gui(auth_user, params[:cluster])
-end
-
-post '/managec/:cluster/fix_auth_of_cluster' do
-  clustername = params[:cluster]
-  unless clustername
-    return [400, "cluster name not defined"]
+get '/managec/cluster_status' do
+  if '' == $cluster_name
+    return __msg_node_not_in_cluster()
   end
+  auth_user = getAuthUser()
+  status = cluster_status_from_nodes(auth_user, $cluster_nodes, $cluster_name)
+  unless status
+    return 403, 'Permission denied'
+  end
+  return JSON.generate(status)
+end
 
-  retval = pcs_compatibility_layer_known_hosts_add(
-    PCSAuth.getSuperuserAuth(), true, clustername, get_cluster_nodes(clustername)
+post '/managec/fix_auth_of_cluster' do
+  if '' == $cluster_name
+    return __msg_node_not_in_cluster()
+  end
+  retval = _send_known_hosts_to_cluster(
+    PCSAuth.getSuperuserAuth(), $cluster_nodes
   )
-  if retval == 'not_supported'
-    return [400, "Old version of PCS/PCSD is running on cluster nodes. Fixing authentication is not supported. Use 'pcs host auth' command to authenticate the nodes."]
-  elsif retval == 'error'
+  if retval == 'error'
     return [400, "Authentication failed."]
   end
-  return [200, "Auhentication of nodes in cluster should be fixed."]
+  return [200, "Authentication of nodes in cluster should be fixed."]
 end
 
-post '/managec/:cluster/send-known-hosts' do
+post '/managec/send-known-hosts' do
   # send
   #   data (token, dest_list) of nodes in params[:node_names]
-  #   to nodes that belongs to a cluster with name params[:cluster]
+  #   to nodes that belong to the local cluster
   auth_user = getAuthUser()
   if not allowed_for_superuser(auth_user)
     return 403, 'Permission denied.'
   end
-  return pcs_compatibility_layer_known_hosts_add(
-    auth_user, true, params[:cluster], params[:node_names]
-  )
+  if '' == $cluster_name
+    return __msg_node_not_in_cluster()
+  end
+  return _send_known_hosts_to_cluster(auth_user, params[:node_names])
 end
 
-def pcs_compatibility_layer_known_hosts_add(
-  auth_user, is_cluster_request, target, host_list
-)
+def _get_known_hosts_to_send(host_list)
   known_hosts = get_known_hosts().select { |name, obj|
     host_list.include?(name)
   }
@@ -451,33 +470,38 @@ def pcs_compatibility_layer_known_hosts_add(
       }
     ),
   }
-  if is_cluster_request
-    retval, _out = send_cluster_request_with_token(
-      auth_user, target, '/known_hosts_change', true, request_data
-    )
-  else
-    retval, _out = send_request_with_token(
-      auth_user, target, '/known_hosts_change', true, request_data
-    )
-  end
+  return request_data
+end
 
+def _send_known_hosts_to_cluster(auth_user, host_list)
+  retval, _out = send_cluster_request_with_token(
+    auth_user, '/known_hosts_change', true, _get_known_hosts_to_send(host_list)
+  )
   if retval == 200
     return 'success'
-  end
-
-  if retval == 404
-    return 'not_supported'
   end
   return 'error'
 end
 
-post '/managec/:cluster/api/v1/:command' do
+def _send_known_hosts_to_node(auth_user, target, host_list)
+  retval, _out = send_request_with_token(
+    auth_user, target, '/known_hosts_change', true, _get_known_hosts_to_send(host_list)
+  )
+  if retval == 200
+    return 'success'
+  end
+  return 'error'
+end
+
+post '/managec/api/v1/:command' do
+  if '' == $cluster_name
+    return __msg_node_not_in_cluster()
+  end
   auth_user = getAuthUser()
-  if params[:cluster] and params[:command]
+  if params[:command]
     request.body.rewind
     return send_cluster_request_with_token(
       auth_user,
-      params[:cluster],
       '/api/v1/' + params[:command] + '/v1',
       true, # post
       {}, # data - useless when there are raw_data
@@ -487,13 +511,15 @@ post '/managec/:cluster/api/v1/:command' do
   end
 end
 
-get '/managec/:cluster/api/v1/:command' do
+get '/managec/api/v1/:command' do
+  if '' == $cluster_name
+    return __msg_node_not_in_cluster()
+  end
   auth_user = getAuthUser()
-  if params[:cluster] and params[:command]
+  if params[:command]
     request.body.rewind
     return send_cluster_request_with_token(
       auth_user,
-      params[:cluster],
       '/api/v1/' + params[:command] + '/v1',
       false, # post
       {}, # data - useless when there are raw_data
@@ -503,30 +529,32 @@ get '/managec/:cluster/api/v1/:command' do
   end
 end
 
-post '/managec/:cluster/?*' do
+post '/managec/?*' do
+  if '' == $cluster_name
+    return __msg_node_not_in_cluster()
+  end
   auth_user = getAuthUser()
   request.body.rewind
   raw_data = request.body.read
-  if params[:cluster]
-    request = "/" + params[:splat].join("/")
-
-    return send_cluster_request_with_token(
-      auth_user, params[:cluster], request, true, params, true, raw_data
-    )
-  end
+  request = "/" + params[:splat].join("/")
+  code, out = send_cluster_request_with_token(
+    auth_user, request, true, params, true, raw_data
+  )
+  return code, out
 end
 
-get '/managec/:cluster/?*' do
+get '/managec/?*' do
+  if '' == $cluster_name
+    return __msg_node_not_in_cluster()
+  end
   auth_user = getAuthUser()
   request.body.rewind
   raw_data = request.body.read
-  if params[:cluster]
-    request = "/" + params[:splat].join("/")
-    code, out = send_cluster_request_with_token(
-      auth_user, params[:cluster], request, false, params, true, raw_data
-    )
-    return code, out
-  end
+  request = "/" + params[:splat].join("/")
+  code, out = send_cluster_request_with_token(
+    auth_user, request, false, params, true, raw_data
+  )
+  return code, out
 end
 
 get '*' do
