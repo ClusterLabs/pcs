@@ -694,38 +694,6 @@ class UtilsTest(TestCase):
             utils.validate_xml_id("dummy?", "test id"),
         )
 
-    def test_is_score(self):
-        self.assertTrue(utils.is_score("INFINITY"))
-        self.assertTrue(utils.is_score("+INFINITY"))
-        self.assertTrue(utils.is_score("-INFINITY"))
-        self.assertTrue(utils.is_score("0"))
-        self.assertTrue(utils.is_score("+0"))
-        self.assertTrue(utils.is_score("-0"))
-        self.assertTrue(utils.is_score("123"))
-        self.assertTrue(utils.is_score("-123"))
-        self.assertTrue(utils.is_score("+123"))
-
-        self.assertFalse(utils.is_score(""))
-        self.assertFalse(utils.is_score("abc"))
-        self.assertFalse(utils.is_score("+abc"))
-        self.assertFalse(utils.is_score("-abc"))
-        self.assertFalse(utils.is_score("10a"))
-        self.assertFalse(utils.is_score("+10a"))
-        self.assertFalse(utils.is_score("-10a"))
-        self.assertFalse(utils.is_score("a10"))
-        self.assertFalse(utils.is_score("+a10"))
-        self.assertFalse(utils.is_score("a-10"))
-        self.assertFalse(utils.is_score("infinity"))
-        self.assertFalse(utils.is_score("+infinity"))
-        self.assertFalse(utils.is_score("-infinity"))
-        self.assertFalse(utils.is_score("+InFiNiTy"))
-        self.assertFalse(utils.is_score("INFINITY10"))
-        self.assertFalse(utils.is_score("INFINITY+10"))
-        self.assertFalse(utils.is_score("-INFINITY10"))
-        self.assertFalse(utils.is_score("+INFINITY+10"))
-        self.assertFalse(utils.is_score("10INFINITY"))
-        self.assertFalse(utils.is_score("+10+INFINITY"))
-
     def get_cib_status_lrm(self):
         cib_dom = self.get_cib_empty()
         new_status = xml.dom.minidom.parseString(

@@ -38,7 +38,12 @@ from pcs.common.str_tools import format_list, indent
 from pcs.common.types import StringCollection, StringIterable, StringSequence
 from pcs.lib.cib.constraint.order import ATTRIB as order_attrib
 from pcs.lib.node import get_existing_nodes_names
-from pcs.lib.pacemaker.values import SCORE_INFINITY, is_true, sanitize_id
+from pcs.lib.pacemaker.values import (
+    SCORE_INFINITY,
+    is_score,
+    is_true,
+    sanitize_id,
+)
 
 DEFAULT_ACTION = const.PCMK_ACTION_START
 DEFAULT_ROLE = const.PCMK_ROLE_STARTED
@@ -47,10 +52,6 @@ OPTIONS_SYMMETRICAL = order_attrib["symmetrical"]
 
 LOCATION_NODE_VALIDATION_SKIP_MSG = (
     "Validation for node existence in the cluster will be skipped"
-)
-STANDALONE_SCORE_MSG = (
-    "Specifying score as a standalone value is deprecated and "
-    "might be removed in a future release, use score=value instead"
 )
 
 
@@ -115,42 +116,18 @@ def _validate_resources_not_in_same_group(cib_dom, resource1, resource2):
         )
 
 
-# Syntax: colocation add [role] <src> with [role] <tgt> [score] [options]
+# Syntax: colocation add [role] <src> with [role] <tgt> [score=<score>] [options]
 # possible commands:
-#        <src> with        <tgt> [score] [options]
-#        <src> with <role> <tgt> [score] [options]
-# <role> <src> with        <tgt> [score] [options]
-# <role> <src> with <role> <tgt> [score] [options]
-# Specifying score as a single argument is deprecated, though. The correct way
-# is score=value in options.
+#        <src> with        <tgt> [score=<score>] [options]
+#        <src> with <role> <tgt> [score=<score>] [options]
+# <role> <src> with        <tgt> [score=<score>] [options]
+# <role> <src> with <role> <tgt> [score=<score>] [options]
 def colocation_add(lib, argv, modifiers):  # noqa: PLR0912, PLR0915
     """
     Options:
       * -f - CIB file
       * --force - allow constraint on any resource, allow duplicate constraints
     """
-
-    def _parse_score_options(argv):
-        # When passed an array of arguments if the first argument doesn't have
-        # an '=' then it's the score, otherwise they're all arguments. Return a
-        # tuple with the score and array of name,value pairs
-        """
-        Commandline options: no options
-        """
-        if not argv:
-            return None, []
-        score = None
-        if "=" not in argv[0]:
-            score = argv.pop(0)
-            # TODO added to pcs in the first 0.12.x version
-            deprecation_warning(STANDALONE_SCORE_MSG)
-
-        # create a list of 2-tuples (name, value)
-        arg_array = [
-            parse_args.split_option(arg, allow_empty_value=False)
-            for arg in argv
-        ]
-        return score, arg_array
 
     def _validate_and_prepare_role(new_roles_supported, role):
         if role is None:
@@ -196,13 +173,15 @@ def colocation_add(lib, argv, modifiers):  # noqa: PLR0912, PLR0915
 
     if not argv:
         raise CmdLineInputError()
-    if len(argv) == 1 or utils.is_score_or_opt(argv[1]):
+    if len(argv) == 1 or argv[1].find("=") != -1:
         resource2 = argv.pop(0)
     else:
         role2_candidate = argv.pop(0)
         resource2 = argv.pop(0)
 
-    score, nv_pairs = _parse_score_options(argv)
+    nv_pairs = [
+        parse_args.split_option(arg, allow_empty_value=False) for arg in argv
+    ]
     influence_attr_set = any(name == "influence" for name, _ in nv_pairs)
 
     cib_dom = (
@@ -222,6 +201,7 @@ def colocation_add(lib, argv, modifiers):  # noqa: PLR0912, PLR0915
     _validate_constraint_resource(cib_dom, resource2)
 
     id_in_nvpairs = None
+    score = None
     for name, value in nv_pairs:
         if name == "id":
             id_valid, id_error = utils.validate_xml_id(value, "constraint id")
@@ -811,7 +791,7 @@ def _verify_node_name(node, existing_nodes):
 
 
 def _verify_score(score):
-    if not utils.is_score(score):
+    if not is_score(score):
         utils.err(
             "invalid score '%s', use integer or INFINITY or -INFINITY" % score
         )
@@ -902,7 +882,7 @@ def location_add(  # noqa: PLR0912, PLR0915
     """
     del lib
     modifiers.ensure_only_supported("--force", "-f")
-    if len(argv) < 4:
+    if len(argv) < 3:
         raise CmdLineInputError()
 
     constraint_id = argv.pop(0)
@@ -913,10 +893,6 @@ def location_add(  # noqa: PLR0912, PLR0915
     )
     node = argv.pop(0)
     score = None
-    if "=" not in argv[0]:
-        score = argv.pop(0)
-        # TODO added to pcs in the first 0.12.x version
-        deprecation_warning(STANDALONE_SCORE_MSG)
     options = []
     # For now we only allow setting resource-discovery and score
     for arg in argv:

@@ -21,6 +21,9 @@
   create, display and modify corosync configuration with such transports, use
   knet transport instead. This affects mainly `pcs cluster setup`, `pcs config
   update` and `pcs cluster link` commands.
+- Specifying score as a standalone value in `pcs constraint location add` and
+  `pcs constraint colocation add`. Use `score=value` instead. This was
+  deprecated since pcs-0.12.
 
 ### Fixed
 - Command `pcs stonith update-scsi-devices` no longer triggers unnecessary
