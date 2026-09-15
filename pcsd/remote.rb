@@ -29,7 +29,6 @@ def remote(params, request, auth_user)
       :cluster_enable => method(:cluster_enable),
       :cluster_disable => method(:cluster_disable),
       :cluster_destroy => method(:cluster_destroy),
-      :get_cluster_known_hosts => method(:get_cluster_known_hosts),
       :get_cluster_properties_definition => method(:get_cluster_properties_definition),
       :remove_stonith_watchdog_timeout=> method(:remove_stonith_watchdog_timeout),
       :set_stonith_watchdog_timeout_to_zero => method(:set_stonith_watchdog_timeout_to_zero),
@@ -100,85 +99,6 @@ def _get_param_list(params)
     end
   }
   return param_line + meta_options, flags
-end
-
-# provides remote cluster status to a local gui
-def cluster_status_gui(auth_user, cluster_name, dont_update_config=false)
-  config = PCSConfig.new(get_pcs_settings_conf())
-  unless config.is_cluster_name_in_use(cluster_name)
-    return 404, 'Unknown cluster'
-  end
-  cluster_nodes = config.get_nodes(cluster_name)
-  status = cluster_status_from_nodes(auth_user, cluster_nodes, cluster_name)
-  unless status
-    return 403, 'Permission denied'
-  end
-
-  if dont_update_config
-    return JSON.generate(status)
-  end
-
-  # source for :corosync_offline, etc... is result of command `pcs status nodes
-  # both` launched on one of cluster nodes.
-  new_cluster_nodes = []
-  new_cluster_nodes += status[:corosync_offline] if status[:corosync_offline]
-  new_cluster_nodes += status[:corosync_online] if status[:corosync_online]
-  new_cluster_nodes += status[:pacemaker_offline] if status[:pacemaker_offline]
-  new_cluster_nodes += status[:pacemaker_online] if status[:pacemaker_online]
-  new_cluster_nodes.uniq!
-  if new_cluster_nodes.length == 0
-    # We haven't got direct info about participating nodes from one of cluster
-    # nodes. But it does not mean that cluster does not exist - all nodes can
-    # be offline!
-    # So, we use nodes from :node_list. There is a set of nodes we have
-    # provided to `cluster_status_from_nodes` (i.e. from pcs_settings) minus
-    # nodes that reliably have said that they are in another cluster. If
-    # :node_list is empty it means that all nodes from pcs_settings have said
-    # that they are in another cluster and requested cluster should be removed
-    # from pcs_settings.
-    new_cluster_nodes = status[:node_list].map{|n| n[:name]}
-  end
-
-
-  if config.cluster_nodes_equal?(cluster_name, new_cluster_nodes)
-    return JSON.generate(status)
-  end
-
-  _update_pcsd_settings(config, cluster_name, new_cluster_nodes)
-
-  if new_cluster_nodes.length > 0
-    return cluster_status_gui(auth_user, cluster_name, true)
-  end
-  return JSON.generate(status)
-end
-
-def _update_pcsd_settings(config, cluster_name, new_nodes)
-  old_nodes = config.get_nodes(cluster_name)
-
-  # removing log is embedded in config.update_cluster
-  $logger.info(
-    "Updating node list for: #{cluster_name} #{old_nodes}->#{new_nodes}"
-  )
-
-  config.update_cluster(cluster_name, new_nodes)
-
-  # Save and sync via Python
-  result = run_pcs_internal(
-    PCSAuth.getSuperuserAuth(),
-    "pcs_cfgsync.save_sync_pcs_settings_internal",
-    {:config_text => config.text()},
-  )
-
-  # on version conflict just go on, config will be corrected eventually
-  # by displaying the cluster in the web UI
-  if result[:status] != 'success'
-    report_messages = (result[:report_list] || []).map { |r|
-      r.dig(:message, :message)
-    }.compact
-    $logger.error(
-      "Failed to sync pcs_settings to cluster: #{report_messages.join('; ')}"
-    )
-  end
 end
 
 # get cluster status and return it to a remote gui or other client
@@ -430,15 +350,6 @@ def node_status(params, request, auth_user)
   end
 
   return [400, "Unsupported version '#{version}' of status requested"]
-end
-
-def imported_cluster_list(params, request, auth_user)
-  config = PCSConfig.new(get_pcs_settings_conf())
-  imported_clusters = {"cluster_list" => []}
-  config.clusters.each { |cluster|
-    imported_clusters["cluster_list"] << { "name": cluster.name }
-  }
-  return JSON.generate(imported_clusters)
 end
 
 def resource_cleanup(params, request, auth_user)
@@ -821,25 +732,6 @@ def cluster_destroy(params, request, auth_user)
   else
     return [400, "Error destroying cluster:\n#{out}\n#{errout}\n#{retval}\n"]
   end
-end
-
-def get_cluster_known_hosts(params, request, auth_user)
-  # pcsd runs as root thus always returns hacluster's tokens
-  if not allowed_for_local_cluster(auth_user, Permissions::FULL)
-    return 403, "Permission denied"
-  end
-  on, off = get_nodes()
-  nodes = (on + off).uniq()
-  data = {}
-  get_known_hosts().each { |host_name, host_obj|
-    if nodes.include?(host_name)
-      data[host_name] = {
-        'dest_list' => host_obj.dest_list,
-        'token' => host_obj.token,
-      }
-    end
-  }
-  return [200, JSON.generate(data)]
 end
 
 def resource_change_group(params, request, auth_user)

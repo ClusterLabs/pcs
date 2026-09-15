@@ -14,7 +14,6 @@ from pcs.common.reports import ReportItem, ReportItemList, ReportProcessor
 from pcs.lib.errors import LibraryError
 
 SUPPORTED_COMMANDS = {
-    "pcs_cfgsync.save_sync_pcs_settings_internal",
     "services.get_services_info",
 }
 

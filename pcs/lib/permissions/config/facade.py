@@ -6,7 +6,6 @@ from pcs.common.permissions.types import PermissionGrantedType
 from pcs.lib.interface.config import SyncVersionFacadeInterface
 
 from .types import (
-    ClusterEntry,
     ClusterPermissions,
     ConfigV2,
     PermissionEntry,
@@ -56,9 +55,6 @@ class FacadeV2(SyncVersionFacadeInterface):
             )
         )
 
-    def _set_clusters(self, clusters: list[ClusterEntry]) -> None:
-        self._set_config(replace(self.config, clusters=clusters))
-
     def get_entry(
         self, target: str, target_type: PermissionTargetType
     ) -> PermissionEntry | None:
@@ -98,20 +94,3 @@ class FacadeV2(SyncVersionFacadeInterface):
 
     def set_permissions(self, permissions: Sequence[PermissionEntry]) -> None:
         self._set_permissions(list(permissions))
-
-    def is_cluster_name_in_use(self, cluster_name: str) -> bool:
-        return any(
-            cluster.name == cluster_name for cluster in self.config.clusters
-        )
-
-    def add_cluster(self, cluster: ClusterEntry) -> None:
-        self._set_clusters(list(self.config.clusters) + [cluster])
-
-    def remove_cluster(self, cluster_name: str) -> None:
-        self._set_clusters(
-            [
-                cluster
-                for cluster in self.config.clusters
-                if cluster.name != cluster_name
-            ]
-        )

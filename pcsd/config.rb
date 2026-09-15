@@ -108,20 +108,6 @@ class PCSConfig
     end
   end
 
-  def update_cluster(cluster_name, node_list)
-    if node_list.length == 0
-      @clusters.delete_if{|c|c.name == cluster_name}
-      $logger.info("Removing cluster from pcs_settings: #{cluster_name}")
-      return
-    end
-    @clusters.each {|c|
-      if c.name == cluster_name
-        c.nodes = node_list
-        break
-      end
-    }
-  end
-
   def text()
     out_hash = Hash.new
     out_hash['clusters'] = []
@@ -140,39 +126,6 @@ class PCSConfig
     out_hash['permissions']['local_cluster'] = @permissions_local.to_hash()
 
     return JSON.pretty_generate(out_hash, {indent: '    '})
-  end
-
-  def is_cluster_name_in_use(cname)
-    @clusters.each {|c|
-      if c.name == cname
-        return true
-      end
-    }
-    return false
-  end
-
-  def get_nodes_cluster(nodename)
-    @clusters.each {|c|
-      c.nodes.each {|n|
-        return c.name if n == nodename
-      }
-    }
-    return nil
-  end
-
-  def get_nodes(clustername)
-    @clusters.each {|c|
-      if c.name == clustername
-        return c.nodes
-      end
-    }
-    return nil
-  end
-
-  def cluster_nodes_equal?(cluster_name, nodes)
-    my_nodes = get_nodes(cluster_name) || []
-    nodes = nodes || []
-    return my_nodes.sort.uniq == nodes.sort.uniq
   end
 end
 

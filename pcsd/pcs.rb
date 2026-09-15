@@ -146,30 +146,18 @@ def remove_constraint_rule(auth_user, rule_id)
   return retval
 end
 
-# Gets all of the nodes specified in the pcs config file for the cluster
-def get_cluster_nodes(cluster_name)
-  pcs_config = PCSConfig.new(get_pcs_settings_conf())
-  clusters = pcs_config.clusters
-  cluster = nil
-  for c in clusters
-    if c.name == cluster_name
-      cluster = c
-      break
-    end
-  end
+def send_cluster_request_with_token(auth_user, request, post=false, data={}, remote=true, raw_data=nil)
+  $logger.info("SCRWT: " + request)
 
-  if cluster && cluster.nodes != nil
-    nodes = cluster.nodes
+  if has_corosync_conf()
+    nodes = CorosyncConf::get_corosync_nodes_names(
+      CorosyncConf::parse_string(get_corosync_conf())
+    )
   else
-    $logger.info "Error: no nodes found for #{cluster_name}"
+    $logger.info "Error: corosync.conf not found"
     nodes = []
   end
-  return nodes
-end
 
-def send_cluster_request_with_token(auth_user, cluster_name, request, post=false, data={}, remote=true, raw_data=nil)
-  $logger.info("SCRWT: " + request)
-  nodes = get_cluster_nodes(cluster_name)
   return send_nodes_request_with_token(
     auth_user, nodes, request, post, data, remote, raw_data
   )
@@ -391,6 +379,10 @@ def get_pcs_settings_conf()
   return _read_config_file("pcs_settings.conf", PCSD_SETTINGS_CONF_LOCATION, nil, "")
 end
 
+def has_corosync_conf()
+  return File::exist?(COROSYNC_CONF)
+end
+
 def get_corosync_conf()
   return read_file_lock(COROSYNC_CONF)
 end
@@ -451,29 +443,6 @@ def get_nodes_status()
     'pacemaker_offline' => pacemaker_offline,
     'pacemaker_standby' => pacemaker_standby,
   }
-end
-
-def get_cluster_name_and_uuid()
-  if File::exist?(COROSYNC_CONF)
-    corosync_conf = CorosyncConf::parse_string(get_corosync_conf())
-    # mimic corosync behavior - the last value is used
-    cluster_name = ''
-    cluster_uuid = ''
-    corosync_conf.sections('totem').each { |totem|
-      totem.attributes('cluster_name').each { |attrib|
-        cluster_name = attrib[1]
-      }
-      totem.attributes('cluster_uuid').each { |attrib|
-        cluster_uuid = attrib[1]
-      }
-    }
-    return cluster_name, cluster_uuid
-  end
-  return '', ''
-end
-
-def get_cluster_name()
-  return get_cluster_name_and_uuid()[0]
 end
 
 def get_node_attributes(auth_user, cib_dom=nil)
