@@ -1731,10 +1731,10 @@ The \fB\-\-force\fR flag is no longer accepted as an alternative to interactive 
 .SS "constraint"
 .TP
 colocation add
-Specifying score as a standalone value is no longer supported. Use score=value instead. This was deprecated since pcs\-0.12.
+Specifying score as a standalone value is no longer supported. Use score=value instead.
 .TP
 location add
-Specifying score as a standalone value is no longer supported. Use score=value instead. This was deprecated since pcs\-0.12.
+Specifying score as a standalone value is no longer supported. Use score=value instead.
 .SS "pcsd"
 .TP
 certkey

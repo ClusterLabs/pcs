@@ -51,6 +51,10 @@ DEPRECATED_LOCATION_CONSTRAINT_REMOVE = (
     "Deprecation Warning: This command is deprecated and will be removed. "
     "Please use 'pcs constraint delete' or 'pcs constraint remove' instead.\n"
 )
+STANDALONE_SCORE_SYNTAX_CHANGED = (
+    "Hint: Syntax has changed from previous version. See 'man pcs' -> Changes "
+    "in pcs-1.0.\n"
+)
 
 empty_cib = rc("cib-empty-3.7.xml")
 large_cib = rc("cib-large.xml")
@@ -546,8 +550,10 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
         self.assertEqual(stdout, "")
         ac(
             stderr,
-            "Error: invalid role value '{}', allowed values are: {}\n".format(
-                role, format_list(const.PCMK_ROLES)
+            "Error: invalid role value '{}', allowed values are: {}\n{}".format(
+                role,
+                format_list(const.PCMK_ROLES),
+                STANDALONE_SCORE_SYNTAX_CHANGED,
             ),
         )
 
@@ -729,8 +735,8 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
         )
         ac(
             stderr,
-            "Error: invalid role value 'abc', allowed values are: {}\n".format(
-                format_list(const.PCMK_ROLES)
+            "Error: invalid role value 'abc', allowed values are: {}\n{}".format(
+                format_list(const.PCMK_ROLES), STANDALONE_SCORE_SYNTAX_CHANGED
             ),
         )
         self.assertEqual(stdout, "")
@@ -742,8 +748,10 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
         )
         ac(
             stderr,
-            "Error: invalid role value 'def', allowed values are: {}\n".format(
-                format_list(const.PCMK_ROLES)
+            (
+                "Error: invalid role value 'def', allowed values are: {}\n{}"
+            ).format(
+                format_list(const.PCMK_ROLES), STANDALONE_SCORE_SYNTAX_CHANGED
             ),
         )
         self.assertEqual(stdout, "")
@@ -756,8 +764,9 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
         )
         ac(
             stderr,
-            "Error: invalid role value 'D2', allowed values are: {}\n".format(
-                format_list(const.PCMK_ROLES)
+            "Error: invalid role value 'D2', allowed values are: {}\n{}".format(
+                format_list(const.PCMK_ROLES),
+                STANDALONE_SCORE_SYNTAX_CHANGED,
             ),
         )
         self.assertEqual(stdout, "")
@@ -770,8 +779,10 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
         )
         ac(
             stderr,
-            "Error: invalid role value 'abc', allowed values are: {}\n".format(
-                format_list(const.PCMK_ROLES)
+            (
+                "Error: invalid role value 'abc', allowed values are: {}\n{}"
+            ).format(
+                format_list(const.PCMK_ROLES), STANDALONE_SCORE_SYNTAX_CHANGED
             ),
         )
         self.assertEqual(stdout, "")
@@ -4290,7 +4301,10 @@ class LocationAdd(ConstraintEffect):
     def test_invalid_standalone_score(self):
         self.assert_pcs_fail(
             "constraint location add location1 D1 rh7-1 100".split(),
-            "Error: missing value of '100' option\n",
+            stderr_full=(
+                "Error: Specifying score as a standalone value was removed, "
+                f"use score=value instead\n{STANDALONE_SCORE_SYNTAX_CHANGED}"
+            ),
         )
         self.assert_resources_xml_in_cib("<constraints/>")
 

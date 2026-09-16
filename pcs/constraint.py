@@ -8,7 +8,11 @@ from xml.dom.minidom import parseString
 import pcs.cli.constraint_order.command as order_command
 from pcs import utils
 from pcs.cli.common import parse_args
-from pcs.cli.common.errors import CmdLineInputError, raise_command_replaced
+from pcs.cli.common.errors import (
+    SEE_MAN_CHANGES,
+    CmdLineInputError,
+    raise_command_replaced,
+)
 from pcs.cli.common.output import INDENT_STEP, lines_to_str
 from pcs.cli.constraint.location.command import (
     RESOURCE_TYPE_REGEXP,
@@ -59,6 +63,12 @@ class CrmRuleReturnCode(Enum):
     IN_EFFECT = 0
     EXPIRED = 110
     TO_BE_IN_EFFECT = 111
+
+
+def _hint_syntax_has_changed(version: str) -> str:
+    return "Hint: Syntax has changed from previous version. {}".format(
+        SEE_MAN_CHANGES.format(version)
+    )
 
 
 def constraint_order_cmd(lib, argv, modifiers):
@@ -135,8 +145,12 @@ def colocation_add(lib, argv, modifiers):  # noqa: PLR0912, PLR0915
         role_cleaned = role.lower().capitalize()
         if role_cleaned not in const.PCMK_ROLES:
             utils.err(
-                "invalid role value '{0}', allowed values are: {1}".format(
-                    role, format_list(const.PCMK_ROLES)
+                (
+                    "invalid role value '{0}', allowed values are: {1}\n{2}"
+                ).format(
+                    role,
+                    format_list(const.PCMK_ROLES),
+                    _hint_syntax_has_changed("1.0"),
                 )
             )
         return pacemaker.role.get_value_for_cib(
@@ -173,7 +187,7 @@ def colocation_add(lib, argv, modifiers):  # noqa: PLR0912, PLR0915
 
     if not argv:
         raise CmdLineInputError()
-    if len(argv) == 1 or argv[1].find("=") != -1:
+    if len(argv) == 1 or "=" in argv[1]:
         resource2 = argv.pop(0)
     else:
         role2_candidate = argv.pop(0)
@@ -893,6 +907,11 @@ def location_add(  # noqa: PLR0912, PLR0915
     )
     node = argv.pop(0)
     score = None
+    if "=" not in argv[0]:
+        utils.err(
+            "Specifying score as a standalone value was removed, use "
+            f"score=value instead\n{_hint_syntax_has_changed('1.0')}"
+        )
     options = []
     # For now we only allow setting resource-discovery and score
     for arg in argv:
