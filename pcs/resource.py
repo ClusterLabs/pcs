@@ -27,7 +27,7 @@ from pcs.cli.common.parse_args import (
 from pcs.cli.common.tools import print_to_stderr, timeout_to_seconds_legacy
 from pcs.cli.nvset import filter_out_expired_nvset, nvset_dto_list_to_lines
 from pcs.cli.reports import process_library_reports
-from pcs.cli.reports.output import deprecation_warning, error, warn
+from pcs.cli.reports.output import error, warn
 from pcs.cli.resource.common import check_is_not_stonith
 from pcs.cli.resource.output import (
     operation_defaults_to_cmd,
@@ -429,25 +429,22 @@ def resource_op_add(argv: Argv, modifiers: InputModifiers) -> None:
     if not res_el:
         utils.err("Unable to find resource: %s" % res_id)
 
-    allowed_operation_name_list = None
     agent_name = _get_resource_agent_name_from_rsc_el(res_el)
     try:
         agent_facade = _get_resource_agent_facade(agent_name)
-        allowed_operation_name_list = [
-            op.name for op in agent_facade.metadata.actions
-        ]
     except lib_ra.ResourceAgentError as e:
-        # Do not fail with an error to keep backward compatibility.
-        # NOTE: Reconsider when moving operation commands to pcs.lib.
+        if bool(modifiers.get("--force")):
+            severity = reports.ReportItemSeverity.warning()
+            agent_facade = _get_void_resource_agent_facade(agent_name)
+        else:
+            severity = reports.ReportItemSeverity.error(reports.codes.FORCE)
         process_library_reports(
-            [
-                lib_ra.resource_agent_error_to_report_item(
-                    e,
-                    reports.ReportItemSeverity.warning(),
-                )
-            ]
+            [lib_ra.resource_agent_error_to_report_item(e, severity)]
         )
 
+    allowed_operation_name_list = [
+        op.name for op in agent_facade.metadata.actions
+    ]
     utils.replace_cib_configuration(
         resource_operation_add(
             dom,
@@ -1014,7 +1011,6 @@ def resource_update(args: Argv, modifiers: InputModifiers) -> None:  # noqa: PLR
     params = utils.convert_args_to_tuples(ra_values)
 
     agent_name = _get_resource_agent_name_from_rsc_el(resource)
-    allowed_operation_name_list = None
     try:
         agent_facade = _get_resource_agent_facade(agent_name)
         allowed_operation_name_list = [
@@ -1044,6 +1040,12 @@ def resource_update(args: Argv, modifiers: InputModifiers) -> None:  # noqa: PLR
                 )
             ]
         )
+        # If --force is not specified, process_library_reports raises, and the
+        # command ends. Otherwise we continue with a void agent facade.
+        agent_facade = _get_void_resource_agent_facade(agent_name)
+        allowed_operation_name_list = [
+            op.name for op in agent_facade.metadata.actions
+        ]
 
     utils.dom_update_instance_attr(resource, params)
 
@@ -1243,20 +1245,17 @@ def resource_operation_add(  # noqa: PLR0912, PLR0915
         utils.err("%s does not appear to be a valid operation action" % op_name)
 
     op_dict = dict(op_properties)
-    if "name" in op_dict:
-        # deprecated since pcs-0.12.3
-        deprecation_warning(
-            "Specifying an operation name with 'name=<value>' syntax "
-            "is deprecated and might be removed in a future release. "
-            "Use the operation name as the first argument instead."
+    if "name" in op_dict and op_dict["name"] != op_name:
+        raise CmdLineInputError(
+            "duplicate option 'name' with different values "
+            f"'{op_name}' and '{op_dict['name']}'"
         )
-    else:
-        op_dict["name"] = op_name
+    op_dict["name"] = op_name
 
     normalized = operations.operations_to_normalized([op_dict])
     report_list = operations.validate_operation_list(
         normalized,
-        allowed_operation_name_list,
+        allowed_operation_name_list or [],
         allow_invalid="--force" in utils.pcs_options,
     )
     if report_list:
@@ -1591,6 +1590,14 @@ def _get_resource_agent_facade(
     return lib_ra.ResourceAgentFacadeFactory(
         utils.cmd_runner(), utils.get_report_processor()
     ).facade_from_parsed_name(resource_agent)
+
+
+def _get_void_resource_agent_facade(
+    resource_agent: lib_ra.ResourceAgentName,
+) -> lib_ra.ResourceAgentFacade:
+    return lib_ra.ResourceAgentFacadeFactory(
+        utils.cmd_runner(), utils.get_report_processor()
+    ).void_facade_from_parsed_name(resource_agent)
 
 
 def resource_clone_create(  # noqa: PLR0912

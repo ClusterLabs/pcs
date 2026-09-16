@@ -16,6 +16,7 @@ from pcs_test.tools.misc import (
     get_tmp_file,
     skip_unless_pacemaker_supports_op_onfail_demote,
     write_data_to_tmpfile,
+    write_file_to_tmpfile,
 )
 from pcs_test.tools.pcs_runner import PcsRunner
 
@@ -354,14 +355,12 @@ class ResourceUpdateOperations(
     TestCase, get_assert_pcs_effect_mixin(get_cib_resources)
 ):
     def setUp(self):
+        self.empty_cib = get_test_resource("cib-empty.xml")
         self.temp_cib = get_tmp_file("tier1_test_resource_update_operations")
         self.pcs_runner = PcsRunner(self.temp_cib.name)
         self.pcs_runner.mock_settings = get_mock_settings()
         write_data_to_tmpfile(
-            modify_cib_file(
-                get_test_resource("cib-empty.xml"),
-                resources=FIXTURE_EXISTING_OP_CIB,
-            ),
+            modify_cib_file(self.empty_cib, resources=FIXTURE_EXISTING_OP_CIB),
             self.temp_cib,
         )
 
@@ -532,15 +531,11 @@ class ResourceUpdateOperations(
             (
                 "resource update R op monitor interval=5s "
                 "status id=ab#cd enabled=invalid-bool interval=invalid-number "
-                "interval-origin=value name=status on-fail=invalid-on-fail "
+                "interval-origin=value on-fail=invalid-on-fail "
                 "record-pending=invalid-bool role=invalid-role "
                 f"start-delay=value timeout=invalid-timeout {force_opt}"
             ).split(),
             (
-                "Deprecation Warning: Specifying an operation name with "
-                "'name=<value>' syntax is deprecated and might be removed in a "
-                "future release. Use the operation name as the first argument "
-                "instead.\n"
                 f"{forceable}: 'status' is not a valid operation name value, "
                 "use 'meta-data', 'migrate_from', 'migrate_to', 'monitor', "
                 "'reload', 'reload-agent', 'start', 'stop', 'validate-all'"
@@ -647,6 +642,65 @@ class ResourceUpdateOperations(
             ),
         )
         self.assert_resources_xml_in_cib(fixture_cib)
+
+    def test_operation_name_in_options_matches(self):
+        self.assert_effect(
+            "resource update R op start interval=20s name=start".split(),
+            self._fixture_primitive_with_ops(
+                FIXTURE_EXISTING_OP_MONITOR,
+                FIXTURE_EXISTING_OP_RELOAD,
+                fixture_op("R-start-interval-20s", "start", "20s"),
+            ),
+        )
+
+    def test_operation_name_in_options_mismatch(self):
+        self.assert_pcs_fail_regardless_of_force(
+            "resource update R op start timeout=30 name=stop".split(),
+            "Error: duplicate option 'name' with different values 'start' and "
+            "'stop'\n",
+        )
+
+    def test_unable_to_load_agent(self):
+        self.assert_pcs_success(
+            "resource create --no-default-ops S ocf:pcsmock:bad-metadata --force".split(),
+            stderr_start="Warning: Agent 'ocf:pcsmock:bad-metadata' is not installed",
+        )
+        self.assert_pcs_fail(
+            "resource update S op start interval=20s".split(),
+            "Error: Agent 'ocf:pcsmock:bad-metadata' is not installed or does "
+            "not provide valid metadata: pcs mock error message: unable to "
+            "load agent metadata, use --force to override\n",
+        )
+
+    def test_unable_to_load_agent_forced(self):
+        write_file_to_tmpfile(self.empty_cib, self.temp_cib)
+        self.assert_pcs_success(
+            "resource create --no-default-ops S ocf:pcsmock:bad-metadata --force".split(),
+            stderr_start="Warning: Agent 'ocf:pcsmock:bad-metadata' is not installed",
+        )
+        self.assert_effect(
+            "resource update S op start interval=20s --force".split(),
+            """<resources>
+                <primitive class="ocf" id="S" provider="pcsmock"
+                    type="bad-metadata"
+                >
+                    <operations>
+                        <op id="S-monitor-interval-60s" interval="60s"
+                            name="monitor"
+                        />
+                        <op id="S-start-interval-20s" interval="20s"
+                            name="start"
+                        />
+                    </operations>
+                </primitive>
+            </resources>""",
+            stderr_full=(
+                "Warning: Agent 'ocf:pcsmock:bad-metadata' is not installed or "
+                "does not provide valid metadata: pcs mock error message: "
+                "unable to load agent metadata\n"
+                "Warning: 'start' is not a valid operation name value\n"
+            ),
+        )
 
 
 class ResourceUpdateCloneOperations(

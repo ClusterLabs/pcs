@@ -32,6 +32,10 @@
 - Dropped dependency on `python-dateutil` in favor of the Python standard
   library `datetime` module. Ordinal date format (`YYYY-DDD`) is no longer
   accepted in rule date expressions.
+- Commands `pcs resource update`, `pcs resource op add`, `pcs stonith update`,
+  and `pcs stonith op add` now error out when resource agent metadata cannot be
+  loaded during operations validation; use `--force` to override. Specifying an
+  operation action in the form of `name=action` is no longer allowed.
 
 
 ## [0.12.3.1] - 2026-09-08

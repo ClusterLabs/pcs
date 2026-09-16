@@ -150,20 +150,14 @@ def normalized_to_operations(
 
 def validate_operation_list(
     operation_list: Iterable[validate.TypeOptionNormalizedMap],
-    allowed_operation_name_list: StringCollection | None,
+    allowed_operation_name_list: StringCollection,
     allow_invalid: bool = False,
 ) -> ReportItemList:
     """
     Validate given operation list and return a list of report items.
 
     operation_list -- operations with normalized option names and values
-    allowed_operation_name_list -- operation names defined by a resource agent,
-        or None if agent metadata failed to load (in pcs resource update or
-        pcs resource op add). When None, operation name validation is skipped
-        for backward compatibility - the user should still be able to configure
-        operations even when the agent metadata is unavailable.
-        In pcs resource create, a list is always passed (empty for a void agent
-        when an agent loading error is forced).
+    allowed_operation_name_list -- operation names defined by a resource agent
     allow_invalid -- if True, downgrade unknown operation name errors to
         warnings (i.e. allow forcing)
     """
@@ -173,17 +167,12 @@ def validate_operation_list(
     validators: list[validate.ValidatorInterface] = [
         validate.NamesIn(ATTRIBUTES, option_type=option_type),
         validate.IsRequiredAll(["name"], option_type=option_type),
-    ]
-    if allowed_operation_name_list is not None:
-        validators.append(
-            validate.ValueIn(
-                "name",
-                allowed_operation_name_list,
-                option_name_for_report="operation name",
-                severity=severity,
-            ),
-        )
-    validators += [
+        validate.ValueIn(
+            "name",
+            allowed_operation_name_list,
+            option_name_for_report="operation name",
+            severity=severity,
+        ),
         validate.ValueIn("role", const.PCMK_ROLES),
         validate.ValueIn("on-fail", ON_FAIL_VALUES),
         validate.ValueXsdBoolean("record-pending"),

@@ -174,15 +174,11 @@ class OperationAdd(TestCase, get_assert_pcs_effect_mixin(get_cib_resources)):
             (
                 "resource op add R status "
                 "id=ab#cd enabled=invalid-bool interval=invalid-number "
-                "interval-origin=value name=status on-fail=invalid-on-fail "
+                "interval-origin=value on-fail=invalid-on-fail "
                 "record-pending=invalid-bool role=invalid-role "
                 f"start-delay=value timeout=invalid-timeout {force_opt}"
             ).split(),
             (
-                "Deprecation Warning: Specifying an operation name with "
-                "'name=<value>' syntax is deprecated and might be removed in a "
-                "future release. Use the operation name as the first argument "
-                "instead.\n"
                 f"{forceable}: 'status' is not a valid operation name value, "
                 "use 'meta-data', 'migrate_from', 'migrate_to', 'monitor', "
                 "'reload', 'reload-agent', 'start', 'stop', 'validate-all'"
@@ -212,3 +208,69 @@ class OperationAdd(TestCase, get_assert_pcs_effect_mixin(get_cib_resources)):
 
     def test_invalid_operations_force(self):
         self._invalid_operations(force=True)
+
+    def test_operation_name_in_options_matches(self):
+        self.assert_effect(
+            "resource op add R start interval=20s name=start".split(),
+            """<resources>
+                <primitive class="ocf" id="R" provider="pcsmock" type="minimal">
+                    <operations>
+                        <op id="R-monitor-interval-10s" interval="10s"
+                            name="monitor" timeout="20s"
+                        />
+                        <op id="R-start-interval-20s" interval="20s"
+                            name="start"
+                        />
+                    </operations>
+                </primitive>
+            </resources>""",
+        )
+
+    def test_operation_name_in_options_mismatch(self):
+        self.assert_pcs_fail_regardless_of_force(
+            "resource op add R start timeout=30 name=stop".split(),
+            "Error: duplicate option 'name' with different values 'start' and "
+            "'stop'\n",
+        )
+
+    def test_unable_to_load_agent(self):
+        self.assert_pcs_success(
+            "resource create --no-default-ops S ocf:pcsmock:bad-metadata --force".split(),
+            stderr_start="Warning: Agent 'ocf:pcsmock:bad-metadata' is not installed",
+        )
+        self.assert_pcs_fail(
+            "resource op add S start interval=20s".split(),
+            "Error: Agent 'ocf:pcsmock:bad-metadata' is not installed or does "
+            "not provide valid metadata: pcs mock error message: unable to "
+            "load agent metadata, use --force to override\n",
+        )
+
+    def test_unable_to_load_agent_forced(self):
+        write_file_to_tmpfile(self.empty_cib, self.temp_cib)
+        self.assert_pcs_success(
+            "resource create --no-default-ops S ocf:pcsmock:bad-metadata --force".split(),
+            stderr_start="Warning: Agent 'ocf:pcsmock:bad-metadata' is not installed",
+        )
+        self.assert_effect(
+            "resource op add S start interval=20s --force".split(),
+            """<resources>
+                <primitive class="ocf" id="S" provider="pcsmock"
+                    type="bad-metadata"
+                >
+                    <operations>
+                        <op id="S-monitor-interval-60s" interval="60s"
+                            name="monitor"
+                        />
+                        <op id="S-start-interval-20s" interval="20s"
+                            name="start"
+                        />
+                    </operations>
+                </primitive>
+            </resources>""",
+            stderr_full=(
+                "Warning: Agent 'ocf:pcsmock:bad-metadata' is not installed or "
+                "does not provide valid metadata: pcs mock error message: "
+                "unable to load agent metadata\n"
+                "Warning: 'start' is not a valid operation name value\n"
+            ),
+        )

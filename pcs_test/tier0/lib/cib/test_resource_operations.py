@@ -523,11 +523,6 @@ class ValidateOperation(TestCase):
             ],
         )
 
-    def test_skip_name_validation_when_allowed_list_is_none(self):
-        self.assert_operation_produces_report(
-            {"name": "unknown_op"}, [], allowed_operation_name_list=None
-        )
-
     def test_return_error_on_invalid_name_with_empty_allowed_list(self):
         self.assert_operation_produces_report(
             {"name": "monitor"},
