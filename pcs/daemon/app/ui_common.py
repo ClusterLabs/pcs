@@ -15,8 +15,12 @@ class AjaxMixin:
 
 class StaticFile(EnhanceHeadersMixin, StaticFileHandler):
     def initialize(
-        self, path: str, default_filename: str | None = None
+        self,
+        path: str,
+        default_filename: str | None = None,
+        allowed_symlink_directory: str | list[str] | None = None,
     ) -> None:
+        del allowed_symlink_directory
         super().initialize(path, default_filename)
         # allow static files to be cached
         self.clear_header_cache_control()
