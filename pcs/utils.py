@@ -57,7 +57,6 @@ from pcs.lib.host.config.facade import Facade as KnownHostsFacade
 from pcs.lib.interface.config import ParserErrorException
 from pcs.lib.pacemaker.live import get_cluster_status_dom
 from pcs.lib.pacemaker.state import ClusterState
-from pcs.lib.pacemaker.values import is_score as is_score_value
 from pcs.lib.pacemaker.values import validate_id
 from pcs.lib.services import get_service_manager as _get_service_manager
 from pcs.lib.services import service_exception_to_report
@@ -1868,23 +1867,6 @@ def write_empty_cib(cibfile):
     """
     with open(cibfile, "w") as f:
         f.write(empty_xml)
-
-
-# Test if 'var' is a score or option (contains an '=')
-def is_score_or_opt(var):
-    """
-    Commandline options: no options
-    """
-    if is_score(var):
-        return True
-    return var.find("=") != -1
-
-
-def is_score(var):
-    """
-    Commandline options: no options
-    """
-    return is_score_value(var)
 
 
 def validate_xml_id(var: str, description: str = "id") -> tuple[bool, str]:

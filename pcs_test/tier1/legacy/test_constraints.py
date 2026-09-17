@@ -51,9 +51,9 @@ DEPRECATED_LOCATION_CONSTRAINT_REMOVE = (
     "Deprecation Warning: This command is deprecated and will be removed. "
     "Please use 'pcs constraint delete' or 'pcs constraint remove' instead.\n"
 )
-DEPRECATED_STANDALONE_SCORE = (
-    "Deprecation Warning: Specifying score as a standalone value is deprecated "
-    "and might be removed in a future release, use score=value instead\n"
+STANDALONE_SCORE_SYNTAX_CHANGED = (
+    "Hint: Syntax has changed from previous version. See 'man pcs' -> Changes "
+    "in pcs-1.0.\n"
 )
 
 empty_cib = rc("cib-empty-3.7.xml")
@@ -504,18 +504,18 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
 
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
-            "constraint colocation add D1 with D2 100".split(),
+            "constraint colocation add D1 with D2 score=100".split(),
         )
         self.assertEqual(stdout, "")
-        self.assertEqual(stderr, DEPRECATED_STANDALONE_SCORE)
+        self.assertEqual(stderr, "")
         self.assertEqual(retval, 0)
 
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
-            "--force -- constraint colocation add D1 with D2 -100".split(),
+            "--force constraint colocation add D1 with D2 score=-100".split(),
         )
         self.assertEqual(stdout, "")
-        self.assertEqual(stderr, DEPRECATED_STANDALONE_SCORE)
+        self.assertEqual(stderr, "")
         self.assertEqual(retval, 0)
 
         stdout, stderr, retval = pcs(
@@ -545,14 +545,15 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
         role = str(const.PCMK_ROLE_UNPROMOTED_LEGACY).lower()
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
-            f"constraint colocation add {role} M5-master with started M6-master 500".split(),
+            f"constraint colocation add {role} M5-master with started M6-master score=500".split(),
         )
         self.assertEqual(stdout, "")
         ac(
             stderr,
-            DEPRECATED_STANDALONE_SCORE
-            + "Error: invalid role value '{}', allowed values are: {}\n".format(
-                role, format_list(const.PCMK_ROLES)
+            "Error: invalid role value '{}', allowed values are: {}\n{}".format(
+                role,
+                format_list(const.PCMK_ROLES),
+                STANDALONE_SCORE_SYNTAX_CHANGED,
             ),
         )
 
@@ -700,10 +701,10 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
 
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
-            "-- constraint colocation add D1 with D2 -100 id=abcd node-attribute=y".split(),
+            "constraint colocation add D1 with D2 score=-100 id=abcd node-attribute=y".split(),
         )
         self.assertEqual(stdout, "")
-        self.assertEqual(stderr, DEPRECATED_STANDALONE_SCORE)
+        self.assertEqual(stderr, "")
         self.assertEqual(retval, 0)
 
         stdout, stderr, retval = pcs(
@@ -734,8 +735,8 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
         )
         ac(
             stderr,
-            "Error: invalid role value 'abc', allowed values are: {}\n".format(
-                format_list(const.PCMK_ROLES)
+            "Error: invalid role value 'abc', allowed values are: {}\n{}".format(
+                format_list(const.PCMK_ROLES), STANDALONE_SCORE_SYNTAX_CHANGED
             ),
         )
         self.assertEqual(stdout, "")
@@ -747,21 +748,41 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
         )
         ac(
             stderr,
-            "Error: invalid role value 'def', allowed values are: {}\n".format(
-                format_list(const.PCMK_ROLES)
+            (
+                "Error: invalid role value 'def', allowed values are: {}\n{}"
+            ).format(
+                format_list(const.PCMK_ROLES), STANDALONE_SCORE_SYNTAX_CHANGED
             ),
         )
         self.assertEqual(stdout, "")
         self.assertEqual(retval, 1)
 
+    def test_colocation_standalone_score(self):
+        stdout, stderr, retval = pcs(
+            self.temp_cib.name,
+            "constraint colocation add D1 with D2 100".split(),
+        )
+        ac(
+            stderr,
+            "Error: invalid role value 'D2', allowed values are: {}\n{}".format(
+                format_list(const.PCMK_ROLES),
+                STANDALONE_SCORE_SYNTAX_CHANGED,
+            ),
+        )
+        self.assertEqual(stdout, "")
+        self.assertEqual(retval, 1)
+
+    def test_colocation_invalid_role_both(self):
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
             "constraint colocation add abc D1 with def D2".split(),
         )
         ac(
             stderr,
-            "Error: invalid role value 'abc', allowed values are: {}\n".format(
-                format_list(const.PCMK_ROLES)
+            (
+                "Error: invalid role value 'abc', allowed values are: {}\n{}"
+            ).format(
+                format_list(const.PCMK_ROLES), STANDALONE_SCORE_SYNTAX_CHANGED
             ),
         )
         self.assertEqual(stdout, "")
@@ -1217,11 +1238,8 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_success(
-            "-- constraint location add id1 crd1 my_node -INFINITY resource-discovery=always".split(),
-            stderr_full=(
-                DEPRECATED_STANDALONE_SCORE
-                + LOCATION_NODE_VALIDATION_SKIP_WARNING
-            ),
+            "constraint location add id1 crd1 my_node score=-INFINITY resource-discovery=always".split(),
+            stderr_full=LOCATION_NODE_VALIDATION_SKIP_WARNING,
         )
         self.assert_pcs_success(
             "-- constraint location add id2 crd2 my_node score=-INFINITY resource-discovery=never".split(),
@@ -1240,11 +1258,8 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
             "Error: missing value of 'INFINITY' option\n",
         )
         self.assert_pcs_fail(
-            "-- constraint location add id6 crd1 my_node2 -INFINITY bad-opt=test".split(),
-            (
-                DEPRECATED_STANDALONE_SCORE
-                + "Error: bad option 'bad-opt', use --force to override\n"
-            ),
+            "constraint location add id6 crd1 my_node2 score=-INFINITY bad-opt=test".split(),
+            "Error: bad option 'bad-opt', use --force to override\n",
         )
         self.assert_pcs_fail(
             "-- constraint location add id7 crd1 my_node2 score=-INFINITY bad-opt=test".split(),
@@ -3518,23 +3533,6 @@ class LocationTypeId(ConstraintEffect):
             stderr_full=LOCATION_NODE_VALIDATION_SKIP_WARNING,
         )
 
-    def test_add_deprecated(self):
-        self.fixture_primitive("A")
-        self.assert_effect(
-            [
-                "constraint location add my-id A node1 INFINITY".split(),
-                "constraint location add my-id %A node1 INFINITY".split(),
-                "constraint location add my-id resource%A node1 INFINITY".split(),
-            ],
-            """<constraints>
-                <rsc_location id="my-id" node="node1" rsc="A" score="INFINITY"/>
-            </constraints>""",
-            stderr_full=(
-                DEPRECATED_STANDALONE_SCORE
-                + LOCATION_NODE_VALIDATION_SKIP_WARNING
-            ),
-        )
-
     def test_add(self):
         self.fixture_primitive("A")
         self.assert_effect(
@@ -3577,20 +3575,6 @@ class LocationTypePattern(ConstraintEffect):
             stderr_full=LOCATION_NODE_VALIDATION_SKIP_WARNING,
         )
 
-    def test_add_deprecated(self):
-        self.assert_effect(
-            "constraint location add my-id regexp%res_[0-9] node1 INFINITY".split(),
-            """<constraints>
-                <rsc_location id="my-id" node="node1" rsc-pattern="res_[0-9]"
-                    score="INFINITY"
-                />
-            </constraints>""",
-            stderr_full=(
-                DEPRECATED_STANDALONE_SCORE
-                + LOCATION_NODE_VALIDATION_SKIP_WARNING
-            ),
-        )
-
     def test_add(self):
         self.assert_effect(
             "constraint location add my-id regexp%res_[0-9] node1 score=INFINITY".split(),
@@ -3622,9 +3606,9 @@ class LocationShowWithPattern(ConstraintBaseTest):
                 "constraint location regexp%R_[0-9]+ prefers node1 node2=20".split(),
                 "constraint location regexp%R_[0-9]+ avoids node3=30".split(),
                 "constraint location regexp%R_[a-z]+ avoids node3=30".split(),
-                "constraint location add my-id1 R3 node1 -INFINITY resource-discovery=never".split(),
-                "constraint location add my-id2 R3 node2 -INFINITY resource-discovery=never".split(),
-                "constraint location add my-id3 regexp%R_[0-9]+ node4 -INFINITY resource-discovery=never".split(),
+                "constraint location add my-id1 R3 node1 score=-INFINITY resource-discovery=never".split(),
+                "constraint location add my-id2 R3 node2 score=-INFINITY resource-discovery=never".split(),
+                "constraint location add my-id3 regexp%R_[0-9]+ node4 score=-INFINITY resource-discovery=never".split(),
                 "constraint location regexp%R_[0-9]+ rule score=20 defined pingd".split(),
             ]
         )
@@ -4314,14 +4298,12 @@ class LocationAvoids(ConstraintEffect, LocationPrefersAvoidsMixin):
 
 
 class LocationAdd(ConstraintEffect):
-    def test_invalid_score_deprecated(self):
+    def test_invalid_standalone_score(self):
         self.assert_pcs_fail(
-            "constraint location add location1 D1 rh7-1 bar".split(),
-            (
-                DEPRECATED_STANDALONE_SCORE
-                + LOCATION_NODE_VALIDATION_SKIP_WARNING
-                + "Error: invalid score 'bar', use integer or INFINITY or "
-                "-INFINITY\n"
+            "constraint location add location1 D1 rh7-1 100".split(),
+            stderr_full=(
+                "Error: Specifying score as a standalone value was removed, "
+                f"use score=value instead\n{STANDALONE_SCORE_SYNTAX_CHANGED}"
             ),
         )
         self.assert_resources_xml_in_cib("<constraints/>")

@@ -8,7 +8,11 @@ from xml.dom.minidom import parseString
 import pcs.cli.constraint_order.command as order_command
 from pcs import utils
 from pcs.cli.common import parse_args
-from pcs.cli.common.errors import CmdLineInputError, raise_command_replaced
+from pcs.cli.common.errors import (
+    SEE_MAN_CHANGES,
+    CmdLineInputError,
+    raise_command_replaced,
+)
 from pcs.cli.common.output import INDENT_STEP, lines_to_str
 from pcs.cli.constraint.location.command import (
     RESOURCE_TYPE_REGEXP,
@@ -38,7 +42,12 @@ from pcs.common.str_tools import format_list, indent
 from pcs.common.types import StringCollection, StringIterable, StringSequence
 from pcs.lib.cib.constraint.order import ATTRIB as order_attrib
 from pcs.lib.node import get_existing_nodes_names
-from pcs.lib.pacemaker.values import SCORE_INFINITY, is_true, sanitize_id
+from pcs.lib.pacemaker.values import (
+    SCORE_INFINITY,
+    is_score,
+    is_true,
+    sanitize_id,
+)
 
 DEFAULT_ACTION = const.PCMK_ACTION_START
 DEFAULT_ROLE = const.PCMK_ROLE_STARTED
@@ -48,16 +57,18 @@ OPTIONS_SYMMETRICAL = order_attrib["symmetrical"]
 LOCATION_NODE_VALIDATION_SKIP_MSG = (
     "Validation for node existence in the cluster will be skipped"
 )
-STANDALONE_SCORE_MSG = (
-    "Specifying score as a standalone value is deprecated and "
-    "might be removed in a future release, use score=value instead"
-)
 
 
 class CrmRuleReturnCode(Enum):
     IN_EFFECT = 0
     EXPIRED = 110
     TO_BE_IN_EFFECT = 111
+
+
+def _hint_syntax_has_changed(version: str) -> str:
+    return "Hint: Syntax has changed from previous version. {}".format(
+        SEE_MAN_CHANGES.format(version)
+    )
 
 
 def constraint_order_cmd(lib, argv, modifiers):
@@ -115,14 +126,12 @@ def _validate_resources_not_in_same_group(cib_dom, resource1, resource2):
         )
 
 
-# Syntax: colocation add [role] <src> with [role] <tgt> [score] [options]
+# Syntax: colocation add [role] <src> with [role] <tgt> [score=<score>] [options]
 # possible commands:
-#        <src> with        <tgt> [score] [options]
-#        <src> with <role> <tgt> [score] [options]
-# <role> <src> with        <tgt> [score] [options]
-# <role> <src> with <role> <tgt> [score] [options]
-# Specifying score as a single argument is deprecated, though. The correct way
-# is score=value in options.
+#        <src> with        <tgt> [score=<score>] [options]
+#        <src> with <role> <tgt> [score=<score>] [options]
+# <role> <src> with        <tgt> [score=<score>] [options]
+# <role> <src> with <role> <tgt> [score=<score>] [options]
 def colocation_add(lib, argv, modifiers):  # noqa: PLR0912, PLR0915
     """
     Options:
@@ -130,36 +139,18 @@ def colocation_add(lib, argv, modifiers):  # noqa: PLR0912, PLR0915
       * --force - allow constraint on any resource, allow duplicate constraints
     """
 
-    def _parse_score_options(argv):
-        # When passed an array of arguments if the first argument doesn't have
-        # an '=' then it's the score, otherwise they're all arguments. Return a
-        # tuple with the score and array of name,value pairs
-        """
-        Commandline options: no options
-        """
-        if not argv:
-            return None, []
-        score = None
-        if "=" not in argv[0]:
-            score = argv.pop(0)
-            # TODO added to pcs in the first 0.12.x version
-            deprecation_warning(STANDALONE_SCORE_MSG)
-
-        # create a list of 2-tuples (name, value)
-        arg_array = [
-            parse_args.split_option(arg, allow_empty_value=False)
-            for arg in argv
-        ]
-        return score, arg_array
-
     def _validate_and_prepare_role(new_roles_supported, role):
         if role is None:
             return ""
         role_cleaned = role.lower().capitalize()
         if role_cleaned not in const.PCMK_ROLES:
             utils.err(
-                "invalid role value '{0}', allowed values are: {1}".format(
-                    role, format_list(const.PCMK_ROLES)
+                (
+                    "invalid role value '{0}', allowed values are: {1}\n{2}"
+                ).format(
+                    role,
+                    format_list(const.PCMK_ROLES),
+                    _hint_syntax_has_changed("1.0"),
                 )
             )
         return pacemaker.role.get_value_for_cib(
@@ -196,13 +187,15 @@ def colocation_add(lib, argv, modifiers):  # noqa: PLR0912, PLR0915
 
     if not argv:
         raise CmdLineInputError()
-    if len(argv) == 1 or utils.is_score_or_opt(argv[1]):
+    if len(argv) == 1 or "=" in argv[1]:
         resource2 = argv.pop(0)
     else:
         role2_candidate = argv.pop(0)
         resource2 = argv.pop(0)
 
-    score, nv_pairs = _parse_score_options(argv)
+    nv_pairs = [
+        parse_args.split_option(arg, allow_empty_value=False) for arg in argv
+    ]
     influence_attr_set = any(name == "influence" for name, _ in nv_pairs)
 
     cib_dom = (
@@ -222,6 +215,7 @@ def colocation_add(lib, argv, modifiers):  # noqa: PLR0912, PLR0915
     _validate_constraint_resource(cib_dom, resource2)
 
     id_in_nvpairs = None
+    score = None
     for name, value in nv_pairs:
         if name == "id":
             id_valid, id_error = utils.validate_xml_id(value, "constraint id")
@@ -811,7 +805,7 @@ def _verify_node_name(node, existing_nodes):
 
 
 def _verify_score(score):
-    if not utils.is_score(score):
+    if not is_score(score):
         utils.err(
             "invalid score '%s', use integer or INFINITY or -INFINITY" % score
         )
@@ -902,7 +896,7 @@ def location_add(  # noqa: PLR0912, PLR0915
     """
     del lib
     modifiers.ensure_only_supported("--force", "-f")
-    if len(argv) < 4:
+    if len(argv) < 3:
         raise CmdLineInputError()
 
     constraint_id = argv.pop(0)
@@ -914,9 +908,10 @@ def location_add(  # noqa: PLR0912, PLR0915
     node = argv.pop(0)
     score = None
     if "=" not in argv[0]:
-        score = argv.pop(0)
-        # TODO added to pcs in the first 0.12.x version
-        deprecation_warning(STANDALONE_SCORE_MSG)
+        utils.err(
+            "Specifying score as a standalone value was removed, use "
+            f"score=value instead\n{_hint_syntax_has_changed('1.0')}"
+        )
     options = []
     # For now we only allow setting resource-discovery and score
     for arg in argv:

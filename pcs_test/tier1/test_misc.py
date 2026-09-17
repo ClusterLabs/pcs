@@ -14,6 +14,11 @@ from pcs_test.tools.misc import (
 )
 from pcs_test.tools.pcs_runner import PcsRunner
 
+HINT_SYNTAX_CHANGED = (
+    "Hint: Syntax has changed from previous version. See 'man pcs' -> Changes "
+    "in pcs-1.0."
+)
+
 
 class ParseArgvDashDash(TestCase, AssertPcsMixin):
     # The command will fail, that's ok. We are interested only in the argv
@@ -33,10 +38,10 @@ class ParseArgvDashDash(TestCase, AssertPcsMixin):
         self.assert_pcs_fail(
             self.cmd + ["-123"],
             outdent(
-                """\
+                f"""\
                 Deprecation Warning: Using '-123' without '--' is deprecated, those parameters will be considered position independent options in future pcs versions
-                Deprecation Warning: Specifying score as a standalone value is deprecated and might be removed in a future release, use score=value instead
-                Error: Resource 'R1' does not exist
+                Error: invalid role value 'R2', allowed values are: {self.allowed_roles}
+                {HINT_SYNTAX_CHANGED}
                 """
             ),
         )
@@ -48,6 +53,7 @@ class ParseArgvDashDash(TestCase, AssertPcsMixin):
                 f"""\
                 Deprecation Warning: Using '-12.3' without '--' is deprecated, those parameters will be considered position independent options in future pcs versions
                 Error: invalid role value 'R2', allowed values are: {self.allowed_roles}
+                {HINT_SYNTAX_CHANGED}
                 """
             ),
         )
@@ -59,6 +65,7 @@ class ParseArgvDashDash(TestCase, AssertPcsMixin):
                 f"""\
                 Deprecation Warning: Using '-inFIniTY' without '--' is deprecated, those parameters will be considered position independent options in future pcs versions
                 Error: invalid role value 'R2', allowed values are: {self.allowed_roles}
+                {HINT_SYNTAX_CHANGED}
                 """
             ),
         )
@@ -67,9 +74,9 @@ class ParseArgvDashDash(TestCase, AssertPcsMixin):
         self.assert_pcs_fail(
             ["--"] + self.cmd + ["-123"],
             outdent(
-                """\
-                Deprecation Warning: Specifying score as a standalone value is deprecated and might be removed in a future release, use score=value instead
-                Error: Resource 'R1' does not exist
+                f"""\
+                Error: invalid role value 'R2', allowed values are: {self.allowed_roles}
+                {HINT_SYNTAX_CHANGED}
                 """
             ),
         )
@@ -80,6 +87,7 @@ class ParseArgvDashDash(TestCase, AssertPcsMixin):
             outdent(
                 f"""\
                 Error: invalid role value 'R2', allowed values are: {self.allowed_roles}
+                {HINT_SYNTAX_CHANGED}
                 """
             ),
         )
@@ -90,6 +98,7 @@ class ParseArgvDashDash(TestCase, AssertPcsMixin):
             outdent(
                 f"""\
                 Error: invalid role value 'R2', allowed values are: {self.allowed_roles}
+                {HINT_SYNTAX_CHANGED}
                 """
             ),
         )
