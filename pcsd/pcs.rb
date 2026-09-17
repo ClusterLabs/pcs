@@ -322,6 +322,7 @@ def send_request(
 
   $logger.info "Connecting to: #{url}"
 
+  curl = nil
   begin
     curl = Curl::Easy.new(url)
     curl.timeout_ms = timeout_ms
@@ -349,6 +350,11 @@ def send_request(
       "No response from: #{node} request: #{request}, error: #{e.message}"
     )
     return 400,'{"noresponse":true}'
+  ensure
+    # Free the libcurl handle in this (parent) thread. Left to the garbage
+    # collector, its cleanup can run in a forked child (e.g. when pcsd forks to
+    # run pcs) and abort the process with a threaded-resolver libcurl.
+    curl.close if curl
   end
 end
 
