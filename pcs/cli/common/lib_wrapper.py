@@ -110,10 +110,8 @@ def load_module(env, middleware_factory, name):  # noqa: PLR0911, PLR0912
             {
                 "create_role": acl.create_role,
                 "remove_role": acl.remove_role,
-                "assign_role_not_specific": acl.assign_role_not_specific,
                 "assign_role_to_target": acl.assign_role_to_target,
                 "assign_role_to_group": acl.assign_role_to_group,
-                "unassign_role_not_specific": acl.unassign_role_not_specific,
                 "unassign_role_from_target": acl.unassign_role_from_target,
                 "unassign_role_from_group": acl.unassign_role_from_group,
                 "create_target": acl.create_target,

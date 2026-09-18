@@ -78,34 +78,6 @@ find_role = partial(_find, TAG_ROLE)
 find_target = partial(_find, TAG_TARGET)
 
 
-# DEPRECATED in the first 0.12 version
-def find_target_or_group(acl_section, target_or_group_id):
-    """
-    Returns acl_target or acl_group element with id target_or_group_id. Target
-    element has bigger priority so if there are target and group with the same
-    id only target element will be affected by this function.
-    Raises LibraryError if there is no target or group element with
-    specified id.
-
-    This approach is DEPRECATED and it is there only for backward compatibility
-    reason. It is better to know explicitly whether we need target(user) or
-    group.
-
-    acl_section -- cib etree node
-    target_or_group_id -- id of target/group element which should be returned
-    """
-    target = find_target(
-        acl_section, target_or_group_id, none_if_id_unused=True
-    )
-
-    if target is not None:
-        return target
-
-    return find_group(
-        acl_section, target_or_group_id, id_types=[TAG_GROUP, TAG_TARGET]
-    )
-
-
 def validate_create_role(
     id_provider: IdProvider, role_id: str, description: str | None = None
 ) -> reports.ReportItemList:

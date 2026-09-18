@@ -65,27 +65,6 @@ def remove_role(lib_env, role_id, autodelete_users_groups=False):
         acl.remove_role(acl_section, role_id, autodelete_users_groups)
 
 
-# DEPRECATED in the first 0.12 version
-# Use assign_role_to_target or assign_role_to_group instead.
-def assign_role_not_specific(lib_env, role_id, target_or_group_id):
-    """
-    Assign role with id role_id to target or group with id target_or_group_id.
-    Target element has bigger priority so if there are target and group with
-    the same id only target element will be affected by this function.
-    Raises LibraryError on any failure.
-
-    lib_env -- LibraryEnvironment
-    role_id -- id of role which should be assigned to target/group
-    target_or_group_id -- id of target/group element
-    """
-    with cib_acl_section(lib_env) as acl_section:
-        acl.assign_role(
-            acl_section,
-            role_id,
-            acl.find_target_or_group(acl_section, target_or_group_id),
-        )
-
-
 def assign_role_to_target(lib_env, role_id, target_id):
     """
     Assign role with id role_id to target with id target_id.
@@ -117,31 +96,6 @@ def assign_role_to_group(lib_env, role_id, group_id):
             acl_section,
             role_id,
             acl.find_group(acl_section, group_id),
-        )
-
-
-# DEPRECATED in the first 0.12 version
-# Use unassign_role_from_target or unassign_role_from_group instead.
-def unassign_role_not_specific(
-    lib_env, role_id, target_or_group_id, autodelete_target_group=False
-):
-    """
-    Unassign role with role_id from target/group with id target_or_group_id.
-    Target element has bigger priority so if there are target and group with
-    the same id only target element will be affected by this function.
-    Raises LibraryError on any failure.
-
-    lib_env -- LibraryEnvironment
-    role_id -- id of role which should be unassigned from target/group
-    target_or_group_id -- id of acl_target/acl_group element
-    autodelete_target_group -- if True remove target/group element if has no
-        more role assigned
-    """
-    with cib_acl_section(lib_env) as acl_section:
-        acl.unassign_role(
-            acl.find_target_or_group(acl_section, target_or_group_id),
-            role_id,
-            autodelete_target_group,
         )
 
 

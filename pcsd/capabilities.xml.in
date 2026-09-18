@@ -899,6 +899,19 @@
           /api/v1/acl-unassign-role-from-target/v1
       </description>
     </capability>
+    <capability id="pcmk.acl.role.assign-unassign-user-group-specific" in-pcs="1" in-pcsd="1">
+      <description>
+        When assigning or unassigning a role, it must be explicitly
+        specified whether the assignee is a user or a group.
+
+        pcs commands: acl role ( assign | unassign )
+        daemon urls:
+          /api/v1/acl-assign-role-to-group/v1
+          /api/v1/acl-unassign-role-from-group/v1
+          /api/v1/acl-assign-role-to-target/v1
+          /api/v1/acl-unassign-role-from-target/v1
+      </description>
+    </capability>
     <capability id="pcmk.acl.role.create-with-permissions" in-pcs="1" in-pcsd="1">
       <description>
         Create an ACL role and its permissions in one command.

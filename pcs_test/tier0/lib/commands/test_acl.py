@@ -160,19 +160,6 @@ class RemoveRoleTest(AclCommandsTest):
 
 
 @mock.patch("pcs.lib.commands.acl.get_acls", mock.Mock(side_effect=lambda x: x))
-@mock.patch("pcs.lib.cib.acl.find_target_or_group")
-@mock.patch("pcs.lib.cib.acl.assign_role")
-class AssignRoleNotSpecific(AclCommandsTest, ExtendedAssertionsMixin):
-    def test_success(self, mock_assign, find_target_or_group):
-        find_target_or_group.return_value = "target_el"
-        cmd_acl.assign_role_not_specific(self.mock_env, "role_id", "target_id")
-        self.assert_get_cib_called()
-        find_target_or_group.assert_called_once_with(self.cib, "target_id")
-        mock_assign.assert_called_once_with(self.cib, "role_id", "target_el")
-        self.assert_same_cib_pushed()
-
-
-@mock.patch("pcs.lib.commands.acl.get_acls", mock.Mock(side_effect=lambda x: x))
 @mock.patch("pcs.lib.cib.acl.find_target")
 @mock.patch("pcs.lib.cib.acl.assign_role")
 class AssignRoleToTargetTest(AclCommandsTest):
@@ -193,21 +180,6 @@ class AssignRoleToGroupTest(AclCommandsTest):
         cmd_acl.assign_role_to_group(self.mock_env, "role_id", "group_id")
         self.assert_get_cib_called()
         mock_assign.assert_called_once_with(self.cib, "role_id", "group_el")
-        self.assert_same_cib_pushed()
-
-
-@mock.patch("pcs.lib.commands.acl.get_acls", mock.Mock(side_effect=lambda x: x))
-@mock.patch("pcs.lib.cib.acl.unassign_role")
-@mock.patch("pcs.lib.cib.acl.find_target_or_group")
-class UnassignRoleNotSpecificTest(AclCommandsTest):
-    def test_success(self, find_target_or_group, mock_unassign):
-        find_target_or_group.return_value = "target_el"
-        cmd_acl.unassign_role_not_specific(
-            self.mock_env, "role_id", "target_id", False
-        )
-        self.assert_get_cib_called()
-        find_target_or_group.assert_called_once_with(self.cib, "target_id")
-        mock_unassign.assert_called_once_with("target_el", "role_id", False)
         self.assert_same_cib_pushed()
 
 

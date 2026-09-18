@@ -8,11 +8,6 @@ from pcs_test.tools.pcs_runner import PcsRunner
 
 empty_cib = rc("cib-empty.xml")
 
-AMBIGUOUS_ASSIGN_DEPRECATED = (
-    "Deprecation Warning: Assigning / unassigning a role to a user / group "
-    "without specifying 'user' or 'group' keyword is deprecated and might be "
-    "removed in a future release.\n"
-)
 AUTODELETE_DEPRECATED = (
     "Deprecation Warning: Flag '--autodelete' is deprecated and might be "
     "removed in a future release.\n"
@@ -136,24 +131,7 @@ class ACLTest(TestCase, AssertPcsMixin):
             "acl group create role1".split(),
             "Error: 'role1' already exists\n",
         )
-        self.assert_pcs_fail(
-            "acl role assign role1 to noexist".split(),
-            (
-                AMBIGUOUS_ASSIGN_DEPRECATED
-                + "Error: ACL group / ACL user 'noexist' does not exist\n"
-            ),
-        )
-        self.assert_pcs_fail(
-            "acl role assign noexist to user1".split(),
-            (
-                AMBIGUOUS_ASSIGN_DEPRECATED
-                + "Error: ACL role 'noexist' does not exist\n"
-            ),
-        )
-        self.assert_pcs_success(
-            "acl role assign role3 to user1".split(),
-            stderr_full=AMBIGUOUS_ASSIGN_DEPRECATED,
-        )
+        self.assert_pcs_success("acl role assign role3 to user user1".split())
         self.assert_pcs_success(
             ["acl"],
             dedent(
@@ -177,22 +155,11 @@ class ACLTest(TestCase, AssertPcsMixin):
             ),
         )
         self.assert_pcs_fail(
-            "acl role unassign noexist from user1".split(),
-            (
-                AMBIGUOUS_ASSIGN_DEPRECATED
-                + "Error: Role 'noexist' is not assigned to 'user1'\n"
-            ),
-        )
-        self.assert_pcs_fail(
-            "acl role unassign role3 from noexist".split(),
-            (
-                AMBIGUOUS_ASSIGN_DEPRECATED
-                + "Error: ACL group / ACL user 'noexist' does not exist\n"
-            ),
+            "acl role unassign noexist from user user1".split(),
+            "Error: Role 'noexist' is not assigned to 'user1'\n",
         )
         self.assert_pcs_success(
-            "acl role unassign role3 from user1".split(),
-            stderr_full=AMBIGUOUS_ASSIGN_DEPRECATED,
+            "acl role unassign role3 from user user1".split()
         )
         self.assert_pcs_success(
             ["acl"],
@@ -217,12 +184,10 @@ class ACLTest(TestCase, AssertPcsMixin):
             ),
         )
         self.assert_pcs_success(
-            "acl role unassign role2 from user1".split(),
-            stderr_full=AMBIGUOUS_ASSIGN_DEPRECATED,
+            "acl role unassign role2 from user user1".split()
         )
         self.assert_pcs_success(
-            "acl role unassign role1 from user1".split(),
-            stderr_full=AMBIGUOUS_ASSIGN_DEPRECATED,
+            "acl role unassign role1 from user user1".split()
         )
         self.assert_pcs_success(
             ["acl"],
@@ -266,10 +231,7 @@ class ACLTest(TestCase, AssertPcsMixin):
                 """
             ),
         )
-        self.assert_pcs_success(
-            "acl role assign role2 to user1".split(),
-            stderr_full=AMBIGUOUS_ASSIGN_DEPRECATED,
-        )
+        self.assert_pcs_success("acl role assign role2 to user user1".split())
         self.assert_pcs_success(
             ["acl"],
             dedent(
@@ -289,10 +251,7 @@ class ACLTest(TestCase, AssertPcsMixin):
                 """
             ),
         )
-        self.assert_pcs_success(
-            "acl role assign role1 user1".split(),
-            stderr_full=AMBIGUOUS_ASSIGN_DEPRECATED,
-        )
+        self.assert_pcs_success("acl role assign role1 user user1".split())
         self.assert_pcs_success(
             ["acl"],
             dedent(
@@ -313,8 +272,8 @@ class ACLTest(TestCase, AssertPcsMixin):
             ),
         )
         self.assert_pcs_success(
-            "acl role unassign role2 from user1 --autodelete".split(),
-            stderr_full=AUTODELETE_DEPRECATED + AMBIGUOUS_ASSIGN_DEPRECATED,
+            "acl role unassign role2 from user user1 --autodelete".split(),
+            stderr_full=AUTODELETE_DEPRECATED,
         )
         self.assert_pcs_success(
             ["acl"],
@@ -336,8 +295,8 @@ class ACLTest(TestCase, AssertPcsMixin):
             ),
         )
         self.assert_pcs_success(
-            "acl role unassign role1 from user1 --autodelete".split(),
-            stderr_full=AUTODELETE_DEPRECATED + AMBIGUOUS_ASSIGN_DEPRECATED,
+            "acl role unassign role1 from user user1 --autodelete".split(),
+            stderr_full=AUTODELETE_DEPRECATED,
         )
         self.assert_pcs_success(
             ["acl"],
@@ -969,14 +928,6 @@ class ACLTest(TestCase, AssertPcsMixin):
             "Error: Role 'role1' is not assigned to 'user1'\n",
         )
 
-    def test_assign_unassign_role_to_user_not_existing_user(self):
-        self.assert_pcs_success("acl role create role1".split())
-        self.assert_pcs_success("acl group create group1".split())
-        self.assert_pcs_fail(
-            "acl role assign role1 to user group1".split(),
-            "Error: 'group1' is not an ACL user\n",
-        )
-
     def test_assign_unassign_role_to_user_with_to(self):
         self.assert_pcs_success("acl role create role1".split())
         self.assert_pcs_success("acl user create user1".split())
@@ -993,6 +944,46 @@ class ACLTest(TestCase, AssertPcsMixin):
             "Error: Role 'role1' is not assigned to 'user1'\n",
         )
 
+    def test_assign_unassign_role_to_user_not_existing_user(self):
+        self.assert_pcs_success("acl role create role1".split())
+        self.assert_pcs_success("acl group create group1".split())
+
+        self.assert_pcs_fail(
+            "acl role assign role1 to user group1".split(),
+            "Error: 'group1' is not an ACL user\n",
+        )
+        self.assert_pcs_fail(
+            "acl role assign role1 user group1".split(),
+            "Error: 'group1' is not an ACL user\n",
+        )
+
+        self.assert_pcs_fail(
+            "acl role assign role1 to user noexist".split(),
+            "Error: ACL user 'noexist' does not exist\n",
+        )
+        self.assert_pcs_fail(
+            "acl role assign role1 user noexist".split(),
+            "Error: ACL user 'noexist' does not exist\n",
+        )
+
+        self.assert_pcs_fail(
+            "acl role unassign role1 from user group1".split(),
+            "Error: 'group1' is not an ACL user\n",
+        )
+        self.assert_pcs_fail(
+            "acl role unassign role1 user group1".split(),
+            "Error: 'group1' is not an ACL user\n",
+        )
+
+        self.assert_pcs_fail(
+            "acl role unassign role1 from user noexist".split(),
+            "Error: ACL user 'noexist' does not exist\n",
+        )
+        self.assert_pcs_fail(
+            "acl role unassign role1 user noexist".split(),
+            "Error: ACL user 'noexist' does not exist\n",
+        )
+
     def test_assign_unassign_role_to_group(self):
         self.assert_pcs_success("acl role create role1".split())
         self.assert_pcs_success("acl group create group1".split())
@@ -1005,14 +996,6 @@ class ACLTest(TestCase, AssertPcsMixin):
         self.assert_pcs_fail(
             "acl role unassign role1 group group1".split(),
             "Error: Role 'role1' is not assigned to 'group1'\n",
-        )
-
-    def test_assign_unassign_role_to_group_not_existing_group(self):
-        self.assert_pcs_success("acl role create role1".split())
-        self.assert_pcs_success("acl user create user1".split())
-        self.assert_pcs_fail(
-            "acl role assign role1 to group user1".split(),
-            "Error: ACL group 'user1' does not exist\n",
         )
 
     def test_assign_unassign_role_to_group_with_to(self):
@@ -1029,4 +1012,121 @@ class ACLTest(TestCase, AssertPcsMixin):
         self.assert_pcs_fail(
             "acl role unassign role1 from group group1".split(),
             "Error: Role 'role1' is not assigned to 'group1'\n",
+        )
+
+    def test_assign_unassign_role_to_group_not_existing_group(self):
+        self.assert_pcs_success("acl role create role1".split())
+        self.assert_pcs_success("acl user create user1".split())
+
+        self.assert_pcs_fail(
+            "acl role assign role1 to group user1".split(),
+            "Error: ACL group 'user1' does not exist\n",
+        )
+        self.assert_pcs_fail(
+            "acl role assign role1 group user1".split(),
+            "Error: ACL group 'user1' does not exist\n",
+        )
+
+        self.assert_pcs_fail(
+            "acl role assign role1 to group noexist".split(),
+            "Error: ACL group 'noexist' does not exist\n",
+        )
+        self.assert_pcs_fail(
+            "acl role assign role1 group noexist".split(),
+            "Error: ACL group 'noexist' does not exist\n",
+        )
+
+        self.assert_pcs_fail(
+            "acl role unassign role1 from group user1".split(),
+            "Error: ACL group 'user1' does not exist\n",
+        )
+        self.assert_pcs_fail(
+            "acl role unassign role1 group user1".split(),
+            "Error: ACL group 'user1' does not exist\n",
+        )
+
+        self.assert_pcs_fail(
+            "acl role unassign role1 from group noexist".split(),
+            "Error: ACL group 'noexist' does not exist\n",
+        )
+        self.assert_pcs_fail(
+            "acl role unassign role1 group noexist".split(),
+            "Error: ACL group 'noexist' does not exist\n",
+        )
+
+    def test_assign_unassign_nonexistent_role(self):
+        self.assert_pcs_success("acl role create role1".split())
+        self.assert_pcs_success("acl user create user1".split())
+        self.assert_pcs_success("acl group create group1".split())
+        self.assert_pcs_fail(
+            "acl role assign noexist to user user1".split(),
+            "Error: ACL role 'noexist' does not exist\n",
+        )
+        self.assert_pcs_fail(
+            "acl role assign noexist group group1".split(),
+            "Error: ACL role 'noexist' does not exist\n",
+        )
+        self.assert_pcs_fail(
+            "acl role assign group1 to user user1".split(),
+            "Error: 'group1' is not an ACL role\n",
+        )
+        self.assert_pcs_fail(
+            "acl role unassign noexist from user user1".split(),
+            "Error: Role 'noexist' is not assigned to 'user1'\n",
+        )
+        self.assert_pcs_fail(
+            "acl role unassign noexist group group1".split(),
+            "Error: Role 'noexist' is not assigned to 'group1'\n",
+        )
+        self.assert_pcs_fail(
+            "acl role unassign group1 from user user1".split(),
+            "Error: Role 'group1' is not assigned to 'user1'\n",
+        )
+
+    def test_assign_unassign_role_without_usergroup_keyword(self):
+        self.assert_pcs_fail(
+            "acl role assign role1 to usergroup1".split(),
+            stderr_start="\nUsage: pcs acl role assign...",
+        )
+        self.assert_pcs_fail(
+            "acl role unassign role1 from usergroup1".split(),
+            stderr_start="\nUsage: pcs acl role unassign...",
+        )
+
+        self.assert_pcs_fail(
+            "acl role assign role1 usergroup1".split(),
+            stderr_start="\nUsage: pcs acl role assign...",
+        )
+        self.assert_pcs_fail(
+            "acl role unassign role1 usergroup1".split(),
+            stderr_start="\nUsage: pcs acl role unassign...",
+        )
+
+    def test_assign_unassign_role_too_many_args(self):
+        self.assert_pcs_fail(
+            "acl role assign role1 to user user1 something".split(),
+            stderr_start="\nUsage: pcs acl role assign...",
+        )
+        self.assert_pcs_fail(
+            "acl role unassign role1 from user user1 something".split(),
+            stderr_start="\nUsage: pcs acl role unassign...",
+        )
+
+        self.assert_pcs_fail(
+            "acl role assign role1 user user1 something".split(),
+            stderr_start="\nUsage: pcs acl role assign...",
+        )
+        self.assert_pcs_fail(
+            "acl role unassign role1 user user1 something".split(),
+            stderr_start="\nUsage: pcs acl role unassign...",
+        )
+
+    def test_assign_unassign_role_wrong_keyword(self):
+        self.assert_pcs_fail(
+            "acl role assign role1 from user usergroup1".split(),
+            stderr_start="\nUsage: pcs acl role assign...",
+        )
+        self.assert_pcs_fail(
+            "acl role unassign role1 to user usergroup1".split(),
+            stderr_start="\nUsage: pcs acl role unassign...",
         )

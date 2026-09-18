@@ -175,47 +175,25 @@ def role_delete(lib: Any, argv: Argv, modifiers: InputModifiers):
     )
 
 
-def _role_assign_unassign(argv, keyword, not_specific_fn, user_fn, group_fn):
+def _role_assign_unassign(argv, keyword, user_fn, group_fn):
     """
     Commandline options: no options
     """
-    # DEPRECATED ambiguous syntax in the first 0.12 version
-    # it was used in the old web ui, it was never used in the new web ui
-    # therefore it is unused since pcs-0.11.1
-    # - pcs role assign <role id> [to] [user|group] <username/group>
-    # - pcs role unassign <role id> [from] [user|group] <username/group>
-    # The problem is, that 'user|group' is optional, therefore pcs guesses
-    # which one it is.
-    argv_len = len(argv)
-    if argv_len < 2:
+    if len(argv) < 3:
+        raise CmdLineInputError()
+    role_id = argv.pop(0)
+    keyword_or_type = argv.pop(0)
+    user_group = argv.pop(0) if keyword_or_type == keyword else keyword_or_type
+    if not argv:
+        raise CmdLineInputError()
+    user_group_id = argv.pop(0)
+    if argv:
         raise CmdLineInputError()
 
-    not_specific_fn_deprecated = (
-        "Assigning / unassigning a role to a user / group without specifying "
-        "'user' or 'group' keyword is deprecated and might be removed in a "
-        "future release."
-    )
-
-    if argv_len == 2:
-        deprecation_warning(not_specific_fn_deprecated)
-        not_specific_fn(*argv)
-    elif argv_len == 3:
-        role_id, something, ug_id = argv
-        if something == keyword:
-            deprecation_warning(not_specific_fn_deprecated)
-            not_specific_fn(role_id, ug_id)
-        elif something == "user":
-            user_fn(role_id, ug_id)
-        elif something == "group":
-            group_fn(role_id, ug_id)
-        else:
-            raise CmdLineInputError()
-    elif argv_len == 4 and argv[1] == keyword and argv[2] in ["group", "user"]:
-        role_id, _, user_group, ug_id = argv
-        if user_group == "user":
-            user_fn(role_id, ug_id)
-        else:
-            group_fn(role_id, ug_id)
+    if user_group == "user":
+        user_fn(role_id, user_group_id)
+    elif user_group == "group":
+        group_fn(role_id, user_group_id)
     else:
         raise CmdLineInputError()
 
@@ -229,11 +207,6 @@ def role_assign(lib, argv, modifiers):
     _role_assign_unassign(
         argv,
         "to",
-        # DEPRECATED ambiguous syntax in the first 0.12 version
-        # Use assign_role_to_target or assign_role_to_group instead.
-        # it was used in the old web ui, it was never used in the new web ui
-        # therefore it is unused since pcs-0.11.1
-        lib.acl.assign_role_not_specific,
         lib.acl.assign_role_to_target,
         lib.acl.assign_role_to_group,
     )
@@ -255,13 +228,6 @@ def role_unassign(lib: Any, argv: Argv, modifiers: InputModifiers):
     _role_assign_unassign(
         argv,
         "from",
-        # DEPRECATED ambiguous syntax in the first 0.12 version
-        # Use unassign_role_from_target or unassign_role_from_group instead.
-        # it was used in the old web ui, it was never used in the new web ui
-        # therefore it is unused since pcs-0.11.1
-        lambda role_id, ug_id: lib.acl.unassign_role_not_specific(
-            role_id, ug_id, modifiers.get("--autodelete")
-        ),
         lambda role_id, ug_id: lib.acl.unassign_role_from_target(
             role_id, ug_id, modifiers.get("--autodelete")
         ),

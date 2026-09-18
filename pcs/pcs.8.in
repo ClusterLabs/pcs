@@ -1728,6 +1728,10 @@ cluster setup, cluster config update \- knet encryption required
 Setting knet transport crypto options \fBcipher\fR or \fBhash\fR to \fBnone\fR or clearing them with an empty value is no longer allowed. Pcs no longer allows to disable cluster traffic encryption. The default values \fBcipher=aes256\fR and \fBhash=sha256\fR are set during cluster setup when no crypto options are specified.
 .SS "\-\-force no longer accepted as an alternative to \-\-yes or \-\-overwrite"
 The \fB\-\-force\fR flag is no longer accepted as an alternative to interactive confirmation or file overwriting in the following commands. Use \fB\-\-yes\fR or \fB\-\-overwrite\fR instead. Affected commands are: 'pcs cluster destroy', 'pcs quorum unblock', 'pcs stonith confirm', 'pcs stonith sbd device setup', 'pcs stonith sbd watchdog test' (\fB\-\-yes\fR) and 'pcs cluster report' (\fB\-\-overwrite\fR).
+.SS "acl"
+.TP
+role assign | unassign
+When assigning or unassigning a role, it must now be explicitly specified whether the assignee is a user or a group.
 .SS "constraint"
 .TP
 colocation add

@@ -23,6 +23,9 @@
   update` and `pcs cluster link` commands.
 - Specifying score as a standalone value in `pcs constraint location add` and
   `pcs constraint colocation add`. Use `score=value` instead.
+- An option to omit `user` or `group` keyword in `pcs acl role assign |
+  unassign` commands has been removed, it is now required to explicitly specify
+  whether the assignee is a user or a group
 
 ### Fixed
 - Command `pcs stonith update-scsi-devices` no longer triggers unnecessary

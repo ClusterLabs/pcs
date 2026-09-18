@@ -981,34 +981,6 @@ class GetRoleListOfTargetTest(LibraryAclTest):
         )
 
 
-@mock.patch("pcs.lib.cib.acl.find_group")
-@mock.patch("pcs.lib.cib.acl.find_target")
-class FindTargetOrGroup(TestCase):
-    def test_returns_target(self, find_target, find_group):
-        del find_group
-        find_target.return_value = "target_element"
-        self.assertEqual(
-            lib.find_target_or_group("acl_section", "target_id"),
-            "target_element",
-        )
-        find_target.assert_called_once_with(
-            "acl_section", "target_id", none_if_id_unused=True
-        )
-
-    def test_returns_group_if_target_is_none(self, find_target, find_group):
-        find_target.return_value = None
-        find_group.return_value = "group_element"
-        self.assertEqual(
-            lib.find_target_or_group("acl_section", "group_id"), "group_element"
-        )
-        find_target.assert_called_once_with(
-            "acl_section", "group_id", none_if_id_unused=True
-        )
-        find_group.assert_called_once_with(
-            "acl_section", "group_id", id_types=["acl_group", "acl_target"]
-        )
-
-
 class Find(TestCase):
     @mock.patch("pcs.lib.cib.acl.find_element_by_tag_and_id")
     def test_map_well_to_common_finder(self, common_finder):
