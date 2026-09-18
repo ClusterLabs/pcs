@@ -30,11 +30,6 @@ from pcs_test.tools.xml import XmlManipulation
 
 empty_cib = rc("cib-empty.xml")
 empty_cib_rules = rc("cib-empty-3.9.xml")
-RULE_ARGV_DEPRECATED = (
-    "Deprecation Warning: Specifying a rule as multiple arguments is "
-    "deprecated and might be removed in a future release, specify the rule as "
-    "a single string instead\n"
-)
 DEFAULTS_MAY_BE_OVERRIDDEN = (
     "Warning: Defaults do not apply to resources which override them "
     "with their own defined values\n"
@@ -611,7 +606,7 @@ class DefaultsSetCreateMixin(TestDefaultsMixin, AssertPcsMixin):
             ),
         )
 
-    def _assert_success_rule(self, deprecated_rule_form):
+    def _assert_success_rule(self):
         command = (
             self.cli_command
             + "-- set create id=mine score=10 meta name1=value1 name2=value2 rule".split()
@@ -623,13 +618,9 @@ class DefaultsSetCreateMixin(TestDefaultsMixin, AssertPcsMixin):
             "date-spec years=2019 months=7-8 weekdays=6-7 or "
             "date in_range to 2019-12-15)"
         )
-        if deprecated_rule_form:
-            full_command = command + rule_str.split()
-        else:
-            full_command = command + [rule_str]
 
         self.assert_effect(
-            full_command,
+            command + [rule_str],
             dedent(
                 f"""\
                 <{self.cib_tag}>
@@ -668,18 +659,24 @@ class DefaultsSetCreateMixin(TestDefaultsMixin, AssertPcsMixin):
             """
             ),
             stderr_full=(
-                (RULE_ARGV_DEPRECATED if deprecated_rule_form else "")
-                + CIB_HAS_BEEN_UPGRADED
+                CIB_HAS_BEEN_UPGRADED
                 + self.meta_warning_not_validated
                 + DEFAULTS_MAY_BE_OVERRIDDEN
             ),
         )
 
     def test_success_rule(self):
-        self._assert_success_rule(False)
+        self._assert_success_rule()
 
-    def test_success_rule_deprecated_form(self):
-        self._assert_success_rule(True)
+    def test_rule_multiple_args_not_supported(self):
+        self.assert_pcs_fail(
+            self.cli_command
+            + "set create meta name1=value1 rule".split()
+            + "#uname eq node1".split(),
+            stderr_start=(
+                f"\nUsage: pcs {' '.join(self.cli_command)} set create..."
+            ),
+        )
 
     def test_rule_error_messages(self):
         self.assert_pcs_fail(

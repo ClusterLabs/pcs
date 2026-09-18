@@ -6,11 +6,6 @@ from pcs.common import const, reports
 
 from pcs_test.tools.misc import dict_to_modifiers
 
-RULE_ARGV_DEPRECATED = (
-    "Specifying a rule as multiple arguments is deprecated and might be removed "
-    "in a future release, specify the rule as a single string instead"
-)
-
 
 class CreateWithRule(TestCase):
     def setUp(self):
@@ -62,19 +57,21 @@ class CreateWithRule(TestCase):
         )
         self.report_processor.set_report_item_preprocessor.assert_called_once()
 
-    @mock.patch("pcs.cli.common.parse_args.deprecation_warning")
-    def test_minimal_deprecated_form(self, mock_dw):
-        self._call_cmd("R1 rule #uname eq node1".split())
-        self.lib_module.create_plain_with_rule.assert_called_once_with(
-            const.RESOURCE_ID_TYPE_PLAIN,
-            "R1",
-            "#uname eq node1",
-            {},
-            {},
-            set(),
-        )
-        self.report_processor.set_report_item_preprocessor.assert_called_once()
-        mock_dw.assert_called_once_with(RULE_ARGV_DEPRECATED)
+    def test_rule_multiple_args_not_supported(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self._call_cmd("R1 rule #uname eq node1".split())
+        self.assertIsNone(cm.exception.message)
+        self.lib_module.create_plain_with_rule.assert_not_called()
+        self.report_processor.set_report_item_preprocessor.assert_not_called()
+
+    def test_rule_unknown_options_are_left_in_args(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self._call_cmd(
+                ["R1", "rule", "something=anything", "#uname eq node1"]
+            )
+        self.assertIsNone(cm.exception.message)
+        self.lib_module.create_plain_with_rule.assert_not_called()
+        self.report_processor.set_report_item_preprocessor.assert_not_called()
 
     def test_resource_id(self):
         self._call_cmd(["resource%R1", "rule", "#uname eq node1"])
@@ -110,22 +107,27 @@ class CreateWithRule(TestCase):
         self.lib_module.create_plain_with_rule.assert_not_called()
         self.report_processor.set_report_item_preprocessor.assert_not_called()
 
-    @mock.patch("pcs.cli.common.parse_args.deprecation_warning")
-    def test_all_options(self, mock_dw):
+    def test_all_options(self):
         self._call_cmd(
-            (
-                "R1 rule id=id1 constraint-id=id2 score=7 score-attribute=attr "
-                "resource-discovery=rd role=r something=anything #uname eq node1"
-            ).split(),
+            [
+                "R1",
+                "rule",
+                "id=id1",
+                "constraint-id=id2",
+                "score=7",
+                "score-attribute=attr",
+                "resource-discovery=rd",
+                "role=r",
+                "#uname eq node1",
+            ],
             {"force": True},
         )
         self.lib_module.create_plain_with_rule.assert_called_once_with(
             const.RESOURCE_ID_TYPE_PLAIN,
             "R1",
-            "something=anything #uname eq node1",
+            "#uname eq node1",
             {"id": "id1", "score": "7", "score-attribute": "attr", "role": "r"},
             {"resource-discovery": "rd", "id": "id2"},
             {reports.codes.FORCE},
         )
         self.report_processor.set_report_item_preprocessor.assert_called_once()
-        mock_dw.assert_called_once_with(RULE_ARGV_DEPRECATED)

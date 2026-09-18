@@ -95,6 +95,7 @@ def create_with_rule(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     else:
         raise CmdLineInputError()
     rule_options, constraint_options = _extract_rule_options(argv)
+    rule_str = get_rule_str(argv) or ""
 
     lib.env.report_processor.set_report_item_preprocessor(
         get_duplicate_constraint_exists_preprocessor(lib)
@@ -102,7 +103,7 @@ def create_with_rule(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     lib.constraint_location.create_plain_with_rule(
         _RESOURCE_TYPE_MAP[rsc_type],
         rsc_value,
-        get_rule_str(argv) or "",
+        rule_str,
         rule_options,
         constraint_options,
         force_flags,
