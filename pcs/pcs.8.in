@@ -1219,12 +1219,6 @@ List all the current location constraints that are not expired. If 'resources' i
 location add <id> <resource> <node> [score=<score>] [resource\-discovery=<option>]
 Add a location constraint with the appropriate id for the specified resource, node name and score (default score: INFINITY). Resource may be either a resource id <resource_id> or %<resource_id> or resource%<resource_id>, or a resource name regular expression regexp%<resource_pattern>.
 .TP
-location delete <id>...
-Remove location constraints with the specified ids.
-.TP
-location remove <id>...
-Remove location constraints with the specified ids.
-.TP
 order [config] [\fB\-\-full\fR] [@OUTPUT_FORMAT_SYNTAX_DOC@]
 List all current ordering constraints (if \fB\-\-full\fR is specified show the internal constraint id's as well). @OUTPUT_FORMAT_DESC_DOC@
 .TP
@@ -1739,6 +1733,9 @@ Specifying score as a standalone value is no longer supported. Use score=value i
 .TP
 location add
 Specifying score as a standalone value is no longer supported. Use score=value instead.
+.TP
+location delete | remove
+These commands have been removed, use 'constraint delete | remove' instead.
 .SS "pcsd"
 .TP
 certkey

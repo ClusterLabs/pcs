@@ -2538,12 +2538,6 @@ Commands:
         resource%<resource_id>, or a resource name regular expression
         regexp%<resource_pattern>.
 
-    location delete <id>...
-        Remove location constraints with the specified ids.
-
-    location remove <id>...
-        Remove location constraints with the specified ids.
-
     order [config] [--full] [{output_format_syntax}]
         List all current ordering constraints (if --full is specified show
         the internal constraint id's as well).

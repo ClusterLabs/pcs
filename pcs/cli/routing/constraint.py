@@ -4,6 +4,7 @@ import pcs.cli.constraint_colocation.command as colocation_command
 from pcs import constraint, usage
 from pcs.cli.common.errors import (
     CmdLineInputError,
+    command_replaced,
     raise_command_removed,
     raise_command_replaced,
 )
@@ -24,7 +25,9 @@ def constraint_location_cmd(
         if sub_cmd == "add":
             constraint.location_add(lib, argv, modifiers)
         elif sub_cmd in ["remove", "delete"]:
-            location_command.remove(lib, argv, modifiers)
+            raise command_replaced(
+                [f"pcs constraint {sub_cmd}"], pcs_version="1.0"
+            )
         elif sub_cmd == "show":
             raise_command_replaced(
                 ["pcs constraint location config"], pcs_version="0.12"

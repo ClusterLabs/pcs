@@ -74,12 +74,3 @@ def get_all_location_rules_ids(
         _get_location_rule_ids(constraints_dto.location)
         + _get_location_rule_ids(constraints_dto.location_set)
     )
-
-
-def get_all_location_constraints_ids(
-    constraints_dto: CibConstraintsDto,
-) -> set[str]:
-    return set(
-        _get_constraint_ids(constraints_dto.location)
-        + _get_constraint_ids(constraints_dto.location_set)
-    )

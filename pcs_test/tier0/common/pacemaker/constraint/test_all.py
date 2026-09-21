@@ -3,7 +3,6 @@ from unittest import TestCase
 from pcs.common.pacemaker.constraint import (
     CibConstraintsDto,
     get_all_constraints_ids,
-    get_all_location_constraints_ids,
     get_all_location_rules_ids,
 )
 
@@ -63,38 +62,5 @@ class GetAllLocationRulesIds(TestCase):
         )
         self.assertEqual(
             get_all_location_rules_ids(location_constraints_without_rules),
-            set(),
-        )
-
-
-class GetAllLocationIds(TestCase):
-    def test_location_constraints_defined(self):
-        constraint_dto = get_all_constraints(RuleInEffectEvalMock({}))
-        self.assertEqual(
-            get_all_location_constraints_ids(constraint_dto),
-            {
-                "location-G2-localhost-INFINITY",
-                "location-R-localhost-INFINITY",
-                "location-R7-another-one--INFINITY",
-                "location-R7-localhost-INFINITY",
-                "location-R7-non-existing-node--10000",
-                "loc_constr_with_expired_rule",
-                "loc_constr_with_not_expired_rule",
-                "loc_constr_with_not_expired_rule-1",
-            },
-        )
-
-    def test_location_constraints_not_defined(self):
-        constraint_dto = get_all_constraints(RuleInEffectEvalMock({}))
-        no_location_constraints_dto = CibConstraintsDto(
-            colocation=constraint_dto.colocation,
-            colocation_set=constraint_dto.colocation_set,
-            order=constraint_dto.order,
-            order_set=constraint_dto.order_set,
-            ticket=constraint_dto.ticket_set,
-            ticket_set=constraint_dto.ticket_set,
-        )
-        self.assertEqual(
-            get_all_location_constraints_ids(no_location_constraints_dto),
             set(),
         )

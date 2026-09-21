@@ -26,6 +26,8 @@
 - An option to omit `user` or `group` keyword in `pcs acl role assign |
   unassign` commands has been removed, it is now required to explicitly specify
   whether the assignee is a user or a group
+- Commands `pcs constraint location delete | remove` have been removed, use
+  `pcs constraint delete | remove` instead
 
 ### Fixed
 - Command `pcs stonith update-scsi-devices` no longer triggers unnecessary

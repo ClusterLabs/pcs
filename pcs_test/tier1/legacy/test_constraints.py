@@ -47,10 +47,6 @@ DEPRECATED_DASH_DASH_GROUP = (
     "with 'group' in a future release. Specify --future to switch to the future "
     "behavior.\n"
 )
-DEPRECATED_LOCATION_CONSTRAINT_REMOVE = (
-    "Deprecation Warning: This command is deprecated and will be removed. "
-    "Please use 'pcs constraint delete' or 'pcs constraint remove' instead.\n"
-)
 STANDALONE_SCORE_SYNTAX_CHANGED = (
     "Hint: Syntax has changed from previous version. See 'man pcs' -> Changes "
     "in pcs-1.0.\n"
@@ -399,18 +395,18 @@ class ConstraintTest(unittest.TestCase, AssertPcsMixin):
 
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
-            "constraint location delete location-D5-node1-INFINITY".split(),
+            "constraint delete location-D5-node1-INFINITY".split(),
         )
         self.assertEqual(stdout, "")
-        self.assertEqual(stderr, DEPRECATED_LOCATION_CONSTRAINT_REMOVE)
+        self.assertEqual(stderr, "")
         self.assertEqual(retval, 0)
 
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
-            "constraint location remove location-D5-node2--INFINITY".split(),
+            "constraint remove location-D5-node2--INFINITY".split(),
         )
         self.assertEqual(stdout, "")
-        self.assertEqual(stderr, DEPRECATED_LOCATION_CONSTRAINT_REMOVE)
+        self.assertEqual(stderr, "")
         self.assertEqual(retval, 0)
 
         self.assert_pcs_success("constraint --full".split())
@@ -2218,10 +2214,10 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
 
         stdout, stderr, retval = pcs(
             self.temp_cib.name,
-            "constraint location remove location-dummy-rh7-1-INFINITY".split(),
+            "constraint remove location-dummy-rh7-1-INFINITY".split(),
         )
         self.assertEqual(stdout, "")
-        self.assertEqual(stderr, DEPRECATED_LOCATION_CONSTRAINT_REMOVE)
+        self.assertEqual(stderr, "")
         self.assertEqual(retval, 0)
 
         stdout, stderr, retval = pcs(

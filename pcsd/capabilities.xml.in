@@ -1118,7 +1118,6 @@
         Create and delete a location constraint for one resource.
 
         pcs commands: constraint location ( prefers | avoids ),
-          constraint location ( delete | remove ),
           constraint ( delete | remove )
         daemon urls: add_constraint_remote (param: c_type=loc),
           remove_constraint_remote
