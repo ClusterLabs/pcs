@@ -5,6 +5,7 @@
 ### Fixed
 - Command `pcs stonith update-scsi-devices` no longer triggers unnecessary
   resource restarts when updating SCSI devices. ([RHEL-214140])
+- Most pcsd requests ending with Internal Server Error with rubygem-json 3.0.0+
 
 ### Deprecated
 - Disabling cluster traffic encryption (setting knet transport crypto options

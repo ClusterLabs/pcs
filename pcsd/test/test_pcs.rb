@@ -80,7 +80,7 @@ class TestGetNodesAttributes < Test::Unit::TestCase
           "name": "test",
           "value": "44"
         }
-      ]', {:symbolize_names => true})
+      ]', symbolize_names: true)
     expected['node3'] = JSON.parse(
       '[
         {
@@ -98,7 +98,7 @@ class TestGetNodesAttributes < Test::Unit::TestCase
           "name": "test321",
           "value": "321"
         }
-      ]', {:symbolize_names => true})
+      ]', symbolize_names: true)
     assert_equal(expected, get_node_attributes(nil, cib_dom))
   end
 end

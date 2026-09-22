@@ -870,7 +870,7 @@ def cluster_status_from_nodes(auth_user, cluster_nodes, cluster_name)
         :error_list => []
       }
       begin
-        parsed_response = JSON.parse(response, {:symbolize_names => true})
+        parsed_response = JSON.parse(response, symbolize_names: true)
         parsed_response[:pcsd_capabilities] ||= []
         if parsed_response[:noresponse]
           node_map[node][:node] = {}
@@ -1334,7 +1334,7 @@ def run_pcs_internal(auth_user, cmd, data, request_timeout=nil)
     )
   end
   begin
-    parsed_output = JSON.parse(stdout.join("\n"), {:symbolize_names => true})
+    parsed_output = JSON.parse(stdout.join("\n"), symbolize_names: true)
     if (
       parsed_output.include?(:report_list) \
       and \
