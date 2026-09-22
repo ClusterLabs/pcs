@@ -2591,10 +2591,12 @@ Commands:
         are id, influence and score.
 
     colocation delete <source resource id> <target resource id>
-        Remove colocation constraints with specified resources.
+        Remove colocation constraints with specified source resource and target
+        resource.
 
     colocation remove <source resource id> <target resource id>
-        Remove colocation constraints with specified resources.
+        Remove colocation constraints with specified source resource and target
+        resource.
 
     ticket [config] [--full] [{output_format_syntax}]
         List all current ticket constraints (if --full is specified show

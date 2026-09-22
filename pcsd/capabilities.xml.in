@@ -1223,6 +1223,15 @@
           remove_constraint_remote
       </description>
     </capability>
+    <capability id="pcmk.constraint.colocation.simple.delete.resource-order" in-pcs="1" in-pcsd="0">
+      <description>
+        Resource order matters in 'constraint colocation delete | remove
+        source_resource target_resource' command, it no longer deletes
+        'target_resource with source_resource' constraints.
+
+        pcs commands: constraint colocation ( delete | remove )
+      </description>
+    </capability>
     <capability id="pcmk.constraint.colocation.simple.options" in-pcs="1" in-pcsd="0">
       <description>
         Can set constraint options, constraint id and resources's role.

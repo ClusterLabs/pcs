@@ -42,6 +42,9 @@
   and `pcs stonith op add` now error out when resource agent metadata cannot be
   loaded during operations validation; use `--force` to override. Specifying an
   operation action in the form of `name=action` is no longer allowed.
+- Resource order matters in `pcs constraint colocation delete | remove
+  source_resource target_resource` command, it no longer deletes
+  'target_resource with source_resource' constraints.
 
 
 ## [0.12.3.1] - 2026-09-08

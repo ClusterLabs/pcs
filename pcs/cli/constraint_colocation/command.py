@@ -4,7 +4,6 @@ from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import Argv, InputModifiers
 from pcs.cli.constraint import command
 from pcs.cli.constraint.output import print_config
-from pcs.cli.reports.output import deprecation_warning
 from pcs.cli.reports.preprocessor import (
     get_duplicate_constraint_exists_preprocessor,
 )
@@ -63,29 +62,15 @@ def remove(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     if len(argv) != 2:
         raise CmdLineInputError()
     source_rsc_id, target_rsc_id = argv
-    constraint_ids_to_remove: list[str] = []
     constraint_dto = lib.constraint.get_config(evaluate_rules=False)
-    for colocation_dto in constraint_dto.colocation:
+    constraint_ids_to_remove = [
+        colocation_dto.attributes.constraint_id
+        for colocation_dto in constraint_dto.colocation
         if (
             colocation_dto.resource_id == source_rsc_id
             and colocation_dto.with_resource_id == target_rsc_id
-        ):
-            constraint_ids_to_remove.append(
-                colocation_dto.attributes.constraint_id
-            )
-        elif (
-            colocation_dto.resource_id == target_rsc_id
-            and colocation_dto.with_resource_id == source_rsc_id
-        ):
-            # deprecated since pcs-0.11.7
-            deprecation_warning(
-                "Removing colocation constraint with interchanged source "
-                "resource id and target resource id. This behavior is "
-                "deprecated and will be removed."
-            )
-            constraint_ids_to_remove.append(
-                colocation_dto.attributes.constraint_id
-            )
+        )
+    ]
     if not constraint_ids_to_remove:
         raise CmdLineInputError(
             f"Unable to find colocation constraint with source resource "

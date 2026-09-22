@@ -127,18 +127,21 @@ class TestRemoveColocationConstraint(TestCase):
         self.constraint.get_config.assert_called_once_with(evaluate_rules=False)
         self.cib.remove_elements.assert_called_once_with(["colocation-C-D"])
 
-    @mock.patch("pcs.cli.constraint_colocation.command.deprecation_warning")
-    def test_remove_colocation_constraint_with_interchanged_ids(
-        self, mock_warn
-    ):
+    def test_dont_remove_colocation_constraint_with_interchanged_ids(self):
         colocation_constraints_ids = ["A", "B"]
         self._call_cmd(colocation_constraints_ids)
         self.constraint.get_config.assert_called_once_with(evaluate_rules=False)
-        self.cib.remove_elements.assert_called_once_with(
-            ["colocation-A-B", "colocation-B-A"]
+        self.cib.remove_elements.assert_called_once_with(["colocation-A-B"])
+
+    def test_colocation_constraint_with_interchanged_ids_not_found(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self._call_cmd(["D", "C"])
+        self.assertEqual(
+            cm.exception.message,
+            (
+                "Unable to find colocation constraint with source resource "
+                "'D' and target resource 'C'"
+            ),
         )
-        mock_warn.assert_called_once_with(
-            "Removing colocation constraint with interchanged source resource "
-            "id and target resource id. This behavior is deprecated and will "
-            "be removed."
-        )
+        self.constraint.get_config.assert_called_once_with(evaluate_rules=False)
+        self.cib.remove_elements.assert_not_called()
