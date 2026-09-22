@@ -5,6 +5,7 @@
 ### Fixed
 - Command `pcs stonith update-scsi-devices` no longer triggers unnecessary
   resource restarts when updating SCSI devices. ([RHEL-215405])
+- Most pcsd requests ending with Internal Server Error with rubygem-json 3.0.0+
 
 [RHEL-215405]: https://redhat.atlassian.net/browse/RHEL-215405
 
