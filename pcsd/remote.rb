@@ -1156,7 +1156,7 @@ def check_request_data_for_json(params, auth_user)
     raise PcsdRequestException.new("Missing required parameter 'data_json'")
   end
   begin
-    return JSON.parse(params[:data_json], {:symbolize_names => true})
+    return JSON.parse(params[:data_json], symbolize_names: true)
   rescue JSON::ParserError
     raise PcsdRequestException.new('Invalid input data format')
   end

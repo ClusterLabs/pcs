@@ -955,7 +955,7 @@ module TestPrimitiveMixin
       ],
       "operations": []
     }'
-    hash = JSON.parse(json, {:symbolize_names => true})
+    hash = JSON.parse(json, symbolize_names: true)
     # assert_equal_hashes(hash, obj.to_status('2'))
     assert(hash == obj.to_status('2'))
   end
@@ -1001,7 +1001,7 @@ module TestPrimitiveMixin
       ],
       "operations": []
     }'
-    hash = JSON.parse(json, {:symbolize_names => true})
+    hash = JSON.parse(json, symbolize_names: true)
     # assert_equal_hashes(hash, obj.to_status('2'))
     assert(hash == obj.to_status('2'))
   end
@@ -1255,7 +1255,7 @@ module TestGroupMixin
         }
       ]
     }'
-    hash = JSON.parse(json, {:symbolize_names => true})
+    hash = JSON.parse(json, symbolize_names: true)
     assert(hash == obj.to_status('2'))
   end
 end
@@ -1618,7 +1618,7 @@ module TestCloneMixin
         "operations": []
       }
     }'
-    hash = JSON.parse(json, {:symbolize_names => true})
+    hash = JSON.parse(json, symbolize_names: true)
     assert_equal(hash, obj.to_status('2'))
   end
 
@@ -1865,7 +1865,7 @@ module TestCloneMixin
         ]
       }
     }'
-    hash = JSON.parse(json, {:symbolize_names => true})
+    hash = JSON.parse(json, symbolize_names: true)
     assert_equal(hash, obj.to_status('2'))
   end
 end
@@ -2007,7 +2007,7 @@ module TestCloneFromPromotableElementMixin
         "operations": []
       }
     }'
-    hash = JSON.parse(json, {:symbolize_names => true})
+    hash = JSON.parse(json, symbolize_names: true)
     assert_equal(hash, obj.to_status('2'))
   end
 end
@@ -2336,7 +2336,7 @@ module TestCloneFromMasterElementMixin
         "operations": []
       }
     }'
-    hash = JSON.parse(json, {:symbolize_names => true})
+    hash = JSON.parse(json, symbolize_names: true)
     assert_equal(hash, obj.to_status('2'))
   end
 
@@ -2582,7 +2582,7 @@ module TestCloneFromMasterElementMixin
         ]
       }
     }'
-    hash = JSON.parse(json, {:symbolize_names => true})
+    hash = JSON.parse(json, symbolize_names: true)
     assert_equal(hash, obj.to_status('2'))
   end
 end

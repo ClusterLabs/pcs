@@ -30,6 +30,7 @@
 ### Fixed
 - Command `pcs stonith update-scsi-devices` no longer triggers unnecessary
   resource restarts when updating SCSI devices
+- Most pcsd requests ending with Internal Server Error with rubygem-json 3.0.0+
 
 ### Changed
 - Dropped dependency on `python-dateutil` in favor of the Python standard
