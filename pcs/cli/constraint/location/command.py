@@ -4,6 +4,7 @@ from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import (
     Argv,
     InputModifiers,
+    KeyValueParser,
     get_rule_str,
     parse_typed_arg,
 )
@@ -11,7 +12,6 @@ from pcs.cli.reports.preprocessor import (
     get_duplicate_constraint_exists_preprocessor,
 )
 from pcs.common import const, reports
-from pcs.common.types import StringIterable
 
 RESOURCE_TYPE_RESOURCE = "resource"
 RESOURCE_TYPE_REGEXP = "regexp"
@@ -19,55 +19,28 @@ _RESOURCE_TYPE_MAP = {
     RESOURCE_TYPE_RESOURCE: const.RESOURCE_ID_TYPE_PLAIN,
     RESOURCE_TYPE_REGEXP: const.RESOURCE_ID_TYPE_REGEXP,
 }
+_RULE_OPTION_NAMES = ("id", "role", "score", "score-attribute")
+_CONSTRAINT_ID_CLI_NAME = "constraint-id"
 
 
-def _extract_options(
-    argv: Argv, options: StringIterable, ignored_options: StringIterable = ()
-) -> dict[str, str]:
-    result: dict[str, str] = {}
-    for argument in argv:
-        if "=" not in argument:
-            break
-        key, value = argument.split("=", 1)
-        if key in options:
-            result[key] = value
-            continue
-        if key not in ignored_options:
-            break
-    return result
-
-
-def _extract_rule_options(
-    argv: Argv, extract_constraint_options: bool = True
+def _split_rule_and_constraint_options(
+    argv: Argv,
 ) -> tuple[dict[str, str], dict[str, str]]:
-    rule_options_def = {"id", "role", "score", "score-attribute"}
-    constraint_options_def = {"constraint-id", "resource-discovery"}
+    option_args: Argv = []
+    while argv and len(argv[0].split()) == 1 and "=" in argv[0]:
+        option_args.append(argv.pop(0))
 
-    rule_options = _extract_options(
-        argv,
-        rule_options_def,
-        ignored_options=(
-            constraint_options_def if extract_constraint_options else set()
-        ),
-    )
-    constraint_options = dict()
-    if extract_constraint_options:
-        constraint_options = _extract_options(
-            argv, constraint_options_def, ignored_options=rule_options_def
-        )
+    all_options = KeyValueParser(option_args).get_unique()
 
-    processed_options = set(rule_options_def)
-    if extract_constraint_options:
-        processed_options |= constraint_options_def
-    while (
-        argv and "=" in argv[0] and argv[0].split("=")[0] in processed_options
-    ):
-        argv.pop(0)
-
-    if "constraint-id" in constraint_options:
-        constraint_options["id"] = constraint_options["constraint-id"]
-        del constraint_options["constraint-id"]
-
+    rule_options: dict[str, str] = {}
+    constraint_options: dict[str, str] = {}
+    for name, value in all_options.items():
+        if name in _RULE_OPTION_NAMES:
+            rule_options[name] = value
+        elif name == _CONSTRAINT_ID_CLI_NAME:
+            constraint_options["id"] = value
+        else:
+            constraint_options[name] = value
     return rule_options, constraint_options
 
 
@@ -94,7 +67,7 @@ def create_with_rule(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
         argv.pop(0)
     else:
         raise CmdLineInputError()
-    rule_options, constraint_options = _extract_rule_options(argv)
+    rule_options, constraint_options = _split_rule_and_constraint_options(argv)
     rule_str = get_rule_str(argv) or ""
 
     lib.env.report_processor.set_report_item_preprocessor(

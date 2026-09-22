@@ -184,15 +184,16 @@ class CreateWithRule(RuleBaseMixin, TestCase):
         )
         self.assert_pcs_fail(
             "constraint location R1 rule resource-discovery=badly "
-            "role=bad-role".split()
-            + ["bad=option #uname eq"],
+            "role=bad-role bad1=option1 bad2=option2".split()
+            + ["#uname eq"],
             stderr_full=dedent(
                 f"""\
+                Error: invalid constraint options: 'bad1', 'bad2', allowed options are: 'id', 'resource-discovery'
                 Error: 'badly' is not a valid resource-discovery value, use 'always', 'exclusive', 'never', use --force to override
                 Error: 'bad-role' is not a valid role value, use {roles}
-                Error: 'bad=option #uname eq' is not a valid rule expression, parse error near or after line 1 column 12
-                  bad=option #uname eq
-                  -----------^
+                Error: '#uname eq' is not a valid rule expression, parse error near or after line 1 column 10
+                  #uname eq
+                  ---------^
                 """
                 + ERRORS_HAVE_OCCURRED
             ),

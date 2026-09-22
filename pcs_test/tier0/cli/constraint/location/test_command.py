@@ -64,12 +64,27 @@ class CreateWithRule(TestCase):
         self.lib_module.create_plain_with_rule.assert_not_called()
         self.report_processor.set_report_item_preprocessor.assert_not_called()
 
-    def test_rule_unknown_options_are_left_in_args(self):
+    def test_rule_unknown_options_routed_to_constraint(self):
+        self._call_cmd(["R1", "rule", "something=anything", "#uname eq node1"])
+        self.lib_module.create_plain_with_rule.assert_called_once_with(
+            const.RESOURCE_ID_TYPE_PLAIN,
+            "R1",
+            "#uname eq node1",
+            {},
+            {"something": "anything"},
+            set(),
+        )
+        self.report_processor.set_report_item_preprocessor.assert_called_once()
+
+    def test_duplicate_option_different_values(self):
         with self.assertRaises(CmdLineInputError) as cm:
             self._call_cmd(
-                ["R1", "rule", "something=anything", "#uname eq node1"]
+                ["R1", "rule", "score=1", "score=2", "#uname eq node1"]
             )
-        self.assertIsNone(cm.exception.message)
+        self.assertEqual(
+            cm.exception.message,
+            "duplicate option 'score' with different values '1' and '2'",
+        )
         self.lib_module.create_plain_with_rule.assert_not_called()
         self.report_processor.set_report_item_preprocessor.assert_not_called()
 

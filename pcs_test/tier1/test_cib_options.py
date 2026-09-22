@@ -606,11 +606,7 @@ class DefaultsSetCreateMixin(TestDefaultsMixin, AssertPcsMixin):
             ),
         )
 
-    def _assert_success_rule(self):
-        command = (
-            self.cli_command
-            + "-- set create id=mine score=10 meta name1=value1 name2=value2 rule".split()
-        )
+    def test_success_rule(self):
         rule_str = (
             "(date gt 2018-05-17T13:28:19 or "
             "date in_range 2019-01-01 to 2019-03-15 or "
@@ -620,7 +616,9 @@ class DefaultsSetCreateMixin(TestDefaultsMixin, AssertPcsMixin):
         )
 
         self.assert_effect(
-            command + [rule_str],
+            self.cli_command
+            + "-- set create id=mine score=10 meta name1=value1 name2=value2 rule".split()
+            + [rule_str],
             dedent(
                 f"""\
                 <{self.cib_tag}>
@@ -664,9 +662,6 @@ class DefaultsSetCreateMixin(TestDefaultsMixin, AssertPcsMixin):
                 + DEFAULTS_MAY_BE_OVERRIDDEN
             ),
         )
-
-    def test_success_rule(self):
-        self._assert_success_rule()
 
     def test_rule_multiple_args_not_supported(self):
         self.assert_pcs_fail(
