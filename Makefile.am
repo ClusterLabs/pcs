@@ -250,7 +250,7 @@ endif
 
 pcsd-tests:
 	GEM_HOME=${abs_top_builddir}/${PCSD_BUNDLED_DIR_ROOT_LOCAL} \
-		$(RUBY) \
+		$(BUNDLE) exec $(RUBY) \
 		-I${abs_top_builddir}/pcsd \
 		-I${abs_top_builddir}/pcsd/test \
 		${abs_top_builddir}/pcsd/test/test_all_suite.rb
