@@ -2,14 +2,12 @@ from typing import Any
 
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import (
-    FUTURE_OPTION,
     Argv,
     InputModifiers,
     KeyValueParser,
     group_by_keywords,
 )
 from pcs.cli.reports.output import (
-    deprecation_warning,
     process_library_reports,
     warn,
 )
@@ -260,11 +258,10 @@ def remove_from_cluster(
 ) -> None:
     """
     Options:
-      * --force - allow remove of multiple, (deprecated) don't stop resources
+      * --force - allow remove of multiple
       * -f - CIB file
       * --name - name of a booth instance
       * --no-stop - don't stop resources before deletion
-      * --future - specifying '--force' does not skip resource stopping
     """
 
     def _process_reports(
@@ -286,9 +283,7 @@ def remove_from_cluster(
             filtered_reports.append(report)
         return filtered_reports
 
-    modifiers.ensure_only_supported(
-        "-f", "--force", FUTURE_OPTION, "--name", "--no-stop"
-    )
+    modifiers.ensure_only_supported("-f", "--force", "--name", "--no-stop")
     modifiers.ensure_not_mutually_exclusive("-f", "--no-stop")
     if arg_list:
         raise CmdLineInputError()
@@ -308,18 +303,6 @@ def remove_from_cluster(
         return
 
     dont_stop_me_now = modifiers.is_specified("--no-stop")
-    if (
-        not modifiers.is_specified(FUTURE_OPTION)
-        and modifiers.is_specified("--force")
-        and not dont_stop_me_now
-    ):
-        # deprecated after pcs-0.12.0
-        deprecation_warning(
-            "Using '--force' to skip resource stopping is deprecated and will "
-            "be removed in a future release. Specify '--future' to switch to "
-            "the future behavior and use '--no-stop' to skip resource stopping."
-        )
-        dont_stop_me_now = True
 
     if dont_stop_me_now:
         lib.booth.remove_from_cluster(instance_name, force_flags)

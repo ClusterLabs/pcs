@@ -262,40 +262,29 @@ class RemoveResourceBase:
 )
 @mock.patch("pcs.cli.resource.command.process_library_reports")
 class RemoveResource(RemoveResourceBase, TestCase):
-    @mock.patch("pcs.cli.resource.command.deprecation_warning")
-    def test_remove_force(
-        self, mock_deprecation_warning, mock_process_lib_reports, mock_reports
-    ):
+    def test_remove_force(self, mock_process_lib_reports, mock_reports):
+        mock_reports.return_value = []
+
         self._call_cmd(["R1"], {"force": True})
 
-        mock_deprecation_warning.assert_called_once()
+        resource_ids = {"R1"}
         self.assert_lib_calls(
             [
                 mock.call.resource.get_configured_resources(),
-                mock.call.cib.remove_elements({"R1"}, {reports.codes.FORCE}),
+                mock.call.cib.remove_elements(resource_ids),
             ]
         )
-        mock_reports.assert_not_called()
+        mock_reports.assert_called_once()
         mock_process_lib_reports.assert_not_called()
 
-
-@mock.patch(
-    "pcs.common.reports.processor.ReportProcessorInMemory.reports",
-    new_callable=mock.PropertyMock,
-)
-@mock.patch("pcs.cli.resource.command.process_library_reports")
-class RemoveResourceFuture(RemoveResourceBase, TestCase):
-    def _call_cmd(self, argv, modifiers=None):
-        default_modifiers = {"future": True}
-        command.remove(
-            self.lib,
-            argv,
-            dict_to_modifiers(
-                modifiers | default_modifiers
-                if modifiers
-                else default_modifiers
-            ),
-        )
+    def test_future_option_rejected(
+        self, mock_process_lib_reports, mock_reports
+    ):
+        with self.assertRaises(CmdLineInputError):
+            self._call_cmd(["R1"], {"future": True})
+        self.assert_lib_calls([])
+        mock_reports.assert_not_called()
+        mock_process_lib_reports.assert_not_called()
 
     def test_remove_force_more_errors_forceable(
         self, mock_process_lib_reports, mock_reports

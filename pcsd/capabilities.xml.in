@@ -1735,6 +1735,17 @@
       </description>
     </capability>
 
+    <capability id="pcmk.resource.delete.no-stop" in-pcs="1" in-pcsd="0">
+      <description>
+        Resources are stopped before their deletion. Specifying --no-stop skips
+        stopping the resources before their deletion. Using --force no longer
+        skips resource stopping.
+
+        pcs commands: resource ( delete | remove ), booth ( delete | remove ),
+                      cluster node ( delete-remote | remove-remote )
+      </description>
+    </capability>
+
     <capability id="pcmk.resource.update" in-pcs="1" in-pcsd="1">
       <description>
         Update instance options of a resource. Several options can be updated at

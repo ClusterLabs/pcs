@@ -405,7 +405,7 @@ class DeleteRemoveTestMixin(AssertPcsMixin):
             stderr_start=outdent(
                 f"""
                 Usage: pcs booth <command>
-                    {self.command} [--no-stop] [--future]
+                    {self.command} [--no-stop]
                 """
             ),
         )

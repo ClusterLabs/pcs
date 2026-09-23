@@ -2,14 +2,12 @@ from typing import Any
 
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import (
-    FUTURE_OPTION,
     Argv,
     InputModifiers,
     KeyValueParser,
 )
 from pcs.cli.common.tools import print_to_stderr
 from pcs.cli.reports.output import (
-    deprecation_warning,
     process_library_reports,
     warn,
 )
@@ -97,11 +95,10 @@ def node_remove_remote(
     """
     Options:
       * --force - allow multiple nodes removal, allow pcmk remote service
-        to fail, (deprecated) don't stop a resource before its deletion
+        to fail
       * --skip-offline - skip offline nodes
       * --request-timeout - HTTP request timeout
       * --no-stop - don't stop resources before deletion
-      * --future - specifying '--force' does not skip resource stopping
       For tests:
       * --corosync_conf
       * -f
@@ -130,7 +127,6 @@ def node_remove_remote(
         "--corosync_conf",
         "-f",
         "--force",
-        FUTURE_OPTION,
         "--no-stop",
         "--request-timeout",
         "--skip-offline",
@@ -156,18 +152,6 @@ def node_remove_remote(
         return
 
     dont_stop_me_now = modifiers.is_specified("--no-stop")
-    if (
-        not modifiers.is_specified(FUTURE_OPTION)
-        and modifiers.is_specified("--force")
-        and not dont_stop_me_now
-    ):
-        # deprecated after pcs-0.12.0
-        deprecation_warning(
-            "Using '--force' to skip resource stopping is deprecated and will "
-            "be removed in a future release. Specify '--future' to switch to "
-            "the future behavior and use '--no-stop' to skip resource stopping."
-        )
-        dont_stop_me_now = True
 
     if dont_stop_me_now:
         lib.remote_node.node_remove_remote(node_identifier, force_flags)

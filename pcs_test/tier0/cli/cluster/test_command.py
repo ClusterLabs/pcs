@@ -294,37 +294,21 @@ class NodeRemoveRemoteBase:
 
 @mock.patch("pcs.cli.cluster.command.process_library_reports")
 class NodeRemoveRemote(NodeRemoveRemoteBase, TestCase):
-    @mock.patch("pcs.cli.cluster.command.deprecation_warning")
-    def test_remove_force(
-        self, mock_deprecation_warning, mock_process_library_reports
-    ):
-        self._call_cmd(["A"], {"force": True})
+    def test_remove_force(self, mock_process_library_reports):
+        node_identifier = "A"
+        self._call_cmd([node_identifier], {"force": True})
 
-        mock_deprecation_warning.assert_called_once()
-        self.report_processor.assert_not_called()
+        self.report_processor.assert_called_once_with(False)
         self.assert_lib_calls(
-            [
-                mock.call.remote_node.node_remove_remote(
-                    "A", [reports.codes.FORCE]
-                )
-            ]
+            [mock.call.remote_node.node_remove_remote(node_identifier, [])]
         )
         mock_process_library_reports.assert_not_called()
 
-
-@mock.patch("pcs.cli.cluster.command.process_library_reports")
-class NodeRemoveRemoteFuture(NodeRemoveRemoteBase, TestCase):
-    def _call_cmd(self, argv, modifiers=None):
-        default_modifiers = {"future": True}
-        command.node_remove_remote(
-            self.lib,
-            argv,
-            dict_to_modifiers(
-                modifiers | default_modifiers
-                if modifiers
-                else default_modifiers
-            ),
-        )
+    def test_future_option_rejected(self, mock_process_library_reports):
+        with self.assertRaises(CmdLineInputError):
+            self._call_cmd(["A"], {"future": True})
+        self.assert_lib_calls([])
+        mock_process_library_reports.assert_not_called()
 
     def test_remove_force_forceable_error(self, mock_process_library_reports):
         node_identifier = "A"

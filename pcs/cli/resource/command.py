@@ -4,7 +4,6 @@ from typing import Any
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.output import format_cmd_list, lines_to_str, smart_wrap_text
 from pcs.cli.common.parse_args import (
-    FUTURE_OPTION,
     OUTPUT_FORMAT_OPTION,
     OUTPUT_FORMAT_VALUE_CMD,
     OUTPUT_FORMAT_VALUE_JSON,
@@ -134,10 +133,8 @@ def remove(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * -f - CIB file
-      * --force - turn validation errors into warnings, (derecated) skip
-                  resource stopping
+      * --force - turn validation errors into warnings
       * --no-stop - don't stop resources before deletion
-      * --future - specifying '--force' does not skip resource stopping
     """
 
     def _process_reports(
@@ -159,7 +156,7 @@ def remove(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
             filtered_reports.append(report)
         return filtered_reports
 
-    modifiers.ensure_only_supported("-f", "--force", FUTURE_OPTION, "--no-stop")
+    modifiers.ensure_only_supported("-f", "--force", "--no-stop")
     modifiers.ensure_not_mutually_exclusive("-f", "--no-stop")
 
     if not argv:
@@ -202,18 +199,6 @@ def remove(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
         return
 
     dont_stop_me_now = modifiers.is_specified("--no-stop")
-    if (
-        not modifiers.is_specified(FUTURE_OPTION)
-        and modifiers.is_specified("--force")
-        and not dont_stop_me_now
-    ):
-        # deprecated after pcs-0.12.0
-        deprecation_warning(
-            "Using '--force' to skip resource stopping is deprecated and will "
-            "be removed in a future release. Specify '--future' to switch to "
-            "the future behavior and use '--no-stop' to skip resource stopping."
-        )
-        dont_stop_me_now = True
 
     if dont_stop_me_now:
         lib.cib.remove_elements(resources_to_remove, force_flags)
