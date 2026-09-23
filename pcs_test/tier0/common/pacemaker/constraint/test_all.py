@@ -22,6 +22,7 @@ class GetAllConstraintsIds(TestCase):
                 "colocation_set_R7G2B2",
                 "loc_constr_with_expired_rule",
                 "loc_constr_with_not_expired_rule",
+                "loc_constr_with_not_expired_rule-1",
                 "location-G2-localhost-INFINITY",
                 "location-R-localhost-INFINITY",
                 "location-R7-another-one--INFINITY",
@@ -29,7 +30,7 @@ class GetAllConstraintsIds(TestCase):
                 "location-R7-non-existing-node--10000",
                 "order-G2-B2-Optional",
                 "order-R7-G2-mandatory",
-                "order_set_B2R6-cloneSe",
+                "order_set_R6-cloneB2Se",
                 "ticket-custom-ticket1-G1-clone-Promoted",
                 "ticket_set_R7B2G2",
             },
@@ -45,7 +46,7 @@ class GetAllLocationRulesIds(TestCase):
         self.assertEqual(
             get_all_location_rules_ids(constraint_dto),
             {
-                "loc_constr_with_not_expired_rule-rule-1",
+                "loc_constr_with_not_expired_rule-1-rule",
                 "loc_constr_with_expired_rule-rule",
                 "loc_constr_with_not_expired_rule-rule",
             },
@@ -79,6 +80,7 @@ class GetAllLocationIds(TestCase):
                 "location-R7-non-existing-node--10000",
                 "loc_constr_with_expired_rule",
                 "loc_constr_with_not_expired_rule",
+                "loc_constr_with_not_expired_rule-1",
             },
         )
 
