@@ -25,8 +25,10 @@ class GetAllResourcesIds(TestCase):
                 "R5",
                 "R6",
                 "R7",
+                "R8",
                 "S1",
                 "S2",
+                "S3",
                 "G1",
                 "G2",
                 "B1",
@@ -44,7 +46,9 @@ class GetAllResourcesIds(TestCase):
 
 class GetStonithResourcesIds(TestCase):
     def test_resources(self):
-        self.assertEqual(get_stonith_resources_ids(ALL_RESOURCES), {"S1", "S2"})
+        self.assertEqual(
+            get_stonith_resources_ids(ALL_RESOURCES), {"S1", "S2", "S3"}
+        )
 
     def test_no_resources(self):
         self.assertEqual(
