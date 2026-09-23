@@ -132,9 +132,10 @@ EXTRA_DIST		= \
 			  tier0/common/interface/__init__.py \
 			  tier0/common/interface/test_dto.py \
 			  tier0/common/pacemaker/constraint/__init__.py \
-			  tier0/common/pacemaker/constraint/all.py \
+			  tier0/common/pacemaker/constraint/test_all.py \
+			  tier0/common/pacemaker/__init__.py \
 			  tier0/common/pacemaker/resource/__init__.py \
-			  tier0/common/pacemaker/resource/list.py \
+			  tier0/common/pacemaker/resource/test_list.py \
 			  tier0/common/reports/__init__.py \
 			  tier0/common/reports/test_item.py \
 			  tier0/common/reports/test_messages.py \
