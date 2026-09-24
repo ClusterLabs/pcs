@@ -436,20 +436,22 @@ AC_DEFUN([PCS_BUNDLE_GEM], [
 	else
 		grep "$1" Gemfile || AC_MSG_ERROR([custom gemfile missing required gem '$1'])
 	fi
-	if test "x$cache_only" = "xyes"; then
-		src=`ls $PCSD_BUNDLED_CACHE_DIR/$1-*`
-		if test "x$src" = "x"; then
-			AC_MSG_ERROR([cache only build required but no source detected in $PCSD_BUNDLED_CACHE_DIR])
-		fi
-	fi
 ])
 
 # PCS_CHECK_GEM([module], [version])
 AC_DEFUN([PCS_CHECK_GEM], [
 	if test "x$local_build" = "xyes"; then
+		# Add gem to Gemfile regardless of system availability.
+		# Needed for isolated test execution via `bundle exec`.
+		PCS_BUNDLE_GEM([$1])
 		AC_RUBY_GEM([$1], [$2], [bundle_module=no], [bundle_module=yes])
 		if test "x$bundle_module" = "xyes" || test "x$individual_bundling" != "xyes"; then
-			PCS_BUNDLE_GEM([$1])
+			if test "x$cache_only" = "xyes"; then
+				src=`ls $PCSD_BUNDLED_CACHE_DIR/$1-*`
+				if test "x$src" = "x"; then
+					AC_MSG_ERROR([cache only build required but no source detected in $PCSD_BUNDLED_CACHE_DIR])
+				fi
+			fi
 		fi
 	else
 		AC_RUBY_GEM([$1], [$2], [], [AC_MSG_ERROR([ruby gem $1 not found])])
