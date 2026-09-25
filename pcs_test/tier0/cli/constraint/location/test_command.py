@@ -60,7 +60,9 @@ class CreateWithRule(TestCase):
     def test_rule_multiple_args_not_supported(self):
         with self.assertRaises(CmdLineInputError) as cm:
             self._call_cmd("R1 rule #uname eq node1".split())
-        self.assertIsNone(cm.exception.message)
+        self.assertEqual(
+            cm.exception.message, "missing value of '#uname' option"
+        )
         self.lib_module.create_plain_with_rule.assert_not_called()
         self.report_processor.set_report_item_preprocessor.assert_not_called()
 
@@ -76,6 +78,21 @@ class CreateWithRule(TestCase):
         )
         self.report_processor.set_report_item_preprocessor.assert_called_once()
 
+    def test_rule_looks_like_option(self):
+        # The last argument is always taken as the rule expression, even when it
+        # looks like an option ("name=value"). It is passed to the library as
+        # the rule, which then validates it.
+        self._call_cmd(["R1", "rule", "score=100"])
+        self.lib_module.create_plain_with_rule.assert_called_once_with(
+            const.RESOURCE_ID_TYPE_PLAIN,
+            "R1",
+            "score=100",
+            {},
+            {},
+            set(),
+        )
+        self.report_processor.set_report_item_preprocessor.assert_called_once()
+
     def test_duplicate_option_different_values(self):
         with self.assertRaises(CmdLineInputError) as cm:
             self._call_cmd(
@@ -87,6 +104,28 @@ class CreateWithRule(TestCase):
         )
         self.lib_module.create_plain_with_rule.assert_not_called()
         self.report_processor.set_report_item_preprocessor.assert_not_called()
+
+    def test_option_key_and_value_with_space(self):
+        # Both the key and the value of an option may contain spaces; only the
+        # last argument is treated as the rule.
+        self._call_cmd(
+            [
+                "R1",
+                "rule",
+                "score=100",
+                "desc ription=some text",
+                "#uname eq node1",
+            ]
+        )
+        self.lib_module.create_plain_with_rule.assert_called_once_with(
+            const.RESOURCE_ID_TYPE_PLAIN,
+            "R1",
+            "#uname eq node1",
+            {"score": "100"},
+            {"desc ription": "some text"},
+            set(),
+        )
+        self.report_processor.set_report_item_preprocessor.assert_called_once()
 
     def test_resource_id(self):
         self._call_cmd(["resource%R1", "rule", "#uname eq node1"])

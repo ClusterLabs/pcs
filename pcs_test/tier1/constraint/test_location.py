@@ -108,12 +108,7 @@ class CreateWithRule(RuleBaseMixin, TestCase):
     def test_rule_multiple_args_not_supported(self):
         self.assert_pcs_fail(
             "constraint location R1 rule #uname eq node1".split(),
-            stderr_start=dedent(
-                """
-                Usage: pcs constraint [constraints]...
-                    location <resource> prefers <node>[=<score>] [<node>[=<score>]]...
-                """
-            ),
+            stderr_start="Error: missing value of '#uname' option\n",
         )
 
     def test_success_all_options(self):
@@ -184,11 +179,11 @@ class CreateWithRule(RuleBaseMixin, TestCase):
         )
         self.assert_pcs_fail(
             "constraint location R1 rule resource-discovery=badly "
-            "role=bad-role bad1=option1 bad2=option2".split()
-            + ["#uname eq"],
+            "role=bad-role bad1=option1".split()
+            + ["bad 2=option with space", "#uname eq"],
             stderr_full=dedent(
                 f"""\
-                Error: invalid constraint options: 'bad1', 'bad2', allowed options are: 'id', 'resource-discovery'
+                Error: invalid constraint options: 'bad 2', 'bad1', allowed options are: 'id', 'resource-discovery'
                 Error: 'badly' is not a valid resource-discovery value, use 'always', 'exclusive', 'never', use --force to override
                 Error: 'bad-role' is not a valid role value, use {roles}
                 Error: '#uname eq' is not a valid rule expression, parse error near or after line 1 column 10
