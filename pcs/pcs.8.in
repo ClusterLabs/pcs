@@ -275,7 +275,7 @@ op defaults [config] [\fB\-\-all\fR | \fB\-\-no\-expire\-check\fR] [\fB\-\-full\
 List currently configured default values for operations. If \fB\-\-all\fR is specified, also list expired sets of values. If \fB\-\-full\fR is specified, also list ids. If \fB\-\-no\-expire\-check\fR is specified, do not evaluate whether sets of values are expired. @OUTPUT_FORMAT_DESC_DOC@
 .TP
 op defaults set create [<set options>] [meta [<name>=<value>]...] [rule [<expression>]]
-Create a new set of default values for resource / stonith device operations. You may specify a rule describing resources / stonith devices and / or operations to which the set applies.
+Create a new set of default values for resource / stonith device operations. You may specify a rule describing resources / stonith devices and / or operations to which the set applies. The rule must be specified as a single command line argument, i.e. enclosed in quotes, for example 'date-spec hours=1-12'.
 
 Set options are: id, score
 
@@ -383,7 +383,7 @@ defaults [config] [\fB\-\-all\fR | \fB\-\-no\-expire\-check\fR] [\fB\-\-full\fR]
 List currently configured default values for resources / stonith devices. If \fB\-\-all\fR is specified, also list expired sets of values. If \fB\-\-full\fR is specified, also list ids. If \fB\-\-no\-expire\-check\fR is specified, do not evaluate whether sets of values are expired. @OUTPUT_FORMAT_DESC_DOC@
 .TP
 defaults set create [<set options>] [meta [<name>=<value>]...] [rule [<expression>]]
-Create a new set of default values for resources / stonith devices. You may specify a rule describing resources / stonith devices to which the set applies.
+Create a new set of default values for resources / stonith devices. You may specify a rule describing resources / stonith devices to which the set applies. The rule must be specified as a single command line argument, i.e. enclosed in quotes, for example 'date-spec hours=1-12'.
 
 Set options are: id, score
 
@@ -854,7 +854,7 @@ List currently configured default values for operations. If \fB\-\-all\fR is spe
 op defaults set create [<set options>] [meta [<name>=<value>]...] [rule [<expression>]]
 This command is an alias of 'resource op defaults set create' command.
 
-Create a new set of default values for resource / stonith device operations. You may specify a rule describing resources / stonith devices and / or operations to which the set applies.
+Create a new set of default values for resource / stonith device operations. You may specify a rule describing resources / stonith devices and / or operations to which the set applies. The rule must be specified as a single command line argument, i.e. enclosed in quotes, for example 'date-spec hours=1-12'.
 
 Set options are: id, score
 
@@ -927,7 +927,7 @@ List currently configured default values for resources / stonith devices. If \fB
 defaults set create [<set options>] [meta [<name>=<value>]...] [rule [<expression>]]
 This command is an alias of 'resource defaults set create' command.
 
-Create a new set of default values for resources / stonith devices. You may specify a rule describing resources / stonith devices to which the set applies.
+Create a new set of default values for resources / stonith devices. You may specify a rule describing resources / stonith devices to which the set applies. The rule must be specified as a single command line argument, i.e. enclosed in quotes, for example 'date-spec hours=1-12'.
 
 Set options are: id, score
 
@@ -1185,7 +1185,7 @@ location <resource> avoids <node>[=<score>] [<node>[=<score>]]...
 Create a location constraint on a resource to avoid the specified node with score (default score: INFINITY). Resource may be either a resource id <resource_id> or %<resource_id> or resource%<resource_id>, or a resource name regular expression regexp%<resource_pattern>.
 .TP
 location <resource> rule [id=<rule id>] [resource\-discovery=<option>] [role=Promoted|Unpromoted] [constraint\-id=<id>] [score=<score> | score\-attribute=<attribute>] <expression>
-Creates a location constraint with a rule on the specified resource where expression looks like one of the following:
+Creates a location constraint with a rule on the specified resource. The rule must be specified as a single command line argument, i.e. enclosed in quotes, for example '#uname eq node1'. Expression looks like one of the following:
 .br
   defined|not_defined <node attribute>
 .br
@@ -1722,6 +1722,8 @@ cluster setup, cluster config update \- knet encryption required
 Setting knet transport crypto options \fBcipher\fR or \fBhash\fR to \fBnone\fR or clearing them with an empty value is no longer allowed. Pcs no longer allows to disable cluster traffic encryption. The default values \fBcipher=aes256\fR and \fBhash=sha256\fR are set during cluster setup when no crypto options are specified.
 .SS "\-\-force no longer accepted as an alternative to \-\-yes or \-\-overwrite"
 The \fB\-\-force\fR flag is no longer accepted as an alternative to interactive confirmation or file overwriting in the following commands. Use \fB\-\-yes\fR or \fB\-\-overwrite\fR instead. Affected commands are: 'pcs cluster destroy', 'pcs quorum unblock', 'pcs stonith confirm', 'pcs stonith sbd device setup', 'pcs stonith sbd watchdog test' (\fB\-\-yes\fR) and 'pcs cluster report' (\fB\-\-overwrite\fR).
+.SS "Pacemaker rules"
+Rules must be specified as a single command line argument. Specifying rules as multiple arguments is no longer supported. This affects commands: 'pcs constraint location', 'pcs resource defaults set create', 'pcs resource op defaults set create', 'pcs stonith defaults set create' and 'pcs stonith op defaults set create'.
 .SS "acl"
 .TP
 role assign | unassign

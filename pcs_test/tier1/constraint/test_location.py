@@ -19,11 +19,6 @@ from pcs_test.tools.xml import XmlManipulation
 ERRORS_HAVE_OCCURRED = (
     "Error: Errors have occurred, therefore pcs is unable to continue\n"
 )
-RULE_ARGV_DEPRECATED = (
-    "Deprecation Warning: Specifying a rule as multiple arguments is "
-    "deprecated and might be removed in a future release, specify the rule as "
-    "a single string instead\n"
-)
 empty_cib = get_test_resource("cib-empty-3.9.xml")
 
 
@@ -110,24 +105,10 @@ class CreateWithRule(RuleBaseMixin, TestCase):
             ),
         )
 
-    def test_success_minimal_deprecated_form(self):
-        self.assert_effect(
-            [
-                "constraint location R1 rule #uname eq node1".split(),
-                "constraint location %R1 rule #uname eq node1".split(),
-                "constraint location resource%R1 rule #uname eq node1".split(),
-            ],
-            self.fixture_constraints(
-                """
-                <rsc_location id="location-R1" rsc="R1">
-                  <rule id="location-R1-rule" boolean-op="and" score="INFINITY">
-                    <expression id="location-R1-rule-expr"
-                        attribute="#uname" operation="eq" value="node1" />
-                  </rule>
-                </rsc_location>
-                """
-            ),
-            stderr_full=RULE_ARGV_DEPRECATED,
+    def test_rule_multiple_args_not_supported(self):
+        self.assert_pcs_fail(
+            "constraint location R1 rule #uname eq node1".split(),
+            stderr_start="Error: missing value of '#uname' option\n",
         )
 
     def test_success_all_options(self):
@@ -197,18 +178,17 @@ class CreateWithRule(RuleBaseMixin, TestCase):
             [const.PCMK_ROLE_PROMOTED, const.PCMK_ROLE_UNPROMOTED]
         )
         self.assert_pcs_fail(
-            (
-                "constraint location R1 rule resource-discovery=badly "
-                "role=bad-role bad=option #uname eq"
-            ).split(),
-            stderr_full=RULE_ARGV_DEPRECATED
-            + dedent(
+            "constraint location R1 rule resource-discovery=badly "
+            "role=bad-role bad1=option1".split()
+            + ["bad 2=option with space", "#uname eq"],
+            stderr_full=dedent(
                 f"""\
+                Error: invalid constraint options: 'bad 2', 'bad1', allowed options are: 'id', 'resource-discovery'
                 Error: 'badly' is not a valid resource-discovery value, use 'always', 'exclusive', 'never', use --force to override
                 Error: 'bad-role' is not a valid role value, use {roles}
-                Error: 'bad=option #uname eq' is not a valid rule expression, parse error near or after line 1 column 12
-                  bad=option #uname eq
-                  -----------^
+                Error: '#uname eq' is not a valid rule expression, parse error near or after line 1 column 10
+                  #uname eq
+                  ---------^
                 """
                 + ERRORS_HAVE_OCCURRED
             ),

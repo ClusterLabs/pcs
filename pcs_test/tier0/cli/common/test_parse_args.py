@@ -12,6 +12,7 @@ from pcs.cli.common.parse_args import (
     ensure_unique_args,
     filter_out_non_option_negative_numbers,
     filter_out_options,
+    get_rule_str,
     group_by_keywords,
     is_long_option_expecting_value,
     is_option_expecting_value,
@@ -828,3 +829,16 @@ class EnsureUniqueArgsTest(TestCase):
         with self.assertRaises(CmdLineInputError) as cm:
             ensure_unique_args(["a", "b", "c", "b", "a", "b"])
         self.assertEqual("duplicate arguments: 'a', 'b'", cm.exception.message)
+
+
+class GetRuleStr(TestCase):
+    def test_empty(self):
+        self.assertIsNone(get_rule_str([]))
+
+    def test_single_arg(self):
+        self.assertEqual(get_rule_str(["#uname eq node1"]), "#uname eq node1")
+
+    def test_multiple_args_not_supported(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            get_rule_str(["#uname", "eq", "node1"])
+        self.assertIsNone(cm.exception.message)
