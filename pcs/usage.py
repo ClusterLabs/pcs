@@ -307,7 +307,7 @@ def _output_format_desc(cmd: bool = True) -> str:
 _DELETE_CMD = "delete"
 _REMOVE_CMD = "remove"
 _RESOURCE_DELETE_SYNTAX = (
-    "<resource id|group id|bundle id|clone id>... [--no-skip] [--future]"
+    "<resource id|group id|bundle id|clone id>... [--no-stop] [--future]"
 )
 _RESOURCE_DELETE_DESC = (
     """
