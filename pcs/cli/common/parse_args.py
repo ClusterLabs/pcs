@@ -4,7 +4,6 @@ from functools import partial
 from typing import Final
 
 from pcs.cli.common.errors import SEE_MAN_CHANGES, CmdLineInputError
-from pcs.cli.reports.output import deprecation_warning
 from pcs.common.const import INFINITY
 from pcs.common.str_tools import (
     format_list,
@@ -733,12 +732,6 @@ class InputModifiers:
 def get_rule_str(argv: Argv) -> str | None:
     if argv:
         if len(argv) > 1:
-            # deprecated after 0.11.7
-            deprecation_warning(
-                "Specifying a rule as multiple arguments is deprecated and "
-                "might be removed in a future release, specify the rule as "
-                "a single string instead"
-            )
-            return " ".join(argv)
+            raise CmdLineInputError()
         return argv[0]
     return None

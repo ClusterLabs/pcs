@@ -3605,7 +3605,8 @@ class LocationShowWithPattern(ConstraintBaseTest):
                 "constraint location add my-id1 R3 node1 score=-INFINITY resource-discovery=never".split(),
                 "constraint location add my-id2 R3 node2 score=-INFINITY resource-discovery=never".split(),
                 "constraint location add my-id3 regexp%R_[0-9]+ node4 score=-INFINITY resource-discovery=never".split(),
-                "constraint location regexp%R_[0-9]+ rule score=20 defined pingd".split(),
+                "constraint location regexp%R_[0-9]+ rule score=20".split()
+                + ["defined pingd"],
             ]
         )
 

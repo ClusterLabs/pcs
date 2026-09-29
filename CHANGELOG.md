@@ -28,6 +28,10 @@
   whether the assignee is a user or a group
 - Commands `pcs constraint location delete | remove` have been removed, use
   `pcs constraint delete | remove` instead
+- Specifying rules as multiple arguments in commands `pcs constraint location`,
+  `pcs resource defaults set create`, `pcs resource op defaults set create`,
+  `pcs stonith defaults set create`, and `pcs stonith op defaults set create`.
+  Specify the rule as a single string instead.
 
 ### Fixed
 - Command `pcs stonith update-scsi-devices` no longer triggers unnecessary

@@ -73,10 +73,6 @@ FIXTURE_INSTANCE_ATTRIBUTES = [
         [CibNvpairDto("instance-pair", "inst", "ance")],
     ),
 ]
-RULE_ARGV_DEPRECATED = (
-    "Specifying a rule as multiple arguments is deprecated and might be removed "
-    "in a future release, specify the rule as a single string instead"
-)
 
 
 class DefaultsBaseMixin:
@@ -349,16 +345,11 @@ class DefaultsSetCreateMixin(DefaultsBaseMixin):
             force_flags=set(),
         )
 
-    @mock.patch("pcs.cli.common.parse_args.deprecation_warning")
-    def test_rule_deprecated_form(self, mock_dw):
-        self._call_cmd(["rule", "resource", "dummy", "or", "op", "monitor"])
-        self.lib_command.assert_called_once_with(
-            {},
-            {},
-            nvset_rule="resource dummy or op monitor",
-            force_flags=set(),
-        )
-        mock_dw.assert_called_once_with(RULE_ARGV_DEPRECATED)
+    def test_rule_multiple_args_not_supported(self):
+        with self.assertRaises(CmdLineInputError) as cm:
+            self._call_cmd(["rule", "resource", "dummy", "or", "op", "monitor"])
+        self.assertIsNone(cm.exception.message)
+        self.lib_command.assert_not_called()
 
     def test_force(self):
         self._call_cmd([], {"force": True})

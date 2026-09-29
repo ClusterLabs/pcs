@@ -477,7 +477,9 @@ _RESOURCE_OP_DEFAULTS_SET_CREATE_DESC = (
         """
         Create a new set of default values for resource / stonith device
         operations. You may specify a rule describing resources / stonith
-        devices and / or operations to which the set applies.
+        devices and / or operations to which the set applies. The rule must be
+        specified as a single command line argument, i.e. enclosed in quotes,
+        for example 'date-spec hours=1-12'.
         """
     ),
     "",
@@ -615,7 +617,8 @@ _RESOURCE_DEFAULTS_SET_CREATE_DESC = (
         """
         Create a new set of default values for resources / stonith devices. You
         may specify a rule describing resources / stonith devices to which the
-        set applies.
+        set applies. The rule must be specified as a single command line
+        argument, i.e. enclosed in quotes, for example 'date-spec hours=1-12'.
         """
     ),
     "",
@@ -2493,8 +2496,10 @@ Commands:
     location <resource> rule [id=<rule id>] [resource-discovery=<option>]
              [role=Promoted|Unpromoted] [constraint-id=<id>]
              [score=<score> | score-attribute=<attribute>] <expression>
-        Creates a location constraint with a rule on the specified resource
-        where expression looks like one of the following:
+        Creates a location constraint with a rule on the specified resource.
+        The rule must be specified as a single command line argument, i.e.
+        enclosed in quotes, for example '#uname eq node1'. Expression looks like
+        one of the following:
           defined|not_defined <node attribute>
           <node attribute> lt|gt|lte|gte|eq|ne [string|integer|number|version]
               <value>
