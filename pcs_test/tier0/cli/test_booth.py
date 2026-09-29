@@ -6,6 +6,7 @@ from pcs.cli.common.parse_args import InputModifiers
 from pcs.common import reports
 from pcs.lib.errors import LibraryError
 
+from pcs_test.tools.fixture_cli import FIXTURE_FUTURE_OPTION_DEPRECATION_WARNING
 from pcs_test.tools.misc import dict_to_modifiers
 
 UNSTOPPED_RESOURCES_ERROR_REPORT = reports.ReportItem.error(
@@ -180,7 +181,12 @@ class CreateTest(TestCase):
         )
 
 
-class RemoveFromClusterBase:
+@mock.patch(
+    "pcs.common.reports.processor.ReportProcessorInMemory.reports",
+    new_callable=mock.PropertyMock,
+)
+@mock.patch("pcs.cli.booth.command.process_library_reports")
+class RemoveFromCluster(TestCase):
     def setUp(self):
         self.lib = mock.Mock(spec_set=["booth", "cluster", "env", "resource"])
         self.lib.env = mock.Mock(spec_set=["report_processor"])
@@ -324,13 +330,6 @@ class RemoveFromClusterBase:
         mock_reports.assert_not_called()
         mock_process_library_reports.assert_not_called()
 
-
-@mock.patch(
-    "pcs.common.reports.processor.ReportProcessorInMemory.reports",
-    new_callable=mock.PropertyMock,
-)
-@mock.patch("pcs.cli.booth.command.process_library_reports")
-class RemoveFromCluster(RemoveFromClusterBase, TestCase):
     def test_remove_force(self, mock_process_lib_reports, mock_reports):
         booth_name = None
         mock_reports.return_value = []
@@ -341,13 +340,19 @@ class RemoveFromCluster(RemoveFromClusterBase, TestCase):
         mock_reports.assert_called_once()
         mock_process_lib_reports.assert_not_called()
 
-    def test_future_option_rejected(
-        self, mock_process_lib_reports, mock_reports
+    @mock.patch("pcs.cli.booth.command.deprecation_warning")
+    def test_future_option_no_op(
+        self, mock_deprecation_warning, mock_process_lib_reports, mock_reports
     ):
-        with self.assertRaises(CmdLineInputError):
-            self._call_cmd([], {"future": True})
-        self.assert_lib_calls([])
-        mock_reports.assert_not_called()
+        booth_name = None
+        mock_reports.return_value = []
+
+        self._call_cmd([], {"future": True})
+
+        self.assert_lib_calls([mock.call.booth.remove_from_cluster(booth_name)])
+        mock_deprecation_warning.assert_called_once_with(
+            FIXTURE_FUTURE_OPTION_DEPRECATION_WARNING
+        )
         mock_process_lib_reports.assert_not_called()
 
     def test_remove_force_more_errors_forceable(

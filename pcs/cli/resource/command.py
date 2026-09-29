@@ -4,6 +4,8 @@ from typing import Any
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.output import format_cmd_list, lines_to_str, smart_wrap_text
 from pcs.cli.common.parse_args import (
+    FUTURE_OPTION,
+    FUTURE_OPTION_DEPRECATION_WARNING,
     OUTPUT_FORMAT_OPTION,
     OUTPUT_FORMAT_VALUE_CMD,
     OUTPUT_FORMAT_VALUE_JSON,
@@ -135,6 +137,7 @@ def remove(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
       * -f - CIB file
       * --force - turn validation errors into warnings
       * --no-stop - don't stop resources before deletion
+      * --future - deprecated, no-op
     """
 
     def _process_reports(
@@ -156,8 +159,11 @@ def remove(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
             filtered_reports.append(report)
         return filtered_reports
 
-    modifiers.ensure_only_supported("-f", "--force", "--no-stop")
+    modifiers.ensure_only_supported("-f", "--force", FUTURE_OPTION, "--no-stop")
     modifiers.ensure_not_mutually_exclusive("-f", "--no-stop")
+
+    if modifiers.is_specified(FUTURE_OPTION):
+        deprecation_warning(FUTURE_OPTION_DEPRECATION_WARNING)
 
     if not argv:
         raise CmdLineInputError()

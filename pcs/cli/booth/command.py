@@ -2,12 +2,15 @@ from typing import Any
 
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import (
+    FUTURE_OPTION,
+    FUTURE_OPTION_DEPRECATION_WARNING,
     Argv,
     InputModifiers,
     KeyValueParser,
     group_by_keywords,
 )
 from pcs.cli.reports.output import (
+    deprecation_warning,
     process_library_reports,
     warn,
 )
@@ -262,6 +265,7 @@ def remove_from_cluster(
       * -f - CIB file
       * --name - name of a booth instance
       * --no-stop - don't stop resources before deletion
+      * --future - deprecated, no-op
     """
 
     def _process_reports(
@@ -283,8 +287,14 @@ def remove_from_cluster(
             filtered_reports.append(report)
         return filtered_reports
 
-    modifiers.ensure_only_supported("-f", "--force", "--name", "--no-stop")
+    modifiers.ensure_only_supported(
+        "-f", "--force", FUTURE_OPTION, "--name", "--no-stop"
+    )
     modifiers.ensure_not_mutually_exclusive("-f", "--no-stop")
+
+    if modifiers.is_specified(FUTURE_OPTION):
+        deprecation_warning(FUTURE_OPTION_DEPRECATION_WARNING)
+
     if arg_list:
         raise CmdLineInputError()
 

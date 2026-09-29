@@ -7,6 +7,7 @@ from pcs.common import reports
 from pcs.common.reports import codes as report_codes
 from pcs.lib.errors import LibraryError
 
+from pcs_test.tools.fixture_cli import FIXTURE_FUTURE_OPTION_DEPRECATION_WARNING
 from pcs_test.tools.misc import dict_to_modifiers
 
 UNSTOPPED_RESOURCES_ERROR_REPORT = reports.ReportItem.error(
@@ -40,7 +41,8 @@ class ParseNodeAddRemote(TestCase):
         )
 
 
-class NodeRemoveRemoteBase:
+@mock.patch("pcs.cli.cluster.command.process_library_reports")
+class NodeRemoveRemote(TestCase):
     def setUp(self):
         self.lib = mock.Mock(
             spec_set=["cluster", "env", "remote_node", "resource"]
@@ -291,9 +293,6 @@ class NodeRemoveRemoteBase:
         self.assert_lib_calls([])
         mock_process_library_reports.assert_not_called()
 
-
-@mock.patch("pcs.cli.cluster.command.process_library_reports")
-class NodeRemoveRemote(NodeRemoveRemoteBase, TestCase):
     def test_remove_force(self, mock_process_library_reports):
         node_identifier = "A"
         self._call_cmd([node_identifier], {"force": True})
@@ -304,10 +303,20 @@ class NodeRemoveRemote(NodeRemoveRemoteBase, TestCase):
         )
         mock_process_library_reports.assert_not_called()
 
-    def test_future_option_rejected(self, mock_process_library_reports):
-        with self.assertRaises(CmdLineInputError):
-            self._call_cmd(["A"], {"future": True})
-        self.assert_lib_calls([])
+    @mock.patch("pcs.cli.cluster.command.deprecation_warning")
+    def test_future_option_no_op(
+        self, mock_deprecation_warning, mock_process_library_reports
+    ):
+        node_identifier = "A"
+        self._call_cmd([node_identifier], {"future": True})
+
+        self.report_processor.assert_called_once_with(False)
+        self.assert_lib_calls(
+            [mock.call.remote_node.node_remove_remote(node_identifier, [])]
+        )
+        mock_deprecation_warning.assert_called_once_with(
+            FIXTURE_FUTURE_OPTION_DEPRECATION_WARNING
+        )
         mock_process_library_reports.assert_not_called()
 
     def test_remove_force_forceable_error(self, mock_process_library_reports):

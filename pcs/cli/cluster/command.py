@@ -2,12 +2,15 @@ from typing import Any
 
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import (
+    FUTURE_OPTION,
+    FUTURE_OPTION_DEPRECATION_WARNING,
     Argv,
     InputModifiers,
     KeyValueParser,
 )
 from pcs.cli.common.tools import print_to_stderr
 from pcs.cli.reports.output import (
+    deprecation_warning,
     process_library_reports,
     warn,
 )
@@ -99,6 +102,7 @@ def node_remove_remote(
       * --skip-offline - skip offline nodes
       * --request-timeout - HTTP request timeout
       * --no-stop - don't stop resources before deletion
+      * --future - deprecated, no-op
       For tests:
       * --corosync_conf
       * -f
@@ -127,11 +131,15 @@ def node_remove_remote(
         "--corosync_conf",
         "-f",
         "--force",
+        FUTURE_OPTION,
         "--no-stop",
         "--request-timeout",
         "--skip-offline",
     )
     modifiers.ensure_not_mutually_exclusive("-f", "--no-stop")
+
+    if modifiers.is_specified(FUTURE_OPTION):
+        deprecation_warning(FUTURE_OPTION_DEPRECATION_WARNING)
 
     if len(arg_list) != 1:
         raise CmdLineInputError()

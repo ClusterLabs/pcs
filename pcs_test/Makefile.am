@@ -592,6 +592,7 @@ EXTRA_DIST		= \
 			  tools/command_env/tools.py \
 			  tools/custom_mock.py \
 			  tools/fixture_cib.py \
+			  tools/fixture_cli.py \
 			  tools/fixture_crm_mon.py \
 			  tools/fixture_pcs_cfgsync.py \
 			  tools/fixture.py \
