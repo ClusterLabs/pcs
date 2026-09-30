@@ -37,37 +37,19 @@ class ParseArgvDashDash(TestCase, AssertPcsMixin):
     def test_negative_int(self):
         self.assert_pcs_fail(
             self.cmd + ["-123"],
-            outdent(
-                f"""\
-                Deprecation Warning: Using '-123' without '--' is deprecated, those parameters will be considered position independent options in future pcs versions
-                Error: invalid role value 'R2', allowed values are: {self.allowed_roles}
-                {HINT_SYNTAX_CHANGED}
-                """
-            ),
+            stderr_start="Error: option -1 not recognized\n",
         )
 
     def test_negative_float(self):
         self.assert_pcs_fail(
             self.cmd + ["-12.3"],
-            outdent(
-                f"""\
-                Deprecation Warning: Using '-12.3' without '--' is deprecated, those parameters will be considered position independent options in future pcs versions
-                Error: invalid role value 'R2', allowed values are: {self.allowed_roles}
-                {HINT_SYNTAX_CHANGED}
-                """
-            ),
+            stderr_start="Error: option -1 not recognized\n",
         )
 
     def test_negative_infinity(self):
         self.assert_pcs_fail(
             self.cmd + ["-inFIniTY"],
-            outdent(
-                f"""\
-                Deprecation Warning: Using '-inFIniTY' without '--' is deprecated, those parameters will be considered position independent options in future pcs versions
-                Error: invalid role value 'R2', allowed values are: {self.allowed_roles}
-                {HINT_SYNTAX_CHANGED}
-                """
-            ),
+            stderr_start="Error: option -i not recognized\n",
         )
 
     def test_negative_int_dash_dash(self):

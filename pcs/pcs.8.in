@@ -1731,6 +1731,8 @@ Specifying score as a standalone value is no longer supported. Use score=value i
 .TP
 location delete | remove
 These commands have been removed, use 'constraint delete | remove' instead.
+.SS "Negative numbers and \-INFINITY require \-\-"
+Arguments starting with \fB\-\fR that represent negative numbers or \fB\-INFINITY\fR must now be preceded by \fB\-\-\fR on the command line to separate them from options. Using them without \fB\-\-\fR is no longer supported.
 .SS "pcsd"
 .TP
 certkey
