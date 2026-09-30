@@ -19,6 +19,11 @@ ModifierValueType = None | bool | str
 
 _FUTURE_OPTION_STR: Final = "future"
 FUTURE_OPTION: Final = f"--{_FUTURE_OPTION_STR}"
+FUTURE_OPTION_DEPRECATION_WARNING: Final = (
+    "Option '--future' is deprecated and no longer has any effect, "
+    "since the behavior it enabled is now the default. It will be "
+    "removed in a future release."
+)
 _OUTPUT_FORMAT_OPTION_STR: Final = "output-format"
 OUTPUT_FORMAT_OPTION: Final = f"--{_OUTPUT_FORMAT_OPTION_STR}"
 OUTPUT_FORMAT_VALUE_CMD: Final = "cmd"

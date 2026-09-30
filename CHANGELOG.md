@@ -32,6 +32,16 @@
   `pcs resource defaults set create`, `pcs resource op defaults set create`,
   `pcs stonith defaults set create`, and `pcs stonith op defaults set create`.
   Specify the rule as a single string instead.
+- Using `--force` in `pcs resource delete | remove`, `pcs booth delete |
+  remove`, and `pcs cluster node delete-remote | remove-remote` to skip
+  resource stopping before deletion. Use the `--no-stop` flag instead.
+
+### Deprecated
+- Option `--future` in `pcs resource delete | remove`, `pcs booth delete |
+  remove`, and `pcs cluster node delete-remote | remove-remote`. The option
+  is now a no-op and only prints a deprecation warning, since the behavior it
+  previously enabled is now the default. It will be removed in a future
+  release.
 
 ### Fixed
 - Command `pcs stonith update-scsi-devices` no longer triggers unnecessary

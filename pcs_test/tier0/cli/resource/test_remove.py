@@ -6,6 +6,7 @@ from pcs.cli.resource import command
 from pcs.common import reports
 from pcs.lib.errors import LibraryError
 
+from pcs_test.tools.fixture_cli import FIXTURE_FUTURE_OPTION_DEPRECATION_WARNING
 from pcs_test.tools.misc import dict_to_modifiers
 from pcs_test.tools.resources_dto import ALL_RESOURCES
 
@@ -23,7 +24,12 @@ INFO_REPORT = reports.ReportItem.info(
 )
 
 
-class RemoveResourceBase:
+@mock.patch(
+    "pcs.common.reports.processor.ReportProcessorInMemory.reports",
+    new_callable=mock.PropertyMock,
+)
+@mock.patch("pcs.cli.resource.command.process_library_reports")
+class RemoveResource(TestCase):
     def setUp(self):
         self.lib = mock.Mock(spec_set=["cib", "cluster", "env", "resource"])
 
@@ -255,47 +261,40 @@ class RemoveResourceBase:
         mock_reports.assert_not_called()
         mock_process_library_reports.assert_not_called()
 
+    def test_remove_force(self, mock_process_lib_reports, mock_reports):
+        mock_reports.return_value = []
 
-@mock.patch(
-    "pcs.common.reports.processor.ReportProcessorInMemory.reports",
-    new_callable=mock.PropertyMock,
-)
-@mock.patch("pcs.cli.resource.command.process_library_reports")
-class RemoveResource(RemoveResourceBase, TestCase):
-    @mock.patch("pcs.cli.resource.command.deprecation_warning")
-    def test_remove_force(
-        self, mock_deprecation_warning, mock_process_lib_reports, mock_reports
-    ):
         self._call_cmd(["R1"], {"force": True})
 
-        mock_deprecation_warning.assert_called_once()
+        resource_ids = {"R1"}
         self.assert_lib_calls(
             [
                 mock.call.resource.get_configured_resources(),
-                mock.call.cib.remove_elements({"R1"}, {reports.codes.FORCE}),
+                mock.call.cib.remove_elements(resource_ids),
             ]
         )
-        mock_reports.assert_not_called()
+        mock_reports.assert_called_once()
         mock_process_lib_reports.assert_not_called()
 
+    @mock.patch("pcs.cli.resource.command.deprecation_warning")
+    def test_future_option_no_op(
+        self, mock_deprecation_warning, mock_process_lib_reports, mock_reports
+    ):
+        resource_ids = {"R1"}
+        mock_reports.return_value = []
 
-@mock.patch(
-    "pcs.common.reports.processor.ReportProcessorInMemory.reports",
-    new_callable=mock.PropertyMock,
-)
-@mock.patch("pcs.cli.resource.command.process_library_reports")
-class RemoveResourceFuture(RemoveResourceBase, TestCase):
-    def _call_cmd(self, argv, modifiers=None):
-        default_modifiers = {"future": True}
-        command.remove(
-            self.lib,
-            argv,
-            dict_to_modifiers(
-                modifiers | default_modifiers
-                if modifiers
-                else default_modifiers
-            ),
+        self._call_cmd(["R1"], {"future": True})
+
+        self.assert_lib_calls(
+            [
+                mock.call.resource.get_configured_resources(),
+                mock.call.cib.remove_elements(resource_ids),
+            ]
         )
+        mock_deprecation_warning.assert_called_once_with(
+            FIXTURE_FUTURE_OPTION_DEPRECATION_WARNING
+        )
+        mock_process_lib_reports.assert_not_called()
 
     def test_remove_force_more_errors_forceable(
         self, mock_process_lib_reports, mock_reports

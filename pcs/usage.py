@@ -307,7 +307,7 @@ def _output_format_desc(cmd: bool = True) -> str:
 _DELETE_CMD = "delete"
 _REMOVE_CMD = "remove"
 _RESOURCE_DELETE_SYNTAX = (
-    "<resource id|group id|bundle id|clone id>... [--no-skip] [--future]"
+    "<resource id|group id|bundle id|clone id>... [--no-stop]"
 )
 _RESOURCE_DELETE_DESC = (
     """
@@ -319,12 +319,6 @@ _RESOURCE_DELETE_DESC = (
     If --no-stop is specified, the resources will not be stopped before their
     deletion. This may result in orphaned resources being left behind in case
     the deleted resources are not already stopped.
-    """,
-    "",
-    """
-    Using --force currently also means the resources will not be stopped before
-    their deletion. If you need to use --force and still want to stop the
-    resources, you need to combine it with the --future flag.
     """,
 )
 
@@ -1805,7 +1799,7 @@ Commands:
         communicate with the node using the specified addresses.
         If --wait is specified, wait up to 'n' seconds for the node to start.
 
-    node delete-remote <node identifier> [--no-stop] [--future]
+    node delete-remote <node identifier> [--no-stop]
         Shutdown specified remote node and remove it from the cluster.
         The node-identifier can be the name of the node or the address of the
         node.
@@ -1815,11 +1809,7 @@ Commands:
         resources being left behind in case the deleted resources are not
         already stopped.
 
-        Using --force currently also means the resources will not be stopped
-        before their deletion. If you need to use --force and still want to stop
-        the resources, you need to combine it with the --future flag.
-
-    node remove-remote <node identifier> [--no-stop] [--future]
+    node remove-remote <node identifier> [--no-stop]
         Shutdown specified remote node and remove it from the cluster.
         The node-identifier can be the name of the node or the address of the
         node.
@@ -1828,10 +1818,6 @@ Commands:
         will not be stopped before its deletion. This may result in orphaned
         resources being left behind in case the deleted resources are not
         already stopped.
-
-        Using --force currently also means the resources will not be stopped
-        before their deletion. If you need to use --force and still want to stop
-        the resources, you need to combine it with the --future flag.
 
     node add-guest <node name> <resource id> [options] [--wait[=<n>]]
         Make the specified resource a guest node resource. Sync all relevant
@@ -3315,27 +3301,19 @@ Commands:
         Make the cluster run booth service on the specified ip address as
         a cluster resource.  Typically this is used to run booth site.
 {enable_authfile}{enable_authfile_clean}
-    delete [--no-stop] [--future]
+    delete [--no-stop]
         Remove booth resources created by the "pcs booth create" command.
 
         If --no-stop is specified, the resources will not be stopped before
         their deletion. This may result in orphaned resources being left behind
         in case the deleted resources are not already stopped.
 
-        Using --force currently also means the resources will not be stopped
-        before their deletion. If you need to use --force and still want to stop
-        the resources, you need to combine it with the --future flag.
-
-    remove [--no-stop] [--future]
+    remove [--no-stop]
         Remove booth resources created by the "pcs booth create" command.
 
         If --no-stop is specified, the resources will not be stopped before
         their deletion. This may result in orphaned resources being left behind
         in case the deleted resources are not already stopped.
-
-        Using --force currently also means the resources will not be stopped
-        before their deletion. If you need to use --force and still want to stop
-        the resources, you need to combine it with the --future flag.
 
     restart
         Restart booth resources created by the "pcs booth create" command.
