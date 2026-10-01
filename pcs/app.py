@@ -145,6 +145,12 @@ def main(argv=None):  # noqa: PLR0912, PLR0915
         )
     except getopt.GetoptError as err:
         error(str(err))
+        print_to_stderr(
+            "Hint: positional arguments starting with '-' must be preceded "
+            "by '--' to separate them from options. {}".format(
+                errors.SEE_MAN_CHANGES.format("1.0")
+            )
+        )
         print_to_stderr(usage.main())
         sys.exit(1)
 

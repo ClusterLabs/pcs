@@ -18,6 +18,12 @@ HINT_SYNTAX_CHANGED = (
     "Hint: Syntax has changed from previous version. See 'man pcs' -> Changes "
     "in pcs-1.0."
 )
+HINT_DASH_OPTION_NOT_RECOGNIZED = (
+    "Hint: positional arguments starting with '-' must be preceded by '--' to "
+    "separate them from options. See 'man pcs' -> Changes in pcs-1.0.\n"
+    "\n"
+    "Usage: pcs [-f file] [-h] [commands]...\n"
+)
 
 
 class ParseArgvDashDash(TestCase, AssertPcsMixin):
@@ -37,19 +43,28 @@ class ParseArgvDashDash(TestCase, AssertPcsMixin):
     def test_negative_int(self):
         self.assert_pcs_fail(
             self.cmd + ["-123"],
-            stderr_start="Error: option -1 not recognized\n",
+            stderr_start=(
+                "Error: option -1 not recognized\n"
+                + HINT_DASH_OPTION_NOT_RECOGNIZED
+            ),
         )
 
     def test_negative_float(self):
         self.assert_pcs_fail(
             self.cmd + ["-12.3"],
-            stderr_start="Error: option -1 not recognized\n",
+            stderr_start=(
+                "Error: option -1 not recognized\n"
+                + HINT_DASH_OPTION_NOT_RECOGNIZED
+            ),
         )
 
     def test_negative_infinity(self):
         self.assert_pcs_fail(
             self.cmd + ["-inFIniTY"],
-            stderr_start="Error: option -i not recognized\n",
+            stderr_start=(
+                "Error: option -i not recognized\n"
+                + HINT_DASH_OPTION_NOT_RECOGNIZED
+            ),
         )
 
     def test_negative_int_dash_dash(self):
