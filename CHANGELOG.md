@@ -39,6 +39,10 @@
   preceding `--` on the command line. Use `--` to separate options from such
   arguments.
 
+### Changed
+- Rubygem ethon is no longer used, it was replaced by rubygem curb. This also
+  impacts subdependencies of PCS, please review the README for changes.
+
 ### Deprecated
 - Option `--future` in `pcs resource delete | remove`, `pcs booth delete |
   remove`, and `pcs cluster node delete-remote | remove-remote`. The option
