@@ -35,6 +35,9 @@
 - Using `--force` in `pcs resource delete | remove`, `pcs booth delete |
   remove`, and `pcs cluster node delete-remote | remove-remote` to skip
   resource stopping before deletion. Use the `--no-stop` flag instead.
+- Support for passing positional arguments starting with `-` without a
+  preceding `--` on the command line. Use `--` to separate options from such
+  arguments.
 
 ### Deprecated
 - Option `--future` in `pcs resource delete | remove`, `pcs booth delete |

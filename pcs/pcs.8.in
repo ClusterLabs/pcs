@@ -1714,6 +1714,8 @@ The \fB\-\-force\fR flag is no longer accepted as an alternative to interactive 
 In the commands 'pcs resource delete | remove', 'pcs booth delete | remove', 'pcs cluster node delete\-remote | remove\-remote', \fB\-\-force\fR no longer skips stopping resources before their deletion. Resources are always stopped first unless \fB\-\-no\-stop\fR is specified. The \fB\-\-future\fR flag (previously used to opt into this behavior) is still accepted but is now a no\-op that only prints a deprecation warning. The \fB\-\-future\fR flag will be removed in a future release.
 .SS "Pacemaker rules"
 Rules must be specified as a single command line argument. Specifying rules as multiple arguments is no longer supported. This affects commands: 'pcs constraint location', 'pcs resource defaults set create', 'pcs resource op defaults set create', 'pcs stonith defaults set create' and 'pcs stonith op defaults set create'.
+.SS "Positional arguments starting with \- require \-\-"
+Positional arguments starting with \fB\-\fR must now be preceded by \fB\-\-\fR on the command line to separate them from options. Using them without \fB\-\-\fR is no longer supported.
 .SS "acl"
 .TP
 role assign | unassign

@@ -7,11 +7,7 @@ from pcs.cli.common.parse_args import (
     ArgsByKeywords,
     InputModifiers,
     KeyValueParser,
-    _is_negative_num,
-    _is_num,
     ensure_unique_args,
-    filter_out_non_option_negative_numbers,
-    filter_out_options,
     get_rule_str,
     group_by_keywords,
     is_long_option_expecting_value,
@@ -415,136 +411,6 @@ class ParseTypedArg(TestCase):
     def test_more_delimiters(self):
         self.assert_parse("t2%va%lu%e", ("t2", "va%lu%e"))
         self.assert_parse("t2%%va%lu%e", ("t2", "%va%lu%e"))
-
-
-class FilterOutNonOptionNegativeNumbers(TestCase):
-    def test_does_not_remove_anything_when_no_negative_numbers(self):
-        args = ["first", "second"]
-        self.assertEqual(
-            (args, []), filter_out_non_option_negative_numbers(args)
-        )
-
-    def test_remove_negative_number(self):
-        self.assertEqual(
-            (["first"], ["-1"]),
-            filter_out_non_option_negative_numbers(["first", "-1"]),
-        )
-
-    def test_remove_negative_infinity(self):
-        self.assertEqual(
-            (["first"], ["-INFINITY"]),
-            filter_out_non_option_negative_numbers(["first", "-INFINITY"]),
-        )
-        self.assertEqual(
-            (["first"], ["-infinity"]),
-            filter_out_non_option_negative_numbers(["first", "-infinity"]),
-        )
-
-    def test_not_remove_follower_of_short_signed_option(self):
-        self.assertEqual(
-            (["first", "-f", "-1"], []),
-            filter_out_non_option_negative_numbers(["first", "-f", "-1"]),
-        )
-
-    def test_remove_follower_of_short_unsigned_option(self):
-        self.assertEqual(
-            (["first", "-h"], ["-1"]),
-            filter_out_non_option_negative_numbers(["first", "-h", "-1"]),
-        )
-
-    def test_not_remove_follower_of_long_signed_option(self):
-        self.assertEqual(
-            (["first", "--name", "-1"], []),
-            filter_out_non_option_negative_numbers(["first", "--name", "-1"]),
-        )
-
-    def test_remove_follower_of_long_unsigned_option(self):
-        self.assertEqual(
-            (["first", "--clone"], ["-1"]),
-            filter_out_non_option_negative_numbers(["first", "--clone", "-1"]),
-        )
-
-    def test_does_not_remove_dash(self):
-        self.assertEqual(
-            (["first", "-"], []),
-            filter_out_non_option_negative_numbers(["first", "-"]),
-        )
-
-    def test_does_not_remove_dash_dash(self):
-        self.assertEqual(
-            (["first", "--"], []),
-            filter_out_non_option_negative_numbers(["first", "--"]),
-        )
-
-
-class FilterOutOptions(TestCase):
-    def test_does_not_remove_anything_when_no_options(self):
-        args = ["first", "second"]
-        self.assertEqual(args, filter_out_options(args))
-
-    def test_remove_unsigned_short_option(self):
-        self.assertEqual(
-            ["first", "second"], filter_out_options(["first", "-h", "second"])
-        )
-
-    def test_remove_signed_short_option_with_value(self):
-        self.assertEqual(
-            ["first"], filter_out_options(["first", "-f", "second"])
-        )
-
-    def test_not_remove_value_of_signed_short_option_when_value_bundled(self):
-        self.assertEqual(
-            ["first", "second"],
-            filter_out_options(["first", "-fvalue", "second"]),
-        )
-
-    def test_remove_unsigned_long_option(self):
-        self.assertEqual(
-            ["first", "second"],
-            filter_out_options(["first", "--clone", "second"]),
-        )
-
-    def test_remove_signed_long_option_with_value(self):
-        self.assertEqual(
-            ["first"], filter_out_options(["first", "--name", "second"])
-        )
-
-    def test_not_remove_value_of_signed_long_option_when_value_bundled(self):
-        self.assertEqual(
-            ["first", "second"],
-            filter_out_options(["first", "--name=value", "second"]),
-        )
-
-    def test_does_not_remove_dash(self):
-        self.assertEqual(["first", "-"], filter_out_options(["first", "-"]))
-
-    def test_remove_dash_dash(self):
-        self.assertEqual(["first"], filter_out_options(["first", "--"]))
-
-
-class IsNum(TestCase):
-    def test_returns_true_on_number(self):
-        self.assertTrue(_is_num("10"))
-
-    def test_returns_true_on_infinity(self):
-        self.assertTrue(_is_num("infinity"))
-
-    def test_returns_false_on_no_number(self):
-        self.assertFalse(_is_num("no-num"))
-
-
-class IsNegativeNum(TestCase):
-    def test_returns_true_on_negative_number(self):
-        self.assertTrue(_is_negative_num("-10"))
-
-    def test_returns_true_on_infinity(self):
-        self.assertTrue(_is_negative_num("-INFINITY"))
-
-    def test_returns_false_on_positive_number(self):
-        self.assertFalse(_is_negative_num("10"))
-
-    def test_returns_false_on_no_number(self):
-        self.assertFalse(_is_negative_num("no-num"))
 
 
 class IsShortOptionExpectingValue(TestCase):

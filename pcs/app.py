@@ -6,7 +6,7 @@ import sys
 from pcs import settings, usage, utils
 from pcs.cli.common import completion, errors, parse_args, routing
 from pcs.cli.reports import process_library_reports
-from pcs.cli.reports.output import deprecation_warning, error, print_to_stderr
+from pcs.cli.reports.output import error, print_to_stderr
 from pcs.cli.routing import (
     acl,
     alert,
@@ -140,33 +140,17 @@ def main(argv=None):  # noqa: PLR0912, PLR0915
     argv = new_argv
 
     try:
-        if "--" in argv:
-            pcs_options, argv = getopt.gnu_getopt(
-                argv, parse_args.PCS_SHORT_OPTIONS, parse_args.PCS_LONG_OPTIONS
-            )
-        else:
-            # DEPRECATED
-            # TODO remove
-            # We want to support only the -- version
-            (
-                args_without_negative_nums,
-                args_filtered_out,
-            ) = parse_args.filter_out_non_option_negative_numbers(argv)
-            if args_filtered_out:
-                options_str = "', '".join(args_filtered_out)
-                deprecation_warning(
-                    f"Using '{options_str}' without '--' is deprecated, those "
-                    "parameters will be considered position independent "
-                    "options in future pcs versions"
-                )
-            pcs_options, dummy_argv = getopt.gnu_getopt(
-                args_without_negative_nums,
-                parse_args.PCS_SHORT_OPTIONS,
-                parse_args.PCS_LONG_OPTIONS,
-            )
-            argv = parse_args.filter_out_options(argv)
+        pcs_options, argv = getopt.gnu_getopt(
+            argv, parse_args.PCS_SHORT_OPTIONS, parse_args.PCS_LONG_OPTIONS
+        )
     except getopt.GetoptError as err:
         error(str(err))
+        print_to_stderr(
+            "Hint: positional arguments starting with '-' must be preceded "
+            "by '--' to separate them from options. {}".format(
+                errors.SEE_MAN_CHANGES.format("1.0")
+            )
+        )
         print_to_stderr(usage.main())
         sys.exit(1)
 

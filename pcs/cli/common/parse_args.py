@@ -4,7 +4,6 @@ from functools import partial
 from typing import Final
 
 from pcs.cli.common.errors import SEE_MAN_CHANGES, CmdLineInputError
-from pcs.common.const import INFINITY
 from pcs.common.str_tools import (
     format_list,
     format_list_custom_last_separator,
@@ -468,28 +467,6 @@ def parse_typed_arg(
     return arg_type, arg_value
 
 
-def _is_num(arg: str) -> bool:
-    if arg.lower() == INFINITY.lower():
-        return True
-    try:
-        int(arg)
-        return True
-    except ValueError:
-        return False
-
-
-def _is_float(arg: str) -> bool:
-    try:
-        float(arg)
-        return True
-    except ValueError:
-        return False
-
-
-def _is_negative_num(arg: str) -> bool:
-    return arg.startswith("-") and (_is_num(arg[1:]) or _is_float(arg))
-
-
 def is_short_option_expecting_value(arg: str) -> bool:
     return len(arg) == 2 and arg[0] == "-" and f"{arg[1]}:" in PCS_SHORT_OPTIONS
 
@@ -504,73 +481,6 @@ def is_option_expecting_value(arg: str) -> bool:
     return is_short_option_expecting_value(
         arg
     ) or is_long_option_expecting_value(arg)
-
-
-# DEPRECATED
-# TODO remove
-# This function is called only by deprecated code for parsing argv containing
-# negative numbers without -- prepending them.
-def filter_out_non_option_negative_numbers(arg_list: Argv) -> tuple[Argv, Argv]:
-    """
-    Return arg_list without non-option negative numbers.
-    Negative numbers following the option expecting value are kept.
-
-    There is the problematic legacy:
-    Argument "--" has special meaning: it can be used to signal that no more
-    options will follow. This would solve the problem with negative numbers in
-    a standard way: there would be no special approach to negative numbers,
-    everything would be left in the hands of users.
-
-    We cannot use "--" as it would be a backward incompatible change:
-    * "pcs ... -infinity" would not work any more, users would have to switch
-      to "pcs ... -- ... -infinity"
-    * previously, position of some --options mattered, for example
-      "--clone <clone options>", this syntax would not be possible with the "--"
-      in place
-
-    Currently used --options, which may be problematic when switching to "--":
-    * --group <group name>, --before | --after <resource id>
-      * pcs resource | stonith create, pcs resource group add, pcs tag update
-      * They have a single argument, so they would work even with --. But the
-        command may look weird:
-        pcs resource create --group G --after R2 -- R3 ocf:pacemaker:Dummy
-        vs. current command
-        pcs resource create R3 ocf:pacemaker:Dummy --group G --after R2
-
-    list arg_list contains command line arguments
-    """
-    args_without_negative_nums = []
-    args_filtered_out = []
-    for i, arg in enumerate(arg_list):
-        prev_arg = arg_list[i - 1] if i > 0 else ""
-        if not _is_negative_num(arg) or is_option_expecting_value(prev_arg):
-            args_without_negative_nums.append(arg)
-        else:
-            args_filtered_out.append(arg)
-
-    return args_without_negative_nums, args_filtered_out
-
-
-# DEPRECATED
-# TODO remove
-# This function is called only by deprecated code for parsing argv containing
-# negative numbers without -- prepending them.
-def filter_out_options(arg_list: Argv) -> Argv:
-    """
-    Return arg_list without options and negative numbers
-
-    See a comment in filter_out_non_option_negative_numbers.
-
-    arg_list -- command line arguments
-    """
-    args_without_options = []
-    for i, arg in enumerate(arg_list):
-        prev_arg = arg_list[i - 1] if i > 0 else ""
-        if not is_option_expecting_value(prev_arg) and (
-            not arg.startswith("-") or arg == "-" or _is_negative_num(arg)
-        ):
-            args_without_options.append(arg)
-    return args_without_options
 
 
 def wait_to_timeout(wait: bool | str | None) -> int:
