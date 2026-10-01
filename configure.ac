@@ -431,7 +431,16 @@ REQUIRE_RACKUP="require 'rackup'"
 
 if test "x$tests_only" != "xyes"; then
 	PCS_CHECK_GEM([backports])
-	PCS_CHECK_GEM([childprocess])
+	# We require childprocess 5.0.0+ due to the libcurl's threaded DNS resolver,
+	# new Ruby and Puma. Old childprocess uses a wrong forking method causing
+	# SIGABRT or deadlocks, see: https://bugzilla.redhat.com/show_bug.cgi?id=2536998
+	if test "x$DISTRO" = "xdebian" || test "x$DISTRO" = "xubuntu"; then
+		# Debian and Ubuntu both have old libcurl and Ruby, so there should be
+		# no issue for now with using old childprocess
+		PCS_CHECK_GEM([childprocess])
+	else
+		PCS_CHECK_GEM([childprocess], [>= 5.0.0])
+	fi
 	PCS_CHECK_GEM([curb])
 	PCS_CHECK_GEM([json])
 	PCS_CHECK_GEM([ruby2_keywords])
