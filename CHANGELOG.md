@@ -39,6 +39,10 @@
   preceding `--` on the command line. Use `--` to separate options from such
   arguments.
 
+### Changed
+- Dependency on libffi-devel caused by rubygem ethon was removed. There is a new
+  dependency on libcurl-devel, because ethon was swapped for rubygem curb.
+
 ### Deprecated
 - Option `--future` in `pcs resource delete | remove`, `pcs booth delete |
   remove`, and `pcs cluster node delete-remote | remove-remote`. The option
