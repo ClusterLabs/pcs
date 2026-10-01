@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+- Dependency on libffi-devel caused by rubygem ethon was removed. There is a new
+  dependency on libcurl-devel, because ethon was swapped for rubygem curb.
+
 ### Fixed
 - Command `pcs stonith update-scsi-devices` no longer triggers unnecessary
   resource restarts when updating SCSI devices. ([RHEL-215405])
