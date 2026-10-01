@@ -380,10 +380,14 @@ if test "x$local_build" = "xyes"; then
 	fi
 fi
 
-# PCS_BUNDLE_GEM([module])
+# PCS_BUNDLE_GEM([module], [version])
 AC_DEFUN([PCS_BUNDLE_GEM], [
 	if test "x$PCS_CUSTOM_GEMFILE" = "x"; then
-		echo "gem '$1'" >> Gemfile
+		if test "x$2" = "x"; then
+			echo "gem '$1'" >> Gemfile
+		else
+			echo "gem '$1', '$2'" >> Gemfile
+		fi
 	else
 		grep "$1" Gemfile || AC_MSG_ERROR([custom gemfile missing required gem '$1'])
 	fi
@@ -394,7 +398,7 @@ AC_DEFUN([PCS_CHECK_GEM], [
 	if test "x$local_build" = "xyes"; then
 		# Add gem to Gemfile regardless of system availability.
 		# Needed for isolated test execution via `bundle exec`.
-		PCS_BUNDLE_GEM([$1])
+		PCS_BUNDLE_GEM([$1], [$2])
 		AC_RUBY_GEM([$1], [$2], [bundle_module=no], [bundle_module=yes])
 		if test "x$bundle_module" = "xyes" || test "x$individual_bundling" != "xyes"; then
 			if test "x$cache_only" = "xyes"; then
