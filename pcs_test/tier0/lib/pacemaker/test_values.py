@@ -1,12 +1,10 @@
 from unittest import TestCase
 
 import pcs.lib.pacemaker.values as lib
-from pcs import settings
 from pcs.common.reports import ReportItemSeverity as severity
 from pcs.common.reports import codes as report_codes
 
 from pcs_test.tools.assertions import assert_raise_library_error
-from pcs_test.tools.custom_mock import get_runner_mock
 
 
 class BooleanTest(TestCase):
@@ -245,19 +243,3 @@ class IsScoreValueTest(TestCase):
 
     def test_returns_false_for_multiple_operators(self):
         self.assertFalse(lib.is_score("++INFINITY"))
-
-
-class IsDurationValueTest(TestCase):
-    def assert_is_duration(self, return_value):
-        duration = "P"
-        mock_runner = get_runner_mock(returncode=0 if return_value else 1)
-        self.assertEqual(lib.is_duration(mock_runner, duration), return_value)
-        mock_runner.run.assert_called_once_with(
-            [settings.iso8601_exec, "--duration", duration]
-        )
-
-    def test_duration_valid(self):
-        self.assert_is_duration(True)
-
-    def test_duration_invalid(self):
-        self.assert_is_duration(False)

@@ -150,7 +150,6 @@ pacemaker_schedulerd_exec = os.path.join(
     pacemaker_daemon_dir, "pacemaker-schedulerd"
 )
 pacemakerd_exec = os.path.join(pacemaker_execs, "pacemakerd")
-iso8601_exec = os.path.join(pacemaker_execs, "iso8601")
 pacemaker_controld_exec = os.path.join(pacemaker_daemon_dir, "pacemaker-controld")
 pacemaker_based_exec = os.path.join(pacemaker_daemon_dir, "pacemaker-based")
 pacemaker_fenced_exec = os.path.join(pacemaker_daemon_dir, "pacemaker-fenced")

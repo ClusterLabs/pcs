@@ -823,7 +823,6 @@ def run(
     command = args[0]
     if command[0:3] == "crm" or command in [
         "cibadmin",
-        "iso8601",
         "stonith_admin",
     ]:
         args[0] = os.path.join(settings.pacemaker_execs, command)

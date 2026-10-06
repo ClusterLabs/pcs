@@ -61,7 +61,6 @@ COMMAND_COMPLETIONS = {
     "crm_simulate": settings.crm_simulate_exec,
     "crm_ticket": settings.crm_ticket_exec,
     "crm_verify": settings.crm_verify_exec,
-    "iso8601": settings.iso8601_exec,
     "sbd": settings.sbd_exec,
     "stonith_admin": settings.stonith_admin_exec,
 }

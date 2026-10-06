@@ -380,6 +380,7 @@ if test "x$tests_only" != "xyes"; then
 	# those are kind of problematic.
 	# use them all from the BaseOS or embedded them all as necessary (--enable-local-build)
 	PCS_CHECK_PYMOD([dacite], [], [yes])
+	PCS_CHECK_PYMOD([isodate], [], [yes])
 	PCS_CHECK_PYMOD([tornado], [>= 6.0.0], [yes])
 	# Pycurl-7.46.0 requires setuptools => 77. However, if pycurl is already
 	# installed on the system, use whatever pycurl is installed and don't limit
