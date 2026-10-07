@@ -123,15 +123,15 @@ prepare:
       - rubygem-sinatra
       - rubygem-tilt
 
-  - name: Install corosync-qdevice-devel on CentOS-Stream-9
+  - name: Install corosync-qdevice-devel on CentOS-Stream-9 / RHEL-9.*
     # required dependency for the rpm build on CentOS-Stream9 / RHEL-9.*
     # provided by rhel-buildroot repository on RHEL-9.*
     # missing in standard CentOS-Stream-9 repositories
     # installing from 'testing-farm-tag-repository'
-    when: distro == centos-stream-9
+    when: distro == rhel-9, centos-stream-9
     how: shell
     script:
-      - dnf install -y --enablerepo=testing-farm-tag-repository
+      - dnf install -y --enablerepo=testing-farm-tag-repository*
         corosync-qdevice-devel
 
 # https://tmt.readthedocs.io/en/stable/spec/plans.html#execute
