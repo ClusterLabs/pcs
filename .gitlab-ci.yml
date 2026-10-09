@@ -90,14 +90,14 @@ variables:
         TMT_DISTRO: rhel-10.3
     - if: $COMPOSE_NAME == "FedoraCurrentRelease"
       variables:
-        TF_COMPOSE: Fedora-45
+        TF_COMPOSE: Fedora-45-Cloud-Base
         TMT_DISTRO: fedora-45
         # FIPS is not supported on Fedora
         TFCLI_TMT_PREPARE: ""
     - if: $COMPOSE_NAME == "FedoraNext"
       allow_failure: true
       variables:
-        TF_COMPOSE: Fedora-Rawhide
+        TF_COMPOSE: Fedora-Rawhide-Cloud-Base
         # set fedora-9999 to avoid bumping every release
         TMT_DISTRO: fedora-9999
         # FIPS is not supported on Fedora
