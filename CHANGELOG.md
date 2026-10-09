@@ -68,7 +68,6 @@
   previously tolerated by pacemaker are no longer allowed.
 
 
-
 ## [0.12.3.1] - 2026-09-08
 
 ### Security

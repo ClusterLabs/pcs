@@ -1081,9 +1081,11 @@ class ValueTimeIntervalOrDuration(ValuePredicateBase):
         # The python isodate would accept these values as valid according to
         # the standard. Pacemaker logs only a warning and silently treats such
         # values as 0ms.
-        if value.startswith("P") and not any(
-            char in value for char in [".", ",", "-"]
-        ):
+        if value[:2] in ("-P", "+P"):
+            return False
+        if value.startswith("P"):
+            if any(char in value for char in [".", ",", "-"]):
+                return False
             try:
                 isodate.parse_duration(value)
                 return True

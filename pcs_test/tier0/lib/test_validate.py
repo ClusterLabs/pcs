@@ -1989,6 +1989,7 @@ class ValueTimeIntervalOrDuration(TestCase):
 
     def test_reports_about_invalid_interval(self):
         for interval in [
+            "",
             "invalid_value",
             "2024-01-15/2024-02-15",
             "2024-01-15/P1M",
