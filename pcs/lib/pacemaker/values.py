@@ -1,12 +1,10 @@
 import re
 
-from pcs import settings
 from pcs.common import reports
 from pcs.common.reports.item import ReportItem, ReportItemList
 from pcs.common.tools import timeout_to_seconds
 from pcs.common.validate import is_integer
 from pcs.lib.errors import LibraryError
-from pcs.lib.external import CommandRunner
 
 _BOOLEAN_TRUE = frozenset(["true", "on", "yes", "y", "1"])
 _BOOLEAN_FALSE = frozenset(["false", "off", "no", "n", "0"])
@@ -54,12 +52,6 @@ def is_score(value: str) -> bool:
         return False
     unsigned_value = value[1:] if value[0] in ("+", "-") else value
     return unsigned_value == SCORE_INFINITY or is_integer(value)
-
-
-def is_duration(runner: CommandRunner, value: str) -> bool:
-    cmd = [settings.iso8601_exec, "--duration", value]
-    _, _, retval = runner.run(cmd)
-    return retval == 0
 
 
 def get_valid_timeout_seconds(

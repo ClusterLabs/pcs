@@ -14,7 +14,6 @@ from pcs.lib.cib.tools import (
     get_pacemaker_version_by_which_cib_was_validated,
 )
 from pcs.lib.errors import LibraryError
-from pcs.lib.external import CommandRunner
 from pcs.lib.pacemaker.values import is_false
 from pcs.lib.resource_agent import ResourceAgentFacade
 
@@ -86,7 +85,6 @@ def _validate_not_disabling_fencing(
 
 
 def validate_set_cluster_properties(  # noqa: PLR0912
-    runner: CommandRunner,
     cluster_properties_facade: ResourceAgentFacade,
     properties_set_id: str,
     configured_properties: StringSequence,
@@ -175,7 +173,7 @@ def validate_set_cluster_properties(  # noqa: PLR0912
         elif property_metadata.type == "duration":
             validators.append(
                 validate.ValueTimeIntervalOrDuration(
-                    runner, property_metadata.name, severity=severity
+                    property_metadata.name, severity=severity
                 )
             )
         elif property_metadata.type in ["integer", "score"]:
@@ -228,7 +226,7 @@ def validate_set_cluster_properties(  # noqa: PLR0912
             else:  # time
                 validators.append(
                     validate.ValueTimeIntervalOrDuration(
-                        runner, property_metadata.name, severity=severity
+                        property_metadata.name, severity=severity
                     )
                 )
 

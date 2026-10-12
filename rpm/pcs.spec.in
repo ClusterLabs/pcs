@@ -20,7 +20,7 @@ Release: 99+git%{?numcomm:.%{numcomm}}%{?alphatag:.%{alphatag}}%{?dirty:.%{dirty
 # MIT AND (BSD-2-Clause OR GPL-2.0-or-later): nio4r
 # BSD-2-Clause: rexml
 # BSD-2-Clause or Ruby: base64, ruby2_keywords, strscan
-# BSD 3-Clause: puma
+# BSD 3-Clause: puma, isodate
 # Ruby: curb
 # curl OR LGPL-2.1-or-later: python-pycurl
 # Some gems we bundle are just dependencies of gems that we use,

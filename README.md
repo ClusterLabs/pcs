@@ -41,6 +41,7 @@ These are the runtime dependencies of pcs and pcsd:
 * python3-pyparsing 3.0.0+
 * python3-tornado 6.1.0+
 * [dacite](https://github.com/konradhalas/dacite)
+* [isodate](https://github.com/gweis/isodate)
 * ruby 3.1.0+
 * killall (package psmisc)
 * corosync 3.x

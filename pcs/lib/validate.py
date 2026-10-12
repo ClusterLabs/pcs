@@ -35,6 +35,8 @@ from collections.abc import Callable, Container, Iterable, Mapping
 from re import Pattern
 from typing import Any, NamedTuple, cast
 
+import isodate  # type: ignore[import-untyped]
+
 from pcs.common import reports
 from pcs.common.str_tools import format_list, format_optional
 from pcs.common.tools import timeout_to_seconds
@@ -42,12 +44,10 @@ from pcs.common.types import StringCollection, StringIterable
 from pcs.common.validate import is_integer, is_port_number
 from pcs.lib.cib.tools import IdProvider
 from pcs.lib.corosync import constants as corosync_constants
-from pcs.lib.external import CommandRunner
 from pcs.lib.pacemaker.values import (
     BOOLEAN_VALUES,
     SCORE_INFINITY,
     is_boolean,
-    is_duration,
     is_score,
     validate_id,
 )
@@ -1073,23 +1073,24 @@ class ValueTimeIntervalOrDuration(ValuePredicateBase):
     PT1H2M3S, ...)
     """
 
-    def __init__(
-        self,
-        runner: CommandRunner,
-        option_name: TypeOptionName,
-        option_name_for_report: str | None = None,
-        severity: reports.ReportItemSeverity | None = None,
-    ):
-        super().__init__(
-            option_name,
-            option_name_for_report=option_name_for_report,
-            severity=severity,
-        )
-        self.runner = runner
-
     def _is_valid(self, value: TypeOptionValue) -> bool:
+        # Pacemaker does not support:
+        #   1. signed durations ('-P1Y', '+P1Y')
+        #   2. fractional date or time components ('P1.5Y', 'P1,5Y', 'PT2.5H')
+        #   3. alternative ISO 8601 format ('P2026-01-01T00:00:00')
+        # The python isodate would accept these values as valid according to
+        # the standard. Pacemaker logs only a warning and silently treats such
+        # values as 0ms.
+        if value[:2] in ("-P", "+P"):
+            return False
         if value.startswith("P"):
-            return is_duration(self.runner, value)
+            if any(char in value for char in [".", ",", "-"]):
+                return False
+            try:
+                isodate.parse_duration(value)
+                return True
+            except isodate.ISO8601Error:
+                return False
         return timeout_to_seconds(value) is not None
 
     def _get_allowed_values(self) -> Any:

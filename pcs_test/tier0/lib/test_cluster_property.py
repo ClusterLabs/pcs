@@ -21,7 +21,6 @@ from pcs_test.tools.assertions import (
     assert_report_item_list_equal,
     assert_xml_equal,
 )
-from pcs_test.tools.custom_mock import get_runner_mock
 
 TEMPLATE_CRM_CONFIG = """
 <cib validate-with="pacemaker-3.8">
@@ -103,7 +102,7 @@ ALLOWED_PROPERTIES = [
 
 FIXTURE_VALID_OPTIONS_DICT = {
     "bool_param": "true",
-    "duration_param": "P1S",
+    "duration_param": "PT1S",
     "integer_param": "10",
     "nonnegative_param": "9",
     "percentage_param": "20%",
@@ -324,7 +323,6 @@ class TestValidateSetClusterProperties(TestCase):
         sbd_devices=False,
         force=False,
         valid_value=True,
-        returncode=0,
     ):
         calls_is_sbd_enabled = []
         calls_sbd_devices = []
@@ -343,7 +341,6 @@ class TestValidateSetClusterProperties(TestCase):
 
         assert_report_item_list_equal(
             lib_cluster_property.validate_set_cluster_properties(
-                get_runner_mock(returncode=returncode),
                 self.facade,
                 "property-set-id",
                 configured_properties,
@@ -422,10 +419,7 @@ class TestValidateSetClusterProperties(TestCase):
 
     def test_set_invalid_properties_and_values(self):
         self.assert_validate_set(
-            [],
-            FIXTURE_INVALID_OPTIONS_DICT,
-            FIXTURE_ERROR_REPORTS,
-            returncode=1,
+            [], FIXTURE_INVALID_OPTIONS_DICT, FIXTURE_ERROR_REPORTS
         )
 
     def test_set_invalid_properties_and_values_forced(self):
@@ -434,7 +428,6 @@ class TestValidateSetClusterProperties(TestCase):
             FIXTURE_INVALID_OPTIONS_DICT,
             warning_reports(FIXTURE_ERROR_REPORTS),
             force=True,
-            returncode=1,
         )
 
     def test_unset_stonith_watchdog_timeout_sbd_disabled(self):

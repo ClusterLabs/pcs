@@ -62,6 +62,10 @@
 - Resource order matters in `pcs constraint colocation delete | remove
   source_resource target_resource` command, it no longer deletes
   'target_resource with source_resource' constraints.
+- Dropped dependency on pacemaker tool `iso8601` in favor of the python
+  `isodate` library for validation of ISO 8601 duration values. Pcs now
+  accepts only standard ISO 8601 durations. Some non-standard values
+  previously tolerated by pacemaker are no longer allowed.
 
 
 ## [0.12.3.1] - 2026-09-08
