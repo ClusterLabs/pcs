@@ -335,7 +335,10 @@ fi
 AC_DEFUN([PCS_BUNDLE_PYMOD], [
 	echo "$1 $2" | sed -e 's# ##g' >> $ac_pwd/rpm/requirements.txt
 	if test "x$cache_only" = "xyes"; then
-		src=`ls rpm/$1-*`
+		# Workaround for hyphen/underscore inconsistency between module and archive names
+		# NOTE: double '[[]]' brackets needs to be used because '[]' are special characters in m4 macros
+		pattern=`printf '%s\n' "$1" | sed -e 's/[[-_]]/[[-_]]/'`
+		src=`ls rpm/$pattern-*`
 		if test "x$src" = "x"; then
 			 AC_MSG_ERROR([cache only build required but no source detected in rpm/])
 		fi
@@ -384,9 +387,10 @@ if test "x$tests_only" != "xyes"; then
 	PCS_CHECK_PYMOD([python-dateutil], [>= 2.7.0], [yes])
 	# setuptoools_scm is needed for bundling dateutil, this uses variables
 	# set by the PCS_CHECK_PYMOD macro, so it must be executed right after it
-	if test "x$bundle_module" = "xyes" && test "x$local_build" = "xyes"; then
+	if test "x$bundle_module" = "xyes"; then
 		PCS_CHECK_PYMOD([setuptools-scm])
 		PCS_CHECK_PYMOD([six])
+		PKG_CHECK_MODULES([TZDATA], [tzdata])
 	fi
 	# Pycurl-7.46.0 requires setuptools => 77. However, if pycurl is already
 	# installed on the system, use whatever pycurl is installed and don't limit
