@@ -445,6 +445,7 @@ if test "x$tests_only" != "xyes"; then
 	PCS_CHECK_GEM([json])
 	PCS_CHECK_GEM([ruby2_keywords])
 	PCS_CHECK_GEM([mustermann])
+	PCS_CHECK_GEM([openssl])
 	PCS_CHECK_GEM([rack])
 	PCS_GEM_ACTION([$HAVE_RUBYGEM_RACK_VERSION], [<], [3.0], [RACK_HANDLER=Rack REQUIRE_RACKUP=""], [PCS_CHECK_GEM([rackup])])
 	PCS_CHECK_GEM([rack-protection])
