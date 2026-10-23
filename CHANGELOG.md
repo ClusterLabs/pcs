@@ -7,6 +7,10 @@
   resource restarts when updating SCSI devices. ([RHEL-214140])
 - Most pcsd requests ending with Internal Server Error with rubygem-json 3.0.0+
 
+### Changed
+- Rubygem ethon is no longer used, it was replaced by rubygem curb. This also
+  impacts subdependencies of PCS, please review the README for changes.
+
 ### Deprecated
 - Disabling cluster traffic encryption (setting knet transport crypto options
   `cipher` or `hash` to `none`) ([RHEL-218000])
