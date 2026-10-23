@@ -430,10 +430,14 @@ if test "x$local_build" = "xyes"; then
 	fi
 fi
 
-# PCS_BUNDLE_GEM([module])
+# PCS_BUNDLE_GEM([module], [version])
 AC_DEFUN([PCS_BUNDLE_GEM], [
 	if test "x$PCS_CUSTOM_GEMFILE" = "x"; then
-		echo "gem '$1'" >> Gemfile
+		if test "x$2" = "x"; then
+			echo "gem '$1'" >> Gemfile
+		else
+			echo "gem '$1', '$2'" >> Gemfile
+		fi
 	else
 		grep "$1" Gemfile || AC_MSG_ERROR([custom gemfile missing required gem '$1'])
 	fi
@@ -444,7 +448,7 @@ AC_DEFUN([PCS_CHECK_GEM], [
 	if test "x$local_build" = "xyes"; then
 		# Add gem to Gemfile regardless of system availability.
 		# Needed for isolated test execution via `bundle exec`.
-		PCS_BUNDLE_GEM([$1])
+		PCS_BUNDLE_GEM([$1], [$2])
 		AC_RUBY_GEM([$1], [$2], [bundle_module=no], [bundle_module=yes])
 		if test "x$bundle_module" = "xyes" || test "x$individual_bundling" != "xyes"; then
 			if test "x$cache_only" = "xyes"; then
@@ -477,11 +481,12 @@ REQUIRE_RACKUP="require 'rackup'"
 
 if test "x$tests_only" != "xyes"; then
 	PCS_CHECK_GEM([backports])
-	PCS_CHECK_GEM([childprocess])
+	PCS_CHECK_GEM([childprocess], [>= 5.0.0])
 	PCS_CHECK_GEM([curb])
 	PCS_CHECK_GEM([json])
 	PCS_CHECK_GEM([ruby2_keywords])
 	PCS_CHECK_GEM([mustermann])
+	PCS_CHECK_GEM([openssl])
 	PCS_CHECK_GEM([rack])
 	PCS_GEM_ACTION([$HAVE_RUBYGEM_RACK_VERSION], [<], [3.0], [RACK_HANDLER=Rack REQUIRE_RACKUP=""], [PCS_CHECK_GEM([rackup])])
 	PCS_CHECK_GEM([rack-protection])
