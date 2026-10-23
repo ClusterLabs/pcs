@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+- Rubygem ethon is no longer used, it was replaced by rubygem curb. This also
+  impacts subdependencies of PCS, please review the README for changes.
+
 ### Fixed
 - Command `pcs stonith update-scsi-devices` no longer triggers unnecessary
   resource restarts when updating SCSI devices. ([RHEL-215405])
