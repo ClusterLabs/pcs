@@ -853,25 +853,31 @@ class Parser(TestCase):
             # resource, op
             ("resource", (1, 9, 8, "Expected 'eq'")),
             ("op", (1, 3, 2, "Expected 'eq'")),
-            ("resource ::rA and", (1, 15, 14, "Expected end of text")),
-            ("resource ::rA and op ", (1, 15, 14, "Expected end of text")),
-            ("resource ::rA and (", (1, 15, 14, "Expected end of text")),
+            ("resource ::rA and", (1, 18, 17, "Expected <expression>")),
+            (
+                "resource ::rA and op ",
+                (1, 22, 21, "Expected <comparison operator>"),
+            ),
+            ("resource ::rA and (", (1, 20, 19, "Expected <expression>")),
             # and, or
             ("and", (1, 4, 3, "Expected 'eq'")),
             ("or", (1, 3, 2, "Expected 'eq'")),
             ("#uname and node1", (1, 8, 7, "Expected 'eq'")),
             ("#uname or node1", (1, 8, 7, "Expected 'eq'")),
             ("#uname or eq", (1, 8, 7, "Expected 'eq'")),
-            ("#uname eq node1 and node2", (1, 17, 16, "Expected end of text")),
-            ("#uname eq node1 and", (1, 17, 16, "Expected end of text")),
+            (
+                "#uname eq node1 and node2",
+                (1, 26, 25, "Expected <comparison operator>"),
+            ),
+            ("#uname eq node1 and", (1, 20, 19, "Expected <expression>")),
             (
                 "#uname eq node1 and #uname eq",
-                (1, 17, 16, "Expected end of text"),
+                (1, 30, 29, "Expected <attribute value>"),
             ),
             ("and #uname eq node1", (1, 5, 4, "Expected 'eq'")),
             (
                 "#uname ne node1 and duration hours=1",
-                (1, 17, 16, "Expected end of text"),
+                (1, 30, 29, "Expected <comparison operator>"),
             ),
             (
                 "duration monthdays=1 or #uname ne node1",
@@ -935,11 +941,18 @@ class Parser(TestCase):
                 (1, 40, 39, "Expected end of text"),
             ),
             # braces
-            ("(#uname)", (1, 8, 7, "Expected 'eq'")),
-            ("(", (1, 2, 1, "Expected 'date'")),
-            ("()", (1, 2, 1, "Expected 'date'")),
-            ("(#uname", (1, 8, 7, "Expected 'eq'")),
+            ("(#uname)", (1, 8, 7, "Expected <comparison operator>")),
+            ("(", (1, 2, 1, "Expected <expression>")),
+            ("()", (1, 2, 1, "Expected <expression>")),
+            ("(#uname", (1, 8, 7, "Expected <comparison operator>")),
             ("(#uname eq", (1, 11, 10, "Expected <attribute value>")),
+            # a failing operand inside parentheses reports its own precise error
+            # instead of a generic error at the operator or opening parenthesis
+            (
+                "(#uname eq node-1 and date eq)",
+                (1, 30, 29, "Expected <attribute value>"),
+            ),
+            ("(#uname eq node-1 and date gt)", (1, 30, 29, "Expected <date>")),
             # pyparsing 2 uses double quotes, pyparsing 3 uses single quotes
             ("(#uname eq node1", (1, 17, 16, {"Expected ')'", 'Expected ")"'})),
         ]
