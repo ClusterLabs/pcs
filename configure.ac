@@ -334,23 +334,62 @@ fi
 # PCS_BUNDLE_PYMOD([module], [version])
 AC_DEFUN([PCS_BUNDLE_PYMOD], [
 	echo "$1 $2" | sed -e 's# ##g' >> $ac_pwd/rpm/requirements.txt
-	if test "x$cache_only" = "xyes"; then
-		src=`ls rpm/$1-*`
-		if test "x$src" = "x"; then
-			 AC_MSG_ERROR([cache only build required but no source detected in rpm/])
-		fi
-	fi
 ])
 
 # PCS_CHECK_PYMOD([module], [version], [embedded=yes])
 AC_DEFUN([PCS_CHECK_PYMOD], [
-	if test "x$local_build" = "xyes" && test "x$3" = "xyes"; then
-		AC_PIP_MODULE([$1], [$2], [bundle_module=no], [bundle_module=yes], [bundle_module=yes])
-		if test "x$bundle_module" = "xyes" || test "x$individual_bundling" != "xyes"; then
-			PCS_BUNDLE_PYMOD([$1], [$2])
+	AC_PIP_MODULE([$1], [$2], [bundle_module=no], [bundle_module=yes], [bundle_module=yes])
+	if { test "x$local_build" != "xyes" || test "x$3" != "xyes"; } && test "x$bundle_module" = "xyes"; then
+		AC_MSG_ERROR([Python module $1 not found])
+	fi
+	if test "x$bundle_module" = "xyes" && test "x$cache_only" = "xyes"; then
+		src=`ls rpm/$1-*`
+		if test "x$src" = "x"; then
+			AC_MSG_ERROR([cache only build required but no source detected in rpm/])
+		fi
+	fi
+	if test "x$3" = "xyes" && { test "x$bundle_module" = "xyes" || test "x$individual_bundling" != "xyes"; }; then
+		PCS_BUNDLE_PYMOD([$1], [$2])
+	fi
+])
+
+# PCS_BUNDLE_GEM([module], [version])
+AC_DEFUN([PCS_BUNDLE_GEM], [
+	if test "x$PCS_CUSTOM_GEMFILE" = "x"; then
+		if test "x$2" = "x"; then
+			echo "gem '$1'" >> Gemfile
+		else
+			echo "gem '$1', '$2'" >> Gemfile
 		fi
 	else
-		AC_PIP_MODULE([$1], [$2], [], [AC_MSG_ERROR([Python module $1 not found])])
+		grep "$1" Gemfile || AC_MSG_ERROR([custom gemfile missing required gem '$1'])
+	fi
+])
+
+# PCS_CHECK_GEM([module], [version])
+AC_DEFUN([PCS_CHECK_GEM], [
+	AC_RUBY_GEM([$1], [$2], [bundle_module=no], [bundle_module=yes])
+	if test "x$local_build" != "xyes" && test "x$bundle_module" = "xyes"; then
+		AC_MSG_ERROR([ruby gem $1 not found])
+	fi
+	if test "x$bundle_module" = "xyes" && test "x$cache_only" = "xyes"; then
+		src=`ls $PCSD_BUNDLED_CACHE_DIR/$1-*`
+		if test "x$src" = "x"; then
+			AC_MSG_ERROR([cache only build required but no source detected in $PCSD_BUNDLED_CACHE_DIR])
+		fi
+	fi
+	# Add gem to Gemfile regardless of system availability.
+	# Needed for isolated test execution via `bundle exec`.
+	PCS_BUNDLE_GEM([$1])
+])
+
+# PCS_GEM_ACTION([curversion], [op], [cmpversion][, action-if-true] [, action-if-false])
+AC_DEFUN([PCS_GEM_ACTION], [
+	if test "x$individual_bundling" = "xyes" || test "x$local_build" != "xyes" && test -n "$1"; then
+		AC_COMPARE_VERSIONS([$1], [$2], [$3], [$4], [$5])
+	else
+		true
+		$5
 	fi
 ])
 
@@ -394,7 +433,7 @@ if test "x$tests_only" != "xyes"; then
 	# packages must be installed for these checks to pass.
 	# This uses variables set by the PCS_CHECK_PYMOD macro, so it must be executed
 	# right after it.
-	if test "x$bundle_module" = "xyes"; then
+	if test "x$bundle_module" = "xyes" || test "x$individual_bundling" != "xyes"; then
 		PKG_CHECK_MODULES([LIBCURL], [libcurl])
 		PKG_CHECK_MODULES([OPENSSL], [openssl])
 	fi
@@ -429,49 +468,6 @@ if test "x$local_build" = "xyes"; then
 		echo "" >> Gemfile
 	fi
 fi
-
-# PCS_BUNDLE_GEM([module], [version])
-AC_DEFUN([PCS_BUNDLE_GEM], [
-	if test "x$PCS_CUSTOM_GEMFILE" = "x"; then
-		if test "x$2" = "x"; then
-			echo "gem '$1'" >> Gemfile
-		else
-			echo "gem '$1', '$2'" >> Gemfile
-		fi
-	else
-		grep "$1" Gemfile || AC_MSG_ERROR([custom gemfile missing required gem '$1'])
-	fi
-])
-
-# PCS_CHECK_GEM([module], [version])
-AC_DEFUN([PCS_CHECK_GEM], [
-	if test "x$local_build" = "xyes"; then
-		# Add gem to Gemfile regardless of system availability.
-		# Needed for isolated test execution via `bundle exec`.
-		PCS_BUNDLE_GEM([$1], [$2])
-		AC_RUBY_GEM([$1], [$2], [bundle_module=no], [bundle_module=yes])
-		if test "x$bundle_module" = "xyes" || test "x$individual_bundling" != "xyes"; then
-			if test "x$cache_only" = "xyes"; then
-				src=`ls $PCSD_BUNDLED_CACHE_DIR/$1-*`
-				if test "x$src" = "x"; then
-					AC_MSG_ERROR([cache only build required but no source detected in $PCSD_BUNDLED_CACHE_DIR])
-				fi
-			fi
-		fi
-	else
-		AC_RUBY_GEM([$1], [$2], [], [AC_MSG_ERROR([ruby gem $1 not found])])
-	fi
-])
-
-# PCS_GEM_ACTION([curversion], [op], [cmpversion][, action-if-true] [, action-if-false])
-AC_DEFUN([PCS_GEM_ACTION], [
-	if test "x$individual_bundling" = "xyes" || test "x$local_build" != "xyes" && test -n "$1"; then
-		AC_COMPARE_VERSIONS([$1], [$2], [$3], [$4], [$5])
-	else
-		true
-		$5
-	fi
-])
 
 PCS_CHECK_GEM([power_assert])
 PCS_CHECK_GEM([test-unit])
