@@ -99,7 +99,13 @@ def parse_rule(rule_string: str) -> BoolExpr:
             e.lineno,
             e.col,
             e.loc,
-            e.args[2] if e.args[2] is not None else "",
+            # Use e.msg (the current message) rather than e.args[2] (the
+            # message captured when the exception was constructed). When an Or
+            # substitutes its own set_name into a failed match it updates e.msg
+            # but leaves e.args[2] pointing at the inner alternative's original
+            # message, so e.args[2] can be stale (e.g. "Expected 'eq'" instead
+            # of "Expected <comparison operator>").
+            e.msg if e.msg is not None else "",
         ) from e
 
     if not isinstance(parsed, BoolExpr):
@@ -401,7 +407,7 @@ def __get_rule_parser() -> pyparsing.ParserElement:
                         ]
                     ),
                 ]
-            ),
+            ).set_name("<date>"),
         ]
     )
     date_inrange_expr.set_parse_action(__build_date_inrange_expr)
