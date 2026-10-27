@@ -381,19 +381,18 @@ AC_DEFUN([PCS_CHECK_GEM], [
 			AC_MSG_ERROR([cache only build required but no source detected in $PCSD_BUNDLED_CACHE_DIR])
 		fi
 	fi
-	# Add gem to Gemfile regardless of system availability.
-	# Needed for isolated test execution via `bundle exec`.
-	PCS_BUNDLE_GEM([$1])
-])
-
-# PCS_GEM_ACTION([curversion], [op], [cmpversion][, action-if-true] [, action-if-false])
-AC_DEFUN([PCS_GEM_ACTION], [
-	if test "x$individual_bundling" = "xyes" || test "x$local_build" != "xyes" && test -n "$1"; then
-		AC_COMPARE_VERSIONS([$1], [$2], [$3], [$4], [$5])
-	else
-		true
-		$5
+	gem_version=""
+	if test "x$bundle_module" != "xyes" && test "x$individual_bundling" = "xyes"; then
+		# Individual bundling is on and the gem is installed in the system:
+		# use its installed version so it is reused instead of bundled.
+		module_caps=AS_TR_CPP([$1])
+		AS_VAR_COPY([gem_version], [HAVE_RUBYGEM_${module_caps}_VERSION])
 	fi
+	gem_version="${gem_version:-$2}"
+	# Pin the gem in the Gemfile to:
+	#   * the installed system version -> reuse the system gem (no bundling);
+	#   * the given version requirement (or none) -> bundle the newest match.
+	PCS_BUNDLE_GEM([$1], [$gem_version])
 ])
 
 # required by rpm build
@@ -479,13 +478,40 @@ if test "x$local_build" = "xyes"; then
 	fi
 fi
 
-PCS_CHECK_GEM([power_assert])
-PCS_CHECK_GEM([test-unit])
-
 RACK_HANDLER="Rackup"
 REQUIRE_RACKUP="require 'rackup'"
 
 if test "x$tests_only" != "xyes"; then
+	# Direct PCSD dependencies
+	# ########################
+	if test "x$individual_bundling" != "xyes"; then
+		# Default Gems
+		PCS_CHECK_GEM([date])
+		PCS_CHECK_GEM([etc])
+		PCS_CHECK_GEM([fileutils])
+		PCS_CHECK_GEM([net-http])
+		PCS_CHECK_GEM([openssl])
+		PCS_CHECK_GEM([rubygems-update])
+		PCS_CHECK_GEM([shellwords])
+		PCS_CHECK_GEM([stringio])
+		PCS_CHECK_GEM([tempfile])
+		PCS_CHECK_GEM([timeout])
+		PCS_CHECK_GEM([uri])
+	fi
+	# json is a default gem upstream, but RHEL/Fedora ship it as a bundled gem,
+	# so it must be checked and pinned explicitly, also in individual bundling.
+	PCS_CHECK_GEM([json])
+	# Default/Bundled Gems
+	# base64 >= 0.1.0 is also required as a dependency of rack-protection >= 3.2.0.
+	# The version requirement must be specified here rather than in a separate
+	# check, because listing the same gem twice in the Gemfile with different
+	# version specs causes bundler to fail.
+	PCS_CHECK_GEM([base64], [>= 0.1.0])
+	PCS_CHECK_GEM([logger])
+	PCS_CHECK_GEM([rexml])
+	# Bundled Gems
+	PCS_CHECK_GEM([test-unit])
+	# Standalone Gems
 	PCS_CHECK_GEM([backports])
 	# We require childprocess 5.0.0+ due to the libcurl's threaded DNS resolver,
 	# new Ruby and Puma. Old childprocess uses a wrong forking method causing
@@ -498,21 +524,45 @@ if test "x$tests_only" != "xyes"; then
 		PCS_CHECK_GEM([childprocess], [>= 5.0.0])
 	fi
 	PCS_CHECK_GEM([curb])
-	PCS_CHECK_GEM([json])
-	PCS_CHECK_GEM([ruby2_keywords])
-	PCS_CHECK_GEM([mustermann])
-	PCS_CHECK_GEM([openssl])
-	PCS_CHECK_GEM([rack])
-	PCS_GEM_ACTION([$HAVE_RUBYGEM_RACK_VERSION], [<], [3.0], [RACK_HANDLER=Rack REQUIRE_RACKUP=""], [PCS_CHECK_GEM([rackup])])
-	PCS_CHECK_GEM([rack-protection])
-	PCS_GEM_ACTION([$HAVE_RUBYGEM_RACK_PROTECTION_VERSION], [<], [3.2.0], [], [PCS_CHECK_GEM([base64], [>= 0.1.0])])
-	PCS_CHECK_GEM([rack-test])
-	PCS_CHECK_GEM([sinatra])
-	PCS_GEM_ACTION([$HAVE_RUBYGEM_SINATRA_VERSION], [<], [4.0.0], [], [PCS_CHECK_GEM([rack-session], [>= 2.0.0])])
-	PCS_CHECK_GEM([tilt])
-	PCS_CHECK_GEM([nio4r])
 	PCS_CHECK_GEM([puma])
-	PCS_CHECK_GEM([rexml])
+	PCS_CHECK_GEM([rack])
+	# rack < 3.0 provides its own handler and does not need the rackup gem
+	AC_RUBY_GEM([rack], [< 3.0.0], [need_rackup=no], [need_rackup=yes], [need_rackup=yes])
+	if test "x$need_rackup" = "xyes"; then
+		PCS_CHECK_GEM([rackup])
+	else
+		RACK_HANDLER=Rack
+		REQUIRE_RACKUP=""
+	fi
+	PCS_CHECK_GEM([sinatra])
+	if test "x$individual_bundling" = "xyes"; then
+		# Indirect PCSD dependencies
+		# ########################
+		# NOTE: These are transitive dependencies of the direct gems above. We
+		#       must list them so PCS_CHECK_GEM pins them to their system
+		#       versions; an unlisted one stays unpinned and bundler would
+		#       download and bundle a newer version instead of reusing the
+		#       system gem. A new transitive dependency must therefore be added
+		#       here as well.
+		# test-unit dependencies
+		PCS_CHECK_GEM([power_assert])
+		# rest of sinatra dependencies
+		PCS_CHECK_GEM([mustermann], [< 4.0.0])
+		# musterman < 3.1.0 requires ruby2_keywords ~> 0.0.1
+		AC_RUBY_GEM([mustermann], [< 3.1.0], [need_ruby2_keywords=yes], [need_ruby2_keywords=no], [need_ruby2_keywords=no])
+		if test "x$need_ruby2_keywords" = "xyes"; then
+			PCS_CHECK_GEM([ruby2_keywords], [>= 0.0.1])
+		fi
+		PCS_CHECK_GEM([rack-protection])
+		# sinatra >= 4.0.0 introduced a new dependency on rack-session >= 2.0.0
+		AC_RUBY_GEM([sinatra], [< 4.0.0], [need_rack_session=no], [need_rack_session=yes], [need_rack_session=yes])
+		if test "x$need_rack_session" = "xyes"; then
+			PCS_CHECK_GEM([rack-session], [>= 2.0.0])
+		fi
+		PCS_CHECK_GEM([tilt])
+		# puma dependencies
+		PCS_CHECK_GEM([nio4r])
+	fi
 fi
 AC_SUBST([RACK_HANDLER])
 AC_SUBST([REQUIRE_RACKUP])
@@ -534,6 +584,8 @@ AC_SUBST([SYSTEMD_GEM_HOME])
 AM_CONDITIONAL([INSTALL_EMBEDDED_GEMS], [test -n "$GEM_HOME"])
 
 AM_CONDITIONAL([ENABLE_DOWNLOAD], [test "x$cache_only" != "xyes"])
+AM_CONDITIONAL([INDIVIDUAL_BUNDLING], [test "x$individual_bundling" = "xyes"])
+
 
 if test "x$booth_enable_authfile_set" = "xyes"; then
 	BOOTH_ENABLE_AUTHFILE_SET_DOC="

@@ -128,18 +128,55 @@ if ENABLE_DOWNLOAD
 	rm -rf .bundle Gemfile.lock
 	$(MKDIR_P) .bundle
 	echo '---' > .bundle/config
+if INDIVIDUAL_BUNDLING
+else
+# Vendor every gem into pcsd/vendor/bundle instead of using system gems.
+# BUNDLE_PATH makes bundler install all gems there, including ones also
+# installed system-wide, producing a self-contained bundle;
+# BUNDLE_DISABLE_SHARED_GEMS states that explicitly.
+#
+# BUNDLE_PATH is essential: without it bundler shares system gems, and then
+# a plain `bundle install` silently references a system-installed gem
+# instead of vendoring it (incomplete bundle). `bundle install --redownload`
+# does not help either: although --redownload is meant to force downloading
+# every gem, a gem already present system-wide is not downloaded (contrary
+# to what --redownload promises), so the install then fails because its .gem
+# file is missing.
 	echo 'BUNDLE_DISABLE_SHARED_GEMS: "true"' >> .bundle/config
 	echo 'BUNDLE_PATH: "$(PCSD_BUNDLED_DIR_ROOT_LOCAL)"' >> .bundle/config
 	echo 'BUNDLE_CACHE_PATH: "$(PCSD_BUNDLED_CACHE_DIR)"' >> .bundle/config
-	echo 'BUNDLE_BUILD: \"$(ruby_LIBS)\"' >> .bundle/config
+endif
 	echo 'BUNDLE_TIMEOUT: 30' >> .bundle/config
 	echo 'BUNDLE_RETRY: 30' >> .bundle/config
 	echo 'BUNDLE_JOBS: 1' >> .bundle/config
 	echo 'BUNDLE_FORCE_RUBY_PLATFORM: "true"' >> .bundle/config
-	$(BUNDLE) --redownload
+if INDIVIDUAL_BUNDLING
+# Individual bundling reuses system gems and bundles only the missing ones,
+# so BUNDLE_PATH / vendoring isolation (see the full local build above) is
+# intentionally NOT set here - it would vendor a private copy of every gem.
+# Bundler has no single option for reusing system gems, so we achieve it by
+# pinning the system gems to their installed versions in the Gemfile (done in
+# configure.ac); otherwise bundler resolves them to another version and
+# downloads it. GEM_HOME/GEM_PATH point bundler at the system gem locations
+# plus our vendor dir.
+#
+# Do NOT add --prefer-local: it makes bundler avoid fetching gems missing
+# locally and skews resolution - a missing transitive gem makes it backtrack
+# to an ancient version that does not need it (observed: sinatra 1.0 because
+# its transitive mustermann dependency was not installed). A plain
+# `bundle install` resolves against the remote index and picks newest.
+	GEM_HOME="${abs_top_builddir}/${PCSD_BUNDLED_DIR_ROOT_LOCAL}" \
+		GEM_PATH="$$GEM_HOME:$$(gem env path)" \
+		$(BUNDLE) install
+else
+	$(BUNDLE) install
 	cp -rp $(PCSD_BUNDLED_DIR_LOCAL)/* $(PCSD_BUNDLED_DIR_ROOT_LOCAL)/
 	rm -rf $$(realpath $(PCSD_BUNDLED_DIR_LOCAL)/../)
-	rm -rf .bundle Gemfile.lock
+endif
+# Remove .bundle so that `bundle exec` (used by pcsd-tests) does not read
+# BUNDLE_PATH and instead resolves the gems through GEM_HOME against the
+# flattened pcsd/vendor/bundle layout. Gemfile.lock is kept.
+	rm -rf .bundle
 else
 	with_cflags=""; \
 	if test "x$(ruby_CFLAGS)" != "x"; then \
