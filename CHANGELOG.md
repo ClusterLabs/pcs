@@ -7,6 +7,10 @@
   resource restarts when updating SCSI devices. ([RHEL-214140])
 - Most pcsd requests ending with Internal Server Error with rubygem-json 3.0.0+
 
+### Changed
+- Dependency on libffi-devel caused by rubygem ethon was removed. There is a new
+  dependency on libcurl-devel, because ethon was swapped for rubygem curb.
+
 ### Deprecated
 - Disabling cluster traffic encryption (setting knet transport crypto options
   `cipher` or `hash` to `none`) ([RHEL-218000])
