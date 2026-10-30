@@ -824,8 +824,8 @@ class Parser(TestCase):
     def test_not_valid_rule(self):
         test_data = [
             # node attr misc
-            ("#uname", (1, 7, 6, "Expected 'eq'")),
-            ("string node1", (1, 8, 7, "Expected 'eq'")),
+            ("#uname", (1, 7, 6, "Expected <comparison operator>")),
+            ("string node1", (1, 8, 7, "Expected <comparison operator>")),
             # node attr unary
             ("defined", (1, 8, 7, "Expected <attribute name>")),
             ("not_defined", (1, 12, 11, "Expected <attribute name>")),
@@ -833,55 +833,76 @@ class Parser(TestCase):
             ("defined date-spec hours=1", (1, 19, 18, "Expected end of text")),
             ("defined duration hours=1", (1, 18, 17, "Expected end of text")),
             # node attr binary
-            ("eq", (1, 3, 2, "Expected 'eq'")),
+            ("eq", (1, 3, 2, "Expected <comparison operator>")),
             ("#uname eq", (1, 10, 9, "Expected <attribute value>")),
-            ("#uname node1", (1, 8, 7, "Expected 'eq'")),
-            ("eq #uname", (1, 4, 3, "Expected 'eq'")),
+            ("#uname node1", (1, 8, 7, "Expected <comparison operator>")),
+            ("eq #uname", (1, 4, 3, "Expected <comparison operator>")),
             ("eq lt", (1, 6, 5, "Expected <attribute value>")),
-            ("string #uname eq node1", (1, 8, 7, "Expected 'eq'")),
+            (
+                "string #uname eq node1",
+                (1, 8, 7, "Expected <comparison operator>"),
+            ),
             ("date-spec hours=1 eq node1", (1, 19, 18, "Expected end of text")),
             (
                 "#uname eq date-spec hours=1",
                 (1, 21, 20, "Expected end of text"),
             ),
-            ("duration hours=1 eq node1", (1, 10, 9, "Expected 'eq'")),
+            (
+                "duration hours=1 eq node1",
+                (1, 10, 9, "Expected <comparison operator>"),
+            ),
             ("#uname eq duration hours=1", (1, 20, 19, "Expected end of text")),
             # node attr binary with optional parts
-            ("string", (1, 7, 6, "Expected 'eq'")),
+            ("string", (1, 7, 6, "Expected <comparison operator>")),
             ("#uname eq string", (1, 17, 16, "Expected <attribute value>")),
-            ("string #uname eq node1", (1, 8, 7, "Expected 'eq'")),
+            (
+                "string #uname eq node1",
+                (1, 8, 7, "Expected <comparison operator>"),
+            ),
             # resource, op
-            ("resource", (1, 9, 8, "Expected 'eq'")),
-            ("op", (1, 3, 2, "Expected 'eq'")),
-            ("resource ::rA and", (1, 15, 14, "Expected end of text")),
-            ("resource ::rA and op ", (1, 15, 14, "Expected end of text")),
-            ("resource ::rA and (", (1, 15, 14, "Expected end of text")),
+            ("resource", (1, 9, 8, "Expected <comparison operator>")),
+            ("op", (1, 3, 2, "Expected <comparison operator>")),
+            ("resource ::rA and", (1, 18, 17, "Expected <expression>")),
+            (
+                "resource ::rA and op ",
+                (1, 22, 21, "Expected <comparison operator>"),
+            ),
+            ("resource ::rA and (", (1, 20, 19, "Expected <expression>")),
             # and, or
-            ("and", (1, 4, 3, "Expected 'eq'")),
-            ("or", (1, 3, 2, "Expected 'eq'")),
-            ("#uname and node1", (1, 8, 7, "Expected 'eq'")),
-            ("#uname or node1", (1, 8, 7, "Expected 'eq'")),
-            ("#uname or eq", (1, 8, 7, "Expected 'eq'")),
-            ("#uname eq node1 and node2", (1, 17, 16, "Expected end of text")),
-            ("#uname eq node1 and", (1, 17, 16, "Expected end of text")),
+            ("and", (1, 4, 3, "Expected <comparison operator>")),
+            ("or", (1, 3, 2, "Expected <comparison operator>")),
+            ("#uname and node1", (1, 8, 7, "Expected <comparison operator>")),
+            ("#uname or node1", (1, 8, 7, "Expected <comparison operator>")),
+            ("#uname or eq", (1, 8, 7, "Expected <comparison operator>")),
+            (
+                "#uname eq node1 and node2",
+                (1, 26, 25, "Expected <comparison operator>"),
+            ),
+            ("#uname eq node1 and", (1, 20, 19, "Expected <expression>")),
             (
                 "#uname eq node1 and #uname eq",
-                (1, 17, 16, "Expected end of text"),
+                (1, 30, 29, "Expected <attribute value>"),
             ),
-            ("and #uname eq node1", (1, 5, 4, "Expected 'eq'")),
+            (
+                "and #uname eq node1",
+                (1, 5, 4, "Expected <comparison operator>"),
+            ),
             (
                 "#uname ne node1 and duration hours=1",
-                (1, 17, 16, "Expected end of text"),
+                (1, 30, 29, "Expected <comparison operator>"),
             ),
             (
                 "duration monthdays=1 or #uname ne node1",
-                (1, 10, 9, "Expected 'eq'"),
+                (1, 10, 9, "Expected <comparison operator>"),
             ),
             # date
             ("date in_range", (1, 14, 13, "Expected 'to'")),
             ("date in_range 2014-06-26", (1, 15, 14, "Expected 'to'")),
             ("date in_range 2014-06-26 to", (1, 28, 27, "Expected <date>")),
-            ("in_range 2014-06-26 to 2014-07-26", (1, 10, 9, "Expected 'eq'")),
+            (
+                "in_range 2014-06-26 to 2014-07-26",
+                (1, 10, 9, "Expected <comparison operator>"),
+            ),
             (
                 "date in_range #uname eq node1 to 2014-07-26",
                 (1, 15, 14, "Expected 'to'"),
@@ -900,7 +921,7 @@ class Parser(TestCase):
             ),
             (
                 "string date in_range 2014-06-26 to 2014-07-26",
-                (1, 8, 7, "Expected 'eq'"),
+                (1, 8, 7, "Expected <comparison operator>"),
             ),
             (
                 "date in_range string 2014-06-26 to 2014-07-26",
@@ -916,7 +937,7 @@ class Parser(TestCase):
             ),
             (
                 "#uname in_range 2014-06-26 to 2014-07-26",
-                (1, 8, 7, "Expected 'eq'"),
+                (1, 8, 7, "Expected <comparison operator>"),
             ),
             (
                 "date gt 2014-06-24 12:00:00",
@@ -935,11 +956,18 @@ class Parser(TestCase):
                 (1, 40, 39, "Expected end of text"),
             ),
             # braces
-            ("(#uname)", (1, 8, 7, "Expected 'eq'")),
-            ("(", (1, 2, 1, "Expected 'date'")),
-            ("()", (1, 2, 1, "Expected 'date'")),
-            ("(#uname", (1, 8, 7, "Expected 'eq'")),
+            ("(#uname)", (1, 8, 7, "Expected <comparison operator>")),
+            ("(", (1, 2, 1, "Expected <expression>")),
+            ("()", (1, 2, 1, "Expected <expression>")),
+            ("(#uname", (1, 8, 7, "Expected <comparison operator>")),
             ("(#uname eq", (1, 11, 10, "Expected <attribute value>")),
+            # a failing operand inside parentheses reports its own precise error
+            # instead of a generic error at the operator or opening parenthesis
+            (
+                "(#uname eq node-1 and date eq)",
+                (1, 30, 29, "Expected <attribute value>"),
+            ),
+            ("(#uname eq node-1 and date gt)", (1, 30, 29, "Expected <date>")),
             # pyparsing 2 uses double quotes, pyparsing 3 uses single quotes
             ("(#uname eq node1", (1, 17, 16, {"Expected ')'", 'Expected ")"'})),
         ]
