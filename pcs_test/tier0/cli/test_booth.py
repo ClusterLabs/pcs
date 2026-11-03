@@ -185,11 +185,11 @@ class CreateTest(TestCase):
     "pcs.common.reports.processor.ReportProcessorInMemory.reports",
     new_callable=mock.PropertyMock,
 )
-@mock.patch("pcs.cli.booth.command.process_library_reports")
 class RemoveFromCluster(TestCase):
     def setUp(self):
         self.lib = mock.Mock(spec_set=["booth", "cluster", "env", "resource"])
         self.lib.env = mock.Mock(spec_set=["report_processor"])
+        self.lib.env.report_processor = mock.Mock(spec_set=["report_list"])
         self.lib.booth = mock.Mock(
             spec_set=["get_resource_ids_from_cluster", "remove_from_cluster"]
         )
@@ -205,62 +205,53 @@ class RemoveFromCluster(TestCase):
         self.lib.assert_has_calls(expected_calls)
         self.assertEqual(len(self.lib.mock_calls), len(expected_calls))
 
-    def test_args(self, mock_process_library_reports, mock_reports):
+    def test_args(self, mock_reports):
         with self.assertRaises(CmdLineInputError) as cm:
             self._call_cmd(["A"])
         self.assertIsNone(cm.exception.message)
         self.assert_lib_calls([])
         mock_reports.assert_not_called()
-        mock_process_library_reports.assert_not_called()
+        self.lib.env.report_processor.report_list.assert_not_called()
 
-    def test_no_name(self, mock_process_library_reports, mock_reports):
+    def test_no_name(self, mock_reports):
         mock_reports.return_value = [INFO_REPORT]
         self._call_cmd([])
 
-        self.assert_lib_calls([mock.call.booth.remove_from_cluster(None)])
-        mock_process_library_reports.assert_called_once_with(
-            [INFO_REPORT], include_debug=False
+        self.assert_lib_calls(
+            [
+                mock.call.booth.remove_from_cluster(None),
+                mock.call.env.report_processor.report_list([INFO_REPORT]),
+            ]
         )
 
-    def test_name(self, mock_process_library_reports, mock_reports):
+    def test_name(self, mock_reports):
         mock_reports.return_value = [INFO_REPORT]
         self._call_cmd([], {"name": "A"})
 
-        self.assert_lib_calls([mock.call.booth.remove_from_cluster("A")])
-        mock_process_library_reports.assert_called_once_with(
-            [INFO_REPORT], include_debug=False
+        self.assert_lib_calls(
+            [
+                mock.call.booth.remove_from_cluster("A"),
+                mock.call.env.report_processor.report_list([INFO_REPORT]),
+            ]
         )
 
-    def test_with_debug(self, mock_process_library_reports, mock_reports):
-        mock_reports.return_value = [INFO_REPORT]
-        self._call_cmd([], {"debug": True})
-
-        self.assert_lib_calls([mock.call.booth.remove_from_cluster(None)])
-        mock_process_library_reports.assert_called_once_with(
-            [INFO_REPORT], include_debug=True
-        )
-
-    def test_dont_stop_me_now(self, mock_process_library_reports, mock_reports):
+    def test_dont_stop_me_now(self, mock_reports):
         self._call_cmd([], {"no-stop": True})
 
         self.assert_lib_calls([mock.call.booth.remove_from_cluster(None, [])])
         mock_reports.assert_not_called()
-        mock_process_library_reports.assert_not_called()
+        self.lib.env.report_processor.report_list.assert_not_called()
 
-    def test_force_dont_stop_me_now(
-        self, mock_process_library_reports, mock_reports
-    ):
+    def test_force_dont_stop_me_now(self, mock_reports):
         self._call_cmd([], {"force": True, "no-stop": True})
 
         self.assert_lib_calls(
             [mock.call.booth.remove_from_cluster(None, [reports.codes.FORCE])]
         )
         mock_reports.assert_not_called()
-        mock_process_library_reports.assert_not_called()
+        self.lib.env.report_processor.report_list.assert_not_called()
 
-    def test_remove_not_stopped(
-        self, mock_process_library_reports, mock_reports
-    ):
+    def test_remove_not_stopped(self, mock_reports):
         booth_name = None
         force_flags = []
         resource_ids = ["R1", "R2"]
@@ -279,11 +270,9 @@ class RemoveFromCluster(TestCase):
                 mock.call.booth.remove_from_cluster(booth_name, force_flags),
             ]
         )
-        mock_process_library_reports.assert_not_called()
+        self.lib.env.report_processor.report_list.assert_not_called()
 
-    def test_remove_more_errors(
-        self, mock_process_library_reports, mock_reports
-    ):
+    def test_remove_more_errors(self, mock_reports):
         self.lib.booth.remove_from_cluster.side_effect = [LibraryError(), None]
         mock_reports.return_value = [
             BOOTH_NOT_IN_CIB_ERROR,
@@ -292,31 +281,16 @@ class RemoveFromCluster(TestCase):
 
         self.assertRaises(LibraryError, lambda: self._call_cmd([]))
 
-        self.assert_lib_calls([mock.call.booth.remove_from_cluster(None)])
-        mock_process_library_reports.assert_called_once_with(
-            [BOOTH_NOT_IN_CIB_ERROR], include_debug=False, exit_on_error=False
+        self.assert_lib_calls(
+            [
+                mock.call.booth.remove_from_cluster(None),
+                mock.call.env.report_processor.report_list(
+                    [BOOTH_NOT_IN_CIB_ERROR]
+                ),
+            ]
         )
 
-    def test_remove_more_errors_debug(
-        self, mock_process_library_reports, mock_reports
-    ):
-        self.lib.booth.remove_from_cluster.side_effect = [LibraryError(), None]
-        mock_reports.return_value = [
-            BOOTH_NOT_IN_CIB_ERROR,
-            UNSTOPPED_RESOURCES_ERROR_REPORT,
-        ]
-
-        self.assertRaises(
-            LibraryError, lambda: self._call_cmd([], {"debug": True})
-        )
-        self.assert_lib_calls([mock.call.booth.remove_from_cluster(None)])
-        mock_process_library_reports.assert_called_once_with(
-            [BOOTH_NOT_IN_CIB_ERROR], include_debug=True, exit_on_error=False
-        )
-
-    def test_mutually_exclusive_options(
-        self, mock_process_library_reports, mock_reports
-    ):
+    def test_mutually_exclusive_options(self, mock_reports):
         with self.assertRaises(CmdLineInputError) as cm:
             booth_cmd.remove_from_cluster(
                 self.lib,
@@ -328,9 +302,9 @@ class RemoveFromCluster(TestCase):
         )
         self.assert_lib_calls([])
         mock_reports.assert_not_called()
-        mock_process_library_reports.assert_not_called()
+        self.lib.env.report_processor.report_list.assert_not_called()
 
-    def test_remove_force(self, mock_process_lib_reports, mock_reports):
+    def test_remove_force(self, mock_reports):
         booth_name = None
         mock_reports.return_value = []
 
@@ -338,12 +312,9 @@ class RemoveFromCluster(TestCase):
 
         self.assert_lib_calls([mock.call.booth.remove_from_cluster(booth_name)])
         mock_reports.assert_called_once()
-        mock_process_lib_reports.assert_not_called()
 
     @mock.patch("pcs.cli.booth.command.deprecation_warning")
-    def test_future_option_no_op(
-        self, mock_deprecation_warning, mock_process_lib_reports, mock_reports
-    ):
+    def test_future_option_no_op(self, mock_deprecation_warning, mock_reports):
         booth_name = None
         mock_reports.return_value = []
 
@@ -353,11 +324,8 @@ class RemoveFromCluster(TestCase):
         mock_deprecation_warning.assert_called_once_with(
             FIXTURE_FUTURE_OPTION_DEPRECATION_WARNING
         )
-        mock_process_lib_reports.assert_not_called()
 
-    def test_remove_force_more_errors_forceable(
-        self, mock_process_lib_reports, mock_reports
-    ):
+    def test_remove_force_more_errors_forceable(self, mock_reports):
         booth_name = None
         force_flags = [reports.codes.FORCE]
         resource_ids = ["R1"]
@@ -378,11 +346,8 @@ class RemoveFromCluster(TestCase):
                 mock.call.booth.remove_from_cluster(booth_name, force_flags),
             ]
         )
-        mock_process_lib_reports.assert_not_called()
 
-    def test_remove_force_more_errors_not_forceable(
-        self, mock_process_lib_reports, mock_reports
-    ):
+    def test_remove_force_more_errors_not_forceable(self, mock_reports):
         self.lib.booth.remove_from_cluster.side_effect = [LibraryError(), None]
         self.lib.booth.get_resource_ids_from_cluster.return_value = ["R1"]
         mock_reports.return_value = [
@@ -395,16 +360,18 @@ class RemoveFromCluster(TestCase):
             LibraryError,
             lambda: self._call_cmd([], {"force": True}),
         )
-        self.assert_lib_calls([mock.call.booth.remove_from_cluster(None)])
-        mock_process_lib_reports.assert_called_once_with(
+        self.assert_lib_calls(
             [
-                reports.item.ReportItem.warning(
-                    reports.messages.BoothNotExistsInCib(name="booth")
+                mock.call.booth.remove_from_cluster(None),
+                mock.call.env.report_processor.report_list(
+                    [
+                        reports.item.ReportItem.warning(
+                            reports.messages.BoothNotExistsInCib(name="booth")
+                        ),
+                        BOOTH_NOT_IN_CIB_ERROR,
+                    ]
                 ),
-                BOOTH_NOT_IN_CIB_ERROR,
-            ],
-            include_debug=False,
-            exit_on_error=False,
+            ]
         )
 
 

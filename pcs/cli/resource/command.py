@@ -18,7 +18,6 @@ from pcs.cli.common.parse_args import (
 )
 from pcs.cli.reports.output import (
     deprecation_warning,
-    process_library_reports,
     warn,
 )
 from pcs.cli.resource.common import (
@@ -223,26 +222,20 @@ def remove(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
         # the resources were successfully removed, but we still need to print
         # out the reports, since there could be INFO or DEBUG reports
         if in_memory_report_processor.reports:
-            process_library_reports(
+            original_report_processor.report_list(
                 in_memory_report_processor.reports,
-                include_debug=modifiers.is_specified("--debug"),
             )
         return
     except LibraryError as e:
         filtered_reports = _process_reports(
             in_memory_report_processor.reports, force_flags
         )
-
         # if there are other errors than CANNOT_REMOVE_RESOURCES_NOT_STOPPED or
         # errors that would be forced, we can exit, since it does not make sense
         # to try stopping and removing the resources again
         if reports.has_errors(filtered_reports) or e.args:
             if filtered_reports:
-                process_library_reports(
-                    filtered_reports,
-                    include_debug=modifiers.is_specified("--debug"),
-                    exit_on_error=False,
-                )
+                original_report_processor.report_list(filtered_reports)
             raise e
 
     lib.env.report_processor = original_report_processor

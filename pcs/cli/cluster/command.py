@@ -11,7 +11,6 @@ from pcs.cli.common.parse_args import (
 from pcs.cli.common.tools import print_to_stderr
 from pcs.cli.reports.output import (
     deprecation_warning,
-    process_library_reports,
     warn,
 )
 from pcs.cli.resource.parse_args import (
@@ -187,9 +186,8 @@ def node_remove_remote(
             not temporary_report_processor.already_reported_to_console
             and temporary_report_processor.reports
         ):
-            process_library_reports(
+            original_report_processor.report_list(
                 temporary_report_processor.reports,
-                include_debug=modifiers.is_specified("--debug"),
             )
         return
     except LibraryError as e:
@@ -204,10 +202,8 @@ def node_remove_remote(
 
         if reports.has_errors(filtered_reports) or e.args:
             if filtered_reports:
-                process_library_reports(
+                original_report_processor.report_list(
                     filtered_reports,
-                    include_debug=modifiers.is_specified("--debug"),
-                    exit_on_error=False,
                 )
             raise e
 
