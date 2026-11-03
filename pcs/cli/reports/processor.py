@@ -1,7 +1,13 @@
+import sys
 from collections.abc import Callable, Iterable
 
 from pcs.cli.common.tools import print_to_stderr
-from pcs.common.reports import ReportItem, ReportItemSeverity, ReportProcessor
+from pcs.common.reports import (
+    ReportItem,
+    ReportItemList,
+    ReportItemSeverity,
+    ReportProcessor,
+)
 from pcs.common.reports.dto import ReportItemDto
 from pcs.common.reports.types import SeverityLevel
 from pcs.common.reports.utils import add_context_to_message
@@ -83,3 +89,17 @@ def has_errors(report_list_dto: list[ReportItemDto]) -> bool:
 
 def _is_error(report_item_dto: ReportItemDto) -> bool:
     return report_item_dto.severity.level == ReportItemSeverity.ERROR
+
+
+# DEPRECATED
+# This function exists for the needs of already existing code and should not be
+# used. It duplicates errors and reports handling which is meant to be done in
+# app.py.
+def report_and_exit_on_error(
+    report_processor: ReportProcessorToConsole, report_item_list: ReportItemList
+) -> None:
+    if not report_item_list:
+        raise error("Errors have occurred, therefore pcs is unable to continue")
+    report_processor.report_list(report_item_list)
+    if report_processor.has_errors:
+        sys.exit(1)

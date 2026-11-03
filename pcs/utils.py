@@ -41,7 +41,9 @@ from pcs.common.host import PcsKnownHost
 from pcs.common.pacemaker.resource.operations import (
     OCF_CHECK_LEVEL_INSTANCE_ATTRIBUTE_NAME,
 )
-from pcs.common.reports import ReportProcessor
+from pcs.common.reports import (
+    ReportItemList,
+)
 from pcs.common.reports.messages import CibUpgradeFailedToMinimalRequiredVersion
 from pcs.common.services.errors import ManageServiceError
 from pcs.common.services.interfaces import ServiceManagerInterface
@@ -2392,7 +2394,7 @@ def get_cib_user_groups():
     return user, groups
 
 
-def get_cli_env():
+def get_cli_env() -> Env:
     """
     Commandline options:
       * --debug
@@ -2427,7 +2429,7 @@ def get_middleware_factory():
     )
 
 
-def get_library_wrapper():
+def get_library_wrapper() -> Library:
     """
     Commandline options:
       * --debug
@@ -2454,7 +2456,7 @@ def exit_on_cmdline_input_error(
     sys.exit(1)
 
 
-def get_report_processor() -> ReportProcessor:
+def get_report_processor() -> ReportProcessorToConsole:
     return ReportProcessorToConsole(debug="--debug" in pcs_options)
 
 
