@@ -443,7 +443,6 @@ if test "x$tests_only" != "xyes"; then
 	fi
 	PCS_CHECK_GEM([curb])
 	PCS_CHECK_GEM([json])
-	PCS_CHECK_GEM([ruby2_keywords])
 	PCS_CHECK_GEM([mustermann])
 	PCS_CHECK_GEM([openssl])
 	PCS_CHECK_GEM([rack])
