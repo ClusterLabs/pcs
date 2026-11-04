@@ -3,8 +3,8 @@ import sys
 
 from pcs import utils
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.reports import process_library_reports
 from pcs.cli.reports.output import error
+from pcs.cli.reports.processor import report_and_exit_on_error
 from pcs.lib.errors import LibraryError
 from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.pacemaker.live import get_cluster_status_dom
@@ -47,7 +47,6 @@ def nodes_status(lib, argv, modifiers):  # noqa: PLR0912, PLR0915
 
     NOTE: modifiers check is in subcommand
     """
-    del lib
     if len(argv) == 1 and (argv[0] == "config"):
         modifiers.ensure_only_supported("-f", "--corosync_conf")
         if utils.hasCorosyncConf():
@@ -55,7 +54,7 @@ def nodes_status(lib, argv, modifiers):  # noqa: PLR0912, PLR0915
                 utils.get_corosync_conf_facade()
             )
             if report_list:
-                process_library_reports(report_list)
+                report_and_exit_on_error(lib.env.report_processor, report_list)
         else:
             corosync_nodes = []
         try:
@@ -69,7 +68,7 @@ def nodes_status(lib, argv, modifiers):  # noqa: PLR0912, PLR0915
                 ]
             )
         except LibraryError as e:
-            process_library_reports(e.args)
+            report_and_exit_on_error(lib.env.report_processor, e.args)
         print("Corosync Nodes:")
         if corosync_nodes:
             print(" " + " ".join(corosync_nodes))
@@ -85,7 +84,7 @@ def nodes_status(lib, argv, modifiers):  # noqa: PLR0912, PLR0915
             utils.get_corosync_conf_facade()
         )
         if report_list:
-            process_library_reports(report_list)
+            report_and_exit_on_error(lib.env.report_processor, report_list)
         online_nodes = utils.getCorosyncActiveNodes()
         offline_nodes = [node for node in all_nodes if node not in online_nodes]
 

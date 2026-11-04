@@ -26,8 +26,8 @@ from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.output import INDENT_STEP, smart_wrap_text
 from pcs.cli.constraint.output import constraints_to_text
 from pcs.cli.nvset import nvset_dto_list_to_lines
-from pcs.cli.reports import process_library_reports
 from pcs.cli.reports.output import print_to_stderr, warn
+from pcs.cli.reports.processor import report_and_exit_on_error
 from pcs.cli.resource.output import (
     ResourcesConfigurationFacade,
     resources_to_text,
@@ -281,7 +281,6 @@ def config_restore(lib, argv, modifiers):
       * --request-timeout - timeout for HTTP requests, used only if --local was
         not defined or user is not root
     """
-    del lib
     modifiers.ensure_only_supported("--local", "--request-timeout")
     if len(argv) > 1:
         raise CmdLineInputError()
@@ -297,7 +296,9 @@ def config_restore(lib, argv, modifiers):
         if modifiers.get("--local"):
             config_restore_local(infile_name, infile_obj)
         else:
-            config_restore_remote(infile_name, infile_obj)
+            config_restore_remote(
+                lib.env.report_processor, infile_name, infile_obj
+            )
     else:
         new_argv = ["config", "restore"]
         options = []
@@ -320,7 +321,7 @@ def config_restore(lib, argv, modifiers):
         sys.exit(exitcode)
 
 
-def config_restore_remote(infile_name, infile_obj):  # noqa: PLR0912
+def config_restore_remote(report_processor, infile_name, infile_obj):  # noqa: PLR0912
     """
     Commandline options:
       * --request-timeout - timeout for HTTP requests
@@ -351,7 +352,7 @@ def config_restore_remote(infile_name, infile_obj):  # noqa: PLR0912
         )
     )
     if report_list:
-        process_library_reports(report_list)
+        report_and_exit_on_error(report_processor, report_list)
     if not node_list:
         utils.err("no nodes found in the tarball")
 
