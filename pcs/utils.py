@@ -57,8 +57,6 @@ from pcs.lib.external import CommandRunner, is_proxy_set
 from pcs.lib.file.instance import FileInstance as LibFileInstance
 from pcs.lib.host.config.facade import Facade as KnownHostsFacade
 from pcs.lib.interface.config import ParserErrorException
-from pcs.lib.pacemaker.live import get_cluster_status_dom
-from pcs.lib.pacemaker.state import ClusterState
 from pcs.lib.pacemaker.values import validate_id
 from pcs.lib.services import get_service_manager as _get_service_manager
 from pcs.lib.services import service_exception_to_report
@@ -680,21 +678,6 @@ def get_corosync_conf_facade(conf_text=None):
         )
     except corosync_conf_parser.CorosyncConfParserException as e:
         return err("Unable to parse corosync.conf: %s" % e)
-
-
-def getNodeAttributesFromPacemaker():
-    """
-    Commandline options: no options
-    """
-    try:
-        return [
-            node.attrs
-            for node in ClusterState(
-                get_cluster_status_dom(cmd_runner())
-            ).node_section.nodes
-        ]
-    except LibraryError as e:
-        return process_library_reports(e.args)
 
 
 def hasCorosyncConf():
