@@ -125,9 +125,20 @@ endif
 
 install_python_embedded_mods:
 if LOCAL_BUILD
+if ENABLE_DOWNLOAD
+# lets pip download and install build dependencies of embedded python modules
 	for i in ${abs_top_builddir}/$(PCS_BUNDLED_DIR_LOCAL)/src/*; do \
-		$(call build_python_bundle,$$i,$(or ${DESTDIR}, /)/$(PCS_BUNDLED_DIR),${pipinstallopts_no_build_deps}); \
+		$(call build_python_bundle,$$i,$(or ${DESTDIR}, /)/$(PCS_BUNDLED_DIR),\
+			${pipinstallopts}); \
 	done;
+else
+# ${pipinstallopts_no_isolation} - prevents pip from downloading and installing
+#   build dependencies of embedded python modules.
+	for i in ${abs_top_builddir}/$(PCS_BUNDLED_DIR_LOCAL)/src/*; do \
+		$(call build_python_bundle,$$i,$(or ${DESTDIR}, /)/$(PCS_BUNDLED_DIR),\
+			${pipinstallopts} ${pipinstallopts_no_isolation}); \
+	done;
+endif
 endif
 
 stamps/install_ruby_deps_local:
