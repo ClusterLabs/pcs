@@ -64,7 +64,7 @@ class Config(TestCase):
             )
         )
 
-    @mock.patch("pcs.cli.reports.output.sys.stderr.write")
+    @mock.patch("pcs.cli.reports.output.print_to_stderr")
     def test_invalid_response(self, mock_stderr, mock_print):
         self.lib.dr.get_config.return_value = [
             "wrong response",
@@ -77,7 +77,7 @@ class Config(TestCase):
         mock_print.assert_not_called()
         mock_stderr.assert_called_once_with(
             "Error: Unable to communicate with pcsd, received response:\n"
-            "['wrong response', {'x': 'y'}]\n"
+            "['wrong response', {'x': 'y'}]"
         )
 
 
@@ -191,7 +191,7 @@ class Status(TestCase):
         )
         mock_print.assert_called_once_with(self._fixture_print())
 
-    @mock.patch("pcs.cli.reports.output.sys.stderr.write")
+    @mock.patch("pcs.cli.reports.output.print_to_stderr")
     def test_error_local(self, mock_stderr, mock_print):
         self._fixture_response(local_success=False)
         with self.assertRaises(SystemExit) as cm:
@@ -212,10 +212,10 @@ class Status(TestCase):
             )
         )
         mock_stderr.assert_called_once_with(
-            "Error: Unable to get status of all sites\n"
+            "Error: Unable to get status of all sites"
         )
 
-    @mock.patch("pcs.cli.reports.output.sys.stderr.write")
+    @mock.patch("pcs.cli.reports.output.print_to_stderr")
     def test_error_remote(self, mock_stderr, mock_print):
         self._fixture_response(remote_success=False)
         with self.assertRaises(SystemExit) as cm:
@@ -237,10 +237,10 @@ class Status(TestCase):
             )
         )
         mock_stderr.assert_called_once_with(
-            "Error: Unable to get status of all sites\n"
+            "Error: Unable to get status of all sites"
         )
 
-    @mock.patch("pcs.cli.reports.output.sys.stderr.write")
+    @mock.patch("pcs.cli.reports.output.print_to_stderr")
     def test_error_both(self, mock_stderr, mock_print):
         self._fixture_response(local_success=False, remote_success=False)
         with self.assertRaises(SystemExit) as cm:
@@ -260,10 +260,10 @@ class Status(TestCase):
             )
         )
         mock_stderr.assert_called_once_with(
-            "Error: Unable to get status of all sites\n"
+            "Error: Unable to get status of all sites"
         )
 
-    @mock.patch("pcs.cli.reports.output.sys.stderr.write")
+    @mock.patch("pcs.cli.reports.output.print_to_stderr")
     def test_invalid_response(self, mock_stderr, mock_print):
         self.lib.dr.status_all_sites_plaintext.return_value = [
             "wrong response",
@@ -278,7 +278,7 @@ class Status(TestCase):
         mock_print.assert_not_called()
         mock_stderr.assert_called_once_with(
             "Error: Unable to communicate with pcsd, received response:\n"
-            "['wrong response', {'x': 'y'}]\n"
+            "['wrong response', {'x': 'y'}]"
         )
 
 

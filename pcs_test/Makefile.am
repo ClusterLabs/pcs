@@ -118,7 +118,6 @@ EXTRA_DIST		= \
 			  tier0/cli/query/test_resource.py \
 			  tier0/cli/reports/__init__.py \
 			  tier0/cli/reports/test_messages.py \
-			  tier0/cli/reports/test_output.py \
 			  tier0/cli/reports/test_processor.py \
 			  tier0/cli/resource/__init__.py \
 			  tier0/cli/resource/test_common.py \
