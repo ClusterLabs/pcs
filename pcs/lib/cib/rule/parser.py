@@ -92,14 +92,20 @@ def parse_rule(rule_string: str) -> BoolExpr:
         parsed = __get_rule_parser().parse_string(rule_string, parse_all=True)[
             0
         ]
-    except pyparsing.ParseException as e:
+    except pyparsing.ParseBaseException as e:
         raise RuleParseError(
             rule_string,
             e.line,
             e.lineno,
             e.col,
             e.loc,
-            e.args[2] if e.args[2] is not None else "",
+            # Use e.msg (the current message) rather than e.args[2] (the
+            # message captured when the exception was constructed). When an Or
+            # substitutes its own set_name into a failed match it updates e.msg
+            # but leaves e.args[2] pointing at the inner alternative's original
+            # message, so e.args[2] can be stale (e.g. "Expected 'eq'" instead
+            # of "Expected <comparison operator>").
+            e.msg if e.msg is not None else "",
         ) from e
 
     if not isinstance(parsed, BoolExpr):
@@ -312,7 +318,9 @@ def __get_rule_parser() -> pyparsing.ParserElement:
                     pyparsing.CaselessKeyword(op).set_name(f"'{op}'")
                     for op in _token_to_node_expr_binary_op
                 ]
-            ).set_results_name("operator"),
+            )
+            .set_name("<comparison operator>")
+            .set_results_name("operator"),
             # attribute type
             pyparsing.Optional(
                 pyparsing.Or(
@@ -399,7 +407,7 @@ def __get_rule_parser() -> pyparsing.ParserElement:
                         ]
                     ),
                 ]
-            ),
+            ).set_name("<date>"),
         ]
     )
     date_inrange_expr.set_parse_action(__build_date_inrange_expr)
@@ -492,12 +500,32 @@ def __get_rule_parser() -> pyparsing.ParserElement:
             pyparsing.CaselessKeyword("or").set_name("'or'"),
         ]
     )
-    bool_expr = pyparsing.infix_notation(
-        simple_expr,
-        # By putting both "and" and "or" in one tuple we say they have the same
-        # priority. This is consistent with legacy pcs parsers. And it is how
-        # it should be, they work as a glue between "simple_expr"s.
-        [(bool_operator, 2, pyparsing.OpAssoc.LEFT, __build_bool_tree)],
+    # We avoid infix_notation here because pyparsing 3.3.3 rewrote it as a
+    # custom parseImpl (shunting-yard style) that discards the inner
+    # ParseException when content inside parentheses is invalid, always
+    # replacing it with a generic "Expected <base_expr>" at the opening
+    # position. Our grammar only needs same-precedence left-associative and/or,
+    # so a manual Forward+Group is sufficient and preserves inner errors.
+    #
+    # Using - (And with commitment) after "(" means that once "(" is matched,
+    # any inner failure raises ParseSyntaxException (not caught by backtracking),
+    # so the specific inner error position and message propagate to the caller.
+    # The same commitment is used after a bool_operator: once "and"/"or" is
+    # matched there must be an operand, so committing lets a failing operand
+    # report its own precise error instead of being swallowed by ZeroOrMore
+    # backtracking (which would surface as a misleading "Expected ')'" or
+    # "Expected end of text" at the operator position).
+    bool_expr_forward: pyparsing.Forward = pyparsing.Forward()
+    paren_expr = (
+        pyparsing.Suppress(pyparsing.Literal("(").set_name("'('"))
+        - bool_expr_forward
+        - pyparsing.Suppress(pyparsing.Literal(")").set_name("')'"))
     )
+    atom = (paren_expr | simple_expr).set_name("<expression>")
+    bool_expr = pyparsing.Group(
+        atom + pyparsing.ZeroOrMore(bool_operator - atom)
+    )
+    bool_expr.set_parse_action(__build_bool_tree)
+    bool_expr_forward <<= bool_expr
 
-    return pyparsing.Or([bool_expr, simple_expr])
+    return bool_expr
