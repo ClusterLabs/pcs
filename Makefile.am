@@ -57,16 +57,20 @@ PCS_PYTHON_PACKAGES = pcs/ pcs_test/
 
 # options for any pip command
 pipopts	= --disable-pip-version-check --verbose
-# options for pip install
-# --no-build-isolation - disables installing dependencies for embedded python
-#   modules. All dependencies are installed by autotools in our case.
-pipinstallopts = --force-reinstall --no-build-isolation --no-warn-script-location
+# common pip install options
+pipinstallopts = --force-reinstall --no-warn-script-location
+# --no-build-isolation - prevents pip from downloading and installing build
+#   dependencies of embedded python modules. The build dependencies (e.g.
+#   setuptools, wheel) must already be present in the build environment; their
+#   presence is checked by configure.
+pipinstallopts_no_isolation = --no-build-isolation
 
 # dependency management
 
 # 1 - sources directory - with python package sources
 # 2 - destination directory - python package will be installed into the
 #     `packages` subdirectory of this destination directory
+# 3 - options for pip install
 # switched to pip installation since setup.py installation is deprecated
 # --no-binary - disallows downloading wheels
 # || exit 1 - avoids masking failures in bash for loops
@@ -74,7 +78,7 @@ define build_python_bundle
 	cd $(1) && \
 	PYTHONPATH=$(2)/packages/ \
 	LC_ALL=C.utf8 \
-	${PIP} ${pipopts} install ${pipinstallopts} --no-binary :all: --target $(2)/packages . || exit 1
+	${PIP} ${pipopts} install $(3) --no-binary :all: --target $(2)/packages . || exit 1
 endef
 
 PYAGENTX_URI="https://github.com/ondrejmular/pyagentx/archive/v${PYAGENTX_VERSION}.tar.gz"
@@ -89,7 +93,7 @@ endif
 
 stamps/download_python_deps: rpm/requirements.txt stamps/download_pyagentx dev_requirements.txt
 if ENABLE_DOWNLOAD
-	PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring $(PIP) $(pipopts) download --no-deps --no-build-isolation --dest rpm/ --no-binary :all: --requirement rpm/requirements.txt
+	PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring $(PIP) $(pipopts) download --no-deps --dest rpm/ --no-binary :all: --requirement rpm/requirements.txt
 endif
 	touch $@
 
@@ -114,7 +118,7 @@ endif
 stamps/install_python_embedded_mods_local: stamps/untar_python_src
 if LOCAL_BUILD
 	for i in ${abs_top_builddir}/$(PCS_BUNDLED_DIR_LOCAL)/src/*; do \
-		$(call build_python_bundle,$$i,/${abs_top_builddir}/$(PCS_BUNDLED_DIR_LOCAL)); \
+		$(call build_python_bundle,$$i,/${abs_top_builddir}/$(PCS_BUNDLED_DIR_LOCAL),${pipinstallopts}); \
 	done;
 endif
 	touch $@
@@ -122,7 +126,7 @@ endif
 install_python_embedded_mods:
 if LOCAL_BUILD
 	for i in ${abs_top_builddir}/$(PCS_BUNDLED_DIR_LOCAL)/src/*; do \
-		$(call build_python_bundle,$$i,$(or ${DESTDIR}, /)/$(PCS_BUNDLED_DIR)); \
+		$(call build_python_bundle,$$i,$(or ${DESTDIR}, /)/$(PCS_BUNDLED_DIR),${pipinstallopts_no_build_deps}); \
 	done;
 endif
 
@@ -232,7 +236,7 @@ install-exec-local: install_python_embedded_mods stamps/install_ruby_deps_local
 		$(MKDIR_P) ${DESTDIR}/$(SBINDIR); \
 		$(MKDIR_P) ${DESTDIR}/${prefix}/local/sbin/; \
 	fi
-	${PIP} ${pipopts} install ${pipinstallopts} \
+	${PIP} ${pipopts} install ${pipinstallopts} ${pipinstallopts_no_isolation} \
 		--root=$(or ${DESTDIR}, /) \
 		--prefix=${prefix} ${EXTRA_SETUP_OPTS} .
 	if test "$$(realpath ${DESTDIR}/$(prefix)/bin)" != "$$(realpath ${DESTDIR}/$(SBINDIR))"; then \
