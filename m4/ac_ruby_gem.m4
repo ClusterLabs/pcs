@@ -1,4 +1,4 @@
-dnl @synopsis AC_RUBY_GEM(gem[, version][, action-if-found][, action-if-not-found][, gemhome])
+dnl @synopsis AC_RUBY_GEM(gem[, version][, action-if-found][, action-if-not-found][, action-if-version-mismatch][, gemhome])
 dnl
 dnl Checks for Ruby gem.
 dnl
@@ -10,9 +10,9 @@ dnl @license AllPermissive
 AC_DEFUN([AC_RUBY_GEM],[
 	module="$1"
 	reqversion="$2"
-	AC_MSG_CHECKING([ruby gem: $module])
-	if test -n "$5"; then
-		gemoutput=$(GEM_HOME=$5 $GEM list --local | grep "^$module " 2>/dev/null)
+	AC_MSG_CHECKING([ruby gem: $module $reqversion])
+	if test -n "$6"; then
+		gemoutput=$(GEM_HOME=$6 $GEM list --local | grep "^$module " 2>/dev/null)
 	else
 		gemoutput=$($GEM list --local | grep "^$module " 2>/dev/null)
 	fi
@@ -22,15 +22,27 @@ AC_DEFUN([AC_RUBY_GEM],[
 		for version in $curversionlist; do
 			AC_COMPARE_VERSIONS([$curversion], [lt], [$version], [curversion=$version],)
 		done
+		checkver=ok
 		if test "x$reqversion" != x; then
 			comp=$(echo $reqversion | cut -d " " -f 1)
 			tmpversion=$(echo $reqversion | cut -d " " -f 2)
-			AC_COMPARE_VERSIONS([$curversion], [$comp], [$tmpversion],, [AC_MSG_ERROR([ruby gem $module version $curversion detected. Requested "$comp $tmpversion"])])
+			AC_COMPARE_VERSIONS([$curversion], [$comp], [$tmpversion], [checkver=ok], [checkver=nok])
 		fi
-		AC_MSG_RESULT([yes (detected: $curversion)])
-		eval AS_TR_CPP(HAVE_RUBYGEM_$module)=yes
-		eval AS_TR_CPP(HAVE_RUBYGEM_${module}_version)=$curversion
-		$3
+		if test "x$checkver" = "xok"; then
+			AC_MSG_RESULT([yes (detected: $curversion)])
+			eval AS_TR_CPP(HAVE_RUBYGEM_$module)=yes
+			eval AS_TR_CPP(HAVE_RUBYGEM_${module}_version)=$curversion
+			$3
+		else
+			if test -n "$5"; then
+				AC_MSG_RESULT([no (detected: $curversion)])
+				eval AS_TR_CPP(HAVE_RUBYGEM_$module)=no
+				eval AS_TR_CPP(HAVE_RUBYGEM_${module}_version)=$curversion
+				$5
+			else
+				AC_MSG_ERROR([ruby gem $module version $curversion detected. Requested "$comp $tmpversion"])
+			fi
+		fi
 	else
 		AC_MSG_RESULT([no])
 		eval AS_TR_CPP(HAVE_RUBYGEM_$module)=no
