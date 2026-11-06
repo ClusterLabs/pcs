@@ -14,6 +14,7 @@ environment:
       --enable-individual-bundling
   CONFIGURE_OPTIONS_RPM_BUILD: >-
       --enable-local-build
+      --enable-individual-bundling
       --enable-webui
       --enable-destructive-tests
 
