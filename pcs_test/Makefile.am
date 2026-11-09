@@ -146,6 +146,7 @@ EXTRA_DIST		= \
 			  tier0/cli/stonith/levels/__init__.py \
 			  tier0/cli/stonith/levels/test_output.py \
 			  tier0/cli/stonith/test_config.py\
+			  tier0/cli/stonith/test_create.py\
 			  tier0/cli/stonith/test_update.py \
 			  tier0/common/__init__.py \
 			  tier0/common/communication/__init__.py \

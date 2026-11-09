@@ -1,6 +1,5 @@
-from unittest import TestCase, mock
+from unittest import TestCase
 
-from pcs import settings
 from pcs.common import reports
 from pcs.lib.commands import stonith
 from pcs.lib.resource_agent import const as ra_const
@@ -8,7 +7,6 @@ from pcs.lib.resource_agent import const as ra_const
 from pcs_test.tools import fixture
 from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.metadata_dto import FIXTURE_KNOWN_META_NAMES_STONITH_META
-from pcs_test.tools.misc import get_test_resource as rc
 
 expected_cib_simple = """
     <primitive class="stonith" id="stonith-test" type="test_simple">
@@ -645,68 +643,6 @@ class Create(TestCase):
                         "Input/output error"
                     ),
                 ),
-            ]
-        )
-
-    @mock.patch.object(
-        settings,
-        "pacemaker_api_result_schema",
-        rc("pcmk_rng/api/api-result.rng"),
-    )
-    def test_minimal_wait_ok_run_ok(self):
-        agent_name = "test_simple"
-        instance_name = "stonith-test"
-        instance_attributes = {
-            "must-set": "value",
-            "must-set-new": "B",
-        }
-        timeout = 10
-        expected_status = """
-            <resources>
-                <resource
-                    id="{id}"
-                    resource_agent="stonith:{agent}"
-                    role="Started"
-                    active="true"
-                    failed="false"
-                    nodes_running_on="1"
-                >
-                    <node name="node1" id="1" cached="false"/>
-                </resource>
-            </resources>
-            """.format(id=instance_name, agent=agent_name)
-
-        self.config.runner.pcmk.load_agent(
-            agent_name=f"stonith:{agent_name}",
-            agent_filename="stonith_agent_fence_simple.xml",
-        )
-        self.config.runner.pcmk.load_fake_agent_metadata()
-        self.config.runner.cib.load()
-        self.config.runner.pcmk.stonith_agent_self_validation(
-            instance_attributes, agent_name
-        )
-        self.config.env.push_cib(
-            resources=self._expected_cib(expected_cib_simple), wait=timeout
-        )
-        self.config.runner.pcmk.load_state(resources=expected_status)
-
-        self._create(
-            self.env_assist.get_env(),
-            instance_name,
-            agent_name,
-            operations=[],
-            meta_attributes={},
-            instance_attributes=instance_attributes,
-            wait=str(timeout),
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.info(
-                    reports.codes.RESOURCE_RUNNING_ON_NODES,
-                    roles_with_nodes={"Started": ["node1"]},
-                    resource_id=instance_name,
-                ),
-                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
