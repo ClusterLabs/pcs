@@ -51,6 +51,7 @@ build/
 rpm/*.gem
 rpm/*.tar*
 rpm/*.rpm
+rpm/*.txt
 
 stamps*
 
