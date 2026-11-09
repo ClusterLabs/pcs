@@ -8,6 +8,7 @@ from pcs.common.reports import (
     ReportItemSeverity,
     ReportProcessor,
 )
+from pcs.common.reports import codes as reports_codes
 from pcs.common.reports.dto import ReportItemDto
 from pcs.common.reports.types import SeverityLevel
 from pcs.common.reports.utils import add_context_to_message
@@ -24,12 +25,19 @@ class ReportProcessorToConsole(ReportProcessor):
         self.debug = debug
         self._ignore_severities = self._get_ignored_severities([])
         self._report_item_preprocessor: ReportItemPreprocessor = lambda x: x
+        self._has_waiting_timeout_error = False
 
     def _do_report(self, report_item: ReportItem) -> None:
         filtered_report_item = self._report_item_preprocessor(report_item)
         if not filtered_report_item:
             return
         report_item_dto = filtered_report_item.to_dto()
+        if (
+            report_item_dto.severity.level == ReportItemSeverity.ERROR
+            and report_item_dto.message.code
+            == reports_codes.WAIT_FOR_IDLE_TIMED_OUT
+        ):
+            self._has_waiting_timeout_error = True
         if report_item_dto.severity.level not in self._ignore_severities:
             print_report(report_item_dto)
 
@@ -53,6 +61,10 @@ class ReportProcessorToConsole(ReportProcessor):
         report_item_preprocessor: ReportItemPreprocessor,
     ) -> None:
         self._report_item_preprocessor = report_item_preprocessor
+
+    @property
+    def has_waiting_timeout_error(self) -> bool:
+        return self._has_waiting_timeout_error
 
 
 def print_report(report_item_dto: ReportItemDto) -> None:
@@ -101,8 +113,10 @@ def report_and_exit_on_error(
     if not report_item_list:
         raise error("Errors have occurred, therefore pcs is unable to continue")
     report_processor.report_list(report_item_list)
-    # has_errors is cumulative: once the report processor has seen an error,
-    # report_and_exit_on_error exits even when the passed report list itself
-    # contains no error.
+    # These flags are cumulative: once the report processor has seen an error
+    # or a timeout, report_and_exit_on_error exits even when the passed report
+    # list itself contains no error.
+    if report_processor.has_waiting_timeout_error:
+        sys.exit(2)
     if report_processor.has_errors:
         sys.exit(1)

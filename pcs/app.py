@@ -251,7 +251,7 @@ def main(argv=None):  # noqa: PLR0912, PLR0915
             report_processor.report_list(e.args)
         else:
             error("Errors have occurred, therefore pcs is unable to continue")
-        sys.exit(1)
+        sys.exit(2 if report_processor.has_waiting_timeout_error else 1)
     except errors.CmdLineInputError:
         if argv and argv[0] in cmd_map:
             usage.show(argv[0], [])
