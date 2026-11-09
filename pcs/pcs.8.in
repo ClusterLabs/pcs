@@ -115,7 +115,7 @@ If \fB\-\-agent\-validation\fR is specified, resource agent validate\-all action
 .br
 If \fB\-\-no\-default\-ops\fR is specified, only monitor operations are created for the resource and all other operations use default settings.
 .br
-If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the resource to start and then return 0 if the resource is started, or 1 if the resource has not yet started. If 'n' is not specified it defaults to 60 minutes.
+@WAIT_DESC_DOC@
 .br
 Specifying \fB\-\-future\fR switches to the new command format that changes the way clone and promotable meta options are expected to be specified.
 
@@ -783,7 +783,7 @@ If\fB\-\-disabled\fR is specified the stonith device is not used.
 .br
 If \fB\-\-agent\-validation\fR is specified, stonith agent validate\-all action will be used to validate stonith device options and will prevent creating a misconfigured stonith device. If \fB\-\-agent\-validation\fR is not specified, the validation will be done anyway, but it will only produce warnings not preventing the stonith device from being created.
 .br
-If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the stonith device to start and then return 0 if the stonith device is started, or 1 if the stonith device has not yet started. If 'n' is not specified it defaults to 60 minutes.
+@WAIT_DESC_DOC@
 
 Example: Create a device for nodes node1 and node2
 .br
@@ -1712,6 +1712,16 @@ Setting knet transport crypto options \fBcipher\fR or \fBhash\fR to \fBnone\fR o
 The \fB\-\-force\fR flag is no longer accepted as an alternative to interactive confirmation or file overwriting in the following commands. Use \fB\-\-yes\fR or \fB\-\-overwrite\fR instead. Affected commands are: 'pcs cluster destroy', 'pcs quorum unblock', 'pcs stonith confirm', 'pcs stonith sbd device setup', 'pcs stonith sbd watchdog test' (\fB\-\-yes\fR) and 'pcs cluster report' (\fB\-\-overwrite\fR).
 .SS "\-\-force no longer skips resource stopping"
 In the commands 'pcs resource delete | remove', 'pcs booth delete | remove', 'pcs cluster node delete\-remote | remove\-remote', \fB\-\-force\fR no longer skips stopping resources before their deletion. Resources are always stopped first unless \fB\-\-no\-stop\fR is specified. The \fB\-\-future\fR flag (previously used to opt into this behavior) is still accepted but is now a no\-op that only prints a deprecation warning. The \fB\-\-future\fR flag will be removed in a future release.
+.SS "\-\-wait no longer evaluates cluster state"
+Previously, the \fB\-\-wait\fR flag had two functions. First, pcs waited for the cluster to settle to stable state. Second, pcs evaluated whether the configuration change had the desired effect, e.g. a resource just being created had started, or a resource just being disabled had stopped. It also printed the actual state of the resource and pcs exit code depended on whether the desired effect had been achieved. The second functionality has been removed.
+.br
+Currently, \fB\-\-wait\fR causes pcs to wait for the cluster to settle into stable state and then exit with 2 on waiting timeout, 1 on any other error, or 0 on success. Use 'pcs status query' command to accurately specify the desired state and evaluate it.
+.br
+Affected commands:
+.br
+  resource create
+.br
+  stonith create
 .SS "Pacemaker rules"
 Rules must be specified as a single command line argument. Specifying rules as multiple arguments is no longer supported. This affects commands: 'pcs constraint location', 'pcs resource defaults set create', 'pcs resource op defaults set create', 'pcs stonith defaults set create' and 'pcs stonith op defaults set create'.
 .SS "Positional arguments starting with \- require \-\-"
