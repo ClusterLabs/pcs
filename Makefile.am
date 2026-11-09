@@ -173,6 +173,11 @@ endif
 # flattened pcsd/vendor/bundle layout. Gemfile.lock is kept.
 	rm -rf .bundle
 else
+# No bundle resolution happens in a cache-only build, so remove any Gemfile.lock
+# left over from a previous full-local/individual build in the same tree. Its
+# presence is used (in the $(SPEC) rule) to decide how to generate the
+# "Provides: bundled(...)" lines, so a stale one would mislead that detection.
+	rm -f Gemfile.lock
 	with_cflags=""; \
 	if test "x$(ruby_CFLAGS)" != "x"; then \
 		with_cflags='--with-cflags=$(ruby_CFLAGS)'; \
@@ -365,7 +370,7 @@ clean-local: test-tree-clean
 distclean-local:
 	rm -rf Gemfile
 	rm -rf .mypy_cache
-	rm -rf rpm/requirements.txt rpm/Gemfile rpm/pcs-*
+	rm -rf rpm/requirements.txt rpm/gem_requirements.txt rpm/gem_requirements_default.txt rpm/gem_requires.txt rpm/Gemfile rpm/pcs-*
 	rm -rf stamps
 	rm -rf ${abs_top_builddir}/${PCS_BUNDLED_DIR_LOCAL} ${abs_top_builddir}/${PCSD_BUNDLED_DIR_ROOT_LOCAL}
 	rm -rf $(filter-out \
@@ -395,6 +400,35 @@ gen-ChangeLog:
 	fi
 
 ## make rpm/srpm section.
+
+# awk program generating the rpm "Provides: bundled(rubygem-<gem>) = <version>"
+# lines (the rubygem-<gem> package name form, as used by Fedora rubygems)
+# from Gemfile.lock. It prints one Provides for every gem resolved in the
+# Gemfile.lock "GEM/specs:" section, except gems listed in the
+# rpm/gem_requirements*.txt files - those are used from the system and are
+# already emitted as "Requires: rubygem(<gem>)". The requirements files must be
+# passed to awk before Gemfile.lock so the skip set is complete when parsing it.
+define GEMBUNDLE_AWK
+# collect system gems to skip (requirements files hold one bare name per line)
+	FILENAME ~ /gem_requirements/ { skip[$$1] = 1; next }
+# track the GEM/specs: section of Gemfile.lock
+	/^GEM$$/ { in_gem = 1; next }
+	/^[A-Za-z]/ { in_gem = 0 }
+	in_gem && /^  specs:/ { in_specs = 1; next }
+# Every resolved gem (direct or transitive) is a 4-space line carrying its
+# exact version. The 6-space lines under it are that gem's dependency
+# declarations (name + version constraint, not a resolved version) and only
+# repeat gems that already have their own 4-space line, so match 4 spaces only.
+	in_gem && in_specs && /^    [^ ]/ {
+		line = $$0
+		sub(/^    /, "", line)
+		name = line; sub(/ .*/, "", name)
+		version = line; sub(/^[^(]*\(/, "", version); sub(/\).*/, "", version)
+		if (!(name in skip)) print "Provides: bundled(rubygem-" name ") = " version
+	}
+endef
+export GEMBUNDLE_AWK
+
 $(SPEC): $(SPEC).in .version config.status stamps/download_python_deps stamps/download_rpm_ruby_deps
 	rm -f $@-t $@
 	date="`LC_ALL=C $(UTC_DATE_AT)$(SOURCE_EPOCH) "+%a %b %d %Y"`" && \
@@ -451,10 +485,25 @@ $(SPEC): $(SPEC).in .version config.status stamps/download_python_deps stamps/do
 	gemlist="`for i in $$($(FIND) rpm/ -type f -name '*.gem'); do echo $$i | sed -e 's#rpm/##g' -e 's#.gem##g'; done`" && \
 	gemsrc="`base=80; for i in $$gemlist; do echo 'Source'$$base': '$$i'.gem' && let "base=base+1"; done`" && \
 	$(AWK) -i inplace -v r="$$gemsrc" '{gsub(/@gemsrc@/,r)}1' $@-t; \
-	gembundle="`for i in $$gemlist; do echo $$i | sed 's/\(.*\)-\(.*\)/Provides: bundled(\1) = \2/'; done`" && \
+	gemreqfiles=""; \
+	for f in rpm/gem_requirements_default.txt rpm/gem_requirements.txt; do \
+		test -f $$f && gemreqfiles="$$gemreqfiles $$f"; \
+	done; \
+	if test -f Gemfile.lock; then \
+		gembundle="$$($(AWK) "$$GEMBUNDLE_AWK" $$gemreqfiles Gemfile.lock)"; \
+	else \
+		gembundle="$$($(FIND) $(PCSD_BUNDLED_CACHE_DIR) rpm/ -type f -name '*.gem' 2>/dev/null \
+			| sed -e 's#.*/##' -e 's#\.gem$$##' -e 's/\(.*\)-\(.*\)/Provides: bundled(rubygem-\1) = \2/' \
+			| sort -u)"; \
+	fi && \
 	$(AWK) -i inplace -v r="$$gembundle" '{gsub(/@gembundle@/,r)}1' $@-t; \
 	gemcache="`echo $(MKDIR_P) $(PCSD_BUNDLED_CACHE_DIR); base=80; for i in $$gemlist; do echo 'cp -f %SOURCE'$$base' $(PCSD_BUNDLED_CACHE_DIR)' && let "base=base+1"; done`" && \
 	$(AWK) -i inplace -v r="$$gemcache" '{gsub(/@gemcache@/,r)}1' $@-t;
+	gemreqlist="`for f in rpm/gem_requirements_default.txt rpm/gem_requirements.txt; do test -f $$f && cat $$f; done`" && \
+		gembuildreqs="`for i in $$gemreqlist; do echo 'BuildRequires: rubygem('$$i')'; done`" && \
+		$(AWK) -i inplace -v r="$$gembuildreqs" '{gsub(/@gembuildreqs@/,r)}1' $@-t; \
+		gemrequires="`test -f rpm/gem_requires.txt && sed -e 's/^\(.*\)$$/Requires: rubygem(\1)/' rpm/gem_requires.txt || true`" && \
+		$(AWK) -i inplace -v r="$$gemrequires" '{gsub(/@gemrequires@/,r)}1' $@-t;
 	chmod a-w $@-t
 	mv $@-t $@
 	rm -f $@-t*

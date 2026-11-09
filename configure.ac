@@ -328,7 +328,14 @@ AC_DEFUN([PCS_BUNDLE_GEM], [
 	fi
 ])
 
-# PCS_CHECK_GEM([module], [version])
+# PCS_CHECK_GEM([module], [version], [default=yes], [record_mode])
+# Set the third argument to "yes" for Ruby default gems (gems shipped with Ruby
+# itself). Default gems are recorded into a separate rpm requirements list and
+# are only added to the Gemfile in a full local build; see below. The fourth
+# argument controls how the gem is recorded as an rpm rubygem() dependency:
+#   (empty)   - record for both BuildRequires and Requires
+#   buildonly - record for BuildRequires only (build-time deps, e.g. test-unit)
+#   norecord  - do not record (e.g. kept hardcoded in the spec)
 AC_DEFUN([PCS_CHECK_GEM], [
 	AC_RUBY_GEM([$1], [$2], [bundle_module=no], [bundle_module=yes])
 	if test "x$local_build" != "xyes" && test "x$bundle_module" = "xyes"; then
@@ -340,18 +347,51 @@ AC_DEFUN([PCS_CHECK_GEM], [
 			AC_MSG_ERROR([cache only build required but no source detected in $PCSD_BUNDLED_CACHE_DIR])
 		fi
 	fi
-	gem_version=""
-	if test "x$bundle_module" != "xyes" && test "x$individual_bundling" = "xyes"; then
-		# Individual bundling is on and the gem is installed in the system:
-		# use its installed version so it is reused instead of bundled.
-		module_caps=AS_TR_CPP([$1])
-		AS_VAR_COPY([gem_version], [HAVE_RUBYGEM_${module_caps}_VERSION])
+	# Record the gem as an rpm Build/Requires dependency when it is used from the
+	# system instead of being bundled. That happens when:
+	#   * local build is disabled - all gems come from the system, or
+	#   * individual bundling is enabled - a gem found in the system is reused
+	#     instead of being bundled.
+	# In a full local build (without individual bundling) every gem is bundled,
+	# so no rpm rubygem() dependency is generated.
+	# Non-default and default gems are recorded into separate lists (consumed
+	# together by Makefile.am as BuildRequires). Default gems ship with Ruby and
+	# are always present on the system, so their recording does not depend on
+	# bundle_module. Gems needed at runtime are additionally recorded into
+	# gem_requires.txt (Requires). The record mode (fourth argument, see above)
+	# applies to default and non-default gems alike, so e.g. a default gem whose
+	# rubygem() Provides is missing on some distro can be set to norecord.
+	gem_record_file=""
+	if test "x$local_build" != "xyes" || test "x$individual_bundling" = "xyes"; then
+		if test "x$3" = "xyes"; then
+			gem_record_file=gem_requirements_default.txt
+		elif test "x$bundle_module" != "xyes"; then
+			gem_record_file=gem_requirements.txt
+		fi
 	fi
-	gem_version="${gem_version:-$2}"
-	# Pin the gem in the Gemfile to:
-	#   * the installed system version -> reuse the system gem (no bundling);
-	#   * the given version requirement (or none) -> bundle the newest match.
-	PCS_BUNDLE_GEM([$1], [$gem_version])
+	if test "x$4" != "xnorecord" && test "x$gem_record_file" != "x"; then
+		echo "$1" >> $ac_pwd/rpm/$gem_record_file
+		if test "x$4" != "xbuildonly"; then
+			echo "$1" >> $ac_pwd/rpm/gem_requires.txt
+		fi
+	fi
+	# Add the gem to the Gemfile so it gets bundled or pinned. Default gems ship
+	# with Ruby, so they only need to be bundled in a full local build; in every
+	# other mode they are used from the system and must stay out of the Gemfile.
+	if test "x$3" != "xyes" || { test "x$local_build" = "xyes" && test "x$individual_bundling" != "xyes"; }; then
+		gem_version=""
+		if test "x$bundle_module" != "xyes" && test "x$individual_bundling" = "xyes"; then
+			# Individual bundling is on and the gem is installed in the system:
+			# use its installed version so it is reused instead of bundled.
+			module_caps=AS_TR_CPP([$1])
+			AS_VAR_COPY([gem_version], [HAVE_RUBYGEM_${module_caps}_VERSION])
+		fi
+		gem_version="${gem_version:-$2}"
+		# Pin the gem in the Gemfile to:
+		#   * the installed system version -> reuse the system gem (no bundling);
+		#   * the given version requirement (or none) -> bundle the newest match.
+		PCS_BUNDLE_GEM([$1], [$gem_version])
+	fi
 ])
 
 # required by rpm build
@@ -406,6 +446,21 @@ AC_SUBST([PCSD_BUNDLED_CACHE_DIR])
 
 rm -rf Gemfile Gemfile.lock
 
+# Lists of ruby gems which pcs depends on, consumed by Makefile.am to generate
+# rpm rubygem() BuildRequires/Requires dependencies in the spec. A gem is listed
+# only when it is used from the system rather than bundled, i.e. in every mode
+# except a full local build (where gems are bundled). Both lists are populated by
+# PCS_CHECK_GEM (default gems are flagged with its third argument):
+#   * gem_requirements_default.txt - Ruby default gems (shipped with Ruby).
+#   * gem_requirements.txt - non-default gems.
+# Together they form the BuildRequires list. The runtime subset (build-only gems
+# excluded, see the PCS_CHECK_GEM record_mode argument) is in:
+#   * gem_requires.txt - Requires.
+# Truncate them here so a reconfigure starts from a clean slate; modes that record
+# nothing leave an empty file.
+rm -f $ac_pwd/rpm/gem_requirements.txt $ac_pwd/rpm/gem_requirements_default.txt $ac_pwd/rpm/gem_requires.txt
+touch $ac_pwd/rpm/gem_requirements.txt $ac_pwd/rpm/gem_requirements_default.txt $ac_pwd/rpm/gem_requires.txt
+
 if test "x$local_build" = "xyes"; then
 	if test "x$PCS_CUSTOM_GEMFILE" != "x"; then
 		if ! test -e "$PCS_CUSTOM_GEMFILE"; then
@@ -424,19 +479,21 @@ REQUIRE_RACKUP="require 'rackup'"
 if test "x$tests_only" != "xyes"; then
 	# Direct PCSD dependencies
 	# ########################
-	if test "x$individual_bundling" != "xyes"; then
-		# Default Gems
-		PCS_CHECK_GEM([date])
-		PCS_CHECK_GEM([etc])
-		PCS_CHECK_GEM([fileutils])
-		PCS_CHECK_GEM([net-http])
-		PCS_CHECK_GEM([openssl])
-		PCS_CHECK_GEM([shellwords])
-		PCS_CHECK_GEM([stringio])
-		PCS_CHECK_GEM([tempfile])
-		PCS_CHECK_GEM([timeout])
-		PCS_CHECK_GEM([uri])
-	fi
+	# Default Gems
+	# The third PCS_CHECK_GEM argument flags these as Ruby default gems: they are
+	# recorded into the default-gems list and are only added to the Gemfile (for
+	# bundling) in a full local build. Checked in all modes so the macro records
+	# them regardless of individual bundling.
+	PCS_CHECK_GEM([date], [], [yes], [norecord])
+	PCS_CHECK_GEM([etc], [], [yes], [norecord])
+	PCS_CHECK_GEM([fileutils], [], [yes], [norecord])
+	PCS_CHECK_GEM([net-http], [], [yes], [norecord])
+	PCS_CHECK_GEM([openssl], [], [yes])
+	PCS_CHECK_GEM([shellwords], [], [yes], [norecord])
+	PCS_CHECK_GEM([stringio], [], [yes], [norecord])
+	PCS_CHECK_GEM([tempfile], [], [yes], [norecord])
+	PCS_CHECK_GEM([timeout], [], [yes], [norecord])
+	PCS_CHECK_GEM([uri], [], [yes], [norecord])
 	# json is a default gem upstream, but RHEL/Fedora ship it as a bundled gem,
 	# so it must be checked and pinned explicitly, also in individual bundling.
 	PCS_CHECK_GEM([json])
@@ -445,8 +502,8 @@ if test "x$tests_only" != "xyes"; then
 	# The version requirement must be specified here rather than in a separate
 	# check, because listing the same gem twice in the Gemfile with different
 	# version specs causes bundler to fail.
-	PCS_CHECK_GEM([base64], [>= 0.1.0])
-	PCS_CHECK_GEM([logger])
+	PCS_CHECK_GEM([base64], [>= 0.1.0], [], [norecord])
+	PCS_CHECK_GEM([logger], [], [], [norecord])
 	PCS_CHECK_GEM([rexml])
 	# Bundled Gems
 	PCS_CHECK_GEM([test-unit])
