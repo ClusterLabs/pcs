@@ -491,7 +491,6 @@ if test "x$tests_only" != "xyes"; then
 		PCS_CHECK_GEM([fileutils])
 		PCS_CHECK_GEM([net-http])
 		PCS_CHECK_GEM([openssl])
-		PCS_CHECK_GEM([rubygems-update])
 		PCS_CHECK_GEM([shellwords])
 		PCS_CHECK_GEM([stringio])
 		PCS_CHECK_GEM([tempfile])

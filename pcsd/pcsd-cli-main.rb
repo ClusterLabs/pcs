@@ -1,4 +1,3 @@
-require 'rubygems'
 require 'etc'
 require 'json'
 require 'stringio'
