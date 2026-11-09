@@ -331,12 +331,29 @@ if test "x$CIRPMWORKAROUNDS" = "xyes"; then
 	echo "pyparsing>=3.0.0" >> $ac_pwd/rpm/requirements.txt
 fi
 
+# Lists of python modules which pcs depends on, consumed by Makefile.am to
+# generate rpm python3dist() BuildRequires/Requires dependencies in the spec. A
+# module is listed only when it is used from the system rather than bundled;
+# both lists are populated by PCS_CHECK_PYMOD:
+#   * py_buildrequires.txt - every system module (BuildRequires)
+#   * py_requires.txt      - the runtime subset (build-only modules excluded)
+# Truncate them here so a reconfigure starts from a clean slate; modes that
+# record nothing leave an empty file.
+rm -f $ac_pwd/rpm/py_buildrequires.txt $ac_pwd/rpm/py_requires.txt
+touch $ac_pwd/rpm/py_buildrequires.txt $ac_pwd/rpm/py_requires.txt
+
 # PCS_BUNDLE_PYMOD([module], [version])
 AC_DEFUN([PCS_BUNDLE_PYMOD], [
 	echo "$1 $2" | sed -e 's# ##g' >> $ac_pwd/rpm/requirements.txt
 ])
 
-# PCS_CHECK_PYMOD([module], [version], [embedded=yes])
+# PCS_CHECK_PYMOD([module], [version], [embedded=yes], [record_mode])
+# Set the third argument to "yes" for modules eligible to be bundled (the
+# "problematic" ones); non-embedded modules must come from BaseOS. The fourth
+# argument controls how the module is recorded as an rpm python3dist() dependency:
+#   (empty)   - record for both BuildRequires and Requires
+#   buildonly - record for BuildRequires only (build-time deps, e.g. pip)
+#   norecord  - do not record (kept hardcoded in the spec, e.g. wheel, pyparsing)
 AC_DEFUN([PCS_CHECK_PYMOD], [
 	AC_PIP_MODULE([$1], [$2], [bundle_module=no], [bundle_module=yes], [bundle_module=yes])
 	if { test "x$local_build" != "xyes" || test "x$3" != "xyes"; } && test "x$bundle_module" = "xyes"; then
@@ -353,6 +370,24 @@ AC_DEFUN([PCS_CHECK_PYMOD], [
 	fi
 	if test "x$3" = "xyes" && { test "x$bundle_module" = "xyes" || test "x$individual_bundling" != "xyes"; }; then
 		PCS_BUNDLE_PYMOD([$1], [$2])
+	fi
+	# Record the module as an rpm python3dist() Build/Requires dependency when it
+	# is used from the system instead of being bundled. That is the complement of
+	# the PCS_BUNDLE_PYMOD condition above:
+	#   * a non-embedded module is always used from the system, or
+	#   * an embedded module is found on the system and individual bundling is on.
+	# Store the formatted python3dist() string (with the given version floor, if
+	# any) so Makefile.am only has to prepend the BuildRequires/Requires keyword.
+	# The fourth argument selects the record mode (see above).
+	if test "x$4" != "xnorecord" && { test "x$3" != "xyes" || { test "x$bundle_module" != "xyes" && test "x$individual_bundling" = "xyes"; }; }; then
+		py_dep="python3dist($1)"
+		if test "x$2" != "x"; then
+			py_dep="$py_dep $2"
+		fi
+		echo "$py_dep" >> $ac_pwd/rpm/py_buildrequires.txt
+		if test "x$4" != "xbuildonly"; then
+			echo "$py_dep" >> $ac_pwd/rpm/py_requires.txt
+		fi
 	fi
 ])
 
@@ -442,21 +477,27 @@ AC_SUBST([PYAGENTX_VERSION])
 # those MUST be available in BaseOS
 
 # pip 19.0 required for PEP517 support
-PCS_CHECK_PYMOD([pip], [>= 23.0])
+PCS_CHECK_PYMOD([pip], [>= 23.0], [], [buildonly])
 
 if test "x$tests_only" != "xyes"; then
 	# setuptools 61.0.0 required for PEP621 support
-	PCS_CHECK_PYMOD([setuptools], [>= 66.1])
+	PCS_CHECK_PYMOD([setuptools], [>= 66.1], [], [buildonly])
 	# wheel is required if setuptools < 71
 	AC_PIP_MODULE([setuptools], [>= 71], [], [], [need_wheel=yes])
 	# pycurl-7.46.0 requires setuptools >= 77
 	AC_PIP_MODULE([setuptools], [>= 77], [setuptools_77=yes], [setuptools_77=no], [setuptools_77=no])
 	if test "x$need_wheel" = "xyes"; then
-		PCS_CHECK_PYMOD([wheel])
+		# wheel is kept hardcoded in the spec as a conditional rpm boolean
+		# (requiring it only when setuptools < 71 on the rebuild host), which a
+		# build-host generator cannot reproduce, so do not record it here.
+		PCS_CHECK_PYMOD([wheel], [], [], [norecord])
 	fi
 	PCS_CHECK_PYMOD([cryptography])
 	PCS_CHECK_PYMOD([lxml])
-	PCS_CHECK_PYMOD([pyparsing], [>= 3.0.0])
+	# pyparsing is kept hardcoded in the spec because under CIRPMWORKAROUNDS it is
+	# force-bundled (added to requirements.txt above) and must not also be recorded
+	# as a system dependency, so do not record it here.
+	PCS_CHECK_PYMOD([pyparsing], [>= 3.0.0], [], [norecord])
 
 	# those are kind of problematic.
 	# use them all from the BaseOS or embedded them all as necessary (--enable-local-build)
@@ -466,9 +507,8 @@ if test "x$tests_only" != "xyes"; then
 	# setuptoools_scm is needed for bundling dateutil, this uses variables
 	# set by the PCS_CHECK_PYMOD macro, so it must be executed right after it
 	if test "x$bundle_module" = "xyes"; then
-		PCS_CHECK_PYMOD([setuptools-scm])
-		PCS_CHECK_PYMOD([six])
-		PKG_CHECK_MODULES([TZDATA], [tzdata])
+		PCS_CHECK_PYMOD([setuptools-scm], [], [yes], [norecord])
+		PCS_CHECK_PYMOD([six], [], [yes])
 	fi
 	# Pycurl-7.46.0 requires setuptools => 77. However, if pycurl is already
 	# installed on the system, use whatever pycurl is installed and don't limit
