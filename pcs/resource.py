@@ -26,7 +26,7 @@ from pcs.cli.common.parse_args import (
 )
 from pcs.cli.common.tools import print_to_stderr, timeout_to_seconds_legacy
 from pcs.cli.nvset import filter_out_expired_nvset, nvset_dto_list_to_lines
-from pcs.cli.reports.output import error, warn
+from pcs.cli.reports.output import deprecation_warning, error, warn
 from pcs.cli.reports.processor import (
     ReportProcessorToConsole,
     report_and_exit_on_error,
@@ -590,7 +590,7 @@ def resource_list_options(
     )
 
 
-def resource_create(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  # noqa: PLR0912
+def resource_create(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  # noqa: PLR0912 PLR0915
     """
     Options:
       * --agent-validation - use agent self validation of instance attributes
@@ -622,6 +622,12 @@ def resource_create(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  #
             + ([] if modifiers.get(FUTURE_OPTION) else modifiers_deprecated)
         )
     )
+    modifiers.ensure_not_mutually_exclusive("-f", "--wait")
+    wait_timeout = wait_to_timeout(modifiers.get("--wait"))
+    if wait_timeout >= 0:
+        # deprecated in the first version of 0.12
+        deprecation_warning(reports.messages.ResourceWaitDeprecated().message)
+
     if len(argv) < 2:
         raise CmdLineInputError()
 
@@ -670,7 +676,6 @@ def resource_create(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  #
         allow_invalid_instance_attributes=modifiers.get("--force"),
         ensure_disabled=modifiers.get("--disabled"),
         use_default_operations=not modifiers.get("--no-default-ops"),
-        wait=modifiers.get("--wait"),
         allow_not_suitable_command=modifiers.get("--force"),
         enable_agent_self_validation=modifiers.get("--agent-validation"),
     )
@@ -740,6 +745,9 @@ def resource_create(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  #
             parts.primitive.instance_attrs,
             **settings,
         )
+
+    if wait_timeout >= 0:
+        lib.cluster.wait_for_pcmk_idle(wait_timeout)
 
 
 def _parse_resource_move_ban(

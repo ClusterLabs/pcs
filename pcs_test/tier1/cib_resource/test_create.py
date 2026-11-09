@@ -962,7 +962,6 @@ class Promotable(TestCase, AssertPcsMixin):
         allow_not_suitable_command=False,
         ensure_disabled=False,
         use_default_operations=True,
-        wait=False,
         enable_agent_self_validation=False,
     ):
         return locals()
