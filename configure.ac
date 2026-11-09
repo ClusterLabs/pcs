@@ -290,12 +290,29 @@ mkdir -p $ac_pwd/rpm/
 rm -rf $ac_pwd/rpm/requirements.txt
 touch $ac_pwd/rpm/requirements.txt
 
+# Lists of python modules which pcs depends on, consumed by Makefile.am to
+# generate rpm python3dist() BuildRequires/Requires dependencies in the spec. A
+# module is listed only when it is used from the system rather than bundled;
+# both lists are populated by PCS_CHECK_PYMOD:
+#   * py_buildrequires.txt - every system module (BuildRequires)
+#   * py_requires.txt      - the runtime subset (build-only modules excluded)
+# Truncate them here so a reconfigure starts from a clean slate; modes that
+# record nothing leave an empty file.
+rm -f $ac_pwd/rpm/py_buildrequires.txt $ac_pwd/rpm/py_requires.txt
+touch $ac_pwd/rpm/py_buildrequires.txt $ac_pwd/rpm/py_requires.txt
+
 # PCS_BUNDLE_PYMOD([module], [version])
 AC_DEFUN([PCS_BUNDLE_PYMOD], [
 	echo "$1 $2" | sed -e 's# ##g' >> $ac_pwd/rpm/requirements.txt
 ])
 
-# PCS_CHECK_PYMOD([module], [version], [embedded=yes])
+# PCS_CHECK_PYMOD([module], [version], [embedded=yes], [record_mode])
+# Set the third argument to "yes" for modules eligible to be bundled (the
+# "problematic" ones); non-embedded modules must come from BaseOS. The fourth
+# argument controls how the module is recorded as an rpm python3dist() dependency:
+#   (empty)   - record for both BuildRequires and Requires
+#   buildonly - record for BuildRequires only (build-time deps, e.g. pip)
+#   norecord  - do not record (kept hardcoded in the spec, e.g. wheel, pyparsing)
 AC_DEFUN([PCS_CHECK_PYMOD], [
 	AC_PIP_MODULE([$1], [$2], [bundle_module=no], [bundle_module=yes], [bundle_module=yes])
 	if { test "x$local_build" != "xyes" || test "x$3" != "xyes"; } && test "x$bundle_module" = "xyes"; then
@@ -312,6 +329,24 @@ AC_DEFUN([PCS_CHECK_PYMOD], [
 	fi
 	if test "x$3" = "xyes" && { test "x$bundle_module" = "xyes" || test "x$individual_bundling" != "xyes"; }; then
 		PCS_BUNDLE_PYMOD([$1], [$2])
+	fi
+	# Record the module as an rpm python3dist() Build/Requires dependency when it
+	# is used from the system instead of being bundled. That is the complement of
+	# the PCS_BUNDLE_PYMOD condition above:
+	#   * a non-embedded module is always used from the system, or
+	#   * an embedded module is found on the system and individual bundling is on.
+	# Store the formatted python3dist() string (with the given version floor, if
+	# any) so Makefile.am only has to prepend the BuildRequires/Requires keyword.
+	# The fourth argument selects the record mode (see above).
+	if test "x$4" != "xnorecord" && { test "x$3" != "xyes" || { test "x$bundle_module" != "xyes" && test "x$individual_bundling" = "xyes"; }; }; then
+		py_dep="python3dist($1)"
+		if test "x$2" != "x"; then
+			py_dep="$py_dep $2"
+		fi
+		echo "$py_dep" >> $ac_pwd/rpm/py_buildrequires.txt
+		if test "x$4" != "xbuildonly"; then
+			echo "$py_dep" >> $ac_pwd/rpm/py_requires.txt
+		fi
 	fi
 ])
 
@@ -405,9 +440,10 @@ AC_PIP_MODULE([pip], [>= 10.0.0], [have_isolation=yes], [have_isolation=no], [ha
 AM_CONDITIONAL([PIP_HAS_ISOLATION], [test "x$have_isolation" = xyes])
 
 if test "x$tests_only" != "xyes"; then
+	# entrypoints import parts of setuptools
 	PCS_CHECK_PYMOD([setuptools])
 	if test "x$local_build" = "xyes"; then
-		PCS_CHECK_PYMOD([wheel])
+		PCS_CHECK_PYMOD([wheel], [], [], [buildonly])
 	fi
 	PCS_CHECK_PYMOD([cryptography])
 	PCS_CHECK_PYMOD([lxml])
@@ -422,9 +458,8 @@ if test "x$tests_only" != "xyes"; then
 	# setuptoools_scm is needed for bundling dateutil, this uses variables
 	# set by the CHECK_PYMOD macro, so it must be executed right after it
 	if test "x$bundle_module" = "xyes"; then
-		PCS_CHECK_PYMOD([setuptools-scm])
+		PCS_CHECK_PYMOD([setuptools-scm], [], [], [buildonly])
 		PCS_CHECK_PYMOD([six])
-		PKG_CHECK_MODULES([TZDATA], [tzdata])
 	fi
 
 	# special case, because we need to download from github

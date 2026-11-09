@@ -370,7 +370,7 @@ clean-local: test-tree-clean
 distclean-local:
 	rm -rf Gemfile
 	rm -rf .mypy_cache
-	rm -rf rpm/requirements.txt rpm/gem_requirements.txt rpm/gem_requirements_default.txt rpm/gem_requires.txt rpm/Gemfile rpm/pcs-*
+	rm -rf rpm/requirements.txt rpm/py_buildrequires.txt rpm/py_requires.txt rpm/gem_requirements.txt rpm/gem_requirements_default.txt rpm/gem_requires.txt rpm/Gemfile rpm/pcs-*
 	rm -rf stamps
 	rm -rf ${abs_top_builddir}/${PCS_BUNDLED_DIR_LOCAL} ${abs_top_builddir}/${PCSD_BUNDLED_DIR_ROOT_LOCAL}
 	rm -rf $(filter-out \
@@ -429,6 +429,35 @@ define GEMBUNDLE_AWK
 endef
 export GEMBUNDLE_AWK
 
+# awk program generating the rpm "Provides: bundled(python3dist(<module>)) =
+# <version>" lines for the bundled python modules, module names normalized the
+# way rpm python3dist() names are (lowercase, runs of "-", "_", "." become "-").
+# It is fed the rpm/py_buildrequires.txt file first (one
+# "python3dist(<name>) ..." per line) to build the set of modules used
+# from the system, then the bundled tarball basenames ("<name>-<version>") on
+# stdin ("-"); it prints a Provides for every bundled module except the system
+# ones (already emitted as "Requires: python3dist(<module>)") and dataclasses.
+define PYBUNDLE_AWK
+# collect system modules to skip from py_buildrequires.txt
+	FILENAME != "-" {
+		line = $$0
+		sub(/^python3dist\(/, "", line)
+		sub(/\).*/, "", line)
+		line = tolower(line); gsub(/[-_.]+/, "-", line)
+		skip[line] = 1
+		next
+	}
+# remaining input lines are bundled tarball basenames: <name>-<version>
+	/^dataclasses-/ { next }
+	NF {
+		name = $$0; sub(/-[^-]*$$/, "", name)
+		version = $$0; sub(/^.*-/, "", version)
+		name = tolower(name); gsub(/[-_.]+/, "-", name)
+		if (!(name in skip)) print "Provides: bundled(python3dist(" name ")) = " version
+	}
+endef
+export PYBUNDLE_AWK
+
 $(SPEC): $(SPEC).in .version config.status stamps/download_python_deps stamps/download_rpm_ruby_deps
 	rm -f $@-t $@
 	date="`LC_ALL=C $(UTC_DATE_AT)$(SOURCE_EPOCH) "+%a %b %d %Y"`" && \
@@ -478,7 +507,8 @@ $(SPEC): $(SPEC).in .version config.status stamps/download_python_deps stamps/do
 	pylist="`ls rpm/*.tar.gz | grep -v ^rpm/pyagentx- | grep -v ^rpm/pcs- | sed -e 's#rpm/##g' -e 's#.tar.gz##'`" && \
 	pysrc="`base=42; for i in $$pylist; do echo 'Source'$$base': '$$i'.tar.gz' && let "base=base+1"; done`" && \
 	$(AWK) -i inplace -v r="$$pysrc" '{gsub(/@pysrc@/,r)}1' $@-t; \
-	pybundle="`for i in $$pylist; do echo $$i | grep -v ^dataclasses- | sed 's/\(.*\)-\(.*\)/Provides: bundled(\1) = \2/'; done`" && \
+	pybreqfile=rpm/py_buildrequires.txt; test -f $$pybreqfile || pybreqfile=/dev/null; \
+	pybundle="`echo "$$pylist" | tr ' ' '\n' | $(AWK) "$$PYBUNDLE_AWK" $$pybreqfile -`" && \
 	$(AWK) -i inplace -v r="$$pybundle" '{gsub(/@pybundle@/,r)}1' $@-t; \
 	pycache="`echo $(MKDIR_P) $(PCS_BUNDLED_DIR_LOCAL)/src; base=41; for i in $$pylist pyagentx; do echo 'cp -f %SOURCE'$$base' rpm/' && let "base=base+1"; done`" && \
 	$(AWK) -i inplace -v r="$$pycache" '{gsub(/@pycache@/,r)}1' $@-t; \
@@ -504,6 +534,10 @@ $(SPEC): $(SPEC).in .version config.status stamps/download_python_deps stamps/do
 		$(AWK) -i inplace -v r="$$gembuildreqs" '{gsub(/@gembuildreqs@/,r)}1' $@-t; \
 		gemrequires="`test -f rpm/gem_requires.txt && sed -e 's/^\(.*\)$$/Requires: rubygem(\1)/' rpm/gem_requires.txt || true`" && \
 		$(AWK) -i inplace -v r="$$gemrequires" '{gsub(/@gemrequires@/,r)}1' $@-t;
+	pybuildreqs="`test -f rpm/py_buildrequires.txt && sed -e 's/^/BuildRequires: /' rpm/py_buildrequires.txt || true`" && \
+		$(AWK) -i inplace -v r="$$pybuildreqs" '{gsub(/@pybuildreqs@/,r)}1' $@-t; \
+		pyrequires="`test -f rpm/py_requires.txt && sed -e 's/^/Requires: /' rpm/py_requires.txt || true`" && \
+		$(AWK) -i inplace -v r="$$pyrequires" '{gsub(/@pyrequires@/,r)}1' $@-t;
 	chmod a-w $@-t
 	mv $@-t $@
 	rm -f $@-t*
