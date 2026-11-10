@@ -774,8 +774,10 @@
         daemon urls: /api/v1/node-maintenance-unmaintenance/v1
       </description>
     </capability>
-    <capability id="node.maintenance.wait" in-pcs="1" in-pcsd="1">
+    <capability id="node.maintenance.wait" in-pcs="0" in-pcsd="0">
       <description>
+        Replaced by pcs.wait-for-the-cluster-to-settle.
+
         Wait for nodes to finish transition to or from maintenance mode.
 
         pcs commands: node ( maintenance | unmaintenance ) --wait[=timeout]
@@ -811,8 +813,10 @@
         daemon urls: /api/v1/node-standby-unstandby/v1
       </description>
     </capability>
-    <capability id="node.standby.wait" in-pcs="1" in-pcsd="1">
+    <capability id="node.standby.wait" in-pcs="0" in-pcsd="0">
       <description>
+        Replaced by pcs.wait-for-the-cluster-to-settle.
+
         Wait for nodes to finish transition to or from standby mode.
 
         pcs commands: node ( standby | unstandby ) --wait[=timeout]
@@ -2858,7 +2862,12 @@
     <capability id="pcs.wait-for-the-cluster-to-settle" in-pcs="1" in-pcsd="0">
       <description>
         The listed commands support --wait flag, which makes them wait for the
-        cluster to settle and exit with 2 in case the waiting times out:
+        cluster to settle into stable state and exit with 2 in case the waiting
+        times out:
+          pcs node maintenance
+          pcs node standby
+          pcs node unmaintenance
+          pcs node unstandby
           pcs resource create
           pcs stonith create
       </description>

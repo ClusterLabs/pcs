@@ -3045,39 +3045,27 @@ Commands:
         Put specified node(s) into maintenance mode, if no nodes or options are
         specified the current node will be put into maintenance mode, if --all
         is specified all nodes will be put into maintenance mode.
-        If --wait is specified, pcs will wait up to 'n' seconds for the node(s)
-        to be put into maintenance mode and then return 0 on success or 1 if
-        the operation not succeeded yet. If 'n' is not specified it defaults
-        to 60 minutes.
+{wait_description}
 
     unmaintenance [--all | <node>...] [--wait[=n]]
         Remove node(s) from maintenance mode, if no nodes or options are
         specified the current node will be removed from maintenance mode,
         if --all is specified all nodes will be removed from maintenance mode.
-        If --wait is specified, pcs will wait up to 'n' seconds for the node(s)
-        to be removed from maintenance mode and then return 0 on success or 1 if
-        the operation not succeeded yet. If 'n' is not specified it defaults
-        to 60 minutes.
+{wait_description}
 
     standby [--all | <node>...] [--wait[=n]]
         Put specified node(s) into standby mode (the node specified will no
         longer be able to host resources), if no nodes or options are specified
         the current node will be put into standby mode, if --all is specified
         all nodes will be put into standby mode.
-        If --wait is specified, pcs will wait up to 'n' seconds for the node(s)
-        to be put into standby mode and then return 0 on success or 1 if
-        the operation not succeeded yet. If 'n' is not specified it defaults
-        to 60 minutes.
+{wait_description}
 
     unstandby [--all | <node>...] [--wait[=n]]
         Remove node(s) from standby mode (the node specified will now be able to
         host resources), if no nodes or options are specified the current node
         will be removed from standby mode, if --all is specified all nodes will
         be removed from standby mode.
-        If --wait is specified, pcs will wait up to 'n' seconds for the node(s)
-        to be removed from standby mode and then return 0 on success or 1 if
-        the operation not succeeded yet. If 'n' is not specified it defaults
-        to 60 minutes.
+{wait_description}
 
     utilization [[<node>] [--name <name>] | ({output_format_syntax})
             | <node> <name>=<value> ...]
@@ -3092,6 +3080,7 @@ Commands:
         Example: pcs node utilization node1 cpu=4 ram=
 {utilization_placement_strategy_desc}
 """.format(
+        wait_description=_WAIT_DESCRIPTION,
         output_format_syntax=_output_format_syntax(),
         output_format_desc=_format_desc((" ", _output_format_desc())),
         utilization_placement_strategy_desc=_format_desc(
