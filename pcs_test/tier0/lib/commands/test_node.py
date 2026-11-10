@@ -155,7 +155,7 @@ class SetInstanceAttrsBase(TestCase):
             yield (self.cib, "mock_runner", self.cluster_nodes)
             self.launch["post"] = True
 
-        patcher = patch_command("cib_runner_nodes")
+        patcher = patch_command("_cib_runner_nodes")
         self.addCleanup(patcher.stop)
         patcher.start().side_effect = cib_runner_nodes_contextmanager
 
@@ -281,7 +281,7 @@ class CibRunnerNodes(TestCase):
         wait = 10
         ensure_wait_satisfiable.return_value = wait
 
-        with lib.cib_runner_nodes(self.env, wait) as (cib, runner, nodes):
+        with lib._cib_runner_nodes(self.env, wait) as (cib, runner, nodes):
             self.assertEqual(cib, "mocked cib")
             self.assertEqual(runner, "mocked cmd_runner")
             self.assertEqual(nodes, "nodes")
@@ -294,7 +294,11 @@ class CibRunnerNodes(TestCase):
     @patch_env("ensure_wait_satisfiable", mock.Mock(side_effect=LibraryError))
     def test_raises_when_wait_is_not_satisfiable(self, push_cib):
         def run():
-            with lib.cib_runner_nodes(self.env, "wait") as (cib, runner, nodes):
+            with lib._cib_runner_nodes(self.env, "wait") as (
+                cib,
+                runner,
+                nodes,
+            ):
                 pass
 
         self.assertRaises(LibraryError, run)

@@ -1,20 +1,28 @@
+from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
+
+from lxml.etree import _Element
 
 from pcs.common import reports
 from pcs.common.pacemaker.node import CibNodeListDto
 from pcs.common.reports.item import ReportItem
+from pcs.common.types import StringSequence
 from pcs.lib.cib import node
 from pcs.lib.cib.node import update_node_instance_attrs
 from pcs.lib.cib.rule.in_effect import get_rule_evaluator
 from pcs.lib.cib.tools import IdProvider, get_nodes
 from pcs.lib.env import LibraryEnvironment, WaitType
 from pcs.lib.errors import LibraryError
+from pcs.lib.external import CommandRunner
 from pcs.lib.pacemaker.live import get_local_node_name
 from pcs.lib.pacemaker.state import ClusterState
+from pcs.lib.pacemaker.state import Node as NodeState
 
 
 @contextmanager
-def cib_runner_nodes(lib_env: LibraryEnvironment, wait: WaitType):
+def _cib_runner_nodes(
+    lib_env: LibraryEnvironment, wait: WaitType
+) -> Iterator[tuple[_Element, CommandRunner, list[NodeState]]]:
     wait_timeout = lib_env.ensure_wait_satisfiable(wait)
     yield (
         lib_env.get_cib(),
@@ -25,83 +33,84 @@ def cib_runner_nodes(lib_env: LibraryEnvironment, wait: WaitType):
 
 
 def standby_unstandby_local(
-    lib_env: LibraryEnvironment, standby, wait: WaitType = False
-):
+    lib_env: LibraryEnvironment, standby: bool, wait: WaitType = False
+) -> None:
     """
     Change local node standby mode
 
-    LibraryEnvironment lib_env
-    bool standby -- True: enable standby, False: disable standby
-    mixed wait -- False: no wait, None: wait with default timeout, str or int:
-        wait with specified timeout
+    standby -- True: enable standby, False: disable standby
+    wait -- False: no wait, None: wait with default timeout, str or int: wait
+        with specified timeout
     """
-    return _set_instance_attrs_local_node(
+    _set_instance_attrs_local_node(
         lib_env, _create_standby_unstandby_dict(standby), wait
     )
 
 
 def standby_unstandby_list(
-    lib_env: LibraryEnvironment, standby, node_names, wait: WaitType = False
-):
+    lib_env: LibraryEnvironment,
+    standby: bool,
+    node_names: StringSequence,
+    wait: WaitType = False,
+) -> None:
     """
     Change specified nodes standby mode
 
-    LibraryEnvironment lib_env
-    bool standby -- True: enable standby, False: disable standby
-    iterable node_names -- nodes to apply the change to
-    mixed wait -- False: no wait, None: wait with default timeout, str or int:
-        wait with specified timeout
+    standby -- True: enable standby, False: disable standby
+    node_names -- nodes to apply the change to
+    wait -- False: no wait, None: wait with default timeout, str or int: wait
+        with specified timeout
     """
-    return _set_instance_attrs_node_list(
+    _set_instance_attrs_node_list(
         lib_env, _create_standby_unstandby_dict(standby), node_names, wait
     )
 
 
 def standby_unstandby_all(
-    lib_env: LibraryEnvironment, standby, wait: WaitType = False
-):
+    lib_env: LibraryEnvironment, standby: bool, wait: WaitType = False
+) -> None:
     """
     Change all nodes standby mode
 
-    LibraryEnvironment lib_env
-    bool standby -- True: enable standby, False: disable standby
-    mixed wait -- False: no wait, None: wait with default timeout, str or int:
-        wait with specified timeout
+    standby -- True: enable standby, False: disable standby
+    wait -- False: no wait, None: wait with default timeout, str or int: wait
+        with specified timeout
     """
-    return _set_instance_attrs_all_nodes(
+    _set_instance_attrs_all_nodes(
         lib_env, _create_standby_unstandby_dict(standby), wait
     )
 
 
 def maintenance_unmaintenance_local(
-    lib_env: LibraryEnvironment, maintenance, wait: WaitType = False
-):
+    lib_env: LibraryEnvironment, maintenance: bool, wait: WaitType = False
+) -> None:
     """
     Change local node maintenance mode
 
-    LibraryEnvironment lib_env
-    bool maintenance -- True: enable maintenance, False: disable maintenance
-    mixed wait -- False: no wait, None: wait with default timeout, str or int:
-        wait with specified timeout
+    maintenance -- True: enable maintenance, False: disable maintenance
+    wait -- False: no wait, None: wait with default timeout, str or int: wait
+        with specified timeout
     """
-    return _set_instance_attrs_local_node(
+    _set_instance_attrs_local_node(
         lib_env, _create_maintenance_unmaintenance_dict(maintenance), wait
     )
 
 
 def maintenance_unmaintenance_list(
-    lib_env: LibraryEnvironment, maintenance, node_names, wait: WaitType = False
-):
+    lib_env: LibraryEnvironment,
+    maintenance: bool,
+    node_names: StringSequence,
+    wait: WaitType = False,
+) -> None:
     """
     Change specified nodes maintenance mode
 
-    LibraryEnvironment lib_env
-    bool maintenance -- True: enable maintenance, False: disable maintenance
-    iterable node_names -- nodes to apply the change to
-    mixed wait -- False: no wait, None: wait with default timeout, str or int:
-        wait with specified timeout
+    maintenance -- True: enable maintenance, False: disable maintenance
+    node_names -- nodes to apply the change to
+    wait -- False: no wait, None: wait with default timeout, str or int: wait
+        with specified timeout
     """
-    return _set_instance_attrs_node_list(
+    _set_instance_attrs_node_list(
         lib_env,
         _create_maintenance_unmaintenance_dict(maintenance),
         node_names,
@@ -110,32 +119,31 @@ def maintenance_unmaintenance_list(
 
 
 def maintenance_unmaintenance_all(
-    lib_env: LibraryEnvironment, maintenance, wait: WaitType = False
-):
+    lib_env: LibraryEnvironment, maintenance: bool, wait: WaitType = False
+) -> None:
     """
     Change all nodes maintenance mode
 
-    LibraryEnvironment lib_env
-    bool maintenance -- True: enable maintenance, False: disable maintenance
-    mixed wait -- False: no wait, None: wait with default timeout, str or int:
-        wait with specified timeout
+    maintenance -- True: enable maintenance, False: disable maintenance
+    wait -- False: no wait, None: wait with default timeout, str or int: wait
+        with specified timeout
     """
-    return _set_instance_attrs_all_nodes(
+    _set_instance_attrs_all_nodes(
         lib_env, _create_maintenance_unmaintenance_dict(maintenance), wait
     )
 
 
-def _create_standby_unstandby_dict(standby):
+def _create_standby_unstandby_dict(standby: bool) -> dict[str, str]:
     return {"standby": "on" if standby else ""}
 
 
-def _create_maintenance_unmaintenance_dict(maintenance):
+def _create_maintenance_unmaintenance_dict(maintenance: bool) -> dict[str, str]:
     return {"maintenance": "on" if maintenance else ""}
 
 
 def _set_instance_attrs_local_node(
-    lib_env: LibraryEnvironment, attrs, wait: WaitType
-):
+    lib_env: LibraryEnvironment, attrs: Mapping[str, str], wait: WaitType
+) -> None:
     if not lib_env.is_cib_live:
         # If we are not working with a live cluster we cannot get the local node
         # name.
@@ -145,7 +153,7 @@ def _set_instance_attrs_local_node(
             )
         )
 
-    with cib_runner_nodes(lib_env, wait) as (cib, runner, state_nodes):
+    with _cib_runner_nodes(lib_env, wait) as (cib, runner, state_nodes):
         update_node_instance_attrs(
             cib,
             IdProvider(cib),
@@ -156,9 +164,12 @@ def _set_instance_attrs_local_node(
 
 
 def _set_instance_attrs_node_list(
-    lib_env: LibraryEnvironment, attrs, node_names, wait: WaitType
-):
-    with cib_runner_nodes(lib_env, wait) as (cib, dummy_runner, state_nodes):
+    lib_env: LibraryEnvironment,
+    attrs: Mapping[str, str],
+    node_names: StringSequence,
+    wait: WaitType,
+) -> None:
+    with _cib_runner_nodes(lib_env, wait) as (cib, dummy_runner, state_nodes):
         known_nodes = [node.attrs.name for node in state_nodes]
         report_list = [
             ReportItem.error(reports.messages.NodeNotFound(node))
@@ -175,9 +186,9 @@ def _set_instance_attrs_node_list(
 
 
 def _set_instance_attrs_all_nodes(
-    lib_env: LibraryEnvironment, attrs, wait: WaitType
-):
-    with cib_runner_nodes(lib_env, wait) as (cib, dummy_runner, state_nodes):
+    lib_env: LibraryEnvironment, attrs: Mapping[str, str], wait: WaitType
+) -> None:
+    with _cib_runner_nodes(lib_env, wait) as (cib, dummy_runner, state_nodes):
         for node in [node.attrs.name for node in state_nodes]:
             update_node_instance_attrs(
                 cib, IdProvider(cib), node, attrs, state_nodes=state_nodes
