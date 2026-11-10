@@ -59,8 +59,11 @@ The key steps:
 Errors raised during command execution are caught at this level:
 
 - **`CmdLineInputError`** — translated to usage text on stderr + exit code 1.
-- **`LibraryError`** — translated to error messages on stderr via
-  `process_library_reports()` + exit code 1.
+- **`LibraryError`** — the report items it carries are reported through the
+  shared console report processor (`library_wrapper.env.report_processor`) and
+  pcs exits with code 1. If the error carries no report items, a generic
+  "unable to continue" message is printed instead. See
+  [reports.md — Rendering reports in the CLI](reports.md#rendering-reports-in-the-cli).
 
 ### Routing
 
