@@ -5,36 +5,16 @@ from pcs.cli.resource import parse_args
 
 
 class ParseCloneArgs(TestCase):
-    def setUp(self):
-        print_patcher = mock.patch("pcs.cli.reports.output.print_to_stderr")
-        self.print_mock = print_patcher.start()
-        self.addCleanup(print_patcher.stop)
-        self.meta_deprecated = (
-            "Deprecation Warning: configuring meta attributes without "
-            "specifying the 'meta' keyword is deprecated and will be removed "
-            "in a future release"
-        )
-
-    def assert_stderr(self, stderr=None):
-        if stderr is None:
-            self.print_mock.assert_not_called()
-        else:
-            self.print_mock.assert_called_once_with(stderr)
-
-    def assert_produce(self, arg_list, result, promotable=False, stderr=None):
+    def assert_produce(self, arg_list, result, promotable=False):
         self.assertEqual(
             parse_args.parse_clone(arg_list, promotable=promotable),
             result,
         )
-        self.assert_stderr(stderr)
 
-    def assert_raises_cmdline(
-        self, args, expected_msg, promotable=False, stderr=None
-    ):
+    def assert_raises_cmdline(self, args, expected_msg, promotable=False):
         with self.assertRaises(CmdLineInputError) as cm:
             parse_args.parse_clone(args, promotable=promotable)
         self.assertEqual(cm.exception.message, expected_msg)
-        self.assert_stderr(stderr)
 
     def test_no_args(self):
         self.assert_produce(
@@ -48,14 +28,11 @@ class ParseCloneArgs(TestCase):
             parse_args.CloneOptions(clone_id="CustomCloneId", meta_attrs={}),
         )
 
-    def test_clone_options(self):
-        self.assert_produce(
-            ["a=b", "c=d"],
-            parse_args.CloneOptions(
-                clone_id=None, meta_attrs={"a": "b", "c": "d"}
-            ),
-            stderr=self.meta_deprecated,
-        )
+    def test_options_without_meta_keyword(self):
+        self.assert_raises_cmdline(["a=b", "c=d"], None)
+
+    def test_clone_id_and_options_without_meta_keyword(self):
+        self.assert_raises_cmdline(["CustomCloneId", "a=b", "c=d"], None)
 
     def test_meta_options(self):
         self.assert_produce(
@@ -67,12 +44,11 @@ class ParseCloneArgs(TestCase):
 
     def test_clone_id_and_clone_meta_options(self):
         self.assert_produce(
-            ["CustomCloneId", "a=b", "c=d", "meta", "e=f", "g=h"],
+            ["CustomCloneId", "meta", "e=f", "g=h"],
             parse_args.CloneOptions(
                 clone_id="CustomCloneId",
-                meta_attrs={"a": "b", "c": "d", "e": "f", "g": "h"},
+                meta_attrs={"e": "f", "g": "h"},
             ),
-            stderr=self.meta_deprecated,
         )
 
     def test_op_options(self):
@@ -87,33 +63,24 @@ class ParseCloneArgs(TestCase):
             "op settings must be changed on base resource, not the clone",
         )
 
-    def test_missing_option_value(self):
-        self.assert_raises_cmdline(
-            ["CloneId", "a"],
-            "missing value of 'a' option",
-            stderr=self.meta_deprecated,
-        )
-
     def test_missing_meta_option_value(self):
         self.assert_raises_cmdline(["meta", "m"], "missing value of 'm' option")
 
     def test_promotable_keyword_and_option(self):
         self.assert_raises_cmdline(
-            ["CloneId", "promotable=true", "meta", "promotable=true"],
+            ["CloneId", "meta", "promotable=true"],
             "you cannot specify both promotable option and promotable keyword",
             promotable=True,
-            stderr=self.meta_deprecated,
         )
 
-    def test_different_values_of_option_and_meta_option(self):
+    def test_different_values_of_meta_option(self):
         self.assert_raises_cmdline(
-            ["CloneId", "promotable=true", "meta", "promotable=false"],
+            ["CloneId", "meta", "promotable=true", "promotable=false"],
             (
                 "duplicate option 'promotable' with different values 'false' "
                 "and 'true'"
             ),
             promotable=True,
-            stderr=self.meta_deprecated,
         )
 
 

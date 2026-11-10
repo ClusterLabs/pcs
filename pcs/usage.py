@@ -1174,7 +1174,7 @@ Commands:
     promotable <resource id | group id> [<clone id>] [meta <clone meta options>]
             [--wait[=n]]
         Set up the specified resource or group as a promotable clone. This is
-        an alias for 'pcs resource clone <resource id> promotable=true'.
+        an alias for 'pcs resource clone <resource id> meta promotable=true'.
 
     unclone <clone id | resource id | group id> [--wait[=n]]
         Remove the specified clone or the clone which contains the specified

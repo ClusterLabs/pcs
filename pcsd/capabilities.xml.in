@@ -1939,6 +1939,14 @@
         pcs commands: resource clone
       </description>
     </capability>
+    <capability id="pcmk.resource.clone.meta-in-create.meta-keyword" in-pcs="1" in-pcsd="0">
+      <description>
+        Clone meta attributes are specified using the 'meta' keyword. Specifying
+        them without the 'meta' keyword is not supported.
+
+        pcs commands: resource clone, resource promotable
+      </description>
+    </capability>
     <capability id="pcmk.resource.promotable" in-pcs="1" in-pcsd="1">
       <description>
         Turn an existing resource to a promotable clone resource and the other

@@ -7,7 +7,6 @@ from pcs.cli.common.parse_args import (
     KeyValueParser,
     group_by_keywords,
 )
-from pcs.cli.reports.output import deprecation_warning
 
 
 @dataclass(frozen=True)
@@ -101,15 +100,9 @@ def parse_clone(arg_list: Argv, promotable: bool = False) -> CloneOptions:
             "op settings must be changed on base resource, not the clone",
         )
     if groups.has_keyword("options"):
-        # deprecated since 0.11.6
-        deprecation_warning(
-            "configuring meta attributes without specifying the 'meta' keyword "
-            "is deprecated and will be removed in a future release"
-        )
+        raise CmdLineInputError()
 
-    meta = KeyValueParser(
-        groups.get_args_flat("options") + groups.get_args_flat("meta")
-    ).get_unique()
+    meta = KeyValueParser(groups.get_args_flat("meta")).get_unique()
     if promotable:
         if "promotable" in meta:
             raise CmdLineInputError(

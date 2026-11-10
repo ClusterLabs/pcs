@@ -41,6 +41,8 @@
 - The `--group`, `--before` and `--after` options of `pcs resource create`. Use
   the `group`, `before` and `after` keywords instead. The `--groups` option has
   been removed as well.
+- Specifying clone meta attributes without the `meta` keyword in `pcs resource
+  clone` and `pcs resource promotable`. Use the `meta` keyword instead.
 
 ### Changed
 - Dependency on libffi-devel caused by rubygem ethon was removed. There is a new
