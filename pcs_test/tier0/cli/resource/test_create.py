@@ -156,7 +156,7 @@ class ResourceCreateWaitPromotable(ResourceCreateWaitClone):
 
 
 class ResourceCreateWaitGroup(ResourceCreateWaitMixin, TestCase):
-    cli_cmd = "--future resource create R dummy group G"
+    cli_cmd = "resource create R dummy group G"
     create_call_cmd = "resource.create_in_group"
     create_call_args = ("R", "dummy", "G", [], {}, {})
     create_call_kwargs = dict(

@@ -42,11 +42,6 @@ CRM_RULE_MISSING_MSG = (
     "crm_rule is not available, therefore expired parts of configuration may "
     "not be detected. Consider upgrading pacemaker."
 )
-DEPRECATED_DASH_DASH_GROUP = (
-    "Deprecation Warning: Using '--group' is deprecated and will be replaced "
-    "with 'group' in a future release. Specify --future to switch to the future "
-    "behavior.\n"
-)
 STANDALONE_SCORE_SYNTAX_CHANGED = (
     "Hint: Syntax has changed from previous version. See 'man pcs' -> Changes "
     "in pcs-1.0.\n"
@@ -1751,8 +1746,7 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
         fixture_to_cib(self.temp_cib.name, fixture_master_xml("stateful1"))
 
         self.assert_pcs_success(
-            "resource create stateful2 ocf:pcsmock:stateful --group statefulG".split(),
-            stderr_full=DEPRECATED_DASH_DASH_GROUP,
+            "resource create stateful2 ocf:pcsmock:stateful group statefulG".split(),
         )
 
         # pcs no longer allows turning resources into masters but supports
@@ -1965,8 +1959,7 @@ Error: invalid option 'foo', allowed options are: 'id', 'kind', 'symmetrical'
             "resource create dummy ocf:pcsmock:minimal clone".split()
         )
         self.assert_pcs_success(
-            "resource create dummy2 ocf:pcsmock:minimal --group dummyG".split(),
-            stderr_full=DEPRECATED_DASH_DASH_GROUP,
+            "resource create dummy2 ocf:pcsmock:minimal group dummyG".split(),
         )
         self.assert_pcs_success("resource clone dummyG".split())
 
@@ -4682,16 +4675,13 @@ class OrderVsGroup(unittest.TestCase, AssertPcsMixin):
         self.pcs_runner = PcsRunner(self.temp_cib.name)
         self.pcs_runner.mock_settings = get_mock_settings()
         self.assert_pcs_success(
-            "resource create A ocf:pcsmock:minimal --group grAB".split(),
-            stderr_full=DEPRECATED_DASH_DASH_GROUP,
+            "resource create A ocf:pcsmock:minimal group grAB".split(),
         )
         self.assert_pcs_success(
-            "resource create B ocf:pcsmock:minimal --group grAB".split(),
-            stderr_full=DEPRECATED_DASH_DASH_GROUP,
+            "resource create B ocf:pcsmock:minimal group grAB".split(),
         )
         self.assert_pcs_success(
-            "resource create C ocf:pcsmock:minimal --group grC".split(),
-            stderr_full=DEPRECATED_DASH_DASH_GROUP,
+            "resource create C ocf:pcsmock:minimal group grC".split(),
         )
         self.assert_pcs_success("resource create D ocf:pcsmock:minimal".split())
 

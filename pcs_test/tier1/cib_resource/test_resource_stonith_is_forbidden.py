@@ -80,7 +80,7 @@ class ResourceStonithIsForbidden(
 
     def test_rsc_create_in_group(self):
         self.assert_pcs_fail(
-            "resource create S1 stonith:fence_pcsmock_minimal group G --future".split(),
+            "resource create S1 stonith:fence_pcsmock_minimal group G".split(),
             stderr_full=(
                 "Error: This command does not accept stonith resource. "
                 "Use 'pcs stonith create' command instead.\n"

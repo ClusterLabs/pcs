@@ -855,16 +855,6 @@ Commands:
         options including advanced and deprecated ones are shown.
 
     create <resource id> [<standard>:[<provider>:]]<type>
-           [<resource options>]
-           [op <operation action> <operation options> [<operation action>
-           <operation options>]...]
-           [meta <meta options>]
-           [clone [<clone id>] [<clone meta options>] |
-           promotable [<clone id>] [<promotable meta options>] |
-           --group <group id> [--before <resource id> | --after <resource id>] |
-           bundle <bundle id>] [--disabled] [--agent-validation]
-           [--no-default-ops] [--wait[=n]]
-    create --future <resource id> [<standard>:[<provider>:]]<type>
            [resource options]
            [op <operation action> <operation options> [<operation action>
            <operation options>]...]
@@ -877,8 +867,8 @@ Commands:
         Create specified resource.
         If clone is used, a clone resource is created. If promotable is used,
         a promotable clone resource is created.
-        If --group is specified, the resource is added to the group named. You
-        can use --before or --after to specify the position of the added
+        If group is specified, the resource is added to the group named. You
+        can use before or after to specify the position of the added
         resource relatively to some resource already existing in the group.
         If bundle is used, the resource will be created inside of the specified
         bundle.
@@ -892,8 +882,6 @@ Commands:
         If --no-default-ops is specified, only monitor operations are created
         for the resource and all other operations use default settings.
 {wait_description}
-        Specifying --future switches to the new command format that changes
-        the way clone and promotable meta options are expected to be specified.
         Example: Create a new resource called 'VirtualIP' with IP address
             192.168.0.99, netmask of 32, monitored everything 30 seconds,
             on eth2:

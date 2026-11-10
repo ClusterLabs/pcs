@@ -55,9 +55,6 @@ MODIFIER_OPTIONS_BOOL: Final[frozenset[str]] = frozenset(
         "--full",
         "--quiet",
         FUTURE_OPTION,
-        # TODO remove
-        # used only in deprecated 'pcs resource|stonith show'
-        "--groups",
         "--hide-inactive",
         "--local",
         "--monitor",
@@ -91,8 +88,10 @@ MODIFIER_OPTIONS_VAL: Final[frozenset[str]] = frozenset(
         "--booth-key",
         "--corosync_conf",
         "--from",
-        # TODO remove
-        # used in resource create and stonith create, deprecated in both
+        # TODO remove in the next major version
+        # No longer used by any command. It is kept only so that pcs recognizes
+        # it and 'pcs resource create' can print a helpful "syntax has changed"
+        # error instead of a generic unknown-option error.
         "--group",
         "--name",
         "--node",
@@ -143,6 +142,8 @@ PCS_LONG_OPTIONS: Final = [
     "nodesc",
     "promoted",
     "name=",
+    # TODO remove in the next major version
+    # kept only so 'pcs resource create' can print a "syntax has changed" error
     "group=",
     "node=",
     "from=",
@@ -162,9 +163,6 @@ PCS_LONG_OPTIONS: Final = [
     "hide-inactive",
     # pcs resource (un)manage - enable or disable monitor operations
     "monitor",
-    # TODO remove
-    # used only in deprecated 'pcs resource|stonith show'
-    "groups",
     # "pcs resource clear --expired" - only clear expired moves and bans
     "expired",
     # disable evaluating whether rules are expired

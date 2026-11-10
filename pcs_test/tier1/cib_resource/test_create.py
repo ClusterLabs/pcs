@@ -21,13 +21,6 @@ ERRORS_HAVE_OCCURRED = (
 
 
 class Success(ResourceTest):
-    msg_clone_without_meta = (
-        "Deprecation Warning: Configuring clone meta attributes without "
-        "specifying the 'meta' keyword after the 'clone' keyword is deprecated "
-        "and will be removed in a future release. Specify --future to switch "
-        "to the future behavior.\n"
-    )
-
     def setUp(self):
         super().setUp()
         self.pcs_runner.mock_settings = get_mock_settings()
@@ -239,7 +232,7 @@ class Success(ResourceTest):
         self.assert_effect(
             (
                 "resource create R ocf:pcsmock:minimal --no-default-ops clone "
-                "notify=true"
+                "meta notify=true"
             ).split(),
             """<resources>
                 <clone id="R-clone">
@@ -259,8 +252,9 @@ class Success(ResourceTest):
                     </meta_attributes>
                 </clone>
             </resources>""",
-            stderr_full=self.msg_clone_without_meta
-            + fixture_meta_attributes_not_validated_warning(["clone"]),
+            stderr_full=fixture_meta_attributes_not_validated_warning(
+                ["clone"]
+            ),
         )
 
     def test_create_with_options_and_meta(self):
@@ -592,7 +586,7 @@ class SuccessNewParser(ResourceTest):
 
     def test_primitive_meta(self):
         self.assert_effect(
-            "resource create R ocf:pcsmock:minimal meta a=b --no-default-ops --future".split(),
+            "resource create R ocf:pcsmock:minimal meta a=b --no-default-ops".split(),
             """<resources>
                 <primitive class="ocf" id="R" provider="pcsmock" type="minimal">
                     <meta_attributes id="R-meta_attributes">
@@ -612,7 +606,7 @@ class SuccessNewParser(ResourceTest):
 
     def test_clone_meta(self):
         self.assert_effect(
-            "resource create R ocf:pcsmock:minimal clone meta a=b --no-default-ops --future".split(),
+            "resource create R ocf:pcsmock:minimal clone meta a=b --no-default-ops".split(),
             """<resources>
                 <clone id="R-clone">
                     <primitive class="ocf" id="R" provider="pcsmock" type="minimal">
@@ -634,7 +628,7 @@ class SuccessNewParser(ResourceTest):
 
     def test_primitive_and_clone_meta(self):
         self.assert_effect(
-            "resource create R ocf:pcsmock:minimal meta a=b clone meta c=d --no-default-ops --future".split(),
+            "resource create R ocf:pcsmock:minimal meta a=b clone meta c=d --no-default-ops".split(),
             """<resources>
                 <clone id="R-clone">
                     <primitive class="ocf" id="R" provider="pcsmock" type="minimal">
@@ -659,24 +653,12 @@ class SuccessNewParser(ResourceTest):
 
 class SuccessGroup(ResourceTest):
     FUTURE = ""
-    GROUP = "--group"
-    AFTER = "--after"
-    BEFORE = "--before"
-    DEPRECATED_GROUP = (
-        "Deprecation Warning: Using '--group' is deprecated and will be "
-        "replaced with 'group' in a future release. Specify --future to switch "
-        "to the future behavior.\n"
-    )
-    DEPRECATED_AFTER = (
-        "Deprecation Warning: Using '--after' is deprecated and will be "
-        "replaced with 'after' in a future release. Specify --future to switch "
-        "to the future behavior.\n"
-    )
-    DEPRECATED_BEFORE = (
-        "Deprecation Warning: Using '--before' is deprecated and will be "
-        "replaced with 'before' in a future release. Specify --future to switch "
-        "to the future behavior.\n"
-    )
+    GROUP = "group"
+    AFTER = "after"
+    BEFORE = "before"
+    DEPRECATED_GROUP = ""
+    DEPRECATED_AFTER = ""
+    DEPRECATED_BEFORE = ""
 
     def setUp(self):
         super().setUp()
@@ -882,14 +864,6 @@ class SuccessGroup(ResourceTest):
         )
 
 
-class SuccessGroupFuture(SuccessGroup):
-    FUTURE = "--future"
-    GROUP = "group"
-    AFTER = "after"
-    BEFORE = "before"
-    DEPRECATED_GROUP = DEPRECATED_AFTER = DEPRECATED_BEFORE = ""
-
-
 class SuccessClone(ResourceTest):
     def setUp(self):
         super().setUp()
@@ -938,13 +912,6 @@ class SuccessClone(ResourceTest):
 
 
 class Promotable(TestCase, AssertPcsMixin):
-    msg_promotable_without_meta = (
-        "Deprecation Warning: Configuring promotable meta attributes without "
-        "specifying the 'meta' keyword after the 'promotable' keyword is deprecated "
-        "and will be removed in a future release. Specify --future to switch "
-        "to the future behavior.\n"
-    )
-
     def setUp(self):
         self.lib = mock.Mock(spec_set=["resource"])
         self.resource = mock.Mock(spec_set=["create_as_clone"])
@@ -966,11 +933,10 @@ class Promotable(TestCase, AssertPcsMixin):
     ):
         return locals()
 
-    @mock.patch("pcs.cli.reports.output.print_to_stderr")
-    def test_alias_for_clone(self, mock_print_to_stderr):
+    def test_alias_for_clone(self):
         resource.resource_create(
             self.lib,
-            ["R", "ocf:pcsmock:stateful", "promotable", "a=b", "c=d"],
+            ["R", "ocf:pcsmock:stateful", "promotable", "meta", "a=b", "c=d"],
             InputModifiers({}),
         )
         self.resource.create_as_clone.assert_called_once_with(
@@ -984,49 +950,35 @@ class Promotable(TestCase, AssertPcsMixin):
             allow_incompatible_clone_meta_attributes=False,
             **self.fixture_options(),
         )
-        mock_print_to_stderr.assert_called_once_with(
-            "Deprecation Warning: Configuring promotable meta attributes "
-            "without specifying the 'meta' keyword after the 'promotable' "
-            "keyword is deprecated and will be removed in a future release. "
-            "Specify --future to switch to the future behavior."
-        )
 
     def test_fail_on_promotable(self):
         self.assert_pcs_fail(
             (
-                "resource create R ocf:pcsmock:stateful promotable promotable=a"
+                "resource create R ocf:pcsmock:stateful promotable meta "
+                "promotable=a"
             ).split(),
-            (
-                self.msg_promotable_without_meta
-                + "Error: you cannot specify both promotable option and promotable "
-                "keyword\n"
-            ),
+            "Error: you cannot specify both promotable option and promotable "
+            "keyword\n",
         )
 
     def test_fail_on_promotable_true(self):
         self.assert_pcs_fail(
             (
-                "resource create R ocf:pcsmock:stateful promotable "
+                "resource create R ocf:pcsmock:stateful promotable meta "
                 "promotable=true"
             ).split(),
-            (
-                self.msg_promotable_without_meta
-                + "Error: you cannot specify both promotable option and promotable "
-                "keyword\n"
-            ),
+            "Error: you cannot specify both promotable option and promotable "
+            "keyword\n",
         )
 
     def test_fail_on_promotable_false(self):
         self.assert_pcs_fail(
             (
-                "resource create R ocf:pcsmock:stateful promotable "
+                "resource create R ocf:pcsmock:stateful promotable meta "
                 "promotable=false"
             ).split(),
-            (
-                self.msg_promotable_without_meta
-                + "Error: you cannot specify both promotable option and promotable "
-                "keyword\n"
-            ),
+            "Error: you cannot specify both promotable option and promotable "
+            "keyword\n",
         )
 
 
@@ -1129,14 +1081,10 @@ class Bundle(ResourceTest):
 
 class FailOrWarnGroupCloneBundleCombination(ResourceTest):
     FUTURE = ""
-    GROUP = "--group"
-    AFTER = "--after"
-    BEFORE = "--before"
-    DEPRECATED_GROUP = (
-        "Deprecation Warning: Using '--group' is deprecated and will be "
-        "replaced with 'group' in a future release. Specify --future to switch "
-        "to the future behavior.\n"
-    )
+    GROUP = "group"
+    AFTER = "after"
+    BEFORE = "before"
+    DEPRECATED_GROUP = ""
 
     def setUp(self):
         super().setUp()
@@ -1179,16 +1127,6 @@ class FailOrWarnGroupCloneBundleCombination(ResourceTest):
                 f"or {self.GROUP}\n"
             ),
         )
-
-
-class FailOrWarnGroupCloneBundleCombinationFuture(
-    FailOrWarnGroupCloneBundleCombination
-):
-    FUTURE = "--future"
-    GROUP = "group"
-    AFTER = "after"
-    BEFORE = "before"
-    DEPRECATED_GROUP = ""
 
 
 class FailOrWarn(ResourceTest):
@@ -1599,24 +1537,12 @@ class FailOrWarnOp(ResourceTest):
 
 class FailOrWarnGroup(ResourceTest):
     FUTURE = ""
-    GROUP = "--group"
-    AFTER = "--after"
-    BEFORE = "--before"
-    DEPRECATED_GROUP = (
-        "Deprecation Warning: Using '--group' is deprecated and will be "
-        "replaced with 'group' in a future release. Specify --future to switch "
-        "to the future behavior.\n"
-    )
-    DEPRECATED_AFTER = (
-        "Deprecation Warning: Using '--after' is deprecated and will be "
-        "replaced with 'after' in a future release. Specify --future to switch "
-        "to the future behavior.\n"
-    )
-    DEPRECATED_BEFORE = (
-        "Deprecation Warning: Using '--before' is deprecated and will be "
-        "replaced with 'before' in a future release. Specify --future to switch "
-        "to the future behavior.\n"
-    )
+    GROUP = "group"
+    AFTER = "after"
+    BEFORE = "before"
+    DEPRECATED_GROUP = ""
+    DEPRECATED_AFTER = ""
+    DEPRECATED_BEFORE = ""
 
     def setUp(self):
         super().setUp()
@@ -1674,30 +1600,25 @@ class FailOrWarnGroup(ResourceTest):
                 "resource create R ocf:pcsmock:minimal "
                 f"{self.GROUP} G {self.AFTER} S1 {self.BEFORE} S2 {self.FUTURE}"
             ).split(),
-            (
-                self.DEPRECATED_GROUP
-                + self.DEPRECATED_BEFORE
-                + self.DEPRECATED_AFTER
-                + f"Error: you cannot specify both {self.BEFORE} and {self.AFTER}\n"
-            ),
+            f"Error: you cannot specify both '{self.BEFORE}' and '{self.AFTER}'\n",
         )
 
     def test_fail_when_after_is_used_without_group(self):
         self.assert_pcs_fail(
-            "resource create R ocf:pcsmock:minimal --after S1".split(),
-            "Error: you cannot use --after without --group\n",
+            "resource create R ocf:pcsmock:minimal after S1".split(),
+            "Error: missing value of 'after' option\n",
         )
 
     def test_fail_when_before_is_used_without_group(self):
         self.assert_pcs_fail(
-            "resource create R ocf:pcsmock:minimal --before S1".split(),
-            "Error: you cannot use --before without --group\n",
+            "resource create R ocf:pcsmock:minimal before S1".split(),
+            "Error: missing value of 'before' option\n",
         )
 
     def test_fail_when_before_after_conflicts_and_moreover_without_group(self):
         self.assert_pcs_fail(
-            "resource create R ocf:pcsmock:minimal --after S1 --before S2".split(),
-            "Error: you cannot use --before without --group\n",
+            "resource create R ocf:pcsmock:minimal after S1 before S2".split(),
+            "Error: missing value of 'after' option\n",
         )
 
     def test_fail_when_before_does_not_exist(self):
@@ -1768,46 +1689,6 @@ class FailOrWarnGroup(ResourceTest):
                 + "Error: 'R1' does not exist\n"
                 + ERRORS_HAVE_OCCURRED
             ),
-        )
-
-
-class FailOrWarnGroupFuture(FailOrWarnGroup):
-    FUTURE = "--future"
-    GROUP = "group"
-    AFTER = "after"
-    BEFORE = "before"
-    DEPRECATED_GROUP = DEPRECATED_AFTER = DEPRECATED_BEFORE = ""
-
-    def test_fail_when_entered_both_after_and_before(self):
-        self.assert_pcs_fail(
-            (
-                "resource create R ocf:pcsmock:minimal "
-                f"{self.GROUP} G {self.AFTER} S1 {self.BEFORE} S2 {self.FUTURE}"
-            ).split(),
-            (
-                self.DEPRECATED_GROUP
-                + self.DEPRECATED_BEFORE
-                + self.DEPRECATED_AFTER
-                + f"Error: you cannot specify both '{self.BEFORE}' and '{self.AFTER}'\n"
-            ),
-        )
-
-    def test_fail_when_after_is_used_without_group(self):
-        self.assert_pcs_fail(
-            "resource create R ocf:pcsmock:minimal after S1".split(),
-            "Error: missing value of 'after' option\n",
-        )
-
-    def test_fail_when_before_is_used_without_group(self):
-        self.assert_pcs_fail(
-            "resource create R ocf:pcsmock:minimal before S1".split(),
-            "Error: missing value of 'before' option\n",
-        )
-
-    def test_fail_when_before_after_conflicts_and_moreover_without_group(self):
-        self.assert_pcs_fail(
-            "resource create R ocf:pcsmock:minimal after S1 before S2".split(),
-            "Error: missing value of 'after' option\n",
         )
 
 

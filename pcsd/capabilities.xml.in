@@ -1664,24 +1664,43 @@
                      /api/v1/resource-create-in-group/v1
       </description>
     </capability>
-    <capability id="pcmk.resource.create.meta.future" in-pcs="1" in-pcsd="0">
-      <!-- TODO remove this capability in pcs-0.12 -->
+    <capability id="pcmk.resource.create.meta.future" in-pcs="0" in-pcsd="0">
+      <!-- TODO remove this capability in the next major version -->
       <description>
         Specifying --future enables the new resource create command line parser.
         It requires that meta attributes are prepended with 'meta' keyword for
-        clones and promotables.
+        clones and promotables. The --future option is now a no-op, the behavior
+        it enabled is the default, see pcmk.resource.create.meta.in-clone.
 
         pcs commands: resource create
       </description>
     </capability>
-    <capability id="pcmk.resource.create.group.future" in-pcs="1" in-pcsd="0">
-      <!-- TODO remove this capability in pcs-0.12 -->
+    <capability id="pcmk.resource.create.group.future" in-pcs="0" in-pcsd="0">
+      <!-- TODO remove this capability in the next major version -->
       <description>
         Specifying --future enables the new resource create command line parser.
         It replaces '--group', '--after' and '--before' with 'group', 'after'
-        and 'before', respectively.
+        and 'before', respectively. The --future option is now a no-op, the
+        behavior it enabled is the default, see pcmk.resource.create.group.
 
         pcs commands: resource create
+      </description>
+    </capability>
+    <capability id="pcmk.resource.create.group" in-pcs="1" in-pcsd="0">
+      <description>
+        Put a newly created resource into an existing or new group using the
+        'group' keyword, optionally specifying the resource's position in the
+        group with the 'before' or 'after' keyword.
+
+        pcs commands: resource create ... group
+      </description>
+    </capability>
+    <capability id="pcmk.resource.create.meta.in-clone" in-pcs="1" in-pcsd="0">
+      <description>
+        Clone and promotable clone meta attributes are specified using the
+        'meta' keyword after the 'clone' or 'promotable' keyword.
+
+        pcs commands: resource create ... ( clone | promotable )
       </description>
     </capability>
     <capability id="pcmk.resource.create.operations" in-pcs="1" in-pcsd="1">

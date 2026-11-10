@@ -38,6 +38,9 @@
 - Support for passing positional arguments starting with `-` without a
   preceding `--` on the command line. Use `--` to separate options from such
   arguments.
+- The `--group`, `--before` and `--after` options of `pcs resource create`. Use
+  the `group`, `before` and `after` keywords instead. The `--groups` option has
+  been removed as well.
 
 ### Changed
 - Dependency on libffi-devel caused by rubygem ethon was removed. There is a new
@@ -49,10 +52,10 @@
 
 ### Deprecated
 - Option `--future` in `pcs resource delete | remove`, `pcs booth delete |
-  remove`, and `pcs cluster node delete-remote | remove-remote`. The option
-  is now a no-op and only prints a deprecation warning, since the behavior it
-  previously enabled is now the default. It will be removed in a future
-  release.
+  remove`, `pcs cluster node delete-remote | remove-remote`, and `pcs resource
+  create`. The option is now a no-op and only prints a deprecation warning,
+  since the behavior it previously enabled is now the default. It will be
+  removed in a future release.
 
 ### Fixed
 - Command `pcs stonith update-scsi-devices` no longer triggers unnecessary
