@@ -61,9 +61,26 @@ Errors raised during command execution are caught at this level:
 - **`CmdLineInputError`** — translated to usage text on stderr + exit code 1.
 - **`LibraryError`** — the report items it carries are reported through the
   shared console report processor (`library_wrapper.env.report_processor`) and
-  pcs exits with code 1. If the error carries no report items, a generic
-  "unable to continue" message is printed instead. See
+  pcs exits with code 1 — or code 2 when any reported error was a waiting
+  timeout (see [Exit codes](#exit-codes) below). If the error carries no report
+  items, a generic "unable to continue" message is printed instead. See
   [reports.md — Rendering reports in the CLI](reports.md#rendering-reports-in-the-cli).
+
+#### Exit codes
+
+pcs uses three exit codes:
+
+- **`0`** — success.
+- **`2`** — action was performed successfully, but waiting for the cluster to
+  process it did not finish in time (e.g. waiting for the cluster to settle, or
+  waiting for cluster nodes to start). This lets callers distinguish "the
+  action was performed but the thing pcs waited for did not complete in time"
+  from other failures.
+- **`1`** — any other error.
+
+The console report processor tracks whether a waiting timeout error has been
+reported (`ReportProcessorToConsole.has_waiting_timeout_error`); `app.py`
+consults this flag when choosing between exit codes 1 and 2.
 
 ### Routing
 
