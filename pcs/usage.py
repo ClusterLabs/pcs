@@ -1271,11 +1271,16 @@ Commands:
 
 
     relations <resource id> [--full]
-        Display relations of a resource specified by its id with other resources
-        in a tree structure. Supported types of resource relations are:
-        ordering constraints, ordering set constraints, relations defined by
-        resource hierarchy (clones, groups, bundles). If --full is used, more
-        verbose output will be printed.
+        Display relations of the resource specified by its id to other
+        resources, grouped by the type of relation and rendered as a tree
+        rooted at the specified resource. Supported relation types are:
+        ordering constraints, ordering set constraints, and relations defined
+        by resource hierarchy (clones, groups, bundles). Resources sharing the
+        same relation are listed alphabetically. For ordering set constraints,
+        the configured order of the set is shown in the constraint detail
+        ('set ...' lines), not by the position in the tree. If --full is used,
+        additional detail is printed, including constraint ids and resource
+        types.
 
 Examples:
 
