@@ -839,7 +839,7 @@ def update_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     if not argv:
         raise CmdLineInputError()
     check_is_stonith(lib, [argv[0]], "pcs resource update")
-    resource.resource_update(lib, argv, modifiers)
+    resource.resource_update(lib.env.report_processor, argv, modifiers)
 
 
 def op_add_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
@@ -851,7 +851,7 @@ def op_add_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     if not argv:
         raise CmdLineInputError()
     check_is_stonith(lib, [argv[0]], "pcs resource op add")
-    resource.resource_op_add(lib, argv, modifiers)
+    resource.resource_op_add(lib.env.report_processor, argv, modifiers)
 
 
 def op_delete_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:

@@ -110,7 +110,9 @@ def node_standby_cmd(
         lib.node.standby_unstandby_local(enable, wait)
 
 
-def _getNodeAttributesFromPacemaker(report_processor: ReportProcessorToConsole):
+def _get_node_attributes_from_pacemaker(
+    report_processor: ReportProcessorToConsole,
+):
     """
     Commandline options: no options
     """
@@ -147,7 +149,7 @@ def set_node_utilization(
         if utils.usefile:
             utils.err(f"Unable to find a node: {node}")
 
-        for attrs in _getNodeAttributesFromPacemaker(report_processor):
+        for attrs in _get_node_attributes_from_pacemaker(report_processor):
             if attrs.name == node and attrs.type == "remote":
                 node_attrs = attrs
                 break

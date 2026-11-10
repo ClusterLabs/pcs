@@ -317,6 +317,8 @@ def remove_from_cluster(
         lib.booth.remove_from_cluster(instance_name, force_flags)
         return
 
+    # TODO consider setting a preprocessor in the processor instead of swapping
+    # the whole processor here
     original_report_processor = lib.env.report_processor
     in_memory_report_processor = reports.processor.ReportProcessorInMemory()
     lib.env.report_processor = in_memory_report_processor
@@ -336,8 +338,8 @@ def remove_from_cluster(
             if filtered_reports:
                 original_report_processor.report_list(filtered_reports)
             raise e
-
-    lib.env.report_processor = original_report_processor
+    finally:
+        lib.env.report_processor = original_report_processor
 
     resource_ids = lib.booth.get_resource_ids_from_cluster(instance_name)
     lib.resource.stop(resource_ids, force_flags)

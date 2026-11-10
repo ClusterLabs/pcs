@@ -27,7 +27,10 @@ from pcs.cli.common.parse_args import (
 from pcs.cli.common.tools import print_to_stderr, timeout_to_seconds_legacy
 from pcs.cli.nvset import filter_out_expired_nvset, nvset_dto_list_to_lines
 from pcs.cli.reports.output import error, warn
-from pcs.cli.reports.processor import report_and_exit_on_error
+from pcs.cli.reports.processor import (
+    ReportProcessorToConsole,
+    report_and_exit_on_error,
+)
 from pcs.cli.resource.common import check_is_not_stonith
 from pcs.cli.resource.output import (
     operation_defaults_to_cmd,
@@ -393,10 +396,14 @@ def op_add_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     if not argv:
         raise CmdLineInputError()
     check_is_not_stonith(lib, [argv[0]], "pcs stonith op add")
-    resource_op_add(lib, argv, modifiers)
+    resource_op_add(lib.env.report_processor, argv, modifiers)
 
 
-def resource_op_add(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
+def resource_op_add(
+    report_processor: ReportProcessorToConsole,
+    argv: Argv,
+    modifiers: InputModifiers,
+) -> None:
     """
     Commandline options:
       * -f - CIB file
@@ -439,7 +446,7 @@ def resource_op_add(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
         else:
             severity = reports.ReportItemSeverity.error(reports.codes.FORCE)
         report_and_exit_on_error(
-            lib.env.report_processor,
+            report_processor,
             [lib_ra.resource_agent_error_to_report_item(e, severity)],
         )
 
@@ -448,7 +455,7 @@ def resource_op_add(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     ]
     utils.replace_cib_configuration(
         resource_operation_add(
-            lib.env.report_processor,
+            report_processor,
             dom,
             res_id,
             argv,
@@ -928,12 +935,16 @@ def update_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     if not argv:
         raise CmdLineInputError()
     check_is_not_stonith(lib, [argv[0]], "pcs stonith update")
-    resource_update(lib, argv, modifiers)
+    resource_update(lib.env.report_processor, argv, modifiers)
 
 
 # Update a resource, removing any args that are empty and adding/updating
 # args that are not empty
-def resource_update(lib: Any, args: Argv, modifiers: InputModifiers) -> None:  # noqa: PLR0912, PLR0915
+def resource_update(  # noqa: PLR0912, PLR0915
+    report_processor: ReportProcessorToConsole,
+    args: Argv,
+    modifiers: InputModifiers,
+) -> None:
     """
     Commandline options:
       * -f - CIB file
@@ -956,7 +967,7 @@ def resource_update(lib: Any, args: Argv, modifiers: InputModifiers) -> None:  #
     wait_timeout = None
     if modifiers.is_specified("--wait"):
         # deprecated in the first version of 0.12
-        lib.env.report_processor.report(
+        report_processor.report(
             reports.ReportItem.deprecation(
                 reports.messages.ResourceWaitDeprecated()
             )
@@ -1003,7 +1014,7 @@ def resource_update(lib: Any, args: Argv, modifiers: InputModifiers) -> None:  #
                     if op_args:
                         new_args += ["op"] + op_args
                 return resource_update_clone(
-                    lib.env.report_processor,
+                    report_processor,
                     dom,
                     clone,
                     child_id,
@@ -1033,10 +1044,10 @@ def resource_update(lib: Any, args: Argv, modifiers: InputModifiers) -> None:  #
             ),
         )
         if report_list:
-            report_and_exit_on_error(lib.env.report_processor, report_list)
+            report_and_exit_on_error(report_processor, report_list)
     except lib_ra.ResourceAgentError as e:
         report_and_exit_on_error(
-            lib.env.report_processor,
+            report_processor,
             [
                 lib_ra.resource_agent_error_to_report_item(
                     e,
@@ -1137,7 +1148,7 @@ def resource_update(lib: Any, args: Argv, modifiers: InputModifiers) -> None:  #
         if updating_op:
             updating_op.parentNode.removeChild(updating_op)
         dom = resource_operation_add(
-            lib.env.report_processor,
+            report_processor,
             dom,
             res_id,
             op_argv,

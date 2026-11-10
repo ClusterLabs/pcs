@@ -101,5 +101,8 @@ def report_and_exit_on_error(
     if not report_item_list:
         raise error("Errors have occurred, therefore pcs is unable to continue")
     report_processor.report_list(report_item_list)
+    # has_errors is cumulative: once the report processor has seen an error,
+    # report_and_exit_on_error exits even when the passed report list itself
+    # contains no error.
     if report_processor.has_errors:
         sys.exit(1)

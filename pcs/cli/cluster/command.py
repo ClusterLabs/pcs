@@ -164,6 +164,8 @@ def node_remove_remote(
         lib.remote_node.node_remove_remote(node_identifier, force_flags)
         return
 
+    # TODO consider setting a preprocessor in the processor instead of swapping
+    # the whole processor here
     original_report_processor = lib.env.report_processor
     # We cannot use the ReportProcessorInMemory, since we would catch all
     # reports and print them after the command finishes:
@@ -206,8 +208,8 @@ def node_remove_remote(
                     filtered_reports,
                 )
             raise e
-
-    lib.env.report_processor = original_report_processor
+    finally:
+        lib.env.report_processor = original_report_processor
 
     resource_ids = lib.remote_node.get_resource_ids(node_identifier)
     lib.resource.stop(resource_ids, force_flags)

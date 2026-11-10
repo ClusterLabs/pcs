@@ -42,10 +42,7 @@ from pcs.common.host import PcsKnownHost
 from pcs.common.pacemaker.resource.operations import (
     OCF_CHECK_LEVEL_INSTANCE_ATTRIBUTE_NAME,
 )
-from pcs.common.reports import (
-    ReportItemList,
-    ReportItemSeverity,
-)
+from pcs.common.reports import ReportItemList, ReportItemSeverity
 from pcs.common.reports.messages import CibUpgradeFailedToMinimalRequiredVersion
 from pcs.common.reports.utils import add_context_to_message
 from pcs.common.services.errors import ManageServiceError
@@ -354,7 +351,7 @@ def read_known_hosts_file() -> dict[str, PcsKnownHost]:
 # _process_library_reports with report_and_exit_on_error cannot be done, as
 # they both use different report processors and that would break the daemon.
 # Steps:
-# 1. Write known hosts file getter designed specificall for the daemon context.
+# 1. Write known hosts file getter designed specifically for the daemon context.
 #    This should have been done in the first place.
 # 2. Replace _process_library_reports with report_and_exit_on_error.
 # 3. Drop _process_library_reports.
