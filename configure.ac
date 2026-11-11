@@ -384,7 +384,7 @@ if test "x$tests_only" != "xyes"; then
 	# use them all from the BaseOS or embedded them all as necessary (--enable-local-build)
 	PCS_CHECK_PYMOD([dacite], [], [yes])
 	PCS_CHECK_PYMOD([tornado], [>= 6.0.0], [yes])
-	PCS_CHECK_PYMOD([python-dateutil], [>= 2.7.0], [yes])
+	PCS_CHECK_PYMOD([python-dateutil], [< 4.0.0], [yes])
 	# setuptoools_scm is needed for bundling dateutil, this uses variables
 	# set by the PCS_CHECK_PYMOD macro, so it must be executed right after it
 	if test "x$bundle_module" = "xyes"; then
