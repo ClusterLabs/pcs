@@ -311,9 +311,9 @@ for i in license; do
 done
 
 # python modules docs
-# tornado has some extra README in the demos section
+# -maxdepth 2: search only in a module root directory
 for i in readme contributors; do
- for x in `find %{pcs_bundled_dir}/src -type f -iname "${i}*" | grep -v pyagentx |grep -v demos`; do
+ for x in `find %{pcs_bundled_dir}/src -type f -iname "${i}*" -maxdepth 2 | grep -v pyagentx`; do
   srcfile=`echo $x | sed -e 's#.*\/##g'`
   srcpkg=`echo $x | sed -e 's#.*src/##g' -e 's/\(.*\)-.*/\1/'`
   mv $x dynamic_files/${srcpkg}_${srcfile}

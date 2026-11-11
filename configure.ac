@@ -507,22 +507,25 @@ if test "x$tests_only" != "xyes"; then
 		# build-host generator cannot reproduce, so do not record it here.
 		PCS_CHECK_PYMOD([wheel], [], [], [norecord])
 	fi
-	PCS_CHECK_PYMOD([cryptography])
-	PCS_CHECK_PYMOD([lxml])
+	PCS_CHECK_PYMOD([cryptography], [], [yes])
+	PCS_CHECK_PYMOD([lxml], [], [yes])
 	# pyparsing is kept hardcoded in the spec because under CIRPMWORKAROUNDS it is
 	# force-bundled (added to requirements.txt above) and must not also be recorded
 	# as a system dependency, so do not record it here.
-	PCS_CHECK_PYMOD([pyparsing], [>= 3.0.0], [], [norecord])
+	PCS_CHECK_PYMOD([pyparsing], [>= 3.0.0], [yes], [norecord])
 
 	# those are kind of problematic.
 	# use them all from the BaseOS or embedded them all as necessary (--enable-local-build)
 	PCS_CHECK_PYMOD([dacite], [], [yes])
 	PCS_CHECK_PYMOD([isodate], [], [yes])
 	PCS_CHECK_PYMOD([tornado], [>= 6.0.0], [yes])
-	# Pycurl-7.46.0 requires setuptools => 77. However, if pycurl is already
-	# installed on the system, use whatever pycurl is installed and don't limit
-	# its version based on setuptools version.
-	if test "x$setuptools_77" != "xyes" && test "x$local_build" = "xyes"; then
+	# Pycurl-7.46.0 requires setuptools >= 77. Limit pycurl to an older version
+	# only when the bundled source is built without build isolation, i.e. in a
+	# cache-only build or when individual bundling prepares sources for such a
+	# build. A full local build with downloads enabled uses build isolation, so
+	# pip installs pycurl's build dependencies itself.
+	if test "x$setuptools_77" != "xyes" && test "x$local_build" = "xyes" && \
+		{ test "x$individual_bundling" = "xyes" || test "x$cache_only" = "xyes"; }; then
 		PCS_CHECK_PYMOD([pycurl], [< 7.46.0], [yes])
 	else
 		PCS_CHECK_PYMOD([pycurl], [], [yes])
