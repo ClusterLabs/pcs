@@ -5,7 +5,6 @@ import sys
 
 from pcs import settings, usage, utils
 from pcs.cli.common import completion, errors, parse_args, routing
-from pcs.cli.reports import process_library_reports
 from pcs.cli.reports.output import error, print_to_stderr
 from pcs.cli.routing import (
     acl,
@@ -241,11 +240,18 @@ def main(argv=None):  # noqa: PLR0912, PLR0915
         "help": lambda lib, argv, modifiers: print(usage.main()),
     }
     try:
+        library_wrapper = utils.get_library_wrapper()
         routing.create_router(cmd_map, [])(
-            utils.get_library_wrapper(), argv, utils.get_input_modifiers()
+            library_wrapper, argv, utils.get_input_modifiers()
         )
     except LibraryError as e:
-        process_library_reports(e.args)
+        report_processor = library_wrapper.env.report_processor
+        # duplicated in pcs.cli.reports.processor.report_and_exit_on_error
+        if e.args:
+            report_processor.report_list(e.args)
+        else:
+            error("Errors have occurred, therefore pcs is unable to continue")
+        sys.exit(2 if report_processor.has_waiting_timeout_error else 1)
     except errors.CmdLineInputError:
         if argv and argv[0] in cmd_map:
             usage.show(argv[0], [])

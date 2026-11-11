@@ -24,8 +24,8 @@ from pcs.cli.constraint.output import (
     location,
     print_config,
 )
-from pcs.cli.reports import process_library_reports
 from pcs.cli.reports.output import deprecation_warning, print_to_stderr, warn
+from pcs.cli.reports.processor import report_and_exit_on_error
 from pcs.common import const, pacemaker, reports
 from pcs.common.pacemaker.constraint import (
     CibConstraintColocationSetDto,
@@ -848,7 +848,7 @@ def location_prefer(  # noqa: PLR0912
             cib=lib_env.get_cib(),
         )
         if report_list:
-            process_library_reports(report_list)
+            report_and_exit_on_error(lib.env.report_processor, report_list)
 
     report_list = []
     parameters_list = []
@@ -875,7 +875,7 @@ def location_prefer(  # noqa: PLR0912
         )
 
     if report_list:
-        process_library_reports(report_list)
+        report_and_exit_on_error(lib.env.report_processor, report_list)
 
     modifiers = modifiers.get_subset("--force", "-f")
 
@@ -894,7 +894,6 @@ def location_add(  # noqa: PLR0912, PLR0915
       * --force - allow unknown options, allow constraint for any resource type
       * -f - CIB file
     """
-    del lib
     modifiers.ensure_only_supported("--force", "-f")
     if len(argv) < 3:
         raise CmdLineInputError()
@@ -957,7 +956,7 @@ def location_add(  # noqa: PLR0912, PLR0915
             )
             report_list += _verify_node_name(node, existing_nodes)
             if report_list:
-                process_library_reports(report_list)
+                report_and_exit_on_error(lib.env.report_processor, report_list)
         _verify_score(score)
 
     id_valid, id_error = utils.validate_xml_id(constraint_id, "constraint id")

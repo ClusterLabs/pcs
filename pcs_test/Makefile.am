@@ -118,10 +118,11 @@ EXTRA_DIST		= \
 			  tier0/cli/query/test_resource.py \
 			  tier0/cli/reports/__init__.py \
 			  tier0/cli/reports/test_messages.py \
-			  tier0/cli/reports/test_output.py \
+			  tier0/cli/reports/test_processor.py \
 			  tier0/cli/resource/__init__.py \
 			  tier0/cli/resource/test_common.py \
 			  tier0/cli/resource/test_config.py\
+			  tier0/cli/resource/test_create.py \
 			  tier0/cli/resource/test_defaults.py \
 			  tier0/cli/resource/test_parse_args.py \
 			  tier0/cli/resource/test_relations.py \
@@ -145,6 +146,7 @@ EXTRA_DIST		= \
 			  tier0/cli/stonith/levels/__init__.py \
 			  tier0/cli/stonith/levels/test_output.py \
 			  tier0/cli/stonith/test_config.py\
+			  tier0/cli/stonith/test_create.py\
 			  tier0/cli/stonith/test_update.py \
 			  tier0/common/__init__.py \
 			  tier0/common/communication/__init__.py \

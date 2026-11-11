@@ -5,7 +5,8 @@ from typing import Any, cast
 from pcs import settings, utils
 from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.parse_args import Argv, InputModifiers
-from pcs.cli.reports import output, process_library_reports
+from pcs.cli.reports import output
+from pcs.cli.reports.processor import report_and_exit_on_error
 from pcs.common import file as pcs_file
 from pcs.common import reports
 from pcs.common.reports.item import ReportItem
@@ -160,7 +161,6 @@ def pcsd_status_cmd(
     """
     # If no arguments get current cluster node status, otherwise get listed
     # nodes status
-    del lib
     modifiers.ensure_only_supported("--request-timeout")
     bad_nodes = False
     if not argv:
@@ -174,7 +174,7 @@ def pcsd_status_cmd(
                 )
             )
         if report_list:
-            process_library_reports(report_list)
+            report_and_exit_on_error(lib.env.report_processor, report_list)
         bad_nodes = _check_nodes(nodes, "  ")
     else:
         bad_nodes = _check_nodes(argv, "  ")

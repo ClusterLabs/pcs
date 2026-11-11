@@ -11,7 +11,6 @@ from pcs.cli.common.parse_args import (
 )
 from pcs.cli.reports.output import (
     deprecation_warning,
-    process_library_reports,
     warn,
 )
 from pcs.common import reports
@@ -318,35 +317,29 @@ def remove_from_cluster(
         lib.booth.remove_from_cluster(instance_name, force_flags)
         return
 
+    # TODO consider setting a preprocessor in the processor instead of swapping
+    # the whole processor here
     original_report_processor = lib.env.report_processor
     in_memory_report_processor = reports.processor.ReportProcessorInMemory()
     lib.env.report_processor = in_memory_report_processor
 
     try:
         lib.booth.remove_from_cluster(instance_name)
-
         if in_memory_report_processor.reports:
-            process_library_reports(
+            original_report_processor.report_list(
                 in_memory_report_processor.reports,
-                include_debug=modifiers.is_specified("--debug"),
             )
         return
     except LibraryError as e:
         filtered_reports = _process_reports(
             in_memory_report_processor.reports, force_flags
         )
-
         if reports.has_errors(filtered_reports) or e.args:
             if filtered_reports:
-                process_library_reports(
-                    filtered_reports,
-                    include_debug=modifiers.is_specified("--debug"),
-                    exit_on_error=False,
-                )
-
+                original_report_processor.report_list(filtered_reports)
             raise e
-
-    lib.env.report_processor = original_report_processor
+    finally:
+        lib.env.report_processor = original_report_processor
 
     resource_ids = lib.booth.get_resource_ids_from_cluster(instance_name)
     lib.resource.stop(resource_ids, force_flags)

@@ -11,7 +11,6 @@ from pcs.cli.common.parse_args import (
 from pcs.cli.common.tools import print_to_stderr
 from pcs.cli.reports.output import (
     deprecation_warning,
-    process_library_reports,
     warn,
 )
 from pcs.cli.resource.parse_args import (
@@ -165,6 +164,8 @@ def node_remove_remote(
         lib.remote_node.node_remove_remote(node_identifier, force_flags)
         return
 
+    # TODO consider setting a preprocessor in the processor instead of swapping
+    # the whole processor here
     original_report_processor = lib.env.report_processor
     # We cannot use the ReportProcessorInMemory, since we would catch all
     # reports and print them after the command finishes:
@@ -187,9 +188,8 @@ def node_remove_remote(
             not temporary_report_processor.already_reported_to_console
             and temporary_report_processor.reports
         ):
-            process_library_reports(
+            original_report_processor.report_list(
                 temporary_report_processor.reports,
-                include_debug=modifiers.is_specified("--debug"),
             )
         return
     except LibraryError as e:
@@ -204,14 +204,12 @@ def node_remove_remote(
 
         if reports.has_errors(filtered_reports) or e.args:
             if filtered_reports:
-                process_library_reports(
+                original_report_processor.report_list(
                     filtered_reports,
-                    include_debug=modifiers.is_specified("--debug"),
-                    exit_on_error=False,
                 )
             raise e
-
-    lib.env.report_processor = original_report_processor
+    finally:
+        lib.env.report_processor = original_report_processor
 
     resource_ids = lib.remote_node.get_resource_ids(node_identifier)
     lib.resource.stop(resource_ids, force_flags)

@@ -1705,8 +1705,10 @@
                      /api/v1/resource-create-in-group/v1
       </description>
     </capability>
-    <capability id="pcmk.resource.create.wait" in-pcs="1" in-pcsd="1">
+    <capability id="pcmk.resource.create.wait" in-pcs="0" in-pcsd="0">
       <description>
+        Replaced by pcs.wait-for-the-cluster-to-settle.
+
         Wait for the created resource to start.
 
         pcs commands: resource create ... --wait
@@ -2414,8 +2416,10 @@
           /api/v1/stonith-create/v1
       </description>
     </capability>
-    <capability id="pcmk.stonith.create.wait" in-pcs="1" in-pcsd="1">
+    <capability id="pcmk.stonith.create.wait" in-pcs="0" in-pcsd="0">
       <description>
+        Replaced by pcs.wait-for-the-cluster-to-settle.
+
         Wait for the created resource to start.
 
         pcs commands: stonith create ... --wait
@@ -2820,6 +2824,14 @@
         communication at pcs level.
 
         pcs commands: --request-timeout
+      </description>
+    </capability>
+    <capability id="pcs.wait-for-the-cluster-to-settle" in-pcs="1" in-pcsd="0">
+      <description>
+        The listed commands support --wait flag, which makes them wait for the
+        cluster to settle and exit with 2 in case the waiting times out:
+          pcs resource create
+          pcs stonith create
       </description>
     </capability>
     <capability id="pcs.yes-to-confirm-commands" in-pcs="1" in-pcsd="0">

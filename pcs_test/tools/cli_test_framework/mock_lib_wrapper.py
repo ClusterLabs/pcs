@@ -5,6 +5,7 @@ from typing import Any
 from unittest import mock
 
 from pcs.cli.common import lib_wrapper
+from pcs.cli.common.env_cli import Env as CliEnv
 from pcs.cli.reports.processor import ReportProcessorToConsole
 from pcs.common.reports import ReportItemList
 
@@ -24,6 +25,10 @@ class MockLibrary:
         self._calls = calls
         self._index = 0
         self._report_processor = ReportProcessorToConsole(debug=False)
+        # Mirror the real Library: expose the report processor via env so that
+        # app.py reads the same instance the mock emits reports through.
+        self.env = CliEnv()
+        self.env.report_processor = self._report_processor
 
     def __getattr__(self, module_name: str) -> Any:
         class MockModule:

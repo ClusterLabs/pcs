@@ -560,8 +560,10 @@ AC_SUBST([PCSD_UNIX_SOCKET])
 
 OUTPUT_FORMAT_SYNTAX_DOC="\fB\-\-output\-format\fR text|cmd|json"
 OUTPUT_FORMAT_DESC_DOC="There are 3 formats of output available: 'cmd', 'json' and 'text', default is 'text'. Format 'text' is a human friendly output. Format 'cmd' prints pcs commands which can be used to recreate the same configuration. Format 'json' is a machine oriented output of the configuration."
+WAIT_DESC_DOC="If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the cluster to settle into stable state and then exit with 2 on waiting timeout, 1 on any other error, or 0 on success. If 'n' is not specified, it defaults to 60 minutes."
 AC_SUBST([OUTPUT_FORMAT_SYNTAX_DOC])
 AC_SUBST([OUTPUT_FORMAT_DESC_DOC])
+AC_SUBST([WAIT_DESC_DOC])
 
 # detect different paths required to generate default settings
 AC_PATH_PROG([BASH], [bash])

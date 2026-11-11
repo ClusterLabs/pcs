@@ -8,16 +8,11 @@ from pcs.common.reports.item import ReportItem
 from pcs.common.types import StringCollection
 from pcs.lib.cib import resource
 from pcs.lib.cib.nvpair import INSTANCE_ATTRIBUTES_TAG, get_value
-from pcs.lib.cib.tools import IdProvider
-from pcs.lib.commands.resource import (
-    _are_meta_disabled,
-    _ensure_disabled_after_wait,
-    resource_environment,
-)
+from pcs.lib.cib.tools import IdProvider, get_resources
 from pcs.lib.communication.corosync import GetCorosyncOnlineTargets
 from pcs.lib.communication.scsi import Unfence, UnfenceMpath
 from pcs.lib.communication.tools import AllSameDataMixin, run_and_raise
-from pcs.lib.env import LibraryEnvironment, WaitType
+from pcs.lib.env import LibraryEnvironment
 from pcs.lib.errors import LibraryError
 from pcs.lib.external import CommandRunner
 from pcs.lib.node import get_existing_nodes_names
@@ -92,7 +87,6 @@ def create(  # noqa: PLR0913
     allow_invalid_instance_attributes: bool = False,
     use_default_operations: bool = True,
     ensure_disabled: bool = False,
-    wait: WaitType = False,
     enable_agent_self_validation: bool = False,
 ):
     """
@@ -114,18 +108,9 @@ def create(  # noqa: PLR0913
     use_default_operations -- a flag for stopping of adding default cib
         operations (specified in a stonith agent)
     ensure_disabled -- flag that keeps resource in target-role "Stopped"
-    wait -- flag for controlling waiting for pacemaker idle mechanism
     enable_agent_self_validation -- if True, use agent self-validation feature
         to validate instance attributes
     """
-    if wait is not False:
-        # deprecated in the first version of 0.12
-        env.report_processor.report(
-            reports.ReportItem.deprecation(
-                reports.messages.ResourceWaitDeprecated()
-            )
-        )
-
     runner = env.cmd_runner()
     agent_factory = ResourceAgentFacadeFactory(runner, env.report_processor)
     stonith_agent = _get_agent_facade(
@@ -137,33 +122,29 @@ def create(  # noqa: PLR0913
     if stonith_agent.metadata.provides_unfencing:
         meta_attributes = dict(meta_attributes, provides="unfencing")
 
-    with resource_environment(
-        env,
-        wait,
-        [stonith_id],
-        _ensure_disabled_after_wait(
-            ensure_disabled or _are_meta_disabled(meta_attributes)
-        ),
-    ) as resources_section:
-        id_provider = IdProvider(resources_section)
-        stonith_element = resource.primitive.create(
-            env.report_processor,
-            runner,
-            resources_section,
-            id_provider,
-            stonith_id,
-            stonith_agent,
-            raw_operation_list=operations,
-            meta_attributes=meta_attributes,
-            instance_attributes=instance_attributes,
-            allow_invalid_operation=allow_invalid_operation,
-            allow_invalid_instance_attributes=allow_invalid_instance_attributes,
-            use_default_operations=use_default_operations,
-            resource_type="stonith",
-            enable_agent_self_validation=enable_agent_self_validation,
-        )
-        if ensure_disabled:
-            resource.common.disable(stonith_element, id_provider)
+    resources_section = get_resources(env.get_cib())
+    id_provider = IdProvider(resources_section)
+
+    stonith_element = resource.primitive.create(
+        env.report_processor,
+        runner,
+        resources_section,
+        id_provider,
+        stonith_id,
+        stonith_agent,
+        raw_operation_list=operations,
+        meta_attributes=meta_attributes,
+        instance_attributes=instance_attributes,
+        allow_invalid_operation=allow_invalid_operation,
+        allow_invalid_instance_attributes=allow_invalid_instance_attributes,
+        use_default_operations=use_default_operations,
+        resource_type="stonith",
+        enable_agent_self_validation=enable_agent_self_validation,
+    )
+    if ensure_disabled:
+        resource.common.disable(stonith_element, id_provider)
+
+    env.push_cib()
 
 
 def history_get_text(env: LibraryEnvironment, node: str | None = None):

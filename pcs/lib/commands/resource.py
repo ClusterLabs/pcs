@@ -467,20 +467,6 @@ def _are_meta_disabled(meta_attributes: Mapping[str, str]) -> bool:
     return meta_attributes.get("target-role", "Started").lower() == "stopped"
 
 
-def _can_be_evaluated_as_positive_num(value: str) -> bool:
-    string_wo_leading_zeros = str(value).lstrip("0")
-    return bool(string_wo_leading_zeros) and (
-        string_wo_leading_zeros[0] in list("123456789")
-    )
-
-
-def _is_clone_deactivated_by_meta(meta_attributes: Mapping[str, str]) -> bool:
-    return _are_meta_disabled(meta_attributes) or any(
-        not _can_be_evaluated_as_positive_num(meta_attributes.get(key, "1"))
-        for key in ["clone-max", "clone-node-max"]
-    )
-
-
 def create(  # noqa: PLR0913
     env: LibraryEnvironment,
     resource_id: str,
@@ -494,7 +480,6 @@ def create(  # noqa: PLR0913
     allow_invalid_instance_attributes: bool = False,
     use_default_operations: bool = True,
     ensure_disabled: bool = False,
-    wait: WaitType = False,
     allow_not_suitable_command: bool = False,
     enable_agent_self_validation: bool = False,
 ):
@@ -519,7 +504,6 @@ def create(  # noqa: PLR0913
     use_default_operations -- is a flag for stopping stopping of adding
         default cib operations (specified in a resource agent)
     ensure_disabled -- is flag that keeps resource in target-role "Stopped"
-    wait -- is flag for controlling waiting for pacemaker idle mechanism
     allow_not_suitable_command -- turn forceable errors into warnings
         a resource representing
         - pacemaker remote node (resource agent is ocf:pacemaker:remote)
@@ -532,14 +516,6 @@ def create(  # noqa: PLR0913
     enable_agent_self_validation -- if True, use agent self-validation feature
         to validate instance attributes
     """
-    if wait is not False:
-        # deprecated in the first version of 0.12
-        env.report_processor.report(
-            reports.ReportItem.deprecation(
-                reports.messages.ResourceWaitDeprecated()
-            )
-        )
-
     runner = env.cmd_runner()
     agent_factory = ResourceAgentFacadeFactory(runner, env.report_processor)
     agent_name = _get_resource_agent_name(
@@ -551,48 +527,43 @@ def create(  # noqa: PLR0913
         agent_name,
         [reports.codes.FORCE] if allow_absent_agent else [],
     )
-    with resource_environment(
+    resources_section = get_resources(
+        env.get_cib(get_required_cib_version_for_primitive(operation_list))
+    )
+    id_provider = IdProvider(resources_section)
+
+    _check_special_cases(
         env,
-        wait,
-        [resource_id],
-        _ensure_disabled_after_wait(
-            ensure_disabled or _are_meta_disabled(meta_attributes)
-        ),
-        required_cib_version=get_required_cib_version_for_primitive(
-            operation_list
-        ),
-    ) as resources_section:
-        id_provider = IdProvider(resources_section)
-        _check_special_cases(
-            env,
-            resource_agent.metadata.name,
-            resources_section,
-            resource_id,
-            meta_attributes,
-            instance_attributes,
-            allow_not_suitable_command,
-        )
+        resource_agent.metadata.name,
+        resources_section,
+        resource_id,
+        meta_attributes,
+        instance_attributes,
+        allow_not_suitable_command,
+    )
 
-        primitive_element = resource.primitive.create(
-            env.report_processor,
-            runner,
-            resources_section,
-            id_provider,
-            resource_id,
-            resource_agent,
-            operation_list,
-            meta_attributes,
-            instance_attributes,
-            allow_invalid_operation,
-            allow_invalid_instance_attributes,
-            use_default_operations,
-            enable_agent_self_validation=enable_agent_self_validation,
-        )
-        if env.report_processor.has_errors:
-            raise LibraryError()
+    primitive_element = resource.primitive.create(
+        env.report_processor,
+        runner,
+        resources_section,
+        id_provider,
+        resource_id,
+        resource_agent,
+        operation_list,
+        meta_attributes,
+        instance_attributes,
+        allow_invalid_operation,
+        allow_invalid_instance_attributes,
+        use_default_operations,
+        enable_agent_self_validation=enable_agent_self_validation,
+    )
+    if env.report_processor.has_errors:
+        raise LibraryError()
 
-        if ensure_disabled:
-            resource.common.disable(primitive_element, id_provider)
+    if ensure_disabled:
+        resource.common.disable(primitive_element, id_provider)
+
+    env.push_cib()
 
 
 def create_as_clone(  # noqa: PLR0913
@@ -610,7 +581,6 @@ def create_as_clone(  # noqa: PLR0913
     allow_invalid_instance_attributes: bool = False,
     use_default_operations: bool = True,
     ensure_disabled: bool = False,
-    wait: WaitType = False,
     allow_not_suitable_command: bool = False,
     allow_incompatible_clone_meta_attributes: bool = False,
     enable_agent_self_validation: bool = False,
@@ -638,7 +608,6 @@ def create_as_clone(  # noqa: PLR0913
     use_default_operations -- is a flag for stopping stopping of adding
         default cib operations (specified in a resource agent)
     ensure_disabled -- is flag that keeps resource in target-role "Stopped"
-    wait -- is flag for controlling waiting for pacemaker idle mechanism
     allow_not_suitable_command -- turn forceable errors into warnings
     allow_incompatible_clone_meta_attributes -- if True some incompatible clone
         meta attributes are treated as a warning, or as a forceable error if
@@ -646,14 +615,6 @@ def create_as_clone(  # noqa: PLR0913
     enable_agent_self_validation -- if True, use agent self-validation feature
         to validate instance attributes
     """
-    if wait is not False:
-        # deprecated in the first version of 0.12
-        env.report_processor.report(
-            reports.ReportItem.deprecation(
-                reports.messages.ResourceWaitDeprecated()
-            )
-        )
-
     runner = env.cmd_runner()
     agent_factory = ResourceAgentFacadeFactory(runner, env.report_processor)
     agent_name = _get_resource_agent_name(
@@ -695,69 +656,61 @@ def create_as_clone(  # noqa: PLR0913
     if env.report_processor.has_errors:
         raise LibraryError()
 
-    with resource_environment(
+    resources_section = get_resources(
+        env.get_cib(get_required_cib_version_for_primitive(operation_list))
+    )
+    id_provider = IdProvider(resources_section)
+    _check_special_cases(
         env,
-        wait,
-        [resource_id],
-        _ensure_disabled_after_wait(
-            ensure_disabled
-            or _are_meta_disabled(meta_attributes)
-            or _is_clone_deactivated_by_meta(clone_meta_options)
-        ),
-        required_cib_version=get_required_cib_version_for_primitive(
-            operation_list
-        ),
-    ) as resources_section:
-        id_provider = IdProvider(resources_section)
-        _check_special_cases(
-            env,
-            resource_agent.metadata.name,
-            resources_section,
-            resource_id,
-            meta_attributes,
-            instance_attributes,
-            allow_not_suitable_command,
+        resource_agent.metadata.name,
+        resources_section,
+        resource_id,
+        meta_attributes,
+        instance_attributes,
+        allow_not_suitable_command,
+    )
+    if clone_id is not None:
+        env.report_processor.report_list(
+            resource.clone.validate_clone_id(clone_id, id_provider),
         )
-        if clone_id is not None:
-            env.report_processor.report_list(
-                resource.clone.validate_clone_id(clone_id, id_provider),
-            )
-        if any(clone_meta_options.values()):
-            env.report_processor.report(
-                reports.ReportItem.warning(
-                    reports.messages.MetaAttrsNotValidatedUnsupportedType(
-                        [cib_const.TAG_RESOURCE_CLONE]
-                    )
+    if any(clone_meta_options.values()):
+        env.report_processor.report(
+            reports.ReportItem.warning(
+                reports.messages.MetaAttrsNotValidatedUnsupportedType(
+                    [cib_const.TAG_RESOURCE_CLONE]
                 )
             )
-        if env.report_processor.has_errors:
-            raise LibraryError()
-
-        primitive_element = resource.primitive.create(
-            env.report_processor,
-            runner,
-            resources_section,
-            id_provider,
-            resource_id,
-            resource_agent,
-            operation_list,
-            meta_attributes,
-            instance_attributes,
-            allow_invalid_operation,
-            allow_invalid_instance_attributes,
-            use_default_operations,
-            enable_agent_self_validation=enable_agent_self_validation,
         )
+    if env.report_processor.has_errors:
+        raise LibraryError()
 
-        clone_element = resource.clone.append_new(
-            resources_section,
-            id_provider,
-            primitive_element,
-            clone_meta_options,
-            clone_id=clone_id,
-        )
-        if ensure_disabled:
-            resource.common.disable(clone_element, id_provider)
+    primitive_element = resource.primitive.create(
+        env.report_processor,
+        runner,
+        resources_section,
+        id_provider,
+        resource_id,
+        resource_agent,
+        operation_list,
+        meta_attributes,
+        instance_attributes,
+        allow_invalid_operation,
+        allow_invalid_instance_attributes,
+        use_default_operations,
+        enable_agent_self_validation=enable_agent_self_validation,
+    )
+
+    clone_element = resource.clone.append_new(
+        resources_section,
+        id_provider,
+        primitive_element,
+        clone_meta_options,
+        clone_id=clone_id,
+    )
+    if ensure_disabled:
+        resource.common.disable(clone_element, id_provider)
+
+    env.push_cib()
 
 
 def create_in_group(  # noqa: PLR0913
@@ -776,7 +729,6 @@ def create_in_group(  # noqa: PLR0913
     ensure_disabled: bool = False,
     adjacent_resource_id: str | None = None,
     put_after_adjacent: bool = False,
-    wait: WaitType = False,
     allow_not_suitable_command: bool = False,
     enable_agent_self_validation: bool = False,
 ):
@@ -804,19 +756,10 @@ def create_in_group(  # noqa: PLR0913
     adjacent_resource_id -- identify neighbor of the newly created resource
     put_after_adjacent -- flag to put the newly create resource before / after
         the adjacent resource
-    wait -- flag for controlling waiting for pacemaker idle mechanism
     allow_not_suitable_command -- turn forceable errors into warnings
     enable_agent_self_validation -- if True, use agent self-validation feature
         to validate instance attributes
     """
-    if wait is not False:
-        # deprecated in the first version of 0.12
-        env.report_processor.report(
-            reports.ReportItem.deprecation(
-                reports.messages.ResourceWaitDeprecated()
-            )
-        )
-
     runner = env.cmd_runner()
     agent_factory = ResourceAgentFacadeFactory(runner, env.report_processor)
     agent_name = _get_resource_agent_name(
@@ -828,90 +771,81 @@ def create_in_group(  # noqa: PLR0913
         agent_name,
         [reports.codes.FORCE] if allow_absent_agent else [],
     )
-    with resource_environment(
-        env,
-        wait,
-        [resource_id],
-        _ensure_disabled_after_wait(
-            ensure_disabled or _are_meta_disabled(meta_attributes)
-        ),
-        required_cib_version=get_required_cib_version_for_primitive(
-            operation_list
-        ),
-    ) as resources_section:
-        id_provider = IdProvider(resources_section)
-        _check_special_cases(
-            env,
-            resource_agent.metadata.name,
-            resources_section,
-            resource_id,
-            meta_attributes,
-            instance_attributes,
-            allow_not_suitable_command,
-        )
+    resources_section = get_resources(
+        env.get_cib(get_required_cib_version_for_primitive(operation_list))
+    )
+    id_provider = IdProvider(resources_section)
 
-        adjacent_resource_element = None
-        if adjacent_resource_id:
-            try:
-                adjacent_resource_element = get_element_by_id(
-                    get_root(resources_section), adjacent_resource_id
-                )
-            except ElementNotFound:
-                # We cannot continue without adjacent element because
-                # the validator might produce misleading reports
-                if env.report_processor.report(
-                    ReportItem.error(
-                        reports.messages.IdNotFound(adjacent_resource_id, [])
-                    )
-                ).has_errors:
-                    raise LibraryError() from None
+    _check_special_cases(
+        env,
+        resource_agent.metadata.name,
+        resources_section,
+        resource_id,
+        meta_attributes,
+        instance_attributes,
+        allow_not_suitable_command,
+    )
+
+    adjacent_resource_element = None
+    if adjacent_resource_id:
         try:
-            group_element = get_element_by_id(
-                get_root(resources_section), group_id
+            adjacent_resource_element = get_element_by_id(
+                get_root(resources_section), adjacent_resource_id
             )
         except ElementNotFound:
-            group_id_reports: ReportItemList = []
-            validate_id(
-                group_id, description="group name", reporter=group_id_reports
-            )
-            env.report_processor.report_list(group_id_reports)
-            group_element = resource.group.append_new(
-                resources_section, group_id
-            )
-
-        primitive_element = resource.primitive.create(
-            env.report_processor,
-            runner,
-            resources_section,
-            id_provider,
-            resource_id,
-            resource_agent,
-            operation_list,
-            meta_attributes,
-            instance_attributes,
-            allow_invalid_operation,
-            allow_invalid_instance_attributes,
-            use_default_operations,
-            enable_agent_self_validation=enable_agent_self_validation,
+            # We cannot continue without adjacent element because
+            # the validator might produce misleading reports
+            if env.report_processor.report(
+                ReportItem.error(
+                    reports.messages.IdNotFound(adjacent_resource_id, [])
+                )
+            ).has_errors:
+                raise LibraryError() from None
+    try:
+        group_element = get_element_by_id(get_root(resources_section), group_id)
+    except ElementNotFound:
+        group_id_reports: ReportItemList = []
+        validate_id(
+            group_id, description="group name", reporter=group_id_reports
         )
-        if ensure_disabled:
-            resource.common.disable(primitive_element, id_provider)
+        env.report_processor.report_list(group_id_reports)
+        group_element = resource.group.append_new(resources_section, group_id)
 
-        if env.report_processor.report_list(
-            resource.validations.validate_move_resources_to_group(
-                group_element,
-                [primitive_element],
-                adjacent_resource_element,
-            )
-        ).has_errors:
-            raise LibraryError()
+    primitive_element = resource.primitive.create(
+        env.report_processor,
+        runner,
+        resources_section,
+        id_provider,
+        resource_id,
+        resource_agent,
+        operation_list,
+        meta_attributes,
+        instance_attributes,
+        allow_invalid_operation,
+        allow_invalid_instance_attributes,
+        use_default_operations,
+        enable_agent_self_validation=enable_agent_self_validation,
+    )
+    if ensure_disabled:
+        resource.common.disable(primitive_element, id_provider)
 
-        resource.hierarchy.move_resources_to_group(
+    if env.report_processor.report_list(
+        resource.validations.validate_move_resources_to_group(
             group_element,
             [primitive_element],
             adjacent_resource_element,
-            put_after_adjacent,
         )
+    ).has_errors:
+        raise LibraryError()
+
+    resource.hierarchy.move_resources_to_group(
+        group_element,
+        [primitive_element],
+        adjacent_resource_element,
+        put_after_adjacent,
+    )
+
+    env.push_cib()
 
 
 def create_into_bundle(  # noqa: PLR0913
@@ -928,7 +862,6 @@ def create_into_bundle(  # noqa: PLR0913
     allow_invalid_instance_attributes: bool = False,
     use_default_operations: bool = True,
     ensure_disabled: bool = False,
-    wait: WaitType = False,
     allow_not_suitable_command: bool = False,
     allow_not_accessible_resource: bool = False,
     enable_agent_self_validation: bool = False,
@@ -955,20 +888,11 @@ def create_into_bundle(  # noqa: PLR0913
     use_default_operations -- is a flag for stopping stopping of adding
         default cib operations (specified in a resource agent)
     ensure_disabled -- is flag that keeps resource in target-role "Stopped"
-    wait -- is flag for controlling waiting for pacemaker idle mechanism
     allow_not_suitable_command -- turn forceable errors into warnings
     allow_not_accessible_resource -- turn forceable errors into warnings
     enable_agent_self_validation -- if True, use agent self-validation feature
         to validate instance attributes
     """
-    if wait is not False:
-        # deprecated in the first version of 0.12
-        env.report_processor.report(
-            reports.ReportItem.deprecation(
-                reports.messages.ResourceWaitDeprecated()
-            )
-        )
-
     runner = env.cmd_runner()
     agent_factory = ResourceAgentFacadeFactory(runner, env.report_processor)
     agent_name = _get_resource_agent_name(
@@ -980,65 +904,58 @@ def create_into_bundle(  # noqa: PLR0913
         agent_name,
         [reports.codes.FORCE] if allow_absent_agent else [],
     )
-    required_cib_version = get_required_cib_version_for_primitive(
-        operation_list
+    resources_section = get_resources(
+        env.get_cib(get_required_cib_version_for_primitive(operation_list))
     )
-    with resource_environment(
+    id_provider = IdProvider(resources_section)
+    _check_special_cases(
         env,
-        wait,
-        [resource_id],
-        _ensure_disabled_after_wait(
-            ensure_disabled or _are_meta_disabled(meta_attributes)
-        ),
-        required_cib_version=required_cib_version,
-    ) as resources_section:
-        id_provider = IdProvider(resources_section)
-        _check_special_cases(
-            env,
-            resource_agent.metadata.name,
-            resources_section,
-            resource_id,
-            meta_attributes,
-            instance_attributes,
-            allow_not_suitable_command,
-        )
+        resource_agent.metadata.name,
+        resources_section,
+        resource_id,
+        meta_attributes,
+        instance_attributes,
+        allow_not_suitable_command,
+    )
 
-        primitive_element = resource.primitive.create(
-            env.report_processor,
-            runner,
-            resources_section,
-            id_provider,
-            resource_id,
-            resource_agent,
-            operation_list,
-            meta_attributes,
-            instance_attributes,
-            allow_invalid_operation,
-            allow_invalid_instance_attributes,
-            use_default_operations,
-            enable_agent_self_validation=enable_agent_self_validation,
-        )
-        if ensure_disabled:
-            resource.common.disable(primitive_element, id_provider)
+    primitive_element = resource.primitive.create(
+        env.report_processor,
+        runner,
+        resources_section,
+        id_provider,
+        resource_id,
+        resource_agent,
+        operation_list,
+        meta_attributes,
+        instance_attributes,
+        allow_invalid_operation,
+        allow_invalid_instance_attributes,
+        use_default_operations,
+        enable_agent_self_validation=enable_agent_self_validation,
+    )
+    if ensure_disabled:
+        resource.common.disable(primitive_element, id_provider)
 
-        # the bundle element already exists or LibraryError is raised
-        bundle_el = cast(_Element, _find_bundle(resources_section, bundle_id))
-        if not resource.bundle.is_pcmk_remote_accessible(bundle_el):
-            env.report_processor.report(
-                ReportItem(
-                    severity=reports.item.get_severity(
-                        reports.codes.FORCE,
-                        allow_not_accessible_resource,
-                    ),
-                    message=reports.messages.ResourceInBundleNotAccessible(
-                        bundle_id,
-                        resource_id,
-                    ),
-                )
+    # the bundle element already exists or LibraryError is raised
+    bundle_el = cast(_Element, _find_bundle(resources_section, bundle_id))
+    if not resource.bundle.is_pcmk_remote_accessible(bundle_el):
+        env.report_processor.report(
+            ReportItem(
+                severity=reports.item.get_severity(
+                    reports.codes.FORCE,
+                    allow_not_accessible_resource,
+                ),
+                message=reports.messages.ResourceInBundleNotAccessible(
+                    bundle_id,
+                    resource_id,
+                ),
             )
-        if env.report_processor.has_errors:
-            raise LibraryError()
-        resource.bundle.add_resource(bundle_el, primitive_element)
+        )
+    if env.report_processor.has_errors:
+        raise LibraryError()
+    resource.bundle.add_resource(bundle_el, primitive_element)
+
+    env.push_cib()
 
 
 def bundle_create(  # noqa: PLR0913

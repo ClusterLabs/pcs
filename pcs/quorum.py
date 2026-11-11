@@ -11,7 +11,7 @@ from pcs.cli.common.parse_args import (
     KeyValueParser,
 )
 from pcs.cli.common.tools import print_to_stderr
-from pcs.cli.reports import process_library_reports
+from pcs.cli.reports.processor import report_and_exit_on_error
 from pcs.common.str_tools import format_list, indent
 from pcs.lib.node import get_existing_nodes_names
 from pcs.lib.pacemaker.values import is_false
@@ -306,7 +306,7 @@ def quorum_unblock_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
         utils.get_corosync_conf_facade()
     )
     if report_list:
-        process_library_reports(report_list)
+        report_and_exit_on_error(lib.env.report_processor, report_list)
 
     unjoined_nodes = list(set(all_nodes) - set(utils.getCorosyncActiveNodes()))
     if not unjoined_nodes:

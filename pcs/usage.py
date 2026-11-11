@@ -304,6 +304,12 @@ def _output_format_desc(cmd: bool = True) -> str:
     )
 
 
+_WAIT_DESCRIPTION = """\
+        If --wait is specified, pcs will wait up to 'n' seconds for the cluster
+        to settle into stable state and then exit with 2 on waiting timeout, 1
+        on any other error, or 0 on success. If 'n' is not specified, it
+        defaults to 60 minutes."""
+
 _DELETE_CMD = "delete"
 _REMOVE_CMD = "remove"
 _RESOURCE_DELETE_SYNTAX = (
@@ -885,10 +891,7 @@ Commands:
         preventing the resource from being created.
         If --no-default-ops is specified, only monitor operations are created
         for the resource and all other operations use default settings.
-        If --wait is specified, pcs will wait up to 'n' seconds for the
-        resource to start and then return 0 if the resource is started, or 1 if
-        the resource has not yet started. If 'n' is not specified it defaults
-        to 60 minutes.
+{wait_description}
         Specifying --future switches to the new command format that changes
         the way clone and promotable meta options are expected to be specified.
         Example: Create a new resource called 'VirtualIP' with IP address
@@ -1342,6 +1345,7 @@ Notes:
     resources in a cluster.
 
 """.format(
+        wait_description=_WAIT_DESCRIPTION,
         config_syntax=_format_syntax(_resource_config_syntax("resource")),
         config_desc=_format_desc(_resource_config_desc("resource")),
         delete_syntax=_format_syntax(
@@ -1993,10 +1997,7 @@ Commands:
         creating a misconfigured stonith device. If --agent-validation is not
         specified, the validation will be done anyway, but it will only produce
         warnings not preventing the stonith device from being created.
-        If --wait is specified, pcs will wait up to 'n' seconds for the stonith
-        device to start and then return 0 if the stonith device is started, or 1
-        if the stonith device has not yet started.  If 'n' is not specified it
-        defaults to 60 minutes.
+{wait_description}
         Example: Create a device for nodes node1 and node2
             pcs stonith create MyFence fence_virt pcmk_host_list=node1,node2
         Example: Use port p1 for node n1 and ports p2 and p3 for node n2
@@ -2246,6 +2247,7 @@ Commands:
         To prevent accidental running of this command, --yes or interactive
         user response is required in order to proceed.
 """.format(
+        wait_description=_WAIT_DESCRIPTION,
         config_syntax=_format_syntax(_resource_config_syntax("stonith")),
         config_desc=_format_desc(_resource_config_desc(_STONITH_DEVICE)),
         delete_syntax=_format_syntax(f"{_DELETE_CMD} {_STONITH_DELETE_SYNTAX}"),

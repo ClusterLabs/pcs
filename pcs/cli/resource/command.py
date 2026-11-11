@@ -16,11 +16,7 @@ from pcs.cli.common.parse_args import (
     ensure_unique_args,
     wait_to_timeout,
 )
-from pcs.cli.reports.output import (
-    deprecation_warning,
-    process_library_reports,
-    warn,
-)
+from pcs.cli.reports.output import deprecation_warning, warn
 from pcs.cli.resource.common import (
     check_is_not_stonith,
     get_resource_status_msg,
@@ -131,7 +127,7 @@ def meta(lib: Any, argv: list[str], modifiers: InputModifiers) -> None:
         print(get_resource_status_msg(lib, resource_id))
 
 
-def remove(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
+def remove(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  # noqa: PLR0915
     """
     Options:
       * -f - CIB file
@@ -210,6 +206,8 @@ def remove(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
         lib.cib.remove_elements(resources_to_remove, force_flags)
         return
 
+    # TODO consider setting a preprocessor in the processor instead of swapping
+    # the whole processor here
     original_report_processor = lib.env.report_processor
     in_memory_report_processor = reports.processor.ReportProcessorInMemory()
     lib.env.report_processor = in_memory_report_processor
@@ -223,29 +221,23 @@ def remove(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
         # the resources were successfully removed, but we still need to print
         # out the reports, since there could be INFO or DEBUG reports
         if in_memory_report_processor.reports:
-            process_library_reports(
+            original_report_processor.report_list(
                 in_memory_report_processor.reports,
-                include_debug=modifiers.is_specified("--debug"),
             )
         return
     except LibraryError as e:
         filtered_reports = _process_reports(
             in_memory_report_processor.reports, force_flags
         )
-
         # if there are other errors than CANNOT_REMOVE_RESOURCES_NOT_STOPPED or
         # errors that would be forced, we can exit, since it does not make sense
         # to try stopping and removing the resources again
         if reports.has_errors(filtered_reports) or e.args:
             if filtered_reports:
-                process_library_reports(
-                    filtered_reports,
-                    include_debug=modifiers.is_specified("--debug"),
-                    exit_on_error=False,
-                )
+                original_report_processor.report_list(filtered_reports)
             raise e
-
-    lib.env.report_processor = original_report_processor
+    finally:
+        lib.env.report_processor = original_report_processor
 
     lib.resource.stop(resources_to_remove, force_flags)
     lib.cluster.wait_for_pcmk_idle(None)

@@ -3,6 +3,7 @@ from collections import namedtuple
 
 from pcs import settings
 from pcs.cli.common import middleware
+from pcs.cli.common.env_cli import Env as CliEnv
 from pcs.lib.commands import (
     acl,
     alert,
@@ -581,8 +582,8 @@ def load_module(env, middleware_factory, name):  # noqa: PLR0911, PLR0912
 
 
 class Library:
-    def __init__(self, env, middleware_factory):
-        self.env = env
+    def __init__(self, env: CliEnv, middleware_factory):
+        self.env: CliEnv = env
         self.middleware_factory = middleware_factory
 
     def __getattr__(self, name):

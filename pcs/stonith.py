@@ -10,9 +10,10 @@ from pcs.cli.common.parse_args import (
     InputModifiers,
     KeyValueParser,
     ensure_unique_args,
+    wait_to_timeout,
 )
 from pcs.cli.fencing_topology import target_type_map_cli_to_lib
-from pcs.cli.reports.output import print_to_stderr
+from pcs.cli.reports.output import deprecation_warning, print_to_stderr
 from pcs.cli.resource.output import resource_agent_metadata_to_text
 from pcs.cli.resource.parse_args import (
     parse_primitive as parse_primitive_resource,
@@ -124,6 +125,11 @@ def stonith_create(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
         "-f",
         hint_syntax_changed="0.12",
     )
+    modifiers.ensure_not_mutually_exclusive("-f", "--wait")
+    wait_timeout = wait_to_timeout(modifiers.get("--wait"))
+    if wait_timeout >= 0:
+        # deprecated in the first version of 0.12
+        deprecation_warning(reports.messages.ResourceWaitDeprecated().message)
 
     if len(argv) < 2:
         raise CmdLineInputError()
@@ -139,7 +145,6 @@ def stonith_create(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
         allow_invalid_instance_attributes=modifiers.get("--force"),
         ensure_disabled=modifiers.get("--disabled"),
         use_default_operations=not modifiers.get("--no-default-ops"),
-        wait=modifiers.get("--wait"),
         enable_agent_self_validation=modifiers.get("--agent-validation"),
     )
 
@@ -151,6 +156,9 @@ def stonith_create(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
         parts.instance_attrs,
         **settings,
     )
+
+    if wait_timeout >= 0:
+        lib.cluster.wait_for_pcmk_idle(wait_timeout)
 
 
 def _stonith_level_parse_node(arg):
@@ -839,7 +847,7 @@ def update_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     if not argv:
         raise CmdLineInputError()
     check_is_stonith(lib, [argv[0]], "pcs resource update")
-    resource.resource_update(argv, modifiers)
+    resource.resource_update(lib.env.report_processor, argv, modifiers)
 
 
 def op_add_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
@@ -851,7 +859,7 @@ def op_add_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     if not argv:
         raise CmdLineInputError()
     check_is_stonith(lib, [argv[0]], "pcs resource op add")
-    resource.resource_op_add(argv, modifiers)
+    resource.resource_op_add(lib.env.report_processor, argv, modifiers)
 
 
 def op_delete_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:

@@ -1,7 +1,6 @@
 import json
 from typing import Any
 
-import pcs.lib.pacemaker.live as lib_pacemaker
 from pcs import utils
 from pcs.cli.cluster_property.output import PropertyConfigurationFacade
 from pcs.cli.common.errors import (
@@ -14,6 +13,13 @@ from pcs.cli.common.parse_args import (
     InputModifiers,
     KeyValueParser,
 )
+from pcs.cli.reports.processor import (
+    ReportProcessorToConsole,
+    report_and_exit_on_error,
+)
+from pcs.lib.errors import LibraryError
+from pcs.lib.pacemaker.live import get_cluster_status_dom, get_local_node_status
+from pcs.lib.pacemaker.state import ClusterState
 
 
 def node_attribute_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
@@ -57,7 +63,7 @@ def node_utilization_cmd(
             lib.cluster_property.get_properties_metadata(),
         )
     )
-    set_node_utilization(argv.pop(0), argv)
+    set_node_utilization(lib.env.report_processor, argv.pop(0), argv)
 
 
 def node_maintenance_cmd(
@@ -104,7 +110,26 @@ def node_standby_cmd(
         lib.node.standby_unstandby_local(enable, wait)
 
 
-def set_node_utilization(node: str, argv: Argv) -> None:
+def _get_node_attributes_from_pacemaker(
+    report_processor: ReportProcessorToConsole,
+):
+    """
+    Commandline options: no options
+    """
+    try:
+        return [
+            node.attrs
+            for node in ClusterState(
+                get_cluster_status_dom(utils.cmd_runner())
+            ).node_section.nodes
+        ]
+    except LibraryError as e:
+        report_and_exit_on_error(report_processor, list(e.args))
+
+
+def set_node_utilization(
+    report_processor: ReportProcessorToConsole, node: str, argv: Argv
+) -> None:
     """
     Commandline options:
       * -f - CIB file
@@ -124,7 +149,7 @@ def set_node_utilization(node: str, argv: Argv) -> None:
         if utils.usefile:
             utils.err(f"Unable to find a node: {node}")
 
-        for attrs in utils.getNodeAttributesFromPacemaker():
+        for attrs in _get_node_attributes_from_pacemaker(report_processor):
             if attrs.name == node and attrs.type == "remote":
                 node_attrs = attrs
                 break
@@ -159,7 +184,7 @@ def node_pacemaker_status(
     del lib
     del argv
     del modifiers
-    print(json.dumps(lib_pacemaker.get_local_node_status(utils.cmd_runner())))
+    print(json.dumps(get_local_node_status(utils.cmd_runner())))
 
 
 def attribute_set_cmd(node: str, argv: Argv) -> None:

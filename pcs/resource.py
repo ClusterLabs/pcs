@@ -26,8 +26,11 @@ from pcs.cli.common.parse_args import (
 )
 from pcs.cli.common.tools import print_to_stderr, timeout_to_seconds_legacy
 from pcs.cli.nvset import filter_out_expired_nvset, nvset_dto_list_to_lines
-from pcs.cli.reports import process_library_reports
-from pcs.cli.reports.output import error, warn
+from pcs.cli.reports.output import deprecation_warning, error, warn
+from pcs.cli.reports.processor import (
+    ReportProcessorToConsole,
+    report_and_exit_on_error,
+)
 from pcs.cli.resource.common import check_is_not_stonith
 from pcs.cli.resource.output import (
     operation_defaults_to_cmd,
@@ -393,10 +396,14 @@ def op_add_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     if not argv:
         raise CmdLineInputError()
     check_is_not_stonith(lib, [argv[0]], "pcs stonith op add")
-    resource_op_add(argv, modifiers)
+    resource_op_add(lib.env.report_processor, argv, modifiers)
 
 
-def resource_op_add(argv: Argv, modifiers: InputModifiers) -> None:
+def resource_op_add(
+    report_processor: ReportProcessorToConsole,
+    argv: Argv,
+    modifiers: InputModifiers,
+) -> None:
     """
     Commandline options:
       * -f - CIB file
@@ -438,8 +445,9 @@ def resource_op_add(argv: Argv, modifiers: InputModifiers) -> None:
             agent_facade = _get_void_resource_agent_facade(agent_name)
         else:
             severity = reports.ReportItemSeverity.error(reports.codes.FORCE)
-        process_library_reports(
-            [lib_ra.resource_agent_error_to_report_item(e, severity)]
+        report_and_exit_on_error(
+            report_processor,
+            [lib_ra.resource_agent_error_to_report_item(e, severity)],
         )
 
     allowed_operation_name_list = [
@@ -447,6 +455,7 @@ def resource_op_add(argv: Argv, modifiers: InputModifiers) -> None:
     ]
     utils.replace_cib_configuration(
         resource_operation_add(
+            report_processor,
             dom,
             res_id,
             argv,
@@ -581,7 +590,7 @@ def resource_list_options(
     )
 
 
-def resource_create(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  # noqa: PLR0912
+def resource_create(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  # noqa: PLR0912 PLR0915
     """
     Options:
       * --agent-validation - use agent self validation of instance attributes
@@ -613,6 +622,12 @@ def resource_create(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  #
             + ([] if modifiers.get(FUTURE_OPTION) else modifiers_deprecated)
         )
     )
+    modifiers.ensure_not_mutually_exclusive("-f", "--wait")
+    wait_timeout = wait_to_timeout(modifiers.get("--wait"))
+    if wait_timeout >= 0:
+        # deprecated in the first version of 0.12
+        deprecation_warning(reports.messages.ResourceWaitDeprecated().message)
+
     if len(argv) < 2:
         raise CmdLineInputError()
 
@@ -661,7 +676,6 @@ def resource_create(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  #
         allow_invalid_instance_attributes=modifiers.get("--force"),
         ensure_disabled=modifiers.get("--disabled"),
         use_default_operations=not modifiers.get("--no-default-ops"),
-        wait=modifiers.get("--wait"),
         allow_not_suitable_command=modifiers.get("--force"),
         enable_agent_self_validation=modifiers.get("--agent-validation"),
     )
@@ -731,6 +745,9 @@ def resource_create(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  #
             parts.primitive.instance_attrs,
             **settings,
         )
+
+    if wait_timeout >= 0:
+        lib.cluster.wait_for_pcmk_idle(wait_timeout)
 
 
 def _parse_resource_move_ban(
@@ -926,12 +943,16 @@ def update_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     if not argv:
         raise CmdLineInputError()
     check_is_not_stonith(lib, [argv[0]], "pcs stonith update")
-    resource_update(argv, modifiers)
+    resource_update(lib.env.report_processor, argv, modifiers)
 
 
 # Update a resource, removing any args that are empty and adding/updating
 # args that are not empty
-def resource_update(args: Argv, modifiers: InputModifiers) -> None:  # noqa: PLR0912, PLR0915
+def resource_update(  # noqa: PLR0912, PLR0915
+    report_processor: ReportProcessorToConsole,
+    args: Argv,
+    modifiers: InputModifiers,
+) -> None:
     """
     Commandline options:
       * -f - CIB file
@@ -954,14 +975,11 @@ def resource_update(args: Argv, modifiers: InputModifiers) -> None:  # noqa: PLR
     wait_timeout = None
     if modifiers.is_specified("--wait"):
         # deprecated in the first version of 0.12
-        process_library_reports(
-            [
-                reports.ReportItem.deprecation(
-                    reports.messages.ResourceWaitDeprecated()
-                )
-            ]
+        report_processor.report(
+            reports.ReportItem.deprecation(
+                reports.messages.ResourceWaitDeprecated()
+            )
         )
-
         wait_timeout = utils.validate_wait_get_timeout()
         wait = True
 
@@ -1004,7 +1022,13 @@ def resource_update(args: Argv, modifiers: InputModifiers) -> None:  # noqa: PLR
                     if op_args:
                         new_args += ["op"] + op_args
                 return resource_update_clone(
-                    dom, clone, child_id, new_args, wait, wait_timeout
+                    report_processor,
+                    dom,
+                    clone,
+                    child_id,
+                    new_args,
+                    wait,
+                    wait_timeout,
                 )
         utils.err("Unable to find resource: %s" % res_id)
 
@@ -1028,9 +1052,10 @@ def resource_update(args: Argv, modifiers: InputModifiers) -> None:  # noqa: PLR
             ),
         )
         if report_list:
-            process_library_reports(report_list)
+            report_and_exit_on_error(report_processor, report_list)
     except lib_ra.ResourceAgentError as e:
-        process_library_reports(
+        report_and_exit_on_error(
+            report_processor,
             [
                 lib_ra.resource_agent_error_to_report_item(
                     e,
@@ -1038,9 +1063,9 @@ def resource_update(args: Argv, modifiers: InputModifiers) -> None:  # noqa: PLR
                         reports.codes.FORCE, bool(modifiers.get("--force"))
                     ),
                 )
-            ]
+            ],
         )
-        # If --force is not specified, process_library_reports raises, and the
+        # If --force is not specified, report_and_exit_on_error raises, and the
         # command ends. Otherwise we continue with a void agent facade.
         agent_facade = _get_void_resource_agent_facade(agent_name)
         allowed_operation_name_list = [
@@ -1131,6 +1156,7 @@ def resource_update(args: Argv, modifiers: InputModifiers) -> None:  # noqa: PLR
         if updating_op:
             updating_op.parentNode.removeChild(updating_op)
         dom = resource_operation_add(
+            report_processor,
             dom,
             res_id,
             op_argv,
@@ -1171,13 +1197,15 @@ def resource_update(args: Argv, modifiers: InputModifiers) -> None:  # noqa: PLR
     return None
 
 
-def resource_update_clone(dom, clone, res_id, args, wait, wait_timeout):
+def resource_update_clone(
+    report_processor, dom, clone, res_id, args, wait, wait_timeout
+):
     """
     Commandline options:
       * -f - CIB file
     """
     dom, dummy_clone_id = resource_clone_create(
-        dom, [res_id] + args, update_existing=True
+        report_processor, dom, [res_id] + args, update_existing=True
     )
 
     utils.replace_cib_configuration(dom)
@@ -1220,6 +1248,7 @@ def transform_master_to_clone(master_element):
 
 
 def resource_operation_add(  # noqa: PLR0912, PLR0915
+    report_processor,
     dom,
     res_id,
     argv,
@@ -1259,7 +1288,7 @@ def resource_operation_add(  # noqa: PLR0912, PLR0915
         allow_invalid="--force" in utils.pcs_options,
     )
     if report_list:
-        process_library_reports(report_list)
+        report_and_exit_on_error(report_processor, report_list)
 
     new_role_names_supported = utils.isCibVersionSatisfied(
         dom, const.PCMK_NEW_ROLES_CIB_VERSION
@@ -1438,7 +1467,6 @@ def resource_group_rm_cmd(
       * --wait
       * -f - CIB file
     """
-    del lib
     modifiers.ensure_only_supported("--wait", "-f")
     if not argv:
         raise CmdLineInputError()
@@ -1449,14 +1477,11 @@ def resource_group_rm_cmd(
 
     if modifiers.is_specified("--wait"):
         # deprecated in the first version of 0.12
-        process_library_reports(
-            [
-                reports.ReportItem.deprecation(
-                    reports.messages.ResourceWaitDeprecated()
-                )
-            ]
+        lib.env.report_processor.report(
+            reports.ReportItem.deprecation(
+                reports.messages.ResourceWaitDeprecated()
+            )
         )
-
         wait_timeout = utils.validate_wait_get_timeout()
 
     utils.replace_cib_configuration(cib_dom)
@@ -1532,14 +1557,11 @@ def resource_clone(
 
     if modifiers.is_specified("--wait"):
         # deprecated in the first version of 0.12
-        process_library_reports(
-            [
-                reports.ReportItem.deprecation(
-                    reports.messages.ResourceWaitDeprecated()
-                )
-            ]
+        lib.env.report_processor.report(
+            reports.ReportItem.deprecation(
+                reports.messages.ResourceWaitDeprecated()
+            )
         )
-
         wait_timeout = utils.validate_wait_get_timeout()
 
     force_flags = set()
@@ -1547,7 +1569,11 @@ def resource_clone(
         force_flags.add(reports.codes.FORCE)
 
     cib_dom, clone_id = resource_clone_create(
-        cib_dom, argv, promotable=promotable, force_flags=force_flags
+        lib.env.report_processor,
+        cib_dom,
+        argv,
+        promotable=promotable,
+        force_flags=force_flags,
     )
     cib_dom = constraint.constraint_resource_update(res, cib_dom)
     utils.replace_cib_configuration(cib_dom)
@@ -1601,7 +1627,12 @@ def _get_void_resource_agent_facade(
 
 
 def resource_clone_create(  # noqa: PLR0912
-    cib_dom, argv, update_existing=False, promotable=False, force_flags=()
+    report_processor,
+    cib_dom,
+    argv,
+    update_existing=False,
+    promotable=False,
+    force_flags=(),
 ):
     """
     Commandline options:
@@ -1643,7 +1674,8 @@ def resource_clone_create(  # noqa: PLR0912
         element.parentNode.parentNode.removeChild(element.parentNode)
 
     if element.getAttribute("class") == "stonith":
-        process_library_reports(
+        report_and_exit_on_error(
+            report_processor,
             [
                 reports.ReportItem(
                     severity=reports.item.get_severity(
@@ -1654,12 +1686,15 @@ def resource_clone_create(  # noqa: PLR0912
                         [name]
                     ),
                 )
-            ]
+            ],
         )
 
     parts = parse_clone(argv, promotable=promotable)
     _check_clone_incompatible_options_child(
-        element, parts.meta_attrs, force=reports.codes.FORCE in force_flags
+        element,
+        parts.meta_attrs,
+        report_processor,
+        force=reports.codes.FORCE in force_flags,
     )
 
     if not update_existing:
@@ -1700,6 +1735,7 @@ def resource_clone_create(  # noqa: PLR0912
 def _check_clone_incompatible_options_child(
     child_el,
     clone_meta_attrs: Mapping[str, str],
+    report_processor,
     force: bool = False,
 ):
     report_list = []
@@ -1719,7 +1755,7 @@ def _check_clone_incompatible_options_child(
                 )
             )
     if report_list:
-        process_library_reports(report_list)
+        report_and_exit_on_error(report_processor, report_list)
 
 
 def _check_clone_incompatible_options_primitive(
@@ -1780,7 +1816,6 @@ def resource_clone_master_remove(
       * -f - CIB file
       * --wait
     """
-    del lib
     modifiers.ensure_only_supported("-f", "--wait")
     if len(argv) != 1:
         raise CmdLineInputError()
@@ -1804,14 +1839,11 @@ def resource_clone_master_remove(
 
     if modifiers.is_specified("--wait"):
         # deprecated in the first version of 0.12
-        process_library_reports(
-            [
-                reports.ReportItem.deprecation(
-                    reports.messages.ResourceWaitDeprecated()
-                )
-            ]
+        lib.env.report_processor.report(
+            reports.ReportItem.deprecation(
+                reports.messages.ResourceWaitDeprecated()
+            )
         )
-
         wait_timeout = utils.validate_wait_get_timeout()
 
     # if user requested uncloning a resource contained in a cloned group

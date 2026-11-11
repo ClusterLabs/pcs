@@ -28,12 +28,12 @@ INFO_REPORT = reports.ReportItem.info(
     "pcs.common.reports.processor.ReportProcessorInMemory.reports",
     new_callable=mock.PropertyMock,
 )
-@mock.patch("pcs.cli.resource.command.process_library_reports")
 class RemoveResource(TestCase):
     def setUp(self):
         self.lib = mock.Mock(spec_set=["cib", "cluster", "env", "resource"])
 
         self.lib.env = mock.Mock(spec_set=["report_processor"])
+        self.lib.env.report_processor = mock.Mock(spec_set=["report_list"])
         self.lib.cib = mock.Mock(spec_set=["remove_elements"])
         self.lib.cluster = mock.Mock(spec_set=["wait_for_pcmk_idle"])
         self.lib.resource = mock.Mock(
@@ -48,15 +48,14 @@ class RemoveResource(TestCase):
         self.lib.assert_has_calls(expected_calls)
         self.assertEqual(len(self.lib.mock_calls), len(expected_calls))
 
-    def test_no_args(self, mock_process_lib_reports, mock_reports):
+    def test_no_args(self, mock_reports):
         with self.assertRaises(CmdLineInputError) as cm:
             self._call_cmd([])
         self.assertIsNone(cm.exception.message)
         self.assert_lib_calls([])
         mock_reports.assert_not_called()
-        mock_process_lib_reports.assert_not_called()
 
-    def test_duplicate_args(self, mock_process_lib_reports, mock_reports):
+    def test_duplicate_args(self, mock_reports):
         with self.assertRaises(CmdLineInputError) as cm:
             self._call_cmd(["R1", "R1", "R2", "R3", "R2"])
         self.assertEqual(
@@ -64,9 +63,8 @@ class RemoveResource(TestCase):
         )
         self.assert_lib_calls([])
         mock_reports.assert_not_called()
-        mock_process_lib_reports.assert_not_called()
 
-    def test_not_resource_id(self, mock_process_lib_reports, mock_reports):
+    def test_not_resource_id(self, mock_reports):
         with self.assertRaises(CmdLineInputError) as cm:
             self._call_cmd(["nonexistent"])
 
@@ -75,9 +73,8 @@ class RemoveResource(TestCase):
         )
         self.assert_lib_calls([mock.call.resource.get_configured_resources()])
         mock_reports.assert_not_called()
-        mock_process_lib_reports.assert_not_called()
 
-    def test_stonith_id(self, mock_process_lib_reports, mock_reports):
+    def test_stonith_id(self, mock_reports):
         with self.assertRaises(CmdLineInputError) as cm:
             self._call_cmd(["S1"])
 
@@ -90,9 +87,8 @@ class RemoveResource(TestCase):
         )
         self.assert_lib_calls([mock.call.resource.get_configured_resources()])
         mock_reports.assert_not_called()
-        mock_process_lib_reports.assert_not_called()
 
-    def test_multiple_stonith_ids(self, mock_process_lib_reports, mock_reports):
+    def test_multiple_stonith_ids(self, mock_reports):
         with self.assertRaises(CmdLineInputError) as cm:
             self._call_cmd(["S1", "R1", "R2", "R3", "S2"])
 
@@ -105,9 +101,8 @@ class RemoveResource(TestCase):
         )
         self.assert_lib_calls([mock.call.resource.get_configured_resources()])
         mock_reports.assert_not_called()
-        mock_process_lib_reports.assert_not_called()
 
-    def test_remove_one(self, mock_process_library_reports, mock_reports):
+    def test_remove_one(self, mock_reports):
         mock_reports.return_value = [INFO_REPORT]
         self._call_cmd(["R1"])
 
@@ -115,29 +110,11 @@ class RemoveResource(TestCase):
             [
                 mock.call.resource.get_configured_resources(),
                 mock.call.cib.remove_elements({"R1"}),
+                mock.call.env.report_processor.report_list([INFO_REPORT]),
             ]
         )
-        mock_process_library_reports.assert_called_once_with(
-            [INFO_REPORT], include_debug=False
-        )
 
-    def test_remove_one_with_debug(
-        self, mock_process_library_reports, mock_reports
-    ):
-        mock_reports.return_value = [INFO_REPORT]
-        self._call_cmd(["R1"], {"debug": True})
-
-        self.assert_lib_calls(
-            [
-                mock.call.resource.get_configured_resources(),
-                mock.call.cib.remove_elements({"R1"}),
-            ]
-        )
-        mock_process_library_reports.assert_called_once_with(
-            [INFO_REPORT], include_debug=True
-        )
-
-    def test_remove_multiple(self, mock_process_library_reports, mock_reports):
+    def test_remove_multiple(self, mock_reports):
         mock_reports.return_value = []
         self._call_cmd(["R1", "R2", "R3"])
 
@@ -147,9 +124,8 @@ class RemoveResource(TestCase):
                 mock.call.cib.remove_elements({"R1", "R2", "R3"}),
             ]
         )
-        mock_process_library_reports.assert_not_called()
 
-    def test_dont_stop_me_now(self, mock_process_library_reports, mock_reports):
+    def test_dont_stop_me_now(self, mock_reports):
         self._call_cmd(["R1"], {"no-stop": True})
 
         self.assert_lib_calls(
@@ -159,11 +135,8 @@ class RemoveResource(TestCase):
             ]
         )
         mock_reports.assert_not_called()
-        mock_process_library_reports.assert_not_called()
 
-    def test_force_dont_stop_me_now(
-        self, mock_process_library_reports, mock_reports
-    ):
+    def test_force_dont_stop_me_now(self, mock_reports):
         self._call_cmd(["R1"], {"force": True, "no-stop": True})
 
         self.assert_lib_calls(
@@ -173,11 +146,8 @@ class RemoveResource(TestCase):
             ]
         )
         mock_reports.assert_not_called()
-        mock_process_library_reports.assert_not_called()
 
-    def test_remove_not_stopped(
-        self, mock_process_library_reports, mock_reports
-    ):
+    def test_remove_not_stopped(self, mock_reports):
         self.lib.cib.remove_elements.side_effect = [LibraryError(), None]
         mock_reports.return_value = [CANNOT_STOP_RESOURCES_ERROR_REPORT]
 
@@ -194,11 +164,8 @@ class RemoveResource(TestCase):
                 mock.call.cib.remove_elements(resource_ids, force_flags),
             ]
         )
-        mock_process_library_reports.assert_not_called()
 
-    def test_remove_more_errors(
-        self, mock_process_library_reports, mock_reports
-    ):
+    def test_remove_more_errors(self, mock_reports):
         self.lib.cib.remove_elements.side_effect = [LibraryError(), None]
         mock_reports.return_value = [
             NO_STONITH_WOULD_BE_LEFT_ERROR_REPORT,
@@ -211,42 +178,13 @@ class RemoveResource(TestCase):
             [
                 mock.call.resource.get_configured_resources(),
                 mock.call.cib.remove_elements({"R1"}),
+                mock.call.env.report_processor.report_list(
+                    [NO_STONITH_WOULD_BE_LEFT_ERROR_REPORT]
+                ),
             ]
         )
-        mock_process_library_reports.assert_called_once_with(
-            [NO_STONITH_WOULD_BE_LEFT_ERROR_REPORT],
-            include_debug=False,
-            exit_on_error=False,
-        )
 
-    def test_remove_more_errors_debug(
-        self, mock_process_library_reports, mock_reports
-    ):
-        self.lib.cib.remove_elements.side_effect = [LibraryError(), None]
-        mock_reports.return_value = [
-            NO_STONITH_WOULD_BE_LEFT_ERROR_REPORT,
-            CANNOT_STOP_RESOURCES_ERROR_REPORT,
-        ]
-
-        self.assertRaises(
-            LibraryError, lambda: self._call_cmd(["R1"], {"debug": True})
-        )
-
-        self.assert_lib_calls(
-            [
-                mock.call.resource.get_configured_resources(),
-                mock.call.cib.remove_elements({"R1"}),
-            ]
-        )
-        mock_process_library_reports.assert_called_once_with(
-            [NO_STONITH_WOULD_BE_LEFT_ERROR_REPORT],
-            include_debug=True,
-            exit_on_error=False,
-        )
-
-    def test_mutually_exclusive_options(
-        self, mock_process_library_reports, mock_reports
-    ):
+    def test_mutually_exclusive_options(self, mock_reports):
         with self.assertRaises(CmdLineInputError) as cm:
             command.remove(
                 self.lib,
@@ -259,9 +197,8 @@ class RemoveResource(TestCase):
             cm.exception.message, "Only one of '--no-stop', '-f' can be used"
         )
         mock_reports.assert_not_called()
-        mock_process_library_reports.assert_not_called()
 
-    def test_remove_force(self, mock_process_lib_reports, mock_reports):
+    def test_remove_force(self, mock_reports):
         mock_reports.return_value = []
 
         self._call_cmd(["R1"], {"force": True})
@@ -274,12 +211,9 @@ class RemoveResource(TestCase):
             ]
         )
         mock_reports.assert_called_once()
-        mock_process_lib_reports.assert_not_called()
 
     @mock.patch("pcs.cli.resource.command.deprecation_warning")
-    def test_future_option_no_op(
-        self, mock_deprecation_warning, mock_process_lib_reports, mock_reports
-    ):
+    def test_future_option_no_op(self, mock_deprecation_warning, mock_reports):
         resource_ids = {"R1"}
         mock_reports.return_value = []
 
@@ -294,11 +228,8 @@ class RemoveResource(TestCase):
         mock_deprecation_warning.assert_called_once_with(
             FIXTURE_FUTURE_OPTION_DEPRECATION_WARNING
         )
-        mock_process_lib_reports.assert_not_called()
 
-    def test_remove_force_more_errors_forceable(
-        self, mock_process_lib_reports, mock_reports
-    ):
+    def test_remove_force_more_errors_forceable(self, mock_reports):
         self.lib.cib.remove_elements.side_effect = [LibraryError(), None]
         mock_reports.return_value = [
             FORCEABLE_ERROR_REPORT,
@@ -318,11 +249,8 @@ class RemoveResource(TestCase):
                 mock.call.cib.remove_elements(resource_ids, force_codes),
             ]
         )
-        mock_process_lib_reports.assert_not_called()
 
-    def test_remove_force_more_errors_not_forceable(
-        self, mock_process_lib_reports, mock_reports
-    ):
+    def test_remove_force_more_errors_not_forceable(self, mock_reports):
         self.lib.cib.remove_elements.side_effect = [LibraryError(), None]
         mock_reports.return_value = [
             FORCEABLE_ERROR_REPORT,
@@ -338,15 +266,13 @@ class RemoveResource(TestCase):
             [
                 mock.call.resource.get_configured_resources(),
                 mock.call.cib.remove_elements({"R1"}),
-            ]
-        )
-        mock_process_lib_reports.assert_called_once_with(
-            [
-                reports.item.ReportItem.warning(
-                    reports.messages.NoStonithMeansWouldBeLeft()
+                mock.call.env.report_processor.report_list(
+                    [
+                        reports.item.ReportItem.warning(
+                            reports.messages.NoStonithMeansWouldBeLeft()
+                        ),
+                        NO_STONITH_WOULD_BE_LEFT_ERROR_REPORT,
+                    ]
                 ),
-                NO_STONITH_WOULD_BE_LEFT_ERROR_REPORT,
-            ],
-            include_debug=False,
-            exit_on_error=False,
+            ]
         )

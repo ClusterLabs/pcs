@@ -1,9 +1,7 @@
-from unittest import TestCase, mock
+from unittest import TestCase
 
-from pcs import settings
 from pcs.common import const, reports
 from pcs.lib.commands import resource
-from pcs.lib.errors import LibraryError
 from pcs.lib.resource_agent import ResourceAgentName
 from pcs.lib.resource_agent import const as ra_const
 
@@ -11,10 +9,6 @@ from pcs_test.tools import fixture
 from pcs_test.tools.assertions import assert_raise_library_error
 from pcs_test.tools.command_env import get_env_tools
 from pcs_test.tools.metadata_dto import FIXTURE_KNOWN_META_NAMES_PRIMITIVE_META
-from pcs_test.tools.misc import get_test_resource as rc
-from pcs_test.tools.misc import outdent
-
-TIMEOUT = 10
 
 
 class AreMetaDisabled(TestCase):
@@ -27,40 +21,9 @@ class AreMetaDisabled(TestCase):
         self.assertFalse(resource._are_meta_disabled({"target-role": "any"}))
 
 
-class IsCloneDeactivatedByMeta(TestCase):
-    def assert_is_disabled(self, meta_attributes):
-        self.assertTrue(resource._is_clone_deactivated_by_meta(meta_attributes))
-
-    def assert_is_not_disabled(self, meta_attributes):
-        self.assertFalse(
-            resource._is_clone_deactivated_by_meta(meta_attributes)
-        )
-
-    def test_detect_is_disabled(self):
-        self.assert_is_disabled({"target-role": "Stopped"})
-        self.assert_is_disabled({"target-role": "stopped"})
-        self.assert_is_disabled({"clone-max": "0"})
-        self.assert_is_disabled({"clone-max": "00"})
-        self.assert_is_disabled({"clone-max": 0})
-        self.assert_is_disabled({"clone-node-max": "0"})
-        self.assert_is_disabled({"clone-node-max": "abc1"})
-
-    def test_detect_is_not_disabled(self):
-        self.assert_is_not_disabled({})
-        self.assert_is_not_disabled({"target-role": "any"})
-        self.assert_is_not_disabled({"clone-max": "1"})
-        self.assert_is_not_disabled({"clone-max": "01"})
-        self.assert_is_not_disabled({"clone-max": 1})
-        self.assert_is_not_disabled({"clone-node-max": "1"})
-        self.assert_is_not_disabled({"clone-node-max": 1})
-        self.assert_is_not_disabled({"clone-node-max": "1abc"})
-        self.assert_is_not_disabled({"clone-node-max": "1.1"})
-
-
 def create(  # noqa: PLR0913
     env,
     *,
-    wait=False,
     disabled=False,
     meta_attributes=None,
     operation_list=None,
@@ -77,7 +40,6 @@ def create(  # noqa: PLR0913
         operation_list=operation_list if operation_list else [],
         meta_attributes=meta_attributes if meta_attributes else {},
         instance_attributes=instance_attributes if instance_attributes else {},
-        wait=wait,
         ensure_disabled=disabled,
         allow_invalid_operation=allow_invalid_operation,
         allow_invalid_instance_attributes=allow_invalid_instance_attributes,
@@ -87,7 +49,6 @@ def create(  # noqa: PLR0913
 
 def create_group(
     env,
-    wait=TIMEOUT,
     disabled=False,
     meta_attributes=None,
     operation_list=None,
@@ -103,7 +64,6 @@ def create_group(
         operation_list=operation_list if operation_list else [],
         meta_attributes=meta_attributes if meta_attributes else {},
         instance_attributes=instance_attributes if instance_attributes else {},
-        wait=wait,
         ensure_disabled=disabled,
         enable_agent_self_validation=enable_agent_self_validation,
     )
@@ -112,7 +72,6 @@ def create_group(
 def create_clone(  # noqa: PLR0913
     env,
     *,
-    wait=TIMEOUT,
     disabled=False,
     meta_attributes=None,
     clone_options=None,
@@ -132,7 +91,6 @@ def create_clone(  # noqa: PLR0913
         instance_attributes=instance_attributes if instance_attributes else {},
         clone_meta_options=clone_options if clone_options else {},
         clone_id=clone_id,
-        wait=wait,
         ensure_disabled=disabled,
         allow_incompatible_clone_meta_attributes=allow_incompatible_clone_meta_attributes,
         enable_agent_self_validation=enable_agent_self_validation,
@@ -142,7 +100,6 @@ def create_clone(  # noqa: PLR0913
 def create_bundle(
     env,
     agent="ocf:heartbeat:Dummy",
-    wait=TIMEOUT,
     disabled=False,
     meta_attributes=None,
     allow_not_accessible_resource=False,
@@ -157,20 +114,10 @@ def create_bundle(
         meta_attributes=meta_attributes if meta_attributes else {},
         instance_attributes={},
         bundle_id="B",
-        wait=wait,
         ensure_disabled=disabled,
         allow_not_accessible_resource=allow_not_accessible_resource,
         enable_agent_self_validation=enable_agent_self_validation,
     )
-
-
-wait_error_message = outdent(
-    """\
-    Pending actions:
-            Action 39: stonith-vm-rhel72-1-reboot  on vm-rhel72-1
-    Error performing operation: Timer expired
-    """
-).strip()
 
 
 def fixture_cib_primitive_stateful(
@@ -245,70 +192,10 @@ fixture_cib_resources_xml_primitive_simplest = """
     </resources>
 """
 
-fixture_cib_resources_xml_simplest_disabled = """<resources>
-    <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
-        <meta_attributes id="A-meta_attributes">
-            <nvpair id="A-meta_attributes-target-role" name="target-role"
-                value="Stopped"
-            />
-        </meta_attributes>
-        <operations>
-            <op id="A-migrate_from-interval-0s" interval="0s"
-                name="migrate_from" timeout="20"
-            />
-            <op id="A-migrate_to-interval-0s" interval="0s" name="migrate_to"
-                timeout="20"
-            />
-            <op id="A-monitor-interval-10" interval="10" name="monitor"
-                timeout="20"
-            />
-            <op id="A-reload-interval-0s" interval="0s" name="reload"
-                timeout="20"
-            />
-            <op id="A-start-interval-0s" interval="0s" name="start"
-                timeout="20"
-            />
-            <op id="A-stop-interval-0s" interval="0s" name="stop" timeout="20"/>
-        </operations>
-    </primitive>
-</resources>"""
 
 fixture_cib_resources_xml_group_simplest = """<resources>
     <group id="G">
         <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
-            <operations>
-                <op id="A-migrate_from-interval-0s" interval="0s"
-                    name="migrate_from" timeout="20"
-                />
-                <op id="A-migrate_to-interval-0s" interval="0s"
-                    name="migrate_to" timeout="20"
-                />
-                <op id="A-monitor-interval-10" interval="10" name="monitor"
-                    timeout="20"
-                />
-                <op id="A-reload-interval-0s" interval="0s" name="reload"
-                    timeout="20"
-                />
-                <op id="A-start-interval-0s" interval="0s" name="start"
-                    timeout="20"
-                />
-                <op id="A-stop-interval-0s" interval="0s" name="stop"
-                    timeout="20"
-                />
-            </operations>
-        </primitive>
-    </group>
-</resources>"""
-
-
-fixture_cib_resources_xml_group_simplest_disabled = """<resources>
-    <group id="G">
-        <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
-            <meta_attributes id="A-meta_attributes">
-                <nvpair id="A-meta_attributes-target-role" name="target-role"
-                    value="Stopped"
-                />
-            </meta_attributes>
             <operations>
                 <op id="A-migrate_from-interval-0s" interval="0s"
                     name="migrate_from" timeout="20"
@@ -372,59 +259,6 @@ fixture_cib_resources_xml_clone_custom_id = (
         clone_id="CustomCloneId"
     )
 )
-
-
-fixture_cib_resources_xml_clone_simplest_disabled = """<resources>
-    <clone id="A-clone">
-        <meta_attributes id="A-clone-meta_attributes">
-            <nvpair id="A-clone-meta_attributes-target-role"
-                name="target-role"
-                value="Stopped"
-            />
-        </meta_attributes>
-        <primitive class="ocf" id="A" provider="heartbeat" type="Dummy">
-            <operations>
-                <op id="A-migrate_from-interval-0s" interval="0s"
-                    name="migrate_from" timeout="20"
-                />
-                <op id="A-migrate_to-interval-0s" interval="0s"
-                    name="migrate_to" timeout="20"
-                />
-                <op id="A-monitor-interval-10" interval="10" name="monitor"
-                    timeout="20"
-                />
-                <op id="A-reload-interval-0s" interval="0s" name="reload"
-                    timeout="20"
-                />
-                <op id="A-start-interval-0s" interval="0s" name="start"
-                    timeout="20"
-                />
-                <op id="A-stop-interval-0s" interval="0s" name="stop"
-                    timeout="20"
-                />
-            </operations>
-        </primitive>
-    </clone>
-</resources>"""
-
-
-def fixture_state_resources_xml(
-    role="Started", failed="false", node_name="node1"
-):
-    return """
-        <resources>
-            <resource
-                id="A" resource_agent="ocf::heartbeat:Dummy"
-                role="{role}" failed="{failed}"
-            >
-                <node name="{node_name}" id="1" cached="false"/>
-            </resource>
-        </resources>
-        """.format(
-        role=role,
-        failed=failed,
-        node_name=node_name,
-    )
 
 
 class CreateRolesNormalization(TestCase):
@@ -1420,152 +1254,6 @@ class Create(TestCase):
         )
 
 
-@mock.patch.object(
-    settings, "pacemaker_api_result_schema", rc("pcmk_rng/api/api-result.rng")
-)
-class CreateWait(TestCase):
-    def setUp(self):
-        self.env_assist, self.config = get_env_tools(test_case=self)
-        self.config.runner.pcmk.load_agent()
-        self.config.runner.cib.load()
-        self.config.runner.pcmk.resource_agent_self_validation({})
-        self.config.env.push_cib(
-            resources=fixture_cib_resources_xml_primitive_simplest,
-            wait=TIMEOUT,
-        )
-
-    def test_fail_wait(self):
-        self.config.env.push_cib(
-            resources=fixture_cib_resources_xml_primitive_simplest,
-            wait=TIMEOUT,
-            exception=LibraryError(
-                reports.item.ReportItem.error(
-                    reports.messages.WaitForIdleTimedOut(wait_error_message)
-                )
-            ),
-            instead="env.push_cib",
-        )
-        self.env_assist.assert_raise_library_error(
-            lambda: create(self.env_assist.get_env(), wait=TIMEOUT),
-            [fixture.report_wait_for_idle_timed_out(wait_error_message)],
-            expected_in_processor=False,
-        )
-        self.env_assist.assert_reports(
-            [fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED)]
-        )
-
-    def test_wait_ok_run_fail(self):
-        self.config.runner.pcmk.load_state(
-            resources=fixture_state_resources_xml(failed="true")
-        )
-
-        self.env_assist.assert_raise_library_error(
-            lambda: create(self.env_assist.get_env(), wait=TIMEOUT)
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.error(
-                    reports.codes.RESOURCE_DOES_NOT_RUN,
-                    resource_id="A",
-                ),
-                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
-            ]
-        )
-
-    def test_wait_ok_run_ok(self):
-        self.config.runner.pcmk.load_state(
-            resources=fixture_state_resources_xml()
-        )
-        create(self.env_assist.get_env(), wait=TIMEOUT)
-        self.env_assist.assert_reports(
-            [
-                fixture.info(
-                    reports.codes.RESOURCE_RUNNING_ON_NODES,
-                    roles_with_nodes={"Started": ["node1"]},
-                    resource_id="A",
-                ),
-                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
-            ]
-        )
-
-    def test_wait_ok_disable_fail(self):
-        (
-            self.config.runner.pcmk.load_state(
-                resources=fixture_state_resources_xml()
-            ).env.push_cib(
-                resources=fixture_cib_resources_xml_simplest_disabled,
-                wait=TIMEOUT,
-                instead="env.push_cib",
-            )
-        )
-
-        self.env_assist.assert_raise_library_error(
-            lambda: create(
-                self.env_assist.get_env(), wait=TIMEOUT, disabled=True
-            )
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.error(
-                    reports.codes.RESOURCE_RUNNING_ON_NODES,
-                    roles_with_nodes={"Started": ["node1"]},
-                    resource_id="A",
-                ),
-                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
-            ]
-        )
-
-    def test_wait_ok_disable_ok(self):
-        (
-            self.config.runner.pcmk.load_state(
-                resources=fixture_state_resources_xml(role="Stopped")
-            ).env.push_cib(
-                resources=fixture_cib_resources_xml_simplest_disabled,
-                wait=TIMEOUT,
-                instead="env.push_cib",
-            )
-        )
-
-        create(self.env_assist.get_env(), wait=TIMEOUT, disabled=True)
-        self.env_assist.assert_reports(
-            [
-                fixture.info(
-                    reports.codes.RESOURCE_DOES_NOT_RUN,
-                    resource_id="A",
-                ),
-                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
-            ]
-        )
-
-    def test_wait_ok_disable_ok_by_target_role(self):
-        self.config.runner.pcmk.load_state(
-            resources=fixture_state_resources_xml(role="Stopped")
-        )
-        self.config.runner.pcmk.load_crm_resource_metadata(
-            before="env.push_cib"
-        )
-        self.config.env.push_cib(
-            resources=fixture_cib_resources_xml_simplest_disabled,
-            wait=TIMEOUT,
-            instead="env.push_cib",
-        )
-        create(
-            self.env_assist.get_env(),
-            wait=TIMEOUT,
-            meta_attributes={"target-role": "Stopped"},
-        )
-
-        self.env_assist.assert_reports(
-            [
-                fixture.info(
-                    reports.codes.RESOURCE_DOES_NOT_RUN,
-                    resource_id="A",
-                ),
-                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
-            ]
-        )
-
-
 class CreateInGroup(TestCase):
     def setUp(self):
         self.env_assist, self.config = get_env_tools(test_case=self)
@@ -1577,7 +1265,7 @@ class CreateInGroup(TestCase):
         self.config.env.push_cib(
             resources=fixture_cib_resources_xml_group_simplest
         )
-        create_group(self.env_assist.get_env(), wait=False)
+        create_group(self.env_assist.get_env())
 
     def test_cib_upgrade_on_onfail_demote(self):
         self.config.runner.cib.load(
@@ -1633,7 +1321,6 @@ class CreateInGroup(TestCase):
                     "on-fail": "demote",
                 }
             ],
-            wait=False,
         )
         self.env_assist.assert_reports(
             [fixture.info(reports.codes.CIB_UPGRADE_SUCCESSFUL)]
@@ -1656,7 +1343,7 @@ class CreateInGroup(TestCase):
             resources=fixture_cib_resources_xml_group_simplest
         )
 
-        create_group(self.env_assist.get_env(), wait=False)
+        create_group(self.env_assist.get_env())
         self.env_assist.assert_reports(
             [
                 fixture.warn(
@@ -1684,9 +1371,7 @@ class CreateInGroup(TestCase):
         )
         self.env_assist.assert_raise_library_error(
             lambda: create_group(
-                self.env_assist.get_env(),
-                enable_agent_self_validation=True,
-                wait=False,
+                self.env_assist.get_env(), enable_agent_self_validation=True
             ),
         )
         self.env_assist.assert_reports(
@@ -1696,160 +1381,6 @@ class CreateInGroup(TestCase):
                     result="not ignored\nfirst issue\nanother one",
                     force_code=reports.codes.FORCE,
                 ),
-            ]
-        )
-
-    def test_fail_wait(self):
-        self.config.runner.pcmk.resource_agent_self_validation({})
-        self.config.env.push_cib(
-            resources=fixture_cib_resources_xml_group_simplest,
-            wait=TIMEOUT,
-            exception=LibraryError(
-                reports.item.ReportItem.error(
-                    reports.messages.WaitForIdleTimedOut(wait_error_message)
-                )
-            ),
-        )
-
-        self.env_assist.assert_raise_library_error(
-            lambda: create_group(self.env_assist.get_env()),
-            [fixture.report_wait_for_idle_timed_out(wait_error_message)],
-            expected_in_processor=False,
-        )
-        self.env_assist.assert_reports(
-            [fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED)]
-        )
-
-    @mock.patch.object(
-        settings,
-        "pacemaker_api_result_schema",
-        rc("pcmk_rng/api/api-result.rng"),
-    )
-    def test_wait_ok_run_fail(self):
-        self.config.runner.pcmk.resource_agent_self_validation({})
-        self.config.env.push_cib(
-            resources=fixture_cib_resources_xml_group_simplest, wait=TIMEOUT
-        )
-        self.config.runner.pcmk.load_state(
-            resources=fixture_state_resources_xml(failed="true")
-        )
-        self.env_assist.assert_raise_library_error(
-            lambda: create_group(self.env_assist.get_env())
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.error(
-                    reports.codes.RESOURCE_DOES_NOT_RUN, resource_id="A"
-                ),
-                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
-            ]
-        )
-
-    @mock.patch.object(
-        settings,
-        "pacemaker_api_result_schema",
-        rc("pcmk_rng/api/api-result.rng"),
-    )
-    def test_wait_ok_run_ok(self):
-        self.config.runner.pcmk.resource_agent_self_validation({})
-        self.config.env.push_cib(
-            resources=fixture_cib_resources_xml_group_simplest, wait=TIMEOUT
-        )
-        self.config.runner.pcmk.load_state(
-            resources=fixture_state_resources_xml()
-        )
-        create_group(self.env_assist.get_env())
-        self.env_assist.assert_reports(
-            [
-                fixture.info(
-                    reports.codes.RESOURCE_RUNNING_ON_NODES,
-                    roles_with_nodes={"Started": ["node1"]},
-                    resource_id="A",
-                ),
-                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
-            ]
-        )
-
-    @mock.patch.object(
-        settings,
-        "pacemaker_api_result_schema",
-        rc("pcmk_rng/api/api-result.rng"),
-    )
-    def test_wait_ok_disable_fail(self):
-        self.config.runner.pcmk.resource_agent_self_validation({})
-        self.config.env.push_cib(
-            resources=fixture_cib_resources_xml_group_simplest_disabled,
-            wait=TIMEOUT,
-        )
-        self.config.runner.pcmk.load_state(
-            resources=fixture_state_resources_xml()
-        )
-
-        self.env_assist.assert_raise_library_error(
-            lambda: create_group(self.env_assist.get_env(), disabled=True)
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.error(
-                    reports.codes.RESOURCE_RUNNING_ON_NODES,
-                    roles_with_nodes={"Started": ["node1"]},
-                    resource_id="A",
-                ),
-                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
-            ]
-        )
-
-    @mock.patch.object(
-        settings,
-        "pacemaker_api_result_schema",
-        rc("pcmk_rng/api/api-result.rng"),
-    )
-    def test_wait_ok_disable_ok(self):
-        self.config.runner.pcmk.resource_agent_self_validation({})
-        self.config.env.push_cib(
-            resources=fixture_cib_resources_xml_group_simplest_disabled,
-            wait=TIMEOUT,
-        )
-        self.config.runner.pcmk.load_state(
-            resources=fixture_state_resources_xml(role="Stopped")
-        )
-        create_group(self.env_assist.get_env(), disabled=True)
-        self.env_assist.assert_reports(
-            [
-                fixture.info(
-                    reports.codes.RESOURCE_DOES_NOT_RUN,
-                    resource_id="A",
-                ),
-                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
-            ]
-        )
-
-    @mock.patch.object(
-        settings,
-        "pacemaker_api_result_schema",
-        rc("pcmk_rng/api/api-result.rng"),
-    )
-    def test_wait_ok_disable_ok_by_target_role(self):
-        self.config.runner.pcmk.resource_agent_self_validation({})
-        self.config.runner.pcmk.load_crm_resource_metadata()
-        self.config.env.push_cib(
-            resources=fixture_cib_resources_xml_group_simplest_disabled,
-            wait=TIMEOUT,
-        )
-        self.config.runner.pcmk.load_state(
-            resources=fixture_state_resources_xml(role="Stopped")
-        )
-        create_group(
-            self.env_assist.get_env(),
-            meta_attributes={"target-role": "Stopped"},
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.info(
-                    reports.codes.RESOURCE_DOES_NOT_RUN,
-                    resource_id="A",
-                ),
-                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -1865,7 +1396,7 @@ class CreateAsClone(TestCase):
         self.config.env.push_cib(
             resources=fixture_cib_resources_xml_clone_simplest
         )
-        create_clone(self.env_assist.get_env(), wait=False)
+        create_clone(self.env_assist.get_env())
 
     def test_resource_self_validation_failure_default(self):
         self.config.runner.pcmk.resource_agent_self_validation(
@@ -1883,7 +1414,7 @@ class CreateAsClone(TestCase):
         self.config.env.push_cib(
             resources=fixture_cib_resources_xml_clone_simplest
         )
-        create_clone(self.env_assist.get_env(), wait=False)
+        create_clone(self.env_assist.get_env())
         self.env_assist.assert_reports(
             [
                 fixture.warn(
@@ -1921,7 +1452,6 @@ class CreateAsClone(TestCase):
                     result="not ignored\nfirst issue\nanother one",
                     force_code=reports.codes.FORCE,
                 ),
-                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -1930,14 +1460,12 @@ class CreateAsClone(TestCase):
         self.config.env.push_cib(
             resources=fixture_cib_resources_xml_clone_custom_id
         )
-        create_clone(
-            self.env_assist.get_env(), wait=False, clone_id="CustomCloneId"
-        )
+        create_clone(self.env_assist.get_env(), clone_id="CustomCloneId")
 
     def test_custom_clone_id_error_invalid_id(self):
         self.env_assist.assert_raise_library_error(
             lambda: create_clone(
-                self.env_assist.get_env(), wait=False, clone_id="1invalid"
+                self.env_assist.get_env(), clone_id="1invalid"
             ),
         )
         self.env_assist.assert_reports(
@@ -1961,9 +1489,7 @@ class CreateAsClone(TestCase):
             """,
         )
         self.env_assist.assert_raise_library_error(
-            lambda: create_clone(
-                self.env_assist.get_env(), wait=False, clone_id="C"
-            ),
+            lambda: create_clone(self.env_assist.get_env(), clone_id="C"),
         )
         self.env_assist.assert_reports([fixture.report_id_already_exist("C")])
 
@@ -2017,402 +1543,9 @@ class CreateAsClone(TestCase):
                     "on-fail": "demote",
                 }
             ],
-            wait=False,
         )
         self.env_assist.assert_reports(
             [fixture.info(reports.codes.CIB_UPGRADE_SUCCESSFUL)]
-        )
-
-    def test_fail_wait(self):
-        self.config.runner.pcmk.resource_agent_self_validation({})
-        self.config.env.push_cib(
-            resources=fixture_cib_resources_xml_clone_simplest,
-            wait=TIMEOUT,
-            exception=LibraryError(
-                reports.item.ReportItem.error(
-                    reports.messages.WaitForIdleTimedOut(wait_error_message)
-                )
-            ),
-        )
-        self.env_assist.assert_raise_library_error(
-            lambda: create_clone(self.env_assist.get_env()),
-            [fixture.report_wait_for_idle_timed_out(wait_error_message)],
-            expected_in_processor=False,
-        )
-        self.env_assist.assert_reports(
-            [fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED)]
-        )
-
-    @mock.patch.object(
-        settings,
-        "pacemaker_api_result_schema",
-        rc("pcmk_rng/api/api-result.rng"),
-    )
-    def test_wait_ok_run_fail(self):
-        self.config.runner.pcmk.resource_agent_self_validation({})
-        self.config.env.push_cib(
-            resources=fixture_cib_resources_xml_clone_simplest, wait=TIMEOUT
-        )
-        self.config.runner.pcmk.load_state(
-            resources=fixture_state_resources_xml(failed="true")
-        )
-        self.env_assist.assert_raise_library_error(
-            lambda: create_clone(self.env_assist.get_env())
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.error(
-                    reports.codes.RESOURCE_DOES_NOT_RUN, resource_id="A"
-                ),
-                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
-            ]
-        )
-
-    @mock.patch.object(
-        settings,
-        "pacemaker_api_result_schema",
-        rc("pcmk_rng/api/api-result.rng"),
-    )
-    def test_wait_ok_run_ok(self):
-        self.config.runner.pcmk.resource_agent_self_validation({})
-        self.config.env.push_cib(
-            resources=fixture_cib_resources_xml_clone_simplest, wait=TIMEOUT
-        )
-        self.config.runner.pcmk.load_state(
-            resources=fixture_state_resources_xml()
-        )
-        create_clone(self.env_assist.get_env())
-        self.env_assist.assert_reports(
-            [
-                fixture.info(
-                    reports.codes.RESOURCE_RUNNING_ON_NODES,
-                    roles_with_nodes={"Started": ["node1"]},
-                    resource_id="A",
-                ),
-                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
-            ]
-        )
-
-    @mock.patch.object(
-        settings,
-        "pacemaker_api_result_schema",
-        rc("pcmk_rng/api/api-result.rng"),
-    )
-    def test_wait_ok_disable_fail(self):
-        self.config.runner.pcmk.resource_agent_self_validation({})
-        self.config.env.push_cib(
-            resources=fixture_cib_resources_xml_clone_simplest_disabled,
-            wait=TIMEOUT,
-        )
-        self.config.runner.pcmk.load_state(
-            resources=fixture_state_resources_xml()
-        )
-
-        self.env_assist.assert_raise_library_error(
-            lambda: create_clone(self.env_assist.get_env(), disabled=True)
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.error(
-                    reports.codes.RESOURCE_RUNNING_ON_NODES,
-                    roles_with_nodes={"Started": ["node1"]},
-                    resource_id="A",
-                ),
-                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
-            ]
-        )
-
-    @mock.patch.object(
-        settings,
-        "pacemaker_api_result_schema",
-        rc("pcmk_rng/api/api-result.rng"),
-    )
-    def test_wait_ok_disable_ok(self):
-        self.config.runner.pcmk.resource_agent_self_validation({})
-        self.config.env.push_cib(
-            resources=fixture_cib_resources_xml_clone_simplest_disabled,
-            wait=TIMEOUT,
-        )
-        self.config.runner.pcmk.load_state(
-            resources=fixture_state_resources_xml(role="Stopped")
-        )
-        create_clone(self.env_assist.get_env(), disabled=True)
-        self.env_assist.assert_reports(
-            [
-                fixture.info(
-                    reports.codes.RESOURCE_DOES_NOT_RUN,
-                    resource_id="A",
-                ),
-                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
-            ]
-        )
-
-    @mock.patch.object(
-        settings,
-        "pacemaker_api_result_schema",
-        rc("pcmk_rng/api/api-result.rng"),
-    )
-    def test_wait_ok_disable_ok_by_target_role(self):
-        self.config.runner.pcmk.resource_agent_self_validation({})
-        self.config.runner.pcmk.load_crm_resource_metadata()
-        self.config.env.push_cib(
-            resources="""
-                <resources>
-                    <clone id="A-clone">
-                        <primitive class="ocf" id="A" provider="heartbeat"
-                            type="Dummy"
-                        >
-                            <meta_attributes id="A-meta_attributes">
-                                <nvpair id="A-meta_attributes-target-role"
-                                    name="target-role"
-                                    value="Stopped"
-                                />
-                            </meta_attributes>
-                            <operations>
-                                <op id="A-migrate_from-interval-0s"
-                                    interval="0s" name="migrate_from"
-                                    timeout="20"
-                                />
-                                <op id="A-migrate_to-interval-0s"
-                                    interval="0s" name="migrate_to"
-                                    timeout="20"
-                                />
-                                <op id="A-monitor-interval-10" interval="10"
-                                    name="monitor" timeout="20"
-                                />
-                                <op id="A-reload-interval-0s" interval="0s"
-                                    name="reload" timeout="20"
-                                />
-                                <op id="A-start-interval-0s" interval="0s"
-                                    name="start" timeout="20"
-                                />
-                                <op id="A-stop-interval-0s" interval="0s"
-                                    name="stop" timeout="20"
-                                />
-                            </operations>
-                        </primitive>
-                    </clone>
-                </resources>
-            """,
-            wait=TIMEOUT,
-        )
-        self.config.runner.pcmk.load_state(
-            resources=fixture_state_resources_xml(role="Stopped")
-        )
-        create_clone(
-            self.env_assist.get_env(),
-            meta_attributes={"target-role": "Stopped"},
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.info(
-                    reports.codes.RESOURCE_DOES_NOT_RUN,
-                    resource_id="A",
-                ),
-                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
-            ]
-        )
-
-    @mock.patch.object(
-        settings,
-        "pacemaker_api_result_schema",
-        rc("pcmk_rng/api/api-result.rng"),
-    )
-    def test_wait_ok_disable_ok_by_target_role_in_clone(self):
-        self.config.runner.pcmk.resource_agent_self_validation({})
-        self.config.env.push_cib(
-            resources="""
-                <resources>
-                    <clone id="A-clone">
-                        <primitive class="ocf" id="A" provider="heartbeat"
-                            type="Dummy"
-                        >
-                            <operations>
-                                <op id="A-migrate_from-interval-0s"
-                                    interval="0s" name="migrate_from"
-                                    timeout="20"
-                                />
-                                <op id="A-migrate_to-interval-0s"
-                                    interval="0s" name="migrate_to"
-                                    timeout="20"
-                                />
-                                <op id="A-monitor-interval-10" interval="10"
-                                    name="monitor" timeout="20"
-                                />
-                                <op id="A-reload-interval-0s" interval="0s"
-                                    name="reload" timeout="20"
-                                />
-                                <op id="A-start-interval-0s" interval="0s"
-                                    name="start" timeout="20"
-                                />
-                                <op id="A-stop-interval-0s" interval="0s"
-                                    name="stop" timeout="20"
-                                />
-                            </operations>
-                        </primitive>
-                        <meta_attributes id="A-clone-meta_attributes">
-                            <nvpair id="A-clone-meta_attributes-target-role"
-                                name="target-role" value="Stopped"
-                            />
-                        </meta_attributes>
-                    </clone>
-                </resources>
-            """,
-            wait=TIMEOUT,
-        )
-        self.config.runner.pcmk.load_state(
-            resources=fixture_state_resources_xml(role="Stopped")
-        )
-        create_clone(
-            self.env_assist.get_env(), clone_options={"target-role": "Stopped"}
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.info(
-                    reports.codes.RESOURCE_DOES_NOT_RUN,
-                    resource_id="A",
-                ),
-                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
-                fixture.warn(
-                    reports.codes.META_ATTRS_NOT_VALIDATED_UNSUPPORTED_TYPE,
-                    meta_type_list=["clone"],
-                ),
-            ]
-        )
-
-    @mock.patch.object(
-        settings,
-        "pacemaker_api_result_schema",
-        rc("pcmk_rng/api/api-result.rng"),
-    )
-    def test_wait_ok_disable_ok_by_clone_max(self):
-        self.config.runner.pcmk.resource_agent_self_validation({})
-        self.config.env.push_cib(
-            resources="""
-                <resources>
-                    <clone id="A-clone">
-                        <primitive class="ocf" id="A" provider="heartbeat"
-                            type="Dummy"
-                        >
-                            <operations>
-                                <op id="A-migrate_from-interval-0s"
-                                    interval="0s" name="migrate_from"
-                                    timeout="20"
-                                />
-                                <op id="A-migrate_to-interval-0s"
-                                    interval="0s" name="migrate_to"
-                                    timeout="20"
-                                />
-                                <op id="A-monitor-interval-10" interval="10"
-                                    name="monitor" timeout="20"
-                                />
-                                <op id="A-reload-interval-0s" interval="0s"
-                                    name="reload" timeout="20"
-                                />
-                                <op id="A-start-interval-0s" interval="0s"
-                                    name="start" timeout="20"
-                                />
-                                <op id="A-stop-interval-0s" interval="0s"
-                                    name="stop" timeout="20"
-                                />
-                            </operations>
-                        </primitive>
-                        <meta_attributes id="A-clone-meta_attributes">
-                            <nvpair id="A-clone-meta_attributes-clone-max"
-                                name="clone-max" value="0"
-                            />
-                        </meta_attributes>
-                    </clone>
-                </resources>
-            """,
-            wait=TIMEOUT,
-        )
-        self.config.runner.pcmk.load_state(
-            resources=fixture_state_resources_xml(role="Stopped")
-        )
-        create_clone(
-            self.env_assist.get_env(), clone_options={"clone-max": "0"}
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.info(
-                    reports.codes.RESOURCE_DOES_NOT_RUN,
-                    resource_id="A",
-                ),
-                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
-                fixture.warn(
-                    reports.codes.META_ATTRS_NOT_VALIDATED_UNSUPPORTED_TYPE,
-                    meta_type_list=["clone"],
-                ),
-            ]
-        )
-
-    @mock.patch.object(
-        settings,
-        "pacemaker_api_result_schema",
-        rc("pcmk_rng/api/api-result.rng"),
-    )
-    def test_wait_ok_disable_ok_by_clone_node_max(self):
-        self.config.runner.pcmk.resource_agent_self_validation({})
-        self.config.env.push_cib(
-            resources="""
-                <resources>
-                    <clone id="A-clone">
-                        <primitive class="ocf" id="A" provider="heartbeat"
-                            type="Dummy"
-                        >
-                            <operations>
-                                <op id="A-migrate_from-interval-0s"
-                                    interval="0s" name="migrate_from"
-                                    timeout="20"
-                                />
-                                <op id="A-migrate_to-interval-0s"
-                                    interval="0s" name="migrate_to"
-                                    timeout="20"
-                                />
-                                <op id="A-monitor-interval-10" interval="10"
-                                    name="monitor" timeout="20"
-                                />
-                                <op id="A-reload-interval-0s" interval="0s"
-                                    name="reload" timeout="20"
-                                />
-                                <op id="A-start-interval-0s" interval="0s"
-                                    name="start" timeout="20"
-                                />
-                                <op id="A-stop-interval-0s" interval="0s"
-                                    name="stop" timeout="20"
-                                />
-                            </operations>
-                        </primitive>
-                        <meta_attributes id="A-clone-meta_attributes">
-                            <nvpair
-                                id="A-clone-meta_attributes-clone-node-max"
-                                name="clone-node-max" value="0"
-                            />
-                        </meta_attributes>
-                    </clone>
-                </resources>
-            """,
-            wait=TIMEOUT,
-        )
-        self.config.runner.pcmk.load_state(
-            resources=fixture_state_resources_xml(role="Stopped")
-        )
-        create_clone(
-            self.env_assist.get_env(), clone_options={"clone-node-max": "0"}
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.info(
-                    reports.codes.RESOURCE_DOES_NOT_RUN,
-                    resource_id="A",
-                ),
-                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
-                fixture.warn(
-                    reports.codes.META_ATTRS_NOT_VALIDATED_UNSUPPORTED_TYPE,
-                    meta_type_list=["clone"],
-                ),
-            ]
         )
 
 
@@ -2439,7 +1572,6 @@ class CreateAsCloneFailures(TestCase):
                     resource_id=None,
                     group_id=None,
                 ),
-                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -2469,7 +1601,6 @@ class CreateAsCloneFailures(TestCase):
                     group_id=None,
                     force_code=reports.codes.FORCE,
                 ),
-                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -2508,7 +1639,6 @@ class CreateAsCloneFailures(TestCase):
                     result="error",
                     force_code=reports.codes.FORCE,
                 ),
-                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
                 fixture.warn(
                     reports.codes.META_ATTRS_NOT_VALIDATED_UNSUPPORTED_TYPE,
                     meta_type_list=["clone"],
@@ -2571,81 +1701,6 @@ class CreateInToBundle(TestCase):
     )
     # fmt: on
 
-    fixture_resources_post_disabled = """
-        <resources>
-            <bundle id="B">
-                <network control-port="12345" ip-range-start="192.168.100.200"/>
-                <primitive
-                    class="ocf" id="A" provider="heartbeat" type="Dummy"
-                >
-                    <meta_attributes id="A-meta_attributes">
-                        <nvpair id="A-meta_attributes-target-role"
-                            name="target-role" value="Stopped"
-                        />
-                    </meta_attributes>
-                    <operations>
-                        <op id="A-migrate_from-interval-0s" interval="0s"
-                            name="migrate_from" timeout="20"
-                        />
-                        <op id="A-migrate_to-interval-0s" interval="0s"
-                            name="migrate_to" timeout="20"
-                        />
-                        <op id="A-monitor-interval-10" interval="10"
-                            name="monitor" timeout="20"
-                        />
-                        <op id="A-reload-interval-0s" interval="0s" name="reload"
-                            timeout="20"
-                        />
-                        <op id="A-start-interval-0s" interval="0s"
-                            name="start" timeout="20"
-                        />
-                        <op id="A-stop-interval-0s" interval="0s"
-                            name="stop" timeout="20"
-                        />
-                    </operations>
-                </primitive>
-            </bundle>
-        </resources>
-    """
-
-    fixture_status_stopped = """
-        <resources>
-            <bundle id="B" managed="true">
-                <replica id="0">
-                    <resource id="B-0" managed="true" role="Stopped" />
-                </replica>
-            </bundle>
-        </resources>
-    """
-
-    fixture_status_running_with_primitive = """
-        <resources>
-            <bundle id="B" managed="true">
-                <replica id="0">
-                    <resource id="B-0" managed="true" role="Started">
-                        <node name="node1" id="1" cached="false"/>
-                    </resource>
-                    <resource id="A" managed="true" role="Started">
-                        <node name="node1" id="1" cached="false"/>
-                    </resource>
-                </replica>
-            </bundle>
-        </resources>
-    """
-
-    fixture_status_primitive_not_running = """
-        <resources>
-            <bundle id="B" managed="true">
-                <replica id="0">
-                    <resource id="B-0" managed="true" role="Started">
-                        <node name="node1" id="1" cached="false"/>
-                    </resource>
-                    <resource id="A" managed="true" role="Stopped"/>
-                </replica>
-            </bundle>
-        </resources>
-    """
-
     def setUp(self):
         self.env_assist, self.config = get_env_tools(
             test_case=self,
@@ -2684,7 +1739,6 @@ class CreateInToBundle(TestCase):
                     "on-fail": "demote",
                 }
             ],
-            wait=False,
         )
         self.env_assist.assert_reports(
             [fixture.info(reports.codes.CIB_UPGRADE_SUCCESSFUL)]
@@ -2694,13 +1748,13 @@ class CreateInToBundle(TestCase):
         self.config.runner.cib.load(resources=self.fixture_resources_pre)
         self.config.runner.pcmk.resource_agent_self_validation({})
         self.config.env.push_cib(resources=self.fixture_resources_post_simple)
-        create_bundle(self.env_assist.get_env(), wait=False)
+        create_bundle(self.env_assist.get_env())
 
     def test_bundle_doesnt_exist(self):
         self.config.runner.cib.load(resources=self.fixture_empty_resources)
         self.config.runner.pcmk.resource_agent_self_validation({})
         self.env_assist.assert_raise_library_error(
-            lambda: create_bundle(self.env_assist.get_env(), wait=False),
+            lambda: create_bundle(self.env_assist.get_env()),
             [
                 fixture.error(
                     reports.codes.ID_NOT_FOUND,
@@ -2724,7 +1778,7 @@ class CreateInToBundle(TestCase):
         self.config.runner.pcmk.resource_agent_self_validation({})
 
         self.env_assist.assert_raise_library_error(
-            lambda: create_bundle(self.env_assist.get_env(), wait=False),
+            lambda: create_bundle(self.env_assist.get_env()),
             [
                 fixture.error(
                     reports.codes.ID_BELONGS_TO_UNEXPECTED_TYPE,
@@ -2749,7 +1803,7 @@ class CreateInToBundle(TestCase):
         )
         self.config.runner.pcmk.resource_agent_self_validation({})
         self.env_assist.assert_raise_library_error(
-            lambda: create_bundle(self.env_assist.get_env(), wait=False),
+            lambda: create_bundle(self.env_assist.get_env()),
             [
                 fixture.error(
                     reports.codes.RESOURCE_BUNDLE_ALREADY_CONTAINS_A_RESOURCE,
@@ -2758,127 +1812,6 @@ class CreateInToBundle(TestCase):
                 )
             ],
             expected_in_processor=False,
-        )
-
-    def test_wait_fail(self):
-        self.config.runner.cib.load(resources=self.fixture_resources_pre)
-        self.config.runner.pcmk.resource_agent_self_validation({})
-        self.config.env.push_cib(
-            resources=self.fixture_resources_post_simple,
-            wait=TIMEOUT,
-            exception=LibraryError(
-                reports.item.ReportItem.error(
-                    reports.messages.WaitForIdleTimedOut(wait_error_message)
-                )
-            ),
-        )
-        self.env_assist.assert_raise_library_error(
-            lambda: create_bundle(self.env_assist.get_env()),
-            [
-                fixture.report_wait_for_idle_timed_out(wait_error_message),
-            ],
-            expected_in_processor=False,
-        )
-        self.env_assist.assert_reports(
-            [fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED)]
-        )
-
-    @mock.patch.object(
-        settings,
-        "pacemaker_api_result_schema",
-        rc("pcmk_rng/api/api-result.rng"),
-    )
-    def test_wait_ok_run_ok(self):
-        self.config.runner.cib.load(resources=self.fixture_resources_pre)
-        self.config.runner.pcmk.resource_agent_self_validation({})
-        self.config.env.push_cib(
-            resources=self.fixture_resources_post_simple, wait=TIMEOUT
-        )
-        self.config.runner.pcmk.load_state(
-            resources=self.fixture_status_running_with_primitive
-        )
-        create_bundle(self.env_assist.get_env())
-        self.env_assist.assert_reports(
-            [
-                fixture.report_resource_running("A", {"Started": ["node1"]}),
-                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
-            ]
-        )
-
-    @mock.patch.object(
-        settings,
-        "pacemaker_api_result_schema",
-        rc("pcmk_rng/api/api-result.rng"),
-    )
-    def test_wait_ok_run_fail(self):
-        self.config.runner.cib.load(resources=self.fixture_resources_pre)
-        self.config.runner.pcmk.resource_agent_self_validation({})
-        self.config.env.push_cib(
-            resources=self.fixture_resources_post_simple, wait=TIMEOUT
-        )
-        self.config.runner.pcmk.load_state(
-            resources=self.fixture_status_primitive_not_running
-        )
-        self.env_assist.assert_raise_library_error(
-            lambda: create_bundle(self.env_assist.get_env())
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.error(
-                    reports.codes.RESOURCE_DOES_NOT_RUN, resource_id="A"
-                ),
-                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
-            ]
-        )
-
-    @mock.patch.object(
-        settings,
-        "pacemaker_api_result_schema",
-        rc("pcmk_rng/api/api-result.rng"),
-    )
-    def test_disabled_wait_ok_not_running(self):
-        self.config.runner.cib.load(resources=self.fixture_resources_pre)
-        self.config.runner.pcmk.resource_agent_self_validation({})
-        self.config.env.push_cib(
-            resources=self.fixture_resources_post_disabled, wait=TIMEOUT
-        )
-        self.config.runner.pcmk.load_state(
-            resources=self.fixture_status_primitive_not_running
-        )
-        create_bundle(self.env_assist.get_env(), disabled=True)
-        self.env_assist.assert_reports(
-            [
-                fixture.report_resource_not_running("A"),
-                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
-            ]
-        )
-
-    @mock.patch.object(
-        settings,
-        "pacemaker_api_result_schema",
-        rc("pcmk_rng/api/api-result.rng"),
-    )
-    def test_disabled_wait_ok_running(self):
-        self.config.runner.cib.load(resources=self.fixture_resources_pre)
-        self.config.runner.pcmk.resource_agent_self_validation({})
-        self.config.env.push_cib(
-            resources=self.fixture_resources_post_disabled, wait=TIMEOUT
-        )
-        self.config.runner.pcmk.load_state(
-            resources=self.fixture_status_running_with_primitive
-        )
-        self.env_assist.assert_raise_library_error(
-            lambda: create_bundle(self.env_assist.get_env(), disabled=True)
-        )
-        self.env_assist.assert_reports(
-            [
-                fixture.error(
-                    reports.codes.RESOURCE_RUNNING_ON_NODES,
-                    resource_id="A",
-                    roles_with_nodes={"Started": ["node1"]},
-                ),
-                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
-            ]
         )
 
     def test_no_port_no_ip(self):
@@ -2891,7 +1824,7 @@ class CreateInToBundle(TestCase):
         )
         self.config.runner.pcmk.resource_agent_self_validation({})
         self.env_assist.assert_raise_library_error(
-            lambda: create_bundle(self.env_assist.get_env(), wait=False)
+            lambda: create_bundle(self.env_assist.get_env())
         )
         self.env_assist.assert_reports(
             [
@@ -2922,7 +1855,6 @@ class CreateInToBundle(TestCase):
         )
         create_bundle(
             self.env_assist.get_env(),
-            wait=False,
             allow_not_accessible_resource=True,
         )
         self.env_assist.assert_reports(
@@ -2953,7 +1885,7 @@ class CreateInToBundle(TestCase):
                 )
             )
         )
-        create_bundle(self.env_assist.get_env(), wait=False)
+        create_bundle(self.env_assist.get_env())
 
     def test_port_defined(self):
         self._test_with_network_defined('<network control-port="12345"/>')
@@ -2979,7 +1911,7 @@ class CreateInToBundle(TestCase):
         )
         self.config.env.push_cib(resources=self.fixture_resources_post_simple)
 
-        create_bundle(self.env_assist.get_env(), wait=False)
+        create_bundle(self.env_assist.get_env())
         self.env_assist.assert_reports(
             [
                 fixture.warn(
@@ -3018,7 +1950,6 @@ class CreateInToBundle(TestCase):
                     result="not ignored\nfirst issue\nanother one",
                     force_code=reports.codes.FORCE,
                 ),
-                fixture.deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED),
             ]
         )
 
@@ -3046,28 +1977,26 @@ class StonithIsForbiddenMixin:
 class StonithIsForbiddenInCreate(StonithIsForbiddenMixin, TestCase):
     def _command(self):
         return create(
-            self.env_assist.get_env(),
-            wait=False,
-            agent_name="stonith:fence_simple",
+            self.env_assist.get_env(), agent_name="stonith:fence_simple"
         )
 
 
 class StonithIsForbiddenInBundle(StonithIsForbiddenMixin, TestCase):
     def _command(self):
         return create_bundle(
-            self.env_assist.get_env(), wait=False, agent="stonith:fence_simple"
+            self.env_assist.get_env(), agent="stonith:fence_simple"
         )
 
 
 class StonithIsForbiddenInClone(StonithIsForbiddenMixin, TestCase):
     def _command(self):
         return create_clone(
-            self.env_assist.get_env(), wait=False, agent="stonith:fence_simple"
+            self.env_assist.get_env(), agent="stonith:fence_simple"
         )
 
 
 class StonithIsForbiddenInGroup(StonithIsForbiddenMixin, TestCase):
     def _command(self):
         return create_group(
-            self.env_assist.get_env(), wait=False, agent="stonith:fence_simple"
+            self.env_assist.get_env(), agent="stonith:fence_simple"
         )

@@ -43,6 +43,39 @@ a command needs to track whether specific actions occurred (e.g. "was any elemen
 modified?"), use local state (booleans, counters) rather than querying the
 report processor.
 
+## Rendering reports in the CLI
+
+A single `ReportProcessorToConsole` (`pcs/cli/reports/processor.py`) serves the
+whole CLI invocation. It lives in the CLI environment and is reachable from
+handlers as `lib.env.report_processor`. As library commands report items, this
+processor renders each one to stderr immediately — mapping severity to the right
+presentation (`error`, `warn`, `deprecation_warning`, or plain print) and
+applying CLI message overrides (see
+[cli.md — Overriding report messages](cli.md#overriding-report-messages)).
+
+Because this is the single rendering path, there is no separate "print these
+reports" function. When a `LibraryError` propagates up to `pcs/app.py`, the
+report items it carries are reported through this same processor and pcs exits
+with code 1 — or code 2 if any reported error was a waiting timeout (see
+[cli.md — Exit codes](cli.md#exit-codes)).
+
+As the processor renders items, it remembers whether it has ever seen a waiting
+timeout error (`has_waiting_timeout_error`), analogous to the cumulative
+`has_errors` flag. `app.py` reads this flag to choose exit code 2 instead of 1,
+so callers can tell "the action was performed but the thing pcs waited for did
+not complete in time" apart from other failures.
+
+**Legacy exception — `report_and_exit_on_error()`.** Some legacy monolithic
+handlers (`pcs/cluster.py`, `pcs/resource.py`, `pcs/node.py`, …) build report
+lists themselves instead of letting a library command do the reporting. For
+these, `pcs/cli/reports/processor.py` provides the **deprecated**
+`report_and_exit_on_error(report_processor, report_item_list)` helper: it reports
+the list through the console processor and exits with code 2 if a waiting
+timeout has been seen, or code 1 if any other error has been seen. It is
+deprecated on purpose — it duplicates the error handling that belongs in
+`app.py`. New code must not use it; let library commands report through
+`env.report_processor` and let `LibraryError` propagate to `app.py`.
+
 ## Forceable errors (force override pattern)
 
 Some validations should block command execution by default but allow the user

@@ -28,9 +28,12 @@ from pcs.cli.common.parse_args import (
 )
 from pcs.cli.common.tools import print_to_stderr
 from pcs.cli.file import metadata as file_metadata
-from pcs.cli.reports import process_library_reports
 from pcs.cli.reports.messages import report_item_msg_from_dto
 from pcs.cli.reports.output import warn
+from pcs.cli.reports.processor import (
+    ReportProcessorToConsole,
+    report_and_exit_on_error,
+)
 from pcs.common import file as pcs_file
 from pcs.common import file_type_codes, reports
 from pcs.common.auth import HostAuthData
@@ -117,14 +120,13 @@ def cluster_disable_cmd(
       * --request-timeout - timeout for HTTP requests - effective only when at
         least one node has been specified or --all has been used
     """
-    del lib
     modifiers.ensure_only_supported("--all", "--request-timeout")
     if modifiers.get("--all"):
         if argv:
             utils.err(ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE)
-        disable_cluster_all()
+        disable_cluster_all(lib.env.report_processor)
     else:
-        disable_cluster(argv)
+        disable_cluster(argv, lib.env.report_processor)
 
 
 def cluster_enable_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
@@ -134,14 +136,13 @@ def cluster_enable_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
       * --request-timeout - timeout for HTTP requests - effective only when at
         least one node has been specified or --all has been used
     """
-    del lib
     modifiers.ensure_only_supported("--all", "--request-timeout")
     if modifiers.get("--all"):
         if argv:
             utils.err(ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE)
-        enable_cluster_all()
+        enable_cluster_all(lib.env.report_processor)
     else:
-        enable_cluster(argv)
+        enable_cluster(argv, lib.env.report_processor)
 
 
 def cluster_stop_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
@@ -156,7 +157,6 @@ def cluster_stop_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
         specified
       * --all - stop all cluster nodes
     """
-    del lib
     modifiers.ensure_only_supported(
         "--wait",
         "--request-timeout",
@@ -168,9 +168,9 @@ def cluster_stop_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     if modifiers.get("--all"):
         if argv:
             utils.err(ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE)
-        stop_cluster_all()
+        stop_cluster_all(lib.env.report_processor)
     else:
-        stop_cluster(argv)
+        stop_cluster(argv, lib.env.report_processor)
 
 
 def cluster_start_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
@@ -181,14 +181,13 @@ def cluster_start_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
         least one node have been specified
       * --all - start all cluster nodes
     """
-    del lib
     modifiers.ensure_only_supported(
         "--wait", "--request-timeout", "--all", "--corosync_conf"
     )
     if modifiers.get("--all"):
         if argv:
             utils.err(ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE)
-        start_cluster_all()
+        start_cluster_all(lib.env.report_processor)
     else:
         start_cluster(argv)
 
@@ -228,7 +227,6 @@ def sync_nodes(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     Options:
       * --request-timeout - timeout for HTTP requests
     """
-    del lib
     modifiers.ensure_only_supported("--request-timeout")
     if argv:
         raise CmdLineInputError()
@@ -244,7 +242,7 @@ def sync_nodes(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
             )
         )
     if report_list:
-        process_library_reports(report_list)
+        report_and_exit_on_error(lib.env.report_processor, report_list)
 
     for node in nodes:
         utils.setCorosyncConfig(node, config)
@@ -289,7 +287,7 @@ def start_cluster(argv: Argv) -> None:
         wait_for_nodes_started([], wait_timeout)
 
 
-def start_cluster_all() -> None:
+def start_cluster_all(report_processor: ReportProcessorToConsole) -> None:
     """
     Commandline options:
       * --wait
@@ -311,7 +309,7 @@ def start_cluster_all() -> None:
             )
         )
     if report_list:
-        process_library_reports(report_list)
+        report_and_exit_on_error(report_processor, report_list)
 
     start_cluster_nodes(all_nodes)
     if wait:
@@ -439,7 +437,7 @@ def wait_for_nodes_started(
             utils.err("unable to verify all nodes have started")
 
 
-def stop_cluster_all() -> None:
+def stop_cluster_all(report_processor: ReportProcessorToConsole) -> None:
     """
     Commandline options:
       * --force - no error when possible quorum loss
@@ -455,12 +453,14 @@ def stop_cluster_all() -> None:
             )
         )
     if report_list:
-        process_library_reports(report_list)
+        report_and_exit_on_error(report_processor, report_list)
 
-    stop_cluster_nodes(all_nodes)
+    stop_cluster_nodes(all_nodes, report_processor)
 
 
-def stop_cluster_nodes(nodes: StringCollection) -> None:  # noqa: PLR0912
+def stop_cluster_nodes(  # noqa: PLR0912
+    nodes: StringCollection, report_processor: ReportProcessorToConsole
+) -> None:
     """
     Commandline options:
       * --force - no error when possible quorum loss
@@ -472,7 +472,7 @@ def stop_cluster_nodes(nodes: StringCollection) -> None:  # noqa: PLR0912
     unknown_nodes = set(nodes) - set(all_nodes)
     if unknown_nodes:
         if report_list:
-            process_library_reports(report_list)
+            report_and_exit_on_error(report_processor, report_list)
         utils.err(
             "nodes '%s' do not appear to exist in configuration"
             % "', '".join(sorted(unknown_nodes))
@@ -543,7 +543,9 @@ def stop_cluster_nodes(nodes: StringCollection) -> None:  # noqa: PLR0912
         utils.err("unable to stop all nodes")
 
 
-def enable_cluster(argv: Argv) -> None:
+def enable_cluster(
+    argv: Argv, report_processor: ReportProcessorToConsole
+) -> None:
     """
     Commandline options:
       * --request-timeout - timeout for HTTP requests, effective only if at
@@ -556,10 +558,12 @@ def enable_cluster(argv: Argv) -> None:
     try:
         utils.enableServices()
     except LibraryError as e:
-        process_library_reports(list(e.args))
+        report_and_exit_on_error(report_processor, list(e.args))
 
 
-def disable_cluster(argv: Argv) -> None:
+def disable_cluster(
+    argv: Argv, report_processor: ReportProcessorToConsole
+) -> None:
     """
     Commandline options:
       * --request-timeout - timeout for HTTP requests, effective only if at
@@ -572,10 +576,10 @@ def disable_cluster(argv: Argv) -> None:
     try:
         utils.disableServices()
     except LibraryError as e:
-        process_library_reports(list(e.args))
+        report_and_exit_on_error(report_processor, list(e.args))
 
 
-def enable_cluster_all() -> None:
+def enable_cluster_all(report_processor: ReportProcessorToConsole) -> None:
     """
     Commandline options:
       * --request-timeout - timeout for HTTP requests
@@ -590,12 +594,12 @@ def enable_cluster_all() -> None:
             )
         )
     if report_list:
-        process_library_reports(report_list)
+        report_and_exit_on_error(report_processor, report_list)
 
     enable_cluster_nodes(all_nodes)
 
 
-def disable_cluster_all() -> None:
+def disable_cluster_all(report_processor: ReportProcessorToConsole) -> None:
     """
     Commandline options:
       * --request-timeout - timeout for HTTP requests
@@ -610,7 +614,7 @@ def disable_cluster_all() -> None:
             )
         )
     if report_list:
-        process_library_reports(report_list)
+        report_and_exit_on_error(report_processor, report_list)
 
     disable_cluster_nodes(all_nodes)
 
@@ -658,7 +662,9 @@ def destroy_cluster(argv: Argv) -> None:
             )
 
 
-def stop_cluster(argv: Argv) -> None:
+def stop_cluster(
+    argv: Argv, report_processor: ReportProcessorToConsole
+) -> None:
     """
     Commandline options:
       * --force - no error when possible quorum loss
@@ -668,7 +674,7 @@ def stop_cluster(argv: Argv) -> None:
         specified
     """
     if argv:
-        stop_cluster_nodes(argv)
+        stop_cluster_nodes(argv, report_processor)
         return
 
     if "--force" not in utils.pcs_options:
@@ -1259,7 +1265,6 @@ def cluster_destroy(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  #
       * --request-timeout - timeout of HTTP requests, effective only with --all
       * --yes - required for destroying the cluster
     """
-    del lib
     modifiers.ensure_only_supported(
         "--all",
         "--request-timeout",
@@ -1300,7 +1305,7 @@ def cluster_destroy(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  #
                 )
             )
         if report_list:
-            process_library_reports(report_list)
+            report_and_exit_on_error(lib.env.report_processor, report_list)
 
         # destroy remote and guest nodes
         if cib is not None:
@@ -1309,7 +1314,9 @@ def cluster_destroy(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  #
                     cib=cib
                 )
                 if report_list:
-                    process_library_reports(report_list)
+                    report_and_exit_on_error(
+                        lib.env.report_processor, report_list
+                    )
                 if all_remote_nodes:
                     _destroy_pcmk_remote_env(
                         lib_env,
@@ -1318,7 +1325,7 @@ def cluster_destroy(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  #
                         allow_fails=True,
                     )
             except LibraryError as e:
-                process_library_reports(list(e.args))
+                report_and_exit_on_error(lib.env.report_processor, list(e.args))
 
         # destroy full-stack nodes
         destroy_cluster(corosync_nodes)

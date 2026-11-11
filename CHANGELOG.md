@@ -42,6 +42,10 @@
 ### Changed
 - Dependency on libffi-devel caused by rubygem ethon was removed. There is a new
   dependency on libcurl-devel, because ethon was swapped for rubygem curb.
+- Option `--wait` no longer evaluates and reports state of resources. It just
+  waits for the cluster to settle into stable state and pcs then exits with 2
+  on timeout, 1 on any other error, or 0 on success. Use 'pcs status query'
+  command to evaluate state of resources.
 
 ### Deprecated
 - Option `--future` in `pcs resource delete | remove`, `pcs booth delete |

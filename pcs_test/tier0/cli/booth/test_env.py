@@ -5,22 +5,22 @@ from pcs.common import file_type_codes
 
 
 class BoothConfTest(TestCase):
-    @mock.patch("pcs.cli.reports.output.sys.stderr.write")
+    @mock.patch("pcs.cli.reports.output.print_to_stderr")
     def test_mocked_key_not_config(self, mock_stderr):
         with self.assertRaises(SystemExit):
             env.middleware_config(None, "/local/file/path.key")
         mock_stderr.assert_called_once_with(
             "Error: When --booth-key is specified, --booth-conf must be "
-            "specified as well\n"
+            "specified as well"
         )
 
-    @mock.patch("pcs.cli.reports.output.sys.stderr.write")
+    @mock.patch("pcs.cli.reports.output.print_to_stderr")
     def test_mocked_config_not_key(self, mock_stderr):
         with self.assertRaises(SystemExit):
             env.middleware_config("/local/file/path.conf", None)
         mock_stderr.assert_called_once_with(
             "Error: When --booth-conf is specified, --booth-key must be "
-            "specified as well\n"
+            "specified as well"
         )
 
     def test_not_mocked(self):

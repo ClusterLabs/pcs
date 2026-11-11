@@ -15,7 +15,7 @@ import xml.dom.minidom
 from functools import lru_cache
 from io import BytesIO
 from textwrap import dedent
-from typing import TYPE_CHECKING, Any, cast
+from typing import Any, cast
 from urllib.parse import urlencode
 from xml.dom.minidom import Document as DomDocument
 from xml.dom.minidom import parseString
@@ -31,8 +31,9 @@ from pcs.cli.common.lib_wrapper import Library
 from pcs.cli.common.parse_args import InputModifiers
 from pcs.cli.common.tools import print_to_stderr, timeout_to_seconds_legacy
 from pcs.cli.file import metadata as cli_file_metadata
-from pcs.cli.reports import ReportProcessorToConsole, process_library_reports
+from pcs.cli.reports import ReportProcessorToConsole
 from pcs.cli.reports import output as reports_output
+from pcs.cli.reports.messages import report_item_msg_from_dto
 from pcs.common import const, file_type_codes
 from pcs.common import file as pcs_file
 from pcs.common import pacemaker as common_pacemaker
@@ -41,8 +42,9 @@ from pcs.common.host import PcsKnownHost
 from pcs.common.pacemaker.resource.operations import (
     OCF_CHECK_LEVEL_INSTANCE_ATTRIBUTE_NAME,
 )
-from pcs.common.reports import ReportProcessor
+from pcs.common.reports import ReportItemList, ReportItemSeverity
 from pcs.common.reports.messages import CibUpgradeFailedToMinimalRequiredVersion
+from pcs.common.reports.utils import add_context_to_message
 from pcs.common.services.errors import ManageServiceError
 from pcs.common.services.interfaces import ServiceManagerInterface
 from pcs.common.str_tools import format_list
@@ -55,15 +57,9 @@ from pcs.lib.external import CommandRunner, is_proxy_set
 from pcs.lib.file.instance import FileInstance as LibFileInstance
 from pcs.lib.host.config.facade import Facade as KnownHostsFacade
 from pcs.lib.interface.config import ParserErrorException
-from pcs.lib.pacemaker.live import get_cluster_status_dom
-from pcs.lib.pacemaker.state import ClusterState
 from pcs.lib.pacemaker.values import validate_id
 from pcs.lib.services import get_service_manager as _get_service_manager
 from pcs.lib.services import service_exception_to_report
-
-if TYPE_CHECKING:
-    from pcs.common.reports.item import ReportItemList
-
 
 # usefile & filename variables are set in pcs module
 usefile = False
@@ -291,11 +287,74 @@ def remove_uid_gid_file(uid, gid):
     return file_removed
 
 
+# DEPRECATED
+# This function has been replaced in all pcs code and has been kept solely for
+# the purpose of read_known_hosts_file_not_cached function in this module. Once
+# that function is cleaned up, this function should be removed.
+def _process_library_reports(
+    report_item_list: ReportItemList,
+    exit_on_error: bool = True,
+    include_debug: bool = True,
+) -> None:
+    if not report_item_list:
+        raise reports_output.error(
+            "Errors have occurred, therefore pcs is unable to continue"
+        )
+
+    critical_error = False
+    for report_item in report_item_list:
+        report_dto = report_item.to_dto()
+        severity = report_dto.severity.level
+
+        if severity == ReportItemSeverity.DEBUG and not include_debug:
+            continue
+
+        cli_report_msg = report_item_msg_from_dto(report_dto.message)
+        msg = add_context_to_message(cli_report_msg.message, report_dto.context)
+
+        if severity == ReportItemSeverity.WARNING:
+            reports_output.warn(msg)
+            continue
+
+        if severity == ReportItemSeverity.DEPRECATION:
+            reports_output.deprecation_warning(msg)
+            continue
+
+        if severity != ReportItemSeverity.ERROR:
+            reports_output.print_to_stderr(msg)
+            continue
+
+        reports_output.error(
+            add_context_to_message(
+                cli_report_msg.get_message_with_force_text(
+                    report_item.severity.force_code
+                ),
+                report_dto.context,
+            )
+        )
+        critical_error = True
+
+    if critical_error and exit_on_error:
+        sys.exit(1)
+
+
 @lru_cache
 def read_known_hosts_file() -> dict[str, PcsKnownHost]:
     return read_known_hosts_file_not_cached()
 
 
+# TODO
+# This is the last function where _process_library_reports was not replaced
+# with pcs.cli.reports.processor.report_and_exit_on_error. The problem is, that
+# this function is meant to be used in CLI layer only, and despite that it is
+# being used in pcs.daemon.async_tasks.worker.executor. Replacing
+# _process_library_reports with report_and_exit_on_error cannot be done, as
+# they both use different report processors and that would break the daemon.
+# Steps:
+# 1. Write known hosts file getter designed specifically for the daemon context.
+#    This should have been done in the first place.
+# 2. Replace _process_library_reports with report_and_exit_on_error.
+# 3. Drop _process_library_reports.
 def read_known_hosts_file_not_cached() -> dict[str, PcsKnownHost]:
     """
     Commandline options: no options
@@ -328,13 +387,13 @@ def read_known_hosts_file_not_cached() -> dict[str, PcsKnownHost]:
         # This is here to provide known-hosts to functions not yet
         # overhauled to pcs.lib. Cli should never read known hosts from
         # /var/lib/pcsd/.
-        process_library_reports(list(e.args))
+        _process_library_reports(list(e.args))
     except ParserErrorException as e:
         # TODO remove
         # This is here to provide known-hosts to functions not yet
         # overhauled to pcs.lib. Cli should never read known hosts from
         # /var/lib/pcsd/.
-        process_library_reports(
+        _process_library_reports(
             known_hosts_instance.parser_exception_to_report_list(e)
         )
     except pcs_file.RawFileError as e:
@@ -678,21 +737,6 @@ def get_corosync_conf_facade(conf_text=None):
         )
     except corosync_conf_parser.CorosyncConfParserException as e:
         return err("Unable to parse corosync.conf: %s" % e)
-
-
-def getNodeAttributesFromPacemaker():
-    """
-    Commandline options: no options
-    """
-    try:
-        return [
-            node.attrs
-            for node in ClusterState(
-                get_cluster_status_dom(cmd_runner())
-            ).node_section.nodes
-        ]
-    except LibraryError as e:
-        return process_library_reports(e.args)
 
 
 def hasCorosyncConf():
@@ -2392,7 +2436,7 @@ def get_cib_user_groups():
     return user, groups
 
 
-def get_cli_env():
+def get_cli_env() -> Env:
     """
     Commandline options:
       * --debug
@@ -2427,7 +2471,7 @@ def get_middleware_factory():
     )
 
 
-def get_library_wrapper():
+def get_library_wrapper() -> Library:
     """
     Commandline options:
       * --debug
@@ -2454,7 +2498,7 @@ def exit_on_cmdline_input_error(
     sys.exit(1)
 
 
-def get_report_processor() -> ReportProcessor:
+def get_report_processor() -> ReportProcessorToConsole:
     return ReportProcessorToConsole(debug="--debug" in pcs_options)
 
 

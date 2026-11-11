@@ -8,8 +8,8 @@ from pcs.common.pacemaker.constraint import CibConstraintsDto
 from pcs.common.str_tools import format_list, indent
 from pcs.common.types import StringIterable
 from pcs.lib.errors import LibraryError
+from pcs.utils import get_report_processor
 
-from .output import process_library_reports
 from .processor import ReportItemPreprocessor
 
 
@@ -105,12 +105,11 @@ def get_duplicate_constraint_exists_preprocessor(
                 # originally called command. Raising the exception would
                 # prevent that. Also, it is not correct to exit with an error
                 # just because we were unable to get optional additional info
-                # for printing a report.
+                # for printing a report. Therefore, we use a fresh
+                # report_processor to avoid setting has_errors to True in the
+                # global one.
                 if e.args:
-                    process_library_reports(
-                        cast(reports.ReportItemList, e.args),
-                        exit_on_error=False,
-                    )
+                    get_report_processor().report_list(list(e.args))
                 print_to_stderr(
                     "Duplicate constraints: " + format_list(duplicate_id_list)
                 )
