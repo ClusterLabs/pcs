@@ -130,6 +130,12 @@ prepare:
       # rubygems
       - ruby-devel
 
+  - name: Install system python packages
+    when: distro == fedora
+    how: install
+    package:
+      - python3-isodate
+
   - name: Install system rubygem packages
     when: distro == fedora
     how: install
