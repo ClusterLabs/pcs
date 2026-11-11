@@ -40,6 +40,11 @@ MAINTAINERCLEANFILES	= \
 
 SPEC			= rpm/$(PACKAGE_NAME).spec
 
+# Options passed to configure inside the spec file %build section controlling
+# how dependencies are bundled during rpm build. Overridable on the command
+# line, e.g. make rpm/pcs.spec SPEC_CONFIGURE_BUNDLE_OPTIONS="--enable-local-build"
+SPEC_CONFIGURE_BUNDLE_OPTIONS ?= --enable-local-build --enable-individual-bundling --enable-use-local-cache-only
+
 TARFILES		= $(PACKAGE_NAME)-$(VERSION).tar.bz2 \
 			  $(PACKAGE_NAME)-$(VERSION).tar.gz \
 			  $(PACKAGE_NAME)-$(VERSION).tar.xz
@@ -542,7 +547,28 @@ define PYBUNDLE_AWK
 endef
 export PYBUNDLE_AWK
 
-$(SPEC): $(SPEC).in .version config.status stamps/download_python_deps stamps/download_rpm_ruby_deps
+# Track the values of make variables that only affect $(SPEC) from inside its
+# recipe (SPEC_CONFIGURE_BUNDLE_OPTIONS, CI_BRANCH) in stamp files so that
+# $(SPEC) can depend on them as normal file prerequisites. Each stamp recipe
+# runs on every make invocation (it depends on the phony FORCE target), but it
+# only rewrites the stamp file - bumping its timestamp - when the value actually
+# changes. That way changing one of these variables on the command line forces
+# the spec to be regenerated, while repeated builds with unchanged values do
+# not.
+.PHONY: FORCE
+FORCE:
+
+stamps/spec_configure_bundle_options: FORCE
+	@if [ ! -f $@ ] || [ "`cat $@`" != "$(SPEC_CONFIGURE_BUNDLE_OPTIONS)" ]; then \
+		echo "$(SPEC_CONFIGURE_BUNDLE_OPTIONS)" > $@; \
+	fi
+
+stamps/spec_ci_branch: FORCE
+	@if [ ! -f $@ ] || [ "`cat $@`" != "$(CI_BRANCH)" ]; then \
+		echo "$(CI_BRANCH)" > $@; \
+	fi
+
+$(SPEC): $(SPEC).in .version config.status stamps/download_python_deps stamps/download_rpm_ruby_deps stamps/spec_configure_bundle_options stamps/spec_ci_branch
 	rm -f $@-t $@
 	date="`LC_ALL=C $(UTC_DATE_AT)$(SOURCE_EPOCH) "+%a %b %d %Y"`" && \
 	gvgver="`cd $(abs_srcdir); make/git-version-gen --fallback $(VERSION) .tarball-version .gitarchivever`" && \
@@ -572,6 +598,7 @@ $(SPEC): $(SPEC).in .version config.status stamps/download_python_deps stamps/do
 			-e "s#@pcs_bundled_dir@#${PCS_BUNDLED_DIR_LOCAL}#g" \
 			-e "s#@pyversion@#${PYVERSION}#g" \
 			-e "s#@cirpmworkarounds@#${CIRPMWORKAROUNDS}#g" \
+			-e "s#@specconfigurebundleoptions@#$(SPEC_CONFIGURE_BUNDLE_OPTIONS)#g" \
 		$(abs_srcdir)/$@.in > $@-t; \
 	else \
 		sed \
@@ -583,6 +610,7 @@ $(SPEC): $(SPEC).in .version config.status stamps/download_python_deps stamps/do
 			-e "s#@pcs_bundled_dir@#${PCS_BUNDLED_DIR_LOCAL}#g" \
 			-e "s#@pyversion@#${PYVERSION}#g" \
 			-e "s#@cirpmworkarounds@#${CIRPMWORKAROUNDS}#g" \
+			-e "s#@specconfigurebundleoptions@#$(SPEC_CONFIGURE_BUNDLE_OPTIONS)#g" \
 		$(abs_srcdir)/$@.in > $@-t; \
 	fi; \
 	if [ -z "$(CI_BRANCH)" ]; then \
