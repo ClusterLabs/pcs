@@ -1,41 +1,20 @@
 from unittest import TestCase, mock
 
 from pcs.cli.common.errors import CmdLineInputError
-from pcs.cli.common.parse_args import InputModifiers
 from pcs.cli.resource import parse_args
 
 
 class ParseCloneArgs(TestCase):
-    def setUp(self):
-        print_patcher = mock.patch("pcs.cli.reports.output.print_to_stderr")
-        self.print_mock = print_patcher.start()
-        self.addCleanup(print_patcher.stop)
-        self.meta_deprecated = (
-            "Deprecation Warning: configuring meta attributes without "
-            "specifying the 'meta' keyword is deprecated and will be removed "
-            "in a future release"
-        )
-
-    def assert_stderr(self, stderr=None):
-        if stderr is None:
-            self.print_mock.assert_not_called()
-        else:
-            self.print_mock.assert_called_once_with(stderr)
-
-    def assert_produce(self, arg_list, result, promotable=False, stderr=None):
+    def assert_produce(self, arg_list, result, promotable=False):
         self.assertEqual(
             parse_args.parse_clone(arg_list, promotable=promotable),
             result,
         )
-        self.assert_stderr(stderr)
 
-    def assert_raises_cmdline(
-        self, args, expected_msg, promotable=False, stderr=None
-    ):
+    def assert_raises_cmdline(self, args, expected_msg, promotable=False):
         with self.assertRaises(CmdLineInputError) as cm:
             parse_args.parse_clone(args, promotable=promotable)
         self.assertEqual(cm.exception.message, expected_msg)
-        self.assert_stderr(stderr)
 
     def test_no_args(self):
         self.assert_produce(
@@ -49,14 +28,11 @@ class ParseCloneArgs(TestCase):
             parse_args.CloneOptions(clone_id="CustomCloneId", meta_attrs={}),
         )
 
-    def test_clone_options(self):
-        self.assert_produce(
-            ["a=b", "c=d"],
-            parse_args.CloneOptions(
-                clone_id=None, meta_attrs={"a": "b", "c": "d"}
-            ),
-            stderr=self.meta_deprecated,
-        )
+    def test_options_without_meta_keyword(self):
+        self.assert_raises_cmdline(["a=b", "c=d"], None)
+
+    def test_clone_id_and_options_without_meta_keyword(self):
+        self.assert_raises_cmdline(["CustomCloneId", "a=b", "c=d"], None)
 
     def test_meta_options(self):
         self.assert_produce(
@@ -68,12 +44,11 @@ class ParseCloneArgs(TestCase):
 
     def test_clone_id_and_clone_meta_options(self):
         self.assert_produce(
-            ["CustomCloneId", "a=b", "c=d", "meta", "e=f", "g=h"],
+            ["CustomCloneId", "meta", "e=f", "g=h"],
             parse_args.CloneOptions(
                 clone_id="CustomCloneId",
-                meta_attrs={"a": "b", "c": "d", "e": "f", "g": "h"},
+                meta_attrs={"e": "f", "g": "h"},
             ),
-            stderr=self.meta_deprecated,
         )
 
     def test_op_options(self):
@@ -88,761 +63,28 @@ class ParseCloneArgs(TestCase):
             "op settings must be changed on base resource, not the clone",
         )
 
-    def test_missing_option_value(self):
-        self.assert_raises_cmdline(
-            ["CloneId", "a"],
-            "missing value of 'a' option",
-            stderr=self.meta_deprecated,
-        )
-
     def test_missing_meta_option_value(self):
         self.assert_raises_cmdline(["meta", "m"], "missing value of 'm' option")
 
     def test_promotable_keyword_and_option(self):
         self.assert_raises_cmdline(
-            ["CloneId", "promotable=true", "meta", "promotable=true"],
+            ["CloneId", "meta", "promotable=true"],
             "you cannot specify both promotable option and promotable keyword",
             promotable=True,
-            stderr=self.meta_deprecated,
         )
 
-    def test_different_values_of_option_and_meta_option(self):
+    def test_different_values_of_meta_option(self):
         self.assert_raises_cmdline(
-            ["CloneId", "promotable=true", "meta", "promotable=false"],
+            ["CloneId", "meta", "promotable=true", "promotable=false"],
             (
                 "duplicate option 'promotable' with different values 'false' "
                 "and 'true'"
             ),
             promotable=True,
-            stderr=self.meta_deprecated,
         )
 
 
-class ParseCreateArgsCommonMixin:
-    def setUp(self):
-        print_patcher = mock.patch("pcs.cli.reports.output.print_to_stderr")
-        self.print_mock = print_patcher.start()
-        self.addCleanup(print_patcher.stop)
-
-    def assert_stderr(self, stderr=None):
-        if stderr is None:
-            self.print_mock.assert_not_called()
-        else:
-            calls = [mock.call(item) for item in stderr]
-            self.print_mock.assert_has_calls(calls)
-            self.assertEqual(self.print_mock.call_count, len(calls))
-
-    def test_no_args(self):
-        self.assert_produce(
-            [],
-            parse_args.ComplexResourceOptions(
-                primitive=parse_args.PrimitiveOptions(
-                    instance_attrs={},
-                    meta_attrs={},
-                    operations=[],
-                ),
-                group=None,
-                clone=None,
-                promotable=None,
-                bundle_id=None,
-            ),
-        )
-        self.assert_stderr()
-
-    def test_only_instance_attributes(self):
-        self.assert_produce(
-            ["a=b", "c=d"],
-            parse_args.ComplexResourceOptions(
-                primitive=parse_args.PrimitiveOptions(
-                    instance_attrs={"a": "b", "c": "d"},
-                    meta_attrs={},
-                    operations=[],
-                ),
-                group=None,
-                clone=None,
-                promotable=None,
-                bundle_id=None,
-            ),
-        )
-        self.assert_stderr()
-
-    def test_only_meta(self):
-        self.assert_produce(
-            ["meta", "a=b", "c=d"],
-            parse_args.ComplexResourceOptions(
-                primitive=parse_args.PrimitiveOptions(
-                    instance_attrs={},
-                    meta_attrs={"a": "b", "c": "d"},
-                    operations=[],
-                ),
-                group=None,
-                clone=None,
-                promotable=None,
-                bundle_id=None,
-            ),
-        )
-        self.assert_stderr()
-
-    def test_only_clone(self):
-        self.assert_produce(
-            ["clone"],
-            parse_args.ComplexResourceOptions(
-                primitive=parse_args.PrimitiveOptions(
-                    instance_attrs={},
-                    meta_attrs={},
-                    operations=[],
-                ),
-                group=None,
-                clone=parse_args.CloneOptions(clone_id=None, meta_attrs={}),
-                promotable=None,
-                bundle_id=None,
-            ),
-        )
-        self.assert_stderr()
-
-    def test_only_clone_with_custom_id(self):
-        self.assert_produce(
-            ["clone", "CustomCloneId"],
-            parse_args.ComplexResourceOptions(
-                primitive=parse_args.PrimitiveOptions(
-                    instance_attrs={},
-                    meta_attrs={},
-                    operations=[],
-                ),
-                group=None,
-                clone=parse_args.CloneOptions(
-                    clone_id="CustomCloneId", meta_attrs={}
-                ),
-                promotable=None,
-                bundle_id=None,
-            ),
-        )
-        self.assert_stderr()
-
-    def test_only_promotable(self):
-        self.assert_produce(
-            ["promotable"],
-            parse_args.ComplexResourceOptions(
-                primitive=parse_args.PrimitiveOptions(
-                    instance_attrs={},
-                    meta_attrs={},
-                    operations=[],
-                ),
-                group=None,
-                clone=None,
-                promotable=parse_args.CloneOptions(
-                    clone_id=None, meta_attrs={}
-                ),
-                bundle_id=None,
-            ),
-        )
-        self.assert_stderr()
-
-    def test_only_promotable_with_custom_id(self):
-        self.assert_produce(
-            ["promotable", "CustomCloneId"],
-            parse_args.ComplexResourceOptions(
-                primitive=parse_args.PrimitiveOptions(
-                    instance_attrs={},
-                    meta_attrs={},
-                    operations=[],
-                ),
-                group=None,
-                clone=None,
-                promotable=parse_args.CloneOptions(
-                    clone_id="CustomCloneId", meta_attrs={}
-                ),
-                bundle_id=None,
-            ),
-        )
-        self.assert_stderr()
-
-    def test_only_operations(self):
-        self.assert_produce(
-            [
-                "op",
-                "monitor",
-                "a=b",
-                "c=d",
-                "start",
-                "e=f",
-            ],
-            parse_args.ComplexResourceOptions(
-                primitive=parse_args.PrimitiveOptions(
-                    instance_attrs={},
-                    meta_attrs={},
-                    operations=[
-                        {"name": "monitor", "a": "b", "c": "d"},
-                        {"name": "start", "e": "f"},
-                    ],
-                ),
-                group=None,
-                clone=None,
-                promotable=None,
-                bundle_id=None,
-            ),
-        )
-        self.assert_stderr()
-
-    def test_raises_when_operation_name_does_not_follow_op_keyword(self):
-        msg = "When using 'op' you must specify an operation name after 'op'"
-        self.assert_raises_cmdline(["op", "a=b"], msg)
-        self.assert_raises_cmdline(["op", "monitor", "a=b", "op", "c=d"], msg)
-
-    def test_raises_when_operation_have_no_option(self):
-        msg = (
-            "When using 'op' you must specify an operation name and at least "
-            "one option"
-        )
-        self.assert_raises_cmdline(
-            ["op", "monitor", "a=b", "start", "stop", "c=d"], msg
-        )
-        self.assert_raises_cmdline(
-            ["op", "monitor", "a=b", "stop", "c=d", "op", "start"], msg
-        )
-
-    def test_allow_to_repeat_op(self):
-        self.assert_produce(
-            [
-                "op",
-                "monitor",
-                "a=b",
-                "c=d",
-                "op",
-                "start",
-                "e=f",
-            ],
-            parse_args.ComplexResourceOptions(
-                primitive=parse_args.PrimitiveOptions(
-                    instance_attrs={},
-                    meta_attrs={},
-                    operations=[
-                        {"name": "monitor", "a": "b", "c": "d"},
-                        {"name": "start", "e": "f"},
-                    ],
-                ),
-                group=None,
-                clone=None,
-                promotable=None,
-                bundle_id=None,
-            ),
-        )
-        self.assert_stderr()
-
-    def test_deal_with_empty_operations(self):
-        msg = (
-            "When using 'op' you must specify an operation name and at least "
-            "one option"
-        )
-        self.assert_raises_cmdline(["op", "monitoring", "a=b", "op"], msg)
-
-    def test_bundle_no_options(self):
-        self.assert_raises_cmdline(
-            ["bundle"],
-            "you have to specify exactly one bundle",
-        )
-
-    def test_bundle(self):
-        self.assert_produce(
-            ["bundle", "b"],
-            parse_args.ComplexResourceOptions(
-                primitive=parse_args.PrimitiveOptions(
-                    instance_attrs={},
-                    meta_attrs={},
-                    operations=[],
-                ),
-                group=None,
-                clone=None,
-                promotable=None,
-                bundle_id="b",
-            ),
-        )
-        self.assert_stderr()
-
-
-class ParseCreateArgsOld(ParseCreateArgsCommonMixin, TestCase):
-    # super().* is just used to keep the order of tests, so that the order can
-    # be kept once dropping the old parsing function and merging the test
-    # classes back together
-    msg_clone_without_meta = (
-        "Deprecation Warning: Configuring clone meta attributes without "
-        "specifying the 'meta' keyword after the 'clone' keyword is deprecated "
-        "and will be removed in a future release. Specify --future to switch "
-        "to the future behavior."
-    )
-    msg_promotable_without_meta = (
-        "Deprecation Warning: Configuring promotable meta attributes without "
-        "specifying the 'meta' keyword after the 'promotable' keyword is deprecated "
-        "and will be removed in a future release. Specify --future to switch "
-        "to the future behavior."
-    )
-    msg_meta_after_clone = (
-        "Deprecation Warning: Specifying 'meta' after 'clone' now defines "
-        "meta attributes for the base resource. In a future release, this will "
-        "define meta attributes for the clone. Specify --future to switch to the "
-        "future behavior."
-    )
-    msg_op_after_clone = (
-        "Deprecation Warning: Specifying 'op' after 'clone' now defines "
-        "operations for the base resource. In a future release, this will be "
-        "removed and operations will have to be specified before 'clone'. "
-        "Specify --future to switch to the future behavior."
-    )
-    msg_meta_after_bundle = (
-        "Deprecation Warning: Specifying 'meta' after 'bundle' now defines "
-        "meta options for the base resource. In a future release, this will be "
-        "removed and meta options will have to be specified before 'bundle'. "
-        "Specify --future to switch to the future behavior."
-    )
-    msg_op_after_bundle = (
-        "Deprecation Warning: Specifying 'op' after 'bundle' now defines "
-        "operations for the base resource. In a future release, this will be "
-        "removed and operations will have to be specified before 'bundle'. "
-        "Specify --future to switch to the future behavior."
-    )
-
-    def assert_produce(self, arg_list, result, modifiers=None):
-        self.assertEqual(
-            parse_args.parse_create_old(
-                arg_list, InputModifiers(modifiers or {})
-            ),
-            result,
-        )
-
-    def assert_raises_cmdline(self, arg_list, msg="", modifiers=None):
-        with self.assertRaises(CmdLineInputError) as cm:
-            parse_args.parse_create_old(
-                arg_list, InputModifiers(modifiers or {})
-            )
-        exception = cm.exception
-        self.assertEqual(msg, exception.message)
-
-    def test_no_args(self):
-        super().test_no_args()
-
-    def test_only_instance_attributes(self):
-        super().test_only_instance_attributes()
-
-    def test_only_meta(self):
-        super().test_only_meta()
-
-    def test_group_and_id(self):
-        self.assert_produce(
-            [],
-            parse_args.ComplexResourceOptions(
-                primitive=parse_args.PrimitiveOptions(
-                    instance_attrs={},
-                    meta_attrs={},
-                    operations=[],
-                ),
-                group=parse_args.GroupOptions(
-                    group_id="G1", after_resource=None, before_resource=None
-                ),
-                clone=None,
-                promotable=None,
-                bundle_id=None,
-            ),
-            {"--group": "G1"},
-        )
-
-    def test_group_after_and_id(self):
-        self.assert_produce(
-            [],
-            parse_args.ComplexResourceOptions(
-                primitive=parse_args.PrimitiveOptions(
-                    instance_attrs={},
-                    meta_attrs={},
-                    operations=[],
-                ),
-                group=parse_args.GroupOptions(
-                    group_id="G1", after_resource="R1", before_resource=None
-                ),
-                clone=None,
-                promotable=None,
-                bundle_id=None,
-            ),
-            {"--group": "G1", "--after": "R1"},
-        )
-
-    def test_group_before_and_id(self):
-        self.assert_produce(
-            [],
-            parse_args.ComplexResourceOptions(
-                primitive=parse_args.PrimitiveOptions(
-                    instance_attrs={},
-                    meta_attrs={},
-                    operations=[],
-                ),
-                group=parse_args.GroupOptions(
-                    group_id="G1", after_resource=None, before_resource="R2"
-                ),
-                clone=None,
-                promotable=None,
-                bundle_id=None,
-            ),
-            {"--group": "G1", "--before": "R2"},
-        )
-
-    def test_group_after_and_before(self):
-        self.assert_produce(
-            [],
-            parse_args.ComplexResourceOptions(
-                primitive=parse_args.PrimitiveOptions(
-                    instance_attrs={},
-                    meta_attrs={},
-                    operations=[],
-                ),
-                group=parse_args.GroupOptions(
-                    group_id="G1", after_resource="R1", before_resource="R2"
-                ),
-                clone=None,
-                promotable=None,
-                bundle_id=None,
-            ),
-            {"--group": "G1", "--after": "R1", "--before": "R2"},
-        )
-
-    def test_after_without_group(self):
-        self.assert_raises_cmdline(
-            [], "you cannot use --after without --group", {"--after": "R2"}
-        )
-
-    def test_before_without_group(self):
-        self.assert_raises_cmdline(
-            [], "you cannot use --before without --group", {"--before": "R2"}
-        )
-
-    def test_only_clone(self):
-        super().test_only_clone()
-
-    def test_only_clone_with_options(self):
-        self.assert_produce(
-            ["clone", "a=b", "c=d"],
-            parse_args.ComplexResourceOptions(
-                primitive=parse_args.PrimitiveOptions(
-                    instance_attrs={},
-                    meta_attrs={},
-                    operations=[],
-                ),
-                group=None,
-                clone=parse_args.CloneOptions(
-                    clone_id=None, meta_attrs={"a": "b", "c": "d"}
-                ),
-                promotable=None,
-                bundle_id=None,
-            ),
-        )
-        self.assert_stderr([self.msg_clone_without_meta])
-
-    def test_only_clone_with_custom_id(self):
-        super().test_only_clone_with_custom_id()
-
-    def test_only_clone_with_custom_id_and_meta(self):
-        self.assert_produce(
-            ["clone", "CustomCloneId", "a=b", "c=d"],
-            parse_args.ComplexResourceOptions(
-                primitive=parse_args.PrimitiveOptions(
-                    instance_attrs={},
-                    meta_attrs={},
-                    operations=[],
-                ),
-                group=None,
-                clone=parse_args.CloneOptions(
-                    clone_id="CustomCloneId", meta_attrs={"a": "b", "c": "d"}
-                ),
-                promotable=None,
-                bundle_id=None,
-            ),
-        )
-        self.assert_stderr([self.msg_clone_without_meta])
-
-    def test_only_clone_with_custom_id_and_meta_new(self):
-        self.assert_produce(
-            ["clone", "CustomCloneId", "meta", "a=b", "c=d"],
-            parse_args.ComplexResourceOptions(
-                primitive=parse_args.PrimitiveOptions(
-                    instance_attrs={},
-                    meta_attrs={"a": "b", "c": "d"},
-                    operations=[],
-                ),
-                group=None,
-                clone=parse_args.CloneOptions(
-                    clone_id="CustomCloneId", meta_attrs={}
-                ),
-                promotable=None,
-                bundle_id=None,
-            ),
-        )
-
-    def test_only_promotable(self):
-        super().test_only_promotable()
-
-    def test_only_promotable_with_options(self):
-        self.assert_produce(
-            ["promotable", "a=b", "c=d"],
-            parse_args.ComplexResourceOptions(
-                primitive=parse_args.PrimitiveOptions(
-                    instance_attrs={},
-                    meta_attrs={},
-                    operations=[],
-                ),
-                group=None,
-                clone=None,
-                promotable=parse_args.CloneOptions(
-                    clone_id=None, meta_attrs={"a": "b", "c": "d"}
-                ),
-                bundle_id=None,
-            ),
-        )
-        self.assert_stderr([self.msg_promotable_without_meta])
-
-    def test_only_promotable_with_custom_id(self):
-        super().test_only_promotable_with_custom_id()
-
-    def test_only_promotable_with_custom_id_and_meta(self):
-        self.assert_produce(
-            ["promotable", "CustomCloneId", "a=b", "c=d"],
-            parse_args.ComplexResourceOptions(
-                primitive=parse_args.PrimitiveOptions(
-                    instance_attrs={},
-                    meta_attrs={},
-                    operations=[],
-                ),
-                group=None,
-                clone=None,
-                promotable=parse_args.CloneOptions(
-                    clone_id="CustomCloneId", meta_attrs={"a": "b", "c": "d"}
-                ),
-                bundle_id=None,
-            ),
-        )
-        self.assert_stderr([self.msg_promotable_without_meta])
-
-    def test_only_promotable_with_custom_id_and_meta_new(self):
-        self.assert_produce(
-            ["promotable", "CustomCloneId", "meta", "a=b", "c=d"],
-            parse_args.ComplexResourceOptions(
-                primitive=parse_args.PrimitiveOptions(
-                    instance_attrs={},
-                    meta_attrs={"a": "b", "c": "d"},
-                    operations=[],
-                ),
-                group=None,
-                clone=None,
-                promotable=parse_args.CloneOptions(
-                    clone_id="CustomCloneId", meta_attrs={}
-                ),
-                bundle_id=None,
-            ),
-        )
-
-    def test_only_operations(self):
-        super().test_only_operations()
-
-    def test_args_op_clone_meta(self):
-        self.assert_produce(
-            [
-                "a=b",
-                "c=d",
-                "meta",
-                "e=f",
-                "g=h",
-                "op",
-                "monitor",
-                "i=j",
-                "k=l",
-                "start",
-                "m=n",
-                "clone",
-                "o=p",
-                "q=r",
-            ],
-            parse_args.ComplexResourceOptions(
-                primitive=parse_args.PrimitiveOptions(
-                    instance_attrs={"a": "b", "c": "d"},
-                    meta_attrs={"e": "f", "g": "h"},
-                    operations=[
-                        {"name": "monitor", "i": "j", "k": "l"},
-                        {"name": "start", "m": "n"},
-                    ],
-                ),
-                group=None,
-                clone=parse_args.CloneOptions(
-                    clone_id=None, meta_attrs={"o": "p", "q": "r"}
-                ),
-                promotable=None,
-                bundle_id=None,
-            ),
-        )
-        self.assert_stderr([self.msg_clone_without_meta])
-
-    def test_raises_when_operation_name_does_not_follow_op_keyword(self):
-        super().test_raises_when_operation_name_does_not_follow_op_keyword()
-
-    def test_raises_when_operation_have_no_option(self):
-        super().test_raises_when_operation_have_no_option()
-
-    def test_allow_to_repeat_op(self):
-        super().test_allow_to_repeat_op()
-
-    def test_deal_with_empty_operations(self):
-        super().test_deal_with_empty_operations()
-
-    def test_op_after_clone(self):
-        self.assert_produce(
-            [
-                "a=b",
-                "c=d",
-                "meta",
-                "e=f",
-                "g=h",
-                "clone",
-                "o=p",
-                "q=r",
-                "op",
-                "monitor",
-                "i=j",
-                "k=l",
-                "start",
-                "m=n",
-            ],
-            parse_args.ComplexResourceOptions(
-                primitive=parse_args.PrimitiveOptions(
-                    instance_attrs={"a": "b", "c": "d"},
-                    meta_attrs={"e": "f", "g": "h"},
-                    operations=[
-                        {"name": "monitor", "i": "j", "k": "l"},
-                        {"name": "start", "m": "n"},
-                    ],
-                ),
-                group=None,
-                clone=parse_args.CloneOptions(
-                    clone_id=None, meta_attrs={"o": "p", "q": "r"}
-                ),
-                promotable=None,
-                bundle_id=None,
-            ),
-        )
-        self.assert_stderr(
-            [self.msg_clone_without_meta, self.msg_op_after_clone]
-        )
-
-    def test_meta_after_clone(self):
-        self.assert_produce(
-            [
-                "a=b",
-                "c=d",
-                "op",
-                "monitor",
-                "i=j",
-                "k=l",
-                "start",
-                "m=n",
-                "clone",
-                "o=p",
-                "q=r",
-                "meta",
-                "e=f",
-                "g=h",
-            ],
-            parse_args.ComplexResourceOptions(
-                primitive=parse_args.PrimitiveOptions(
-                    instance_attrs={"a": "b", "c": "d"},
-                    meta_attrs={"e": "f", "g": "h"},
-                    operations=[
-                        {"name": "monitor", "i": "j", "k": "l"},
-                        {"name": "start", "m": "n"},
-                    ],
-                ),
-                group=None,
-                clone=parse_args.CloneOptions(
-                    clone_id=None, meta_attrs={"o": "p", "q": "r"}
-                ),
-                promotable=None,
-                bundle_id=None,
-            ),
-        )
-        self.assert_stderr(
-            [self.msg_clone_without_meta, self.msg_meta_after_clone]
-        )
-
-    def test_bundle_no_options(self):
-        super().test_bundle_no_options()
-
-    def test_bundle(self):
-        super().test_bundle()
-
-    def test_op_after_bundle(self):
-        self.assert_produce(
-            ["bundle", "b", "op", "monitor", "a=b", "c=d", "start", "e=f"],
-            parse_args.ComplexResourceOptions(
-                primitive=parse_args.PrimitiveOptions(
-                    instance_attrs={},
-                    meta_attrs={},
-                    operations=[
-                        {"name": "monitor", "a": "b", "c": "d"},
-                        {"name": "start", "e": "f"},
-                    ],
-                ),
-                group=None,
-                clone=None,
-                promotable=None,
-                bundle_id="b",
-            ),
-        )
-        self.assert_stderr([self.msg_op_after_bundle])
-
-    def test_meta_after_bundle(self):
-        self.assert_produce(
-            ["bundle", "b", "meta", "a=b", "c=d"],
-            parse_args.ComplexResourceOptions(
-                primitive=parse_args.PrimitiveOptions(
-                    instance_attrs={},
-                    meta_attrs={"a": "b", "c": "d"},
-                    operations=[],
-                ),
-                group=None,
-                clone=None,
-                promotable=None,
-                bundle_id="b",
-            ),
-        )
-        self.assert_stderr([self.msg_meta_after_bundle])
-
-    def test_multiple_meta(self):
-        self.assert_produce(
-            [
-                "a=b",
-                "c=d",
-                "meta",
-                "e=f",
-                "meta",
-                "g=h",
-                "clone",
-                "meta",
-                "m=n",
-                "meta",
-                "o=p",
-            ],
-            parse_args.ComplexResourceOptions(
-                primitive=parse_args.PrimitiveOptions(
-                    instance_attrs={"a": "b", "c": "d"},
-                    meta_attrs={"e": "f", "g": "h", "m": "n", "o": "p"},
-                    operations=[],
-                ),
-                group=None,
-                clone=parse_args.CloneOptions(clone_id=None, meta_attrs={}),
-                promotable=None,
-                bundle_id=None,
-            ),
-        )
-        self.assert_stderr([self.msg_meta_after_clone])
-
-
-class ParseCreateArgsNew(ParseCreateArgsCommonMixin, TestCase):
-    # super().* is just used to keep the order of tests, so that the order can
-    # be kept once dropping the old parsing function and merging the test
-    # classes back together
+class ParseCreateArgs(TestCase):
     msg_clone_without_meta_err = (
         "Specifying instance attributes for a clone is not supported. Use "
         "'meta' after 'clone' if you want to specify meta attributes."
@@ -867,23 +109,78 @@ class ParseCreateArgsNew(ParseCreateArgsCommonMixin, TestCase):
         "op settings must be defined on the base resource, not the group"
     )
 
+    def setUp(self):
+        print_patcher = mock.patch("pcs.cli.reports.output.print_to_stderr")
+        self.print_mock = print_patcher.start()
+        self.addCleanup(print_patcher.stop)
+
+    def assert_stderr(self, stderr=None):
+        if stderr is None:
+            self.print_mock.assert_not_called()
+        else:
+            calls = [mock.call(item) for item in stderr]
+            self.print_mock.assert_has_calls(calls)
+            self.assertEqual(self.print_mock.call_count, len(calls))
+
     def assert_produce(self, arg_list, result):
-        self.assertEqual(parse_args.parse_create_new(arg_list), result)
+        self.assertEqual(parse_args.parse_create(arg_list), result)
 
     def assert_raises_cmdline(self, args, msg=""):
         with self.assertRaises(CmdLineInputError) as cm:
-            parse_args.parse_create_new(args)
+            parse_args.parse_create(args)
         exception = cm.exception
         self.assertEqual(msg, exception.message)
 
     def test_no_args(self):
-        super().test_no_args()
+        self.assert_produce(
+            [],
+            parse_args.ComplexResourceOptions(
+                primitive=parse_args.PrimitiveOptions(
+                    instance_attrs={},
+                    meta_attrs={},
+                    operations=[],
+                ),
+                group=None,
+                clone=None,
+                promotable=None,
+                bundle_id=None,
+            ),
+        )
+        self.assert_stderr()
 
     def test_only_instance_attributes(self):
-        super().test_only_instance_attributes()
+        self.assert_produce(
+            ["a=b", "c=d"],
+            parse_args.ComplexResourceOptions(
+                primitive=parse_args.PrimitiveOptions(
+                    instance_attrs={"a": "b", "c": "d"},
+                    meta_attrs={},
+                    operations=[],
+                ),
+                group=None,
+                clone=None,
+                promotable=None,
+                bundle_id=None,
+            ),
+        )
+        self.assert_stderr()
 
     def test_only_meta(self):
-        super().test_only_meta()
+        self.assert_produce(
+            ["meta", "a=b", "c=d"],
+            parse_args.ComplexResourceOptions(
+                primitive=parse_args.PrimitiveOptions(
+                    instance_attrs={},
+                    meta_attrs={"a": "b", "c": "d"},
+                    operations=[],
+                ),
+                group=None,
+                clone=None,
+                promotable=None,
+                bundle_id=None,
+            ),
+        )
+        self.assert_stderr()
 
     def test_group_no_options(self):
         self.assert_raises_cmdline(
@@ -1005,7 +302,21 @@ class ParseCreateArgsNew(ParseCreateArgsCommonMixin, TestCase):
         )
 
     def test_only_clone(self):
-        super().test_only_clone()
+        self.assert_produce(
+            ["clone"],
+            parse_args.ComplexResourceOptions(
+                primitive=parse_args.PrimitiveOptions(
+                    instance_attrs={},
+                    meta_attrs={},
+                    operations=[],
+                ),
+                group=None,
+                clone=parse_args.CloneOptions(clone_id=None, meta_attrs={}),
+                promotable=None,
+                bundle_id=None,
+            ),
+        )
+        self.assert_stderr()
 
     def test_only_clone_with_options(self):
         self.assert_raises_cmdline(
@@ -1013,7 +324,23 @@ class ParseCreateArgsNew(ParseCreateArgsCommonMixin, TestCase):
         )
 
     def test_only_clone_with_custom_id(self):
-        super().test_only_clone_with_custom_id()
+        self.assert_produce(
+            ["clone", "CustomCloneId"],
+            parse_args.ComplexResourceOptions(
+                primitive=parse_args.PrimitiveOptions(
+                    instance_attrs={},
+                    meta_attrs={},
+                    operations=[],
+                ),
+                group=None,
+                clone=parse_args.CloneOptions(
+                    clone_id="CustomCloneId", meta_attrs={}
+                ),
+                promotable=None,
+                bundle_id=None,
+            ),
+        )
+        self.assert_stderr()
 
     def test_only_clone_with_custom_id_and_meta(self):
         self.assert_raises_cmdline(
@@ -1040,7 +367,23 @@ class ParseCreateArgsNew(ParseCreateArgsCommonMixin, TestCase):
         )
 
     def test_only_promotable(self):
-        super().test_only_promotable()
+        self.assert_produce(
+            ["promotable"],
+            parse_args.ComplexResourceOptions(
+                primitive=parse_args.PrimitiveOptions(
+                    instance_attrs={},
+                    meta_attrs={},
+                    operations=[],
+                ),
+                group=None,
+                clone=None,
+                promotable=parse_args.CloneOptions(
+                    clone_id=None, meta_attrs={}
+                ),
+                bundle_id=None,
+            ),
+        )
+        self.assert_stderr()
 
     def test_only_promotable_with_options(self):
         self.assert_raises_cmdline(
@@ -1048,7 +391,23 @@ class ParseCreateArgsNew(ParseCreateArgsCommonMixin, TestCase):
         )
 
     def test_only_promotable_with_custom_id(self):
-        super().test_only_promotable_with_custom_id()
+        self.assert_produce(
+            ["promotable", "CustomCloneId"],
+            parse_args.ComplexResourceOptions(
+                primitive=parse_args.PrimitiveOptions(
+                    instance_attrs={},
+                    meta_attrs={},
+                    operations=[],
+                ),
+                group=None,
+                clone=None,
+                promotable=parse_args.CloneOptions(
+                    clone_id="CustomCloneId", meta_attrs={}
+                ),
+                bundle_id=None,
+            ),
+        )
+        self.assert_stderr()
 
     def test_only_promotable_with_custom_id_and_meta(self):
         self.assert_raises_cmdline(
@@ -1075,7 +434,31 @@ class ParseCreateArgsNew(ParseCreateArgsCommonMixin, TestCase):
         )
 
     def test_only_operations(self):
-        super().test_only_operations()
+        self.assert_produce(
+            [
+                "op",
+                "monitor",
+                "a=b",
+                "c=d",
+                "start",
+                "e=f",
+            ],
+            parse_args.ComplexResourceOptions(
+                primitive=parse_args.PrimitiveOptions(
+                    instance_attrs={},
+                    meta_attrs={},
+                    operations=[
+                        {"name": "monitor", "a": "b", "c": "d"},
+                        {"name": "start", "e": "f"},
+                    ],
+                ),
+                group=None,
+                clone=None,
+                promotable=None,
+                bundle_id=None,
+            ),
+        )
+        self.assert_stderr()
 
     def test_args_op_clone_meta(self):
         self.assert_raises_cmdline(
@@ -1099,16 +482,56 @@ class ParseCreateArgsNew(ParseCreateArgsCommonMixin, TestCase):
         )
 
     def test_raises_when_operation_name_does_not_follow_op_keyword(self):
-        super().test_raises_when_operation_name_does_not_follow_op_keyword()
+        msg = "When using 'op' you must specify an operation name after 'op'"
+        self.assert_raises_cmdline(["op", "a=b"], msg)
+        self.assert_raises_cmdline(["op", "monitor", "a=b", "op", "c=d"], msg)
 
     def test_raises_when_operation_have_no_option(self):
-        super().test_raises_when_operation_have_no_option()
+        msg = (
+            "When using 'op' you must specify an operation name and at least "
+            "one option"
+        )
+        self.assert_raises_cmdline(
+            ["op", "monitor", "a=b", "start", "stop", "c=d"], msg
+        )
+        self.assert_raises_cmdline(
+            ["op", "monitor", "a=b", "stop", "c=d", "op", "start"], msg
+        )
 
     def test_allow_to_repeat_op(self):
-        super().test_allow_to_repeat_op()
+        self.assert_produce(
+            [
+                "op",
+                "monitor",
+                "a=b",
+                "c=d",
+                "op",
+                "start",
+                "e=f",
+            ],
+            parse_args.ComplexResourceOptions(
+                primitive=parse_args.PrimitiveOptions(
+                    instance_attrs={},
+                    meta_attrs={},
+                    operations=[
+                        {"name": "monitor", "a": "b", "c": "d"},
+                        {"name": "start", "e": "f"},
+                    ],
+                ),
+                group=None,
+                clone=None,
+                promotable=None,
+                bundle_id=None,
+            ),
+        )
+        self.assert_stderr()
 
     def test_deal_with_empty_operations(self):
-        super().test_deal_with_empty_operations()
+        msg = (
+            "When using 'op' you must specify an operation name and at least "
+            "one option"
+        )
+        self.assert_raises_cmdline(["op", "monitoring", "a=b", "op"], msg)
 
     def test_op_after_clone(self):
         self.assert_raises_cmdline(
@@ -1152,10 +575,27 @@ class ParseCreateArgsNew(ParseCreateArgsCommonMixin, TestCase):
         self.assert_stderr()
 
     def test_bundle_no_options(self):
-        super().test_bundle_no_options()
+        self.assert_raises_cmdline(
+            ["bundle"],
+            "you have to specify exactly one bundle",
+        )
 
     def test_bundle(self):
-        super().test_bundle()
+        self.assert_produce(
+            ["bundle", "b"],
+            parse_args.ComplexResourceOptions(
+                primitive=parse_args.PrimitiveOptions(
+                    instance_attrs={},
+                    meta_attrs={},
+                    operations=[],
+                ),
+                group=None,
+                clone=None,
+                promotable=None,
+                bundle_id="b",
+            ),
+        )
+        self.assert_stderr()
 
     def test_op_after_bundle(self):
         self.assert_raises_cmdline(

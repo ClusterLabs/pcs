@@ -48,11 +48,6 @@ LOCATION_NODE_VALIDATION_SKIP_WARNING = (
 ERRORS_HAVE_OCCURRED = (
     "Error: Errors have occurred, therefore pcs is unable to continue\n"
 )
-DEPRECATED_DASH_DASH_GROUP = (
-    "Deprecation Warning: Using '--group' is deprecated and will be replaced "
-    "with 'group' in a future release. Specify --future to switch to the future "
-    "behavior.\n"
-)
 
 
 def fixture_message_not_deleting_resources_not_live(resource_ids):
@@ -1880,12 +1875,10 @@ class Resource(TestCase, AssertPcsMixin):
 
     def test_clone_group_member(self):
         self.assert_pcs_success(
-            "resource create --no-default-ops D0 ocf:pcsmock:minimal --group AG".split(),
-            stderr_full=DEPRECATED_DASH_DASH_GROUP,
+            "resource create --no-default-ops D0 ocf:pcsmock:minimal group AG".split(),
         )
         self.assert_pcs_success(
-            "resource create --no-default-ops D1 ocf:pcsmock:minimal --group AG".split(),
-            stderr_full=DEPRECATED_DASH_DASH_GROUP,
+            "resource create --no-default-ops D1 ocf:pcsmock:minimal group AG".split(),
         )
 
         self.assert_pcs_success("resource clone D0".split())
@@ -1928,12 +1921,10 @@ class Resource(TestCase, AssertPcsMixin):
 
     def test_promotable_group_member(self):
         self.assert_pcs_success(
-            "resource create --no-default-ops D0 ocf:pcsmock:stateful --group AG".split(),
-            stderr_full=DEPRECATED_DASH_DASH_GROUP,
+            "resource create --no-default-ops D0 ocf:pcsmock:stateful group AG".split(),
         )
         self.assert_pcs_success(
-            "resource create --no-default-ops D1 ocf:pcsmock:stateful --group AG".split(),
-            stderr_full=DEPRECATED_DASH_DASH_GROUP,
+            "resource create --no-default-ops D1 ocf:pcsmock:stateful group AG".split(),
         )
 
         self.assert_pcs_success("resource promotable D0".split())
@@ -2129,12 +2120,10 @@ class Resource(TestCase, AssertPcsMixin):
     )
     def test_debug_start_clone_group(self):
         self.assert_pcs_success(
-            "resource create D0 ocf:pcsmock:minimal --group DGroup".split(),
-            stderr_full=DEPRECATED_DASH_DASH_GROUP,
+            "resource create D0 ocf:pcsmock:minimal group DGroup".split(),
         )
         self.assert_pcs_success(
-            "resource create D1 ocf:pcsmock:minimal --group DGroup".split(),
-            stderr_full=DEPRECATED_DASH_DASH_GROUP,
+            "resource create D1 ocf:pcsmock:minimal group DGroup".split(),
         )
         self.assert_pcs_success(
             "resource create D2 ocf:pcsmock:minimal clone".split(),
@@ -2159,8 +2148,7 @@ class Resource(TestCase, AssertPcsMixin):
 
     def test_group_clone_creation(self):
         self.assert_pcs_success(
-            "resource create --no-default-ops D1 ocf:pcsmock:minimal --group DGroup".split(),
-            stderr_full=DEPRECATED_DASH_DASH_GROUP,
+            "resource create --no-default-ops D1 ocf:pcsmock:minimal group DGroup".split(),
         )
 
         self.assert_pcs_fail(
@@ -2190,8 +2178,7 @@ class Resource(TestCase, AssertPcsMixin):
 
     def test_group_promotable_creation(self):
         self.assert_pcs_success(
-            "resource create --no-default-ops D1 ocf:pcsmock:stateful --group DGroup".split(),
-            stderr_full=DEPRECATED_DASH_DASH_GROUP,
+            "resource create --no-default-ops D1 ocf:pcsmock:stateful group DGroup".split(),
         )
 
         self.assert_pcs_fail(
@@ -2420,16 +2407,13 @@ class Resource(TestCase, AssertPcsMixin):
 
     def test_mastered_group(self):
         self.assert_pcs_success(
-            "resource create --no-default-ops A ocf:pcsmock:minimal --group AG".split(),
-            stderr_full=DEPRECATED_DASH_DASH_GROUP,
+            "resource create --no-default-ops A ocf:pcsmock:minimal group AG".split(),
         )
         self.assert_pcs_success(
-            "resource create --no-default-ops B ocf:pcsmock:minimal --group AG".split(),
-            stderr_full=DEPRECATED_DASH_DASH_GROUP,
+            "resource create --no-default-ops B ocf:pcsmock:minimal group AG".split(),
         )
         self.assert_pcs_success(
-            "resource create --no-default-ops C ocf:pcsmock:minimal --group AG".split(),
-            stderr_full=DEPRECATED_DASH_DASH_GROUP,
+            "resource create --no-default-ops C ocf:pcsmock:minimal group AG".split(),
         )
         # pcs no longer allows turning resources into masters but supports
         # existing ones. In order to test it, we need to put a master in the
@@ -2494,12 +2478,10 @@ class Resource(TestCase, AssertPcsMixin):
 
     def test_cloned_group(self):
         self.assert_pcs_success(
-            "resource create --no-default-ops D1 ocf:pcsmock:minimal --group DG".split(),
-            stderr_full=DEPRECATED_DASH_DASH_GROUP,
+            "resource create --no-default-ops D1 ocf:pcsmock:minimal group DG".split(),
         )
         self.assert_pcs_success(
-            "resource create --no-default-ops D2 ocf:pcsmock:minimal --group DG".split(),
-            stderr_full=DEPRECATED_DASH_DASH_GROUP,
+            "resource create --no-default-ops D2 ocf:pcsmock:minimal group DG".split(),
         )
         self.assert_pcs_success("resource clone DG".split())
         self.assert_pcs_success(
@@ -2644,14 +2626,12 @@ class Resource(TestCase, AssertPcsMixin):
 
     def test_group_ms_and_clone(self):
         self.assert_pcs_fail(
-            "resource create --no-default-ops D3 ocf:pcsmock:minimal promotable --group xxx clone".split(),
-            DEPRECATED_DASH_DASH_GROUP
-            + "Error: you can specify only one of clone, promotable, bundle or --group\n",
+            "resource create --no-default-ops D3 ocf:pcsmock:minimal promotable group xxx clone".split(),
+            "Error: you can specify only one of clone, promotable, bundle or group\n",
         )
         self.assert_pcs_fail(
-            "resource create --no-default-ops D4 ocf:pcsmock:minimal promotable --group xxx".split(),
-            DEPRECATED_DASH_DASH_GROUP
-            + "Error: you can specify only one of clone, promotable, bundle or --group\n",
+            "resource create --no-default-ops D4 ocf:pcsmock:minimal promotable group xxx".split(),
+            "Error: you can specify only one of clone, promotable, bundle or group\n",
         )
 
     def test_resource_missing_values(self):
@@ -2688,16 +2668,13 @@ class Resource(TestCase, AssertPcsMixin):
 
     def test_cloned_mastered_group(self):
         self.assert_pcs_success(
-            "resource create dummy1 ocf:pcsmock:minimal --no-default-ops --group dummies".split(),
-            stderr_full=DEPRECATED_DASH_DASH_GROUP,
+            "resource create dummy1 ocf:pcsmock:minimal --no-default-ops group dummies".split(),
         )
         self.assert_pcs_success(
-            "resource create dummy2 ocf:pcsmock:minimal --no-default-ops --group dummies".split(),
-            stderr_full=DEPRECATED_DASH_DASH_GROUP,
+            "resource create dummy2 ocf:pcsmock:minimal --no-default-ops group dummies".split(),
         )
         self.assert_pcs_success(
-            "resource create dummy3 ocf:pcsmock:minimal --no-default-ops --group dummies".split(),
-            stderr_full=DEPRECATED_DASH_DASH_GROUP,
+            "resource create dummy3 ocf:pcsmock:minimal --no-default-ops group dummies".split(),
         )
         self.assert_pcs_success("resource clone dummies".split())
         self.assert_pcs_success(
@@ -2806,16 +2783,13 @@ class Resource(TestCase, AssertPcsMixin):
         )
 
         self.assert_pcs_success(
-            "resource create dummy1 ocf:pcsmock:minimal --no-default-ops --group dummies".split(),
-            stderr_full=DEPRECATED_DASH_DASH_GROUP,
+            "resource create dummy1 ocf:pcsmock:minimal --no-default-ops group dummies".split(),
         )
         self.assert_pcs_success(
-            "resource create dummy2 ocf:pcsmock:minimal --no-default-ops --group dummies".split(),
-            stderr_full=DEPRECATED_DASH_DASH_GROUP,
+            "resource create dummy2 ocf:pcsmock:minimal --no-default-ops group dummies".split(),
         )
         self.assert_pcs_success(
-            "resource create dummy3 ocf:pcsmock:minimal --no-default-ops --group dummies".split(),
-            stderr_full=DEPRECATED_DASH_DASH_GROUP,
+            "resource create dummy3 ocf:pcsmock:minimal --no-default-ops group dummies".split(),
         )
         # pcs no longer allows turning resources into masters but supports
         # existing ones. In order to test it, we need to put a master in the
@@ -2939,23 +2913,19 @@ class Resource(TestCase, AssertPcsMixin):
             "resource create D1 ocf:pcsmock:minimal --no-default-ops".split()
         )
         self.assert_pcs_success(
-            "resource create DG1 ocf:pcsmock:minimal --no-default-ops --group GR".split(),
-            stderr_full=DEPRECATED_DASH_DASH_GROUP,
+            "resource create DG1 ocf:pcsmock:minimal --no-default-ops group GR".split(),
         )
         self.assert_pcs_success(
-            "resource create DG2 ocf:pcsmock:minimal --no-default-ops --group GR".split(),
-            stderr_full=DEPRECATED_DASH_DASH_GROUP,
+            "resource create DG2 ocf:pcsmock:minimal --no-default-ops group GR".split(),
         )
         self.assert_pcs_success(
             "resource create DC ocf:pcsmock:minimal --no-default-ops clone".split()
         )
         self.assert_pcs_success(
-            "resource create DGC1 ocf:pcsmock:minimal --no-default-ops --group GRC".split(),
-            stderr_full=DEPRECATED_DASH_DASH_GROUP,
+            "resource create DGC1 ocf:pcsmock:minimal --no-default-ops group GRC".split(),
         )
         self.assert_pcs_success(
-            "resource create DGC2 ocf:pcsmock:minimal --no-default-ops --group GRC".split(),
-            stderr_full=DEPRECATED_DASH_DASH_GROUP,
+            "resource create DGC2 ocf:pcsmock:minimal --no-default-ops group GRC".split(),
         )
         self.assert_pcs_success("resource clone GRC".split())
 

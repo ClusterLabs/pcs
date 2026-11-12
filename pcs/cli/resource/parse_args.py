@@ -1,15 +1,12 @@
 from dataclasses import dataclass
 
-from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.common.errors import SEE_MAN_CHANGES, CmdLineInputError
 from pcs.cli.common.parse_args import (
-    FUTURE_OPTION,
     ArgsByKeywords,
     Argv,
-    InputModifiers,
     KeyValueParser,
     group_by_keywords,
 )
-from pcs.cli.reports.output import deprecation_warning
 
 
 @dataclass(frozen=True)
@@ -103,15 +100,17 @@ def parse_clone(arg_list: Argv, promotable: bool = False) -> CloneOptions:
             "op settings must be changed on base resource, not the clone",
         )
     if groups.has_keyword("options"):
-        # deprecated since 0.11.6
-        deprecation_warning(
-            "configuring meta attributes without specifying the 'meta' keyword "
-            "is deprecated and will be removed in a future release"
+        # TODO: remove the hint about syntax change in the next major version,
+        # added in the first version of 1.x
+        raise CmdLineInputError(
+            hint=(
+                "Syntax has changed from previous version. {}".format(
+                    SEE_MAN_CHANGES.format("1.0")
+                )
+            )
         )
 
-    meta = KeyValueParser(
-        groups.get_args_flat("options") + groups.get_args_flat("meta")
-    ).get_unique()
+    meta = KeyValueParser(groups.get_args_flat("meta")).get_unique()
     if promotable:
         if "promotable" in meta:
             raise CmdLineInputError(
@@ -122,7 +121,7 @@ def parse_clone(arg_list: Argv, promotable: bool = False) -> CloneOptions:
     return CloneOptions(clone_id=clone_id, meta_attrs=meta)
 
 
-def parse_create_new(arg_list: Argv) -> ComplexResourceOptions:  # noqa: PLR0912
+def parse_create(arg_list: Argv) -> ComplexResourceOptions:  # noqa: PLR0912
     top_groups = group_by_keywords(
         arg_list,
         {"clone", "promotable", "bundle", "group"},
@@ -240,141 +239,6 @@ def parse_create_new(arg_list: Argv) -> ComplexResourceOptions:  # noqa: PLR0912
 
     return ComplexResourceOptions(
         primitive=primitive_options,
-        group=group_options,
-        clone=clone_options["clone"],
-        promotable=clone_options["promotable"],
-        bundle_id=bundle_id,
-    )
-
-
-# deprecated since 0.11.6
-def parse_create_old(  # noqa: PLR0912
-    arg_list: Argv, modifiers: InputModifiers
-) -> ComplexResourceOptions:
-    top_groups = group_by_keywords(
-        arg_list,
-        {"clone", "promotable", "bundle"},
-        implicit_first_keyword="primitive",
-    )
-
-    primitive_groups = group_by_keywords(
-        top_groups.get_args_flat("primitive"),
-        {"op", "meta"},
-        implicit_first_keyword="instance",
-    )
-    primitive_instance_attrs = primitive_groups.get_args_flat("instance")
-    primitive_meta_attrs = primitive_groups.get_args_flat("meta")
-    primitive_operations = primitive_groups.get_args_groups("op")
-
-    group_options = None
-    if modifiers.is_specified("--group"):
-        dash_deprecation = (
-            "Using '--{option}' is deprecated and will be replaced with "
-            "'{option}' in a future release. "
-            f"Specify {FUTURE_OPTION} to switch to the future behavior."
-        )
-        deprecation_warning(dash_deprecation.format(option="group"))
-        before_resource = None
-        if modifiers.get("--before"):
-            before_resource = str(modifiers.get("--before"))
-            deprecation_warning(dash_deprecation.format(option="before"))
-        after_resource = None
-        if modifiers.get("--after"):
-            after_resource = str(modifiers.get("--after"))
-            deprecation_warning(dash_deprecation.format(option="after"))
-        group_options = GroupOptions(
-            group_id=str(modifiers.get("--group")),
-            before_resource=before_resource,
-            after_resource=after_resource,
-        )
-    else:
-        for option in ("--before", "--after"):
-            if modifiers.is_specified(option):
-                raise CmdLineInputError(
-                    f"you cannot use {option} without --group"
-                )
-
-    clone_options: dict[str, CloneOptions | None] = {
-        "clone": None,
-        "promotable": None,
-    }
-    for clone_type in clone_options:
-        if not top_groups.has_keyword(clone_type):
-            continue
-        clone_groups = group_by_keywords(
-            top_groups.get_args_flat(clone_type),
-            {"op", "meta"},
-            implicit_first_keyword="options",
-        )
-        clone_id = None
-        options = clone_groups.get_args_flat("options")
-        if options and "=" not in options[0]:
-            clone_id = options.pop(0)
-        if options:
-            deprecation_warning(
-                f"Configuring {clone_type} meta attributes without specifying "
-                f"the 'meta' keyword after the '{clone_type}' keyword "
-                "is deprecated and will be removed in a future release. "
-                f"Specify {FUTURE_OPTION} to switch to the future behavior."
-            )
-        if clone_groups.has_keyword("op"):
-            deprecation_warning(
-                f"Specifying 'op' after '{clone_type}' now defines "
-                "operations for the base resource. In a future release, this "
-                f"will be removed and operations will have to be specified "
-                f"before '{clone_type}'. "
-                f"Specify {FUTURE_OPTION} to switch to the future behavior."
-            )
-            primitive_operations += clone_groups.get_args_groups("op")
-        if clone_groups.has_keyword("meta"):
-            deprecation_warning(
-                f"Specifying 'meta' after '{clone_type}' now defines "
-                "meta attributes for the base resource. In a future release, this "
-                f"will define meta attributes for the {clone_type}. "
-                f"Specify {FUTURE_OPTION} to switch to the future behavior."
-            )
-            primitive_meta_attrs += clone_groups.get_args_flat("meta")
-        clone_options[clone_type] = CloneOptions(
-            clone_id=clone_id,
-            meta_attrs=KeyValueParser(options).get_unique(),
-        )
-
-    bundle_id = None
-    if top_groups.has_keyword("bundle"):
-        bundle_groups = group_by_keywords(
-            top_groups.get_args_flat("bundle"),
-            {"op", "meta"},
-            implicit_first_keyword="options",
-        )
-        if bundle_groups.has_keyword("meta"):
-            deprecation_warning(
-                "Specifying 'meta' after 'bundle' now defines meta options for "
-                "the base resource. In a future release, this will be removed and meta "
-                "options will have to be specified before 'bundle'. "
-                f"Specify {FUTURE_OPTION} to switch to the future behavior."
-            )
-            primitive_meta_attrs += bundle_groups.get_args_flat("meta")
-        if bundle_groups.has_keyword("op"):
-            deprecation_warning(
-                "Specifying 'op' after 'bundle' now defines operations for the "
-                "base resource. In a future release, this will be removed and operations "
-                "will have to be specified before 'bundle'. "
-                f"Specify {FUTURE_OPTION} to switch to the future behavior."
-            )
-            primitive_operations += bundle_groups.get_args_groups("op")
-        if len(bundle_groups.get_args_flat("options")) != 1:
-            raise CmdLineInputError("you have to specify exactly one bundle")
-        bundle_id = bundle_groups.get_args_flat("options")[0]
-
-    return ComplexResourceOptions(
-        primitive=PrimitiveOptions(
-            KeyValueParser(primitive_instance_attrs).get_unique(),
-            KeyValueParser(primitive_meta_attrs).get_unique(),
-            [
-                KeyValueParser(op).get_unique()
-                for op in build_operations(primitive_operations)
-            ],
-        ),
         group=group_options,
         clone=clone_options["clone"],
         promotable=clone_options["promotable"],

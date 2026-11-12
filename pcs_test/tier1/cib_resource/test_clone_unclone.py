@@ -491,16 +491,26 @@ class Clone(
     def test_clone_with_options(self):
         self.assert_effect(
             (
-                "resource clone C CustomCloneId globally-unique=true meta a=b "
+                "resource clone C CustomCloneId meta globally-unique=true a=b "
                 "c=d"
             ).split(),
             fixture_resources_xml(FIXTURE_CLONE_WITH_OPTIONS),
-            stderr_full=(
-                "Deprecation Warning: configuring meta attributes without "
-                "specifying the 'meta' keyword is deprecated and will be "
-                "removed in a future release\n"
-                + fixture_meta_attributes_not_validated_warning(["clone"])
+            stderr_full=fixture_meta_attributes_not_validated_warning(
+                ["clone"]
             ),
+        )
+
+    def test_clone_options_without_meta_keyword(self):
+        self.assert_pcs_fail(
+            "resource clone C globally-unique=true".split(),
+            stderr_start=(
+                "Hint: Syntax has changed from previous version. See 'man pcs' "
+                "-> Changes in pcs-1.0.\n\n"
+                "Usage: pcs resource clone"
+            ),
+        )
+        self.assert_resources_xml_in_cib(
+            fixture_resources_xml(FIXTURE_PRIMITIVE_FOR_CLONE)
         )
 
     def test_group_last_member(self):

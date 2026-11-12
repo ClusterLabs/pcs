@@ -14,6 +14,7 @@ from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.common.output import format_wrap_for_terminal
 from pcs.cli.common.parse_args import (
     FUTURE_OPTION,
+    FUTURE_OPTION_DEPRECATION_WARNING,
     OUTPUT_FORMAT_VALUE_CMD,
     OUTPUT_FORMAT_VALUE_JSON,
     OUTPUT_FORMAT_VALUE_TEXT,
@@ -42,8 +43,7 @@ from pcs.cli.resource.parse_args import (
     parse_bundle_reset_options,
     parse_bundle_update_options,
     parse_clone,
-    parse_create_new,
-    parse_create_old,
+    parse_create,
 )
 from pcs.cli.resource_agent import find_single_agent
 from pcs.common import const, pacemaker, reports
@@ -594,39 +594,31 @@ def resource_create(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  #
     """
     Options:
       * --agent-validation - use agent self validation of instance attributes
-      * --before - specified resource inside a group before which new resource
-        will be placed inside the group
-      * --after - specified resource inside a group after which new resource
-        will be placed inside the group
-      * --group - specifies group in which resource will be created
       * --force - allow not existing agent, invalid operations or invalid
         instance attributes, allow not suitable command
       * --disabled - created resource will be disabled
       * --no-default-ops - do not add default operations
       * --wait
       * -f - CIB file
-      * --future - enable future cli parser behavior
+      * --future - no longer has any effect, only prints a deprecation warning
     """
-    modifiers_deprecated = ["--before", "--after", "--group"]
     modifiers.ensure_only_supported(
-        *(
-            [
-                "--agent-validation",
-                "--force",
-                "--disabled",
-                "--no-default-ops",
-                "--wait",
-                "-f",
-                FUTURE_OPTION,
-            ]
-            + ([] if modifiers.get(FUTURE_OPTION) else modifiers_deprecated)
-        )
+        "--agent-validation",
+        "--force",
+        "--disabled",
+        "--no-default-ops",
+        "--wait",
+        "-f",
+        FUTURE_OPTION,
+        hint_syntax_changed="1.0",
     )
     modifiers.ensure_not_mutually_exclusive("-f", "--wait")
     wait_timeout = wait_to_timeout(modifiers.get("--wait"))
     if wait_timeout >= 0:
         # deprecated in the first version of 0.12
         deprecation_warning(reports.messages.ResourceWaitDeprecated().message)
+    if modifiers.is_specified(FUTURE_OPTION):
+        deprecation_warning(FUTURE_OPTION_DEPRECATION_WARNING)
 
     if len(argv) < 2:
         raise CmdLineInputError()
@@ -634,12 +626,7 @@ def resource_create(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  #
     ra_id = argv[0]
     ra_type = argv[1]
 
-    if modifiers.get(FUTURE_OPTION):
-        parts = parse_create_new(argv[2:])
-    else:
-        parts = parse_create_old(
-            argv[2:], modifiers.get_subset(*modifiers_deprecated)
-        )
+    parts = parse_create(argv[2:])
 
     defined_options = set()
     if parts.bundle_id:
@@ -652,17 +639,13 @@ def resource_create(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  #
         defined_options.add("group")
     if len(defined_options) > 1:
         raise CmdLineInputError(
-            "you can specify only one of clone, promotable, bundle or {}group".format(
-                "" if modifiers.get(FUTURE_OPTION) else "--"
-            )
+            "you can specify only one of clone, promotable, bundle or group"
         )
 
     if parts.group:
         if parts.group.after_resource and parts.group.before_resource:
             raise CmdLineInputError(
                 "you cannot specify both 'before' and 'after'"
-                if modifiers.get(FUTURE_OPTION)
-                else "you cannot specify both --before and --after"
             )
 
     if parts.promotable and "promotable" in parts.promotable.meta_attrs:

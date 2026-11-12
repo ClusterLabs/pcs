@@ -391,13 +391,13 @@ def update_resource (params, request, auth_user)
     cmd = ["resource", "create", params[:name], params[:resource_type]]
     cmd += param_line
     if params[:resource_group] and params[:resource_group] != ""
-      flags += ['--group', params[:resource_group]]
+      cmd += ['group', params[:resource_group]]
       if (
         ['before', 'after'].include?(params[:in_group_position]) and
         params[:in_group_reference_resource_id]
       )
-        flags << "--#{params[:in_group_position]}"
-        flags << params[:in_group_reference_resource_id]
+        cmd << params[:in_group_position]
+        cmd << params[:in_group_reference_resource_id]
       end
       resource_group = params[:resource_group]
     end
