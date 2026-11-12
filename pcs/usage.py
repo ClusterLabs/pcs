@@ -855,7 +855,7 @@ Commands:
         options including advanced and deprecated ones are shown.
 
     create <resource id> [<standard>:[<provider>:]]<type>
-           [resource options]
+           [<resource options>]
            [op <operation action> <operation options> [<operation action>
            <operation options>]...]
            [meta <meta options>]
@@ -868,8 +868,8 @@ Commands:
         If clone is used, a clone resource is created. If promotable is used,
         a promotable clone resource is created.
         If group is specified, the resource is added to the group named. You
-        can use before or after to specify the position of the added
-        resource relatively to some resource already existing in the group.
+        can use before or after to specify the position of the added resource
+        relatively to some resource already existing in the group.
         If bundle is used, the resource will be created inside of the specified
         bundle.
         If --disabled is specified, the resource is not started

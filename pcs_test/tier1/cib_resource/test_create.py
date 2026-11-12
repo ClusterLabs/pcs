@@ -579,7 +579,7 @@ class SuccessOperations(ResourceTest):
         )
 
 
-class SuccessNewParser(ResourceTest):
+class SuccessParser(ResourceTest):
     def setUp(self):
         super().setUp()
         self.pcs_runner.mock_settings = get_mock_settings()
@@ -652,14 +652,6 @@ class SuccessNewParser(ResourceTest):
 
 
 class SuccessGroup(ResourceTest):
-    FUTURE = ""
-    GROUP = "group"
-    AFTER = "after"
-    BEFORE = "before"
-    DEPRECATED_GROUP = ""
-    DEPRECATED_AFTER = ""
-    DEPRECATED_BEFORE = ""
-
     def setUp(self):
         super().setUp()
         self.pcs_runner.mock_settings = get_mock_settings()
@@ -667,8 +659,7 @@ class SuccessGroup(ResourceTest):
     def test_with_group(self):
         self.assert_effect(
             (
-                "resource create R ocf:pcsmock:minimal --no-default-ops "
-                f"{self.GROUP} G {self.FUTURE}"
+                "resource create R ocf:pcsmock:minimal --no-default-ops group G"
             ).split(),
             """<resources>
                 <group id="G">
@@ -683,21 +674,18 @@ class SuccessGroup(ResourceTest):
                     </primitive>
                 </group>
             </resources>""",
-            stderr_full=self.DEPRECATED_GROUP,
         )
 
     def test_with_existing_group(self):
         self.assert_pcs_success(
             (
                 "resource create R0 ocf:pcsmock:minimal --no-default-ops "
-                f"{self.GROUP} G {self.FUTURE}"
+                "group G"
             ).split(),
-            stderr_full=self.DEPRECATED_GROUP,
         )
         self.assert_effect(
             (
-                "resource create R ocf:pcsmock:minimal --no-default-ops "
-                f"{self.GROUP} G {self.FUTURE}"
+                "resource create R ocf:pcsmock:minimal --no-default-ops group G"
             ).split(),
             """<resources>
                 <group id="G">
@@ -721,28 +709,25 @@ class SuccessGroup(ResourceTest):
                     </primitive>
                 </group>
             </resources>""",
-            stderr_full=self.DEPRECATED_GROUP,
         )
 
     def test_with_group_with_after(self):
         self.assert_pcs_success(
             (
                 "resource create R0 ocf:pcsmock:minimal --no-default-ops "
-                f"{self.GROUP} G {self.FUTURE}"
+                "group G"
             ).split(),
-            stderr_full=self.DEPRECATED_GROUP,
         )
         self.assert_pcs_success(
             (
                 "resource create R1 ocf:pcsmock:minimal --no-default-ops "
-                f"{self.GROUP} G {self.FUTURE}"
+                "group G"
             ).split(),
-            stderr_full=self.DEPRECATED_GROUP,
         )
         self.assert_effect(
             (
                 "resource create R ocf:pcsmock:minimal --no-default-ops "
-                f"{self.GROUP} G {self.AFTER} R0 {self.FUTURE}"
+                "group G after R0"
             ).split(),
             """<resources>
                 <group id="G">
@@ -775,12 +760,11 @@ class SuccessGroup(ResourceTest):
                     </primitive>
                 </group>
             </resources>""",
-            stderr_full=self.DEPRECATED_GROUP + self.DEPRECATED_AFTER,
         )
         self.assert_effect(
             (
                 "resource create Rx ocf:pcsmock:minimal --no-default-ops "
-                f"{self.GROUP} G {self.AFTER} R1 {self.FUTURE}"
+                "group G after R1"
             ).split(),
             """<resources>
                 <group id="G">
@@ -822,21 +806,19 @@ class SuccessGroup(ResourceTest):
                     </primitive>
                 </group>
             </resources>""",
-            stderr_full=self.DEPRECATED_GROUP + self.DEPRECATED_AFTER,
         )
 
     def test_with_group_with_before(self):
         self.assert_pcs_success(
             (
                 "resource create R0 ocf:pcsmock:minimal --no-default-ops "
-                f"{self.GROUP} G {self.FUTURE}"
+                "group G"
             ).split(),
-            stderr_full=self.DEPRECATED_GROUP,
         )
         self.assert_effect(
             (
                 "resource create R ocf:pcsmock:minimal --no-default-ops "
-                f"{self.GROUP} G {self.BEFORE} R0 {self.FUTURE}"
+                "group G before R0"
             ).split(),
             """<resources>
                 <group id="G">
@@ -860,7 +842,6 @@ class SuccessGroup(ResourceTest):
                     </primitive>
                 </group>
             </resources>""",
-            stderr_full=self.DEPRECATED_GROUP + self.DEPRECATED_BEFORE,
         )
 
 
@@ -1080,12 +1061,6 @@ class Bundle(ResourceTest):
 
 
 class FailOrWarnGroupCloneBundleCombination(ResourceTest):
-    FUTURE = ""
-    GROUP = "group"
-    AFTER = "after"
-    BEFORE = "before"
-    DEPRECATED_GROUP = ""
-
     def setUp(self):
         super().setUp()
         self.pcs_runner.mock_settings = get_mock_settings()
@@ -1094,12 +1069,11 @@ class FailOrWarnGroupCloneBundleCombination(ResourceTest):
         self.assert_pcs_fail(
             (
                 "resource create R ocf:pcsmock:minimal --no-default-ops "
-                f"clone {self.GROUP} G {self.FUTURE}"
+                "clone group G"
             ).split(),
             (
-                self.DEPRECATED_GROUP
-                + "Error: you can specify only one of clone, promotable, bundle "
-                f"or {self.GROUP}\n"
+                "Error: you can specify only one of clone, promotable, bundle "
+                "or group\n"
             ),
         )
 
@@ -1107,11 +1081,11 @@ class FailOrWarnGroupCloneBundleCombination(ResourceTest):
         self.assert_pcs_fail(
             (
                 "resource create R ocf:pcsmock:minimal --no-default-ops "
-                f"clone bundle bundle_id {self.FUTURE}"
+                "clone bundle bundle_id"
             ).split(),
             (
                 "Error: you can specify only one of clone, promotable, bundle "
-                f"or {self.GROUP}\n"
+                "or group\n"
             ),
         )
 
@@ -1119,12 +1093,11 @@ class FailOrWarnGroupCloneBundleCombination(ResourceTest):
         self.assert_pcs_fail(
             (
                 "resource create R ocf:pcsmock:minimal --no-default-ops "
-                f"{self.GROUP} G bundle bundle_id {self.FUTURE}"
+                "group G bundle bundle_id"
             ).split(),
             (
-                self.DEPRECATED_GROUP
-                + "Error: you can specify only one of clone, promotable, bundle "
-                f"or {self.GROUP}\n"
+                "Error: you can specify only one of clone, promotable, bundle "
+                "or group\n"
             ),
         )
 
@@ -1536,24 +1509,15 @@ class FailOrWarnOp(ResourceTest):
 
 
 class FailOrWarnGroup(ResourceTest):
-    FUTURE = ""
-    GROUP = "group"
-    AFTER = "after"
-    BEFORE = "before"
-    DEPRECATED_GROUP = ""
-    DEPRECATED_AFTER = ""
-    DEPRECATED_BEFORE = ""
-
     def setUp(self):
         super().setUp()
         self.pcs_runner.mock_settings = get_mock_settings()
 
     def test_fail_when_invalid_group(self):
         self.assert_pcs_fail(
-            f"resource create R ocf:pcsmock:minimal {self.GROUP} 1 {self.FUTURE}".split(),
+            "resource create R ocf:pcsmock:minimal group 1".split(),
             (
-                self.DEPRECATED_GROUP
-                + "Error: invalid group name '1', '1' is not a valid first character"
+                "Error: invalid group name '1', '1' is not a valid first character"
                 " for a group name\n" + ERRORS_HAVE_OCCURRED
             ),
         )
@@ -1585,11 +1549,10 @@ class FailOrWarnGroup(ResourceTest):
         self.assert_pcs_fail(
             (
                 "resource create R2 ocf:pcsmock:minimal "
-                f"{self.GROUP} R1-meta_attributes {self.FUTURE}"
+                "group R1-meta_attributes"
             ).split(),
             (
-                self.DEPRECATED_GROUP
-                + "Error: 'R1-meta_attributes' is not a group\n"
+                "Error: 'R1-meta_attributes' is not a group\n"
                 + ERRORS_HAVE_OCCURRED
             ),
         )
@@ -1598,9 +1561,9 @@ class FailOrWarnGroup(ResourceTest):
         self.assert_pcs_fail(
             (
                 "resource create R ocf:pcsmock:minimal "
-                f"{self.GROUP} G {self.AFTER} S1 {self.BEFORE} S2 {self.FUTURE}"
+                "group G after S1 before S2"
             ).split(),
-            f"Error: you cannot specify both '{self.BEFORE}' and '{self.AFTER}'\n",
+            "Error: you cannot specify both 'before' and 'after'\n",
         )
 
     def test_fail_when_after_is_used_without_group(self):
@@ -1623,72 +1586,40 @@ class FailOrWarnGroup(ResourceTest):
 
     def test_fail_when_before_does_not_exist(self):
         self.assert_pcs_success(
-            (
-                f"resource create R0 ocf:pcsmock:minimal {self.GROUP} G1 "
-                f"{self.FUTURE}"
-            ).split(),
-            stderr_full=self.DEPRECATED_GROUP,
+            "resource create R0 ocf:pcsmock:minimal group G1".split(),
         )
         self.assert_pcs_fail(
             (
-                f"resource create R2 ocf:pcsmock:minimal {self.GROUP} G1 "
-                f"{self.BEFORE} R1 {self.FUTURE}"
+                "resource create R2 ocf:pcsmock:minimal group G1 before R1"
             ).split(),
-            (
-                self.DEPRECATED_GROUP
-                + self.DEPRECATED_BEFORE
-                + "Error: 'R1' does not exist\n"
-                + ERRORS_HAVE_OCCURRED
-            ),
+            "Error: 'R1' does not exist\n" + ERRORS_HAVE_OCCURRED,
         )
 
     def test_fail_when_use_before_with_new_group(self):
         self.assert_pcs_fail(
             (
-                f"resource create R2 ocf:pcsmock:minimal {self.GROUP} G1 "
-                f"{self.BEFORE} R1 {self.FUTURE}"
+                "resource create R2 ocf:pcsmock:minimal group G1 before R1"
             ).split(),
-            (
-                self.DEPRECATED_GROUP
-                + self.DEPRECATED_BEFORE
-                + "Error: 'R1' does not exist\n"
-                + ERRORS_HAVE_OCCURRED
-            ),
+            "Error: 'R1' does not exist\n" + ERRORS_HAVE_OCCURRED,
         )
 
     def test_fail_when_after_does_not_exist(self):
         self.assert_pcs_success(
-            (
-                f"resource create R0 ocf:pcsmock:minimal {self.GROUP} G1 "
-                f"{self.FUTURE}"
-            ).split(),
-            stderr_full=self.DEPRECATED_GROUP,
+            "resource create R0 ocf:pcsmock:minimal group G1".split(),
         )
         self.assert_pcs_fail(
             (
-                f"resource create R2 ocf:pcsmock:minimal {self.GROUP} G1 "
-                f"{self.AFTER} R1 {self.FUTURE}"
+                "resource create R2 ocf:pcsmock:minimal group G1 after R1"
             ).split(),
-            (
-                self.DEPRECATED_GROUP
-                + self.DEPRECATED_AFTER
-                + "Error: 'R1' does not exist\n"
-                + ERRORS_HAVE_OCCURRED
-            ),
+            "Error: 'R1' does not exist\n" + ERRORS_HAVE_OCCURRED,
         )
 
     def test_fail_when_use_after_with_new_group(self):
         self.assert_pcs_fail(
             (
-                f"resource create R2 ocf:pcsmock:minimal {self.GROUP} G1 "
-                f"{self.AFTER} R1 {self.FUTURE}"
+                "resource create R2 ocf:pcsmock:minimal group G1 after R1"
             ).split(),
-            (
-                self.DEPRECATED_GROUP
-                + self.DEPRECATED_AFTER
-                + "Error: 'R1' does not exist\n"
-                + ERRORS_HAVE_OCCURRED
-            ),
+            "Error: 'R1' does not exist\n" + ERRORS_HAVE_OCCURRED,
         )
 
 

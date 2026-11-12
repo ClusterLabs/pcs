@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from pcs.cli.common.errors import CmdLineInputError
+from pcs.cli.common.errors import SEE_MAN_CHANGES, CmdLineInputError
 from pcs.cli.common.parse_args import (
     ArgsByKeywords,
     Argv,
@@ -100,7 +100,15 @@ def parse_clone(arg_list: Argv, promotable: bool = False) -> CloneOptions:
             "op settings must be changed on base resource, not the clone",
         )
     if groups.has_keyword("options"):
-        raise CmdLineInputError()
+        # TODO: remove the hint about syntax change in the next major version,
+        # added in the first version of 1.x
+        raise CmdLineInputError(
+            hint=(
+                "Syntax has changed from previous version. {}".format(
+                    SEE_MAN_CHANGES.format("1.0")
+                )
+            )
+        )
 
     meta = KeyValueParser(groups.get_args_flat("meta")).get_unique()
     if promotable:
@@ -113,7 +121,7 @@ def parse_clone(arg_list: Argv, promotable: bool = False) -> CloneOptions:
     return CloneOptions(clone_id=clone_id, meta_attrs=meta)
 
 
-def parse_create_new(arg_list: Argv) -> ComplexResourceOptions:  # noqa: PLR0912
+def parse_create(arg_list: Argv) -> ComplexResourceOptions:  # noqa: PLR0912
     top_groups = group_by_keywords(
         arg_list,
         {"clone", "promotable", "bundle", "group"},

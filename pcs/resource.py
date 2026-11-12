@@ -43,7 +43,7 @@ from pcs.cli.resource.parse_args import (
     parse_bundle_reset_options,
     parse_bundle_update_options,
     parse_clone,
-    parse_create_new,
+    parse_create,
 )
 from pcs.cli.resource_agent import find_single_agent
 from pcs.common import const, pacemaker, reports
@@ -626,7 +626,7 @@ def resource_create(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  #
     ra_id = argv[0]
     ra_type = argv[1]
 
-    parts = parse_create_new(argv[2:])
+    parts = parse_create(argv[2:])
 
     defined_options = set()
     if parts.bundle_id:

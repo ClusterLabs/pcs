@@ -88,10 +88,12 @@ MODIFIER_OPTIONS_VAL: Final[frozenset[str]] = frozenset(
         "--booth-key",
         "--corosync_conf",
         "--from",
-        # TODO remove in the next major version
+        # TODO: remove in the next major version, added in the first version of
+        # 1.x
         # No longer used by any command. It is kept only so that pcs recognizes
         # it and 'pcs resource create' can print a helpful "syntax has changed"
         # error instead of a generic unknown-option error.
+        # deprecated in the 0.11.7 version
         "--group",
         "--name",
         "--node",
@@ -142,8 +144,9 @@ PCS_LONG_OPTIONS: Final = [
     "nodesc",
     "promoted",
     "name=",
-    # TODO remove in the next major version
+    # TODO: remove in the next major version, added in the first version of 1.x
     # kept only so 'pcs resource create' can print a "syntax has changed" error
+    # deprecated in the 0.11.7 version
     "group=",
     "node=",
     "from=",

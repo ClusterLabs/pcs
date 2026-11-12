@@ -503,7 +503,11 @@ class Clone(
     def test_clone_options_without_meta_keyword(self):
         self.assert_pcs_fail(
             "resource clone C globally-unique=true".split(),
-            stderr_regexp=r"(?s)^\nUsage: pcs resource .*\n    clone ",
+            stderr_start=(
+                "Hint: Syntax has changed from previous version. See 'man pcs' "
+                "-> Changes in pcs-1.0.\n\n"
+                "Usage: pcs resource clone"
+            ),
         )
         self.assert_resources_xml_in_cib(
             fixture_resources_xml(FIXTURE_PRIMITIVE_FOR_CLONE)

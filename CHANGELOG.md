@@ -39,8 +39,7 @@
   preceding `--` on the command line. Use `--` to separate options from such
   arguments.
 - The `--group`, `--before` and `--after` options of `pcs resource create`. Use
-  the `group`, `before` and `after` keywords instead. The `--groups` option has
-  been removed as well.
+  the `group`, `before` and `after` keywords instead.
 - Specifying clone meta attributes without the `meta` keyword in `pcs resource
   clone` and `pcs resource promotable`. Use the `meta` keyword instead.
 
