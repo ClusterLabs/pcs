@@ -84,8 +84,6 @@ MODIFIER_OPTIONS_VAL: Final[frozenset[str]] = frozenset(
     (
         "--after",
         "--before",
-        "--booth-conf",
-        "--booth-key",
         "--corosync_conf",
         "--from",
         # TODO: remove in the next major version, added in the first version of
@@ -154,8 +152,6 @@ PCS_LONG_OPTIONS: Final = [
     "after=",
     "before=",
     "corosync_conf=",
-    "booth-conf=",
-    "booth-key=",
     # do not stop resources in resource delete command
     "no-stop",
     "no-watchdog-validation",

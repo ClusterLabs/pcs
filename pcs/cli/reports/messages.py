@@ -695,8 +695,6 @@ def report_item_msg_from_dto(obj: dto.ReportItemMessageDto) -> CliReportMessage:
 
 
 _file_role_to_option_translation: Mapping[file_type_codes.FileTypeCode, str] = {
-    file_type_codes.BOOTH_CONFIG: "--booth-conf",
-    file_type_codes.BOOTH_KEY: "--booth-key",
     file_type_codes.CIB: "-f",
     file_type_codes.COROSYNC_CONF: "--corosync_conf",
 }

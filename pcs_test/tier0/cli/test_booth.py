@@ -108,8 +108,6 @@ class AddTicketTest(TestCase):
                 {
                     "name": "my_booth",
                     "force": True,
-                    "booth-conf": "C",
-                    "booth-key": "K",
                 }
             ),
         )
@@ -142,8 +140,6 @@ class RemoveTicketTest(TestCase):
             dict_to_modifiers(
                 {
                     "name": "my_booth",
-                    "booth-conf": "C",
-                    "booth-key": "K",
                 }
             ),
         )
@@ -513,8 +509,6 @@ class Sync(TestCase):
                     "name": "my_booth",
                     "request-timeout": "10",
                     "skip-offline": True,
-                    "booth-conf": "C",
-                    "booth-key": "K",
                 }
             ),
         )

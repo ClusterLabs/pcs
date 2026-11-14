@@ -398,24 +398,24 @@ class LiveEnvironmentNotConsistent(CliReportMessageTestBase):
     def test_one_one(self):
         self.assert_message(
             messages.LiveEnvironmentNotConsistent(
-                [file_type_codes.BOOTH_CONFIG],
-                [file_type_codes.BOOTH_KEY],
+                [file_type_codes.CIB],
+                [file_type_codes.COROSYNC_CONF],
             ),
-            (
-                "When '--booth-conf' is specified, "
-                "'--booth-key' must be specified as well"
-            ),
+            "When '-f' is specified, '--corosync_conf' must be specified as well",
         )
 
     def test_many_many(self):
         self.assert_message(
             messages.LiveEnvironmentNotConsistent(
-                [file_type_codes.CIB, file_type_codes.BOOTH_CONFIG],
-                [file_type_codes.COROSYNC_CONF, file_type_codes.BOOTH_KEY],
+                [file_type_codes.CIB, file_type_codes.FileTypeCode("A")],
+                [
+                    file_type_codes.COROSYNC_CONF,
+                    file_type_codes.FileTypeCode("B"),
+                ],
             ),
             (
-                "When '--booth-conf', '-f' are specified, "
-                "'--booth-key', '--corosync_conf' must be specified as well"
+                "When '-f', 'A' are specified, "
+                "'--corosync_conf', 'B' must be specified as well"
             ),
         )
 

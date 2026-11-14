@@ -24,7 +24,6 @@ EXTRA_DIST		= \
 			  cli/alert/command.py \
 			  cli/alert/output.py \
 			  cli/booth/command.py \
-			  cli/booth/env.py \
 			  cli/booth/__init__.py \
 			  cli/cib/element/command.py \
 			  cli/cib/element/__init__.py \

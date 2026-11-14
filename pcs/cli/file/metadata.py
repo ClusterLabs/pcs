@@ -4,22 +4,6 @@ from pcs.common import file_type_codes as code
 from pcs.common.file import FileMetadata
 
 _metadata = {
-    code.BOOTH_CONFIG: lambda path: FileMetadata(
-        file_type_code=code.BOOTH_CONFIG,
-        path=path,
-        owner_user_name=None,
-        owner_group_name=None,
-        permissions=None,
-        is_binary=False,
-    ),
-    code.BOOTH_KEY: lambda path: FileMetadata(
-        file_type_code=code.BOOTH_KEY,
-        path=path,
-        owner_user_name=None,
-        owner_group_name=None,
-        permissions=0o600,
-        is_binary=True,
-    ),
     code.COROSYNC_CONF: lambda path: FileMetadata(
         file_type_code=code.COROSYNC_CONF,
         path=path,

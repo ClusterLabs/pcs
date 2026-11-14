@@ -49,29 +49,23 @@ def cli_env_to_lib_env(cli_env):
         cli_env.groups,
         cli_env.cib_data,
         cli_env.corosync_conf_data,
-        booth_files_data=cli_env.booth,
         known_hosts_getter=cli_env.known_hosts_getter,
         request_timeout=cli_env.request_timeout,
     )
 
 
 def lib_env_to_cli_env(lib_env, cli_env):
+    # TODO
+    # We expect that when cib or corosync_conf is mocked in cli_env, then it
+    # is mocked in lib_env as well. The code works like that now. Once we start
+    # to communicate over the network, we must do extra checks in here to make
+    # sure what the status really is.
+    # An inconsistency between cli and lib environment is dangerously hidden:
+    # when it occurs, original content is put to the file (which is wrong).
     if not lib_env.is_cib_live:
         cli_env.cib_data = lib_env.final_mocked_cib_content
     if not lib_env.is_corosync_conf_live:
         cli_env.corosync_conf_data = lib_env.get_corosync_conf_data()
-
-    # TODO
-    # We expect that when there is booth set up in cli_env then there is booth
-    # set up in lib_env as well. The code works like that now. Once we start
-    # communicate over the network, we must do extra checks in here to make
-    # sure what the status really is.
-    # this applies generally, not only for booth
-    # corosync_conf and cib suffers with this problem as well but in this cases
-    # it is dangerously hidden: when inconsistency between cli and lib
-    # environment occurs, original content is put to file (which is wrong)
-    if cli_env.booth:
-        cli_env.booth["modified_env"] = lib_env.get_booth_env(name="").export()
 
     return cli_env
 
@@ -188,9 +182,7 @@ def load_module(env, middleware_factory, name):  # noqa: PLR0911, PLR0912
             )
         return bind_all(
             env,
-            middleware.build(
-                middleware_factory.booth_conf, middleware_factory.cib
-            ),
+            middleware.build(middleware_factory.cib),
             bindings,
         )
 
