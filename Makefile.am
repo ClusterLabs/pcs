@@ -293,6 +293,19 @@ if DEV_TESTS
 		$(TIME) $(PYTHON) -m mypy --config-file mypy.ini --package pcs --package pcs_test
 endif
 
+# Fail if mypy.ini contains per-module sections not matching any checked module.
+# mypy only reports them as a note and exits with 0, so the output is checked.
+# --warn-unused-configs requires incremental mode to be turned off.
+.PHONY: mypy_unused_configs
+mypy_unused_configs:
+if DEV_TESTS
+	export PYTHONPATH=${abs_top_builddir}/${PCS_BUNDLED_DIR_LOCAL}/packages && \
+		output=$$($(PYTHON) -m mypy --config-file mypy.ini \
+			--warn-unused-configs --no-incremental \
+			--package pcs --package pcs_test 2>&1); \
+		if echo "$$output" | grep "unused section(s)"; then exit 1; fi
+endif
+
 RUN_TYPOS=typos --color never --format brief | sed -e 's/:[0-9]\+:[0-9]\+:/:/' | $(SORT)
 .PHONY: typos_check
 typos_check:
@@ -385,7 +398,7 @@ test-tree-clean:
 	fi
 	find ${abs_top_builddir} -type d -name __pycache__ -exec rm -rf {} \; 2>/dev/null || :
 
-check-local: check-local-deps test-tree-prep typos_check ruff_lint ruff_isort_check ruff_format_check mypy tests_tier0 tests_tier1 pcsd-tests test-tree-clean
+check-local: check-local-deps test-tree-prep typos_check ruff_lint ruff_isort_check ruff_format_check mypy_unused_configs mypy tests_tier0 tests_tier1 pcsd-tests test-tree-clean
 
 # New setuptools use the build directory to build wheels
 clean-local: test-tree-clean

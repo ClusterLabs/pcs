@@ -48,6 +48,7 @@ Pull request must comply with the following policies:
     * `make ruff_format_check`
     * `make ruff_isort_check`
     * `make mypy`
+    * `make mypy_unused_configs`
     * `make ruff_lint`
     * `make typos_check`
     * `make tests_tier0`

@@ -40,6 +40,11 @@ environment:
   tag: [lint]
   test: make mypy
 
+/mypy_unused_configs:
+  summary: Check mypy.ini has no sections for nonexistent modules
+  tag: [lint]
+  test: make mypy_unused_configs
+
 /typos:
   summary: Run typos check
   tag: [lint]
