@@ -301,6 +301,9 @@ touch $ac_pwd/rpm/requirements.txt
 rm -f $ac_pwd/rpm/py_buildrequires.txt $ac_pwd/rpm/py_requires.txt
 touch $ac_pwd/rpm/py_buildrequires.txt $ac_pwd/rpm/py_requires.txt
 
+# Additional build dependencies of bundled modules, see m4/pcs_buildreq.m4.
+PCS_BUILDREQ_INIT
+
 # PCS_BUNDLE_PYMOD([module], [version])
 AC_DEFUN([PCS_BUNDLE_PYMOD], [
 	echo "$1 $2" | sed -e 's# ##g' >> $ac_pwd/rpm/requirements.txt
@@ -329,6 +332,12 @@ AC_DEFUN([PCS_CHECK_PYMOD], [
 	fi
 	if test "x$3" = "xyes" && { test "x$bundle_module" = "xyes" || test "x$individual_bundling" != "xyes"; }; then
 		PCS_BUNDLE_PYMOD([$1], [$2])
+	fi
+	# module_bundled=yes when the module is built from bundled sources; use it to
+	# check additional build dependencies with PCS_CHECK_BUILDREQ_PKG.
+	module_bundled=no
+	if test "x$local_build" = "xyes" && test "x$3" = "xyes" && { test "x$bundle_module" = "xyes" || test "x$individual_bundling" != "xyes"; }; then
+		module_bundled=yes
 	fi
 	# Record the module as an rpm python3dist() Build/Requires dependency when it
 	# is used from the system instead of being bundled. That is the complement of
@@ -380,6 +389,15 @@ AC_DEFUN([PCS_CHECK_GEM], [
 		src=`ls $PCSD_BUNDLED_CACHE_DIR/$1-*`
 		if test "x$src" = "x"; then
 			AC_MSG_ERROR([cache only build required but no source detected in $PCSD_BUNDLED_CACHE_DIR])
+		fi
+	fi
+	# module_bundled=yes when the gem is built from bundled sources (it gets into
+	# the Gemfile below and is not pinned to a system version); use it to check
+	# additional build dependencies with PCS_CHECK_BUILDREQ_PKG.
+	module_bundled=no
+	if test "x$local_build" = "xyes"; then
+		if test "x$individual_bundling" != "xyes" || { test "x$3" != "xyes" && test "x$bundle_module" = "xyes"; }; then
+			module_bundled=yes
 		fi
 	fi
 	# Record the gem as an rpm Build/Requires dependency when it is used from the
