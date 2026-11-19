@@ -1574,16 +1574,16 @@ Manage node attributes.  If no parameters are specified, show attributes of all 
 
 .TP
 maintenance [\fB\-\-all\fR | <node>...] [\fB\-\-wait\fR[=n]]
-Put specified node(s) into maintenance mode, if no nodes or options are specified the current node will be put into maintenance mode, if \fB\-\-all\fR is specified all nodes will be put into maintenance mode. If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the node(s) to be put into maintenance mode and then return 0 on success or 1 if the operation not succeeded yet. If 'n' is not specified it defaults to 60 minutes.
+Put specified node(s) into maintenance mode, if no nodes or options are specified the current node will be put into maintenance mode, if \fB\-\-all\fR is specified all nodes will be put into maintenance mode. @WAIT_DESC_DOC@
 .TP
 unmaintenance [\fB\-\-all\fR | <node>...] [\fB\-\-wait\fR[=n]]
-Remove node(s) from maintenance mode, if no nodes or options are specified the current node will be removed from maintenance mode, if \fB\-\-all\fR is specified all nodes will be removed from maintenance mode. If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the node(s) to be removed from maintenance mode and then return 0 on success or 1 if the operation not succeeded yet. If 'n' is not specified it defaults to 60 minutes.
+Remove node(s) from maintenance mode, if no nodes or options are specified the current node will be removed from maintenance mode, if \fB\-\-all\fR is specified all nodes will be removed from maintenance mode. @WAIT_DESC_DOC@
 .TP
 standby [\fB\-\-all\fR | <node>...] [\fB\-\-wait\fR[=n]]
-Put specified node(s) into standby mode (the node specified will no longer be able to host resources), if no nodes or options are specified the current node will be put into standby mode, if \fB\-\-all\fR is specified all nodes will be put into standby mode. If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the node(s) to be put into standby mode and then return 0 on success or 1 if the operation not succeeded yet. If 'n' is not specified it defaults to 60 minutes.
+Put specified node(s) into standby mode (the node specified will no longer be able to host resources), if no nodes or options are specified the current node will be put into standby mode, if \fB\-\-all\fR is specified all nodes will be put into standby mode. @WAIT_DESC_DOC@
 .TP
 unstandby [\fB\-\-all\fR | <node>...] [\fB\-\-wait\fR[=n]]
-Remove node(s) from standby mode (the node specified will now be able to host resources), if no nodes or options are specified the current node will be removed from standby mode, if \fB\-\-all\fR is specified all nodes will be removed from standby mode. If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the node(s) to be removed from standby mode and then return 0 on success or 1 if the operation not succeeded yet. If 'n' is not specified it defaults to 60 minutes.
+Remove node(s) from standby mode (the node specified will now be able to host resources), if no nodes or options are specified the current node will be removed from standby mode, if \fB\-\-all\fR is specified all nodes will be removed from standby mode. @WAIT_DESC_DOC@
 .TP
 utilization [[<node>] [\fB\-\-name\fR <name>] | (@OUTPUT_FORMAT_SYNTAX_DOC@) | <node> <name>=<value> ...]
 Add specified utilization options to specified node.  If node is not specified, shows utilization of all nodes.  If \fB\-\-name\fR is specified, shows specified utilization value from all nodes. If utilization options are not specified, shows utilization of specified node.  Utilization option should be in format name=value, value has to be integer.  Options may be removed by setting an option without a value. @OUTPUT_FORMAT_DESC_DOC@
@@ -1714,6 +1714,10 @@ Previously, the \fB\-\-wait\fR flag had two functions. First, pcs waited for the
 Currently, \fB\-\-wait\fR causes pcs to wait for the cluster to settle into stable state and then exit with 2 on waiting timeout, 1 on any other error, or 0 on success. Use 'pcs status query' command to accurately specify the desired state and evaluate it.
 .br
 Affected commands:
+.br
+  node maintenance | unmaintenance
+.br
+  node standby | unstandby
 .br
   resource create
 .br

@@ -13,7 +13,6 @@ from pcs.common.types import CibRuleInEffectStatus
 from pcs.lib.cib.tools import IdProvider
 from pcs.lib.commands import node as lib
 from pcs.lib.env import LibraryEnvironment
-from pcs.lib.errors import LibraryError
 
 from pcs_test.tools import fixture
 from pcs_test.tools.assertions import assert_raise_library_error
@@ -47,7 +46,6 @@ class StandbyMaintenancePassParameters(TestCase):
     def setUp(self):
         self.lib_env = "lib_env"
         self.nodes = "nodes"
-        self.wait = "wait"
         self.standby_on = {"standby": "on"}
         self.standby_off = {"standby": ""}
         self.maintenance_on = {"maintenance": "on"}
@@ -57,86 +55,66 @@ class StandbyMaintenancePassParameters(TestCase):
 @patch_command("_set_instance_attrs_local_node")
 class StandbyMaintenancePassParametersLocal(StandbyMaintenancePassParameters):
     def test_standby(self, mock_doer):
-        lib.standby_unstandby_local(self.lib_env, True, self.wait)
-        mock_doer.assert_called_once_with(
-            self.lib_env, self.standby_on, self.wait
-        )
+        lib.standby_unstandby_local(self.lib_env, True)
+        mock_doer.assert_called_once_with(self.lib_env, self.standby_on)
 
     def test_unstandby(self, mock_doer):
-        lib.standby_unstandby_local(self.lib_env, False, self.wait)
-        mock_doer.assert_called_once_with(
-            self.lib_env, self.standby_off, self.wait
-        )
+        lib.standby_unstandby_local(self.lib_env, False)
+        mock_doer.assert_called_once_with(self.lib_env, self.standby_off)
 
     def test_maintenance(self, mock_doer):
-        lib.maintenance_unmaintenance_local(self.lib_env, True, self.wait)
-        mock_doer.assert_called_once_with(
-            self.lib_env, self.maintenance_on, self.wait
-        )
+        lib.maintenance_unmaintenance_local(self.lib_env, True)
+        mock_doer.assert_called_once_with(self.lib_env, self.maintenance_on)
 
     def test_unmaintenance(self, mock_doer):
-        lib.maintenance_unmaintenance_local(self.lib_env, False, self.wait)
-        mock_doer.assert_called_once_with(
-            self.lib_env, self.maintenance_off, self.wait
-        )
+        lib.maintenance_unmaintenance_local(self.lib_env, False)
+        mock_doer.assert_called_once_with(self.lib_env, self.maintenance_off)
 
 
 @patch_command("_set_instance_attrs_node_list")
 class StandbyMaintenancePassParametersList(StandbyMaintenancePassParameters):
     def test_standby(self, mock_doer):
-        lib.standby_unstandby_list(self.lib_env, True, self.nodes, self.wait)
+        lib.standby_unstandby_list(self.lib_env, True, self.nodes)
         mock_doer.assert_called_once_with(
-            self.lib_env, self.standby_on, self.nodes, self.wait
+            self.lib_env, self.standby_on, self.nodes
         )
 
     def test_unstandby(self, mock_doer):
-        lib.standby_unstandby_list(self.lib_env, False, self.nodes, self.wait)
+        lib.standby_unstandby_list(self.lib_env, False, self.nodes)
         mock_doer.assert_called_once_with(
-            self.lib_env, self.standby_off, self.nodes, self.wait
+            self.lib_env, self.standby_off, self.nodes
         )
 
     def test_maintenance(self, mock_doer):
-        lib.maintenance_unmaintenance_list(
-            self.lib_env, True, self.nodes, self.wait
-        )
+        lib.maintenance_unmaintenance_list(self.lib_env, True, self.nodes)
         mock_doer.assert_called_once_with(
-            self.lib_env, self.maintenance_on, self.nodes, self.wait
+            self.lib_env, self.maintenance_on, self.nodes
         )
 
     def test_unmaintenance(self, mock_doer):
-        lib.maintenance_unmaintenance_list(
-            self.lib_env, False, self.nodes, self.wait
-        )
+        lib.maintenance_unmaintenance_list(self.lib_env, False, self.nodes)
         mock_doer.assert_called_once_with(
-            self.lib_env, self.maintenance_off, self.nodes, self.wait
+            self.lib_env, self.maintenance_off, self.nodes
         )
 
 
 @patch_command("_set_instance_attrs_all_nodes")
 class StandbyMaintenancePassParametersAll(StandbyMaintenancePassParameters):
     def test_standby(self, mock_doer):
-        lib.standby_unstandby_all(self.lib_env, True, self.wait)
-        mock_doer.assert_called_once_with(
-            self.lib_env, self.standby_on, self.wait
-        )
+        lib.standby_unstandby_all(self.lib_env, True)
+        mock_doer.assert_called_once_with(self.lib_env, self.standby_on)
 
     def test_unstandby(self, mock_doer):
-        lib.standby_unstandby_all(self.lib_env, False, self.wait)
-        mock_doer.assert_called_once_with(
-            self.lib_env, self.standby_off, self.wait
-        )
+        lib.standby_unstandby_all(self.lib_env, False)
+        mock_doer.assert_called_once_with(self.lib_env, self.standby_off)
 
     def test_maintenance(self, mock_doer):
-        lib.maintenance_unmaintenance_all(self.lib_env, True, self.wait)
-        mock_doer.assert_called_once_with(
-            self.lib_env, self.maintenance_on, self.wait
-        )
+        lib.maintenance_unmaintenance_all(self.lib_env, True)
+        mock_doer.assert_called_once_with(self.lib_env, self.maintenance_on)
 
     def test_unmaintenance(self, mock_doer):
-        lib.maintenance_unmaintenance_all(self.lib_env, False, self.wait)
-        mock_doer.assert_called_once_with(
-            self.lib_env, self.maintenance_off, self.wait
-        )
+        lib.maintenance_unmaintenance_all(self.lib_env, False)
+        mock_doer.assert_called_once_with(self.lib_env, self.maintenance_off)
 
 
 class SetInstanceAttrsBase(TestCase):
@@ -149,13 +127,13 @@ class SetInstanceAttrsBase(TestCase):
         self.launch = {"pre": False, "post": False}
 
         @contextmanager
-        def cib_runner_nodes_contextmanager(env, wait):
-            del env, wait
+        def cib_runner_nodes_contextmanager(env):
+            del env
             self.launch["pre"] = True
             yield (self.cib, "mock_runner", self.cluster_nodes)
             self.launch["post"] = True
 
-        patcher = patch_command("cib_runner_nodes")
+        patcher = patch_command("_cib_runner_nodes")
         self.addCleanup(patcher.stop)
         patcher.start().side_effect = cib_runner_nodes_contextmanager
 
@@ -178,7 +156,7 @@ class SetInstanceAttrsLocal(SetInstanceAttrsBase):
     def test_not_possible_with_cib_file(self, mock_name, mock_attrs):
         assert_raise_library_error(
             lambda: lib._set_instance_attrs_local_node(
-                create_env(cib_data="<cib />"), "attrs", "wait"
+                create_env(cib_data="<cib />"), "attrs"
             ),
             (
                 severity.ERROR,
@@ -193,7 +171,7 @@ class SetInstanceAttrsLocal(SetInstanceAttrsBase):
     def test_success(self, mock_name, mock_attrs):
         mock_name.return_value = "node-1"
 
-        lib._set_instance_attrs_local_node(create_env(), "attrs", False)
+        lib._set_instance_attrs_local_node(create_env(), "attrs")
 
         self.assert_context_manager_launched(pre=True, post=True)
         mock_name.assert_called_once_with("mock_runner")
@@ -209,7 +187,7 @@ class SetInstanceAttrsAll(SetInstanceAttrsBase):
     node_count = 2
 
     def test_success(self, mock_attrs):
-        lib._set_instance_attrs_all_nodes(create_env(), "attrs", False)
+        lib._set_instance_attrs_all_nodes(create_env(), "attrs")
 
         mock_attrs_calls = mock_attrs.call_args_list
         self.assertEqual(2, len(mock_attrs_calls))
@@ -227,7 +205,7 @@ class SetInstanceAttrsList(SetInstanceAttrsBase):
 
     def test_success(self, mock_attrs):
         lib._set_instance_attrs_node_list(
-            create_env(), "attrs", ["node-1", "node-2"], False
+            create_env(), "attrs", ["node-1", "node-2"]
         )
 
         self.assert_context_manager_launched(pre=True, post=True)
@@ -243,7 +221,7 @@ class SetInstanceAttrsList(SetInstanceAttrsBase):
     def test_bad_node(self, mock_attrs):
         assert_raise_library_error(
             lambda: lib._set_instance_attrs_node_list(
-                create_env(), "attrs", ["node-1", "node-9"], False
+                create_env(), "attrs", ["node-1", "node-9"]
             ),
             (
                 severity.ERROR,
@@ -264,41 +242,23 @@ class CibRunnerNodes(TestCase):
 
     @patch_env("get_cib", lambda self: "mocked cib")
     @patch_env("cmd_runner", lambda self: "mocked cmd_runner")
-    @patch_env("ensure_wait_satisfiable")
     @patch_command("ClusterState")
     @patch_env("get_cluster_state")
     def test_wire_together_all_expected_dependencies(
-        self,
-        get_cluster_state,
-        cluster_state,
-        ensure_wait_satisfiable,
-        push_cib,
+        self, get_cluster_state, cluster_state, push_cib
     ):
         cluster_state.return_value = mock.MagicMock(
             node_section=mock.MagicMock(nodes="nodes")
         )
         get_cluster_state.return_value = "mock get_cluster_state"
-        wait = 10
-        ensure_wait_satisfiable.return_value = wait
 
-        with lib.cib_runner_nodes(self.env, wait) as (cib, runner, nodes):
+        with lib._cib_runner_nodes(self.env) as (cib, runner, nodes):
             self.assertEqual(cib, "mocked cib")
             self.assertEqual(runner, "mocked cmd_runner")
             self.assertEqual(nodes, "nodes")
-            ensure_wait_satisfiable.assert_called_once_with(wait)
             get_cluster_state.assert_called_once_with()
             cluster_state.assert_called_once_with("mock get_cluster_state")
-
-        push_cib.assert_called_once_with(wait_timeout=wait)
-
-    @patch_env("ensure_wait_satisfiable", mock.Mock(side_effect=LibraryError))
-    def test_raises_when_wait_is_not_satisfiable(self, push_cib):
-        def run():
-            with lib.cib_runner_nodes(self.env, "wait") as (cib, runner, nodes):
-                pass
-
-        self.assertRaises(LibraryError, run)
-        push_cib.assert_not_called()
+        push_cib.assert_called_once_with()
 
 
 class GetConfigDto(TestCase):

@@ -12,6 +12,7 @@ from pcs.cli.common.parse_args import (
     Argv,
     InputModifiers,
     KeyValueParser,
+    wait_to_timeout,
 )
 from pcs.cli.reports.processor import (
     ReportProcessorToConsole,
@@ -72,20 +73,25 @@ def node_maintenance_cmd(
     """
     Options:
       * -f - CIB file (in lib wrapper)
-      * --wait - wait for node to change state
+      * --wait - wait for the cluster to settle
       * --all - all cluster nodes
     """
     modifiers.ensure_only_supported("-f", "--wait", "--all")
+    modifiers.ensure_not_mutually_exclusive("-f", "--wait")
     if argv and modifiers.get("--all"):
         raise CmdLineInputError(ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE)
-    wait = modifiers.get("--wait")
+    wait_timeout = wait_to_timeout(modifiers.get("--wait"))
+
     if modifiers.get("--all"):
-        lib.node.maintenance_unmaintenance_all(enable, wait)
+        lib.node.maintenance_unmaintenance_all(enable)
     elif argv:
-        lib.node.maintenance_unmaintenance_list(enable, argv, wait)
+        lib.node.maintenance_unmaintenance_list(enable, argv)
     else:
         # -f cannot be used when editing local node
-        lib.node.maintenance_unmaintenance_local(enable, wait)
+        lib.node.maintenance_unmaintenance_local(enable)
+
+    if wait_timeout >= 0:
+        lib.cluster.wait_for_pcmk_idle(wait_timeout)
 
 
 def node_standby_cmd(
@@ -94,20 +100,25 @@ def node_standby_cmd(
     """
     Options:
       * -f - CIB file (in lib wrapper)
-      * --wait - wait for node to change state
+      * --wait - wait for the cluster to settle
       * --all - all cluster nodes
     """
     modifiers.ensure_only_supported("-f", "--wait", "--all")
+    modifiers.ensure_not_mutually_exclusive("-f", "--wait")
     if argv and modifiers.get("--all"):
         raise CmdLineInputError(ERR_NODE_LIST_AND_ALL_MUTUALLY_EXCLUSIVE)
-    wait = modifiers.get("--wait")
+    wait_timeout = wait_to_timeout(modifiers.get("--wait"))
+
     if modifiers.get("--all"):
-        lib.node.standby_unstandby_all(enable, wait)
+        lib.node.standby_unstandby_all(enable)
     elif argv:
-        lib.node.standby_unstandby_list(enable, argv, wait)
+        lib.node.standby_unstandby_list(enable, argv)
     else:
         # -f cannot be used when editing local node
-        lib.node.standby_unstandby_local(enable, wait)
+        lib.node.standby_unstandby_local(enable)
+
+    if wait_timeout >= 0:
+        lib.cluster.wait_for_pcmk_idle(wait_timeout)
 
 
 def _get_node_attributes_from_pacemaker(

@@ -126,7 +126,7 @@ class _SummarySection(_Element):
     }
 
 
-class _Node(_Element):
+class Node(_Element):
     required_attrs = {
         "id": "id",
         "name": "name",
@@ -146,7 +146,7 @@ class _Node(_Element):
 
 class _NodeSection(_Element):
     children = {
-        "nodes": ("node", _Node),
+        "nodes": ("node", Node),
     }
 
 

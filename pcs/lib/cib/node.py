@@ -1,4 +1,5 @@
 from collections import namedtuple
+from collections.abc import Iterable, Mapping
 
 from lxml import etree
 from lxml.etree import _Element
@@ -9,8 +10,9 @@ from pcs.common.reports.item import ReportItem
 from pcs.lib.cib import nvpair_multi, rule
 from pcs.lib.cib.const import TAG_NODE
 from pcs.lib.cib.nvpair import update_nvset
-from pcs.lib.cib.tools import get_nodes
+from pcs.lib.cib.tools import IdProvider, get_nodes
 from pcs.lib.errors import LibraryError
+from pcs.lib.pacemaker.state import Node as NodeState
 from pcs.lib.xml_tools import append_when_useful, get_root
 
 
@@ -54,8 +56,12 @@ class PacemakerNode(namedtuple("PacemakerNode", "name addr")):
 
 
 def update_node_instance_attrs(
-    cib, id_provider, node_name, attrs, state_nodes=None
-):
+    cib: _Element,
+    id_provider: IdProvider,
+    node_name: str,
+    attrs: Mapping[str, str],
+    state_nodes: Iterable[NodeState] | None = None,
+) -> None:
     """
     Update nvpairs in instance_attributes for a node specified by its name.
 
@@ -64,11 +70,11 @@ def update_node_instance_attrs(
     node is missing in the CIB, it is automatically created if its state is
     provided in state_nodes.
 
-    etree cib -- cib
-    IdProvider id_provider -- elements' ids generator
-    string node_name -- name of the node to be updated
-    dict attrs -- attrs to update, e.g. {'A': 'a', 'B': ''}
-    iterable state_nodes -- optional list of node state objects
+    cib -- cib
+    id_provider -- elements' ids generator
+    node_name -- name of the node to be updated
+    attrs -- attrs to update, e.g. {'A': 'a', 'B': ''}
+    state_nodes -- optional list of node state objects
     """
     # Do not ever remove the nvset element or the node element, even if they
     # are empty. There may be ACLs set in pacemaker which allow "write" for

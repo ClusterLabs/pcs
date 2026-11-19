@@ -114,6 +114,7 @@ EXTRA_DIST		= \
 			  tier0/cli/node/__init__.py \
 			  tier0/cli/node/test_command.py \
 			  tier0/cli/node/test_output.py \
+			  tier0/cli/node/test_standby_maintenance.py \
 			  tier0/cli/query/__init__.py \
 			  tier0/cli/query/test_resource.py \
 			  tier0/cli/reports/__init__.py \
