@@ -446,14 +446,15 @@ clean-local: test-tree-clean
 distclean-local:
 	rm -rf Gemfile
 	rm -rf .mypy_cache
-	rm -rf rpm/requirements.txt rpm/py_buildrequires.txt rpm/py_requires.txt rpm/gem_requirements.txt rpm/gem_requirements_default.txt rpm/gem_requires.txt rpm/Gemfile rpm/pcs-* build/
+	rm -rf rpm/requirements.txt rpm/py_buildrequires.txt rpm/py_requires.txt rpm/bundle_buildrequires.txt rpm/gem_requirements.txt rpm/gem_requirements_default.txt rpm/gem_requires.txt rpm/Gemfile rpm/pcs-* build/
 	rm -rf stamps
 	rm -rf ${abs_top_builddir}/${PCS_BUNDLED_DIR_LOCAL} ${abs_top_builddir}/${PCSD_BUNDLED_DIR_ROOT_LOCAL}
 	rm -rf $(filter-out \
 	         $(top_builddir)/m4/ac_compare_versions.m4 \
 	         $(top_builddir)/m4/ac_pip_module.m4 \
 		 $(top_builddir)/m4/ac_ruby_gem.m4 \
-		 $(top_builddir)/m4/ax_prog_date.m4, \
+		 $(top_builddir)/m4/ax_prog_date.m4 \
+		 $(top_builddir)/m4/pcs_buildreq.m4, \
 		 $(wildcard $(top_builddir)/m4/*.m4))
 
 # release/versioning
@@ -639,6 +640,8 @@ $(SPEC): $(SPEC).in .version config.status stamps/download_python_deps stamps/do
 		$(AWK) -i inplace -v r="$$gembuildreqs" '{gsub(/@gembuildreqs@/,r)}1' $@-t; \
 		gemrequires="`test -f rpm/gem_requires.txt && sed -e 's/^\(.*\)$$/Requires: rubygem(\1)/' rpm/gem_requires.txt || true`" && \
 		$(AWK) -i inplace -v r="$$gemrequires" '{gsub(/@gemrequires@/,r)}1' $@-t;
+	bundlebuildreqs="`test -f rpm/bundle_buildrequires.txt && sed -e 's/^/BuildRequires: /' rpm/bundle_buildrequires.txt || true`" && \
+		$(AWK) -i inplace -v r="$$bundlebuildreqs" '{gsub(/@bundlebuildreqs@/,r)}1' $@-t;
 	pybuildreqs="`test -f rpm/py_buildrequires.txt && sed -e 's/^/BuildRequires: /' rpm/py_buildrequires.txt || true`" && \
 		$(AWK) -i inplace -v r="$$pybuildreqs" '{gsub(/@pybuildreqs@/,r)}1' $@-t; \
 		pyrequires="`test -f rpm/py_requires.txt && sed -e 's/^/Requires: /' rpm/py_requires.txt || true`" && \
