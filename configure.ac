@@ -511,7 +511,20 @@ if test "x$tests_only" != "xyes"; then
 		PCS_CHECK_PYMOD([wheel], [], [], [norecord])
 	fi
 	PCS_CHECK_PYMOD([cryptography], [], [yes])
+	if test "x$module_bundled" = "xyes"; then
+		PCS_CHECK_BUILDREQ_PKG([libffi])
+		PCS_CHECK_BUILDREQ_PKG([openssl])
+		# Runtime dependencies of cryptography. pip installs them into the
+		# bundle anyway, list them so they get rpm Source and bundled()
+		# Provides. This overwrites module_bundled, keep it last in the block.
+		PCS_CHECK_PYMOD([cffi], [], [yes])
+		PCS_CHECK_PYMOD([pycparser], [], [yes])
+	fi
 	PCS_CHECK_PYMOD([lxml], [], [yes])
+	if test "x$module_bundled" = "xyes"; then
+		PCS_CHECK_BUILDREQ_PKG([libxml-2.0])
+		PCS_CHECK_BUILDREQ_PKG([libxslt])
+	fi
 	# pyparsing is kept hardcoded in the spec because under CIRPMWORKAROUNDS it is
 	# force-bundled (added to requirements.txt above) and must not also be recorded
 	# as a system dependency, so do not record it here.
@@ -539,13 +552,9 @@ if test "x$tests_only" != "xyes"; then
 	else
 		PCS_CHECK_PYMOD([pycurl], [], [yes])
 	fi
-	# Building pycurl requires devel packages that contain pkg-config, so devel
-	# packages must be installed for these checks to pass.
-	# This uses variables set by the PCS_CHECK_PYMOD macro, so it must be executed
-	# right after it.
-	if test "x$bundle_module" = "xyes" || test "x$individual_bundling" != "xyes"; then
-		PKG_CHECK_MODULES([LIBCURL], [libcurl])
-		PKG_CHECK_MODULES([OPENSSL], [openssl])
+	if test "x$module_bundled" = "xyes"; then
+		PCS_CHECK_BUILDREQ_PKG([libcurl])
+		PCS_CHECK_BUILDREQ_PKG([openssl])
 	fi
 
 	# special case, because we need to download from github
@@ -641,6 +650,9 @@ if test "x$tests_only" != "xyes"; then
 		PCS_CHECK_GEM([childprocess], [>= 5.0.0])
 	fi
 	PCS_CHECK_GEM([curb])
+	if test "x$module_bundled" = "xyes"; then
+		PCS_CHECK_BUILDREQ_PKG([libcurl])
+	fi
 	PCS_CHECK_GEM([puma])
 	PCS_CHECK_GEM([rack])
 	# rack < 3.0 provides its own handler and does not need the rackup gem
