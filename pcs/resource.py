@@ -760,10 +760,19 @@ def resource_move_with_constraint(
     """
     Options:
       * -f - CIB file
-      * --promoted
-      * --wait
+      * --promoted - limit the constraint to the Promoted role
+      * --wait - wait for the cluster to settle
     """
     modifiers.ensure_only_supported("-f", "--promoted", "--wait")
+    modifiers.ensure_not_mutually_exclusive("-f", "--wait")
+    wait_timeout = wait_to_timeout(modifiers.get("--wait"))
+    if wait_timeout >= 0:
+        # deprecated in the first version of 0.12
+        lib.env.report_processor.report(
+            reports.ReportItem.deprecation(
+                reports.messages.ResourceWaitDeprecated()
+            )
+        )
 
     if not argv:
         raise CmdLineInputError("must specify a resource to move")
@@ -776,8 +785,10 @@ def resource_move_with_constraint(
         node=node,
         master=modifiers.is_specified("--promoted"),
         lifetime=lifetime,
-        wait=modifiers.get("--wait"),
     )
+
+    if wait_timeout >= 0:
+        lib.cluster.wait_for_pcmk_idle(wait_timeout)
 
 
 def resource_move(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
@@ -813,10 +824,19 @@ def resource_ban(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
       * -f - CIB file
-      * --promoted
-      * --wait
+      * --promoted - limit the constraint to the Promoted role
+      * --wait - wait for the cluster to settle
     """
     modifiers.ensure_only_supported("-f", "--promoted", "--wait")
+    modifiers.ensure_not_mutually_exclusive("-f", "--wait")
+    wait_timeout = wait_to_timeout(modifiers.get("--wait"))
+    if wait_timeout >= 0:
+        # deprecated in the first version of 0.12
+        lib.env.report_processor.report(
+            reports.ReportItem.deprecation(
+                reports.messages.ResourceWaitDeprecated()
+            )
+        )
 
     if not argv:
         raise CmdLineInputError("must specify a resource to ban")
@@ -829,8 +849,10 @@ def resource_ban(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
         node=node,
         master=modifiers.is_specified("--promoted"),
         lifetime=lifetime,
-        wait=modifiers.get("--wait"),
     )
+
+    if wait_timeout >= 0:
+        lib.cluster.wait_for_pcmk_idle(wait_timeout)
 
 
 def resource_unmove_unban(
@@ -838,11 +860,21 @@ def resource_unmove_unban(
 ) -> None:
     """
     Options:
+      * --expired - only remove constraints which have already expired
       * -f - CIB file
-      * --promoted
-      * --wait
+      * --promoted - only remove constraints for Promoted role
+      * --wait - wait for the cluster to settle
     """
     modifiers.ensure_only_supported("-f", "--expired", "--promoted", "--wait")
+    modifiers.ensure_not_mutually_exclusive("-f", "--wait")
+    wait_timeout = wait_to_timeout(modifiers.get("--wait"))
+    if wait_timeout >= 0:
+        # deprecated in the first version of 0.12
+        lib.env.report_processor.report(
+            reports.ReportItem.deprecation(
+                reports.messages.ResourceWaitDeprecated()
+            )
+        )
 
     if not argv:
         raise CmdLineInputError("must specify a resource to clear")
@@ -856,8 +888,10 @@ def resource_unmove_unban(
         node=node,
         master=modifiers.is_specified("--promoted"),
         expired=modifiers.is_specified("--expired"),
-        wait=modifiers.get("--wait"),
     )
+
+    if wait_timeout >= 0:
+        lib.cluster.wait_for_pcmk_idle(wait_timeout)
 
 
 def resource_standards(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:

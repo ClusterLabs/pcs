@@ -1036,9 +1036,7 @@ Commands:
         Promoted role and promotable clone id must be used (instead of the
         resource id).
 
-        If --wait is specified, pcs will wait up to 'n' seconds for the
-        resource to move and then return 0 on success or 1 on error. If 'n' is
-        not specified it defaults to 60 minutes.
+{wait_description}
 
         If you want the resource to preferably avoid running on some nodes but
         be able to failover to them use 'pcs constraint location avoids'.
@@ -1058,9 +1056,7 @@ Commands:
         Lifetime is expected to be specified as ISO 8601 duration (see
         https://en.wikipedia.org/wiki/ISO_8601#Durations).
 
-        If --wait is specified, pcs will wait up to 'n' seconds for the
-        resource to move and then return 0 on success or 1 on error. If 'n' is
-        not specified it defaults to 60 minutes.
+{wait_description}
 
         If you want the resource to preferably avoid running on some nodes but
         be able to failover to them use 'pcs constraint location avoids'.
@@ -1076,10 +1072,7 @@ Commands:
         If --expired is specified, only constraints with expired lifetimes will
         be removed.
 
-        If --wait is specified, pcs will wait up to 'n' seconds for the
-        operation to finish (including starting and/or moving resources if
-        appropriate) and then return 0 on success or 1 on error. If 'n' is not
-        specified it defaults to 60 minutes.
+{wait_description}
 
     standards
         List available resource agent standards supported by this installation
