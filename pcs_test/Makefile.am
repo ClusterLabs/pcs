@@ -80,7 +80,6 @@ EXTRA_DIST		= \
 			  tier0/cli/alert/__init__.py \
 			  tier0/cli/alert/test_output.py \
 			  tier0/cli/booth/__init__.py \
-			  tier0/cli/booth/test_env.py \
 			  tier0/cli/cib/element/__init__.py \
 			  tier0/cli/cib/element/test_command.py \
 			  tier0/cli/cib/__init__.py \

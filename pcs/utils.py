@@ -20,7 +20,6 @@ from urllib.parse import urlencode
 from xml.dom.minidom import Document as DomDocument
 from xml.dom.minidom import parseString
 
-import pcs.cli.booth.env
 import pcs.lib.corosync.config_parser as corosync_conf_parser
 from pcs import settings, usage
 from pcs.cli.cluster_property.output import PropertyConfigurationFacade
@@ -2455,18 +2454,12 @@ def get_middleware_factory():
     Commandline options:
       * --corosync_conf
       * --name
-      * --booth-conf
-      * --booth-key
       * -f
     """
     return middleware.create_middleware_factory(
         cib=middleware.cib(filename if usefile else None, touch_cib_file),
         corosync_conf_existing=middleware.corosync_conf_existing(
             pcs_options.get("--corosync_conf")
-        ),
-        booth_conf=pcs.cli.booth.env.middleware_config(
-            pcs_options.get("--booth-conf"),
-            pcs_options.get("--booth-key"),
         ),
     )
 
@@ -2478,8 +2471,6 @@ def get_library_wrapper() -> Library:
       * --request-timeout
       * --corosync_conf
       * --name
-      * --booth-conf
-      * --booth-key
       * -f
     NOTE: usage of options may depend on used middleware for particular command
     """

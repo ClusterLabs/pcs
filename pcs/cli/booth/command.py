@@ -9,10 +9,7 @@ from pcs.cli.common.parse_args import (
     KeyValueParser,
     group_by_keywords,
 )
-from pcs.cli.reports.output import (
-    deprecation_warning,
-    warn,
-)
+from pcs.cli.reports.output import deprecation_warning, warn
 from pcs.common import reports
 from pcs.common.reports import codes as report_codes
 from pcs.lib.errors import LibraryError
@@ -24,14 +21,10 @@ def config_setup(lib: Any, arg_list: Argv, modifiers: InputModifiers) -> None:
 
     Options:
       * --force - overwrite existing
-      * --booth-conf - booth config file
-      * --booth-key - booth authkey file
       * --name - name of a booth instance
     """
     modifiers.ensure_only_supported(
         "--force",
-        "--booth-conf",
-        "--booth-key",
         "--name",
     )
     peers = group_by_keywords(arg_list, {"sites", "arbitrators"})
@@ -94,13 +87,9 @@ def config_ticket_add(
 
     Options:
       * --force
-      * --booth-conf - booth config file
-      * --booth-key - booth auth key file
       * --name - name of a booth instance
     """
-    modifiers.ensure_only_supported(
-        "--force", "--booth-conf", "--name", "--booth-key"
-    )
+    modifiers.ensure_only_supported("--force", "--name")
     if not arg_list:
         raise CmdLineInputError
     lib.booth.config_ticket_add(
@@ -118,11 +107,9 @@ def config_ticket_remove(
     add ticket to current configuration
 
     Options:
-      * --booth-conf - booth config file
-      * --booth-key - booth auth key file
       * --name - name of a booth instance
     """
-    modifiers.ensure_only_supported("--booth-conf", "--name", "--booth-key")
+    modifiers.ensure_only_supported("--name")
     if len(arg_list) != 1:
         raise CmdLineInputError
     lib.booth.config_ticket_remove(
@@ -136,11 +123,9 @@ def enable_authfile(
 ) -> None:
     """
     Options:
-      * --booth-conf - booth config file
-      * --booth-key - booth auth key file
       * --name - name of a booth instance
     """
-    modifiers.ensure_only_supported("--booth-conf", "--name", "--booth-key")
+    modifiers.ensure_only_supported("--name")
     if len(arg_list):
         raise CmdLineInputError()
     lib.booth.config_set_enable_authfile(instance_name=modifiers.get("--name"))
@@ -151,11 +136,9 @@ def enable_authfile_clean(
 ) -> None:
     """
     Options:
-      * --booth-conf - booth config file
-      * --booth-key - booth auth key file
       * --name - name of a booth instance
     """
-    modifiers.ensure_only_supported("--booth-conf", "--name", "--booth-key")
+    modifiers.ensure_only_supported("--name")
     if len(arg_list):
         raise CmdLineInputError()
     lib.booth.config_unset_enable_authfile(
@@ -369,15 +352,11 @@ def sync(lib: Any, arg_list: Argv, modifiers: InputModifiers) -> None:
     Options:
       * --skip-offline - skip offline nodes
       * --name - name of a booth instance
-      * --booth-conf - booth config file
-      * --booth-key - booth authkey file
       * --request-timeout - HTTP timeout for file distribution
     """
     modifiers.ensure_only_supported(
         "--skip-offline",
         "--name",
-        "--booth-conf",
-        "--booth-key",
         "--request-timeout",
     )
     if arg_list:

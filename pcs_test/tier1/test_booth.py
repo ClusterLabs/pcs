@@ -1,4 +1,6 @@
+import grp
 import os
+import pwd
 from textwrap import dedent
 from unittest import TestCase, mock
 
@@ -27,13 +29,19 @@ class BoothMixinNoFiles(AssertPcsMixin):
 class BoothMixin(AssertPcsMixin):
     def setUp(self):
         self.booth_dir = get_tmp_dir("tier1_booth")
-        self.booth_cfg_path = os.path.join(self.booth_dir.name, "booth.cfg")
+        self.booth_cfg_path = os.path.join(self.booth_dir.name, "booth.conf")
         self.booth_key_path = os.path.join(self.booth_dir.name, "booth.key")
         self.temp_cib = get_tmp_file("tier1_booth")
         write_file_to_tmpfile(EMPTY_CIB, self.temp_cib)
         self.pcs_runner = PcsRunner(
             self.temp_cib.name,
             mock_settings=dict(
+                # divert booth files so that a live cluster is not affected
+                booth_config_dir=self.booth_dir.name,
+                # booth key is owned by pacemaker user, which may not exist on
+                # the test machine
+                pacemaker_uname=pwd.getpwuid(os.getuid()).pw_name,
+                pacemaker_gname=grp.getgrgid(os.getgid()).gr_name,
                 booth_enable_authfile_set_enabled=str(False),
                 booth_enable_authfile_unset_enabled=str(False),
             ),
@@ -42,12 +50,6 @@ class BoothMixin(AssertPcsMixin):
     def tearDown(self):
         self.temp_cib.close()
         self.booth_dir.cleanup()
-
-    def fake_file(self, command):
-        return command + [
-            f"--booth-conf={self.booth_cfg_path}",
-            f"--booth-key={self.booth_key_path}",
-        ]
 
     def ensure_booth_config_exists(self):
         if not os.path.exists(self.booth_cfg_path):
@@ -59,17 +61,6 @@ class BoothMixin(AssertPcsMixin):
             os.remove(self.booth_cfg_path)
         if os.path.exists(self.booth_key_path):
             os.remove(self.booth_key_path)
-
-    def assert_pcs_success(self, command, *args, **kwargs):
-        return super().assert_pcs_success(
-            self.fake_file(command), *args, **kwargs
-        )
-
-    def assert_pcs_fail(self, command, *args, **kwargs):
-        return super().assert_pcs_fail(self.fake_file(command), *args, **kwargs)
-
-    def assert_pcs_fail_original(self, *args, **kwargs):
-        return super().assert_pcs_fail(*args, **kwargs)
 
 
 class SetupTest(BoothMixin, TestCase):
@@ -97,13 +88,9 @@ class SetupTest(BoothMixin, TestCase):
         with open(self.booth_key_path, "rb") as key_file:
             self.assertEqual(64, len(key_file.read()))
 
-    def test_success_setup_booth_config_enable_autfile(self):
-        self.pcs_runner = PcsRunner(
-            None,
-            mock_settings=dict(
-                booth_enable_authfile_set_enabled=str(True),
-                booth_enable_authfile_unset_enabled=str(False),
-            ),
+    def test_success_setup_booth_config_enable_authfile(self):
+        self.pcs_runner.mock_settings["booth_enable_authfile_set_enabled"] = (
+            str(True)
         )
         self.ensure_booth_config_not_exists()
         self.assert_pcs_success(
@@ -123,10 +110,21 @@ class SetupTest(BoothMixin, TestCase):
                 config_file.read(),
             )
 
-    def test_overwrite_existing_mocked_config(self):
+    def test_overwrite_existing_config(self):
         self.ensure_booth_config_exists()
-        self.assert_pcs_success(
+        self.assert_pcs_fail(
             "booth setup sites 1.1.1.1 2.2.2.2 arbitrators 3.3.3.3".split(),
+            (
+                f"Error: Booth configuration file '{self.booth_cfg_path}' "
+                "already exists, use --force to override\n"
+                "Error: Errors have occurred, therefore pcs is unable to "
+                "continue\n"
+            ),
+        )
+        self.assert_pcs_success(
+            (
+                "booth setup sites 1.1.1.1 2.2.2.2 arbitrators 3.3.3.3 --force"
+            ).split(),
         )
         self.ensure_booth_config_not_exists()
 
@@ -145,30 +143,6 @@ class SetupTest(BoothMixin, TestCase):
             ),
         )
 
-    def test_refuse_partially_mocked_environment(self):
-        self.assert_pcs_fail_original(
-            # no --booth-key!
-            (
-                "booth setup sites 1.1.1.1 2.2.2.2 arbitrators 3.3.3.3 "
-                "--booth-conf=/some/file"
-            ).split(),
-            (
-                "Error: When --booth-conf is specified, --booth-key must be "
-                "specified as well\n"
-            ),
-        )
-        self.assert_pcs_fail_original(
-            # no --booth-conf!
-            (
-                "booth setup sites 1.1.1.1 2.2.2.2 arbitrators 3.3.3.3 "
-                "--booth-key=/some/file"
-            ).split(),
-            (
-                "Error: When --booth-key is specified, --booth-conf must be "
-                "specified as well\n"
-            ),
-        )
-
     def test_show_usage_when_no_site_specified(self):
         self.assert_pcs_fail(
             "booth setup arbitrators 3.3.3.3".split(),
@@ -177,21 +151,6 @@ class SetupTest(BoothMixin, TestCase):
         self.assert_pcs_fail(
             "booth setup".split(),
             stderr_start="\nUsage: pcs booth <command>\n    setup",
-        )
-
-
-class DestroyTest(BoothMixin, TestCase):
-    def setUp(self):
-        super().setUp()
-        self.pcs_runner.cib_file = None
-
-    def test_failed_when_using_mocked_booth_env(self):
-        self.assert_pcs_fail(
-            "booth destroy".split(),
-            (
-                "Error: Specified options '--booth-conf', '--booth-key' are "
-                "not supported in this command\n"
-            ),
         )
 
 
@@ -227,8 +186,8 @@ class AddTicketTest(BoothTest):
         self.assert_pcs_fail(
             "booth ticket add @TicketA".split(),
             (
-                "Error: booth ticket name '@TicketA' is not valid, use up to 63 "
-                "alphanumeric characters or dash\n"
+                "Error: booth ticket name '@TicketA' is not valid, "
+                "use up to 63 alphanumeric characters or dash\n"
                 "Error: Errors have occurred, therefore pcs is unable to "
                 "continue\n"
             ),
@@ -264,7 +223,8 @@ class AddTicketTest(BoothTest):
         msg = (
             "invalid booth ticket option 'unknown', allowed options"
             " are: 'acquire-after', 'attr-prereq', 'before-acquire-handler',"
-            " 'expire', 'mode', 'renewal-freq', 'retries', 'timeout', 'weights'"
+            " 'expire', 'mode', 'renewal-freq', 'retries', 'timeout', "
+            "'weights'"
         )
         self.assert_pcs_fail(
             "booth ticket add TicketA unknown=a".split(),
