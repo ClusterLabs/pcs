@@ -363,6 +363,36 @@ if DEV_TESTS
 	$(DIFF) typos_known typos_new
 endif
 
+# Report python modules installed in the bundle (e.g. runtime dependencies
+# pulled in by pip) which are not declared in rpm/requirements.txt and thus get
+# no rpm Source and bundled() Provides. Declare them with PCS_CHECK_PYMOD in
+# configure.ac. Exits with non-zero status if any is found, it is up to the
+# caller to treat that as an error or a warning. Not run by the build itself.
+# Override BUNDLED_PYTHON_PACKAGES_DIR to check an installed bundle, e.g.
+# make bundled_python_deps_check \
+#   BUNDLED_PYTHON_PACKAGES_DIR=$DESTDIR/usr/lib64/pcs/pcs_bundled/packages
+BUNDLED_PYTHON_PACKAGES_DIR ?= ${abs_top_builddir}/$(PCS_BUNDLED_DIR_LOCAL)/packages
+# normalize python package names the way pip does (PEP 503)
+NORMALIZE_PYNAME = tr 'A-Z' 'a-z' | sed -E -e 's/[-_.]+/-/g'
+.PHONY: bundled_python_deps_check
+bundled_python_deps_check:
+	@if ! test -d "$(BUNDLED_PYTHON_PACKAGES_DIR)"; then \
+		echo "Bundled python packages directory $(BUNDLED_PYTHON_PACKAGES_DIR) not found"; \
+		exit 1; \
+	fi; \
+	declared="`{ sed -E -e 's/[<>=!~;[ ].*//' ${abs_top_builddir}/rpm/requirements.txt 2>/dev/null; echo pyagentx; } \
+		| $(NORMALIZE_PYNAME) | $(SORT) -u`"; \
+	undeclared="`ls "$(BUNDLED_PYTHON_PACKAGES_DIR)" \
+		| sed -n -E -e 's/^(.*)-[^-]+\.dist-info$$/\1/p' \
+		| $(NORMALIZE_PYNAME) | $(SORT) -u \
+		| $(AWK) -v d="$$declared" 'BEGIN { n = split(d, a, "\n"); for (i = 1; i <= n; i++) known[a[i]] = 1 } !($$0 in known)'`"; \
+	if test -n "$$undeclared"; then \
+		echo "Python modules bundled but not declared in rpm/requirements.txt (add them with PCS_CHECK_PYMOD):"; \
+		echo "$$undeclared" | sed -e 's/^/  /'; \
+		exit 1; \
+	fi; \
+	echo "All bundled python modules are declared"
+
 .PHONY: typos_known
 typos_known:
 if DEV_TESTS
