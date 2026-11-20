@@ -107,6 +107,29 @@ prepare:
       - libcurl-devel
       - openssl-devel
 
+  - name: Install dependencies for bundled modules
+    how: install
+    package:
+      # modules with c extensions
+      - gcc
+      # pycurl, curb
+      - libcurl-devel
+      # cryptography
+      - libffi-devel
+      # lxml
+      - libxml2-devel
+      - libxslt-devel
+      # cryptography, pycurl, curb
+      - openssl-devel
+      # python modules
+      - python3-devel
+      # dacite, pyagentx and others
+      - python3-setuptools
+      # isodate
+      - python3-setuptools_scm
+      # rubygems
+      - ruby-devel
+
   - name: Install system rubygem packages
     when: distro == fedora
     how: install
