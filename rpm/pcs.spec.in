@@ -264,6 +264,13 @@ make all
 %install
 make install DESTDIR=%{buildroot}
 
+# Console scripts of bundled python modules are not used by pcs nor by the
+# modules at runtime. Their shebang points to the build python, which fails
+# brp-mangle-shebangs (e.g. ambiguous /usr/bin/python) or leaks a virtualenv
+# path into Requires. Remove them in %%install, %%exclude does not hide files
+# from brp scripts.
+rm -rf %{buildroot}%{_libdir}/pcs/%{pcs_bundled_dir}/packages/bin
+
 # fix shebangs according to packaging guidelines
 # add E to default Python arguments (-sP)
 %global py3_shbang_opts_pcs %{py3_shbang_opts}E
