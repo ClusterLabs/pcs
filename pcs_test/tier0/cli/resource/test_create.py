@@ -10,8 +10,10 @@ ERRORS_HAVE_OCCURRED = (
     "Error: Errors have occurred, therefore pcs is unable to continue\n"
 )
 DEPRECATED_WAIT = (
-    "Deprecation Warning: Ability of this command to accept 'wait' argument is "
-    "deprecated and will be removed in a future release.\n"
+    "Deprecation Warning: Using '--wait' is deprecated. Instead, use the "
+    "'pcs status wait' command to wait for the cluster to settle into stable "
+    "state. Use the 'pcs status query resource' commands to verify that the "
+    "resource is in the expected state after the wait.\n"
 )
 ERROR_TIMEOUT = """\
 Error: waiting timeout

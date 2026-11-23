@@ -14,7 +14,6 @@ from pcs.cli.common.parse_args import (
     InputModifiers,
     KeyValueParser,
     ensure_unique_args,
-    wait_to_timeout,
 )
 from pcs.cli.reports.output import deprecation_warning, warn
 from pcs.cli.resource.common import (
@@ -26,6 +25,7 @@ from pcs.cli.resource.output import (
     resources_to_cmd,
     resources_to_text,
 )
+from pcs.cli.resource.parse_args import get_wait_timeout_deprecated
 from pcs.common import reports
 from pcs.common.interface import dto
 from pcs.common.pacemaker.resource.list import (
@@ -109,7 +109,9 @@ def meta(lib: Any, argv: list[str], modifiers: InputModifiers) -> None:
     """
     modifiers.ensure_only_supported("-f", "--force", "--wait")
     modifiers.ensure_not_mutually_exclusive("-f", "--wait")
-    wait_timeout = wait_to_timeout(modifiers.get("--wait"))
+    wait_timeout = get_wait_timeout_deprecated(
+        lib.env.report_processor, modifiers
+    )
     force_flags = []
     if modifiers.get("--force"):
         force_flags.append(reports.codes.FORCE)
@@ -122,7 +124,6 @@ def meta(lib: Any, argv: list[str], modifiers: InputModifiers) -> None:
     lib.resource.update_meta(resource_id, meta_attrs_dict, force_flags)
 
     if wait_timeout >= 0:
-        deprecation_warning(reports.messages.ResourceWaitDeprecated().message)
         lib.cluster.wait_for_pcmk_idle(wait_timeout)
         print(get_resource_status_msg(lib, resource_id))
 

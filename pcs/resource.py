@@ -39,6 +39,7 @@ from pcs.cli.resource.output import (
     resource_defaults_to_cmd,
 )
 from pcs.cli.resource.parse_args import (
+    get_wait_timeout_deprecated,
     parse_bundle_create_options,
     parse_bundle_reset_options,
     parse_bundle_update_options,
@@ -590,7 +591,7 @@ def resource_list_options(
     )
 
 
-def resource_create(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  # noqa: PLR0912 PLR0915
+def resource_create(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  # noqa: PLR0912
     """
     Options:
       * --agent-validation - use agent self validation of instance attributes
@@ -613,10 +614,10 @@ def resource_create(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:  #
         hint_syntax_changed="1.0",
     )
     modifiers.ensure_not_mutually_exclusive("-f", "--wait")
-    wait_timeout = wait_to_timeout(modifiers.get("--wait"))
-    if wait_timeout >= 0:
-        # deprecated in the first version of 0.12
-        deprecation_warning(reports.messages.ResourceWaitDeprecated().message)
+    # deprecated in the first version of 0.12
+    wait_timeout = get_wait_timeout_deprecated(
+        lib.env.report_processor, modifiers
+    )
     if modifiers.is_specified(FUTURE_OPTION):
         deprecation_warning(FUTURE_OPTION_DEPRECATION_WARNING)
 
@@ -765,14 +766,10 @@ def resource_move_with_constraint(
     """
     modifiers.ensure_only_supported("-f", "--promoted", "--wait")
     modifiers.ensure_not_mutually_exclusive("-f", "--wait")
-    wait_timeout = wait_to_timeout(modifiers.get("--wait"))
-    if wait_timeout >= 0:
-        # deprecated in the first version of 0.12
-        lib.env.report_processor.report(
-            reports.ReportItem.deprecation(
-                reports.messages.ResourceWaitDeprecated()
-            )
-        )
+    # deprecated in the first version of 0.12
+    wait_timeout = get_wait_timeout_deprecated(
+        lib.env.report_processor, modifiers
+    )
 
     if not argv:
         raise CmdLineInputError("must specify a resource to move")
@@ -829,14 +826,10 @@ def resource_ban(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     modifiers.ensure_only_supported("-f", "--promoted", "--wait")
     modifiers.ensure_not_mutually_exclusive("-f", "--wait")
-    wait_timeout = wait_to_timeout(modifiers.get("--wait"))
-    if wait_timeout >= 0:
-        # deprecated in the first version of 0.12
-        lib.env.report_processor.report(
-            reports.ReportItem.deprecation(
-                reports.messages.ResourceWaitDeprecated()
-            )
-        )
+    # deprecated in the first version of 0.12
+    wait_timeout = get_wait_timeout_deprecated(
+        lib.env.report_processor, modifiers
+    )
 
     if not argv:
         raise CmdLineInputError("must specify a resource to ban")
@@ -867,14 +860,10 @@ def resource_unmove_unban(
     """
     modifiers.ensure_only_supported("-f", "--expired", "--promoted", "--wait")
     modifiers.ensure_not_mutually_exclusive("-f", "--wait")
-    wait_timeout = wait_to_timeout(modifiers.get("--wait"))
-    if wait_timeout >= 0:
-        # deprecated in the first version of 0.12
-        lib.env.report_processor.report(
-            reports.ReportItem.deprecation(
-                reports.messages.ResourceWaitDeprecated()
-            )
-        )
+    # deprecated in the first version of 0.12
+    wait_timeout = get_wait_timeout_deprecated(
+        lib.env.report_processor, modifiers
+    )
 
     if not argv:
         raise CmdLineInputError("must specify a resource to clear")

@@ -10,11 +10,11 @@ from pcs.cli.common.parse_args import (
     InputModifiers,
     KeyValueParser,
     ensure_unique_args,
-    wait_to_timeout,
 )
 from pcs.cli.fencing_topology import target_type_map_cli_to_lib
-from pcs.cli.reports.output import deprecation_warning, print_to_stderr
+from pcs.cli.reports.output import print_to_stderr
 from pcs.cli.resource.output import resource_agent_metadata_to_text
+from pcs.cli.resource.parse_args import get_wait_timeout_deprecated
 from pcs.cli.resource.parse_args import (
     parse_primitive as parse_primitive_resource,
 )
@@ -126,10 +126,10 @@ def stonith_create(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
         hint_syntax_changed="0.12",
     )
     modifiers.ensure_not_mutually_exclusive("-f", "--wait")
-    wait_timeout = wait_to_timeout(modifiers.get("--wait"))
-    if wait_timeout >= 0:
-        # deprecated in the first version of 0.12
-        deprecation_warning(reports.messages.ResourceWaitDeprecated().message)
+    # deprecated in the first version of 0.12
+    wait_timeout = get_wait_timeout_deprecated(
+        lib.env.report_processor, modifiers
+    )
 
     if len(argv) < 2:
         raise CmdLineInputError()

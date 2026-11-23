@@ -8,11 +8,11 @@ from pcs.cli.common.parse_args import (
     Argv,
     InputModifiers,
     KeyValueParser,
-    wait_to_timeout,
 )
-from pcs.cli.reports.output import deprecation_warning, warn
+from pcs.cli.reports.output import warn
 from pcs.cli.resource import command as resource_cmd
 from pcs.cli.resource.common import get_resource_status_msg
+from pcs.cli.resource.parse_args import get_wait_timeout_deprecated
 from pcs.cli.stonith.common import check_is_stonith
 from pcs.cli.stonith.levels.output import (
     stonith_level_config_to_cmd,
@@ -69,7 +69,9 @@ def meta(lib: Any, argv: list[str], modifiers: InputModifiers) -> None:
     """
     modifiers.ensure_only_supported("-f", "--force", "--wait")
     modifiers.ensure_not_mutually_exclusive("-f", "--wait")
-    wait_timeout = wait_to_timeout(modifiers.get("--wait"))
+    wait_timeout = get_wait_timeout_deprecated(
+        lib.env.report_processor, modifiers
+    )
     force_flags = []
     if modifiers.get("--force"):
         force_flags.append(reports.codes.FORCE)
@@ -82,6 +84,5 @@ def meta(lib: Any, argv: list[str], modifiers: InputModifiers) -> None:
     lib.resource.update_meta(resource_id, meta_attrs_dict, force_flags)
 
     if wait_timeout >= 0:
-        deprecation_warning(reports.messages.ResourceWaitDeprecated().message)
         lib.cluster.wait_for_pcmk_idle(wait_timeout)
         print(get_resource_status_msg(lib, resource_id))

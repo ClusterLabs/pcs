@@ -4,9 +4,13 @@ from pcs.cli.common.errors import SEE_MAN_CHANGES, CmdLineInputError
 from pcs.cli.common.parse_args import (
     ArgsByKeywords,
     Argv,
+    InputModifiers,
     KeyValueParser,
     group_by_keywords,
+    wait_to_timeout,
 )
+from pcs.cli.reports.processor import ReportProcessorToConsole
+from pcs.common import reports
 
 
 @dataclass(frozen=True)
@@ -399,3 +403,16 @@ def __every_operation_needs_name() -> CmdLineInputError:
     return CmdLineInputError(
         "When using 'op' you must specify an operation name after 'op'"
     )
+
+
+def get_wait_timeout_deprecated(
+    report_processor: ReportProcessorToConsole, modifiers: InputModifiers
+) -> int:
+    wait_timeout = wait_to_timeout(modifiers.get("--wait"))
+    if wait_timeout >= 0:
+        report_processor.report(
+            reports.ReportItem.deprecation(
+                reports.messages.ResourceWaitDeprecated()
+            )
+        )
+    return wait_timeout
