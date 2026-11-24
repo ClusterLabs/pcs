@@ -1284,26 +1284,15 @@ def _disable_run_simulate(
 def disable(
     env: LibraryEnvironment,
     resource_or_tag_ids: StringCollection,
-    wait: WaitType = False,
     force_flags: reports.types.ForceFlags = (),
-):
+) -> None:
     """
     Disallow specified resources to be started by the cluster
 
     env -- provides all for communication with externals
     resource_or_tag_ids -- ids of the resources to become disabled, or in case
         of tag ids, all resources in tags are to be disabled
-    wait -- False: no wait, None: wait default timeout, int: wait timeout
     """
-    if wait is not False:
-        # deprecated in the first version of 0.12
-        env.report_processor.report(
-            reports.ReportItem.deprecation(
-                reports.messages.ResourceWaitDeprecated()
-            )
-        )
-
-    wait_timeout = env.ensure_wait_satisfiable(wait)
     cib = env.get_cib()
     resource_el_list, report_list = _find_resources_expand_tags(
         cib, resource_or_tag_ids
@@ -1340,20 +1329,14 @@ def disable(
     if env.report_processor.has_errors:
         raise LibraryError()
 
-    _push_cib_wait(
-        env,
-        wait_timeout,
-        resource_or_tag_ids,
-        _ensure_disabled_after_wait(True),
-    )
+    env.push_cib()
 
 
 def disable_safe(
     env: LibraryEnvironment,
     resource_or_tag_ids: list[str],
     strict: bool,
-    wait: WaitType = False,
-):
+) -> None:
     """
     Disallow specified resources to be started by the cluster only if there is
     no effect on other resources
@@ -1362,16 +1345,7 @@ def disable_safe(
     resource_or_tag_ids -- ids of the resources to become disabled, or in case
         of tag ids, all resources in tags are to be disabled
     strict -- if False, allow resources to be migrated
-    wait -- False: no wait, None: wait default timeout, int: wait timeout
     """
-    if wait is not False:
-        # deprecated in the first version of 0.12
-        env.report_processor.report(
-            reports.ReportItem.deprecation(
-                reports.messages.ResourceWaitDeprecated()
-            )
-        )
-
     if not env.is_cib_live:
         raise LibraryError(
             ReportItem.error(
@@ -1379,7 +1353,6 @@ def disable_safe(
             )
         )
 
-    wait_timeout = env.ensure_wait_satisfiable(wait)
     cib = env.get_cib()
     resource_el_list, report_list = _find_resources_expand_tags(
         cib, resource_or_tag_ids
@@ -1443,12 +1416,7 @@ def disable_safe(
         if env.report_processor.has_errors:
             raise LibraryError()
 
-    _push_cib_wait(
-        env,
-        wait_timeout,
-        disabled_resource_id_set,
-        _ensure_disabled_after_wait(True),
-    )
+    env.push_cib()
 
 
 def disable_simulate(
@@ -1507,28 +1475,14 @@ def disable_simulate(
     )
 
 
-def enable(
-    env: LibraryEnvironment,
-    resource_or_tag_ids: list[str],
-    wait: WaitType = False,
-):
+def enable(env: LibraryEnvironment, resource_or_tag_ids: list[str]) -> None:
     """
     Allow specified resources to be started by the cluster
 
     env -- provides all for communication with externals
     resource_or_tag_ids -- ids of the resources to become enabled, or in case
         of tag ids, all resources in tags are to be enabled
-    wait -- False: no wait, None: wait default timeout, int: wait timeout
     """
-    if wait is not False:
-        # deprecated in the first version of 0.12
-        env.report_processor.report(
-            reports.ReportItem.deprecation(
-                reports.messages.ResourceWaitDeprecated()
-            )
-        )
-
-    wait_timeout = env.ensure_wait_satisfiable(wait)
     cib = env.get_cib()
     resource_el_list, report_list = _find_resources_expand_tags(
         cib, resource_or_tag_ids
@@ -1548,12 +1502,8 @@ def enable(
         )
     ).has_errors:
         raise LibraryError()
-    _push_cib_wait(
-        env,
-        wait_timeout,
-        [str(el.get("id", "")) for el in resource_el_list],
-        _ensure_disabled_after_wait(False),
-    )
+
+    env.push_cib()
 
 
 def _resource_list_enable_disable(

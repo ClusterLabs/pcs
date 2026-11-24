@@ -898,10 +898,8 @@ Commands:
     enable <resource id | tag id>... [--wait[=n]]
         Allow the cluster to start the resources. Depending on the rest of the
         configuration (constraints, options, failures, etc), the resources may
-        remain stopped. If --wait is specified, pcs will wait up to 'n' seconds
-        for the resources to start and then return 0 if the resources are
-        started, or 1 if the resources have not yet started. If 'n' is not
-        specified it defaults to 60 minutes.
+        remain stopped.
+{wait_description}
 
     disable <resource id | tag id>... [--safe [--brief] [--no-strict]]
             [--simulate [--brief]] [--wait[=n]]
@@ -919,10 +917,7 @@ Commands:
         will be made and the effect of the changes will be printed instead. If
         --brief is also specified, only a list of affected resources not
         specified in the command will be printed.
-        If --wait is specified, pcs will wait up to 'n' seconds for the
-        resources to stop and then return 0 if the resources are stopped or 1
-        if the resources have not stopped. If 'n' is not specified it defaults
-        to 60 minutes.
+{wait_description}
 
     safe-disable <resource id | tag id>... [--brief] [--no-strict]
             [--simulate [--brief]] [--wait[=n]] [--force]
@@ -939,10 +934,7 @@ Commands:
         will be made and the effect of the changes will be printed instead. If
         --brief is also specified, only a list of affected resources not
         specified in the command will be printed.
-        If --wait is specified, pcs will wait up to 'n' seconds for the
-        resources to stop and then return 0 if the resources are stopped or 1
-        if the resources have not stopped. If 'n' is not specified it defaults
-        to 60 minutes.
+{wait_description}
         If --force is specified, checks for safe disable will be skipped.
 
     restart <resource id> [node] [--wait=n]
@@ -2077,18 +2069,13 @@ Commands:
 {failcount_show_desc}
 
     enable <stonith id>... [--wait[=n]]
-        Allow the cluster to use the stonith devices. If --wait is specified,
-        pcs will wait up to 'n' seconds for the stonith devices to start and
-        then return 0 if the stonith devices are started, or 1 if the stonith
-        devices have not yet started. If 'n' is not specified it defaults to 60
-        minutes.
+        Allow the cluster to use the stonith devices.
+{wait_description}
 
     disable <stonith id>... [--wait[=n]]
         Attempt to stop the stonith devices if they are running and disallow
-        the cluster to use them. If --wait is specified, pcs will wait up to
-        'n' seconds for the stonith devices to stop and then return 0 if the
-        stonith devices are stopped or 1 if the stonith devices have not
-        stopped. If 'n' is not specified it defaults to 60 minutes.
+        the cluster to use them.
+{wait_description}
 
     level [config] [{output_format_syntax}]
         Lists all of the fencing levels currently configured.

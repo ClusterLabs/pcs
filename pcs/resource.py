@@ -2161,7 +2161,7 @@ def resource_disable_cmd(
       * --safe - only disable if no other resource gets stopped or demoted
       * --simulate - do not push the CIB, print its effects
       * --no-strict - allow disable if other resource is affected
-      * --wait
+      * --wait - wait for the cluster to settle
     """
     if not argv:
         raise CmdLineInputError("You must specify resource(s) to disable")
@@ -2180,7 +2180,7 @@ def resource_disable_common(
       * --safe - only disable if no other resource gets stopped or demoted
       * --simulate - do not push the CIB, print its effects
       * --no-strict - allow disable if other resource is affected
-      * --wait
+      * --wait - wait for the cluster to settle
     """
     modifiers.ensure_only_supported(
         "-f",
@@ -2195,6 +2195,10 @@ def resource_disable_common(
     modifiers.ensure_not_incompatible("--simulate", {"-f", "--safe", "--wait"})
     modifiers.ensure_not_incompatible("--safe", {"-f", "--simulate"})
     modifiers.ensure_not_incompatible("--no-strict", {"-f"})
+    # deprecated in the first version of 0.12
+    wait_timeout = get_wait_timeout_deprecated(
+        lib.env.report_processor, modifiers
+    )
 
     if not argv:
         raise CmdLineInputError("You must specify resource(s) to disable")
@@ -2211,6 +2215,7 @@ def resource_disable_common(
             return
         print(result["plaintext_simulated_status"])
         return
+
     if modifiers.get("--safe") or modifiers.get("--no-strict"):
         if modifiers.get("--brief"):
             # Brief mode skips simulation output by setting the report processor
@@ -2219,12 +2224,12 @@ def resource_disable_common(
             lib.env.report_processor.suppress_reports_of_severity(
                 [reports.ReportItemSeverity.INFO]
             )
-        lib.resource.disable_safe(
-            argv,
-            not modifiers.get("--no-strict"),
-            modifiers.get("--wait"),
-        )
+        lib.resource.disable_safe(argv, not modifiers.get("--no-strict"))
+
+        if wait_timeout >= 0:
+            lib.cluster.wait_for_pcmk_idle(wait_timeout)
         return
+
     if modifiers.get("--brief"):
         raise CmdLineInputError(
             "'--brief' cannot be used without '--simulate' or '--safe'"
@@ -2232,7 +2237,10 @@ def resource_disable_common(
     force_flags = set()
     if modifiers.get("--force"):
         force_flags.add(reports.codes.FORCE)
-    lib.resource.disable(argv, modifiers.get("--wait"), force_flags)
+    lib.resource.disable(argv, force_flags)
+
+    if wait_timeout >= 0:
+        lib.cluster.wait_for_pcmk_idle(wait_timeout)
 
 
 def resource_safe_disable_cmd(
@@ -2244,7 +2252,7 @@ def resource_safe_disable_cmd(
       * --force - skip checks for safe resource disable
       * --no-strict - allow disable if other resource is affected
       * --simulate - do not push the CIB, print its effects
-      * --wait
+      * --wait - wait for the cluster to settle
     """
     modifiers.ensure_only_supported(
         "--brief", "--force", "--no-strict", "--simulate", "--wait"
@@ -2272,15 +2280,23 @@ def resource_enable_cmd(
 ) -> None:
     """
     Options:
-      * --wait
+      * --wait - wait for the cluster to settle
       * -f - CIB file
     """
     modifiers.ensure_only_supported("--wait", "-f")
+    modifiers.ensure_not_mutually_exclusive("-f", "--wait")
+    # deprecated in the first version of 0.12
+    wait_timeout = get_wait_timeout_deprecated(
+        lib.env.report_processor, modifiers
+    )
     if not argv:
         raise CmdLineInputError("You must specify resource(s) to enable")
     resources = argv
     check_is_not_stonith(lib, resources, "pcs stonith enable")
-    lib.resource.enable(resources, modifiers.get("--wait"))
+    lib.resource.enable(resources)
+
+    if wait_timeout >= 0:
+        lib.cluster.wait_for_pcmk_idle(wait_timeout)
 
 
 def resource_restart_cmd(

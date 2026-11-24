@@ -2079,13 +2079,19 @@
         pcs commands: resource disable, resource enable
       </description>
     </capability>
-    <capability id="pcmk.resource.enable-disable.wait" in-pcs="1" in-pcsd="1">
+    <capability id="pcmk.resource.enable-disable.wait" in-pcs="0" in-pcsd="0">
       <description>
+        Replaced by pcs.wait-for-the-cluster-to-settle and status.pcmk.wait.
+
         Wait for resources to start or stop.
 
-        pcs commands: resource disable --wait, resource enable --wait
+        pcs commands:
+          resource disable --wait
+          resource safe-disable --wait
+          resource enable --wait
         daemon urls:
           /api/v1/resource-disable/v1
+          /api/v1/resource-disable-safe/v1
           /api/v1/resource-enable/v1
       </description>
     </capability>
@@ -2226,7 +2232,7 @@
         removing these constraints no longer provide means for waiting for the
         changes to take effect.
 
-        See pcs.wait-for-the-cluster-to-settle
+        Replaced by pcs.wait-for-the-cluster-to-settle.
 
         daemon urls:
           /api/v1/resource-ban/v1
@@ -2565,8 +2571,10 @@
           /api/v1/resource-enable/v1
       </description>
     </capability>
-    <capability id="pcmk.stonith.enable-disable.wait" in-pcs="1" in-pcsd="1">
+    <capability id="pcmk.stonith.enable-disable.wait" in-pcs="0" in-pcsd="0">
       <description>
+        Replaced by pcs.wait-for-the-cluster-to-settle and status.pcmk.wait.
+
         Wait for resources to start or stop.
 
         pcs commands: stonith disable --wait, stonith enable --wait
@@ -2888,8 +2896,13 @@
           pcs resource ban
           pcs resource clear
           pcs resource create
+          pcs resource disable
+          pcs resource enable
           pcs resource move-with-constraint
+          pcs resource safe-disable
           pcs stonith create
+          pcs stonith disable
+          pcs stonith enable
       </description>
     </capability>
     <capability id="pcs.yes-to-confirm-commands" in-pcs="1" in-pcsd="0">
