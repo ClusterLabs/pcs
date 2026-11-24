@@ -4,6 +4,8 @@ from pcs.cli.common.errors import CmdLineInputError
 from pcs.cli.resource import command
 from pcs.common import reports
 
+from pcs_test.tools.custom_mock import MockLibraryReportProcessor
+from pcs_test.tools.fixture import deprecation
 from pcs_test.tools.misc import dict_to_modifiers
 
 RESOURCE_ID = "resource-id"
@@ -13,7 +15,7 @@ class ResourceMeta(TestCase):
     command = staticmethod(command.meta)
 
     def setUp(self):
-        self.lib = mock.Mock(spec_set=["resource", "cluster"])
+        self.lib = mock.Mock(spec_set=["env", "resource", "cluster"])
 
         self.lib.resource = mock.Mock(
             spec_set=[
@@ -22,6 +24,8 @@ class ResourceMeta(TestCase):
                 "is_any_resource_except_stonith",
             ]
         )
+        self.lib.env = mock.Mock(spec_set=["report_processor"])
+        self.lib.env.report_processor = MockLibraryReportProcessor()
         self.lib.resource.update_meta = self.update_meta = mock.Mock()
 
         mock_get_resource_status_msg_patcher = mock.patch(
@@ -40,17 +44,11 @@ class ResourceMeta(TestCase):
             mock.Mock()
         )
 
-        mock_deprecation_warning_patcher = mock.patch(
-            "pcs.cli.resource.command.deprecation_warning"
-        )
-        self.addCleanup(mock_deprecation_warning_patcher.stop)
-        self.mock_deprecation_warning = mock_deprecation_warning_patcher.start()
-
     def _assert_no_wait_or_stonith(self):
         self.lib.resource.is_any_stonith.assert_called_once_with([RESOURCE_ID])
         self.wait_for_pcmk_idle.assert_not_called()
         self.mock_get_resource_status_msg.assert_not_called()
-        self.mock_deprecation_warning.assert_not_called()
+        self.lib.env.report_processor.assert_reports([])
 
     def test_no_args(self):
         with self.assertRaises(CmdLineInputError) as cm:
@@ -59,6 +57,7 @@ class ResourceMeta(TestCase):
         self.lib.resource.is_any_stonith.assert_not_called()
         self.update_meta.assert_not_called()
         self.wait_for_pcmk_idle.assert_not_called()
+        self.lib.env.report_processor.assert_reports([])
 
     def test_duplicate_attrs(self):
         with self.assertRaises(CmdLineInputError) as cm:
@@ -127,9 +126,8 @@ class ResourceMeta(TestCase):
         )
         self.lib.resource.is_any_stonith.assert_called_once_with([RESOURCE_ID])
         self.wait_for_pcmk_idle.assert_called_once_with(0)
-        self.mock_deprecation_warning.assert_called_once_with(
-            "Ability of this command to accept 'wait' argument is "
-            "deprecated and will be removed in a future release."
+        self.lib.env.report_processor.assert_reports(
+            [deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED)]
         )
 
     @mock.patch("pcs.cli.resource.command.print")
@@ -147,9 +145,8 @@ class ResourceMeta(TestCase):
         self.mock_get_resource_status_msg.assert_called_once_with(
             mock.ANY, RESOURCE_ID
         )
-        self.mock_deprecation_warning.assert_called_once_with(
-            "Ability of this command to accept 'wait' argument is "
-            "deprecated and will be removed in a future release."
+        self.lib.env.report_processor.assert_reports(
+            [deprecation(reports.codes.RESOURCE_WAIT_DEPRECATED)]
         )
 
     def test_with_force(self):

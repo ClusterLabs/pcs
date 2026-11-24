@@ -2207,10 +2207,27 @@
         Ban a resource on a specified node and move a resource to a specified
         node by creating constraints. Provide means to remove the constraints.
         Applies to one specified resource. Optional parameters: a node, limiting
-        to a master role, a constraint lifetime. Optionally wait for the
-        constraints to take effect.
+        to a promoted role, a constraint lifetime.
+
+        For details about waiting for the changes to take effect, see
+        capabilities status.pcmk.wait, pcs.wait-for-the-cluster-to-settle and
+        pcmk.resource.ban-move-clear.no-wait
 
         pcs commands: pcs resource ( ban | clear | move-with-constraint )
+        daemon urls:
+          /api/v1/resource-ban/v1
+          /api/v1/resource-move/v1
+          /api/v1/resource-unmove-unban/v1
+      </description>
+    </capability>
+    <capability id="pcmk.resource.ban-move-clear.no-wait" in-pcs="0" in-pcsd="1">
+      <description>
+        Commands for banning and moving resources with constraints, and for
+        removing these constraints no longer provide means for waiting for the
+        changes to take effect.
+
+        See pcs.wait-for-the-cluster-to-settle
+
         daemon urls:
           /api/v1/resource-ban/v1
           /api/v1/resource-move/v1
@@ -2868,7 +2885,10 @@
           pcs node standby
           pcs node unmaintenance
           pcs node unstandby
+          pcs resource ban
+          pcs resource clear
           pcs resource create
+          pcs resource move-with-constraint
           pcs stonith create
       </description>
     </capability>

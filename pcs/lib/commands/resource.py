@@ -1868,17 +1868,14 @@ def move(
     node: str | None = None,
     master: bool = False,
     lifetime: str | None = None,
-    wait: WaitType = False,
 ) -> None:
     """
     Create a constraint to move a resource
 
-    LibraryEnvironment env
     resource_id -- id of a resource to be moved
     node -- node to move the resource to, ban on the current node if None
     master -- limit the constraint to the Promoted role
     lifetime -- lifespan of the constraint, forever if None
-    wait -- flag for controlling waiting for pacemaker idle mechanism
     """
     return _Move().run(
         env,
@@ -1886,7 +1883,6 @@ def move(
         node=node,
         promoted=master,
         lifetime=lifetime,
-        wait=wait,
     )
 
 
@@ -2190,16 +2186,20 @@ def _ensure_resource_moved_and_not_moved_back(
         raise ResourceMoveAutocleanSimulationFailure(False)
 
 
-def ban(env, resource_id, node=None, master=False, lifetime=None, wait=False):
+def ban(
+    env: LibraryEnvironment,
+    resource_id: str,
+    node: str | None = None,
+    master: bool = False,
+    lifetime: str | None = None,
+) -> None:
     """
     Create a constraint to keep a resource of a node
 
-    LibraryEnvironment env
-    string resource_id -- id of a resource to be banned
-    string node -- node to ban the resource on, ban on the current node if None
-    bool master -- limit the constraint to the Promoted role
-    string lifetime -- lifespan of the constraint, forever if None
-    mixed wait -- flag for controlling waiting for pacemaker idle mechanism
+    resource_id -- id of a resource to be banned
+    node -- node to ban the resource on, ban on the current node if None
+    master -- limit the constraint to the Promoted role
+    lifetime -- lifespan of the constraint, forever if None
     """
     return _Ban().run(
         env,
@@ -2207,7 +2207,6 @@ def ban(env, resource_id, node=None, master=False, lifetime=None, wait=False):
         node=node,
         promoted=master,
         lifetime=lifetime,
-        wait=wait,
     )
 
 
@@ -2320,15 +2319,6 @@ class _MoveBanTemplate:
         del resource_id
         return []
 
-    @staticmethod
-    def _report_wait_result(
-        resource_id,
-        node,
-        resource_running_on_before,
-        resource_running_on_after,
-    ):
-        raise NotImplementedError()
-
     def run(
         self,
         env: LibraryEnvironment,
@@ -2336,20 +2326,8 @@ class _MoveBanTemplate:
         node=None,
         promoted=False,
         lifetime=None,
-        wait: WaitType = False,
     ):
         # validate
-
-        if wait is not False:
-            # deprecated in the first version of 0.12
-            env.report_processor.report(
-                reports.ReportItem.deprecation(
-                    reports.messages.ResourceWaitDeprecated()
-                )
-            )
-
-        wait_timeout = env.ensure_wait_satisfiable(wait)  # raises on error
-
         cib = env.get_cib()
         resource_el, report_list = resource.common.find_one_resource(
             get_resources(cib), resource_id
@@ -2360,12 +2338,6 @@ class _MoveBanTemplate:
             report_list.extend(_nodes_exist_reports(cib, [node]))
         if env.report_processor.report_list(report_list).has_errors:
             raise LibraryError()
-
-        # get current status for wait processing
-        if wait_timeout >= 0:
-            resource_running_on_before = get_resource_state(
-                env.get_cluster_state(), resource_id
-            )
 
         # run the action
         stdout, stderr, retval = self._run_action(
@@ -2389,22 +2361,6 @@ class _MoveBanTemplate:
         env.report_processor.report(
             self._report_action_pcmk_success(resource_id, stdout, stderr)
         )
-
-        # process wait
-        if wait_timeout >= 0:
-            env.wait_for_idle(wait_timeout)
-            resource_running_on_after = get_resource_state(
-                env.get_cluster_state(), resource_id
-            )
-            if env.report_processor.report(
-                self._report_wait_result(
-                    resource_id,
-                    node,
-                    resource_running_on_before,
-                    resource_running_on_after,
-                )
-            ).has_errors:
-                raise LibraryError()
 
 
 class _Move(_MoveBanTemplate):
@@ -2435,20 +2391,6 @@ class _Move(_MoveBanTemplate):
             )
         ]
 
-    @staticmethod
-    def _report_wait_result(
-        resource_id,
-        node,
-        resource_running_on_before,
-        resource_running_on_after,
-    ):
-        return _move_wait_report(
-            resource_id,
-            node,
-            resource_running_on_before,
-            resource_running_on_after,
-        )
-
 
 class _Ban(_MoveBanTemplate):
     _is_ban = True
@@ -2471,64 +2413,22 @@ class _Ban(_MoveBanTemplate):
             reports.messages.ResourceBanPcmkSuccess(resource_id, stdout, stderr)
         )
 
-    @staticmethod
-    def _report_wait_result(
-        resource_id,
-        node,
-        resource_running_on_before,
-        resource_running_on_after,
-    ):
-        running_on_nodes = _resource_running_on_nodes(resource_running_on_after)
-        if node:
-            banned_nodes = frozenset([node])
-        else:
-            banned_nodes = _resource_running_on_nodes(
-                resource_running_on_before
-            )
-
-        severity = reports.item.ReportItemSeverity.info()
-        if not banned_nodes.isdisjoint(running_on_nodes) or (
-            resource_running_on_before and not running_on_nodes
-        ):
-            severity = reports.item.ReportItemSeverity.error()
-        if not resource_running_on_after:
-            return ReportItem(
-                severity,
-                reports.messages.ResourceDoesNotRun(resource_id),
-            )
-        return ReportItem(
-            severity,
-            reports.messages.ResourceRunningOnNodes(
-                resource_id,
-                resource_running_on_after,
-            ),
-        )
-
 
 def unmove_unban(
-    env, resource_id, node=None, master=False, expired=False, wait=False
-):
+    env: LibraryEnvironment,
+    resource_id: str,
+    node: str | None = None,
+    master: bool = False,
+    expired: bool = False,
+) -> None:
     """
     Remove all constraints created by move and ban
 
-    LibraryEnvironment env
-    string resource_id -- id of a resource to be unmoved/unbanned
-    string node -- node to limit unmoving/unbanning to, all nodes if None
-    bool master -- only remove constraints for Promoted role
-    bool expired -- only remove constrains which have already expired
-    mixed wait -- flag for controlling waiting for pacemaker idle mechanism
+    resource_id -- id of a resource to be unmoved/unbanned
+    node -- node to limit unmoving/unbanning to, all nodes if None
+    master -- only remove constraints for Promoted role
+    expired -- only remove constraints which have already expired
     """
-    if wait is not False:
-        # deprecated in the first version of 0.12
-        env.report_processor.report(
-            reports.ReportItem.deprecation(
-                reports.messages.ResourceWaitDeprecated()
-            )
-        )
-
-    # validate
-    wait_timeout = env.ensure_wait_satisfiable(wait)  # raises on error
-
     resource_el, report_list = resource.common.find_one_resource(
         get_resources(env.get_cib()), resource_id
     )
@@ -2570,14 +2470,6 @@ def unmove_unban(
             )
         )
     )
-
-    # process wait
-    if wait_timeout >= 0:
-        env.wait_for_idle(wait_timeout)
-        if env.report_processor.report(
-            info_resource_state(env.get_cluster_state(), resource_id)
-        ).has_errors:
-            raise LibraryError()
 
 
 def _find_resource_elem(

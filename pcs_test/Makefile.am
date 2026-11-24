@@ -124,6 +124,7 @@ EXTRA_DIST		= \
 			  tier0/cli/resource/test_config.py\
 			  tier0/cli/resource/test_create.py \
 			  tier0/cli/resource/test_defaults.py \
+			  tier0/cli/resource/test_move_ban_clear.py \
 			  tier0/cli/resource/test_parse_args.py \
 			  tier0/cli/resource/test_relations.py \
 			  tier0/cli/resource/test_remove.py \

@@ -894,7 +894,7 @@ class SuccessClone(ResourceTest):
 
 class Promotable(TestCase, AssertPcsMixin):
     def setUp(self):
-        self.lib = mock.Mock(spec_set=["resource"])
+        self.lib = mock.Mock(spec_set=["env", "resource"])
         self.resource = mock.Mock(spec_set=["create_as_clone"])
         self.lib.resource = self.resource
         # used for tests where code does not even call lib, so cib is not needed

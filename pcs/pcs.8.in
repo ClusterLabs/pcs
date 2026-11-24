@@ -204,7 +204,7 @@ If lifetime is specified then the constraint will expire after that time, otherw
 
 If \fB\-\-promoted\fR is used the scope of the command is limited to the Promoted role and promotable clone id must be used (instead of the resource id).
 
-If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the resource to move and then return 0 on success or 1 on error. If 'n' is not specified it defaults to 60 minutes.
+@WAIT_DESC_DOC@
 
 If you want the resource to preferably avoid running on some nodes but be able to failover to them use 'pcs constraint location avoids'.
 .TP
@@ -215,7 +215,7 @@ If \fB\-\-promoted\fR is used the scope of the command is limited to the Promote
 
 If lifetime is specified then the constraint will expire after that time, otherwise it defaults to infinity and the constraint can be cleared manually with 'pcs resource clear' or 'pcs constraint delete'. Lifetime is expected to be specified as ISO 8601 duration (see https://en.wikipedia.org/wiki/ISO_8601#Durations).
 
-If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the resource to move and then return 0 on success or 1 on error. If 'n' is not specified it defaults to 60 minutes.
+@WAIT_DESC_DOC@
 
 If you want the resource to preferably avoid running on some nodes but be able to failover to them use 'pcs constraint location avoids'.
 .TP
@@ -226,7 +226,7 @@ If \fB\-\-promoted\fR is used the scope of the command is limited to the Promote
 
 If \fB\-\-expired\fR is specified, only constraints with expired lifetimes will be removed.
 
-If \fB\-\-wait\fR is specified, pcs will wait up to 'n' seconds for the operation to finish (including starting and/or moving resources if appropriate) and then return 0 on success or 1 on error. If 'n' is not specified it defaults to 60 minutes.
+@WAIT_DESC_DOC@
 .TP
 standards
 List available resource agent standards supported by this installation (OCF, LSB, etc.).
@@ -1720,6 +1720,8 @@ Affected commands:
   node standby | unstandby
 .br
   resource create
+.br
+  resource move-with-constraint | ban | clear
 .br
   stonith create
 .SS "Pacemaker rules"
