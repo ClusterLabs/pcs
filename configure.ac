@@ -463,19 +463,27 @@ if test "x$tests_only" != "xyes"; then
 	if test "x$local_build" = "xyes"; then
 		PCS_CHECK_PYMOD([wheel], [], [], [buildonly])
 	fi
+	# cryptography is hard to build due to build dependencies
 	PCS_CHECK_PYMOD([cryptography])
-	PCS_CHECK_PYMOD([lxml])
-	PCS_CHECK_PYMOD([pycurl])
-	PCS_CHECK_PYMOD([pyparsing])
+	PCS_CHECK_PYMOD([lxml], [], [yes])
+	if test "x$module_bundled" = "xyes"; then
+		PCS_CHECK_BUILDREQ_PKG([libxml-2.0])
+		PCS_CHECK_BUILDREQ_PKG([libxslt])
+	fi
+	PCS_CHECK_PYMOD([pycurl], [], [yes])
+	if test "x$module_bundled" = "xyes"; then
+		PCS_CHECK_BUILDREQ_PKG([libcurl])
+		PCS_CHECK_BUILDREQ_PKG([openssl])
+	fi
+	# pyparsing uses build backend flit since 3.0.8
+	PCS_CHECK_PYMOD([pyparsing], [< 3.0.0], [yes])
 
 	# those are kind of problematic.
 	# use them all from the BaseOS or embedded them all as necessary (--enable-local-build)
 	PCS_CHECK_PYMOD([dacite], [], [yes])
 	PCS_CHECK_PYMOD([tornado], [>= 6.0.0], [yes])
 	PCS_CHECK_PYMOD([python-dateutil], [>= 2.7.0], [yes])
-	# setuptoools_scm is needed for bundling dateutil, this uses variables
-	# set by the CHECK_PYMOD macro, so it must be executed right after it
-	if test "x$bundle_module" = "xyes"; then
+	if test "x$module_bundled" = "xyes"; then
 		PCS_CHECK_PYMOD([setuptools-scm], [], [], [buildonly])
 		PCS_CHECK_PYMOD([six])
 	fi
@@ -573,6 +581,9 @@ if test "x$tests_only" != "xyes"; then
 		PCS_CHECK_GEM([childprocess], [>= 5.0.0])
 	fi
 	PCS_CHECK_GEM([curb])
+	if test "x$module_bundled" = "xyes"; then
+		PCS_CHECK_BUILDREQ_PKG([libcurl])
+	fi
 	PCS_CHECK_GEM([puma])
 	PCS_CHECK_GEM([rack])
 	# rack < 3.0 provides its own handler and does not need the rackup gem
