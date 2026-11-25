@@ -776,7 +776,7 @@
     </capability>
     <capability id="node.maintenance.wait" in-pcs="0" in-pcsd="0">
       <description>
-        Replaced by pcs.wait-for-the-cluster-to-settle.
+        Replaced by pcs.wait-for-the-cluster-to-settle and status.pcmk.wait.
 
         Wait for nodes to finish transition to or from maintenance mode.
 
@@ -815,7 +815,7 @@
     </capability>
     <capability id="node.standby.wait" in-pcs="0" in-pcsd="0">
       <description>
-        Replaced by pcs.wait-for-the-cluster-to-settle.
+        Replaced by pcs.wait-for-the-cluster-to-settle and status.pcmk.wait.
 
         Wait for nodes to finish transition to or from standby mode.
 
@@ -1732,7 +1732,7 @@
     </capability>
     <capability id="pcmk.resource.create.wait" in-pcs="0" in-pcsd="0">
       <description>
-        Replaced by pcs.wait-for-the-cluster-to-settle.
+        Replaced by pcs.wait-for-the-cluster-to-settle and status.pcmk.wait.
 
         Wait for the created resource to start.
 
@@ -2232,7 +2232,7 @@
         removing these constraints no longer provide means for waiting for the
         changes to take effect.
 
-        Replaced by pcs.wait-for-the-cluster-to-settle.
+        See pcs.wait-for-the-cluster-to-settle and status.pcmk.wait.
 
         daemon urls:
           /api/v1/resource-ban/v1
@@ -2474,7 +2474,7 @@
     </capability>
     <capability id="pcmk.stonith.create.wait" in-pcs="0" in-pcsd="0">
       <description>
-        Replaced by pcs.wait-for-the-cluster-to-settle.
+        Replaced by pcs.wait-for-the-cluster-to-settle and status.pcmk.wait.
 
         Wait for the created resource to start.
 
