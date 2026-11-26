@@ -124,11 +124,19 @@ EXTRA_DIST		= \
 			  tier0/cli/resource/test_config.py\
 			  tier0/cli/resource/test_create.py \
 			  tier0/cli/resource/test_defaults.py \
+			  tier0/cli/resource/test_enable_disable.py \
 			  tier0/cli/resource/test_move_ban_clear.py \
 			  tier0/cli/resource/test_parse_args.py \
 			  tier0/cli/resource/test_relations.py \
 			  tier0/cli/resource/test_remove.py \
 			  tier0/cli/resource/test_update.py \
+			  tier0/cli/stonith/__init__.py \
+			  tier0/cli/stonith/levels/__init__.py \
+			  tier0/cli/stonith/levels/test_output.py \
+			  tier0/cli/stonith/test_config.py\
+			  tier0/cli/stonith/test_create.py\
+			  tier0/cli/stonith/test_enable_disable.py \
+			  tier0/cli/stonith/test_update.py \
 			  tier0/cli/tag/__init__.py \
 			  tier0/cli/tag/test_command.py \
 			  tier0/cli/test_booth.py \
@@ -143,12 +151,6 @@ EXTRA_DIST		= \
 			  tier0/cli/test_rule.py \
 			  tier0/cli/test_status.py \
 			  tier0/cli/test_stonith.py \
-			  tier0/cli/stonith/__init__.py \
-			  tier0/cli/stonith/levels/__init__.py \
-			  tier0/cli/stonith/levels/test_output.py \
-			  tier0/cli/stonith/test_config.py\
-			  tier0/cli/stonith/test_create.py\
-			  tier0/cli/stonith/test_update.py \
 			  tier0/common/__init__.py \
 			  tier0/common/communication/__init__.py \
 			  tier0/common/communication/test_logger.py \

@@ -805,17 +805,25 @@ def delete_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
 def enable_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     """
     Options:
-      * --wait
+      * --wait - wait for the cluster to settle
       * -f - CIB file
     """
     modifiers.ensure_only_supported("--wait", "-f")
+    modifiers.ensure_not_mutually_exclusive("-f", "--wait")
+    # deprecated in the first version of 0.12
+    wait_timeout = get_wait_timeout_deprecated(
+        lib.env.report_processor, modifiers
+    )
     if not argv:
         raise CmdLineInputError(
             "You must specify stonith resource(s) to enable"
         )
     resources = argv
     check_is_stonith(lib, resources, "pcs resource enable")
-    lib.resource.enable(resources, modifiers.get("--wait"))
+    lib.resource.enable(resources)
+
+    if wait_timeout >= 0:
+        lib.cluster.wait_for_pcmk_idle(wait_timeout)
 
 
 def disable_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
@@ -823,7 +831,7 @@ def disable_cmd(lib: Any, argv: Argv, modifiers: InputModifiers) -> None:
     Options:
       * -f - CIB file
       * --force
-      * --wait
+      * --wait - wait for the cluster to settle
     """
     if not argv:
         raise CmdLineInputError(
