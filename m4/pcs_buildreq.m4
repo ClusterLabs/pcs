@@ -1,11 +1,15 @@
-dnl Macros checking additional build dependencies (typically devel packages)
-dnl needed to build bundled python modules and ruby gems from source, and
-dnl recording them as rpm BuildRequires into rpm/bundle_buildrequires.txt
-dnl (consumed by Makefile.am to fill @bundlebuildreqs@ in the spec).
+dnl Macros for checking and recording rpm BuildRequires of packages detected
+dnl via pkg-config (devel packages shipping .pc files). They are not limited
+dnl to dependencies of bundled things: PCS_CHECK_BUILDREQ_PKG can check and
+dnl record any package that provides a *.pc file. The current (and so far
+dnl only) use is additional build dependencies needed to build bundled python
+dnl modules and ruby gems from source - PCS_CHECK_BUILDREQ_PKG is called when
+dnl PCS_CHECK_PYMOD / PCS_CHECK_GEM set module_bundled=yes - and the records
+dnl are stored in rpm/bundle_buildrequires.txt (consumed by Makefile.am to
+dnl fill @bundlebuildreqs@ in the spec), which is where that bundle-specific
+dnl file name comes from.
 dnl
 dnl PCS_BUILDREQ_INIT must be called once before any other macro from this file.
-dnl PCS_CHECK_BUILDREQ_PKG is meant to be called only when PCS_CHECK_PYMOD /
-dnl PCS_CHECK_GEM set module_bundled=yes.
 
 # PCS_BUILDREQ_INIT
 # Truncate the BuildRequires list so a reconfigure starts from a clean slate.
@@ -41,10 +45,11 @@ AC_DEFUN([PCS_RECORD_BUILDREQ], [
 # rpm-dep defaults to "pkgconfig(<pkgconfig-module>)" which rpm provides
 # automatically for every .pc file.
 #
-# Meant for native (C/C++) system libraries which compiled extensions of
-# bundled modules link against, detected via the .pc file shipped by their
-# devel package. Not for python modules or ruby gems, those are handled by
-# PCS_CHECK_PYMOD / PCS_CHECK_GEM.
+# Meant for native (C/C++) system libraries, detected via the .pc file
+# shipped by their devel package. Any such library can be checked and
+# recorded, not only ones which compiled extensions of bundled modules link
+# against - that is just the current use. Not for python modules or ruby
+# gems, those are handled by PCS_CHECK_PYMOD / PCS_CHECK_GEM.
 #
 # The pkgconfig-module is the name of the .pc file without the suffix, e.g.
 # libxml-2.0 for libxml-2.0.pc. Find it with
