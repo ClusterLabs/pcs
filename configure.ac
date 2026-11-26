@@ -419,14 +419,16 @@ AC_DEFUN([PCS_BUNDLE_GEM], [
 # PCS_CHECK_GEM([module], [version], [default=yes], [record_mode])
 # Set the third argument to "yes" for Ruby default gems (gems shipped with Ruby
 # itself). Default gems are recorded into a separate rpm requirements list and
-# are only added to the Gemfile in a full local build; see below. The fourth
-# argument controls how the gem is recorded as an rpm rubygem() dependency:
+# are only added to the Gemfile (for bundling) in a full local build, or when
+# their installed version does not satisfy the requirement - the bundled copy
+# then shadows the Ruby built-in one; see below. The fourth argument controls
+# how the gem is recorded as an rpm rubygem() dependency:
 #   (empty)   - record for both BuildRequires and Requires
 #   buildonly - record for BuildRequires only (build-time deps, e.g. test-unit)
 #   norecord  - do not record (e.g. kept hardcoded in the spec)
 # A gem installed with a version not matching the requirement is treated the
 # same as a missing one (it gets bundled in a local build) instead of failing
-# configure, mirroring PCS_CHECK_PYMOD.
+# configure, mirroring PCS_CHECK_PYMOD. This applies to default gems as well.
 AC_DEFUN([PCS_CHECK_GEM], [
 	AC_RUBY_GEM([$1], [$2], [bundle_module=no], [bundle_module=yes], [bundle_module=yes])
 	if test "x$local_build" != "xyes" && test "x$bundle_module" = "xyes"; then
@@ -449,7 +451,7 @@ AC_DEFUN([PCS_CHECK_GEM], [
 	# additional build dependencies with PCS_CHECK_BUILDREQ_PKG.
 	module_bundled=no
 	if test "x$local_build" = "xyes"; then
-		if test "x$individual_bundling" != "xyes" || { test "x$3" != "xyes" && test "x$bundle_module" = "xyes"; }; then
+		if test "x$individual_bundling" != "xyes" || test "x$bundle_module" = "xyes"; then
 			module_bundled=yes
 		fi
 	fi
@@ -462,17 +464,20 @@ AC_DEFUN([PCS_CHECK_GEM], [
 	# so no rpm rubygem() dependency is generated.
 	# Non-default and default gems are recorded into separate lists (consumed
 	# together by Makefile.am as BuildRequires). Default gems ship with Ruby and
-	# are always present on the system, so their recording does not depend on
-	# bundle_module. Gems needed at runtime are additionally recorded into
+	# are therefore always present on the system; they are recorded only when
+	# not bundled, i.e. when their installed version satisfies the requirement.
+	# Gems needed at runtime are additionally recorded into
 	# gem_requires.txt (Requires). The record mode (fourth argument, see above)
 	# applies to default and non-default gems alike, so e.g. a default gem whose
 	# rubygem() Provides is missing on some distro can be set to norecord.
 	gem_record_file=""
 	if test "x$local_build" != "xyes" || test "x$individual_bundling" = "xyes"; then
-		if test "x$3" = "xyes"; then
-			gem_record_file=gem_requirements_default.txt
-		elif test "x$bundle_module" != "xyes"; then
-			gem_record_file=gem_requirements.txt
+		if test "x$bundle_module" != "xyes"; then
+			if test "x$3" = "xyes"; then
+				gem_record_file=gem_requirements_default.txt
+			else
+				gem_record_file=gem_requirements.txt
+			fi
 		fi
 	fi
 	if test "x$4" != "xnorecord" && test "x$gem_record_file" != "x"; then
@@ -482,9 +487,12 @@ AC_DEFUN([PCS_CHECK_GEM], [
 		fi
 	fi
 	# Add the gem to the Gemfile so it gets bundled or pinned. Default gems ship
-	# with Ruby, so they only need to be bundled in a full local build; in every
-	# other mode they are used from the system and must stay out of the Gemfile.
-	if test "x$3" != "xyes" || { test "x$local_build" = "xyes" && test "x$individual_bundling" != "xyes"; }; then
+	# with Ruby, so they only need to be bundled in a full local build or when
+	# the system version does not satisfy the requirement (bundle_module=yes):
+	# the bundled copy then shadows the Ruby built-in one, same as with json
+	# which RHEL/Fedora ship as a regular gem; in every other mode they are
+	# used from the system and must stay out of the Gemfile.
+	if test "x$3" != "xyes" || test "x$bundle_module" = "xyes" || { test "x$local_build" = "xyes" && test "x$individual_bundling" != "xyes"; }; then
 		gem_version=""
 		if test "x$bundle_module" != "xyes" && test "x$individual_bundling" = "xyes"; then
 			# Individual bundling is on and the gem is installed in the system:
@@ -618,8 +626,9 @@ if test "x$tests_only" != "xyes"; then
 	# Default Gems
 	# The third PCS_CHECK_GEM argument flags these as Ruby default gems: they are
 	# recorded into the default-gems list and are only added to the Gemfile (for
-	# bundling) in a full local build. Checked in all modes so the macro records
-	# them regardless of individual bundling.
+	# bundling) in a full local build or when the installed version does not
+	# satisfy the requirement. Checked in all modes so the macro records them
+	# regardless of individual bundling.
 	PCS_CHECK_GEM([date], [], [yes])
 	PCS_CHECK_GEM([etc], [], [yes])
 	PCS_CHECK_GEM([fileutils], [], [yes])
