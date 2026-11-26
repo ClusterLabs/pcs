@@ -31,13 +31,13 @@ AC_DEFUN([AC_PIP_MODULE],[
 		if test "x$checkver" = "xok"; then
 			AC_MSG_RESULT([yes (detected: $curversion)])
 			eval AS_TR_CPP(HAVE_PIPMOD_$module)=yes
-			eval AS_TR_CPP(HAVE_PIPMOD_$module_version)=$curversion
+			eval AS_TR_CPP(HAVE_PIPMOD_${module}_version)=$curversion
 			$3
 		else
 			if test -n "$5"; then
 				AC_MSG_RESULT([no (detected: $curversion)])
 				eval AS_TR_CPP(HAVE_PIPMOD_$module)=no
-				eval AS_TR_CPP(HAVE_PIPMOD_$module_version)=$curversion
+				eval AS_TR_CPP(HAVE_PIPMOD_${module}_version)=$curversion
 				$5
 			else
 				AC_MSG_ERROR([python $module version $curversion detected. Requested "$comp $tmpversion"])
@@ -46,7 +46,7 @@ AC_DEFUN([AC_PIP_MODULE],[
 	else
 		AC_MSG_RESULT([no])
 		eval AS_TR_CPP(HAVE_PIPMOD_$module)=no
-		eval AS_TR_CPP(HAVE_PIPMOD_$module_version)=""
+		eval AS_TR_CPP(HAVE_PIPMOD_${module}_version)=""
 		$4
 	fi
 ])

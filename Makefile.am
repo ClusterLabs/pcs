@@ -40,6 +40,11 @@ MAINTAINERCLEANFILES	= \
 
 SPEC			= rpm/$(PACKAGE_NAME).spec
 
+# Options passed to configure inside the spec file %build section controlling
+# how dependencies are bundled during rpm build. Overridable on the command
+# line, e.g. make rpm/pcs.spec SPEC_CONFIGURE_BUNDLE_OPTIONS="--enable-local-build"
+SPEC_CONFIGURE_BUNDLE_OPTIONS ?= --enable-local-build --enable-individual-bundling --enable-use-local-cache-only
+
 TARFILES		= $(PACKAGE_NAME)-$(VERSION).tar.bz2 \
 			  $(PACKAGE_NAME)-$(VERSION).tar.gz \
 			  $(PACKAGE_NAME)-$(VERSION).tar.xz
@@ -52,16 +57,20 @@ PCS_PYTHON_PACKAGES = pcs/ pcs_test/
 
 # options for any pip command
 pipopts	= --disable-pip-version-check --verbose
-# options for pip install
-# --no-build-isolation - disables installing dependencies for embedded python
-#   modules. All dependencies are installed by autotools in our case.
-pipinstallopts = --force-reinstall --no-build-isolation --no-warn-script-location
+# common pip install options
+pipinstallopts = --force-reinstall --no-warn-script-location
+# --no-build-isolation - prevents pip from downloading and installing build
+#   dependencies of embedded python modules. The build dependencies (e.g.
+#   setuptools, wheel) must already be present in the build environment; their
+#   presence is checked by configure.
+pipinstallopts_no_isolation = --no-build-isolation
 
 # dependency management
 
 # 1 - sources directory - with python package sources
 # 2 - destination directory - python package will be installed into the
 #     `packages` subdirectory of this destination directory
+# 3 - options for pip install
 # switched to pip installation since setup.py installation is deprecated
 # --no-binary - disallows downloading wheels
 # || exit 1 - avoids masking failures in bash for loops
@@ -69,7 +78,7 @@ define build_python_bundle
 	cd $(1) && \
 	PYTHONPATH=$(2)/packages/ \
 	LC_ALL=C.utf8 \
-	${PIP} ${pipopts} install ${pipinstallopts} --no-binary :all: --target $(2)/packages . || exit 1
+	${PIP} ${pipopts} install $(3) --no-binary :all: --target $(2)/packages . || exit 1
 endef
 
 PYAGENTX_URI="https://github.com/ondrejmular/pyagentx/archive/v${PYAGENTX_VERSION}.tar.gz"
@@ -84,7 +93,7 @@ endif
 
 stamps/download_python_deps: rpm/requirements.txt stamps/download_pyagentx dev_requirements.txt
 if ENABLE_DOWNLOAD
-	PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring $(PIP) $(pipopts) download --no-deps --no-build-isolation --dest rpm/ --no-binary :all: --requirement rpm/requirements.txt
+	PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring $(PIP) $(pipopts) download --no-deps --dest rpm/ --no-binary :all: --requirement rpm/requirements.txt
 endif
 	touch $@
 
@@ -109,16 +118,27 @@ endif
 stamps/install_python_embedded_mods_local: stamps/untar_python_src
 if LOCAL_BUILD
 	for i in ${abs_top_builddir}/$(PCS_BUNDLED_DIR_LOCAL)/src/*; do \
-		$(call build_python_bundle,$$i,/${abs_top_builddir}/$(PCS_BUNDLED_DIR_LOCAL)); \
+		$(call build_python_bundle,$$i,/${abs_top_builddir}/$(PCS_BUNDLED_DIR_LOCAL),${pipinstallopts}); \
 	done;
 endif
 	touch $@
 
 install_python_embedded_mods:
 if LOCAL_BUILD
+if ENABLE_DOWNLOAD
+# lets pip download and install build dependencies of embedded python modules
 	for i in ${abs_top_builddir}/$(PCS_BUNDLED_DIR_LOCAL)/src/*; do \
-		$(call build_python_bundle,$$i,$(or ${DESTDIR}, /)/$(PCS_BUNDLED_DIR)); \
+		$(call build_python_bundle,$$i,$(or ${DESTDIR}, /)/$(PCS_BUNDLED_DIR),\
+			${pipinstallopts}); \
 	done;
+else
+# ${pipinstallopts_no_isolation} - prevents pip from downloading and installing
+#   build dependencies of embedded python modules.
+	for i in ${abs_top_builddir}/$(PCS_BUNDLED_DIR_LOCAL)/src/*; do \
+		$(call build_python_bundle,$$i,$(or ${DESTDIR}, /)/$(PCS_BUNDLED_DIR),\
+			${pipinstallopts} ${pipinstallopts_no_isolation}); \
+	done;
+endif
 endif
 
 stamps/install_ruby_deps_local:
@@ -128,19 +148,61 @@ if ENABLE_DOWNLOAD
 	rm -rf .bundle Gemfile.lock
 	$(MKDIR_P) .bundle
 	echo '---' > .bundle/config
+if INDIVIDUAL_BUNDLING
+else
+# Vendor every gem into pcsd/vendor/bundle instead of using system gems.
+# BUNDLE_PATH makes bundler install all gems there, including ones also
+# installed system-wide, producing a self-contained bundle;
+# BUNDLE_DISABLE_SHARED_GEMS states that explicitly.
+#
+# BUNDLE_PATH is essential: without it bundler shares system gems, and then
+# a plain `bundle install` silently references a system-installed gem
+# instead of vendoring it (incomplete bundle). `bundle install --redownload`
+# does not help either: although --redownload is meant to force downloading
+# every gem, a gem already present system-wide is not downloaded (contrary
+# to what --redownload promises), so the install then fails because its .gem
+# file is missing.
 	echo 'BUNDLE_DISABLE_SHARED_GEMS: "true"' >> .bundle/config
 	echo 'BUNDLE_PATH: "$(PCSD_BUNDLED_DIR_ROOT_LOCAL)"' >> .bundle/config
 	echo 'BUNDLE_CACHE_PATH: "$(PCSD_BUNDLED_CACHE_DIR)"' >> .bundle/config
-	echo 'BUNDLE_BUILD: \"$(ruby_LIBS)\"' >> .bundle/config
+endif
 	echo 'BUNDLE_TIMEOUT: 30' >> .bundle/config
 	echo 'BUNDLE_RETRY: 30' >> .bundle/config
 	echo 'BUNDLE_JOBS: 1' >> .bundle/config
 	echo 'BUNDLE_FORCE_RUBY_PLATFORM: "true"' >> .bundle/config
-	$(BUNDLE) --redownload
+if INDIVIDUAL_BUNDLING
+# Individual bundling reuses system gems and bundles only the missing ones,
+# so BUNDLE_PATH / vendoring isolation (see the full local build above) is
+# intentionally NOT set here - it would vendor a private copy of every gem.
+# Bundler has no single option for reusing system gems, so we achieve it by
+# pinning the system gems to their installed versions in the Gemfile (done in
+# configure.ac); otherwise bundler resolves them to another version and
+# downloads it. GEM_HOME/GEM_PATH point bundler at the system gem locations
+# plus our vendor dir.
+#
+# Do NOT add --prefer-local: it makes bundler avoid fetching gems missing
+# locally and skews resolution - a missing transitive gem makes it backtrack
+# to an ancient version that does not need it (observed: sinatra 1.0 because
+# its transitive mustermann dependency was not installed). A plain
+# `bundle install` resolves against the remote index and picks newest.
+	GEM_HOME="${abs_top_builddir}/${PCSD_BUNDLED_DIR_ROOT_LOCAL}" \
+		GEM_PATH="$$GEM_HOME:$$(gem env path)" \
+		$(BUNDLE) install
+else
+	$(BUNDLE) install
 	cp -rp $(PCSD_BUNDLED_DIR_LOCAL)/* $(PCSD_BUNDLED_DIR_ROOT_LOCAL)/
 	rm -rf $$(realpath $(PCSD_BUNDLED_DIR_LOCAL)/../)
-	rm -rf .bundle Gemfile.lock
+endif
+# Remove .bundle so that `bundle exec` (used by pcsd-tests) does not read
+# BUNDLE_PATH and instead resolves the gems through GEM_HOME against the
+# flattened pcsd/vendor/bundle layout. Gemfile.lock is kept.
+	rm -rf .bundle
 else
+# No bundle resolution happens in a cache-only build, so remove any Gemfile.lock
+# left over from a previous full-local/individual build in the same tree. Its
+# presence is used (in the $(SPEC) rule) to decide how to generate the
+# "Provides: bundled(...)" lines, so a stale one would mislead that detection.
+	rm -f Gemfile.lock
 	with_cflags=""; \
 	if test "x$(ruby_CFLAGS)" != "x"; then \
 		with_cflags='--with-cflags=$(ruby_CFLAGS)'; \
@@ -185,7 +247,7 @@ install-exec-local: install_python_embedded_mods stamps/install_ruby_deps_local
 		$(MKDIR_P) ${DESTDIR}/$(SBINDIR); \
 		$(MKDIR_P) ${DESTDIR}/${prefix}/local/sbin/; \
 	fi
-	${PIP} ${pipopts} install ${pipinstallopts} \
+	${PIP} ${pipopts} install ${pipinstallopts} ${pipinstallopts_no_isolation} \
 		--root=$(or ${DESTDIR}, /) \
 		--prefix=${prefix} ${EXTRA_SETUP_OPTS} .
 	if test "$$(realpath ${DESTDIR}/$(prefix)/bin)" != "$$(realpath ${DESTDIR}/$(SBINDIR))"; then \
@@ -314,6 +376,36 @@ if DEV_TESTS
 	$(DIFF) typos_known typos_new
 endif
 
+# Report python modules installed in the bundle (e.g. runtime dependencies
+# pulled in by pip) which are not declared in rpm/requirements.txt and thus get
+# no rpm Source and bundled() Provides. Declare them with PCS_CHECK_PYMOD in
+# configure.ac. Exits with non-zero status if any is found, it is up to the
+# caller to treat that as an error or a warning. Not run by the build itself.
+# Override BUNDLED_PYTHON_PACKAGES_DIR to check an installed bundle, e.g.
+# make bundled_python_deps_check \
+#   BUNDLED_PYTHON_PACKAGES_DIR=$DESTDIR/usr/lib64/pcs/pcs_bundled/packages
+BUNDLED_PYTHON_PACKAGES_DIR ?= ${abs_top_builddir}/$(PCS_BUNDLED_DIR_LOCAL)/packages
+# normalize python package names the way pip does (PEP 503)
+NORMALIZE_PYNAME = tr 'A-Z' 'a-z' | sed -E -e 's/[-_.]+/-/g'
+.PHONY: bundled_python_deps_check
+bundled_python_deps_check:
+	@if ! test -d "$(BUNDLED_PYTHON_PACKAGES_DIR)"; then \
+		echo "Bundled python packages directory $(BUNDLED_PYTHON_PACKAGES_DIR) not found"; \
+		exit 1; \
+	fi; \
+	declared="`{ sed -E -e 's/[<>=!~;[ ].*//' ${abs_top_builddir}/rpm/requirements.txt 2>/dev/null; echo pyagentx; } \
+		| $(NORMALIZE_PYNAME) | $(SORT) -u`"; \
+	undeclared="`ls "$(BUNDLED_PYTHON_PACKAGES_DIR)" \
+		| sed -n -E -e 's/^(.*)-[^-]+\.dist-info$$/\1/p' \
+		| $(NORMALIZE_PYNAME) | $(SORT) -u \
+		| $(AWK) -v d="$$declared" 'BEGIN { n = split(d, a, "\n"); for (i = 1; i <= n; i++) known[a[i]] = 1 } !($$0 in known)'`"; \
+	if test -n "$$undeclared"; then \
+		echo "Python modules bundled but not declared in rpm/requirements.txt (add them with PCS_CHECK_PYMOD):"; \
+		echo "$$undeclared" | sed -e 's/^/  /'; \
+		exit 1; \
+	fi; \
+	echo "All bundled python modules are declared"
+
 .PHONY: typos_known
 typos_known:
 if DEV_TESTS
@@ -412,14 +504,15 @@ clean-local: test-tree-clean
 distclean-local:
 	rm -rf Gemfile
 	rm -rf .mypy_cache
-	rm -rf rpm/requirements.txt rpm/Gemfile rpm/pcs-* build/
+	rm -rf rpm/requirements.txt rpm/py_buildrequires.txt rpm/py_requires.txt rpm/bundle_buildrequires.txt rpm/gem_requirements.txt rpm/gem_requirements_default.txt rpm/gem_requires.txt rpm/Gemfile rpm/pcs-* build/
 	rm -rf stamps
 	rm -rf ${abs_top_builddir}/${PCS_BUNDLED_DIR_LOCAL} ${abs_top_builddir}/${PCSD_BUNDLED_DIR_ROOT_LOCAL}
 	rm -rf $(filter-out \
 	         $(top_builddir)/m4/ac_compare_versions.m4 \
 	         $(top_builddir)/m4/ac_pip_module.m4 \
 		 $(top_builddir)/m4/ac_ruby_gem.m4 \
-		 $(top_builddir)/m4/ax_prog_date.m4, \
+		 $(top_builddir)/m4/ax_prog_date.m4 \
+		 $(top_builddir)/m4/pcs_buildreq.m4, \
 		 $(wildcard $(top_builddir)/m4/*.m4))
 
 # release/versioning
@@ -442,7 +535,86 @@ gen-ChangeLog:
 	fi
 
 ## make rpm/srpm section.
-$(SPEC): $(SPEC).in .version config.status stamps/download_python_deps stamps/download_rpm_ruby_deps
+
+# awk program generating the rpm "Provides: bundled(rubygem-<gem>) = <version>"
+# lines (the rubygem-<gem> package name form, as used by Fedora rubygems)
+# from Gemfile.lock. It prints one Provides for every gem resolved in the
+# Gemfile.lock "GEM/specs:" section, except gems listed in the
+# rpm/gem_requirements*.txt files - those are used from the system and are
+# already emitted as "Requires: rubygem(<gem>)". The requirements files must be
+# passed to awk before Gemfile.lock so the skip set is complete when parsing it.
+define GEMBUNDLE_AWK
+# collect system gems to skip (requirements files hold one bare name per line)
+	FILENAME ~ /gem_requirements/ { skip[$$1] = 1; next }
+# track the GEM/specs: section of Gemfile.lock
+	/^GEM$$/ { in_gem = 1; next }
+	/^[A-Za-z]/ { in_gem = 0 }
+	in_gem && /^  specs:/ { in_specs = 1; next }
+# Every resolved gem (direct or transitive) is a 4-space line carrying its
+# exact version. The 6-space lines under it are that gem's dependency
+# declarations (name + version constraint, not a resolved version) and only
+# repeat gems that already have their own 4-space line, so match 4 spaces only.
+	in_gem && in_specs && /^    [^ ]/ {
+		line = $$0
+		sub(/^    /, "", line)
+		name = line; sub(/ .*/, "", name)
+		version = line; sub(/^[^(]*\(/, "", version); sub(/\).*/, "", version)
+		if (!(name in skip)) print "Provides: bundled(rubygem-" name ") = " version
+	}
+endef
+export GEMBUNDLE_AWK
+
+# awk program generating the rpm "Provides: bundled(python3dist(<module>)) =
+# <version>" lines for the bundled python modules, module names normalized the
+# way rpm python3dist() names are (lowercase, runs of "-", "_", "." become "-").
+# It is fed the rpm/py_buildrequires.txt file first (one
+# "python3dist(<name>) ..." per line) to build the set of modules used
+# from the system, then the bundled tarball basenames ("<name>-<version>") on
+# stdin ("-"); it prints a Provides for every bundled module except the system
+# ones (already emitted as "Requires: python3dist(<module>)") and dataclasses.
+define PYBUNDLE_AWK
+# collect system modules to skip from py_buildrequires.txt
+	FILENAME != "-" {
+		line = $$0
+		sub(/^python3dist\(/, "", line)
+		sub(/\).*/, "", line)
+		line = tolower(line); gsub(/[-_.]+/, "-", line)
+		skip[line] = 1
+		next
+	}
+# remaining input lines are bundled tarball basenames: <name>-<version>
+	/^dataclasses-/ { next }
+	NF {
+		name = $$0; sub(/-[^-]*$$/, "", name)
+		version = $$0; sub(/^.*-/, "", version)
+		name = tolower(name); gsub(/[-_.]+/, "-", name)
+		if (!(name in skip)) print "Provides: bundled(python3dist(" name ")) = " version
+	}
+endef
+export PYBUNDLE_AWK
+
+# Track the values of make variables that only affect $(SPEC) from inside its
+# recipe (SPEC_CONFIGURE_BUNDLE_OPTIONS, CI_BRANCH) in stamp files so that
+# $(SPEC) can depend on them as normal file prerequisites. Each stamp recipe
+# runs on every make invocation (it depends on the phony FORCE target), but it
+# only rewrites the stamp file - bumping its timestamp - when the value actually
+# changes. That way changing one of these variables on the command line forces
+# the spec to be regenerated, while repeated builds with unchanged values do
+# not.
+.PHONY: FORCE
+FORCE:
+
+stamps/spec_configure_bundle_options: FORCE
+	@if [ ! -f $@ ] || [ "`cat $@`" != "$(SPEC_CONFIGURE_BUNDLE_OPTIONS)" ]; then \
+		echo "$(SPEC_CONFIGURE_BUNDLE_OPTIONS)" > $@; \
+	fi
+
+stamps/spec_ci_branch: FORCE
+	@if [ ! -f $@ ] || [ "`cat $@`" != "$(CI_BRANCH)" ]; then \
+		echo "$(CI_BRANCH)" > $@; \
+	fi
+
+$(SPEC): $(SPEC).in .version config.status stamps/download_python_deps stamps/download_rpm_ruby_deps stamps/spec_configure_bundle_options stamps/spec_ci_branch
 	rm -f $@-t $@
 	date="`LC_ALL=C $(UTC_DATE_AT)$(SOURCE_EPOCH) "+%a %b %d %Y"`" && \
 	gvgver="`cd $(abs_srcdir); make/git-version-gen --fallback $(VERSION) .tarball-version .gitarchivever`" && \
@@ -472,6 +644,7 @@ $(SPEC): $(SPEC).in .version config.status stamps/download_python_deps stamps/do
 			-e "s#@pcs_bundled_dir@#${PCS_BUNDLED_DIR_LOCAL}#g" \
 			-e "s#@pyversion@#${PYVERSION}#g" \
 			-e "s#@cirpmworkarounds@#${CIRPMWORKAROUNDS}#g" \
+			-e "s#@specconfigurebundleoptions@#$(SPEC_CONFIGURE_BUNDLE_OPTIONS)#g" \
 		$(abs_srcdir)/$@.in > $@-t; \
 	else \
 		sed \
@@ -483,6 +656,7 @@ $(SPEC): $(SPEC).in .version config.status stamps/download_python_deps stamps/do
 			-e "s#@pcs_bundled_dir@#${PCS_BUNDLED_DIR_LOCAL}#g" \
 			-e "s#@pyversion@#${PYVERSION}#g" \
 			-e "s#@cirpmworkarounds@#${CIRPMWORKAROUNDS}#g" \
+			-e "s#@specconfigurebundleoptions@#$(SPEC_CONFIGURE_BUNDLE_OPTIONS)#g" \
 		$(abs_srcdir)/$@.in > $@-t; \
 	fi; \
 	if [ -z "$(CI_BRANCH)" ]; then \
@@ -495,7 +669,8 @@ $(SPEC): $(SPEC).in .version config.status stamps/download_python_deps stamps/do
 	pylist="`ls rpm/*.tar.gz | grep -v ^rpm/pyagentx- | grep -v ^rpm/pcs- | sed -e 's#rpm/##g' -e 's#.tar.gz##'`" && \
 	pysrc="`base=42; for i in $$pylist; do echo 'Source'$$base': '$$i'.tar.gz' && let "base=base+1"; done`" && \
 	$(AWK) -i inplace -v r="$$pysrc" '{gsub(/@pysrc@/,r)}1' $@-t; \
-	pybundle="`for i in $$pylist; do echo $$i | grep -v ^dataclasses- | sed 's/\(.*\)-\(.*\)/Provides: bundled(\1) = \2/'; done`" && \
+	pybreqfile=rpm/py_buildrequires.txt; test -f $$pybreqfile || pybreqfile=/dev/null; \
+	pybundle="`echo "$$pylist" | tr ' ' '\n' | $(AWK) "$$PYBUNDLE_AWK" $$pybreqfile -`" && \
 	$(AWK) -i inplace -v r="$$pybundle" '{gsub(/@pybundle@/,r)}1' $@-t; \
 	pycache="`echo $(MKDIR_P) $(PCS_BUNDLED_DIR_LOCAL)/src; base=41; for i in $$pylist pyagentx; do echo 'cp -f %SOURCE'$$base' rpm/' && let "base=base+1"; done`" && \
 	$(AWK) -i inplace -v r="$$pycache" '{gsub(/@pycache@/,r)}1' $@-t; \
@@ -504,10 +679,31 @@ $(SPEC): $(SPEC).in .version config.status stamps/download_python_deps stamps/do
 	gemlist="`for i in $$($(FIND) rpm/ -type f -name '*.gem'); do echo $$i | sed -e 's#rpm/##g' -e 's#.gem##g'; done`" && \
 	gemsrc="`base=80; for i in $$gemlist; do echo 'Source'$$base': '$$i'.gem' && let "base=base+1"; done`" && \
 	$(AWK) -i inplace -v r="$$gemsrc" '{gsub(/@gemsrc@/,r)}1' $@-t; \
-	gembundle="`for i in $$gemlist; do echo $$i | sed 's/\(.*\)-\(.*\)/Provides: bundled(\1) = \2/'; done`" && \
+	gemreqfiles=""; \
+	for f in rpm/gem_requirements_default.txt rpm/gem_requirements.txt; do \
+		test -f $$f && gemreqfiles="$$gemreqfiles $$f"; \
+	done; \
+	if test -f Gemfile.lock; then \
+		gembundle="$$($(AWK) "$$GEMBUNDLE_AWK" $$gemreqfiles Gemfile.lock)"; \
+	else \
+		gembundle="$$($(FIND) $(PCSD_BUNDLED_CACHE_DIR) rpm/ -type f -name '*.gem' 2>/dev/null \
+			| sed -e 's#.*/##' -e 's#\.gem$$##' -e 's/\(.*\)-\(.*\)/Provides: bundled(rubygem-\1) = \2/' \
+			| sort -u)"; \
+	fi && \
 	$(AWK) -i inplace -v r="$$gembundle" '{gsub(/@gembundle@/,r)}1' $@-t; \
 	gemcache="`echo $(MKDIR_P) $(PCSD_BUNDLED_CACHE_DIR); base=80; for i in $$gemlist; do echo 'cp -f %SOURCE'$$base' $(PCSD_BUNDLED_CACHE_DIR)' && let "base=base+1"; done`" && \
 	$(AWK) -i inplace -v r="$$gemcache" '{gsub(/@gemcache@/,r)}1' $@-t;
+	gemreqlist="`for f in rpm/gem_requirements_default.txt rpm/gem_requirements.txt; do test -f $$f && cat $$f; done`" && \
+		gembuildreqs="`for i in $$gemreqlist; do echo 'BuildRequires: rubygem('$$i')'; done`" && \
+		$(AWK) -i inplace -v r="$$gembuildreqs" '{gsub(/@gembuildreqs@/,r)}1' $@-t; \
+		gemrequires="`test -f rpm/gem_requires.txt && sed -e 's/^\(.*\)$$/Requires: rubygem(\1)/' rpm/gem_requires.txt || true`" && \
+		$(AWK) -i inplace -v r="$$gemrequires" '{gsub(/@gemrequires@/,r)}1' $@-t;
+	bundlebuildreqs="`test -f rpm/bundle_buildrequires.txt && sed -e 's/^/BuildRequires: /' rpm/bundle_buildrequires.txt || true`" && \
+		$(AWK) -i inplace -v r="$$bundlebuildreqs" '{gsub(/@bundlebuildreqs@/,r)}1' $@-t;
+	pybuildreqs="`test -f rpm/py_buildrequires.txt && sed -e 's/^/BuildRequires: /' rpm/py_buildrequires.txt || true`" && \
+		$(AWK) -i inplace -v r="$$pybuildreqs" '{gsub(/@pybuildreqs@/,r)}1' $@-t; \
+		pyrequires="`test -f rpm/py_requires.txt && sed -e 's/^/Requires: /' rpm/py_requires.txt || true`" && \
+		$(AWK) -i inplace -v r="$$pyrequires" '{gsub(/@pyrequires@/,r)}1' $@-t;
 	chmod a-w $@-t
 	mv $@-t $@
 	rm -f $@-t*
