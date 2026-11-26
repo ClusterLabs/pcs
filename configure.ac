@@ -319,6 +319,12 @@ AC_DEFUN([PCS_BUNDLE_PYMOD], [
 AC_DEFUN([PCS_CHECK_PYMOD], [
 	AC_PIP_MODULE([$1], [$2], [bundle_module=no], [bundle_module=yes], [bundle_module=yes])
 	if { test "x$local_build" != "xyes" || test "x$3" != "xyes"; } && test "x$bundle_module" = "xyes"; then
+		# the detected version is only set when the module is installed
+		module_caps=AS_TR_CPP([$1])
+		AS_VAR_COPY([module_detected_version], [HAVE_PIPMOD_${module_caps}_VERSION])
+		if test "x$module_detected_version" != "x"; then
+			AC_MSG_ERROR([Python module $1 version $module_detected_version detected. Requested "$2"])
+		fi
 		AC_MSG_ERROR([Python module $1 not found])
 	fi
 	if test "x$bundle_module" = "xyes" && test "x$cache_only" = "xyes"; then
@@ -380,9 +386,18 @@ AC_DEFUN([PCS_BUNDLE_GEM], [
 #   (empty)   - record for both BuildRequires and Requires
 #   buildonly - record for BuildRequires only (build-time deps, e.g. test-unit)
 #   norecord  - do not record (e.g. kept hardcoded in the spec)
+# A gem installed with a version not matching the requirement is treated the
+# same as a missing one (it gets bundled in a local build) instead of failing
+# configure, mirroring PCS_CHECK_PYMOD.
 AC_DEFUN([PCS_CHECK_GEM], [
-	AC_RUBY_GEM([$1], [$2], [bundle_module=no], [bundle_module=yes])
+	AC_RUBY_GEM([$1], [$2], [bundle_module=no], [bundle_module=yes], [bundle_module=yes])
 	if test "x$local_build" != "xyes" && test "x$bundle_module" = "xyes"; then
+		# the detected version is only set when the gem is installed
+		module_caps=AS_TR_CPP([$1])
+		AS_VAR_COPY([gem_detected_version], [HAVE_RUBYGEM_${module_caps}_VERSION])
+		if test "x$gem_detected_version" != "x"; then
+			AC_MSG_ERROR([ruby gem $1 version $gem_detected_version detected. Requested "$2"])
+		fi
 		AC_MSG_ERROR([ruby gem $1 not found])
 	fi
 	if test "x$bundle_module" = "xyes" && test "x$cache_only" = "xyes"; then
