@@ -290,10 +290,44 @@ mkdir -p $ac_pwd/rpm/
 rm -rf $ac_pwd/rpm/requirements.txt
 touch $ac_pwd/rpm/requirements.txt
 
+# Lists of python modules which pcs depends on, consumed by Makefile.am to
+# generate rpm python3dist() BuildRequires/Requires dependencies in the spec. A
+# module is listed only when it is used from the system rather than bundled;
+# both lists are populated by PCS_CHECK_PYMOD:
+#   * py_buildrequires.txt - every system module (BuildRequires)
+#   * py_requires.txt      - the runtime subset (build-only modules excluded)
+# Truncate them here so a reconfigure starts from a clean slate; modes that
+# record nothing leave an empty file.
+rm -f $ac_pwd/rpm/py_buildrequires.txt $ac_pwd/rpm/py_requires.txt
+touch $ac_pwd/rpm/py_buildrequires.txt $ac_pwd/rpm/py_requires.txt
+
+# Additional build dependencies of bundled modules, see m4/pcs_buildreq.m4.
+PCS_BUILDREQ_INIT
+
 # PCS_BUNDLE_PYMOD([module], [version])
 AC_DEFUN([PCS_BUNDLE_PYMOD], [
 	echo "$1 $2" | sed -e 's# ##g' >> $ac_pwd/rpm/requirements.txt
-	if test "x$cache_only" = "xyes"; then
+])
+
+# PCS_CHECK_PYMOD([module], [version], [embedded=yes], [record_mode])
+# Set the third argument to "yes" for modules eligible to be bundled (the
+# "problematic" ones); non-embedded modules must come from BaseOS. The fourth
+# argument controls how the module is recorded as an rpm python3dist() dependency:
+#   (empty)   - record for both BuildRequires and Requires
+#   buildonly - record for BuildRequires only (build-time deps, e.g. pip)
+#   norecord  - do not record (kept hardcoded in the spec, e.g. wheel, pyparsing)
+AC_DEFUN([PCS_CHECK_PYMOD], [
+	AC_PIP_MODULE([$1], [$2], [bundle_module=no], [bundle_module=yes], [bundle_module=yes])
+	if { test "x$local_build" != "xyes" || test "x$3" != "xyes"; } && test "x$bundle_module" = "xyes"; then
+		# the detected version is only set when the module is installed
+		module_caps=AS_TR_CPP([$1])
+		AS_VAR_COPY([module_detected_version], [HAVE_PIPMOD_${module_caps}_VERSION])
+		if test "x$module_detected_version" != "x"; then
+			AC_MSG_ERROR([Python module $1 version $module_detected_version detected. Requested "$2"])
+		fi
+		AC_MSG_ERROR([Python module $1 not found])
+	fi
+	if test "x$bundle_module" = "xyes" && test "x$cache_only" = "xyes"; then
 		# Workaround for hyphen/underscore inconsistency between module and archive names
 		# NOTE: double '[[]]' brackets needs to be used because '[]' are special characters in m4 macros
 		pattern=`printf '%s\n' "$1" | sed -e 's/[[-_]]/[[-_]]/'`
@@ -302,17 +336,137 @@ AC_DEFUN([PCS_BUNDLE_PYMOD], [
 			 AC_MSG_ERROR([cache only build required but no source detected in rpm/])
 		fi
 	fi
+	if test "x$3" = "xyes" && { test "x$bundle_module" = "xyes" || test "x$individual_bundling" != "xyes"; }; then
+		PCS_BUNDLE_PYMOD([$1], [$2])
+	fi
+	# module_bundled=yes when the module is built from bundled sources; use it to
+	# check additional build dependencies with PCS_CHECK_BUILDREQ_PKG.
+	module_bundled=no
+	if test "x$local_build" = "xyes" && test "x$3" = "xyes" && { test "x$bundle_module" = "xyes" || test "x$individual_bundling" != "xyes"; }; then
+		module_bundled=yes
+	fi
+	# Record the module as an rpm python3dist() Build/Requires dependency when it
+	# is used from the system instead of being bundled. That is the complement of
+	# the PCS_BUNDLE_PYMOD condition above:
+	#   * a non-embedded module is always used from the system, or
+	#   * an embedded module is found on the system and individual bundling is on.
+	# Store the formatted python3dist() string (with the given version floor, if
+	# any) so Makefile.am only has to prepend the BuildRequires/Requires keyword.
+	# The fourth argument selects the record mode (see above).
+	if test "x$4" != "xnorecord" && { test "x$3" != "xyes" || { test "x$bundle_module" != "xyes" && test "x$individual_bundling" = "xyes"; }; }; then
+		py_dep="python3dist($1)"
+		if test "x$2" != "x"; then
+			py_dep="$py_dep $2"
+		fi
+		echo "$py_dep" >> $ac_pwd/rpm/py_buildrequires.txt
+		if test "x$4" != "xbuildonly"; then
+			echo "$py_dep" >> $ac_pwd/rpm/py_requires.txt
+		fi
+	fi
 ])
 
-# PCS_CHECK_PYMOD([module], [version], [embedded=yes])
-AC_DEFUN([PCS_CHECK_PYMOD], [
-	if test "x$local_build" = "xyes" && test "x$3" = "xyes"; then
-		AC_PIP_MODULE([$1], [$2], [bundle_module=no], [bundle_module=yes], [bundle_module=yes])
-		if test "x$bundle_module" = "xyes" || test "x$individual_bundling" != "xyes"; then
-			PCS_BUNDLE_PYMOD([$1], [$2])
+# PCS_BUNDLE_GEM([module], [version])
+AC_DEFUN([PCS_BUNDLE_GEM], [
+	if test "x$PCS_CUSTOM_GEMFILE" = "x"; then
+		if test "x$2" = "x"; then
+			echo "gem '$1'" >> Gemfile
+		else
+			echo "gem '$1', '$2'" >> Gemfile
 		fi
 	else
-		AC_PIP_MODULE([$1], [$2], [], [AC_MSG_ERROR([Python module $1 not found])])
+		grep "$1" Gemfile || AC_MSG_ERROR([custom gemfile missing required gem '$1'])
+	fi
+])
+
+# PCS_CHECK_GEM([module], [version], [default=yes], [record_mode])
+# Set the third argument to "yes" for Ruby default gems (gems shipped with Ruby
+# itself). Default gems are recorded into a separate rpm requirements list and
+# are only added to the Gemfile (for bundling) in a full local build, or when
+# their installed version does not satisfy the requirement - the bundled copy
+# then shadows the Ruby built-in one; see below. The fourth argument controls
+# how the gem is recorded as an rpm rubygem() dependency:
+#   (empty)   - record for both BuildRequires and Requires
+#   buildonly - record for BuildRequires only (build-time deps, e.g. test-unit)
+#   norecord  - do not record (e.g. kept hardcoded in the spec)
+# A gem installed with a version not matching the requirement is treated the
+# same as a missing one (it gets bundled in a local build) instead of failing
+# configure, mirroring PCS_CHECK_PYMOD. This applies to default gems as well.
+AC_DEFUN([PCS_CHECK_GEM], [
+	AC_RUBY_GEM([$1], [$2], [bundle_module=no], [bundle_module=yes], [bundle_module=yes])
+	if test "x$local_build" != "xyes" && test "x$bundle_module" = "xyes"; then
+		# the detected version is only set when the gem is installed
+		module_caps=AS_TR_CPP([$1])
+		AS_VAR_COPY([gem_detected_version], [HAVE_RUBYGEM_${module_caps}_VERSION])
+		if test "x$gem_detected_version" != "x"; then
+			AC_MSG_ERROR([ruby gem $1 version $gem_detected_version detected. Requested "$2"])
+		fi
+		AC_MSG_ERROR([ruby gem $1 not found])
+	fi
+	if test "x$bundle_module" = "xyes" && test "x$cache_only" = "xyes"; then
+		src=`ls $PCSD_BUNDLED_CACHE_DIR/$1-*`
+		if test "x$src" = "x"; then
+			AC_MSG_ERROR([cache only build required but no source detected in $PCSD_BUNDLED_CACHE_DIR])
+		fi
+	fi
+	# module_bundled=yes when the gem is built from bundled sources (it gets into
+	# the Gemfile below and is not pinned to a system version); use it to check
+	# additional build dependencies with PCS_CHECK_BUILDREQ_PKG.
+	module_bundled=no
+	if test "x$local_build" = "xyes"; then
+		if test "x$individual_bundling" != "xyes" || test "x$bundle_module" = "xyes"; then
+			module_bundled=yes
+		fi
+	fi
+	# Record the gem as an rpm Build/Requires dependency when it is used from the
+	# system instead of being bundled. That happens when:
+	#   * local build is disabled - all gems come from the system, or
+	#   * individual bundling is enabled - a gem found in the system is reused
+	#     instead of being bundled.
+	# In a full local build (without individual bundling) every gem is bundled,
+	# so no rpm rubygem() dependency is generated.
+	# Non-default and default gems are recorded into separate lists (consumed
+	# together by Makefile.am as BuildRequires). Default gems ship with Ruby and
+	# are therefore always present on the system; they are recorded only when
+	# not bundled, i.e. when their installed version satisfies the requirement.
+	# Gems needed at runtime are additionally recorded into
+	# gem_requires.txt (Requires). The record mode (fourth argument, see above)
+	# applies to default and non-default gems alike, so e.g. a default gem whose
+	# rubygem() Provides is missing on some distro can be set to norecord.
+	gem_record_file=""
+	if test "x$local_build" != "xyes" || test "x$individual_bundling" = "xyes"; then
+		if test "x$bundle_module" != "xyes"; then
+			if test "x$3" = "xyes"; then
+				gem_record_file=gem_requirements_default.txt
+			else
+				gem_record_file=gem_requirements.txt
+			fi
+		fi
+	fi
+	if test "x$4" != "xnorecord" && test "x$gem_record_file" != "x"; then
+		echo "$1" >> $ac_pwd/rpm/$gem_record_file
+		if test "x$4" != "xbuildonly"; then
+			echo "$1" >> $ac_pwd/rpm/gem_requires.txt
+		fi
+	fi
+	# Add the gem to the Gemfile so it gets bundled or pinned. Default gems ship
+	# with Ruby, so they only need to be bundled in a full local build or when
+	# the system version does not satisfy the requirement (bundle_module=yes):
+	# the bundled copy then shadows the Ruby built-in one, same as with json
+	# which RHEL/Fedora ship as a regular gem; in every other mode they are
+	# used from the system and must stay out of the Gemfile.
+	if test "x$3" != "xyes" || test "x$bundle_module" = "xyes" || { test "x$local_build" = "xyes" && test "x$individual_bundling" != "xyes"; }; then
+		gem_version=""
+		if test "x$bundle_module" != "xyes" && test "x$individual_bundling" = "xyes"; then
+			# Individual bundling is on and the gem is installed in the system:
+			# use its installed version so it is reused instead of bundled.
+			module_caps=AS_TR_CPP([$1])
+			AS_VAR_COPY([gem_version], [HAVE_RUBYGEM_${module_caps}_VERSION])
+		fi
+		gem_version="${gem_version:-$2}"
+		# Pin the gem in the Gemfile to:
+		#   * the installed system version -> reuse the system gem (no bundling);
+		#   * the given version requirement (or none) -> bundle the newest match.
+		PCS_BUNDLE_GEM([$1], [$gem_version])
 	fi
 ])
 
@@ -327,26 +481,34 @@ AC_PIP_MODULE([pip], [>= 10.0.0], [have_isolation=yes], [have_isolation=no], [ha
 AM_CONDITIONAL([PIP_HAS_ISOLATION], [test "x$have_isolation" = xyes])
 
 if test "x$tests_only" != "xyes"; then
+	# entrypoints import parts of setuptools
 	PCS_CHECK_PYMOD([setuptools])
 	if test "x$local_build" = "xyes"; then
-		PCS_CHECK_PYMOD([wheel])
+		PCS_CHECK_PYMOD([wheel], [], [], [buildonly])
 	fi
+	# cryptography is hard to build due to build dependencies
 	PCS_CHECK_PYMOD([cryptography])
-	PCS_CHECK_PYMOD([lxml])
-	PCS_CHECK_PYMOD([pycurl])
-	PCS_CHECK_PYMOD([pyparsing])
+	PCS_CHECK_PYMOD([lxml], [], [yes])
+	if test "x$module_bundled" = "xyes"; then
+		PCS_CHECK_BUILDREQ_PKG([libxml-2.0])
+		PCS_CHECK_BUILDREQ_PKG([libxslt])
+	fi
+	PCS_CHECK_PYMOD([pycurl], [], [yes])
+	if test "x$module_bundled" = "xyes"; then
+		PCS_CHECK_BUILDREQ_PKG([libcurl])
+		PCS_CHECK_BUILDREQ_PKG([openssl])
+	fi
+	# pyparsing-3.3.3 compatibility fixes weren't backported to pcs-0.11
+	PCS_CHECK_PYMOD([pyparsing], [< 3.3.3], [yes])
 
 	# those are kind of problematic.
 	# use them all from the BaseOS or embedded them all as necessary (--enable-local-build)
 	PCS_CHECK_PYMOD([dacite], [], [yes])
 	PCS_CHECK_PYMOD([tornado], [>= 6.0.0], [yes])
 	PCS_CHECK_PYMOD([python-dateutil], [>= 2.7.0], [yes])
-	# setuptoools_scm is needed for bundling dateutil, this uses variables
-	# set by the CHECK_PYMOD macro, so it must be executed right after it
-	if test "x$bundle_module" = "xyes"; then
-		PCS_CHECK_PYMOD([setuptools-scm])
+	if test "x$module_bundled" = "xyes"; then
+		PCS_CHECK_PYMOD([setuptools-scm], [], [], [buildonly])
 		PCS_CHECK_PYMOD([six])
-		PKG_CHECK_MODULES([TZDATA], [tzdata])
 	fi
 
 	# special case, because we need to download from github
@@ -368,6 +530,21 @@ AC_SUBST([PCSD_BUNDLED_CACHE_DIR])
 
 rm -rf Gemfile Gemfile.lock
 
+# Lists of ruby gems which pcs depends on, consumed by Makefile.am to generate
+# rpm rubygem() BuildRequires/Requires dependencies in the spec. A gem is listed
+# only when it is used from the system rather than bundled, i.e. in every mode
+# except a full local build (where gems are bundled). Both lists are populated by
+# PCS_CHECK_GEM (default gems are flagged with its third argument):
+#   * gem_requirements_default.txt - Ruby default gems (shipped with Ruby).
+#   * gem_requirements.txt - non-default gems.
+# Together they form the BuildRequires list. The runtime subset (build-only gems
+# excluded, see the PCS_CHECK_GEM record_mode argument) is in:
+#   * gem_requires.txt - Requires.
+# Truncate them here so a reconfigure starts from a clean slate; modes that record
+# nothing leave an empty file.
+rm -f $ac_pwd/rpm/gem_requirements.txt $ac_pwd/rpm/gem_requirements_default.txt $ac_pwd/rpm/gem_requires.txt
+touch $ac_pwd/rpm/gem_requirements.txt $ac_pwd/rpm/gem_requirements_default.txt $ac_pwd/rpm/gem_requires.txt
+
 if test "x$local_build" = "xyes"; then
 	if test "x$PCS_CUSTOM_GEMFILE" != "x"; then
 		if ! test -e "$PCS_CUSTOM_GEMFILE"; then
@@ -380,56 +557,42 @@ if test "x$local_build" = "xyes"; then
 	fi
 fi
 
-# PCS_BUNDLE_GEM([module], [version])
-AC_DEFUN([PCS_BUNDLE_GEM], [
-	if test "x$PCS_CUSTOM_GEMFILE" = "x"; then
-		if test "x$2" = "x"; then
-			echo "gem '$1'" >> Gemfile
-		else
-			echo "gem '$1', '$2'" >> Gemfile
-		fi
-	else
-		grep "$1" Gemfile || AC_MSG_ERROR([custom gemfile missing required gem '$1'])
-	fi
-])
-
-# PCS_CHECK_GEM([module], [version])
-AC_DEFUN([PCS_CHECK_GEM], [
-	if test "x$local_build" = "xyes"; then
-		# Add gem to Gemfile regardless of system availability.
-		# Needed for isolated test execution via `bundle exec`.
-		PCS_BUNDLE_GEM([$1], [$2])
-		AC_RUBY_GEM([$1], [$2], [bundle_module=no], [bundle_module=yes])
-		if test "x$bundle_module" = "xyes" || test "x$individual_bundling" != "xyes"; then
-			if test "x$cache_only" = "xyes"; then
-				src=`ls $PCSD_BUNDLED_CACHE_DIR/$1-*`
-				if test "x$src" = "x"; then
-					AC_MSG_ERROR([cache only build required but no source detected in $PCSD_BUNDLED_CACHE_DIR])
-				fi
-			fi
-		fi
-	else
-		AC_RUBY_GEM([$1], [$2], [], [AC_MSG_ERROR([ruby gem $1 not found])])
-	fi
-])
-
-# PCS_GEM_ACTION([curversion], [op], [cmpversion][, action-if-true] [, action-if-false])
-AC_DEFUN([PCS_GEM_ACTION], [
-	if test "x$individual_bundling" = "xyes" || test "x$local_build" != "xyes" && test -n "$1"; then
-		AC_COMPARE_VERSIONS([$1], [$2], [$3], [$4], [$5])
-	else
-		true
-		$5
-	fi
-])
-
-PCS_CHECK_GEM([power_assert])
-PCS_CHECK_GEM([test-unit])
-
 RACK_HANDLER="Rackup"
 REQUIRE_RACKUP="require 'rackup'"
 
 if test "x$tests_only" != "xyes"; then
+	# Direct PCSD dependencies
+	# ########################
+	# Default Gems
+	# The third PCS_CHECK_GEM argument flags these as Ruby default gems: they are
+	# recorded into the default-gems list and are only added to the Gemfile (for
+	# bundling) in a full local build or when the installed version does not
+	# satisfy the requirement. Checked in all modes so the macro records them
+	# regardless of individual bundling.
+	PCS_CHECK_GEM([date], [], [yes], [norecord])
+	PCS_CHECK_GEM([etc], [], [yes], [norecord])
+	PCS_CHECK_GEM([fileutils], [], [yes], [norecord])
+	PCS_CHECK_GEM([net-http], [], [yes], [norecord])
+	PCS_CHECK_GEM([openssl], [], [yes])
+	PCS_CHECK_GEM([shellwords], [], [yes], [norecord])
+	PCS_CHECK_GEM([stringio], [], [yes], [norecord])
+	PCS_CHECK_GEM([tempfile], [], [yes], [norecord])
+	PCS_CHECK_GEM([timeout], [], [yes], [norecord])
+	PCS_CHECK_GEM([uri], [], [yes], [norecord])
+	# json is a default gem upstream, but RHEL/Fedora ship it as a bundled gem,
+	# so it must be checked and pinned explicitly, also in individual bundling.
+	PCS_CHECK_GEM([json])
+	# Default/Bundled Gems
+	# base64 >= 0.1.0 is also required as a dependency of rack-protection >= 3.2.0.
+	# The version requirement must be specified here rather than in a separate
+	# check, because listing the same gem twice in the Gemfile with different
+	# version specs causes bundler to fail.
+	PCS_CHECK_GEM([base64], [>= 0.1.0], [], [norecord])
+	PCS_CHECK_GEM([logger], [], [], [norecord])
+	PCS_CHECK_GEM([rexml])
+	# Bundled Gems
+	PCS_CHECK_GEM([test-unit])
+	# Standalone Gems
 	PCS_CHECK_GEM([backports])
 	# We require childprocess 5.0.0+ due to the libcurl's threaded DNS resolver,
 	# new Ruby and Puma. Old childprocess uses a wrong forking method causing
@@ -442,21 +605,48 @@ if test "x$tests_only" != "xyes"; then
 		PCS_CHECK_GEM([childprocess], [>= 5.0.0])
 	fi
 	PCS_CHECK_GEM([curb])
-	PCS_CHECK_GEM([json])
-	PCS_CHECK_GEM([ruby2_keywords])
-	PCS_CHECK_GEM([mustermann])
-	PCS_CHECK_GEM([openssl])
-	PCS_CHECK_GEM([rack])
-	PCS_GEM_ACTION([$HAVE_RUBYGEM_RACK_VERSION], [<], [3.0], [RACK_HANDLER=Rack REQUIRE_RACKUP=""], [PCS_CHECK_GEM([rackup])])
-	PCS_CHECK_GEM([rack-protection])
-	PCS_GEM_ACTION([$HAVE_RUBYGEM_RACK_PROTECTION_VERSION], [<], [3.2.0], [], [PCS_CHECK_GEM([base64], [>= 0.1.0])])
-	PCS_CHECK_GEM([rack-test])
-	PCS_CHECK_GEM([sinatra])
-	PCS_GEM_ACTION([$HAVE_RUBYGEM_SINATRA_VERSION], [<], [4.0.0], [], [PCS_CHECK_GEM([rack-session], [>= 2.0.0])])
-	PCS_CHECK_GEM([tilt])
-	PCS_CHECK_GEM([nio4r])
+	if test "x$module_bundled" = "xyes"; then
+		PCS_CHECK_BUILDREQ_PKG([libcurl])
+	fi
 	PCS_CHECK_GEM([puma])
-	PCS_CHECK_GEM([rexml])
+	PCS_CHECK_GEM([rack])
+	# rack < 3.0 provides its own handler and does not need the rackup gem
+	AC_RUBY_GEM([rack], [< 3.0.0], [need_rackup=no], [need_rackup=yes], [need_rackup=yes])
+	if test "x$need_rackup" = "xyes"; then
+		PCS_CHECK_GEM([rackup])
+	else
+		RACK_HANDLER=Rack
+		REQUIRE_RACKUP=""
+	fi
+	PCS_CHECK_GEM([sinatra])
+	if test "x$individual_bundling" = "xyes"; then
+		# Indirect PCSD dependencies
+		# ########################
+		# NOTE: These are transitive dependencies of the direct gems above. We
+		#       must list them so PCS_CHECK_GEM pins them to their system
+		#       versions; an unlisted one stays unpinned and bundler would
+		#       download and bundle a newer version instead of reusing the
+		#       system gem. A new transitive dependency must therefore be added
+		#       here as well.
+		# test-unit dependencies
+		PCS_CHECK_GEM([power_assert])
+		# rest of sinatra dependencies
+		PCS_CHECK_GEM([mustermann], [< 4.0.0])
+		# musterman < 3.1.0 requires ruby2_keywords ~> 0.0.1
+		AC_RUBY_GEM([mustermann], [< 3.1.0], [need_ruby2_keywords=yes], [need_ruby2_keywords=no], [need_ruby2_keywords=no])
+		if test "x$need_ruby2_keywords" = "xyes"; then
+			PCS_CHECK_GEM([ruby2_keywords], [>= 0.0.1])
+		fi
+		PCS_CHECK_GEM([rack-protection])
+		# sinatra >= 4.0.0 introduced a new dependency on rack-session >= 2.0.0
+		AC_RUBY_GEM([sinatra], [< 4.0.0], [need_rack_session=no], [need_rack_session=yes], [need_rack_session=yes])
+		if test "x$need_rack_session" = "xyes"; then
+			PCS_CHECK_GEM([rack-session], [>= 2.0.0])
+		fi
+		PCS_CHECK_GEM([tilt])
+		# puma dependencies
+		PCS_CHECK_GEM([nio4r])
+	fi
 fi
 AC_SUBST([RACK_HANDLER])
 AC_SUBST([REQUIRE_RACKUP])
@@ -478,6 +668,8 @@ AC_SUBST([SYSTEMD_GEM_HOME])
 AM_CONDITIONAL([INSTALL_EMBEDDED_GEMS], [test -n "$GEM_HOME"])
 
 AM_CONDITIONAL([ENABLE_DOWNLOAD], [test "x$cache_only" != "xyes"])
+AM_CONDITIONAL([INDIVIDUAL_BUNDLING], [test "x$individual_bundling" = "xyes"])
+
 
 if test "x$booth_enable_authfile_set" = "xyes"; then
 	BOOTH_ENABLE_AUTHFILE_SET_DOC="
