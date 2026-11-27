@@ -23,7 +23,7 @@ export GEM_HOME="$REPO_PATH/@PCSD_BUNDLED_DIR_ROOT_LOCAL@"
 # export GEM_PATH="$GEM_HOME:"`gem env gempath`
 
 # RACK_ENV=production ruby -I${REPO_PATH}/pcsd ${REPO_PATH}/pcsd/pcsd.service-runner &
-RACK_ENV=production ruby "-I${REPO_PATH}/pcsd" "${REPO_PATH}/pcsd/pcsd" &
+RACK_ENV=production bundle exec ruby "-I${REPO_PATH}/pcsd" "${REPO_PATH}/pcsd/pcsd" &
 pid_ruby=$!
 echo "* ruby daemon started: $pid_ruby"
 sleep 5

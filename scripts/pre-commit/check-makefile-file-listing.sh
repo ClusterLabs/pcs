@@ -22,6 +22,12 @@ get_unlisted_files() {
   mentioned_files=$(get_mentioned_files "$makefiles")
 
   for file in $added_files; do
+    case "$file" in
+      # m4 macro files are pulled into aclocal.m4 (ACLOCAL_AMFLAGS = -I m4) and
+      # automake distributes them automatically, so they are not expected to be
+      # listed in EXTRA_DIST
+      m4/*.m4) continue ;;
+    esac
     if ! echo "$mentioned_files" |
       grep --quiet --fixed-strings --line-regexp "$file" 2> /dev/null; then
       echo "$file"
