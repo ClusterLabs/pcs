@@ -498,8 +498,8 @@ if test "x$tests_only" != "xyes"; then
 		PCS_CHECK_BUILDREQ_PKG([libcurl])
 		PCS_CHECK_BUILDREQ_PKG([openssl])
 	fi
-	# pyparsing uses build backend flit since 3.0.8
-	PCS_CHECK_PYMOD([pyparsing], [< 3.0.0], [yes])
+	# pyparsing-3.3.3 compatibility fixes weren't backported to pcs-0.11
+	PCS_CHECK_PYMOD([pyparsing], [< 3.3.3], [yes])
 
 	# those are kind of problematic.
 	# use them all from the BaseOS or embedded them all as necessary (--enable-local-build)
